@@ -7,93 +7,100 @@ using SC2APIProtocol;
 
 namespace Bot {
     public class Unit {
-        private SC2APIProtocol.Unit original;
-        private UnitTypeData unitTypeData;
+        private SC2APIProtocol.Unit _original;
+        private UnitTypeData _unitTypeData;
 
-        public string name;
-        public uint unitType;
-        public float integrity;
-        public Vector3 position;
-        public ulong tag;
-        public float buildProgress;
-        public UnitOrder order;
-        public RepeatedField<UnitOrder> orders;
-        public int supply;
-        public bool isVisible;
-        public int idealWorkers;
-        public int assignedWorkers;
+        public string Name;
+        public uint UnitType;
+        public float Integrity;
+        public Vector3 Position;
+        public ulong Tag;
+        public float BuildProgress;
+        public UnitOrder Order;
+        public RepeatedField<UnitOrder> Orders;
+        public int Supply;
+        public bool IsVisible;
+        public int IdealWorkers;
+        public int AssignedWorkers;
 
         public Unit(SC2APIProtocol.Unit unit) {
-            this.original = unit;
-            this.unitTypeData = Controller.gameData.Units[(int) unit.UnitType];
+            _original = unit;
+            _unitTypeData = Controller.GameData.Units[(int)unit.UnitType];
 
-            this.name = unitTypeData.Name;
-            this.tag = unit.Tag;
-            this.unitType = unit.UnitType;
-            this.position = new Vector3(unit.Pos.X, unit.Pos.Y, unit.Pos.Z);
-            this.integrity = (unit.Health + unit.Shield) / (unit.HealthMax + unit.ShieldMax);
-            this.buildProgress = unit.BuildProgress;
-            this.idealWorkers = unit.IdealHarvesters;
-            this.assignedWorkers = unit.AssignedHarvesters;
-            
-            this.order = unit.Orders.Count > 0 ? unit.Orders[0] : new UnitOrder();
-            this.orders = unit.Orders;
-            this.isVisible = (unit.DisplayType == DisplayType.Visible);
+            Name = _unitTypeData.Name;
+            Tag = unit.Tag;
+            UnitType = unit.UnitType;
+            Position = new Vector3(unit.Pos.X, unit.Pos.Y, unit.Pos.Z);
+            Integrity = (unit.Health + unit.Shield) / (unit.HealthMax + unit.ShieldMax);
+            BuildProgress = unit.BuildProgress;
+            IdealWorkers = unit.IdealHarvesters;
+            AssignedWorkers = unit.AssignedHarvesters;
 
-            this.supply = (int) unitTypeData.FoodRequired;
-        }                        
-        
-        
+            Order = unit.Orders.Count > 0 ? unit.Orders[0] : new UnitOrder();
+            Orders = unit.Orders;
+            IsVisible = (unit.DisplayType == DisplayType.Visible);
+
+            Supply = (int)_unitTypeData.FoodRequired;
+        }
+
         public double GetDistance(Unit otherUnit) {
-            return Vector3.Distance(position, otherUnit.position);
+            return Vector3.Distance(Position, otherUnit.Position);
         }
 
         public double GetDistance(Vector3 location) {
-            return Vector3.Distance(position, location);
+            return Vector3.Distance(Position, location);
         }
-        
-        public void Train(uint unitType, bool queue=false) {            
-            if (!queue && orders.Count > 0)
-                return;            
 
-            var abilityID = Abilities.GetID(unitType);            
-            var action = Controller.CreateRawUnitCommand(abilityID);
-            action.ActionRaw.UnitCommand.UnitTags.Add(tag);
+        public void Train(uint unitType, bool queue = false) {
+            if (!queue && Orders.Count > 0) {
+                return;
+            }
+
+            var abilityId = Abilities.GetId(unitType);
+            var action = Controller.CreateRawUnitCommand(abilityId);
+            action.ActionRaw.UnitCommand.UnitTags.Add(Tag);
             Controller.AddAction(action);
 
             var targetName = Controller.GetUnitName(unitType);
             Logger.Info("Started training: {0}", targetName);
         }
-        
+
         private void FocusCamera() {
-            var action = new Action();
-            action.ActionRaw = new ActionRaw();
-            action.ActionRaw.CameraMove = new ActionRawCameraMove();
-            action.ActionRaw.CameraMove.CenterWorldSpace = new Point();
-            action.ActionRaw.CameraMove.CenterWorldSpace.X = position.X;
-            action.ActionRaw.CameraMove.CenterWorldSpace.Y = position.Y;
-            action.ActionRaw.CameraMove.CenterWorldSpace.Z = position.Z;            
+            var action = new Action
+            {
+                ActionRaw = new ActionRaw
+                {
+                    CameraMove = new ActionRawCameraMove
+                    {
+                        CenterWorldSpace = new Point
+                        {
+                            X = Position.X,
+                            Y = Position.Y,
+                            Z = Position.Z
+                        }
+                    }
+                }
+            };
+
             Controller.AddAction(action);
         }
-        
-        
+
         public void Move(Vector3 target) {
-            var action = Controller.CreateRawUnitCommand(Abilities.MOVE);
-            action.ActionRaw.UnitCommand.TargetWorldSpacePos = new Point2D();
-            action.ActionRaw.UnitCommand.TargetWorldSpacePos.X = target.X;
-            action.ActionRaw.UnitCommand.TargetWorldSpacePos.Y = target.Y;
-            action.ActionRaw.UnitCommand.UnitTags.Add(tag);
+            var action = Controller.CreateRawUnitCommand(Abilities.Move);
+            action.ActionRaw.UnitCommand.TargetWorldSpacePos = new Point2D
+            {
+                X = target.X,
+                Y = target.Y
+            };
+            action.ActionRaw.UnitCommand.UnitTags.Add(Tag);
             Controller.AddAction(action);
         }
-        
+
         public void Smart(Unit unit) {
-            var action = Controller.CreateRawUnitCommand(Abilities.SMART);
-            action.ActionRaw.UnitCommand.TargetUnitTag = unit.tag;
-            action.ActionRaw.UnitCommand.UnitTags.Add(tag);
+            var action = Controller.CreateRawUnitCommand(Abilities.Smart);
+            action.ActionRaw.UnitCommand.TargetUnitTag = unit.Tag;
+            action.ActionRaw.UnitCommand.UnitTags.Add(Tag);
             Controller.AddAction(action);
         }
-
-
-        
     }
 }

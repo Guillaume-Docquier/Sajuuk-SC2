@@ -1,32 +1,31 @@
 ﻿using System;
+using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot {
     internal class Program {
         // Settings for your bot.
-        private static readonly Bot bot = new RaxBot();
-        private const Race race = Race.Terran;
+        private static readonly IBot Bot = new RaxBot();
+        private const Race MyRace = Race.Terran;
+        private const string MapName = "AcropolisLE.SC2Map";
 
-        // Settings for single player mode.
-//        private static string mapName = "AbyssalReefLE.SC2Map";
-//        private static string mapName = "AbiogenesisLE.SC2Map";
-//        private static string mapName = "FrostLE.SC2Map";
-        private static readonly string mapName = "(2)16-BitLE.SC2Map";
+        private const Race OpponentRace = Race.Random;
+        private const Difficulty OpponentDifficulty = Difficulty.Easy;
 
-        private static readonly Race opponentRace = Race.Random;
-        private static readonly Difficulty opponentDifficulty = Difficulty.Easy;
+        private const bool RealTime = true;
 
-        public static GameConnection gc;
+        public static GameConnection GameConnection;
 
         private static void Main(string[] args) {
             try {
-                gc = new GameConnection();
-                if (args.Length == 0){
-                    gc.readSettings();
-                    gc.RunSinglePlayer(bot, mapName, race, opponentRace, opponentDifficulty).Wait();
+                GameConnection = new GameConnection();
+                if (args.Length == 0) {
+                    GameConnection.FindExecutablePath();
+                    GameConnection.RunSinglePlayer(Bot, MapName, MyRace, OpponentRace, OpponentDifficulty, RealTime).Wait();
                 }
-                else
-                    gc.RunLadder(bot, race, args).Wait();
+                else {
+                    GameConnection.RunLadder(Bot, MyRace, args).Wait();
+                }
             }
             catch (Exception ex) {
                 Logger.Info(ex.ToString());

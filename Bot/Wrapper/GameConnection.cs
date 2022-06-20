@@ -6,23 +6,25 @@ using System.Threading;
 using System.Threading.Tasks;
 using SC2APIProtocol;
 
-namespace Bot {
+namespace Bot.Wrapper {
     public class GameConnection {
-        private const string address = "127.0.0.1";
-        private const int stepSize = 1;
-        private readonly ProtobufProxy proxy = new ProtobufProxy();
-        private string starcraftDir;
+        private const string Address = "127.0.0.1";
+        private const int StepSize = 1;
+        private readonly ProtobufProxy _proxy = new ProtobufProxy();
+        private string _starcraftDir;
 
-        private string starcraftExe;
-        private string starcraftMaps;
+        private string _starcraftExe;
+        private string _starcraftMaps;
 
-        private void StartSC2Instance(int port) {
-            var processStartInfo = new ProcessStartInfo(starcraftExe);
-            processStartInfo.Arguments = string.Format("-listen {0} -port {1} -displayMode 0", address, port);
-            processStartInfo.WorkingDirectory = Path.Combine(starcraftDir, "Support64");
+        private void StartSc2Instance(int port) {
+            var processStartInfo = new ProcessStartInfo(_starcraftExe)
+            {
+                Arguments = $"-listen {Address} -port {port} -displayMode 0",
+                WorkingDirectory = Path.Combine(_starcraftDir, "Support64")
+            };
 
             Logger.Info("Launching SC2:");
-            Logger.Info("--> File: {0}", starcraftExe);
+            Logger.Info("--> File: {0}", _starcraftExe);
             Logger.Info("--> Working Dir: {0}", processStartInfo.WorkingDirectory);
             Logger.Info("--> Arguments: {0}", processStartInfo.Arguments);
             Process.Start(processStartInfo);
@@ -32,12 +34,13 @@ namespace Bot {
             const int timeout = 60;
             for (var i = 0; i < timeout * 2; i++) {
                 try {
-                    await proxy.Connect(address, port);
+                    await _proxy.Connect(Address, port);
                     Logger.Info("--> Connected");
+
                     return;
                 }
                 catch (WebSocketException) {
-//                    Logger.Info("Failed. Retrying...");
+                    Logger.Info("Failed. Retrying...");
                 }
 
                 Thread.Sleep(500);
@@ -47,19 +50,23 @@ namespace Bot {
             throw new Exception("Unable to make a connection.");
         }
 
-        private async Task CreateGame(string mapName, Race opponentRace, Difficulty opponentDifficulty) {
-            var createGame = new RequestCreateGame();
-            createGame.Realtime = false;
+        private async Task CreateGame(string mapName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {
+            var createGame = new RequestCreateGame
+            {
+                Realtime = realTime
+            };
 
-            var mapPath = Path.Combine(starcraftMaps, mapName);
+            var mapPath = Path.Combine(_starcraftMaps, mapName);
 
             if (!File.Exists(mapPath)) {
-                Logger.Info("Unable to locate map: " + mapPath);
-                throw new Exception("Unable to locate map: " + mapPath);
+                Logger.Info($"Unable to locate map: {mapPath}");
+                throw new Exception($"Unable to locate map: {mapPath}");
             }
 
-            createGame.LocalMap = new LocalMap();
-            createGame.LocalMap.MapPath = mapPath;
+            createGame.LocalMap = new LocalMap
+            {
+                MapPath = mapPath
+            };
 
             var player1 = new PlayerSetup();
             createGame.PlayerSetup.Add(player1);
@@ -71,41 +78,42 @@ namespace Bot {
             player2.Type = PlayerType.Computer;
             player2.Difficulty = opponentDifficulty;
 
-            var request = new Request();
-            request.CreateGame = createGame;
-            var response = CheckResponse(await proxy.SendRequest(request));
+            var request = new Request
+            {
+                CreateGame = createGame
+            };
 
-            if(response.CreateGame.Error != ResponseCreateGame.Types.Error.Unset) {
+            var response = CheckResponse(await _proxy.SendRequest(request));
+            if (response.CreateGame.Error != ResponseCreateGame.Types.Error.Unset) {
                 Logger.Error("CreateGame error: {0}", response.CreateGame.Error.ToString());
-                if(!String.IsNullOrEmpty(response.CreateGame.ErrorDetails)) {
+                if (!string.IsNullOrEmpty(response.CreateGame.ErrorDetails)) {
                     Logger.Error(response.CreateGame.ErrorDetails);
                 }
             }
         }
 
-        public void readSettings() {
+        public void FindExecutablePath() {
             var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             var executeInfo = Path.Combine(myDocuments, "StarCraft II", "ExecuteInfo.txt");
-            if (!File.Exists(executeInfo))
+            if (!File.Exists(executeInfo)) {
                 executeInfo = Path.Combine(myDocuments, "StarCraftII", "ExecuteInfo.txt");
+            }
 
             if (File.Exists(executeInfo)) {
                 var lines = File.ReadAllLines(executeInfo);
                 foreach (var line in lines) {
-                    var argument = line.Substring(line.IndexOf('=') + 1).Trim();
                     if (line.Trim().StartsWith("executable")) {
-                        starcraftExe = argument;
-                        starcraftDir =
-                            Path.GetDirectoryName(
-                                Path.GetDirectoryName(Path.GetDirectoryName(starcraftExe))); //we need 2 folders down
-                        if (starcraftDir != null)
-                            starcraftMaps = Path.Combine(starcraftDir, "Maps");
+                        _starcraftExe = line.Substring(line.IndexOf('=') + 1).Trim();
+                        ;
+                        _starcraftDir = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(_starcraftExe))); //we need 2 folders down
+                        if (_starcraftDir != null) {
+                            _starcraftMaps = Path.Combine(_starcraftDir, "Maps");
+                        }
                     }
                 }
             }
             else {
-                throw new Exception("Unable to find:" + executeInfo +
-                                    ". Make sure you started the game successfully at least once.");
+                throw new Exception($"Unable to find:{executeInfo}. Make sure you started the game successfully at least once.");
             }
         }
 
@@ -119,11 +127,11 @@ namespace Bot {
 
             var request = new Request();
             request.JoinGame = joinGame;
-            var response = CheckResponse(await proxy.SendRequest(request));
+            var response = CheckResponse(await _proxy.SendRequest(request));
 
-            if(response.JoinGame.Error != ResponseJoinGame.Types.Error.Unset) {
+            if (response.JoinGame.Error != ResponseJoinGame.Types.Error.Unset) {
                 Logger.Error("JoinGame error: {0}", response.JoinGame.Error.ToString());
-                if(!String.IsNullOrEmpty(response.JoinGame.ErrorDetails)) {
+                if (!String.IsNullOrEmpty(response.JoinGame.ErrorDetails)) {
                     Logger.Error(response.JoinGame.ErrorDetails);
                 }
             }
@@ -151,11 +159,11 @@ namespace Bot {
             var request = new Request();
             request.JoinGame = joinGame;
 
-            var response = CheckResponse(await proxy.SendRequest(request));
+            var response = CheckResponse(await _proxy.SendRequest(request));
 
-            if(response.JoinGame.Error != ResponseJoinGame.Types.Error.Unset) {
+            if (response.JoinGame.Error != ResponseJoinGame.Types.Error.Unset) {
                 Logger.Error("JoinGame error: {0}", response.JoinGame.Error.ToString());
-                if(!String.IsNullOrEmpty(response.JoinGame.ErrorDetails)) {
+                if (!String.IsNullOrEmpty(response.JoinGame.ErrorDetails)) {
                     Logger.Error(response.JoinGame.ErrorDetails);
                 }
             }
@@ -164,31 +172,31 @@ namespace Bot {
         }
 
         public async Task Ping() {
-            await proxy.Ping();
+            await _proxy.Ping();
         }
 
         private async Task RequestLeaveGame() {
             var requestLeaveGame = new Request();
             requestLeaveGame.LeaveGame = new RequestLeaveGame();
-            await proxy.SendRequest(requestLeaveGame);
+            await _proxy.SendRequest(requestLeaveGame);
         }
 
         public async Task SendRequest(Request request) {
-            await proxy.SendRequest(request);
+            await _proxy.SendRequest(request);
         }
 
         public async Task<ResponseQuery> SendQuery(RequestQuery query) {
             var request = new Request();
             request.Query = query;
-            var response = await proxy.SendRequest(request);
+            var response = await _proxy.SendRequest(request);
             return response.Query;
         }
 
-        private async Task Run(Bot bot, uint playerId) {
+        private async Task Run(IBot bot, uint playerId) {
             var gameInfoReq = new Request();
             gameInfoReq.GameInfo = new RequestGameInfo();
 
-            var gameInfoResponse = await proxy.SendRequest(gameInfoReq);
+            var gameInfoResponse = await _proxy.SendRequest(gameInfoReq);
 
             var dataReq = new Request();
             dataReq.Data = new RequestData();
@@ -198,80 +206,82 @@ namespace Bot {
             dataReq.Data.EffectId = true;
             dataReq.Data.UpgradeId = true;
 
-            var dataResponse = await proxy.SendRequest(dataReq);
+            var dataResponse = await _proxy.SendRequest(dataReq);
 
-            Controller.gameInfo = gameInfoResponse.GameInfo;
-            Controller.gameData = dataResponse.Data;
+            Controller.GameInfo = gameInfoResponse.GameInfo;
+            Controller.GameData = dataResponse.Data;
 
             while (true) {
                 var observationRequest = new Request();
                 observationRequest.Observation = new RequestObservation();
-                var response = await proxy.SendRequest(observationRequest);
+                var response = await _proxy.SendRequest(observationRequest);
 
                 var observation = response.Observation;
 
-                if (response.Status == Status.Ended || response.Status == Status.Quit)
-                    {
-                        foreach (var result in observation.PlayerResult)
-                        {
-                            if (result.PlayerId == playerId)
-                            {
-                                Logger.Info("Result: {0}", result.Result);
-                                // Do whatever you want with the info
-                            }
+                if (response.Status == Status.Ended || response.Status == Status.Quit) {
+                    foreach (var result in observation.PlayerResult) {
+                        if (result.PlayerId == playerId) {
+                            Logger.Info("Result: {0}", result.Result);
+                            // Do whatever you want with the info
                         }
-                        break;
                     }
 
-                Controller.obs = observation;
+                    break;
+                }
+
+                Controller.Obs = observation;
                 var actions = bot.OnFrame();
 
                 var actionRequest = new Request();
                 actionRequest.Action = new RequestAction();
                 actionRequest.Action.Actions.AddRange(actions);
                 if (actionRequest.Action.Actions.Count > 0)
-                    await proxy.SendRequest(actionRequest);
+                    await _proxy.SendRequest(actionRequest);
 
                 var stepRequest = new Request();
                 stepRequest.Step = new RequestStep();
-                stepRequest.Step.Count = stepSize;
-                await proxy.SendRequest(stepRequest);
+                stepRequest.Step.Count = StepSize;
+                await _proxy.SendRequest(stepRequest);
             }
         }
 
-        public async Task RunSinglePlayer(Bot bot, string map, Race myRace, Race opponentRace,
-            Difficulty opponentDifficulty) {
-            var port = 5678;
+        public async Task RunSinglePlayer(IBot bot, string map, Race myRace, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {
+            const int port = 5678;
+
             Logger.Info("Starting SinglePlayer Instance");
-            StartSC2Instance(port);
+            StartSc2Instance(port);
+
             Logger.Info("Connecting to port: {0}", port);
             await Connect(port);
+
             Logger.Info("Creating game");
-            await CreateGame(map, opponentRace, opponentDifficulty);
+            await CreateGame(map, opponentRace, opponentDifficulty, realTime);
+
             Logger.Info("Joining game");
             var playerId = await JoinGame(myRace);
             await Run(bot, playerId);
         }
 
-        private async Task RunLadder(Bot bot, Race myRace, int gamePort, int startPort) {
+        private async Task RunLadder(IBot bot, Race myRace, int gamePort, int startPort) {
             await Connect(gamePort);
             var playerId = await JoinGameLadder(myRace, startPort);
             await Run(bot, playerId);
             // await RequestLeaveGame();
         }
 
-        public async Task RunLadder(Bot bot, Race myRace, string[] args) {
-            var commandLineArgs = new CLArgs(args);
+        public async Task RunLadder(IBot bot, Race myRace, string[] args) {
+            var commandLineArgs = new CommandLineArguments(args);
             await RunLadder(bot, myRace, commandLineArgs.GamePort, commandLineArgs.StartPort);
         }
 
-        private Response CheckResponse(Response response){
-            if(response.Error.Count > 0) {
+        private static Response CheckResponse(Response response) {
+            if (response.Error.Count > 0) {
                 Logger.Error("Response errors:");
-                foreach(var error in response.Error) {
+                foreach (var error in response.Error) {
                     Logger.Error(error);
                 }
             }
+
             return response;
         }
     }

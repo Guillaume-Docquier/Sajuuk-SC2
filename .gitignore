@@ -3,6 +3,6 @@ Bot/bin
 Bot/obj
 *.log
 
-
+Bot.sln.DotSettings.user
 /.vs/Bot/v15
 /.vs
