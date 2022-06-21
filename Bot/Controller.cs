@@ -20,9 +20,13 @@ namespace Bot {
         public static ResponseGameInfo GameInfo;
         public static ResponseData GameData;
         public static ResponseObservation Obs;
-        public static ulong Frame;
+
+        public static ulong Frame = ulong.MaxValue;
+
         public static uint CurrentSupply;
         public static uint MaxSupply;
+        public static uint AvailableSupply => MaxSupply - CurrentSupply;
+
         public static uint Minerals;
         public static uint Vespene;
 
@@ -67,8 +71,10 @@ namespace Bot {
             }
 
             Frame = Obs.Observation.GameLoop;
+
             CurrentSupply = Obs.Observation.PlayerCommon.FoodUsed;
             MaxSupply = Obs.Observation.PlayerCommon.FoodCap;
+
             Minerals = Obs.Observation.PlayerCommon.Minerals;
             Vespene = Obs.Observation.PlayerCommon.Vespene;
 
@@ -164,7 +170,7 @@ namespace Bot {
         public static List<Unit> GetUnits(HashSet<uint> hashset, Alliance alliance = Alliance.Self, bool onlyCompleted = false, bool onlyVisible = false) {
             //ideally this should be cached in the future and cleared at each new frame
             var units = new List<Unit>();
-            foreach (var unit in Obs.Observation.RawData.Units)
+            foreach (var unit in Obs.Observation.RawData.Units) {
                 if (hashset.Contains(unit.UnitType) && unit.Alliance == alliance) {
                     if (onlyCompleted && unit.BuildProgress < 1) {
                         continue;
@@ -176,6 +182,7 @@ namespace Bot {
 
                     units.Add(new Unit(unit));
                 }
+            }
 
             return units;
         }
@@ -183,7 +190,7 @@ namespace Bot {
         public static List<Unit> GetUnits(uint unitType, Alliance alliance = Alliance.Self, bool onlyCompleted = false, bool onlyVisible = false) {
             //ideally this should be cached in the future and cleared at each new frame
             var units = new List<Unit>();
-            foreach (var unit in Obs.Observation.RawData.Units)
+            foreach (var unit in Obs.Observation.RawData.Units) {
                 if (unit.UnitType == unitType && unit.Alliance == alliance) {
                     if (onlyCompleted && unit.BuildProgress < 1) {
                         continue;
@@ -195,6 +202,7 @@ namespace Bot {
 
                     units.Add(new Unit(unit));
                 }
+            }
 
             return units;
         }
@@ -368,7 +376,6 @@ namespace Bot {
                 }
             }
         }
-
 
         public static Unit GetAvailableWorker(Vector3 targetPosition) {
             var workers = GetUnits(Units.Workers);

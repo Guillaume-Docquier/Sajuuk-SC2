@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,10 +12,51 @@ namespace Bot.Wrapper {
         private const string Address = "127.0.0.1";
         private const int StepSize = 1;
         private readonly ProtobufProxy _proxy = new ProtobufProxy();
-        private string _starcraftDir;
 
-        private string _starcraftExe;
-        private string _starcraftMaps;
+        private readonly string _starcraftExe;
+        private readonly string _starcraftDir;
+        private readonly string _starcraftMapsDir;
+
+        public GameConnection() {
+            var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var executeInfo = Path.Combine(myDocuments, "StarCraft II", "ExecuteInfo.txt");
+
+            if (File.Exists(executeInfo)) {
+                var lines = File.ReadAllLines(executeInfo);
+                foreach (var line in lines) {
+                    if (line.Trim().StartsWith("executable")) {
+                        _starcraftExe = line.Substring(line.IndexOf('=') + 1).Trim();
+                        _starcraftDir = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(_starcraftExe))); //we need 2 folders down
+                        if (_starcraftDir != null) {
+                            _starcraftMapsDir = Path.Combine(_starcraftDir, "Maps");
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            if (_starcraftExe == default) {
+                throw new Exception($"Unable to find:{executeInfo}. Make sure you started the game successfully at least once.");
+            }
+        }
+
+        public async Task RunSinglePlayer(IBot bot, string mapName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {
+            const int port = 5678;
+
+            Logger.Info("Starting SinglePlayer Instance");
+            StartSc2Instance(port);
+
+            Logger.Info("Connecting to port: {0}", port);
+            await Connect(port);
+
+            Logger.Info("Creating game on map: {0}", mapName);
+            await CreateGame(mapName, opponentRace, opponentDifficulty, realTime);
+
+            Logger.Info("Joining game");
+            var playerId = await JoinGame(bot.Race);
+            await Run(bot, playerId);
+        }
 
         private void StartSc2Instance(int port) {
             var processStartInfo = new ProcessStartInfo(_starcraftExe)
@@ -50,175 +92,181 @@ namespace Bot.Wrapper {
             throw new Exception("Unable to make a connection.");
         }
 
-        private async Task CreateGame(string mapName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {
-            var createGame = new RequestCreateGame
-            {
-                Realtime = realTime
-            };
-
-            var mapPath = Path.Combine(_starcraftMaps, mapName);
-
+        private async Task CreateGame(string mapName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {;
+            var mapPath = Path.Combine(_starcraftMapsDir, mapName);
             if (!File.Exists(mapPath)) {
                 Logger.Info($"Unable to locate map: {mapPath}");
                 throw new Exception($"Unable to locate map: {mapPath}");
             }
 
-            createGame.LocalMap = new LocalMap
+            var createGame = new RequestCreateGame
             {
-                MapPath = mapPath
+                Realtime = realTime,
+                LocalMap = new LocalMap
+                {
+                    MapPath = mapPath
+                }
             };
 
-            var player1 = new PlayerSetup();
-            createGame.PlayerSetup.Add(player1);
-            player1.Type = PlayerType.Participant;
+            createGame.PlayerSetup.Add(new PlayerSetup
+            {
+                Type = PlayerType.Participant
+            });
 
-            var player2 = new PlayerSetup();
-            createGame.PlayerSetup.Add(player2);
-            player2.Race = opponentRace;
-            player2.Type = PlayerType.Computer;
-            player2.Difficulty = opponentDifficulty;
+            createGame.PlayerSetup.Add(new PlayerSetup
+            {
+                Type = PlayerType.Computer,
+                Race = opponentRace,
+                Difficulty = opponentDifficulty
+            });
 
-            var request = new Request
+            var createGameRequest = new Request
             {
                 CreateGame = createGame
             };
+            var createGameResponse = await SendRequest(createGameRequest, logErrors: true);
 
-            var response = CheckResponse(await _proxy.SendRequest(request));
-            if (response.CreateGame.Error != ResponseCreateGame.Types.Error.Unset) {
-                Logger.Error("CreateGame error: {0}", response.CreateGame.Error.ToString());
-                if (!string.IsNullOrEmpty(response.CreateGame.ErrorDetails)) {
-                    Logger.Error(response.CreateGame.ErrorDetails);
+            if (createGameResponse.CreateGame.Error != ResponseCreateGame.Types.Error.Unset) {
+                Logger.Error("CreateGame error: {0}", createGameResponse.CreateGame.Error.ToString());
+                if (!string.IsNullOrEmpty(createGameResponse.CreateGame.ErrorDetails)) {
+                    Logger.Error(createGameResponse.CreateGame.ErrorDetails);
                 }
-            }
-        }
-
-        public void FindExecutablePath() {
-            var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            var executeInfo = Path.Combine(myDocuments, "StarCraft II", "ExecuteInfo.txt");
-            if (!File.Exists(executeInfo)) {
-                executeInfo = Path.Combine(myDocuments, "StarCraftII", "ExecuteInfo.txt");
-            }
-
-            if (File.Exists(executeInfo)) {
-                var lines = File.ReadAllLines(executeInfo);
-                foreach (var line in lines) {
-                    if (line.Trim().StartsWith("executable")) {
-                        _starcraftExe = line.Substring(line.IndexOf('=') + 1).Trim();
-                        ;
-                        _starcraftDir = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(_starcraftExe))); //we need 2 folders down
-                        if (_starcraftDir != null) {
-                            _starcraftMaps = Path.Combine(_starcraftDir, "Maps");
-                        }
-                    }
-                }
-            }
-            else {
-                throw new Exception($"Unable to find:{executeInfo}. Make sure you started the game successfully at least once.");
             }
         }
 
         private async Task<uint> JoinGame(Race race) {
-            var joinGame = new RequestJoinGame();
-            joinGame.Race = race;
+            var joinGame = new RequestJoinGame
+            {
+                Race = race,
+                Options = new InterfaceOptions
+                {
+                    Raw = true,
+                    Score = true
+                }
+            };
 
-            joinGame.Options = new InterfaceOptions();
-            joinGame.Options.Raw = true;
-            joinGame.Options.Score = true;
+            var joinGameRequest = new Request
+            {
+                JoinGame = joinGame
+            };
+            var joinGameResponse = await SendRequest(joinGameRequest, logErrors: true);
 
-            var request = new Request();
-            request.JoinGame = joinGame;
-            var response = CheckResponse(await _proxy.SendRequest(request));
-
-            if (response.JoinGame.Error != ResponseJoinGame.Types.Error.Unset) {
-                Logger.Error("JoinGame error: {0}", response.JoinGame.Error.ToString());
-                if (!String.IsNullOrEmpty(response.JoinGame.ErrorDetails)) {
-                    Logger.Error(response.JoinGame.ErrorDetails);
+            if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.Unset) {
+                Logger.Error("JoinGame error: {0}", joinGameResponse.JoinGame.Error.ToString());
+                if (!String.IsNullOrEmpty(joinGameResponse.JoinGame.ErrorDetails)) {
+                    Logger.Error(joinGameResponse.JoinGame.ErrorDetails);
                 }
             }
 
-            return response.JoinGame.PlayerId;
-        }
-
-        private async Task<uint> JoinGameLadder(Race race, int startPort) {
-            var joinGame = new RequestJoinGame();
-            joinGame.Race = race;
-
-            joinGame.SharedPort = startPort + 1;
-            joinGame.ServerPorts = new PortSet();
-            joinGame.ServerPorts.GamePort = startPort + 2;
-            joinGame.ServerPorts.BasePort = startPort + 3;
-
-            joinGame.ClientPorts.Add(new PortSet());
-            joinGame.ClientPorts[0].GamePort = startPort + 4;
-            joinGame.ClientPorts[0].BasePort = startPort + 5;
-
-            joinGame.Options = new InterfaceOptions();
-            joinGame.Options.Raw = true;
-            joinGame.Options.Score = true;
-
-            var request = new Request();
-            request.JoinGame = joinGame;
-
-            var response = CheckResponse(await _proxy.SendRequest(request));
-
-            if (response.JoinGame.Error != ResponseJoinGame.Types.Error.Unset) {
-                Logger.Error("JoinGame error: {0}", response.JoinGame.Error.ToString());
-                if (!String.IsNullOrEmpty(response.JoinGame.ErrorDetails)) {
-                    Logger.Error(response.JoinGame.ErrorDetails);
-                }
-            }
-
-            return response.JoinGame.PlayerId;
+            return joinGameResponse.JoinGame.PlayerId;
         }
 
         public async Task Ping() {
             await _proxy.Ping();
         }
 
-        private async Task RequestLeaveGame() {
-            var requestLeaveGame = new Request();
-            requestLeaveGame.LeaveGame = new RequestLeaveGame();
-            await _proxy.SendRequest(requestLeaveGame);
-        }
+        public async Task<Response> SendRequest(Request request, bool logErrors = false) {
+            var response = await _proxy.SendRequest(request);
+            if (logErrors) {
+                LogResponseErrors(response);
+            }
 
-        public async Task SendRequest(Request request) {
-            await _proxy.SendRequest(request);
+            return response;
         }
 
         public async Task<ResponseQuery> SendQuery(RequestQuery query) {
-            var request = new Request();
-            request.Query = query;
-            var response = await _proxy.SendRequest(request);
+            var response = await SendRequest(new Request
+            {
+                Query = query
+            });
+
             return response.Query;
         }
 
+        public async Task RunLadder(IBot bot, string[] args) {
+            var commandLineArgs = new CommandLineArguments(args);
+            await RunLadder(bot, commandLineArgs.GamePort, commandLineArgs.StartPort);
+        }
+
+        private async Task RunLadder(IBot bot, int gamePort, int startPort) {
+            await Connect(gamePort);
+
+            var playerId = await JoinGameLadder(bot.Race, startPort);
+            await Run(bot, playerId);
+        }
+
+        private async Task<uint> JoinGameLadder(Race race, int startPort) {
+            var joinGame = new RequestJoinGame
+            {
+                Race = race,
+                SharedPort = startPort + 1,
+                ServerPorts = new PortSet
+                {
+                    GamePort = startPort + 2,
+                    BasePort = startPort + 3
+                },
+                Options = new InterfaceOptions
+                {
+                    Raw = true,
+                    Score = true
+                }
+            };
+
+            joinGame.ClientPorts.Add(new PortSet
+            {
+                GamePort = startPort + 4,
+                BasePort = startPort + 5
+            });
+
+            var joinGameRequest = new Request
+            {
+                JoinGame = joinGame
+            };
+            var joinGameResponse = await SendRequest(joinGameRequest, logErrors: true);
+
+            if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.Unset) {
+                Logger.Error("JoinGame error: {0}", joinGameResponse.JoinGame.Error.ToString());
+                if (!string.IsNullOrEmpty(joinGameResponse.JoinGame.ErrorDetails)) {
+                    Logger.Error(joinGameResponse.JoinGame.ErrorDetails);
+                }
+            }
+
+            return joinGameResponse.JoinGame.PlayerId;
+        }
+
         private async Task Run(IBot bot, uint playerId) {
-            var gameInfoReq = new Request();
-            gameInfoReq.GameInfo = new RequestGameInfo();
+            var gameInfoRequest = new Request
+            {
+                GameInfo = new RequestGameInfo()
+            };
+            var gameInfoResponse = await SendRequest(gameInfoRequest);
 
-            var gameInfoResponse = await _proxy.SendRequest(gameInfoReq);
-
-            var dataReq = new Request();
-            dataReq.Data = new RequestData();
-            dataReq.Data.UnitTypeId = true;
-            dataReq.Data.AbilityId = true;
-            dataReq.Data.BuffId = true;
-            dataReq.Data.EffectId = true;
-            dataReq.Data.UpgradeId = true;
-
-            var dataResponse = await _proxy.SendRequest(dataReq);
+            var dataRequest = new Request
+            {
+                Data = new RequestData
+                {
+                    UnitTypeId = true,
+                    AbilityId = true,
+                    BuffId = true,
+                    EffectId = true,
+                    UpgradeId = true
+                }
+            };
+            var dataResponse = await SendRequest(dataRequest);
 
             Controller.GameInfo = gameInfoResponse.GameInfo;
             Controller.GameData = dataResponse.Data;
 
             while (true) {
-                var observationRequest = new Request();
-                observationRequest.Observation = new RequestObservation();
-                var response = await _proxy.SendRequest(observationRequest);
+                var observationRequest = new Request
+                {
+                    Observation = new RequestObservation()
+                };
+                var observationResponse = await SendRequest(observationRequest);
 
-                var observation = response.Observation;
+                var observation = observationResponse.Observation;
 
-                if (response.Status == Status.Ended || response.Status == Status.Quit) {
+                if (observationResponse.Status is Status.Ended or Status.Quit) {
                     foreach (var result in observation.PlayerResult) {
                         if (result.PlayerId == playerId) {
                             Logger.Info("Result: {0}", result.Result);
@@ -229,60 +277,51 @@ namespace Bot.Wrapper {
                     break;
                 }
 
+                Logger.Info("Frame {0}", observation.Observation.GameLoop);
+                if (Controller.Frame == observation.Observation.GameLoop) {
+                    Logger.Info("Skipped duplicated frame {0} due to realtime", observation.Observation.GameLoop);
+                    continue;
+                }
+
                 Controller.Obs = observation;
-                var actions = bot.OnFrame();
 
-                var actionRequest = new Request();
-                actionRequest.Action = new RequestAction();
-                actionRequest.Action.Actions.AddRange(actions);
-                if (actionRequest.Action.Actions.Count > 0)
-                    await _proxy.SendRequest(actionRequest);
+                var actions = bot.OnFrame().ToList();
+                if (actions.Count > 0) {
+                    var actionRequest = new Request
+                    {
+                        Action = new RequestAction()
+                    };
+                    actionRequest.Action.Actions.AddRange(actions);
 
-                var stepRequest = new Request();
-                stepRequest.Step = new RequestStep();
-                stepRequest.Step.Count = StepSize;
-                await _proxy.SendRequest(stepRequest);
+                    await SendRequest(actionRequest);
+                }
+
+                var stepRequest = new Request
+                {
+                    Step = new RequestStep
+                    {
+                        Count = StepSize
+                    }
+                };
+
+                await SendRequest(stepRequest);
             }
         }
 
-        public async Task RunSinglePlayer(IBot bot, string map, Race myRace, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {
-            const int port = 5678;
-
-            Logger.Info("Starting SinglePlayer Instance");
-            StartSc2Instance(port);
-
-            Logger.Info("Connecting to port: {0}", port);
-            await Connect(port);
-
-            Logger.Info("Creating game");
-            await CreateGame(map, opponentRace, opponentDifficulty, realTime);
-
-            Logger.Info("Joining game");
-            var playerId = await JoinGame(myRace);
-            await Run(bot, playerId);
-        }
-
-        private async Task RunLadder(IBot bot, Race myRace, int gamePort, int startPort) {
-            await Connect(gamePort);
-            var playerId = await JoinGameLadder(myRace, startPort);
-            await Run(bot, playerId);
-            // await RequestLeaveGame();
-        }
-
-        public async Task RunLadder(IBot bot, Race myRace, string[] args) {
-            var commandLineArgs = new CommandLineArguments(args);
-            await RunLadder(bot, myRace, commandLineArgs.GamePort, commandLineArgs.StartPort);
-        }
-
-        private static Response CheckResponse(Response response) {
+        private static void LogResponseErrors(Response response) {
             if (response.Error.Count > 0) {
                 Logger.Error("Response errors:");
                 foreach (var error in response.Error) {
                     Logger.Error(error);
                 }
             }
+        }
 
-            return response;
+        private Task RequestLeaveGame() {
+            return SendRequest(new Request
+            {
+                LeaveGame = new RequestLeaveGame()
+            });
         }
     }
 }

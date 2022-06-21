@@ -4,6 +4,10 @@ using SC2APIProtocol;
 
 namespace Bot {
     internal class RaxBot : IBot {
+        public string Name => "RaxBot";
+
+        public Race Race => Race.Terran;
+
         //the following will be called every frame
         //you can increase the amount of frames that get processed for each step at once in Wrapper/GameConnection.cs: stepSize
         public IEnumerable<Action> OnFrame() {
