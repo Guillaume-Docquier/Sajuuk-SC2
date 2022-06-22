@@ -6,9 +6,9 @@ namespace Bot;
 using BuildOrder = Queue<BuildOrders.BuildStep>;
 
 public class MiningBot: PoliteBot {
-    private static readonly BuildOrder _buildOrder = BuildOrders.TwoBasesRoach();
+    private static readonly BuildOrder BuildOrder = BuildOrders.TwoBasesRoach();
 
-    public override string Name => "MiningBot";
+    public override string Name => "ZergBot";
 
     public override Race Race => Race.Zerg;
 
@@ -22,25 +22,25 @@ public class MiningBot: PoliteBot {
     }
 
     private void FollowBuildOrder() {
-        if (_buildOrder.Count == 0) {
+        if (BuildOrder.Count == 0) {
             return;
         }
 
-        while(_buildOrder.Count > 0) {
-            var buildStep = _buildOrder.Peek();
+        while(BuildOrder.Count > 0) {
+            var buildStep = BuildOrder.Peek();
             if (Controller.CurrentSupply < buildStep.AtSupply || !Controller.ExecuteBuildStep(buildStep)) {
                 return;
             }
 
             buildStep.Quantity -= 1;
-            if (_buildOrder.Peek().Quantity == 0) {
-                _buildOrder.Dequeue();
+            if (BuildOrder.Peek().Quantity == 0) {
+                BuildOrder.Dequeue();
             }
         }
     }
 
     private bool IsBuildOrderBlocking() {
-        return _buildOrder.Count > 0 && Controller.CurrentSupply >= _buildOrder.Peek().AtSupply;
+        return BuildOrder.Count > 0 && Controller.CurrentSupply >= BuildOrder.Peek().AtSupply;
     }
 
     private void SpawnDrones() {

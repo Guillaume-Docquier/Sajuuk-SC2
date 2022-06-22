@@ -53,7 +53,7 @@
     <Compile Include="PoliteBot.cs" />
     <Compile Include="Controller.cs" />
     <Compile Include="Logger.cs" />
-    <Compile Include="MiningBot.cs" />
+    <Compile Include="ZergBot.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Protocol\Common.cs" />
     <Compile Include="Protocol\Data.cs" />
