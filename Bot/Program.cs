@@ -4,14 +4,13 @@ using SC2APIProtocol;
 
 namespace Bot {
     internal class Program {
-        // Settings for your bot.
         private static readonly IBot Bot = new MiningBot();
         private const string MapName = "AcropolisLE.SC2Map";
 
         private const Race OpponentRace = Race.Random;
         private const Difficulty OpponentDifficulty = Difficulty.Easy;
 
-        private const bool RealTime = false;
+        private const bool RealTime = true;
 
         public static GameConnection GameConnection;
 

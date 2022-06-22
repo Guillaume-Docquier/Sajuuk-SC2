@@ -167,6 +167,12 @@ namespace Bot {
         public const uint PurifierMineralField750 = 885;
         public const uint BattleStationMineralField = 886;
         public const uint BattleStationMineralField750 = 887;
+        public const uint InfestationPit = 94;
+        public const uint SwarmHost = 494; // SwarmHostMP
+        public const uint Viper = 499;
+        public const uint Lurker = 502; // LurkerMP
+        public const uint LurkerDen = 504; // LurkerDenMP
+        public const uint Ravager = 688;
 
         public static readonly HashSet<uint> All = new HashSet<uint>
         {
@@ -807,6 +813,46 @@ namespace Bot {
         {
             SupplyDepot,
             SupplyDepotLowered
+        };
+
+        public static readonly Dictionary<uint, IList<uint>> Producers = new Dictionary<uint, IList<uint>>
+        {
+            { Drone,                                  new List<uint> { Larva }},
+            { Corruptor,                              new List<uint> { Larva }},
+            { BroodLord,                              new List<uint> { Corruptor }},
+            { Hydralisk,                              new List<uint> { Larva }},
+            { Lurker,                                 new List<uint> { Hydralisk }},
+            { Infestor,                               new List<uint> { Larva }},
+            { Mutalisk,                               new List<uint> { Larva }},
+            { Overlord,                               new List<uint> { Larva }},
+            { Overseer,                               new List<uint> { Overlord }},
+            { Queen,                                  new List<uint> { Hatchery, Lair, Hive }},
+            { Roach,                                  new List<uint> { Larva }},
+            { Ravager,                                new List<uint> { Roach }},
+            { Ultralisk,                              new List<uint> { Larva }},
+            { Zergling,                               new List<uint> { Larva }},
+            { SwarmHost,                              new List<uint> { Larva }},
+            { Viper,                                  new List<uint> { Larva }},
+            { Baneling,                               new List<uint> { Zergling }},
+            { BanelingNest,                           new List<uint> { Drone }},
+            { EvolutionChamber,                       new List<uint> { Drone }},
+            { Extractor,                              new List<uint> { Drone }},
+            { Hatchery,                               new List<uint> { Drone }},
+            { Lair,                                   new List<uint> { Hatchery }},
+            { Hive,                                   new List<uint> { Lair }},
+            { HydraliskDen,                           new List<uint> { Drone }},
+            { LurkerDen,                              new List<uint> { HydraliskDen }},
+            { InfestationPit,                         new List<uint> { Drone }},
+            { NydusNetwork,                           new List<uint> { Drone }},
+            { RoachWarren,                            new List<uint> { Drone }},
+            { SpawningPool,                           new List<uint> { Drone }},
+            { SpineCrawler,                           new List<uint> { Drone }},
+            { Spire,                                  new List<uint> { Drone }},
+            { GreaterSpire,                           new List<uint> { Spire }},
+            { SporeCrawler,                           new List<uint> { Drone }},
+            { UltraliskCavern,                        new List<uint> { Drone }},
+            { Abilities.ResearchZergMissileWeapons1,  new List<uint> { EvolutionChamber }},
+            { Abilities.ResearchGlialReconstitution,  new List<uint> { EvolutionChamber }},
         };
     }
 }

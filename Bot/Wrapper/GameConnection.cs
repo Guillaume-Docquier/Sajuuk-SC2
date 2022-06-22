@@ -277,9 +277,8 @@ namespace Bot.Wrapper {
                     break;
                 }
 
-                Logger.Info("Frame {0}", observation.Observation.GameLoop);
+                // Can happen when realTime == true
                 if (Controller.Frame == observation.Observation.GameLoop) {
-                    Logger.Info("Skipped duplicated frame {0} due to realtime", observation.Observation.GameLoop);
                     continue;
                 }
 

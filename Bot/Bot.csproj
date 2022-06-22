@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Abilities.cs" />
+    <Compile Include="BuildOrders.cs" />
     <Compile Include="PoliteBot.cs" />
     <Compile Include="Controller.cs" />
     <Compile Include="Logger.cs" />
@@ -65,12 +66,12 @@
     <Compile Include="Protocol\Spatial.cs" />
     <Compile Include="Protocol\Ui.cs" />
     <Compile Include="Unit.cs" />
+    <Compile Include="Wrapper\ActionBuilder.cs" />
     <Compile Include="Wrapper\Interface.cs" />
     <Compile Include="Wrapper\CommandLine.cs" />
     <Compile Include="Wrapper\GameConnection.cs" />
     <Compile Include="Wrapper\ProtobufProxy.cs" />
     <Compile Include="Units.cs" />
-    <Compile Include="RaxBot.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

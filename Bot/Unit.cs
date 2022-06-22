@@ -1,9 +1,7 @@
-using System.Collections.Generic;
 using System.Numerics;
+using Bot.Wrapper;
 using Google.Protobuf.Collections;
 using SC2APIProtocol;
-
-// ReSharper disable MemberCanBePrivate.Global
 
 namespace Bot {
     public class Unit {
@@ -51,20 +49,6 @@ namespace Bot {
             return Vector3.Distance(Position, location);
         }
 
-        public void Train(uint unitType, bool queue = false) {
-            if (!queue && Orders.Count > 0) {
-                return;
-            }
-
-            var abilityId = Abilities.GetId(unitType);
-            var action = Controller.CreateRawUnitCommand(abilityId);
-            action.ActionRaw.UnitCommand.UnitTags.Add(Tag);
-            Controller.AddAction(action);
-
-            var targetName = Controller.GetUnitName(unitType);
-            Logger.Info("Started training: {0}", targetName);
-        }
-
         private void FocusCamera() {
             var action = new Action
             {
@@ -86,21 +70,40 @@ namespace Bot {
         }
 
         public void Move(Vector3 target) {
-            var action = Controller.CreateRawUnitCommand(Abilities.Move);
-            action.ActionRaw.UnitCommand.TargetWorldSpacePos = new Point2D
-            {
-                X = target.X,
-                Y = target.Y
-            };
-            action.ActionRaw.UnitCommand.UnitTags.Add(Tag);
-            Controller.AddAction(action);
+            Controller.AddAction(ActionBuilder.Move(Tag, target));
         }
 
         public void Smart(Unit unit) {
-            var action = Controller.CreateRawUnitCommand(Abilities.Smart);
-            action.ActionRaw.UnitCommand.TargetUnitTag = unit.Tag;
-            action.ActionRaw.UnitCommand.UnitTags.Add(Tag);
-            Controller.AddAction(action);
+            Controller.AddAction(ActionBuilder.Smart(Tag, unit.Tag));
+        }
+
+        public void TrainUnit(uint unitType, bool queue = false) {
+            if (!queue && Orders.Count > 0) {
+                return;
+            }
+
+            Controller.AddAction(ActionBuilder.TrainUnit(unitType, Tag));
+
+            var targetName = Controller.GetUnitName(unitType);
+            Logger.Info("Started training: {0}", targetName);
+        }
+
+        public void PlaceBuilding(uint buildingType, Vector3 target)
+        {
+            Controller.AddAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
+
+            var producerName = Controller.GetUnitName(UnitType);
+            var buildingName = Controller.GetUnitName(buildingType);
+            Logger.Info("{0} started building {1} at [{2}, {3}]", producerName, buildingName, target.X, target.Y);
+        }
+
+        public void ResearchTech(int techAbilityId)
+        {
+            Controller.AddAction(ActionBuilder.ResearchTech(techAbilityId, Tag));
+
+            // TODO GD Find research name
+            var targetName = Controller.GetUnitName(UnitType);
+            Logger.Info("Started research on {0}", targetName);
         }
     }
 }

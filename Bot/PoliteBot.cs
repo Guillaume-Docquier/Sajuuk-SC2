@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
@@ -34,7 +35,7 @@ namespace Bot {
 
         private void EnsureGG() {
             var structures = Controller.GetUnits(Units.Structures);
-            if (structures.Count == 1 && structures[0].Integrity < 0.4) {
+            if (structures.Count() == 1 && structures.First().Integrity < 0.4) {
                 if (!Controller.ChatLog.Contains("gg wp")) {
                     Controller.Chat("gg wp");
                 }

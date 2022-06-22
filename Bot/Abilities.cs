@@ -7,6 +7,9 @@
         public const int ResearchUpgradeMechArmor = 3700;
         public const int ResearchUpgradeMechGround = 3701;
 
+        public const int ResearchGlialReconstitution = 216;
+        public const int ResearchZergMissileWeapons1 = 1192;
+
         public const int CancelConstruction = 314;
         public const int Cancel = 3659;
         public const int CancelLast = 3671;
@@ -38,15 +41,14 @@
         public const int SalvageBunker = 32;
 
         //gathering/returning minerals
-        public const int GatherResources = 295;
-        public const int ReturnResources = 296;
-
-        //gathering/returning minerals
         public const int GatherMinerals = 295;
         public const int ReturnMinerals = 296;
 
-        public static int GetId(uint unit) {
-            return (int)Controller.GameData.Units[(int)unit].AbilityId;
+        public const int DroneGather = 1183;
+        public const int DroneReturnCargo = 1184;
+
+        public static int GetId(uint unitType) {
+            return (int)Controller.GameData.Units[(int)unitType].AbilityId;
         }
     }
 }

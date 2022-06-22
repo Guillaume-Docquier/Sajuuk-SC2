@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
-using System.Threading;
+using Bot.Wrapper;
 using SC2APIProtocol;
 using Action = SC2APIProtocol.Action;
-
-// ReSharper disable MemberCanBePrivate.Global
 
 namespace Bot {
     public static class Controller {
@@ -30,6 +29,9 @@ namespace Bot {
         public static uint Minerals;
         public static uint Vespene;
 
+        public static Dictionary<uint, Unit> OwnedUnitsMap;
+        public static IList<Unit> OwnedUnits;
+
         public static readonly List<Vector3> EnemyLocations = new List<Vector3>();
         public static readonly List<string> ChatLog = new List<string>();
 
@@ -42,10 +44,6 @@ namespace Bot {
 
         public static ulong SecsToFrames(int seconds) {
             return (ulong)(FramesPerSecond * seconds);
-        }
-
-        public static IEnumerable<Action> CloseFrame() {
-            return Actions;
         }
 
         public static void OpenFrame() {
@@ -78,9 +76,11 @@ namespace Bot {
             Minerals = Obs.Observation.PlayerCommon.Minerals;
             Vespene = Obs.Observation.PlayerCommon.Vespene;
 
+            OwnedUnits = Obs.Observation.RawData.Units.Where(unit => unit.Alliance == Alliance.Self).Select(unit => new Unit(unit)).ToList();
+
             //initialization
             if (Frame == 0) {
-                var resourceCenters = GetUnits(Units.ResourceCenters);
+                var resourceCenters = GetUnits(Units.ResourceCenters).ToList();
                 if (resourceCenters.Count > 0) {
                     var rcPosition = resourceCenters[0].Position;
 
@@ -93,10 +93,10 @@ namespace Bot {
                     }
                 }
             }
+        }
 
-            if (FrameDelay > 0) {
-                Thread.Sleep(FrameDelay);
-            }
+        public static IEnumerable<Action> CloseFrame() {
+            return Actions;
         }
 
         public static string GetUnitName(uint unitType) {
@@ -107,42 +107,22 @@ namespace Bot {
             Actions.Add(action);
         }
 
-        public static void Chat(string message, bool team = false) {
-            var action = new Action
-            {
-                ActionChat = new ActionChat
-                {
-                    Channel = team ? ActionChat.Types.Channel.Team : ActionChat.Types.Channel.Broadcast,
-                    Message = message
-                }
-            };
-
-            AddAction(action);
+        public static void Chat(string message, bool toTeam = false) {
+            AddAction(ActionBuilder.Chat(message, toTeam));
         }
 
-        public static void Attack(List<Unit> units, Vector3 target) {
-            var action = CreateRawUnitCommand(Abilities.Attack);
-            action.ActionRaw.UnitCommand.TargetWorldSpacePos = new Point2D
-            {
-                X = target.X,
-                Y = target.Y
-            };
-
-            foreach (var unit in units) {
-                action.ActionRaw.UnitCommand.UnitTags.Add(unit.Tag);
-            }
-
-            AddAction(action);
+        public static void Attack(IEnumerable<Unit> units, Vector3 target) {
+            AddAction(ActionBuilder.Attack(units.Select(unit => unit.Tag), target));
         }
 
-        public static int GetTotalCount(uint unitType) {
+        private static int GetTotalCount(uint unitType) {
             var pendingCount = GetPendingCount(unitType, inConstruction: false);
-            var constructionCount = GetUnits(unitType).Count;
+            var constructionCount = GetUnits(unitType).Count();
 
             return pendingCount + constructionCount;
         }
 
-        public static int GetPendingCount(uint unitType, bool inConstruction = true) {
+        private static int GetPendingCount(uint unitType, bool inConstruction = true) {
             var workers = GetUnits(Units.Workers);
             var abilityId = Abilities.GetId(unitType);
 
@@ -167,63 +147,18 @@ namespace Bot {
             return counter;
         }
 
-        public static List<Unit> GetUnits(HashSet<uint> hashset, Alliance alliance = Alliance.Self, bool onlyCompleted = false, bool onlyVisible = false) {
-            //ideally this should be cached in the future and cleared at each new frame
-            var units = new List<Unit>();
-            foreach (var unit in Obs.Observation.RawData.Units) {
-                if (hashset.Contains(unit.UnitType) && unit.Alliance == alliance) {
-                    if (onlyCompleted && unit.BuildProgress < 1) {
-                        continue;
-                    }
-
-                    if (onlyVisible && (unit.DisplayType != DisplayType.Visible)) {
-                        continue;
-                    }
-
-                    units.Add(new Unit(unit));
-                }
-            }
-
-            return units;
-        }
-
-        public static List<Unit> GetUnits(uint unitType, Alliance alliance = Alliance.Self, bool onlyCompleted = false, bool onlyVisible = false) {
-            //ideally this should be cached in the future and cleared at each new frame
-            var units = new List<Unit>();
-            foreach (var unit in Obs.Observation.RawData.Units) {
-                if (unit.UnitType == unitType && unit.Alliance == alliance) {
-                    if (onlyCompleted && unit.BuildProgress < 1) {
-                        continue;
-                    }
-
-                    if (onlyVisible && (unit.DisplayType != DisplayType.Visible)) {
-                        continue;
-                    }
-
-                    units.Add(new Unit(unit));
-                }
-            }
-
-            return units;
-        }
-
-        public static bool CanAfford(uint unitType) {
-            var unitData = GameData.Units[(int)unitType];
-
-            return (Minerals >= unitData.MineralCost) && (Vespene >= unitData.VespeneCost);
-        }
-
-        public static bool CanConstruct(uint unitType) {
+        // TODO GD Get rid?
+        private static bool CanConstruct(uint unitType) {
             //is it a structure?
             if (Units.Structures.Contains(unitType)) {
                 //we need worker for every structure
-                if (GetUnits(Units.Workers).Count == 0) {
+                if (!GetUnits(Units.Workers).Any()) {
                     return false;
                 }
 
                 //we need an RC for any structure
                 var resourceCenters = GetUnits(Units.ResourceCenters, onlyCompleted: true);
-                if (resourceCenters.Count == 0) {
+                if (!resourceCenters.Any()) {
                     return false;
                 }
 
@@ -233,7 +168,7 @@ namespace Bot {
 
                 //we need supply depots for the following structures
                 var depots = GetUnits(Units.SupplyDepots, onlyCompleted: true);
-                if (depots.Count == 0) {
+                if (!depots.Any()) {
                     return false;
                 }
 
@@ -253,7 +188,7 @@ namespace Bot {
                 //do we construct the units from barracks?
                 if (Units.FromBarracks.Contains(unitType)) {
                     var barracks = GetUnits(Units.Barracks, onlyCompleted: true);
-                    if (barracks.Count == 0) {
+                    if (!barracks.Any()) {
                         return false;
                     }
                 }
@@ -262,20 +197,14 @@ namespace Bot {
             return CanAfford(unitType);
         }
 
-        public static Action CreateRawUnitCommand(int ability) {
-            return new Action
-            {
-                ActionRaw = new ActionRaw
-                {
-                    UnitCommand = new ActionRawUnitCommand
-                    {
-                        AbilityId = ability
-                    }
-                }
-            };
+        // TODO GD Get rid?
+        private static int GetAbilityId(uint unit)
+        {
+            return (int)GameData.Units[(int)unit].AbilityId;
         }
 
-        public static bool CanPlace(uint unitType, Vector3 targetPos) {
+        // TODO GD Get rid?
+        private static bool CanPlace(uint unitType, Vector3 targetPos) {
             //Note: this is a blocking call! Use it sparingly, or you will slow down your execution significantly!
             var abilityId = Abilities.GetId(unitType);
 
@@ -303,7 +232,8 @@ namespace Bot {
             return false;
         }
 
-        public static void DistributeWorkers() {
+        // TODO GD Get rid?
+        private static void DistributeWorkers() {
             var workers = GetUnits(Units.Workers);
             var idleWorkers = new List<Unit>();
             foreach (var worker in workers) {
@@ -316,7 +246,7 @@ namespace Bot {
 
             if (idleWorkers.Count > 0) {
                 var resourceCenters = GetUnits(Units.ResourceCenters, onlyCompleted: true);
-                var mineralFields = GetUnits(Units.MineralFields, onlyVisible: true, alliance: Alliance.Neutral);
+                var mineralFields = GetUnits(Units.MineralFields, onlyVisible: true, alliance: Alliance.Neutral).ToList();
 
                 foreach (var rc in resourceCenters) {
                     //get one of the closer mineral fields
@@ -350,7 +280,7 @@ namespace Bot {
                 }
 
                 if ((transferFrom != null) && (transferTo != null)) {
-                    var mineralFields = GetUnits(Units.MineralFields, onlyVisible: true, alliance: Alliance.Neutral);
+                    var mineralFields = GetUnits(Units.MineralFields, onlyVisible: true, alliance: Alliance.Neutral).ToList();
 
                     var sqrDistance = 7 * 7;
                     foreach (var worker in workers) {
@@ -377,7 +307,8 @@ namespace Bot {
             }
         }
 
-        public static Unit GetAvailableWorker(Vector3 targetPosition) {
+        // TODO GD Get rid?
+        private static Unit GetAvailableWorker(Vector3 targetPosition) {
             var workers = GetUnits(Units.Workers);
             foreach (var worker in workers) {
                 if (worker.Order.AbilityId != Abilities.GatherMinerals) {
@@ -390,11 +321,13 @@ namespace Bot {
             return null;
         }
 
-        public static bool IsInRange(Vector3 targetPosition, List<Unit> units, float maxDistance) {
+        // TODO GD Get rid?
+        private static bool IsInRange(Vector3 targetPosition, List<Unit> units, float maxDistance) {
             return (GetFirstInRange(targetPosition, units, maxDistance) != null);
         }
 
-        public static Unit GetFirstInRange(Vector3 targetPosition, List<Unit> units, float maxDistance) {
+        // TODO GD Get rid?
+        private static Unit GetFirstInRange(Vector3 targetPosition, List<Unit> units, float maxDistance) {
             //squared distance is faster to calculate
             var maxDistanceSqr = maxDistance * maxDistance;
             foreach (var unit in units) {
@@ -406,22 +339,23 @@ namespace Bot {
             return null;
         }
 
-        public static void Construct(uint unitType) {
+        // TODO GD Get rid?
+        private static Vector3 FindConstructionSpot(uint buildingType) {
             Vector3 startingSpot;
 
-            var resourceCenters = GetUnits(Units.ResourceCenters);
+            var resourceCenters = GetUnits(Units.ResourceCenters).ToList();
             if (resourceCenters.Count > 0)
                 startingSpot = resourceCenters[0].Position;
             else {
-                Logger.Error("Unable to construct: {0}. No resource center was found.", GetUnitName(unitType));
+                Logger.Error("Unable to construct: {0}. No resource center was found.", GetUnitName(buildingType));
 
-                return;
+                return Vector3.Zero;
             }
 
             const int radius = 12;
 
             //trying to find a valid construction spot
-            var mineralFields = GetUnits(Units.MineralFields, onlyVisible: true, alliance: Alliance.Neutral);
+            var mineralFields = GetUnits(Units.MineralFields, onlyVisible: true, alliance: Alliance.Neutral).ToList();
             Vector3 constructionSpot;
             while (true) {
                 constructionSpot = new Vector3(startingSpot.X + Random.Next(-radius, radius + 1), startingSpot.Y + Random.Next(-radius, radius + 1), 0);
@@ -432,7 +366,7 @@ namespace Bot {
                 }
 
                 //check if the building fits
-                if (!CanPlace(unitType, constructionSpot)) {
+                if (!CanPlace(buildingType, constructionSpot)) {
                     continue;
                 }
 
@@ -440,24 +374,149 @@ namespace Bot {
                 break;
             }
 
-            var worker = GetAvailableWorker(constructionSpot);
-            if (worker == null) {
-                Logger.Error("Unable to find worker to construct: {0}", GetUnitName(unitType));
+            return constructionSpot;
+        }
 
-                return;
+        /*
+         * OKAY!
+         */
+
+        public static Unit GetAvailableProducer(uint unitOrAbilityType) {
+            if (!Units.Producers.ContainsKey(unitOrAbilityType)) {
+                throw new NotImplementedException($"Producer for unit {GetUnitName(unitOrAbilityType)} not found");
             }
 
-            var abilityId = Abilities.GetId(unitType);
-            var constructAction = CreateRawUnitCommand(abilityId);
-            constructAction.ActionRaw.UnitCommand.UnitTags.Add(worker.Tag);
-            constructAction.ActionRaw.UnitCommand.TargetWorldSpacePos = new Point2D
-            {
-                X = constructionSpot.X,
-                Y = constructionSpot.Y
-            };
-            AddAction(constructAction);
+            var possibleProducers = Units.Producers[unitOrAbilityType];
 
-            Logger.Info("Constructing: {0} @ {1} / {2}", GetUnitName(unitType), constructionSpot.X, constructionSpot.Y);
+            return GetUnits(new HashSet<uint>(possibleProducers), onlyCompleted: true)
+                .FirstOrDefault(unit => unit.Orders.Count(order => order.AbilityId != Abilities.DroneGather && order.AbilityId != Abilities.DroneReturnCargo) == 0);
+        }
+
+        public static bool ExecuteBuildStep(BuildOrders.BuildStep buildStep) {
+            switch (buildStep.BuildType) {
+                case BuildType.TRAIN:
+                    return TrainUnit(buildStep.UnitOrAbilityType);
+                case BuildType.BUILD:
+                    return PlaceBuilding(buildStep.UnitOrAbilityType);
+                case BuildType.RESEARCH:
+                    return ResearchTech((int)buildStep.UnitOrAbilityType);
+            }
+
+            return false;
+        }
+
+        public static bool TrainUnit(uint unitType) {
+            var producer = GetAvailableProducer(unitType);
+
+            return TrainUnit(unitType, producer);
+        }
+
+        public static bool TrainUnit(uint unitType, Unit producer, bool queue = false)
+        {
+            if (producer == null || !CanAfford(unitType)) {
+                return false;
+            }
+
+            if (!queue && producer.Orders.Count > 0) {
+                return false;
+            }
+
+            producer.TrainUnit(unitType);
+
+            var unitData = GameData.Units[(int)unitType];
+            Minerals -= unitData.MineralCost * (unitType == Units.Zergling ? 2U : 1U);
+            Vespene -= unitData.VespeneCost;
+
+            return true;
+        }
+
+        public static bool PlaceBuilding(uint buildingType) {
+            var producer = GetAvailableProducer(buildingType);
+
+            return PlaceBuilding(buildingType, producer);
+        }
+
+        public static bool PlaceBuilding(uint buildingType, Unit producer) {
+            if (producer == null || !CanAfford(buildingType)) {
+                return false;
+            }
+
+            var constructionSpot = FindConstructionSpot(buildingType);
+
+            producer.PlaceBuilding(buildingType, constructionSpot);
+
+            var buildingData = GameData.Units[(int)buildingType];
+            Minerals -= buildingData.MineralCost;
+            Vespene -= buildingData.VespeneCost;
+
+            return true;
+        }
+
+        public static bool ResearchTech(int researchAbilityId) {
+            var producer = GetAvailableProducer((uint)researchAbilityId);
+
+            return ResearchTech(researchAbilityId, producer);
+        }
+
+        public static bool ResearchTech(int researchAbilityId, Unit producer) {
+            // TODO GD Check that this works
+            if (producer == null || !CanAfford((uint)researchAbilityId)) {
+                return false;
+            }
+
+            producer.ResearchTech(researchAbilityId);
+
+            // TODO GD Check that this works
+            var unitData = GameData.Units[researchAbilityId];
+            Minerals -= unitData.MineralCost;
+            Vespene -= unitData.VespeneCost;
+
+            return true;
+        }
+
+        public static IList<Unit> GetAvailableLarvae() {
+            return GetUnits(Units.Larva, onlyCompleted: true).Where(larva => larva.Orders.Count == 0).ToList();
+        }
+
+        public static IEnumerable<Unit> GetUnits(HashSet<uint> hashset, Alliance alliance = Alliance.Self, bool onlyCompleted = false, bool onlyVisible = false) {
+            // TODO GD This only takes our units
+            foreach (var unit in OwnedUnits) {
+                if (hashset.Contains(unit.UnitType)) {
+                    // What does this mean? Drones have BuildProgress == 1
+                    //if (onlyCompleted && unit.BuildProgress < 1) {
+                    //    continue;
+                    //}
+
+                    if (onlyVisible && unit.IsVisible) {
+                        continue;
+                    }
+
+                    yield return unit;
+                }
+            }
+        }
+
+        public static IEnumerable<Unit> GetUnits(uint unitType, Alliance alliance = Alliance.Self, bool onlyCompleted = false, bool onlyVisible = false) {
+            // TODO GD This only takes our units
+            foreach (var unit in OwnedUnits) {
+                if (unit.UnitType == unitType) {
+                    if (onlyCompleted && unit.BuildProgress < 1) {
+                        continue;
+                    }
+
+                    if (onlyVisible && unit.IsVisible) {
+                        continue;
+                    }
+
+                    yield return unit;
+                }
+            }
+        }
+
+        public static bool CanAfford(uint unitType)
+        {
+            var unitData = GameData.Units[(int)unitType];
+            return (Minerals >= (unitType == Units.Zergling ? 2 : 1) * unitData.MineralCost) && (Vespene >= unitData.VespeneCost);
         }
     }
 }
