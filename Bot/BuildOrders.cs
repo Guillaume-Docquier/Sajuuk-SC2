@@ -25,31 +25,31 @@ public static class BuildOrders {
     public static BuildOrder TwoBasesRoach() {
         return new BuildOrder(new[]
         {
-            new BuildStep(BuildType.TRAIN, 13, Units.Overlord),
-            new BuildStep(BuildType.BUILD, 16, Units.Hatchery), // TODO GD Not placed on expand, no rally points
-            new BuildStep(BuildType.BUILD, 18, Units.Extractor),
-            new BuildStep(BuildType.BUILD, 17, Units.SpawningPool),
-            new BuildStep(BuildType.TRAIN, 19, Units.Overlord),
-            new BuildStep(BuildType.TRAIN, 19, Units.Queen, 2), // TODO GD Not waiting for spawning pool to be finished
-            new BuildStep(BuildType.TRAIN, 24, Units.Zergling, 3), // 3 sets of 2
-            new BuildStep(BuildType.TRAIN, 30, Units.Overlord),
-            new BuildStep(BuildType.TRAIN, 30, Units.Queen),
-            new BuildStep(BuildType.BUILD, 33, Units.Lair), // TODO GD Probably not working, blocks everything while waiting on gas but shouldn't
-            new BuildStep(BuildType.BUILD, 37, Units.EvolutionChamber),
-            new BuildStep(BuildType.BUILD, 37, Units.RoachWarren),
-            new BuildStep(BuildType.TRAIN, 44, Units.Overlord),
-            new BuildStep(BuildType.RESEARCH, 44, Abilities.ResearchZergMissileWeapons1),
-            new BuildStep(BuildType.BUILD, 52, Units.Extractor, 2),
-            new BuildStep(BuildType.TRAIN, 50, Units.Overlord, 2),
-            new BuildStep(BuildType.RESEARCH, 50, Abilities.ResearchGlialReconstitution),
-            new BuildStep(BuildType.TRAIN, 50, Units.Roach, 8),
-            new BuildStep(BuildType.TRAIN, 50, Units.Roach, 1000), // Just keep going
+            new BuildStep(BuildType.Train, 13, Units.Overlord),
+            new BuildStep(BuildType.Build, 16, Units.Hatchery), // TODO GD Not placed on expand, no rally points
+            new BuildStep(BuildType.Build, 18, Units.Extractor),
+            new BuildStep(BuildType.Build, 17, Units.SpawningPool), // TODO GD Skipping because not enough minerals (due to wrong building costs and not checking if queued)
+            new BuildStep(BuildType.Train, 19, Units.Overlord),
+            new BuildStep(BuildType.Train, 19, Units.Queen, 2), // TODO GD Not waiting for spawning pool to be finished
+            new BuildStep(BuildType.Train, 24, Units.Zergling, 3), // 3 sets of 2
+            new BuildStep(BuildType.Train, 30, Units.Overlord),
+            new BuildStep(BuildType.Train, 30, Units.Queen),
+            new BuildStep(BuildType.Build, 33, Units.Lair), // TODO GD Probably not working, blocks everything while waiting on gas but shouldn't
+            new BuildStep(BuildType.Build, 37, Units.EvolutionChamber),
+            new BuildStep(BuildType.Build, 37, Units.RoachWarren),
+            new BuildStep(BuildType.Train, 44, Units.Overlord),
+            new BuildStep(BuildType.Research, 44, Abilities.ResearchZergMissileWeapons1),
+            new BuildStep(BuildType.Build, 52, Units.Extractor, 2),
+            new BuildStep(BuildType.Train, 50, Units.Overlord, 2),
+            new BuildStep(BuildType.Research, 50, Abilities.ResearchGlialReconstitution),
+            new BuildStep(BuildType.Train, 50, Units.Roach, 8),
+            new BuildStep(BuildType.Train, 50, Units.Roach, 1000), // Just keep going
         });
     }
 }
 
 public enum BuildType {
-    TRAIN,
-    BUILD,
-    RESEARCH,
+    Train,
+    Build,
+    Research,
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -174,6 +175,27 @@ namespace Bot.Wrapper {
             return response;
         }
 
+        public async Task<Response> SendDebugRequest(IReadOnlyCollection<string> texts) {
+            var request = new Request
+            {
+                Debug = new RequestDebug
+                {
+                    Debug =
+                    {
+                        new DebugCommand
+                        {
+                            Draw = new DebugDraw
+                            {
+                                Text = { texts.Select(text => new DebugText { Text = text, Size = 18 }) },
+                            }
+                        }
+                    }
+                }
+            };
+
+            return await SendRequest(request);
+        }
+
         public async Task<ResponseQuery> SendQuery(RequestQuery query) {
             var response = await SendRequest(new Request
             {
@@ -284,7 +306,7 @@ namespace Bot.Wrapper {
 
                 Controller.Obs = observation;
 
-                var actions = bot.OnFrame().ToList();
+                var actions = (await bot.OnFrame()).ToList();
                 if (actions.Count > 0) {
                     var actionRequest = new Request
                     {

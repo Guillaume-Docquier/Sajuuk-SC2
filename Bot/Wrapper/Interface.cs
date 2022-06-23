@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using SC2APIProtocol;
 
 namespace Bot.Wrapper {
@@ -7,6 +8,7 @@ namespace Bot.Wrapper {
 
         Race Race { get; }
 
-        IEnumerable<Action> OnFrame();
+        // TODO GD Probably don't make this async? Make a debug data collection step instead?
+        Task<IEnumerable<Action>> OnFrame();
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
@@ -9,13 +10,13 @@ namespace Bot {
 
         public abstract Race Race { get; }
 
-        public IEnumerable<Action> OnFrame() {
+        public async Task<IEnumerable<Action>> OnFrame() {
             Controller.OpenFrame();
 
             EnsureGreeting();
             EnsureGG();
 
-            DoOnFrame();
+            await DoOnFrame();
 
             return Controller.CloseFrame();
         }
@@ -42,6 +43,6 @@ namespace Bot {
             }
         }
 
-        protected abstract void DoOnFrame();
+        protected abstract Task DoOnFrame();
     }
 }

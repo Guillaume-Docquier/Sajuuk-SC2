@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using SC2APIProtocol;
 
 namespace Bot;
@@ -12,8 +14,8 @@ public class MiningBot: PoliteBot {
 
     public override Race Race => Race.Zerg;
 
-    protected override void DoOnFrame() {
-        FollowBuildOrder();
+    protected override async Task DoOnFrame() {
+        await FollowBuildOrder();
         if (!IsBuildOrderBlocking()) {
             SpawnDrones();
         }
@@ -21,7 +23,7 @@ public class MiningBot: PoliteBot {
         FastMining();
     }
 
-    private void FollowBuildOrder() {
+    private async Task FollowBuildOrder() {
         if (BuildOrder.Count == 0) {
             return;
         }
@@ -29,7 +31,7 @@ public class MiningBot: PoliteBot {
         while(BuildOrder.Count > 0) {
             var buildStep = BuildOrder.Peek();
             if (Controller.CurrentSupply < buildStep.AtSupply || !Controller.ExecuteBuildStep(buildStep)) {
-                return;
+                break;
             }
 
             buildStep.Quantity -= 1;
@@ -37,6 +39,16 @@ public class MiningBot: PoliteBot {
                 BuildOrder.Dequeue();
             }
         }
+
+        // Print debug info
+        var nextBuildStepsData = BuildOrder
+            .Take(3)
+            .Select((nextBuildStep, index) => $"{nextBuildStep.BuildType.ToString()} {nextBuildStep.Quantity} {Controller.GetUnitName(nextBuildStep.UnitOrAbilityType)} at {nextBuildStep.AtSupply} supply")
+            .ToList();
+
+        nextBuildStepsData.Insert(0, "Next 3 builds:");
+
+        await Program.GameConnection.SendDebugRequest(nextBuildStepsData);
     }
 
     private bool IsBuildOrderBlocking() {
