@@ -703,9 +703,6 @@ namespace Bot {
             ProtossVespeneGeyser,
             PurifierVespeneGeyser,
             ShakurasVespeneGeyser,
-            Extractor,
-            Assimilator,
-            Refinery
         };
 
         public static readonly HashSet<uint> Workers = new HashSet<uint>

@@ -27,7 +27,7 @@ public static class BuildOrders {
         {
             new BuildStep(BuildType.TRAIN, 13, Units.Overlord),
             new BuildStep(BuildType.BUILD, 16, Units.Hatchery), // TODO GD Not placed on expand, no rally points
-            new BuildStep(BuildType.BUILD, 18, Units.Extractor), // TODO GD Not placing on gas
+            new BuildStep(BuildType.BUILD, 18, Units.Extractor),
             new BuildStep(BuildType.BUILD, 17, Units.SpawningPool),
             new BuildStep(BuildType.TRAIN, 19, Units.Overlord),
             new BuildStep(BuildType.TRAIN, 19, Units.Queen, 2), // TODO GD Not waiting for spawning pool to be finished

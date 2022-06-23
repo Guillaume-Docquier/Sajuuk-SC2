@@ -3,107 +3,116 @@ using Bot.Wrapper;
 using Google.Protobuf.Collections;
 using SC2APIProtocol;
 
-namespace Bot {
-    public class Unit {
-        private SC2APIProtocol.Unit _original;
-        private UnitTypeData _unitTypeData;
+namespace Bot;
 
-        public string Name;
-        public uint UnitType;
-        public float Integrity;
-        public Vector3 Position;
-        public ulong Tag;
-        public float BuildProgress;
-        public UnitOrder Order;
-        public RepeatedField<UnitOrder> Orders;
-        public int Supply;
-        public bool IsVisible;
-        public int IdealWorkers;
-        public int AssignedWorkers;
+public class Unit {
+    private SC2APIProtocol.Unit _original;
+    private UnitTypeData _unitTypeData;
 
-        public Unit(SC2APIProtocol.Unit unit) {
-            _original = unit;
-            _unitTypeData = Controller.GameData.Units[(int)unit.UnitType];
+    public string Name;
+    public uint UnitType;
+    public float Integrity;
+    public Vector3 Position;
+    public ulong Tag;
+    public float BuildProgress;
+    public UnitOrder Order;
+    public RepeatedField<UnitOrder> Orders;
+    public int Supply;
+    public bool IsVisible;
+    public int IdealWorkers;
+    public int AssignedWorkers;
 
-            Name = _unitTypeData.Name;
-            Tag = unit.Tag;
-            UnitType = unit.UnitType;
-            Position = new Vector3(unit.Pos.X, unit.Pos.Y, unit.Pos.Z);
-            Integrity = (unit.Health + unit.Shield) / (unit.HealthMax + unit.ShieldMax);
-            BuildProgress = unit.BuildProgress;
-            IdealWorkers = unit.IdealHarvesters;
-            AssignedWorkers = unit.AssignedHarvesters;
+    public Unit(SC2APIProtocol.Unit unit) {
+        _original = unit;
+        _unitTypeData = Controller.GameData.Units[(int)unit.UnitType];
 
-            Order = unit.Orders.Count > 0 ? unit.Orders[0] : new UnitOrder();
-            Orders = unit.Orders;
-            IsVisible = (unit.DisplayType == DisplayType.Visible);
+        Name = _unitTypeData.Name;
+        Tag = unit.Tag;
+        UnitType = unit.UnitType;
+        Position = new Vector3(unit.Pos.X, unit.Pos.Y, unit.Pos.Z);
+        Integrity = (unit.Health + unit.Shield) / (unit.HealthMax + unit.ShieldMax);
+        BuildProgress = unit.BuildProgress;
+        IdealWorkers = unit.IdealHarvesters;
+        AssignedWorkers = unit.AssignedHarvesters;
 
-            Supply = (int)_unitTypeData.FoodRequired;
-        }
+        Order = unit.Orders.Count > 0 ? unit.Orders[0] : new UnitOrder();
+        Orders = unit.Orders;
+        IsVisible = unit.DisplayType == DisplayType.Visible;
 
-        public double GetDistance(Unit otherUnit) {
-            return Vector3.Distance(Position, otherUnit.Position);
-        }
+        Supply = (int)_unitTypeData.FoodRequired;
+    }
 
-        public double GetDistance(Vector3 location) {
-            return Vector3.Distance(Position, location);
-        }
+    public double GetDistance(Unit otherUnit) {
+        return Vector3.Distance(Position, otherUnit.Position);
+    }
 
-        private void FocusCamera() {
-            var action = new Action
+    public double GetDistance(Vector3 location) {
+        return Vector3.Distance(Position, location);
+    }
+
+    private void FocusCamera() {
+        var action = new Action
+        {
+            ActionRaw = new ActionRaw
             {
-                ActionRaw = new ActionRaw
+                CameraMove = new ActionRawCameraMove
                 {
-                    CameraMove = new ActionRawCameraMove
+                    CenterWorldSpace = new Point
                     {
-                        CenterWorldSpace = new Point
-                        {
-                            X = Position.X,
-                            Y = Position.Y,
-                            Z = Position.Z
-                        }
+                        X = Position.X,
+                        Y = Position.Y,
+                        Z = Position.Z
                     }
                 }
-            };
-
-            Controller.AddAction(action);
-        }
-
-        public void Move(Vector3 target) {
-            Controller.AddAction(ActionBuilder.Move(Tag, target));
-        }
-
-        public void Smart(Unit unit) {
-            Controller.AddAction(ActionBuilder.Smart(Tag, unit.Tag));
-        }
-
-        public void TrainUnit(uint unitType, bool queue = false) {
-            if (!queue && Orders.Count > 0) {
-                return;
             }
+        };
 
-            Controller.AddAction(ActionBuilder.TrainUnit(unitType, Tag));
+        Controller.AddAction(action);
+    }
 
-            var targetName = Controller.GetUnitName(unitType);
-            Logger.Info("Started training: {0}", targetName);
+    public void Move(Vector3 target) {
+        Controller.AddAction(ActionBuilder.Move(Tag, target));
+    }
+
+    public void Smart(Unit unit) {
+        Controller.AddAction(ActionBuilder.Smart(Tag, unit.Tag));
+    }
+
+    public void TrainUnit(uint unitType, bool queue = false) {
+        if (!queue && Orders.Count > 0) {
+            return;
         }
 
-        public void PlaceBuilding(uint buildingType, Vector3 target)
-        {
-            Controller.AddAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
+        Controller.AddAction(ActionBuilder.TrainUnit(unitType, Tag));
 
-            var producerName = Controller.GetUnitName(UnitType);
-            var buildingName = Controller.GetUnitName(buildingType);
-            Logger.Info("{0} started building {1} at [{2}, {3}]", producerName, buildingName, target.X, target.Y);
-        }
+        var targetName = Controller.GetUnitName(unitType);
+        Logger.Info("Started training: {0}", targetName);
+    }
 
-        public void ResearchTech(int techAbilityId)
-        {
-            Controller.AddAction(ActionBuilder.ResearchTech(techAbilityId, Tag));
+    public void PlaceBuilding(uint buildingType, Vector3 target)
+    {
+        Controller.AddAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
 
-            // TODO GD Find research name
-            var targetName = Controller.GetUnitName(UnitType);
-            Logger.Info("Started research on {0}", targetName);
-        }
+        var producerName = Controller.GetUnitName(UnitType);
+        var buildingName = Controller.GetUnitName(buildingType);
+        Logger.Info("{0} started building {1} at [{2}, {3}]", producerName, buildingName, target.X, target.Y);
+    }
+
+    public void PlaceExtractor(uint buildingType, Unit gas)
+    {
+        Controller.AddAction(ActionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
+
+        var producerName = Controller.GetUnitName(UnitType);
+        var buildingName = Controller.GetUnitName(buildingType);
+        Logger.Info("{0} started building {1} at [{2}, {3}]", producerName, buildingName, gas.Position.X, gas.Position.Y);
+    }
+
+    public void ResearchTech(int techAbilityId)
+    {
+        Controller.AddAction(ActionBuilder.ResearchTech(techAbilityId, Tag));
+
+        var facilityName = Controller.GetUnitName(UnitType);
+        var researchName = Controller.GetUnitName(UnitType);
+        Logger.Info("{0} started researching {1}", facilityName, researchName);
     }
 }

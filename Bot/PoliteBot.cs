@@ -34,7 +34,7 @@ namespace Bot {
         }
 
         private void EnsureGG() {
-            var structures = Controller.GetUnits(Units.Structures);
+            var structures = Controller.GetUnits(Controller.OwnedUnits, Units.Structures);
             if (structures.Count() == 1 && structures.First().Integrity < 0.4) {
                 if (!Controller.ChatLog.Contains("gg wp")) {
                     Controller.Chat("gg wp");
