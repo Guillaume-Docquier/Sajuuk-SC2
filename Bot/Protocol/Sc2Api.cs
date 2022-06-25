@@ -10543,9 +10543,9 @@ namespace SC2APIProtocol {
 
     /// <summary>Field number for the "minerals" field.</summary>
     public const int MineralsFieldNumber = 2;
-    private uint minerals_;
+    private int minerals_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public uint Minerals {
+    public int Minerals {
       get { return minerals_; }
       set {
         minerals_ = value;
@@ -10554,9 +10554,9 @@ namespace SC2APIProtocol {
 
     /// <summary>Field number for the "vespene" field.</summary>
     public const int VespeneFieldNumber = 3;
-    private uint vespene_;
+    private int vespene_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public uint Vespene {
+    public int Vespene {
       get { return vespene_; }
       set {
         vespene_ = value;
@@ -10711,11 +10711,11 @@ namespace SC2APIProtocol {
       }
       if (Minerals != 0) {
         output.WriteRawTag(16);
-        output.WriteUInt32(Minerals);
+        output.WriteInt32(Minerals);
       }
       if (Vespene != 0) {
         output.WriteRawTag(24);
-        output.WriteUInt32(Vespene);
+        output.WriteInt32(Vespene);
       }
       if (FoodCap != 0) {
         output.WriteRawTag(32);
@@ -10761,10 +10761,10 @@ namespace SC2APIProtocol {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(PlayerId);
       }
       if (Minerals != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Minerals);
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Minerals);
       }
       if (Vespene != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Vespene);
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Vespene);
       }
       if (FoodCap != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(FoodCap);
@@ -10850,11 +10850,11 @@ namespace SC2APIProtocol {
             break;
           }
           case 16: {
-            Minerals = input.ReadUInt32();
+            Minerals = input.ReadInt32();
             break;
           }
           case 24: {
-            Vespene = input.ReadUInt32();
+            Vespene = input.ReadInt32();
             break;
           }
           case 32: {

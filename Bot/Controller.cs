@@ -27,8 +27,8 @@ public static class Controller {
     public static uint MaxSupply;
     public static uint AvailableSupply => MaxSupply - CurrentSupply;
 
-    public static uint Minerals;
-    public static uint Vespene;
+    public static int Minerals;
+    public static int Vespene;
 
     public static Dictionary<uint, Unit> OwnedUnitsMap;
     public static List<Unit> OwnedUnits;
@@ -393,7 +393,7 @@ public static class Controller {
 
         var possibleProducers = Units.Producers[unitOrAbilityType];
 
-        return GetUnits(OwnedUnits, new HashSet<uint>(possibleProducers), onlyCompleted: true)
+        return GetUnits(OwnedUnits, possibleProducers, onlyCompleted: true)
             .FirstOrDefault(unit => unit.Orders.Count(order => order.AbilityId != Abilities.DroneGather && order.AbilityId != Abilities.DroneReturnCargo) == 0);
     }
 
@@ -429,7 +429,7 @@ public static class Controller {
         producer.TrainUnit(unitType);
 
         var unitData = GameData.Units[(int)unitType];
-        Minerals -= unitData.MineralCost * (unitType == Units.Zergling ? 2U : 1U);
+        Minerals -= unitData.MineralCost * (unitType == Units.Zergling ? 2 : 1);
         Vespene -= unitData.VespeneCost;
 
         return true;

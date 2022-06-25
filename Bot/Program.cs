@@ -11,7 +11,7 @@ internal class Program {
     private const Race OpponentRace = Race.Random;
     private const Difficulty OpponentDifficulty = Difficulty.Easy;
 
-    private const bool RealTime = true;
+    private const bool RealTime = false;
 
     public static GameConnection GameConnection;
 

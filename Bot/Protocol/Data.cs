@@ -1254,9 +1254,9 @@ namespace SC2APIProtocol {
 
     /// <summary>Field number for the "mineral_cost" field.</summary>
     public const int MineralCostFieldNumber = 12;
-    private uint mineralCost_;
+    private int mineralCost_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public uint MineralCost {
+    public int MineralCost {
       get { return mineralCost_; }
       set {
         mineralCost_ = value;
@@ -1265,9 +1265,9 @@ namespace SC2APIProtocol {
 
     /// <summary>Field number for the "vespene_cost" field.</summary>
     public const int VespeneCostFieldNumber = 13;
-    private uint vespeneCost_;
+    private int vespeneCost_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public uint VespeneCost {
+    public int VespeneCost {
       get { return vespeneCost_; }
       set {
         vespeneCost_ = value;
@@ -1572,11 +1572,11 @@ namespace SC2APIProtocol {
       weapons_.WriteTo(output, _repeated_weapons_codec);
       if (MineralCost != 0) {
         output.WriteRawTag(96);
-        output.WriteUInt32(MineralCost);
+        output.WriteInt32(MineralCost);
       }
       if (VespeneCost != 0) {
         output.WriteRawTag(104);
-        output.WriteUInt32(VespeneCost);
+        output.WriteInt32(VespeneCost);
       }
       if (FoodRequired != 0F) {
         output.WriteRawTag(117);
@@ -1644,10 +1644,10 @@ namespace SC2APIProtocol {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(CargoSize);
       }
       if (MineralCost != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(MineralCost);
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(MineralCost);
       }
       if (VespeneCost != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(VespeneCost);
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(VespeneCost);
       }
       if (FoodRequired != 0F) {
         size += 1 + 4;
@@ -1807,11 +1807,11 @@ namespace SC2APIProtocol {
             break;
           }
           case 96: {
-            MineralCost = input.ReadUInt32();
+            MineralCost = input.ReadInt32();
             break;
           }
           case 104: {
-            VespeneCost = input.ReadUInt32();
+            VespeneCost = input.ReadInt32();
             break;
           }
           case 117: {
