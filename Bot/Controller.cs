@@ -431,7 +431,7 @@ public static class Controller {
     }
 
     public static bool PlaceBuilding(uint buildingType, Unit producer) {
-        if (producer == null || !CanAfford(buildingType, true)) {
+        if (producer == null || !CanAfford(buildingType)) {
             return false;
         }
 
@@ -503,22 +503,10 @@ public static class Controller {
         }
     }
 
-    public static bool CanAfford(uint unitType, bool isZergBuilding = false)
+    public static bool CanAfford(uint unitType)
     {
         var unitData = GameData.GetUnitTypeData(unitType);
 
-        var mineralCost = unitData.MineralCost;
-        if (unitType == Units.Zergling) {
-            // The unit data for Zerglings is for a single Zergling, even if they always spawn in pairs.
-            mineralCost *= 2;
-        }
-
-        // TODO GD Make method to get the true mineral cost, not the unit's value
-        if (isZergBuilding) {
-            // The unit data for Zerg buildings includes the Drone cost
-            mineralCost -= GameData.GetUnitTypeData(Units.Drone).MineralCost;
-        }
-
-        return (Minerals >= mineralCost) && (Vespene >= unitData.VespeneCost);
+        return Minerals >= unitData.MineralCost && Vespene >= unitData.VespeneCost;
     }
 }

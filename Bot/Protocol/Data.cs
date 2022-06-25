@@ -1172,6 +1172,8 @@ namespace SC2APIProtocol {
       cargoSize_ = other.cargoSize_;
       mineralCost_ = other.mineralCost_;
       vespeneCost_ = other.vespeneCost_;
+      mineralValue_ = other.mineralValue_;
+      vespeneValue_ = other.vespeneValue_;
       foodRequired_ = other.foodRequired_;
       foodProvided_ = other.foodProvided_;
       abilityId_ = other.abilityId_;
@@ -1468,6 +1470,32 @@ namespace SC2APIProtocol {
       get { return weapons_; }
     }
 
+    /// <summary>Field number for the "mineral_value" field.</summary>
+    /// This is not part of the API, I added this field because the current "mineral cost" represents the "mineral value"
+    /// This is very apparent for Zerg, but also any unit that morphs into another one (high templar -> archon, for example)
+    public const int MineralValueFieldNumber = 26;
+    private int mineralValue_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int MineralValue {
+      get { return mineralValue_; }
+      set {
+        mineralValue_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "vespene_value" field.</summary>
+    /// This is not part of the API, I added this field because the current "vespene cost" represents the "vespene value"
+    /// This is very apparent for Zerg, but also any unit that morphs into another one (high templar -> archon, for example)
+    public const int VespeneValueFieldNumber = 27;
+    private int vespeneValue_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int VespeneValue {
+      get { return vespeneValue_; }
+      set {
+        vespeneValue_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public override bool Equals(object other) {
       return Equals(other as UnitTypeData);
@@ -1487,6 +1515,8 @@ namespace SC2APIProtocol {
       if (CargoSize != other.CargoSize) return false;
       if (MineralCost != other.MineralCost) return false;
       if (VespeneCost != other.VespeneCost) return false;
+      if (MineralValue != other.MineralValue) return false;
+      if (VespeneValue != other.VespeneValue) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(FoodRequired, other.FoodRequired)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(FoodProvided, other.FoodProvided)) return false;
       if (AbilityId != other.AbilityId) return false;
@@ -1515,6 +1545,8 @@ namespace SC2APIProtocol {
       if (CargoSize != 0) hash ^= CargoSize.GetHashCode();
       if (MineralCost != 0) hash ^= MineralCost.GetHashCode();
       if (VespeneCost != 0) hash ^= VespeneCost.GetHashCode();
+      if (MineralValue != 0) hash ^= MineralValue.GetHashCode();
+      if (VespeneValue != 0) hash ^= VespeneValue.GetHashCode();
       if (FoodRequired != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(FoodRequired);
       if (FoodProvided != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(FoodProvided);
       if (AbilityId != 0) hash ^= AbilityId.GetHashCode();

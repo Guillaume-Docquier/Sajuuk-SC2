@@ -28,7 +28,7 @@ public static class BuildOrders {
             new BuildStep(BuildType.Train, 13, Units.Overlord),
             new BuildStep(BuildType.Build, 16, Units.Hatchery), // TODO GD Not placed on expand, no rally points
             new BuildStep(BuildType.Build, 18, Units.Extractor),
-            new BuildStep(BuildType.Build, 17, Units.SpawningPool), // TODO GD Skipping because not enough minerals (due to wrong building costs and not checking if queued)
+            new BuildStep(BuildType.Build, 17, Units.SpawningPool),
             new BuildStep(BuildType.Train, 19, Units.Overlord),
             new BuildStep(BuildType.Train, 19, Units.Queen, 2), // TODO GD Not waiting for spawning pool to be finished
             new BuildStep(BuildType.Train, 24, Units.Zergling, 3), // 3 sets of 2

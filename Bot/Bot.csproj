@@ -69,7 +69,7 @@
     <Compile Include="Protocol\Ui.cs" />
     <Compile Include="Unit.cs" />
     <Compile Include="Wrapper\ActionBuilder.cs" />
-    <Compile Include="Wrapper\Interface.cs" />
+    <Compile Include="Wrapper\IBot.cs" />
     <Compile Include="Wrapper\CommandLine.cs" />
     <Compile Include="Wrapper\GameConnection.cs" />
     <Compile Include="Wrapper\ProtobufProxy.cs" />
