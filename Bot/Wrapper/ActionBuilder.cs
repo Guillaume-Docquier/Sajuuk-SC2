@@ -6,19 +6,19 @@ namespace Bot.Wrapper;
 
 public static class ActionBuilder {
     public static Action TrainUnit(uint unitType, ulong producerTag) {
-        var unitAbilityId = Abilities.GetId(unitType);
+        var unitAbilityId = (int)GameData.GetUnitTypeData(unitType).AbilityId;
 
         return UnitCommand(unitAbilityId, producerTag);
     }
 
     public static Action PlaceBuilding(uint buildingType, ulong producerTag, Vector3 position) {
-        var buildingAbilityId = Abilities.GetId(buildingType);
+        var buildingAbilityId = (int)GameData.GetUnitTypeData(buildingType).AbilityId;
 
         return UnitCommand(buildingAbilityId, producerTag, position: new Point2D { X = position.X, Y = position.Y });
     }
 
     public static Action PlaceExtractor(uint buildingType, ulong producerTag, ulong gasTag) {
-        var buildingAbilityId = Abilities.GetId(buildingType);
+        var buildingAbilityId = (int)GameData.GetUnitTypeData(buildingType).AbilityId;
 
         return UnitCommand(buildingAbilityId, producerTag, targetUnitTag: gasTag);
     }

@@ -54,6 +54,7 @@
     <Compile Include="Controller.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Wrapper\Debugger.cs" />
+    <Compile Include="Wrapper\GameData.cs" />
     <Compile Include="ZergBot.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Protocol\Common.cs" />

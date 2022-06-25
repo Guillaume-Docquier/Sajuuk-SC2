@@ -24,7 +24,7 @@ public class Unit {
 
     public Unit(SC2APIProtocol.Unit unit) {
         _original = unit;
-        _unitTypeData = Controller.GameData.Units[(int)unit.UnitType];
+        _unitTypeData = GameData.GetUnitTypeData(unit.UnitType);
 
         Name = _unitTypeData.Name;
         Tag = unit.Tag;
@@ -85,7 +85,7 @@ public class Unit {
 
         Controller.AddAction(ActionBuilder.TrainUnit(unitType, Tag));
 
-        var targetName = Controller.GetUnitName(unitType);
+        var targetName = GameData.GetUnitTypeData(unitType).Name;
         Logger.Info("Started training: {0}", targetName);
     }
 
@@ -93,8 +93,8 @@ public class Unit {
     {
         Controller.AddAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
 
-        var producerName = Controller.GetUnitName(UnitType);
-        var buildingName = Controller.GetUnitName(buildingType);
+        var producerName = GameData.GetUnitTypeData(UnitType).Name;
+        var buildingName = GameData.GetUnitTypeData(buildingType).Name;
         Logger.Info("{0} started building {1} at [{2}, {3}]", producerName, buildingName, target.X, target.Y);
     }
 
@@ -102,8 +102,8 @@ public class Unit {
     {
         Controller.AddAction(ActionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
 
-        var producerName = Controller.GetUnitName(UnitType);
-        var buildingName = Controller.GetUnitName(buildingType);
+        var producerName = GameData.GetUnitTypeData(UnitType).Name;
+        var buildingName = GameData.GetUnitTypeData(buildingType).Name;
         Logger.Info("{0} started building {1} at [{2}, {3}]", producerName, buildingName, gas.Position.X, gas.Position.Y);
     }
 
@@ -111,8 +111,8 @@ public class Unit {
     {
         Controller.AddAction(ActionBuilder.ResearchTech(techAbilityId, Tag));
 
-        var facilityName = Controller.GetUnitName(UnitType);
-        var researchName = Controller.GetUnitName(UnitType);
+        var facilityName = GameData.GetUnitTypeData(UnitType).Name;
+        var researchName = GameData.GetUnitTypeData(UnitType).Name;
         Logger.Info("{0} started researching {1}", facilityName, researchName);
     }
 }

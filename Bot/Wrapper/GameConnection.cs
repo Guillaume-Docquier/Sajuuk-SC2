@@ -241,6 +241,7 @@ public class GameConnection {
             GameInfo = new RequestGameInfo()
         };
         var gameInfoResponse = await SendRequest(gameInfoRequest);
+        Controller.GameInfo = gameInfoResponse.GameInfo;
 
         var dataRequest = new Request
         {
@@ -254,9 +255,7 @@ public class GameConnection {
             }
         };
         var dataResponse = await SendRequest(dataRequest);
-
-        Controller.GameInfo = gameInfoResponse.GameInfo;
-        Controller.GameData = dataResponse.Data;
+        GameData.Data = dataResponse.Data;
 
         while (true) {
             var observationRequest = new Request

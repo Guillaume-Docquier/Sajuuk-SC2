@@ -44,7 +44,7 @@ public class MiningBot: PoliteBot {
         // Print debug info
         var nextBuildStepsData = BuildOrder
             .Take(3)
-            .Select((nextBuildStep, index) => $"{nextBuildStep.BuildType.ToString()} {nextBuildStep.Quantity} {Controller.GetUnitName(nextBuildStep.UnitOrAbilityType)} at {nextBuildStep.AtSupply} supply")
+            .Select((nextBuildStep, index) => $"{nextBuildStep.BuildType.ToString()} {nextBuildStep.Quantity} {GameData.GetUnitTypeData(nextBuildStep.UnitOrAbilityType).Name} at {nextBuildStep.AtSupply} supply")
             .ToList();
 
         nextBuildStepsData.Insert(0, "Next 3 builds:");

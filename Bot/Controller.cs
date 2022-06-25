@@ -18,7 +18,6 @@ public static class Controller {
     private const double FramesPerSecond = 22.4;
 
     public static ResponseGameInfo GameInfo;
-    public static ResponseData GameData; // TODO GD Refine this e.g. modify zerg unit costs
     public static ResponseObservation Obs; // TODO GD Make this private and add a setter
 
     public static ulong Frame = ulong.MaxValue;
@@ -50,11 +49,11 @@ public static class Controller {
     }
 
     public static void OpenFrame() {
-        if (GameInfo == null || GameData == null || Obs == null) {
+        if (GameInfo == null || GameData.Data == null || Obs == null) {
             if (GameInfo == null) {
                 Logger.Info("GameInfo is null! The application will terminate.");
             }
-            else if (GameData == null) {
+            else if (GameData.Data == null) {
                 Logger.Info("GameData is null! The application will terminate.");
             }
             else {
@@ -104,10 +103,6 @@ public static class Controller {
         return Actions;
     }
 
-    public static string GetUnitName(uint unitType) {
-        return GameData.Units[(int)unitType].Name;
-    }
-
     public static void AddAction(Action action) {
         Actions.Add(action);
     }
@@ -129,7 +124,7 @@ public static class Controller {
 
     private static int GetPendingCount(uint unitType, bool inConstruction = true) {
         var workers = GetUnits(OwnedUnits, Units.Workers);
-        var abilityId = Abilities.GetId(unitType);
+        var abilityId = GameData.GetUnitTypeData(unitType).AbilityId;
 
         var counter = 0;
 
@@ -185,7 +180,7 @@ public static class Controller {
         //it's an actual unit
         else {
             //do we have enough supply?
-            var requiredSupply = Controller.GameData.Units[(int)unitType].FoodRequired;
+            var requiredSupply = GameData.GetUnitTypeData(unitType).FoodRequired;
             if (requiredSupply > (MaxSupply - CurrentSupply)) {
                 return false;
             }
@@ -203,19 +198,13 @@ public static class Controller {
     }
 
     // TODO GD Get rid?
-    private static int GetAbilityId(uint unit)
-    {
-        return (int)GameData.Units[(int)unit].AbilityId;
-    }
-
-    // TODO GD Get rid?
     private static bool CanPlace(uint unitType, Vector3 targetPos) {
         //Note: this is a blocking call! Use it sparingly, or you will slow down your execution significantly!
-        var abilityId = Abilities.GetId(unitType);
+        var abilityId = GameData.GetUnitTypeData(unitType).AbilityId;
 
         var queryBuildingPlacement = new RequestQueryBuildingPlacement
         {
-            AbilityId = abilityId,
+            AbilityId = (int)abilityId, // TODO GD Can I just sync the types?
             TargetPos = new Point2D
             {
                 X = targetPos.X,
@@ -352,7 +341,7 @@ public static class Controller {
         if (resourceCenters.Count > 0)
             startingSpot = resourceCenters[0].Position;
         else {
-            Logger.Error("Unable to construct: {0}. No resource center was found.", GetUnitName(buildingType));
+            Logger.Error("Unable to construct: {0}. No resource center was found.", GameData.GetUnitTypeData(buildingType).Name);
 
             return Vector3.Zero;
         }
@@ -388,7 +377,7 @@ public static class Controller {
 
     public static Unit GetAvailableProducer(uint unitOrAbilityType) {
         if (!Units.Producers.ContainsKey(unitOrAbilityType)) {
-            throw new NotImplementedException($"Producer for unit {GetUnitName(unitOrAbilityType)} not found");
+            throw new NotImplementedException($"Producer for unit {GameData.GetUnitTypeData(unitOrAbilityType).Name} not found");
         }
 
         var possibleProducers = Units.Producers[unitOrAbilityType];
@@ -428,7 +417,7 @@ public static class Controller {
 
         producer.TrainUnit(unitType);
 
-        var unitData = GameData.Units[(int)unitType];
+        var unitData = GameData.GetUnitTypeData(unitType);
         Minerals -= unitData.MineralCost * (unitType == Units.Zergling ? 2 : 1);
         Vespene -= unitData.VespeneCost;
 
@@ -462,7 +451,7 @@ public static class Controller {
             producer.PlaceBuilding(buildingType, constructionSpot);
         }
 
-        var buildingData = GameData.Units[(int)buildingType];
+        var buildingData = GameData.GetUnitTypeData(buildingType);
         Minerals -= buildingData.MineralCost;
         Vespene -= buildingData.VespeneCost;
 
@@ -482,7 +471,8 @@ public static class Controller {
 
         producer.ResearchTech(researchAbilityId);
 
-        var unitData = GameData.Units[researchAbilityId];
+        // TODO GD This is beyond wierd, but somehow it works?
+        var unitData = GameData.GetUnitTypeData((uint)researchAbilityId);
         Minerals -= unitData.MineralCost;
         Vespene -= unitData.VespeneCost;
 
@@ -515,7 +505,7 @@ public static class Controller {
 
     public static bool CanAfford(uint unitType, bool isZergBuilding = false)
     {
-        var unitData = GameData.Units[(int)unitType];
+        var unitData = GameData.GetUnitTypeData(unitType);
 
         var mineralCost = unitData.MineralCost;
         if (unitType == Units.Zergling) {
@@ -526,7 +516,7 @@ public static class Controller {
         // TODO GD Make method to get the true mineral cost, not the unit's value
         if (isZergBuilding) {
             // The unit data for Zerg buildings includes the Drone cost
-            mineralCost -= GameData.Units[(int)Units.Drone].MineralCost;
+            mineralCost -= GameData.GetUnitTypeData(Units.Drone).MineralCost;
         }
 
         return (Minerals >= mineralCost) && (Vespene >= unitData.VespeneCost);

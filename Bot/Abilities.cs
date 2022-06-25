@@ -47,8 +47,4 @@ internal static class Abilities {
 
     public const int DroneGather = 1183;
     public const int DroneReturnCargo = 1184;
-
-    public static int GetId(uint unitType) {
-        return (int)Controller.GameData.Units[(int)unitType].AbilityId;
-    }
 }
