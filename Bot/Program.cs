@@ -2,33 +2,33 @@
 using Bot.Wrapper;
 using SC2APIProtocol;
 
-namespace Bot {
-    internal class Program {
-        private static readonly IBot Bot = new MiningBot();
-        private const string MapName = "AcropolisLE.SC2Map";
+namespace Bot;
 
-        private const Race OpponentRace = Race.Random;
-        private const Difficulty OpponentDifficulty = Difficulty.Easy;
+internal class Program {
+    private static readonly IBot Bot = new MiningBot();
+    private const string MapName = "AcropolisLE.SC2Map";
 
-        private const bool RealTime = true;
+    private const Race OpponentRace = Race.Random;
+    private const Difficulty OpponentDifficulty = Difficulty.Easy;
 
-        public static GameConnection GameConnection;
+    private const bool RealTime = true;
 
-        private static void Main(string[] args) {
-            try {
-                GameConnection = new GameConnection();
-                if (args.Length == 0) {
-                    GameConnection.RunSinglePlayer(Bot, MapName, OpponentRace, OpponentDifficulty, RealTime).Wait();
-                }
-                else {
-                    GameConnection.RunLadder(Bot, args).Wait();
-                }
+    public static GameConnection GameConnection;
+
+    private static void Main(string[] args) {
+        try {
+            GameConnection = new GameConnection();
+            if (args.Length == 0) {
+                GameConnection.RunSinglePlayer(Bot, MapName, OpponentRace, OpponentDifficulty, RealTime).Wait();
             }
-            catch (Exception ex) {
-                Logger.Info(ex.ToString());
+            else {
+                GameConnection.RunLadder(Bot, args).Wait();
             }
-
-            Logger.Info("Terminated.");
         }
+        catch (Exception ex) {
+            Logger.Info(ex.ToString());
+        }
+
+        Logger.Info("Terminated.");
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot;
@@ -48,7 +49,7 @@ public class MiningBot: PoliteBot {
 
         nextBuildStepsData.Insert(0, "Next 3 builds:");
 
-        await Program.GameConnection.SendDebugRequest(nextBuildStepsData);
+        await Debugger.ShowDebugText(nextBuildStepsData);
     }
 
     private bool IsBuildOrderBlocking() {
