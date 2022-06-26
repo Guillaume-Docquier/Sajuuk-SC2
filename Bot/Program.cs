@@ -5,7 +5,7 @@ using SC2APIProtocol;
 namespace Bot;
 
 internal class Program {
-    private static readonly IBot Bot = new MiningBot();
+    private static readonly IBot Bot = new ZergBot();
     private const string MapName = "AcropolisLE.SC2Map";
 
     private const Race OpponentRace = Race.Random;

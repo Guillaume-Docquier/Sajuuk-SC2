@@ -30,11 +30,11 @@ public static class BuildOrders {
             new BuildStep(BuildType.Build, 18, Units.Extractor),
             new BuildStep(BuildType.Build, 17, Units.SpawningPool),
             new BuildStep(BuildType.Train, 19, Units.Overlord),
-            new BuildStep(BuildType.Train, 19, Units.Queen, 2), // TODO GD Not waiting for spawning pool to be finished
+            new BuildStep(BuildType.Train, 19, Units.Queen, 2),
             new BuildStep(BuildType.Train, 24, Units.Zergling, 3), // 3 sets of 2
             new BuildStep(BuildType.Train, 30, Units.Overlord),
             new BuildStep(BuildType.Train, 30, Units.Queen),
-            new BuildStep(BuildType.Build, 33, Units.Lair), // TODO GD Probably not working, blocks everything while waiting on gas but shouldn't
+            new BuildStep(BuildType.Build, 33, Units.Lair), // TODO GD Not working
             new BuildStep(BuildType.Build, 37, Units.EvolutionChamber),
             new BuildStep(BuildType.Build, 37, Units.RoachWarren),
             new BuildStep(BuildType.Train, 44, Units.Overlord),

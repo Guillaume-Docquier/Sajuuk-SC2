@@ -8,7 +8,7 @@ namespace Bot;
 
 using BuildOrder = Queue<BuildOrders.BuildStep>;
 
-public class MiningBot: PoliteBot {
+public class ZergBot: PoliteBot {
     private static readonly BuildOrder BuildOrder = BuildOrders.TwoBasesRoach();
 
     public override string Name => "ZergBot";

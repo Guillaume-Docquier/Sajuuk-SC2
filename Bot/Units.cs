@@ -100,7 +100,7 @@ internal static class Units {
     public const uint HydraliskDen = 91;
     public const uint Spire = 92;
     public const uint UltraliskCavern = 93;
-    public const uint InvestationPit = 94;
+    public const uint InfestationPit = 94;
     public const uint NydusNetwork = 95;
     public const uint BanelingNest = 96;
     public const uint RoachWarren = 97;
@@ -144,7 +144,7 @@ internal static class Units {
     public const uint SpineCrawlerUprooted = 139;
     public const uint SporeCrawlerUprooted = 140;
     public const uint Archon = 141;
-    public const uint NydusCanal = 142;
+    public const uint NydusWorm = 142;
     public const uint BroodlingEscort = 143;
     public const uint RichMineralField = 146;
     public const uint RichMineralField750 = 147;
@@ -168,7 +168,6 @@ internal static class Units {
     public const uint PurifierMineralField750 = 885;
     public const uint BattleStationMineralField = 886;
     public const uint BattleStationMineralField750 = 887;
-    public const uint InfestationPit = 94;
     public const uint SwarmHost = 494; // SwarmHostMP
     public const uint Viper = 499;
     public const uint Lurker = 502; // LurkerMP
@@ -274,7 +273,7 @@ internal static class Units {
         HydraliskDen,
         Spire,
         UltraliskCavern,
-        InvestationPit,
+        InfestationPit,
         NydusNetwork,
         BanelingNest,
         RoachWarren,
@@ -318,7 +317,7 @@ internal static class Units {
         SpineCrawlerUprooted,
         SporeCrawlerUprooted,
         Archon,
-        NydusCanal,
+        NydusWorm,
         BroodlingEscort,
         RichMineralField,
         RichMineralField750,
@@ -363,7 +362,7 @@ internal static class Units {
         HydraliskDen,
         Spire,
         UltraliskCavern,
-        InvestationPit,
+        InfestationPit,
         NydusNetwork,
         BanelingNest,
         RoachWarren,
@@ -400,7 +399,7 @@ internal static class Units {
         CreepTumorQueen,
         SpineCrawlerUprooted,
         SporeCrawlerUprooted,
-        NydusCanal,
+        NydusWorm,
         BroodlingEscort,
         Larva
     };
@@ -531,7 +530,7 @@ internal static class Units {
         Hatchery,
         Hive,
         HydraliskDen,
-        InvestationPit,
+        InfestationPit,
         Lair,
         MissileTurret,
         Nexus,
@@ -588,7 +587,7 @@ internal static class Units {
         Hatchery,
         Hive,
         HydraliskDen,
-        InvestationPit,
+        InfestationPit,
         Lair,
         Nexus,
         NydusNetwork,
@@ -853,40 +852,85 @@ internal static class Units {
         { Abilities.ResearchGlialReconstitution,  new HashSet<uint> { EvolutionChamber }},
     };
 
-    public static readonly Dictionary<uint, uint> Morphers = new Dictionary<uint, uint>
+    public static readonly Dictionary<uint, uint> MorphInto = new Dictionary<uint, uint>
     {
-        { Drone,                                  Larva },
-        { Corruptor,                              Larva },
-        { BroodLord,                              Corruptor },
-        { Hydralisk,                              Larva },
-        { Lurker,                                 Hydralisk },
-        { Infestor,                               Larva },
-        { Mutalisk,                               Larva },
-        { Overlord,                               Larva },
-        { Overseer,                               Overlord },
-        { Roach,                                  Larva },
-        { Ravager,                                Roach },
-        { Ultralisk,                              Larva },
-        { Zergling,                               Larva },
-        { SwarmHost,                              Larva },
-        { Viper,                                  Larva },
-        { Baneling,                               Zergling },
-        { BanelingNest,                           Drone },
-        { EvolutionChamber,                       Drone },
-        { Extractor,                              Drone },
-        { Hatchery,                               Drone },
-        { Lair,                                   Hatchery },
-        { Hive,                                   Lair },
-        { HydraliskDen,                           Drone },
-        { LurkerDen,                              HydraliskDen },
-        { InfestationPit,                         Drone },
-        { NydusNetwork,                           Drone },
-        { RoachWarren,                            Drone },
-        { SpawningPool,                           Drone },
-        { SpineCrawler,                           Drone },
-        { Spire,                                  Drone },
-        { GreaterSpire,                           Spire },
-        { SporeCrawler,                           Drone },
-        { UltraliskCavern,                        Drone },
+        { Drone,            Larva },
+        { Corruptor,        Larva },
+        { BroodLord,        Corruptor },
+        { Hydralisk,        Larva },
+        { Lurker,           Hydralisk },
+        { Infestor,         Larva },
+        { Mutalisk,         Larva },
+        { Overlord,         Larva },
+        { Overseer,         Overlord },
+        { Roach,            Larva },
+        { Ravager,          Roach },
+        { Ultralisk,        Larva },
+        { Zergling,         Larva },
+        { SwarmHost,        Larva },
+        { Viper,            Larva },
+        { Baneling,         Zergling },
+        { BanelingNest,     Drone },
+        { EvolutionChamber, Drone },
+        { Extractor,        Drone },
+        { Hatchery,         Drone },
+        { Lair,             Hatchery },
+        { Hive,             Lair },
+        { HydraliskDen,     Drone },
+        { LurkerDen,        Drone },
+        { InfestationPit,   Drone },
+        { NydusNetwork,     Drone },
+        { RoachWarren,      Drone },
+        { SpawningPool,     Drone },
+        { SpineCrawler,     Drone },
+        { Spire,            Drone },
+        { GreaterSpire,     Spire },
+        { SporeCrawler,     Drone },
+        { UltraliskCavern,  Drone },
+    };
+
+    public static readonly Dictionary<uint, HashSet<uint>> EquivalentTo = new Dictionary<uint, HashSet<uint>>
+    {
+        { Hatchery, new HashSet<uint> { Lair, Hive } },
+        { Lair,     new HashSet<uint> { Hive } },
+        { Spire,    new HashSet<uint> { GreaterSpire } },
+    };
+
+    public static readonly Dictionary<uint, uint> Prerequisites = new Dictionary<uint, uint>
+    {
+        { EvolutionChamber,                      Hatchery },
+        { SpawningPool,                          Hatchery },
+        { Zergling,                              SpawningPool },
+        { Queen,                                 SpawningPool },
+        { SpineCrawler,                          SpawningPool },
+        { SporeCrawler,                          SpawningPool },
+        { BanelingNest,                          SpawningPool },
+        { Baneling,                              BanelingNest },
+        { RoachWarren,                           SpawningPool },
+        { Roach,                                 RoachWarren },
+        { Ravager,                               RoachWarren },
+        { Lair,                                  SpawningPool },
+        { Overseer,                              Lair },
+        { NydusNetwork,                          Lair },
+        { NydusWorm,                             NydusNetwork },
+        { InfestationPit,                        Lair },
+        { Infestor,                              InfestationPit },
+        { SwarmHost,                             InfestationPit },
+        { Spire,                                 Lair },
+        { Corruptor,                             Spire },
+        { Mutalisk,                              Spire },
+        { HydraliskDen,                          Lair },
+        { Hydralisk,                             HydraliskDen },
+        { LurkerDen,                             HydraliskDen },
+        { Lurker,                                LurkerDen },
+        { Hive,                                  Lair },
+        { Viper,                                 Hive },
+        { GreaterSpire,                          Hive },
+        { BroodLord,                             GreaterSpire },
+        { UltraliskCavern,                       Hive },
+        { Ultralisk,                             UltraliskCavern },
+
+        { Abilities.ResearchZergMissileWeapons1, EvolutionChamber },
+        { Abilities.ResearchGlialReconstitution, EvolutionChamber },
     };
 }

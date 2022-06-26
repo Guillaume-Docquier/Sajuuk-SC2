@@ -148,56 +148,6 @@ public static class Controller {
     }
 
     // TODO GD Get rid?
-    private static bool CanConstruct(uint unitType) {
-        //is it a structure?
-        if (Units.Structures.Contains(unitType)) {
-            //we need worker for every structure
-            if (!GetUnits(OwnedUnits, Units.Workers).Any()) {
-                return false;
-            }
-
-            //we need an RC for any structure
-            var resourceCenters = GetUnits(OwnedUnits, Units.ResourceCenters, onlyCompleted: true);
-            if (!resourceCenters.Any()) {
-                return false;
-            }
-
-            if ((unitType == Units.CommandCenter) || (unitType == Units.SupplyDepot)) {
-                return CanAfford(unitType);
-            }
-
-            //we need supply depots for the following structures
-            var depots = GetUnits(OwnedUnits, Units.SupplyDepots, onlyCompleted: true);
-            if (!depots.Any()) {
-                return false;
-            }
-
-            if (unitType == Units.Barracks) {
-                return CanAfford(unitType);
-            }
-        }
-
-        //it's an actual unit
-        else {
-            //do we have enough supply?
-            var requiredSupply = GameData.GetUnitTypeData(unitType).FoodRequired;
-            if (requiredSupply > (MaxSupply - CurrentSupply)) {
-                return false;
-            }
-
-            //do we construct the units from barracks?
-            if (Units.FromBarracks.Contains(unitType)) {
-                var barracks = GetUnits(OwnedUnits, Units.Barracks, onlyCompleted: true);
-                if (!barracks.Any()) {
-                    return false;
-                }
-            }
-        }
-
-        return CanAfford(unitType);
-    }
-
-    // TODO GD Get rid?
     private static bool CanPlace(uint unitType, Vector3 targetPos) {
         //Note: this is a blocking call! Use it sparingly, or you will slow down your execution significantly!
         var abilityId = GameData.GetUnitTypeData(unitType).AbilityId;
@@ -407,19 +357,20 @@ public static class Controller {
 
     public static bool TrainUnit(uint unitType, Unit producer, bool queue = false)
     {
-        if (producer == null || !CanAfford(unitType)) {
+        if (producer == null || !CanAfford(unitType) || !IsUnlocked(unitType)) {
             return false;
         }
 
+        // TODO GD Should we assume you gave a producer that you wanted and remove the queue option?
         if (!queue && producer.Orders.Count > 0) {
             return false;
         }
 
         producer.TrainUnit(unitType);
 
-        var unitData = GameData.GetUnitTypeData(unitType);
-        Minerals -= unitData.MineralCost * (unitType == Units.Zergling ? 2 : 1);
-        Vespene -= unitData.VespeneCost;
+        var unitTypeData = GameData.GetUnitTypeData(unitType);
+        Minerals -= unitTypeData.MineralCost;
+        Vespene -= unitTypeData.VespeneCost;
 
         return true;
     }
@@ -431,7 +382,7 @@ public static class Controller {
     }
 
     public static bool PlaceBuilding(uint buildingType, Unit producer) {
-        if (producer == null || !CanAfford(buildingType)) {
+        if (producer == null || !CanAfford(buildingType) || !IsUnlocked(buildingType)) {
             return false;
         }
 
@@ -451,9 +402,9 @@ public static class Controller {
             producer.PlaceBuilding(buildingType, constructionSpot);
         }
 
-        var buildingData = GameData.GetUnitTypeData(buildingType);
-        Minerals -= buildingData.MineralCost;
-        Vespene -= buildingData.VespeneCost;
+        var buildingTypeData = GameData.GetUnitTypeData(buildingType);
+        Minerals -= buildingTypeData.MineralCost;
+        Vespene -= buildingTypeData.VespeneCost;
 
         return true;
     }
@@ -465,16 +416,16 @@ public static class Controller {
     }
 
     public static bool ResearchTech(int researchAbilityId, Unit producer) {
-        if (producer == null || !CanAfford((uint)researchAbilityId)) {
+        if (producer == null || !CanAfford((uint)researchAbilityId) || !IsUnlocked((uint)researchAbilityId)) {
             return false;
         }
 
         producer.ResearchTech(researchAbilityId);
 
         // TODO GD This is beyond wierd, but somehow it works?
-        var unitData = GameData.GetUnitTypeData((uint)researchAbilityId);
-        Minerals -= unitData.MineralCost;
-        Vespene -= unitData.VespeneCost;
+        var researchTypeData = GameData.GetUnitTypeData((uint)researchAbilityId);
+        Minerals -= researchTypeData.MineralCost;
+        Vespene -= researchTypeData.VespeneCost;
 
         return true;
     }
@@ -488,6 +439,13 @@ public static class Controller {
     }
 
     public static IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, HashSet<uint> unitsToGet, bool onlyCompleted = false, bool onlyVisible = false) {
+        var equivalentUnits = unitsToGet
+            .Where(unitToGet => Units.EquivalentTo.ContainsKey(unitToGet))
+            .SelectMany(unitToGet => Units.EquivalentTo[unitToGet])
+            .ToList();
+
+        unitsToGet.UnionWith(equivalentUnits);
+
         foreach (var unit in unitPool) {
             if (unitsToGet.Contains(unit.UnitType)) {
                 if (onlyCompleted && unit.BuildProgress < 1) {
@@ -508,5 +466,13 @@ public static class Controller {
         var unitData = GameData.GetUnitTypeData(unitType);
 
         return Minerals >= unitData.MineralCost && Vespene >= unitData.VespeneCost;
+    }
+
+    public static bool IsUnlocked(uint unitType) {
+        if (Units.Prerequisites.TryGetValue(unitType, out var prerequisiteUnitType)) {
+            return GetUnits(OwnedUnits, prerequisiteUnitType, onlyCompleted: true).Any();
+        }
+
+        return true;
     }
 }
