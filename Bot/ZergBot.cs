@@ -42,9 +42,10 @@ public class ZergBot: PoliteBot {
         }
 
         // Print debug info
+        // TODO GD This doesn't work for research upgrades
         var nextBuildStepsData = BuildOrder
             .Take(3)
-            .Select((nextBuildStep, index) => $"{nextBuildStep.BuildType.ToString()} {nextBuildStep.Quantity} {GameData.GetUnitTypeData(nextBuildStep.UnitOrAbilityType).Name} at {nextBuildStep.AtSupply} supply")
+            .Select(nextBuildStep => $"{nextBuildStep.BuildType.ToString()} {nextBuildStep.Quantity} {GameData.GetUnitTypeData(nextBuildStep.UnitOrAbilityType).Name} at {nextBuildStep.AtSupply} supply")
             .ToList();
 
         nextBuildStepsData.Insert(0, "Next 3 builds:");

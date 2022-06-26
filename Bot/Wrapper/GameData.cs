@@ -35,4 +35,8 @@ public static class GameData {
     public static UnitTypeData GetUnitTypeData(uint unitType) {
         return Data.Units[(int)unitType];
     }
+
+    public static UpgradeData GetResearchData(uint researchId) {
+        return Data.Upgrades[(int)researchId];
+    }
 }

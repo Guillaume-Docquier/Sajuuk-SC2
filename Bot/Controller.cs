@@ -344,6 +344,8 @@ public static class Controller {
                 return PlaceBuilding(buildStep.UnitOrAbilityType);
             case BuildType.Research:
                 return ResearchTech((int)buildStep.UnitOrAbilityType);
+            case BuildType.UpgradeInto:
+                return UpgradeInto(buildStep.UnitOrAbilityType);
         }
 
         return false;
@@ -422,10 +424,30 @@ public static class Controller {
 
         producer.ResearchTech(researchAbilityId);
 
-        // TODO GD This is beyond wierd, but somehow it works?
-        var researchTypeData = GameData.GetUnitTypeData((uint)researchAbilityId);
+        // TODO GD Does this work?
+        var researchTypeData = GameData.GetResearchData((uint)researchAbilityId);
         Minerals -= researchTypeData.MineralCost;
         Vespene -= researchTypeData.VespeneCost;
+
+        return true;
+    }
+
+    public static bool UpgradeInto(uint buildingType) {
+        var producer = GetAvailableProducer(buildingType);
+
+        return UpgradeInto(buildingType, producer);
+    }
+
+    public static bool UpgradeInto(uint buildingType, Unit producer) {
+        if (producer == null || !CanAfford(buildingType) || !IsUnlocked(buildingType)) {
+            return false;
+        }
+
+        producer.UpgradeInto(buildingType);
+
+        var buildingTypeData = GameData.GetUnitTypeData(buildingType);
+        Minerals -= buildingTypeData.MineralCost;
+        Vespene -= buildingTypeData.VespeneCost;
 
         return true;
     }

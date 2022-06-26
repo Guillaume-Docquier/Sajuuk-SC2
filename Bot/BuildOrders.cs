@@ -31,14 +31,14 @@ public static class BuildOrders {
             new BuildStep(BuildType.Build, 17, Units.SpawningPool),
             new BuildStep(BuildType.Train, 19, Units.Overlord),
             new BuildStep(BuildType.Train, 19, Units.Queen, 2),
-            new BuildStep(BuildType.Train, 24, Units.Zergling, 3), // 3 sets of 2
+            new BuildStep(BuildType.Train, 24, Units.Zergling, 3), // TODO GD Training only 2 sets, probably reusing larvae?
             new BuildStep(BuildType.Train, 30, Units.Overlord),
             new BuildStep(BuildType.Train, 30, Units.Queen),
-            new BuildStep(BuildType.Build, 33, Units.Lair), // TODO GD Not working
-            new BuildStep(BuildType.Build, 37, Units.EvolutionChamber),
+            new BuildStep(BuildType.UpgradeInto, 33, Units.Lair),
+            new BuildStep(BuildType.Build, 37, Units.EvolutionChamber), // TODO GD Skipped because the same drone is sent to build a roach warren, need to update producer orders
             new BuildStep(BuildType.Build, 37, Units.RoachWarren),
             new BuildStep(BuildType.Train, 44, Units.Overlord),
-            new BuildStep(BuildType.Research, 44, Abilities.ResearchZergMissileWeapons1),
+            new BuildStep(BuildType.Research, 44, Abilities.ResearchZergMissileWeapons1), // TODO GD Some prints / debug info not working. GetResearchData not working
             new BuildStep(BuildType.Build, 52, Units.Extractor, 2),
             new BuildStep(BuildType.Train, 50, Units.Overlord, 2),
             new BuildStep(BuildType.Research, 50, Abilities.ResearchGlialReconstitution),
@@ -52,4 +52,5 @@ public enum BuildType {
     Train,
     Build,
     Research,
+    UpgradeInto,
 }

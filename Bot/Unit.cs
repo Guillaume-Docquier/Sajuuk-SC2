@@ -79,6 +79,7 @@ public class Unit {
     }
 
     public void TrainUnit(uint unitType, bool queue = false) {
+        // TODO GD This should be handled when choosing a producer
         if (!queue && Orders.Count > 0) {
             return;
         }
@@ -89,30 +90,35 @@ public class Unit {
         Logger.Info("Started training: {0}", targetName);
     }
 
+    public void UpgradeInto(uint unitOrBuildingType) {
+        // You upgrade a unit or building by training the upgrade from the producer
+        Controller.AddAction(ActionBuilder.TrainUnit(unitOrBuildingType, Tag));
+
+        var upgradeName = GameData.GetUnitTypeData(unitOrBuildingType).Name;
+        Logger.Info("Upgrading {0} into {1}", Name, upgradeName);
+    }
+
     public void PlaceBuilding(uint buildingType, Vector3 target)
     {
         Controller.AddAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
 
-        var producerName = GameData.GetUnitTypeData(UnitType).Name;
         var buildingName = GameData.GetUnitTypeData(buildingType).Name;
-        Logger.Info("{0} started building {1} at [{2}, {3}]", producerName, buildingName, target.X, target.Y);
+        Logger.Info("{0} started building {1} at [{2}, {3}]", Name, buildingName, target.X, target.Y);
     }
 
     public void PlaceExtractor(uint buildingType, Unit gas)
     {
         Controller.AddAction(ActionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
 
-        var producerName = GameData.GetUnitTypeData(UnitType).Name;
         var buildingName = GameData.GetUnitTypeData(buildingType).Name;
-        Logger.Info("{0} started building {1} at [{2}, {3}]", producerName, buildingName, gas.Position.X, gas.Position.Y);
+        Logger.Info("{0} started building {1} on gas at [{2}, {3}]", Name, buildingName, gas.Position.X, gas.Position.Y);
     }
 
     public void ResearchTech(int techAbilityId)
     {
         Controller.AddAction(ActionBuilder.ResearchTech(techAbilityId, Tag));
 
-        var facilityName = GameData.GetUnitTypeData(UnitType).Name;
-        var researchName = GameData.GetUnitTypeData(UnitType).Name;
-        Logger.Info("{0} started researching {1}", facilityName, researchName);
+        var researchName = GameData.GetResearchData((uint)techAbilityId).Name;
+        Logger.Info("{0} started researching {1}", Name, researchName);
     }
 }
