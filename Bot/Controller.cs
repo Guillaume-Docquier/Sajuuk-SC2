@@ -128,14 +128,14 @@ public static class Controller {
 
         var counter = 0;
 
-        //count workers that have been sent to build this structure
+        // Count workers that have been sent to build this structure
         foreach (var worker in workers) {
-            if (worker.Order.AbilityId == abilityId) {
+            if (worker.Orders.Any(order => order.AbilityId == abilityId)) {
                 counter += 1;
             }
         }
 
-        //count buildings that are already in construction
+        // Count buildings that are already in construction
         if (inConstruction) {
             foreach (var unit in GetUnits(OwnedUnits, unitType)) {
                 if (unit.BuildProgress < 1) {
@@ -174,95 +174,6 @@ public static class Controller {
         }
 
         return false;
-    }
-
-    // TODO GD Get rid?
-    private static void DistributeWorkers() {
-        var workers = GetUnits(OwnedUnits, Units.Workers);
-        var idleWorkers = new List<Unit>();
-        foreach (var worker in workers) {
-            if (worker.Order.AbilityId != 0) {
-                continue;
-            }
-
-            idleWorkers.Add(worker);
-        }
-
-        if (idleWorkers.Count > 0) {
-            var resourceCenters = GetUnits(OwnedUnits, Units.ResourceCenters, onlyCompleted: true);
-            var mineralFields = GetUnits(OwnedUnits, Units.MineralFields, onlyVisible: true).ToList();
-
-            foreach (var rc in resourceCenters) {
-                //get one of the closer mineral fields
-                var mf = GetFirstInRange(rc.Position, mineralFields, 7);
-                if (mf == null) {
-                    continue;
-                }
-
-                //only one at a time
-                Logger.Info("Distributing idle worker: {0}", idleWorkers[0].Tag);
-                idleWorkers[0].Smart(mf);
-
-                return;
-            }
-
-            //nothing to be done
-            return;
-        }
-        else {
-            //let's see if we can distribute between bases
-            var resourceCenters = GetUnits(OwnedUnits, Units.ResourceCenters, onlyCompleted: true);
-            Unit transferFrom = null;
-            Unit transferTo = null;
-            foreach (var rc in resourceCenters) {
-                if (rc.AssignedWorkers <= rc.IdealWorkers) {
-                    transferTo = rc;
-                }
-                else {
-                    transferFrom = rc;
-                }
-            }
-
-            if ((transferFrom != null) && (transferTo != null)) {
-                var mineralFields = GetUnits(OwnedUnits, Units.MineralFields, onlyVisible: true).ToList();
-
-                var sqrDistance = 7 * 7;
-                foreach (var worker in workers) {
-                    if (worker.Order.AbilityId != Abilities.GatherMinerals) {
-                        continue;
-                    }
-
-                    if (Vector3.DistanceSquared(worker.Position, transferFrom.Position) > sqrDistance) {
-                        continue;
-                    }
-
-                    var mf = GetFirstInRange(transferTo.Position, mineralFields, 7);
-                    if (mf == null) {
-                        continue;
-                    }
-
-                    //only one at a time
-                    Logger.Info("Distributing idle worker: {0}", worker.Tag);
-                    worker.Smart(mf);
-
-                    return;
-                }
-            }
-        }
-    }
-
-    // TODO GD Get rid?
-    private static Unit GetAvailableWorker(Vector3 targetPosition) {
-        var workers = GetUnits(OwnedUnits, Units.Workers);
-        foreach (var worker in workers) {
-            if (worker.Order.AbilityId != Abilities.GatherMinerals) {
-                continue;
-            }
-
-            return worker;
-        }
-
-        return null;
     }
 
     // TODO GD Get rid?

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Bot.Wrapper;
 using Google.Protobuf.Collections;
@@ -15,7 +17,6 @@ public class Unit {
     public Vector3 Position;
     public ulong Tag;
     public float BuildProgress;
-    public UnitOrder Order;
     public RepeatedField<UnitOrder> Orders;
     public int Supply;
     public bool IsVisible;
@@ -35,7 +36,6 @@ public class Unit {
         IdealWorkers = unit.IdealHarvesters;
         AssignedWorkers = unit.AssignedHarvesters;
 
-        Order = unit.Orders.Count > 0 ? unit.Orders[0] : new UnitOrder();
         Orders = unit.Orders;
         IsVisible = unit.DisplayType == DisplayType.Visible;
 
@@ -84,7 +84,7 @@ public class Unit {
             return;
         }
 
-        Controller.AddAction(ActionBuilder.TrainUnit(unitType, Tag));
+        ProcessAction(ActionBuilder.TrainUnit(unitType, Tag));
 
         var targetName = GameData.GetUnitTypeData(unitType).Name;
         Logger.Info("Started training: {0}", targetName);
@@ -92,15 +92,14 @@ public class Unit {
 
     public void UpgradeInto(uint unitOrBuildingType) {
         // You upgrade a unit or building by training the upgrade from the producer
-        Controller.AddAction(ActionBuilder.TrainUnit(unitOrBuildingType, Tag));
+        ProcessAction(ActionBuilder.TrainUnit(unitOrBuildingType, Tag));
 
         var upgradeName = GameData.GetUnitTypeData(unitOrBuildingType).Name;
         Logger.Info("Upgrading {0} into {1}", Name, upgradeName);
     }
 
-    public void PlaceBuilding(uint buildingType, Vector3 target)
-    {
-        Controller.AddAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
+    public void PlaceBuilding(uint buildingType, Vector3 target) {
+        ProcessAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
 
         var buildingName = GameData.GetUnitTypeData(buildingType).Name;
         Logger.Info("{0} started building {1} at [{2}, {3}]", Name, buildingName, target.X, target.Y);
@@ -108,7 +107,7 @@ public class Unit {
 
     public void PlaceExtractor(uint buildingType, Unit gas)
     {
-        Controller.AddAction(ActionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
+        ProcessAction(ActionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
 
         var buildingName = GameData.GetUnitTypeData(buildingType).Name;
         Logger.Info("{0} started building {1} on gas at [{2}, {3}]", Name, buildingName, gas.Position.X, gas.Position.Y);
@@ -116,9 +115,32 @@ public class Unit {
 
     public void ResearchTech(int techAbilityId)
     {
-        Controller.AddAction(ActionBuilder.ResearchTech(techAbilityId, Tag));
+        ProcessAction(ActionBuilder.ResearchTech(techAbilityId, Tag));
 
+        var unitTypeData = GameData.GetUnitTypeData((uint)techAbilityId);
+        var researchTypeData = GameData.GetResearchData((uint)techAbilityId);
         var researchName = GameData.GetResearchData((uint)techAbilityId).Name;
         Logger.Info("{0} started researching {1}", Name, researchName);
+    }
+
+    private void ProcessAction(Action action) {
+        Controller.AddAction(action);
+
+        var order = new UnitOrder
+        {
+            AbilityId = (uint)action.ActionRaw.UnitCommand.AbilityId,
+            TargetUnitTag = action.ActionRaw.UnitCommand.TargetUnitTag,
+        };
+
+        if (action.ActionRaw.UnitCommand.TargetWorldSpacePos != null) {
+            order.TargetWorldSpacePos = new Point
+            {
+                X = action.ActionRaw.UnitCommand.TargetWorldSpacePos.X,
+                Y = action.ActionRaw.UnitCommand.TargetWorldSpacePos.Y,
+                Z = 0, // We don't know
+            };
+        }
+
+        Orders.Add(order);
     }
 }
