@@ -58,15 +58,7 @@ public class ZergBot: PoliteBot {
     }
 
     private void SpawnDrones() {
-        var larvae = Controller.GetAvailableLarvae();
-        if (larvae.Count == 0 || Controller.AvailableSupply == 0) {
-            return;
-        }
-
-        var canStillTrain = true;
-        for (var i = 0; i < larvae.Count && canStillTrain; i++) {
-            canStillTrain = Controller.TrainUnit(Units.Drone, larvae[i]);
-        }
+        while (Controller.TrainUnit(Units.Drone)) {}
     }
 
     private void FastMining() {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using Bot.Wrapper;
 using SC2APIProtocol;
 using Action = SC2APIProtocol.Action;
@@ -268,14 +269,9 @@ public static class Controller {
         return TrainUnit(unitType, producer);
     }
 
-    public static bool TrainUnit(uint unitType, Unit producer, bool queue = false)
+    public static bool TrainUnit(uint unitType, Unit producer)
     {
-        if (producer == null || !CanAfford(unitType) || !IsUnlocked(unitType)) {
-            return false;
-        }
-
-        // TODO GD Should we assume you gave a producer that you wanted and remove the queue option?
-        if (!queue && producer.Orders.Count > 0) {
+        if (producer == null || !CanAfford(unitType) || !HasEnoughSupply(unitType) || !IsUnlocked(unitType)) {
             return false;
         }
 
@@ -407,5 +403,9 @@ public static class Controller {
         }
 
         return true;
+    }
+
+    public static bool HasEnoughSupply(uint unitType) {
+        return AvailableSupply >= GameData.GetUnitTypeData(unitType).FoodRequired;
     }
 }
