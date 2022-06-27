@@ -23,8 +23,10 @@ public static class ActionBuilder {
         return UnitCommand(buildingAbilityId, producerTag, targetUnitTag: gasTag);
     }
 
-    public static Action ResearchTech(int techAbilityId, ulong producerTag) {
-        return UnitCommand(techAbilityId, producerTag);
+    public static Action ResearchUpgrade(uint upgradeType, ulong producerTag) {
+        var upgradeAbilityId = (int)GameData.GetUpgradeData(upgradeType).AbilityId;
+
+        return UnitCommand(upgradeAbilityId, producerTag);
     }
 
     public static Action Move(ulong unitTag, Vector3 position) {

@@ -36,7 +36,7 @@ public static class GameData {
         return Data.Units[(int)unitType];
     }
 
-    public static UpgradeData GetResearchData(uint researchId) {
-        return Data.Upgrades[(int)researchId];
+    public static UpgradeData GetUpgradeData(uint upgradeId) {
+        return Data.Upgrades[(int)upgradeId];
     }
 }

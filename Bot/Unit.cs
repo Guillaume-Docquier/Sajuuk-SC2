@@ -113,13 +113,11 @@ public class Unit {
         Logger.Info("{0} started building {1} on gas at [{2}, {3}]", Name, buildingName, gas.Position.X, gas.Position.Y);
     }
 
-    public void ResearchTech(int techAbilityId)
+    public void ResearchUpgrade(uint upgradeType)
     {
-        ProcessAction(ActionBuilder.ResearchTech(techAbilityId, Tag));
+        ProcessAction(ActionBuilder.ResearchUpgrade(upgradeType, Tag));
 
-        var unitTypeData = GameData.GetUnitTypeData((uint)techAbilityId);
-        var researchTypeData = GameData.GetResearchData((uint)techAbilityId);
-        var researchName = GameData.GetResearchData((uint)techAbilityId).Name;
+        var researchName = GameData.GetUpgradeData(upgradeType).Name;
         Logger.Info("{0} started researching {1}", Name, researchName);
     }
 

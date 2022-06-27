@@ -41,11 +41,19 @@ public class ZergBot: PoliteBot {
             }
         }
 
-        // Print debug info
-        // TODO GD This doesn't work for research upgrades
+        await PrintBuildOrderDebugInfo();
+    }
+
+    private async Task PrintBuildOrderDebugInfo() {
         var nextBuildStepsData = BuildOrder
             .Take(3)
-            .Select(nextBuildStep => $"{nextBuildStep.BuildType.ToString()} {nextBuildStep.Quantity} {GameData.GetUnitTypeData(nextBuildStep.UnitOrAbilityType).Name} at {nextBuildStep.AtSupply} supply")
+            .Select(nextBuildStep => {
+                var buildStepUnitOrUpgradeName = nextBuildStep.BuildType == BuildType.Research
+                    ? GameData.GetUpgradeData(nextBuildStep.UnitOrUpgradeType).Name
+                    : $"{nextBuildStep.Quantity} {GameData.GetUnitTypeData(nextBuildStep.UnitOrUpgradeType).Name}";
+
+                return $"{nextBuildStep.BuildType.ToString()} {buildStepUnitOrUpgradeName} at {nextBuildStep.AtSupply} supply";
+            })
             .ToList();
 
         nextBuildStepsData.Insert(0, "Next 3 builds:");

@@ -251,13 +251,13 @@ public static class Controller {
     public static bool ExecuteBuildStep(BuildOrders.BuildStep buildStep) {
         switch (buildStep.BuildType) {
             case BuildType.Train:
-                return TrainUnit(buildStep.UnitOrAbilityType);
+                return TrainUnit(buildStep.UnitOrUpgradeType);
             case BuildType.Build:
-                return PlaceBuilding(buildStep.UnitOrAbilityType);
+                return PlaceBuilding(buildStep.UnitOrUpgradeType);
             case BuildType.Research:
-                return ResearchTech((int)buildStep.UnitOrAbilityType);
+                return ResearchUpgrade(buildStep.UnitOrUpgradeType);
             case BuildType.UpgradeInto:
-                return UpgradeInto(buildStep.UnitOrAbilityType);
+                return UpgradeInto(buildStep.UnitOrUpgradeType);
         }
 
         return false;
@@ -271,13 +271,13 @@ public static class Controller {
 
     public static bool TrainUnit(uint unitType, Unit producer)
     {
-        if (producer == null || !CanAfford(unitType) || !HasEnoughSupply(unitType) || !IsUnlocked(unitType)) {
+        var unitTypeData = GameData.GetUnitTypeData(unitType);
+        if (producer == null || !CanAfford(unitTypeData) || !HasEnoughSupply(unitType) || !IsUnlocked(unitType)) {
             return false;
         }
 
         producer.TrainUnit(unitType);
 
-        var unitTypeData = GameData.GetUnitTypeData(unitType);
         Minerals -= unitTypeData.MineralCost;
         Vespene -= unitTypeData.VespeneCost;
 
@@ -291,7 +291,8 @@ public static class Controller {
     }
 
     public static bool PlaceBuilding(uint buildingType, Unit producer) {
-        if (producer == null || !CanAfford(buildingType) || !IsUnlocked(buildingType)) {
+        var buildingTypeData = GameData.GetUnitTypeData(buildingType);
+        if (producer == null || !CanAfford(buildingTypeData) || !IsUnlocked(buildingType)) {
             return false;
         }
 
@@ -311,28 +312,26 @@ public static class Controller {
             producer.PlaceBuilding(buildingType, constructionSpot);
         }
 
-        var buildingTypeData = GameData.GetUnitTypeData(buildingType);
         Minerals -= buildingTypeData.MineralCost;
         Vespene -= buildingTypeData.VespeneCost;
 
         return true;
     }
 
-    public static bool ResearchTech(int researchAbilityId) {
-        var producer = GetAvailableProducer((uint)researchAbilityId);
+    public static bool ResearchUpgrade(uint upgradeType) {
+        var producer = GetAvailableProducer(upgradeType);
 
-        return ResearchTech(researchAbilityId, producer);
+        return ResearchUpgrade(upgradeType, producer);
     }
 
-    public static bool ResearchTech(int researchAbilityId, Unit producer) {
-        if (producer == null || !CanAfford((uint)researchAbilityId) || !IsUnlocked((uint)researchAbilityId)) {
+    public static bool ResearchUpgrade(uint upgradeType, Unit producer) {
+        var researchTypeData = GameData.GetUpgradeData(upgradeType);
+        if (producer == null || !CanAfford(researchTypeData) || !IsUnlocked(upgradeType)) {
             return false;
         }
 
-        producer.ResearchTech(researchAbilityId);
+        producer.ResearchUpgrade(upgradeType);
 
-        // TODO GD Does this work?
-        var researchTypeData = GameData.GetResearchData((uint)researchAbilityId);
         Minerals -= researchTypeData.MineralCost;
         Vespene -= researchTypeData.VespeneCost;
 
@@ -346,13 +345,13 @@ public static class Controller {
     }
 
     public static bool UpgradeInto(uint buildingType, Unit producer) {
-        if (producer == null || !CanAfford(buildingType) || !IsUnlocked(buildingType)) {
+        var buildingTypeData = GameData.GetUnitTypeData(buildingType);
+        if (producer == null || !CanAfford(buildingTypeData) || !IsUnlocked(buildingType)) {
             return false;
         }
 
         producer.UpgradeInto(buildingType);
 
-        var buildingTypeData = GameData.GetUnitTypeData(buildingType);
         Minerals -= buildingTypeData.MineralCost;
         Vespene -= buildingTypeData.VespeneCost;
 
@@ -390,11 +389,18 @@ public static class Controller {
         }
     }
 
-    public static bool CanAfford(uint unitType)
+    public static bool CanAfford(UpgradeData upgradeData)
     {
-        var unitData = GameData.GetUnitTypeData(unitType);
+        return CanAfford(upgradeData.MineralCost, upgradeData.VespeneCost);
+    }
 
-        return Minerals >= unitData.MineralCost && Vespene >= unitData.VespeneCost;
+    public static bool CanAfford(UnitTypeData unitTypeData) {
+        return CanAfford(unitTypeData.MineralCost, unitTypeData.VespeneCost);
+    }
+
+    public static bool CanAfford(int mineralCost, int vespeneCost)
+    {
+        return Minerals >= mineralCost && Vespene >= vespeneCost;
     }
 
     public static bool IsUnlocked(uint unitType) {

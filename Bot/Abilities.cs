@@ -1,16 +1,7 @@
 ﻿namespace Bot;
 
+// You can get all these values from the stableid.json file (Generally found in 'C:\Users\your_username\Documents\StarCraft II' on Windows)
 internal static class Abilities {
-    // You can get all these values from the stableid.json file (Generally found in 'C:\Users\your_username\Documents\StarCraft II' on Windows)
-    public const int ResearchBansheeCloak = 790;
-    public const int ResearchInfernalPreigniter = 761;
-    public const int ResearchUpgradeMechAir = 3699;
-    public const int ResearchUpgradeMechArmor = 3700;
-    public const int ResearchUpgradeMechGround = 3701;
-
-    public const int ResearchGlialReconstitution = 216;
-    public const int ResearchZergMissileWeapons1 = 1192;
-
     public const int CancelConstruction = 314;
     public const int Cancel = 3659;
     public const int CancelLast = 3671;

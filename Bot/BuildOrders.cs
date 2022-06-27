@@ -10,14 +10,14 @@ public static class BuildOrders {
 
         public readonly uint AtSupply;
 
-        public readonly uint UnitOrAbilityType;
+        public readonly uint UnitOrUpgradeType;
 
         public uint Quantity;
 
-        public BuildStep(BuildType buildType, uint atSupply, uint unitOrAbilityType, uint quantity = 1) {
+        public BuildStep(BuildType buildType, uint atSupply, uint unitOrUpgradeType, uint quantity = 1) {
             BuildType = buildType;
             AtSupply = atSupply;
-            UnitOrAbilityType = unitOrAbilityType;
+            UnitOrUpgradeType = unitOrUpgradeType;
             Quantity = quantity;
         }
     }
@@ -38,10 +38,10 @@ public static class BuildOrders {
             new BuildStep(BuildType.Build, 37, Units.EvolutionChamber), // TODO GD Skipped because the same drone is sent to build a roach warren, need to update producer orders
             new BuildStep(BuildType.Build, 37, Units.RoachWarren),
             new BuildStep(BuildType.Train, 44, Units.Overlord),
-            new BuildStep(BuildType.Research, 44, Abilities.ResearchZergMissileWeapons1), // TODO GD Some prints / debug info not working. GetResearchData not working
+            new BuildStep(BuildType.Research, 44, Upgrades.ZergMissileWeaponsLevel1),
             new BuildStep(BuildType.Build, 52, Units.Extractor, 2),
             new BuildStep(BuildType.Train, 50, Units.Overlord, 2),
-            new BuildStep(BuildType.Research, 50, Abilities.ResearchGlialReconstitution),
+            new BuildStep(BuildType.Research, 50, Upgrades.GlialReconstitution),
             new BuildStep(BuildType.Train, 50, Units.Roach, 8),
             new BuildStep(BuildType.Train, 50, Units.Roach, 1000), // Just keep going
         });
