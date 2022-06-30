@@ -5,28 +5,28 @@ namespace Bot.Managers;
 
 public class EconomyManager: IManager {
     private readonly List<MiningManager> _miningManagers = new List<MiningManager>();
-    private Dictionary<ulong, MiningManager> _droneDispatch = new Dictionary<ulong, MiningManager>();
-    private Dictionary<ulong, MiningManager> _hatcheryDispatch = new Dictionary<ulong, MiningManager>();
+    private Dictionary<ulong, MiningManager> _workerDispatch = new Dictionary<ulong, MiningManager>();
+    private Dictionary<ulong, MiningManager> _baseDispatch = new Dictionary<ulong, MiningManager>();
 
     public EconomyManager() {
         // Init drone dispatch
-        var drones = Controller.GetUnits(Controller.OwnedUnits, Units.Drone).ToList();
-        foreach (var drone in drones) {
-            _droneDispatch[drone.Tag] = null;
+        var workers = Controller.GetUnits(Controller.OwnedUnits, Units.Drone).ToList();
+        foreach (var worker in workers) {
+            _workerDispatch[worker.Tag] = null;
         }
 
         // Init hatch dispatch and distribute drones
         var dispatched = 0;
-        var hatcheries = Controller.GetUnits(Controller.OwnedUnits, Units.Hatchery).ToList();
-        foreach (var hatchery in hatcheries) {
-            var miningManager = new MiningManager(hatchery);
-            _hatcheryDispatch[hatchery.Tag] = miningManager;
+        var bases = Controller.GetUnits(Controller.OwnedUnits, Units.Hatchery).ToList();
+        foreach (var @base in bases) {
+            var miningManager = new MiningManager(@base);
+            _baseDispatch[@base.Tag] = miningManager;
             _miningManagers.Add(miningManager);
 
             var availableCapacity = miningManager.IdealAvailableCapacity;
-            var dronesToDispatch = drones.Skip(dispatched).Take(availableCapacity).ToList(); // TODO GD Is there a better way to do this?
-            dronesToDispatch.ForEach(drone => _droneDispatch[drone.Tag] = miningManager);
-            miningManager.AssignWorkers(dronesToDispatch);
+            var workersToDispatch = workers.Skip(dispatched).Take(availableCapacity).ToList(); // TODO GD Is there a better way to do this?
+            workersToDispatch.ForEach(worker => _workerDispatch[worker.Tag] = miningManager);
+            miningManager.AssignWorkers(workersToDispatch);
 
             dispatched += availableCapacity;
         }
@@ -35,10 +35,11 @@ public class EconomyManager: IManager {
     public void OnFrame() {
         // TODO GD Only select expand hatches, not macro hatches
         // Manage new hatcheries
-        var newHatcheries = Controller.GetUnits(Controller.NewOwnedUnits, Units.Hatchery);
-        foreach (var newHatchery in newHatcheries) {
-            var miningManager = new MiningManager(newHatchery);
-            _hatcheryDispatch[newHatchery.Tag] = miningManager;
+        var newBases = Controller.GetUnits(Controller.NewOwnedUnits, Units.Hatchery).ToList();
+        newBases.ForEach(@base => @base.AddWatcher(this));
+        foreach (var newBase in newBases) {
+            var miningManager = new MiningManager(newBase);
+            _baseDispatch[newBase.Tag] = miningManager;
             _miningManagers.Add(miningManager);
         }
 
@@ -46,12 +47,13 @@ public class EconomyManager: IManager {
 
         // Dispatch new drones
         var dispatched = 0;
-        var newDrones = Controller.GetUnits(Controller.NewOwnedUnits, Units.Drone).ToList();
+        var newWorkers = Controller.GetUnits(Controller.NewOwnedUnits, Units.Drone).ToList();
+        newWorkers.ForEach(worker => worker.AddWatcher(this));
         foreach (var miningManager in _miningManagers) {
             var availableCapacity = miningManager.IdealAvailableCapacity;
-            var dronesToDispatch = newDrones.Skip(dispatched).Take(availableCapacity).ToList(); // TODO GD Is there a better way to do this?
-            dronesToDispatch.ForEach(drone => _droneDispatch[drone.Tag] = miningManager);
-            miningManager.AssignWorkers(dronesToDispatch);
+            var workersToDispatch = newWorkers.Skip(dispatched).Take(availableCapacity).ToList(); // TODO GD Is there a better way to do this?
+            workersToDispatch.ForEach(worker => _workerDispatch[worker.Tag] = miningManager);
+            miningManager.AssignWorkers(workersToDispatch);
 
             dispatched += availableCapacity;
         }
@@ -61,5 +63,16 @@ public class EconomyManager: IManager {
 
         // Execute managers
         _miningManagers.ForEach(supervisor => supervisor.OnFrame());
+    }
+
+    public void ReportUnitDeath(Unit unit) {
+        switch (unit.UnitType) {
+            case Units.Hatchery:
+                _baseDispatch.Remove(unit.Tag);
+                break;
+            case Units.Drone:
+                _workerDispatch.Remove(unit.Tag);
+                break;
+        }
     }
 }

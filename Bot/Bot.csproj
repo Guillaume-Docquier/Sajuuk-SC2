@@ -52,6 +52,8 @@
     <Compile Include="BuildOrders.cs" />
     <Compile Include="Controller\Controller.cs" />
     <Compile Include="Controller\UnitsTracker.cs" />
+    <Compile Include="ICanDie.cs" />
+    <Compile Include="IWatchUnitsDie.cs" />
     <Compile Include="Managers\EconomyManager.cs" />
     <Compile Include="Managers\IManager.cs" />
     <Compile Include="Managers\MiningManager.cs" />

@@ -47,6 +47,7 @@ public class UnitsTracker {
             }
         });
 
+        // TODO GD Minerals and gasses can also 'die' (deplete)
         // Find dead units
         var newUnitsDict = newRawUnits.ToDictionary(unit => unit.Tag);
         foreach (var unit in _unitsMap.Select(unit => unit.Value).ToList()) {

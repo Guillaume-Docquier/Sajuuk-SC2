@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Numerics;
+using Bot.Managers;
 using Bot.UnitModules;
 using Bot.Wrapper;
 using Google.Protobuf.Collections;
@@ -8,8 +9,10 @@ using Action = SC2APIProtocol.Action;
 
 namespace Bot;
 
-public class Unit {
+public class Unit: ICanDie {
+    private readonly List<IWatchUnitsDie> _deathWatchers = new List<IWatchUnitsDie>();
     private readonly UnitTypeData _unitTypeData;
+
     public readonly string Name;
     public readonly ulong Tag;
     public readonly uint UnitType; // TODO GD Does this change when morphing?
@@ -108,7 +111,7 @@ public class Unit {
         ProcessAction(ActionBuilder.TrainUnit(unitType, Tag));
 
         var targetName = GameData.GetUnitTypeData(unitType).Name;
-        Logger.Info("Started training: {0}", targetName);
+        Logger.Info("{0} started training {1}", Name, targetName);
     }
 
     public void UpgradeInto(uint unitOrBuildingType) {
@@ -171,5 +174,13 @@ public class Unit {
         }
 
         Orders.Add(order);
+    }
+
+    public void AddWatcher(IWatchUnitsDie watcher) {
+        _deathWatchers.Add(watcher);
+    }
+
+    public void Died() {
+        _deathWatchers.ForEach(watcher => watcher.ReportUnitDeath(this));
     }
 }

@@ -1,7 +1,5 @@
 ﻿namespace Bot.Managers;
 
-public interface IManager {
+public interface IManager: IWatchUnitsDie {
     void OnFrame();
-
-
 }

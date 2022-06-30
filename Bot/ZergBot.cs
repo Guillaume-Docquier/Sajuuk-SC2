@@ -23,6 +23,9 @@ public class ZergBot: PoliteBot {
             _managers.Add(new EconomyManager());
         }
 
+        // Some units died
+        Controller.DeadOwnedUnits.ForEach(unit => unit.Died());
+
         await FollowBuildOrder();
         if (!IsBuildOrderBlocking()) {
             SpawnDrones();

@@ -39,6 +39,7 @@ public class MiningManager: IManager {
     }
 
     public void AssignWorkers(List<Unit> workers) {
+        workers.ForEach(worker => worker.AddWatcher(this));
         _workers.AddRange(workers);
 
         var workerIndex = 0;
@@ -80,5 +81,19 @@ public class MiningManager: IManager {
         //}
 
         _workers.ForEach(worker => worker.Modules[_base.Tag].Execute());
+    }
+
+    public void ReportUnitDeath(Unit unit) {
+        if (unit.UnitType == Units.Drone) {
+            _workers.Remove(unit);
+        }
+        else if (Units.MineralFields.Contains(unit.UnitType)) {
+            _minerals.Remove(unit);
+            Logger.Info("Mineral field depleted!");
+        }
+        else if (Units.GasGeysers.Contains(unit.UnitType)) {
+            _gasses.Remove(unit);
+            Logger.Info("Gas geyser depleted!");
+        }
     }
 }
