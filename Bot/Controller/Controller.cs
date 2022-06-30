@@ -141,7 +141,7 @@ public static class Controller {
         // Count buildings that are already in construction
         if (inConstruction) {
             foreach (var unit in GetUnits(OwnedUnits, unitType)) {
-                if (unit.BuildProgress < 1) {
+                if (!unit.IsOperational) {
                     counter += 1;
                 }
             }
@@ -378,7 +378,7 @@ public static class Controller {
 
         foreach (var unit in unitPool) {
             if (unitsToGet.Contains(unit.UnitType)) {
-                if (onlyCompleted && unit.BuildProgress < 1) {
+                if (onlyCompleted && !unit.IsOperational) {
                     continue;
                 }
 

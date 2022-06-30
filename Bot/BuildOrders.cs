@@ -46,6 +46,16 @@ public static class BuildOrders {
             new BuildStep(BuildType.Train, 50, Units.Roach, 1000), // Just keep going
         });
     }
+
+    public static BuildOrder TestGasMining() {
+        return new BuildOrder(new[]
+        {
+            new BuildStep(BuildType.Build, 1, Units.Extractor),
+            new BuildStep(BuildType.Train, 13, Units.Overlord),
+            new BuildStep(BuildType.Build, 1, Units.Extractor),
+            new BuildStep(BuildType.Train, 19, Units.Overlord),
+        });
+    }
 }
 
 public enum BuildType {

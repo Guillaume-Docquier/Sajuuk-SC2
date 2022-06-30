@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Numerics;
-using Bot.Managers;
 using Bot.UnitModules;
 using Bot.Wrapper;
 using Google.Protobuf.Collections;
@@ -25,17 +24,17 @@ public class Unit: ICanDie {
     public Vector3 Position;
     public float Health;
     public float Shield;
-    public float BuildProgress;
+    private float _buildProgress;
     public RepeatedField<UnitOrder> Orders;
     public bool IsVisible;
     public int IdealWorkerCount;
     public int AssignedWorkers;
     public bool IsCargoFull;
 
-    // Use Tags as keys
-    public readonly Dictionary<ulong, IUnitModule> Modules = new Dictionary<ulong, IUnitModule>();
+    public readonly Dictionary<string, IUnitModule> Modules = new Dictionary<string, IUnitModule>();
 
     public float Integrity => (_original.Health + _original.Shield) / (_original.HealthMax + _original.ShieldMax);
+    public bool IsOperational => _buildProgress >= 1;
 
     public Unit(SC2APIProtocol.Unit unit) {
         _unitTypeData = GameData.GetUnitTypeData(unit.UnitType);
@@ -57,7 +56,7 @@ public class Unit: ICanDie {
         Position = new Vector3(unit.Pos.X, unit.Pos.Y, unit.Pos.Z);
         Health = unit.Health;
         Shield = unit.Shield;
-        BuildProgress = unit.BuildProgress;
+        _buildProgress = unit.BuildProgress;
         Orders = unit.Orders;
         IsVisible = unit.DisplayType == DisplayType.Visible;
         IdealWorkerCount = unit.IdealHarvesters;
@@ -176,11 +175,17 @@ public class Unit: ICanDie {
         Orders.Add(order);
     }
 
-    public void AddWatcher(IWatchUnitsDie watcher) {
+    public void AddDeathWatcher(IWatchUnitsDie watcher) {
         _deathWatchers.Add(watcher);
+    }
+
+    public void RemoveDeathWatcher(IWatchUnitsDie watcher) {
+        _deathWatchers.Remove(watcher);
     }
 
     public void Died() {
         _deathWatchers.ForEach(watcher => watcher.ReportUnitDeath(this));
+
+        Logger.Info("{0} died for the greater good!", Name);
     }
 }

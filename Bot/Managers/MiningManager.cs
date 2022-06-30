@@ -9,19 +9,21 @@ public class MiningManager: IManager {
     private const int MaxPerGas = 3;
     private const int MaxMinerals = 8;
     private const int IdealPerMinerals = 2;
-    private const int MaxPerMinerals = 3;
 
     private readonly Unit _base;
 
     private readonly List<Unit> _workers = new List<Unit>();
+    private readonly List<Unit> _extractors = new List<Unit>();
     private readonly List<Unit> _minerals;
     private readonly List<Unit> _gasses;
 
     private int _mineralRoundRobinIndex = 0;
 
-    // TODO GD This doesn't count gasses
-    public int IdealAvailableCapacity => _minerals.Count * IdealPerMinerals - _workers.Count; // TODO GD Include gas
-    public int SaturatedAvailableCapacity => _minerals.Count * MaxPerMinerals - _workers.Count; // TODO GD Include gas
+    private string MiningModuleTag => $"{_base.Tag}-mining";
+    private string CapacityModuleTag => $"{_base.Tag}-capacity";
+
+    public int IdealAvailableCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count * MaxPerGas - _workers.Count;
+    public int SaturatedAvailableCapacity => IdealAvailableCapacity + _minerals.Count; // Can allow 1 more per mineral patch
 
     public MiningManager(Unit hatchery) {
         _base = hatchery;
@@ -39,31 +41,27 @@ public class MiningManager: IManager {
     }
 
     public void AssignWorkers(List<Unit> workers) {
-        workers.ForEach(worker => worker.AddWatcher(this));
+        workers.ForEach(worker => worker.AddDeathWatcher(this));
         _workers.AddRange(workers);
 
-        var workerIndex = 0;
+        var dispatched = 0;
 
-        // TODO GD Check for extractors
-        // TODO GD Make this work
         // Assign workers to gas
-        // var gasIndex = 0;
-        // var gasDispatch = _gasDispatch[_gasses[gasIndex]];
-        // while (workerIndex < workers.Count && gasIndex < _gasses.Count - 1) {
-        //     while (gasDispatch.Count >= 2 && gasIndex < _gasses.Count - 1) {
-        //         gasIndex++;
-        //         gasDispatch = _gasDispatch[_gasses[gasIndex]];
-        //     }
-//
-        //     if (gasIndex < _gasDispatch.Count - 1) {
-        //         gasDispatch.Add(workers[workerIndex]);
-        //         workerIndex++;
-        //     }
-        // }
+        _extractors.Where(extractor => extractor.IsOperational).ToList().ForEach(extractor => {
+            var extractorCapacityModule = extractor.Modules[CapacityModuleTag] as CapacityModule;
+            var availableCapacity = extractorCapacityModule!.AvailableCapacity;
+
+            var assignedWorkers = workers.Skip(dispatched).Take(availableCapacity).ToList();
+
+            extractorCapacityModule.Assign(assignedWorkers);
+            assignedWorkers.ForEach(worker => worker.Modules.Add(MiningModuleTag, new GasMiningModule(worker, extractor)));
+
+            dispatched += availableCapacity;
+        });
 
         // Assign workers to minerals
-        workers.ForEach(worker => {
-            worker.Modules.Add(_base.Tag, new MineralMiningModule(worker, _minerals[_mineralRoundRobinIndex]));
+        workers.Skip(dispatched).ToList().ForEach(worker => {
+            worker.Modules.Add(MiningModuleTag, new MineralMiningModule(worker, _minerals[_mineralRoundRobinIndex]));
             _mineralRoundRobinIndex = (_mineralRoundRobinIndex + 1) % _minerals.Count;
         });
 
@@ -71,29 +69,37 @@ public class MiningManager: IManager {
     }
 
     public void OnFrame() {
-        // TODO GD Make this work
-        //foreach (var gasDispatch in _gasDispatch) {
-        //    gasDispatch.Value.ForEach(worker => {
-        //        if (worker.Orders.Any(order => order.AbilityId == Abilities.DroneGather && order.TargetUnitTag != gasDispatch.Key.Tag)) {
-        //            worker.Gather(gasDispatch.Key);
-        //        }
-        //    });
-        //}
+        // Get new extractors
+        if (_extractors.Count < _gasses.Count) {
+            var newExtractors = Controller.GetUnits(Controller.NewOwnedUnits, Units.Extractor)
+                .Where(extractor => extractor.GetDistance(_base) < 10)
+                .Take(MaxGas - _extractors.Count)
+                .ToList();
 
-        _workers.ForEach(worker => worker.Modules[_base.Tag].Execute());
+            newExtractors.ForEach(newExtractor => {
+                newExtractor.AddDeathWatcher(this);
+                newExtractor.Modules.Add(CapacityModuleTag, new CapacityModule(MaxPerGas));
+            });
+
+            _extractors.AddRange(newExtractors);
+        }
+
+        // Get to work!
+        _workers.ForEach(worker => worker.Modules[MiningModuleTag].Execute());
     }
 
-    public void ReportUnitDeath(Unit unit) {
-        if (unit.UnitType == Units.Drone) {
-            _workers.Remove(unit);
+    public void ReportUnitDeath(Unit deadUnit) {
+        if (deadUnit.UnitType == Units.Drone) {
+            _workers.Remove(deadUnit);
         }
-        else if (Units.MineralFields.Contains(unit.UnitType)) {
-            _minerals.Remove(unit);
-            Logger.Info("Mineral field depleted!");
+        else if (Units.MineralFields.Contains(deadUnit.UnitType)) {
+            _minerals.Remove(deadUnit);
         }
-        else if (Units.GasGeysers.Contains(unit.UnitType)) {
-            _gasses.Remove(unit);
-            Logger.Info("Gas geyser depleted!");
+        else if (Units.GasGeysers.Contains(deadUnit.UnitType)) {
+            _gasses.Remove(deadUnit);
+        }
+        else if (deadUnit.UnitType == Units.Extractor) {
+            _extractors.Remove(deadUnit);
         }
     }
 }

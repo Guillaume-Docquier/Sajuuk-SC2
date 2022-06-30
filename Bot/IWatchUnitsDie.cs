@@ -1,5 +1,5 @@
 ﻿namespace Bot;
 
 public interface IWatchUnitsDie {
-    void ReportUnitDeath(Unit unit);
+    void ReportUnitDeath(Unit deadUnit);
 }

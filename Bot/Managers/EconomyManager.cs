@@ -36,7 +36,7 @@ public class EconomyManager: IManager {
         // TODO GD Only select expand hatches, not macro hatches
         // Manage new hatcheries
         var newBases = Controller.GetUnits(Controller.NewOwnedUnits, Units.Hatchery).ToList();
-        newBases.ForEach(@base => @base.AddWatcher(this));
+        newBases.ForEach(@base => @base.AddDeathWatcher(this));
         foreach (var newBase in newBases) {
             var miningManager = new MiningManager(newBase);
             _baseDispatch[newBase.Tag] = miningManager;
@@ -48,7 +48,7 @@ public class EconomyManager: IManager {
         // Dispatch new drones
         var dispatched = 0;
         var newWorkers = Controller.GetUnits(Controller.NewOwnedUnits, Units.Drone).ToList();
-        newWorkers.ForEach(worker => worker.AddWatcher(this));
+        newWorkers.ForEach(worker => worker.AddDeathWatcher(this));
         foreach (var miningManager in _miningManagers) {
             var availableCapacity = miningManager.IdealAvailableCapacity;
             var workersToDispatch = newWorkers.Skip(dispatched).Take(availableCapacity).ToList(); // TODO GD Is there a better way to do this?
@@ -65,13 +65,13 @@ public class EconomyManager: IManager {
         _miningManagers.ForEach(supervisor => supervisor.OnFrame());
     }
 
-    public void ReportUnitDeath(Unit unit) {
-        switch (unit.UnitType) {
+    public void ReportUnitDeath(Unit deadUnit) {
+        switch (deadUnit.UnitType) {
             case Units.Hatchery:
-                _baseDispatch.Remove(unit.Tag);
+                _baseDispatch.Remove(deadUnit.Tag);
                 break;
             case Units.Drone:
-                _workerDispatch.Remove(unit.Tag);
+                _workerDispatch.Remove(deadUnit.Tag);
                 break;
         }
     }

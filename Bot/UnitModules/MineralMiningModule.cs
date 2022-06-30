@@ -14,7 +14,7 @@ public class MineralMiningModule: IUnitModule {
     public void Execute() {
         // Make sure each worker gathers from its target patch
         // TODO GD Fast mining consists of moving to the base, not using return cargo
-        if (_worker.Orders.Count == 0 || _worker.Orders.Any(order => order.AbilityId == Abilities.DroneGather && order.TargetUnitTag != _targetMineral.Tag)) {
+        if (_worker.Orders.Count == 0 || _worker.Orders.Count == 1 && _worker.Orders.Any(order => order.AbilityId == Abilities.DroneGather && order.TargetUnitTag != _targetMineral.Tag)) {
             _worker.Gather(_targetMineral);
         }
     }
