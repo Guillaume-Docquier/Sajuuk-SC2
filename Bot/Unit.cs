@@ -1,5 +1,6 @@
-using System;
+using System.Collections.Generic;
 using System.Numerics;
+using Bot.UnitModules;
 using Bot.Wrapper;
 using Google.Protobuf.Collections;
 using SC2APIProtocol;
@@ -28,7 +29,9 @@ public class Unit {
     public int AssignedWorkers;
     public bool IsCargoFull;
 
-    public int SaturatedWorkerCount => Convert.ToInt32(IdealWorkerCount * 1.5);
+    // Use Tags as keys
+    public readonly Dictionary<ulong, IUnitModule> Modules = new Dictionary<ulong, IUnitModule>();
+
     public float Integrity => (_original.Health + _original.Shield) / (_original.HealthMax + _original.ShieldMax);
 
     public Unit(SC2APIProtocol.Unit unit) {
