@@ -41,6 +41,14 @@ public static class ActionBuilder {
         return UnitCommand(Abilities.Smart, unitTag, targetUnitTag: targetUnitTag);
     }
 
+    public static Action Gather(ulong unitTag, ulong mineralOrGasTag) {
+        return UnitCommand(Abilities.DroneGather, unitTag, targetUnitTag: mineralOrGasTag);
+    }
+
+    public static Action ReturnCargo(ulong unitTag, ulong baseTag) {
+        return UnitCommand(Abilities.DroneReturnCargo, unitTag, targetUnitTag: baseTag);
+    }
+
     public static Action Chat(string message, bool toTeam = false) {
         return new Action
         {

@@ -50,8 +50,12 @@
   <ItemGroup>
     <Compile Include="Abilities.cs" />
     <Compile Include="BuildOrders.cs" />
+    <Compile Include="Controller\Controller.cs" />
+    <Compile Include="Controller\UnitsTracker.cs" />
+    <Compile Include="Managers\EconomyManager.cs" />
+    <Compile Include="Managers\IManager.cs" />
+    <Compile Include="Managers\MiningManager.cs" />
     <Compile Include="PoliteBot.cs" />
-    <Compile Include="Controller.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Upgrades.cs" />
     <Compile Include="Wrapper\Debugger.cs" />

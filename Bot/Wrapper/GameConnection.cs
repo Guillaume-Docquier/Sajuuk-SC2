@@ -258,11 +258,10 @@ public class GameConnection {
         GameData.Data = dataResponse.Data;
 
         while (true) {
-            var observationRequest = new Request
+            var observationResponse = await SendRequest(new Request
             {
                 Observation = new RequestObservation()
-            };
-            var observationResponse = await SendRequest(observationRequest);
+            });
 
             var observation = observationResponse.Observation;
 
@@ -282,6 +281,7 @@ public class GameConnection {
                 continue;
             }
 
+            // TODO GD This is questionable
             Controller.Obs = observation;
 
             var actions = (await bot.OnFrame()).ToList();

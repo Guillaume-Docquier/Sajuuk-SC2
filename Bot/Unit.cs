@@ -1,45 +1,63 @@
-using System.Collections.Generic;
-using System.Linq;
+using System;
 using System.Numerics;
 using Bot.Wrapper;
 using Google.Protobuf.Collections;
 using SC2APIProtocol;
+using Action = SC2APIProtocol.Action;
 
 namespace Bot;
 
 public class Unit {
-    private SC2APIProtocol.Unit _original;
-    private UnitTypeData _unitTypeData;
+    private readonly UnitTypeData _unitTypeData;
+    public readonly string Name;
+    public readonly ulong Tag;
+    public readonly uint UnitType; // TODO GD Does this change when morphing?
+    public readonly float HealthMax;
+    public readonly float ShieldMax;
+    public readonly int Supply;
 
-    public string Name;
-    public uint UnitType;
-    public float Integrity;
+    private SC2APIProtocol.Unit _original;
+    public Alliance Alliance;
     public Vector3 Position;
-    public ulong Tag;
+    public float Health;
+    public float Shield;
     public float BuildProgress;
     public RepeatedField<UnitOrder> Orders;
-    public int Supply;
     public bool IsVisible;
-    public int IdealWorkers;
+    public int IdealWorkerCount;
     public int AssignedWorkers;
+    public bool IsCargoFull;
+
+    public int SaturatedWorkerCount => Convert.ToInt32(IdealWorkerCount * 1.5);
+    public float Integrity => (_original.Health + _original.Shield) / (_original.HealthMax + _original.ShieldMax);
 
     public Unit(SC2APIProtocol.Unit unit) {
-        _original = unit;
         _unitTypeData = GameData.GetUnitTypeData(unit.UnitType);
 
         Name = _unitTypeData.Name;
         Tag = unit.Tag;
         UnitType = unit.UnitType;
-        Position = new Vector3(unit.Pos.X, unit.Pos.Y, unit.Pos.Z);
-        Integrity = (unit.Health + unit.Shield) / (unit.HealthMax + unit.ShieldMax);
-        BuildProgress = unit.BuildProgress;
-        IdealWorkers = unit.IdealHarvesters;
-        AssignedWorkers = unit.AssignedHarvesters;
+        HealthMax = unit.HealthMax;
+        ShieldMax = unit.ShieldMax;
+        Supply = (int)_unitTypeData.FoodRequired;
 
+        Update(unit);
+    }
+
+    public void Update(SC2APIProtocol.Unit unit) {
+        _original = unit;
+
+        Alliance = unit.Alliance; // Alliance can probably change if being mind controlled?
+        Position = new Vector3(unit.Pos.X, unit.Pos.Y, unit.Pos.Z);
+        Health = unit.Health;
+        Shield = unit.Shield;
+        BuildProgress = unit.BuildProgress;
         Orders = unit.Orders;
         IsVisible = unit.DisplayType == DisplayType.Visible;
-
-        Supply = (int)_unitTypeData.FoodRequired;
+        IdealWorkerCount = unit.IdealHarvesters;
+        AssignedWorkers = unit.AssignedHarvesters;
+        // TODO GD This doesn't work!? Both are always 0
+        IsCargoFull = unit.CargoSpaceTaken == unit.CargoSpaceMax;
     }
 
     public double GetDistance(Unit otherUnit) {
@@ -119,6 +137,16 @@ public class Unit {
 
         var researchName = GameData.GetUpgradeData(upgradeType).Name;
         Logger.Info("{0} started researching {1}", Name, researchName);
+    }
+
+    public void Gather(Unit mineralOrGas) {
+        ProcessAction(ActionBuilder.Gather(Tag, mineralOrGas.Tag));
+    }
+
+    public void ReturnCargo(Unit @base) {
+        ProcessAction(ActionBuilder.ReturnCargo(Tag, @base.Tag));
+
+        Logger.Info("{0} returning cargo to {1} at [{2}, {3}]", Name, @base.Name, @base.Position.X, @base.Position.Y);
     }
 
     private void ProcessAction(Action action) {

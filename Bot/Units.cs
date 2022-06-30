@@ -679,6 +679,7 @@ internal static class Units {
         PlanetaryFortress
     };
 
+    // Mineral field types seem to differ from map to map
     public static readonly HashSet<uint> MineralFields = new HashSet<uint>
     {
         RichMineralField,
@@ -695,6 +696,7 @@ internal static class Units {
         BattleStationMineralField750
     };
 
+    // Gas geyser types seem to differ from map to map
     public static readonly HashSet<uint> GasGeysers = new HashSet<uint>
     {
         VespeneGeyser,

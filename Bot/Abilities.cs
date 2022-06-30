@@ -32,10 +32,11 @@ internal static class Abilities {
     public const int UnloadBunker = 408;
     public const int SalvageBunker = 32;
 
-    //gathering/returning minerals
-    public const int GatherMinerals = 295;
-    public const int ReturnMinerals = 296;
-
+    // TODO GD Generalize this?
+    public const int SCVGather = 295;
+    public const int SCVReturnCargo = 296;
+    public const int ProbeGather = 298;
+    public const int ProbeReturnCargo = 299;
     public const int DroneGather = 1183;
     public const int DroneReturnCargo = 1184;
 }

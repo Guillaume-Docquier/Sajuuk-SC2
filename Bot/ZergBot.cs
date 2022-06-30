@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Bot.Managers;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
@@ -10,18 +11,25 @@ using BuildOrder = Queue<BuildOrders.BuildStep>;
 
 public class ZergBot: PoliteBot {
     private static readonly BuildOrder BuildOrder = BuildOrders.TwoBasesRoach();
+    private readonly List<IManager> _managers = new List<IManager>();
 
     public override string Name => "ZergBot";
 
     public override Race Race => Race.Zerg;
 
     protected override async Task DoOnFrame() {
+        // TODO GD Replace this with some init code?
+        if (Controller.Frame == 0) {
+            _managers.Add(new EconomyManager());
+        }
+
         await FollowBuildOrder();
         if (!IsBuildOrderBlocking()) {
             SpawnDrones();
         }
 
-        FastMining();
+        // Execute managers
+        _managers.ForEach(manager => manager.OnFrame());
     }
 
     private async Task FollowBuildOrder() {
@@ -62,14 +70,12 @@ public class ZergBot: PoliteBot {
     }
 
     private bool IsBuildOrderBlocking() {
+        // TODO GD Replace this by a 'Controller.ReserveMinerals' and 'Controller.ReserveGas' method
+        // TODO GD Allow other stuff to happen if we have to wait for tech or something
         return BuildOrder.Count > 0 && Controller.CurrentSupply >= BuildOrder.Peek().AtSupply;
     }
 
     private void SpawnDrones() {
         while (Controller.TrainUnit(Units.Drone)) {}
-    }
-
-    private void FastMining() {
-
     }
 }
