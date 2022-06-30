@@ -30,13 +30,16 @@ public class Unit: ICanDie {
     public int IdealWorkerCount;
     public int AssignedWorkers;
     public bool IsCargoFull;
+    public ulong LastSeen;
+
+    public ulong DeathDelay = 1;
 
     public readonly Dictionary<string, IUnitModule> Modules = new Dictionary<string, IUnitModule>();
 
     public float Integrity => (_original.Health + _original.Shield) / (_original.HealthMax + _original.ShieldMax);
     public bool IsOperational => _buildProgress >= 1;
 
-    public Unit(SC2APIProtocol.Unit unit) {
+    public Unit(SC2APIProtocol.Unit unit, ulong frame) {
         _unitTypeData = GameData.GetUnitTypeData(unit.UnitType);
 
         Name = _unitTypeData.Name;
@@ -46,10 +49,10 @@ public class Unit: ICanDie {
         ShieldMax = unit.ShieldMax;
         Supply = (int)_unitTypeData.FoodRequired;
 
-        Update(unit);
+        Update(unit, frame);
     }
 
-    public void Update(SC2APIProtocol.Unit unit) {
+    public void Update(SC2APIProtocol.Unit unit, ulong frame) {
         _original = unit;
 
         Alliance = unit.Alliance; // Alliance can probably change if being mind controlled?
@@ -63,6 +66,7 @@ public class Unit: ICanDie {
         AssignedWorkers = unit.AssignedHarvesters;
         // TODO GD This doesn't work!? Both are always 0
         IsCargoFull = unit.CargoSpaceTaken == unit.CargoSpaceMax;
+        LastSeen = frame;
     }
 
     public double GetDistance(Unit otherUnit) {
@@ -186,6 +190,13 @@ public class Unit: ICanDie {
     public void Died() {
         _deathWatchers.ForEach(watcher => watcher.ReportUnitDeath(this));
 
-        Logger.Info("{0} died for the greater good!", Name);
+        // Reduce the noise
+        if (UnitType != Units.Larva) {
+            Logger.Info("{0} died for the greater good!", Name);
+        }
+    }
+
+    public bool IsDead(ulong atFrame) {
+        return atFrame - LastSeen > DeathDelay;
     }
 }

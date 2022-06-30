@@ -9,11 +9,11 @@ using Action = SC2APIProtocol.Action;
 namespace Bot;
 
 public static class Controller {
-    private const int FrameDelay = 0; //too fast? increase this to e.g. 20
+    private const int FrameDelay = 0; // Too fast? increase this to e.g. 20
 
     private static readonly List<Action> Actions = new List<Action>();
     private static readonly Random Random = new Random();
-    private const double FramesPerSecond = 22.4;
+    public const double FramesPerSecond = 22.4;
 
     private static UnitsTracker _unitsTracker;
 
@@ -50,6 +50,8 @@ public static class Controller {
     }
 
     public static void OpenFrame() {
+        Frame = Obs.Observation.GameLoop;
+
         if (GameInfo == null || GameData.Data == null || Obs == null) {
             if (GameInfo == null) {
                 Logger.Info("GameInfo is null! The application will terminate.");
@@ -66,10 +68,10 @@ public static class Controller {
         }
 
         if (_unitsTracker == null) {
-            _unitsTracker = new UnitsTracker(Obs.Observation.RawData.Units);
+            _unitsTracker = new UnitsTracker(Obs.Observation.RawData.Units, Frame);
         }
         else {
-            _unitsTracker.Update(Obs.Observation.RawData.Units.ToList());
+            _unitsTracker.Update(Obs.Observation.RawData.Units.ToList(), Frame);
         }
 
         Actions.Clear();
@@ -77,8 +79,6 @@ public static class Controller {
         foreach (var chat in Obs.Chat) {
             ChatLog.Add(chat.Message);
         }
-
-        Frame = Obs.Observation.GameLoop;
 
         CurrentSupply = Obs.Observation.PlayerCommon.FoodUsed;
         MaxSupply = Obs.Observation.PlayerCommon.FoodCap;

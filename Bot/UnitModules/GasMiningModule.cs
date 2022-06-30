@@ -1,14 +1,21 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 namespace Bot.UnitModules;
 
 public class GasMiningModule: IUnitModule {
+    private static readonly ulong DeathDelay = Convert.ToUInt64(1.415 * Controller.FramesPerSecond) + 5; // +5 just to be sure
+
     private readonly Unit _worker;
     private readonly Unit _targetGasExtractor;
 
     public GasMiningModule(Unit worker, Unit targetGasExtractor) {
         _worker = worker;
         _targetGasExtractor = targetGasExtractor;
+
+        // Workers disappear when going inside extractors for 1.415 seconds
+        // Change their death delay so that we don't think they're dead
+        _worker.DeathDelay = DeathDelay;
     }
 
     public void Execute() {

@@ -14,8 +14,8 @@ public class UnitsTracker {
     public List<Unit> OwnedUnits;
     public List<Unit> EnemyUnits;
 
-    public UnitsTracker(IEnumerable<SC2APIProtocol.Unit> rawUnits) {
-        var units = rawUnits.Select(rawUnit => new Unit(rawUnit)).ToList();
+    public UnitsTracker(IEnumerable<SC2APIProtocol.Unit> rawUnits, ulong frame) {
+        var units = rawUnits.Select(rawUnit => new Unit(rawUnit, frame)).ToList();
 
         _unitsMap = units.ToDictionary(unit => unit.Tag);
 
@@ -24,7 +24,7 @@ public class UnitsTracker {
         EnemyUnits = units.Where(unit => unit.Alliance == Alliance.Enemy).ToList();
     }
 
-    public void Update(List<SC2APIProtocol.Unit> newRawUnits) {
+    public void Update(List<SC2APIProtocol.Unit> newRawUnits, ulong frame) {
         NewOwnedUnits.Clear();
         DeadOwnedUnits.Clear();
 
@@ -32,10 +32,10 @@ public class UnitsTracker {
         newRawUnits.ForEach(newRawUnit => {
             // Existing unit, update it
             if (_unitsMap.ContainsKey(newRawUnit.Tag)) {
-                _unitsMap[newRawUnit.Tag].Update(newRawUnit);
+                _unitsMap[newRawUnit.Tag].Update(newRawUnit, frame);
             }
             else {
-                var newUnit = new Unit(newRawUnit);
+                var newUnit = new Unit(newRawUnit, frame);
 
                 // New owned unit
                 if (newUnit.Alliance == Alliance.Self) {
@@ -49,10 +49,8 @@ public class UnitsTracker {
 
         // TODO GD Minerals and gasses can also 'die' (deplete)
         // Find dead units
-        var newUnitsDict = newRawUnits.ToDictionary(unit => unit.Tag);
         foreach (var unit in _unitsMap.Select(unit => unit.Value).ToList()) {
-            // Cannot find this unit anymore? Probably dead
-            if (!newUnitsDict.ContainsKey(unit.Tag)) {
+            if (unit.IsDead(frame)) {
                 // Dead owned unit
                 if (unit.Alliance == Alliance.Self) {
                     DeadOwnedUnits.Add(unit);
