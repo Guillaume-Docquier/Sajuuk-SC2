@@ -26,16 +26,16 @@ public static class BuildOrders {
         return new BuildOrder(new[]
         {
             new BuildStep(BuildType.Train, 13, Units.Overlord),
-            new BuildStep(BuildType.Build, 16, Units.Hatchery), // TODO GD Not placed on expand, no rally points
+            new BuildStep(BuildType.Build, 16, Units.Hatchery), // TODO GD Not placed on expand
             new BuildStep(BuildType.Build, 18, Units.Extractor),
             new BuildStep(BuildType.Build, 17, Units.SpawningPool),
             new BuildStep(BuildType.Train, 19, Units.Overlord),
             new BuildStep(BuildType.Train, 19, Units.Queen, 2),
-            new BuildStep(BuildType.Train, 24, Units.Zergling, 3), // TODO GD Training only 2 sets, probably reusing larvae?
+            new BuildStep(BuildType.Train, 24, Units.Zergling, 3),
             new BuildStep(BuildType.Train, 30, Units.Overlord),
             new BuildStep(BuildType.Train, 30, Units.Queen),
             new BuildStep(BuildType.UpgradeInto, 33, Units.Lair),
-            new BuildStep(BuildType.Build, 37, Units.EvolutionChamber), // TODO GD Skipped because the same drone is sent to build a roach warren, need to update producer orders
+            new BuildStep(BuildType.Build, 37, Units.EvolutionChamber),
             new BuildStep(BuildType.Build, 37, Units.RoachWarren),
             new BuildStep(BuildType.Train, 44, Units.Overlord),
             new BuildStep(BuildType.Research, 44, Upgrades.ZergMissileWeaponsLevel1),

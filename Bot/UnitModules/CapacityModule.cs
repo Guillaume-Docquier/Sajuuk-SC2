@@ -29,7 +29,6 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
-        // TODO GD Drones 'die' when going inside extractors LOL
         _assignedUnits.Remove(deadUnit);
     }
 }
