@@ -21,6 +21,7 @@ public class ZergBot: PoliteBot {
         // TODO GD Replace this with some init code?
         if (Controller.Frame == 0) {
             _managers.Add(new EconomyManager());
+            _managers.Add(new WarManager());
         }
 
         // Some units died

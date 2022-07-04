@@ -33,8 +33,17 @@ public static class ActionBuilder {
         return UnitCommand(Abilities.Move, unitTag, position: new Point2D { X = position.X, Y = position.Y });
     }
 
-    public static Action Attack(IEnumerable<ulong> unitTags, Vector3 position) {
+    public static Action AttackMove(ulong unitTag, Vector3 position) {
+        return UnitCommand(Abilities.Attack, unitTag, position: new Point2D { X = position.X, Y = position.Y });
+    }
+
+    // TODO GD Might be better to use a single order
+    public static Action AttackMove(IEnumerable<ulong> unitTags, Vector3 position) {
         return UnitCommand(Abilities.Attack, unitTags: unitTags, position: new Point2D { X = position.X, Y = position.Y });
+    }
+
+    public static Action Attack(ulong unitTag, ulong targetTag) {
+        return UnitCommand(Abilities.Attack, unitTag, targetUnitTag: targetTag);
     }
 
     public static Action Smart(ulong unitTag, ulong targetUnitTag) {

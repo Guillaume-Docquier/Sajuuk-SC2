@@ -114,10 +114,6 @@ public static class Controller {
         AddAction(ActionBuilder.Chat(message, toTeam));
     }
 
-    public static void Attack(IEnumerable<Unit> units, Vector3 target) {
-        AddAction(ActionBuilder.Attack(units.Select(unit => unit.Tag), target));
-    }
-
     private static int GetTotalCount(uint unitType) {
         var pendingCount = GetPendingCount(unitType, inConstruction: false);
         var constructionCount = GetUnits(OwnedUnits, unitType).Count();

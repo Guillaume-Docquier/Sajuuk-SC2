@@ -101,6 +101,10 @@ public class Unit: ICanDie {
         Controller.AddAction(ActionBuilder.Move(Tag, target));
     }
 
+    public void AttackMove(Vector3 target) {
+        Controller.AddAction(ActionBuilder.AttackMove(Tag, target));
+    }
+
     public void Smart(Unit unit) {
         Controller.AddAction(ActionBuilder.Smart(Tag, unit.Tag));
     }

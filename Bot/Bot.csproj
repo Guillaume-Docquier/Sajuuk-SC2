@@ -54,9 +54,11 @@
     <Compile Include="Controller\UnitsTracker.cs" />
     <Compile Include="ICanDie.cs" />
     <Compile Include="IWatchUnitsDie.cs" />
+    <Compile Include="Managers\BattleManager.cs" />
     <Compile Include="Managers\EconomyManager.cs" />
     <Compile Include="Managers\IManager.cs" />
     <Compile Include="Managers\MiningManager.cs" />
+    <Compile Include="Managers\WarManager.cs" />
     <Compile Include="PoliteBot.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="UnitModules\CapacityModule.cs" />
