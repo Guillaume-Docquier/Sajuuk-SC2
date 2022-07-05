@@ -166,15 +166,6 @@ public class GameConnection {
         await _proxy.Ping();
     }
 
-    public async Task<Response> SendRequest(Request request, bool logErrors = false) {
-        var response = await _proxy.SendRequest(request);
-        if (logErrors) {
-            LogResponseErrors(response);
-        }
-
-        return response;
-    }
-
     public async Task<ResponseQuery> SendQuery(RequestQuery query) {
         var response = await SendRequest(new Request
         {
@@ -284,7 +275,7 @@ public class GameConnection {
             // TODO GD This is questionable
             Controller.Obs = observation;
 
-            var actions = (await bot.OnFrame()).ToList();
+            var actions = bot.OnFrame().ToList();
             if (actions.Count > 0) {
                 var actionRequest = new Request
                 {
@@ -294,6 +285,8 @@ public class GameConnection {
 
                 await SendRequest(actionRequest);
             }
+
+            await SendRequest(Debugger.GetDebugRequest());
 
             var stepRequest = new Request
             {
@@ -321,5 +314,14 @@ public class GameConnection {
         {
             LeaveGame = new RequestLeaveGame()
         });
+    }
+
+    private async Task<Response> SendRequest(Request request, bool logErrors = false) {
+        var response = await _proxy.SendRequest(request);
+        if (logErrors) {
+            LogResponseErrors(response);
+        }
+
+        return response;
     }
 }

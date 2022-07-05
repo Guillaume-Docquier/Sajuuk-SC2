@@ -11,13 +11,13 @@ public abstract class PoliteBot: IBot {
 
     public abstract Race Race { get; }
 
-    public async Task<IEnumerable<Action>> OnFrame() {
+    public IEnumerable<Action> OnFrame() {
         Controller.OpenFrame();
 
         EnsureGreeting();
         EnsureGG();
 
-        await DoOnFrame();
+        DoOnFrame();
 
         return Controller.CloseFrame();
     }
@@ -44,5 +44,5 @@ public abstract class PoliteBot: IBot {
         }
     }
 
-    protected abstract Task DoOnFrame();
+    protected abstract void DoOnFrame();
 }

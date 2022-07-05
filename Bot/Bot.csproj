@@ -62,6 +62,7 @@
     <Compile Include="PoliteBot.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="UnitModules\CapacityModule.cs" />
+    <Compile Include="UnitModules\DebugLocationModule.cs" />
     <Compile Include="UnitModules\GasMiningModule.cs" />
     <Compile Include="UnitModules\IUnitModule.cs" />
     <Compile Include="UnitModules\MineralMiningModule.cs" />

@@ -22,11 +22,15 @@ public class MiningManager: IManager {
     private string MiningModuleTag => $"{_base.Tag}-mining";
     private string CapacityModuleTag => $"{_base.Tag}-capacity";
 
+    private string DebugLocationModuleTag => $"{_base.Tag}-debug-location";
+
     public int IdealAvailableCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count * MaxPerGas - _workers.Count;
     public int SaturatedAvailableCapacity => IdealAvailableCapacity + _minerals.Count; // Can allow 1 more per mineral patch
 
     public MiningManager(Unit hatchery) {
         _base = hatchery;
+        _base.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(_base));
+        _base.Modules[DebugLocationModuleTag].Execute();
 
         // TODO GD Maybe check that they're not already managed?
         _minerals = Controller.GetUnits(Controller.NeutralUnits, Units.MineralFields)
@@ -34,14 +38,21 @@ public class MiningManager: IManager {
             .Take(MaxMinerals)
             .ToList();
 
+        _minerals.ForEach(mineral => mineral.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(mineral)));
+
         _gasses = Controller.GetUnits(Controller.NeutralUnits, Units.GasGeysers)
             .Where(gas => gas.GetDistance(_base) < 10)
             .Take(MaxGas)
             .ToList();
+
+        _gasses.ForEach(gas => gas.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(gas)));
     }
 
     public void AssignWorkers(List<Unit> workers) {
-        workers.ForEach(worker => worker.AddDeathWatcher(this));
+        workers.ForEach(worker => {
+            worker.AddDeathWatcher(this);
+            worker.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(worker));
+        });
         _workers.AddRange(workers);
 
         var dispatched = 0;
@@ -79,13 +90,22 @@ public class MiningManager: IManager {
             newExtractors.ForEach(newExtractor => {
                 newExtractor.AddDeathWatcher(this);
                 newExtractor.Modules.Add(CapacityModuleTag, new CapacityModule(MaxPerGas));
+                newExtractor.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(newExtractor));
             });
 
             _extractors.AddRange(newExtractors);
         }
 
         // Get to work!
-        _workers.ForEach(worker => worker.Modules[MiningModuleTag].Execute());
+        _workers.ForEach(worker => {
+            worker.Modules[MiningModuleTag].Execute();
+            worker.Modules[DebugLocationModuleTag].Execute();
+        });
+
+        _base.Modules[DebugLocationModuleTag].Execute();
+        _minerals.ForEach(mineral => mineral.Modules[DebugLocationModuleTag].Execute());
+        _gasses.ForEach(gas => gas.Modules[DebugLocationModuleTag].Execute());
+        _extractors.ForEach(extractor => extractor.Modules[DebugLocationModuleTag].Execute());
     }
 
     public void ReportUnitDeath(Unit deadUnit) {

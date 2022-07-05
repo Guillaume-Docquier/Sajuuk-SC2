@@ -18,6 +18,7 @@ public class Unit: ICanDie {
     public readonly float HealthMax;
     public readonly float ShieldMax;
     public readonly int Supply;
+    public readonly float Radius;
 
     private SC2APIProtocol.Unit _original;
     public Alliance Alliance;
@@ -48,6 +49,7 @@ public class Unit: ICanDie {
         HealthMax = unit.HealthMax;
         ShieldMax = unit.ShieldMax;
         Supply = (int)_unitTypeData.FoodRequired;
+        Radius = unit.Radius;
 
         Update(unit, frame);
     }
