@@ -88,18 +88,19 @@ public static class Controller {
         Vespene = Obs.Observation.PlayerCommon.Vespene;
 
         if (Frame == 0) {
-            var resourceCenters = GetUnits(OwnedUnits, Units.ResourceCenters).ToList();
-            if (resourceCenters.Count > 0) {
-                var rcPosition = resourceCenters[0].Position;
+            var townHalls = GetUnits(OwnedUnits, Units.ResourceCenters).ToList();
+            if (townHalls.Count > 0) {
+                var townHall = townHalls[0];
 
                 foreach (var startLocation in GameInfo.StartRaw.StartLocations) {
                     var enemyLocation = new Vector3(startLocation.X, startLocation.Y, 0);
-                    var distance = Vector3.Distance(enemyLocation, rcPosition);
-                    if (distance > 30) {
+                    if (townHall.DistanceTo(enemyLocation) > 30) {
                         EnemyLocations.Add(enemyLocation);
                     }
                 }
             }
+
+            // TODO GD Find expansion slots
         }
     }
 

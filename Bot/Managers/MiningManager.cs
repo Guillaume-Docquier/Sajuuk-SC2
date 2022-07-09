@@ -35,7 +35,7 @@ public class MiningManager: IManager {
         _base.Modules[DebugLocationModuleTag].Execute();
 
         _minerals = Controller.GetUnits(Controller.NeutralUnits, Units.MineralFields)
-            .Where(mineral => mineral.GetDistance(_base) < MaxDistanceToExpand)
+            .Where(mineral => mineral.DistanceTo(_base) < MaxDistanceToExpand)
             .Where(mineral => !UnitUtils.IsResourceManaged(mineral))
             .Take(MaxMinerals)
             .ToList();
@@ -46,7 +46,7 @@ public class MiningManager: IManager {
         });
 
         _gasses = Controller.GetUnits(Controller.NeutralUnits, Units.GasGeysers)
-            .Where(gas => gas.GetDistance(_base) < MaxDistanceToExpand)
+            .Where(gas => gas.DistanceTo(_base) < MaxDistanceToExpand)
             .Where(gas => !UnitUtils.IsResourceManaged(gas))
             .Take(MaxGas)
             .ToList();
@@ -91,7 +91,7 @@ public class MiningManager: IManager {
         // Get new extractors
         if (_extractors.Count < _gasses.Count) {
             var newExtractors = Controller.GetUnits(Controller.NewOwnedUnits, Units.Extractor)
-                .Where(extractor => extractor.GetDistance(_base) < MaxDistanceToExpand)
+                .Where(extractor => extractor.DistanceTo(_base) < MaxDistanceToExpand)
                 .Take(MaxGas - _extractors.Count)
                 .ToList();
 
@@ -99,7 +99,7 @@ public class MiningManager: IManager {
                 newExtractor.AddDeathWatcher(this);
                 newExtractor.Modules.Add(CapacityModule.GlobalTag, new CapacityModule(MaxPerExtractor));
                 newExtractor.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(newExtractor));
-                CapacityModule.Assign(_gasses.First(gas => gas.GetDistance(newExtractor) < 1), newExtractor);
+                CapacityModule.Assign(_gasses.First(gas => gas.DistanceTo(newExtractor) < 1), newExtractor);
             });
 
             _extractors.AddRange(newExtractors);

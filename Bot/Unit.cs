@@ -71,11 +71,11 @@ public class Unit: ICanDie {
         LastSeen = frame;
     }
 
-    public double GetDistance(Unit otherUnit) {
+    public double DistanceTo(Unit otherUnit) {
         return Vector3.Distance(Position, otherUnit.Position);
     }
 
-    public double GetDistance(Vector3 location) {
+    public double DistanceTo(Vector3 location) {
         return Vector3.Distance(Position, location);
     }
 
