@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.UnitModules;
 using Bot.Wrapper;
 using SC2APIProtocol;
 using Action = SC2APIProtocol.Action;
@@ -295,14 +296,15 @@ public static class Controller {
         }
 
         if (buildingType == Units.Extractor) {
-            // TODO GD Exclude geysers with extractors on them
-            // TODO GD Smarter choice of gas location
-            var anyGas = GetUnits(NeutralUnits, Units.GasGeysers, onlyVisible: true).FirstOrDefault();
-            if (anyGas == null) {
+            var availableGas = GetUnits(NeutralUnits, Units.GasGeysers, onlyVisible: true)
+                .FirstOrDefault(gas => UnitUtils.IsResourceManaged(gas) && !UnitUtils.IsGasExploited(gas));
+
+            if (availableGas == null) {
                 return false;
             }
 
-            producer.PlaceExtractor(buildingType, anyGas);
+            producer.PlaceExtractor(buildingType, availableGas);
+            CapacityModule.Assign(availableGas, producer); // Assign the worker until extractor is spawned
         }
         else {
             var constructionSpot = FindConstructionSpot(buildingType);

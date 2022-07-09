@@ -6,9 +6,12 @@ namespace Bot.Managers;
 
 public class MiningManager: IManager {
     private const int MaxGas = 2;
-    private const int MaxPerGas = 3;
+    private const int MaxExtractorsPerGas = 1;
+    private const int MaxPerExtractor = 3;
     private const int MaxMinerals = 8;
     private const int IdealPerMinerals = 2;
+    private const int MaxPerMinerals = 2;
+    private const int MaxDistanceToExpand = 10;
 
     private readonly Unit _base;
 
@@ -20,11 +23,10 @@ public class MiningManager: IManager {
     private int _mineralRoundRobinIndex = 0;
 
     private string MiningModuleTag => $"{_base.Tag}-mining";
-    private string CapacityModuleTag => $"{_base.Tag}-capacity";
 
     private string DebugLocationModuleTag => $"{_base.Tag}-debug-location";
 
-    public int IdealAvailableCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count * MaxPerGas - _workers.Count;
+    public int IdealAvailableCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor - _workers.Count;
     public int SaturatedAvailableCapacity => IdealAvailableCapacity + _minerals.Count; // Can allow 1 more per mineral patch
 
     public MiningManager(Unit hatchery) {
@@ -32,20 +34,27 @@ public class MiningManager: IManager {
         _base.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(_base));
         _base.Modules[DebugLocationModuleTag].Execute();
 
-        // TODO GD Maybe check that they're not already managed?
         _minerals = Controller.GetUnits(Controller.NeutralUnits, Units.MineralFields)
-            .Where(mineral => mineral.GetDistance(_base) < 10)
+            .Where(mineral => mineral.GetDistance(_base) < MaxDistanceToExpand)
+            .Where(mineral => !UnitUtils.IsResourceManaged(mineral))
             .Take(MaxMinerals)
             .ToList();
 
-        _minerals.ForEach(mineral => mineral.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(mineral)));
+        _minerals.ForEach(mineral => {
+            mineral.Modules.Add(CapacityModule.GlobalTag, new CapacityModule(MaxPerMinerals)); // TODO GD Use the module to equalize workers
+            mineral.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(mineral));
+        });
 
         _gasses = Controller.GetUnits(Controller.NeutralUnits, Units.GasGeysers)
-            .Where(gas => gas.GetDistance(_base) < 10)
+            .Where(gas => gas.GetDistance(_base) < MaxDistanceToExpand)
+            .Where(gas => !UnitUtils.IsResourceManaged(gas))
             .Take(MaxGas)
             .ToList();
 
-        _gasses.ForEach(gas => gas.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(gas)));
+        _gasses.ForEach(gas => {
+            gas.Modules.Add(CapacityModule.GlobalTag, new CapacityModule(MaxExtractorsPerGas));
+            gas.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(gas));
+        });
     }
 
     public void AssignWorkers(List<Unit> workers) {
@@ -59,12 +68,11 @@ public class MiningManager: IManager {
 
         // Assign workers to gas
         _extractors.Where(extractor => extractor.IsOperational).ToList().ForEach(extractor => {
-            var extractorCapacityModule = extractor.Modules[CapacityModuleTag] as CapacityModule;
-            var availableCapacity = extractorCapacityModule!.AvailableCapacity;
+            var availableCapacity = CapacityModule.GetAvailableCapacity(extractor);
 
             var assignedWorkers = workers.Skip(dispatched).Take(availableCapacity).ToList();
 
-            extractorCapacityModule.Assign(assignedWorkers);
+            CapacityModule.Assign(extractor, assignedWorkers);
             assignedWorkers.ForEach(worker => worker.Modules.Add(MiningModuleTag, new GasMiningModule(worker, extractor)));
 
             dispatched += availableCapacity;
@@ -83,14 +91,15 @@ public class MiningManager: IManager {
         // Get new extractors
         if (_extractors.Count < _gasses.Count) {
             var newExtractors = Controller.GetUnits(Controller.NewOwnedUnits, Units.Extractor)
-                .Where(extractor => extractor.GetDistance(_base) < 10)
+                .Where(extractor => extractor.GetDistance(_base) < MaxDistanceToExpand)
                 .Take(MaxGas - _extractors.Count)
                 .ToList();
 
             newExtractors.ForEach(newExtractor => {
                 newExtractor.AddDeathWatcher(this);
-                newExtractor.Modules.Add(CapacityModuleTag, new CapacityModule(MaxPerGas));
+                newExtractor.Modules.Add(CapacityModule.GlobalTag, new CapacityModule(MaxPerExtractor));
                 newExtractor.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(newExtractor));
+                CapacityModule.Assign(_gasses.First(gas => gas.GetDistance(newExtractor) < 1), newExtractor);
             });
 
             _extractors.AddRange(newExtractors);
