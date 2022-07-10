@@ -72,4 +72,10 @@ public static class Colors {
     public static Color Yellow = new Color { R = 255, G = 255, B = 1 };
     public static Color Cyan = new Color { R = 1, G = 255, B = 255 };
     public static Color Magenta = new Color { R = 255, G = 1, B = 255 };
+
+    public static Color DarkGreen = new Color { R = 1, G = 100, B = 1 };
+    public static Color DarkBlue = new Color { R = 1, G = 1, B = 139 };
+    public static Color Maroon3 = new Color { R = 176, G = 48, B = 96 };
+    public static Color Burlywood = new Color { R = 222, G = 184, B = 135 };
+    public static Color Cornflower = new Color { R = 100, G = 149, B = 237 };
 }

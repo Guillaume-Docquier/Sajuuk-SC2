@@ -26,7 +26,7 @@ public static class BuildOrders {
         return new BuildOrder(new[]
         {
             new BuildStep(BuildType.Train, 13, Units.Overlord),
-            new BuildStep(BuildType.Build, 16, Units.Hatchery), // TODO GD Not placed on expand
+            new BuildStep(BuildType.Expand, 16, Units.Hatchery),
             new BuildStep(BuildType.Build, 18, Units.Extractor),
             new BuildStep(BuildType.Build, 17, Units.SpawningPool),
             new BuildStep(BuildType.Train, 19, Units.Overlord),
@@ -54,6 +54,7 @@ public static class BuildOrders {
             new BuildStep(BuildType.Train, 13, Units.Overlord),
             new BuildStep(BuildType.Build, 1, Units.Extractor),
             new BuildStep(BuildType.Train, 19, Units.Overlord),
+            new BuildStep(BuildType.Train, 19, Units.Overlord),
         });
     }
 }
@@ -63,4 +64,5 @@ public enum BuildType {
     Build,
     Research,
     UpgradeInto,
+    Expand,
 }

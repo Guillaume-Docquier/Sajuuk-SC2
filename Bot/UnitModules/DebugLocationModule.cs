@@ -1,17 +1,18 @@
 ﻿using Bot.Wrapper;
+using SC2APIProtocol;
 
 namespace Bot.UnitModules;
 
 public class DebugLocationModule: IUnitModule {
     private readonly Unit _unit;
+    private readonly Color _color;
 
-    public DebugLocationModule(Unit unit) {
+    public DebugLocationModule(Unit unit, Color color = null) {
         _unit = unit;
+        _color = color ?? Colors.White;
     }
 
     public void Execute() {
-        if (Units.MineralFields.Contains(_unit.UnitType) || Units.GasGeysers.Contains(_unit.UnitType)) {
-            //Debugger.AddSphere(_unit, _unit.Radius * 1.25f, Colors.Cyan);
-        }
+        Debugger.AddSphere(_unit, _color);
     }
 }

@@ -13,7 +13,7 @@ public static class MapAnalyzer {
     public const float GameGridCellRadius = GameGridCellWidth / 2;
 
     public static List<List<Unit>> ResourceClusters;
-    public static List<Vector3> ExpansionLocations;
+    public static List<Vector3> ExpandLocations;
 
     private const float ExpandSearchRadius = 5;
 
@@ -22,8 +22,8 @@ public static class MapAnalyzer {
         ResourceClusters = FindResourceClusters().ToList();
         Logger.Info("Found {0} resource clusters", ResourceClusters.Count);
 
-        ExpansionLocations = FindExpansionLocations().ToList();
-        Logger.Info("Found {0} expansions", ExpansionLocations.Count);
+        ExpandLocations = FindExpandLocations().ToList();
+        Logger.Info("Found {0} expansions", ExpandLocations.Count);
 
         IsInitialized = true;
     }
@@ -36,7 +36,7 @@ public static class MapAnalyzer {
         return Clustering.DBSCAN(resources, epsilon: 7, minPoints: 4);
     }
 
-    private static IEnumerable<Vector3> FindExpansionLocations() {
+    private static IEnumerable<Vector3> FindExpandLocations() {
         var expandLocations = new List<Vector3>();
 
         foreach (var resourceCluster in ResourceClusters) {

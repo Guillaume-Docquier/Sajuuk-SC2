@@ -29,6 +29,7 @@ public static class Controller {
     public static int AvailableMinerals;
     public static int AvailableVespene;
 
+    public static Unit StartingTownHall;
     public static readonly List<Vector3> EnemyLocations = new List<Vector3>();
     public static readonly List<string> ChatLog = new List<string>();
 
@@ -90,11 +91,11 @@ public static class Controller {
         if (Frame == 0) {
             var townHalls = GetUnits(OwnedUnits, Units.ResourceCenters).ToList();
             if (townHalls.Count > 0) {
-                var townHall = townHalls[0];
+                StartingTownHall = townHalls[0];
 
                 foreach (var startLocation in GameInfo.StartRaw.StartLocations) {
                     var enemyLocation = new Vector3(startLocation.X, startLocation.Y, 0);
-                    if (townHall.DistanceTo(enemyLocation) > 30) {
+                    if (StartingTownHall.DistanceTo(enemyLocation) > 30) {
                         EnemyLocations.Add(enemyLocation);
                     }
                 }
@@ -226,7 +227,7 @@ public static class Controller {
 
         var resourceCenters = GetUnits(OwnedUnits, Units.ResourceCenters).ToList();
         if (resourceCenters.Count > 0)
-            startingSpot = resourceCenters[0].Position;
+            startingSpot = StartingTownHall.Position;
         else {
             Logger.Error("Unable to construct: {0}. No resource center was found.", GameData.GetUnitTypeData(buildingType).Name);
 
@@ -283,6 +284,8 @@ public static class Controller {
                 return ResearchUpgrade(buildStep.UnitOrUpgradeType);
             case BuildType.UpgradeInto:
                 return UpgradeInto(buildStep.UnitOrUpgradeType);
+            case BuildType.Expand:
+                return PlaceExpand(buildStep.UnitOrUpgradeType);
         }
 
         return false;
@@ -309,13 +312,13 @@ public static class Controller {
         return true;
     }
 
-    public static bool PlaceBuilding(uint buildingType) {
+    public static bool PlaceBuilding(uint buildingType, Vector3 location = default) {
         var producer = GetAvailableProducer(buildingType);
 
-        return PlaceBuilding(buildingType, producer);
+        return PlaceBuilding(buildingType, producer, location);
     }
 
-    public static bool PlaceBuilding(uint buildingType, Unit producer) {
+    public static bool PlaceBuilding(uint buildingType, Unit producer, Vector3 location = default) {
         var buildingTypeData = GameData.GetUnitTypeData(buildingType);
         if (producer == null || !CanAfford(buildingTypeData) || !IsUnlocked(buildingType)) {
             return false;
@@ -331,6 +334,13 @@ public static class Controller {
 
             producer.PlaceExtractor(buildingType, availableGas);
             CapacityModule.Assign(availableGas, producer); // Assign the worker until extractor is spawned
+        }
+        else if (location != default) {
+            if (!CanPlace(buildingType, location)) {
+                return false;
+            }
+
+            producer.PlaceBuilding(buildingType, location);
         }
         else {
             var constructionSpot = FindConstructionSpot(buildingType);
@@ -382,6 +392,19 @@ public static class Controller {
         AvailableVespene -= buildingTypeData.VespeneCost;
 
         return true;
+    }
+
+    public static bool PlaceExpand(uint buildingType) {
+        if (!MapAnalyzer.IsInitialized) {
+            return false;
+        }
+
+        // TODO GD Should be based on shortest path, not distance
+        var expandLocation = MapAnalyzer.ExpandLocations
+            .OrderBy(expandLocation => StartingTownHall.DistanceTo(expandLocation))
+            .First(expandLocation => CanPlace(buildingType, expandLocation));
+
+        return PlaceBuilding(buildingType, expandLocation);
     }
 
     public static IList<Unit> GetAvailableLarvae() {
