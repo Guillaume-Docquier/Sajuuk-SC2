@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Abilities.cs" />
     <Compile Include="BuildOrders.cs" />
+    <Compile Include="Clustering.cs" />
     <Compile Include="Controller\Controller.cs" />
     <Compile Include="Controller\UnitsTracker.cs" />
     <Compile Include="ICanDie.cs" />
@@ -59,6 +60,7 @@
     <Compile Include="Managers\IManager.cs" />
     <Compile Include="Managers\MiningManager.cs" />
     <Compile Include="Managers\WarManager.cs" />
+    <Compile Include="MapAnalyzer.cs" />
     <Compile Include="PoliteBot.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="UnitModules\CapacityModule.cs" />
@@ -68,8 +70,10 @@
     <Compile Include="UnitModules\MineralMiningModule.cs" />
     <Compile Include="UnitUtils.cs" />
     <Compile Include="Upgrades.cs" />
+    <Compile Include="Vector3Extensions.cs" />
     <Compile Include="Wrapper\Debugger.cs" />
     <Compile Include="Wrapper\GameData.cs" />
+    <Compile Include="Wrapper\RequestBuilder.cs" />
     <Compile Include="ZergBot.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Protocol\Common.cs" />

@@ -26,8 +26,8 @@ public static class Controller {
     public static uint CurrentSupply;
     public static uint MaxSupply;
 
-    public static int Minerals;
-    public static int Vespene;
+    public static int AvailableMinerals;
+    public static int AvailableVespene;
 
     public static readonly List<Vector3> EnemyLocations = new List<Vector3>();
     public static readonly List<string> ChatLog = new List<string>();
@@ -84,8 +84,8 @@ public static class Controller {
         CurrentSupply = Obs.Observation.PlayerCommon.FoodUsed;
         MaxSupply = Obs.Observation.PlayerCommon.FoodCap;
 
-        Minerals = Obs.Observation.PlayerCommon.Minerals;
-        Vespene = Obs.Observation.PlayerCommon.Vespene;
+        AvailableMinerals = Obs.Observation.PlayerCommon.Minerals;
+        AvailableVespene = Obs.Observation.PlayerCommon.Vespene;
 
         if (Frame == 0) {
             var townHalls = GetUnits(OwnedUnits, Units.ResourceCenters).ToList();
@@ -148,9 +148,8 @@ public static class Controller {
         return counter;
     }
 
-    // TODO GD Get rid?
-    private static bool CanPlace(uint unitType, Vector3 targetPos) {
-        //Note: this is a blocking call! Use it sparingly, or you will slow down your execution significantly!
+    // This is a blocking call! Use it sparingly, or you will slow down your execution significantly!
+    public static bool CanPlace(uint unitType, Vector3 targetPos) {
         var abilityId = GameData.GetUnitTypeData(unitType).AbilityId;
 
         var queryBuildingPlacement = new RequestQueryBuildingPlacement
@@ -171,7 +170,33 @@ public static class Controller {
 
         var result = Program.GameConnection.SendQuery(requestQuery.Query);
         if (result.Result.Placements.Count > 0) {
-            return (result.Result.Placements[0].Result == ActionResult.Success);
+            if (result.Result.Placements.Count > 1) {
+                Logger.Warning("[CanPlace] Expected 1 placement, found {0}", result.Result.Placements.Count);
+            }
+
+            var actionResult = result.Result.Placements[0].Result;
+            if (actionResult == ActionResult.NotSupported) {
+                Debugger.AddSquare(targetPos.ToPoint(), 1f, Colors.Black);
+            }
+            else if (actionResult == ActionResult.CantBuildLocationInvalid) {
+                Debugger.AddSquare(targetPos.ToPoint(), 1f, Colors.Red);
+            }
+            else if (actionResult == ActionResult.CantBuildTooCloseToResources) {
+                Debugger.AddSquare(targetPos.ToPoint(), 1f, Colors.Cyan);
+            }
+            else if (actionResult == ActionResult.Success) {
+                Debugger.AddSquare(targetPos.ToPoint(), 1f, Colors.Green);
+            }
+            else {
+                Logger.Warning("[CanPlace] Unexpected placement result: {0}", actionResult);
+                Debugger.AddSquare(targetPos.ToPoint(), 1f, Colors.Magenta);
+            }
+
+            return actionResult == ActionResult.Success;
+        }
+
+        if (result.Result.Placements.Count > 1) {
+            Logger.Warning("[CanPlace] Expected 1 placement, found 0");
         }
 
         return false;
@@ -179,7 +204,7 @@ public static class Controller {
 
     // TODO GD Get rid?
     private static bool IsInRange(Vector3 targetPosition, List<Unit> units, float maxDistance) {
-        return (GetFirstInRange(targetPosition, units, maxDistance) != null);
+        return GetFirstInRange(targetPosition, units, maxDistance) != null;
     }
 
     // TODO GD Get rid?
@@ -278,8 +303,8 @@ public static class Controller {
 
         producer.TrainUnit(unitType);
 
-        Minerals -= unitTypeData.MineralCost;
-        Vespene -= unitTypeData.VespeneCost;
+        AvailableMinerals -= unitTypeData.MineralCost;
+        AvailableVespene -= unitTypeData.VespeneCost;
 
         return true;
     }
@@ -313,8 +338,8 @@ public static class Controller {
             producer.PlaceBuilding(buildingType, constructionSpot);
         }
 
-        Minerals -= buildingTypeData.MineralCost;
-        Vespene -= buildingTypeData.VespeneCost;
+        AvailableMinerals -= buildingTypeData.MineralCost;
+        AvailableVespene -= buildingTypeData.VespeneCost;
 
         return true;
     }
@@ -333,8 +358,8 @@ public static class Controller {
 
         producer.ResearchUpgrade(upgradeType);
 
-        Minerals -= researchTypeData.MineralCost;
-        Vespene -= researchTypeData.VespeneCost;
+        AvailableMinerals -= researchTypeData.MineralCost;
+        AvailableVespene -= researchTypeData.VespeneCost;
 
         return true;
     }
@@ -353,8 +378,8 @@ public static class Controller {
 
         producer.UpgradeInto(buildingType);
 
-        Minerals -= buildingTypeData.MineralCost;
-        Vespene -= buildingTypeData.VespeneCost;
+        AvailableMinerals -= buildingTypeData.MineralCost;
+        AvailableVespene -= buildingTypeData.VespeneCost;
 
         return true;
     }
@@ -401,7 +426,7 @@ public static class Controller {
 
     public static bool CanAfford(int mineralCost, int vespeneCost)
     {
-        return Minerals >= mineralCost && Vespene >= vespeneCost;
+        return AvailableMinerals >= mineralCost && AvailableVespene >= vespeneCost;
     }
 
     public static bool IsUnlocked(uint unitType) {

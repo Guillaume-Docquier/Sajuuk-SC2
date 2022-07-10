@@ -1,76 +1,75 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using SC2APIProtocol;
 
 namespace Bot.Wrapper;
 
 public static class Debugger {
-    private static readonly List<DebugText> _debugTexts = new List<DebugText>();
-    private static readonly List<DebugSphere> _debugSpheres = new List<DebugSphere>();
+    private const float CreepHeight = 0.008f;
 
+    private static readonly List<DebugText> DebugTexts = new List<DebugText>();
+    private static readonly List<DebugSphere> DebugSpheres = new List<DebugSphere>();
+    private static readonly List<DebugBox> DebugBoxes = new List<DebugBox>();
+
+    // TODO GD Add some optional persistence to the debug elements otherwise they last only 1 frame
     public static Request GetDebugRequest() {
-        var request = new Request
-        {
-            Debug = new RequestDebug
-            {
-                Debug =
-                {
-                    new DebugCommand
-                    {
-                        Draw = new DebugDraw
-                        {
-                            Text = { _debugTexts },
-                            Spheres = { _debugSpheres },
-                        },
-                    },
-                }
-            }
-        };
+        var request = RequestBuilder.DebugRequest(DebugTexts, DebugSpheres, DebugBoxes);
 
-        _debugTexts.Clear();
-        _debugSpheres.Clear();
+        DebugTexts.Clear();
+        DebugSpheres.Clear();
+        DebugBoxes.Clear();
 
         return request;
     }
 
     public static void AddDebugText(string text) {
-        _debugTexts.Add(new DebugText { Text = text, Size = 18 });
+        DebugTexts.Add(new DebugText { Text = text, Size = 18 });
     }
 
     public static void AddDebugText(IEnumerable<string> texts) {
-        _debugTexts.AddRange(texts.Select(text => new DebugText { Text = text, Size = 18 }));
+        DebugTexts.AddRange(texts.Select(text => new DebugText { Text = text, Size = 18 }));
     }
 
     public static void AddSphere(Unit unit, Color color) {
-        _debugSpheres.Add(
+        AddSphere(
+            new Point { X = unit.Position.X, Y = unit.Position.Y, Z = unit.Position.Z + CreepHeight },
+            unit.Radius * 1.25f,
+            color
+        );
+    }
+
+    public static void AddSphere(Point point, float radius, Color color) {
+        DebugSpheres.Add(
             new DebugSphere
             {
-                Color = color, // TODO GD Doesn't work, always white
-                P = new Point { X = unit.Position.X, Y = unit.Position.Y, Z = unit.Position.Z },
-                R = unit.Radius * 1.25f,
+                P = point,
+                R = radius,
+                Color = color,
             }
         );
     }
 
-    public static void AddSphere(Vector3 position, float radius, Color color) {
-        _debugSpheres.Add(
-            new DebugSphere
+    public static void AddSquare(Point centerPoint, float width, Color color) {
+        DebugBoxes.Add(
+            new DebugBox
             {
-                Color = color, // TODO GD Doesn't work, always white
-                P = new Point { X = position.X, Y = position.Y },
-                R = radius,
+                Min = new Point { X = centerPoint.X - width / 2, Y = centerPoint.Y - width / 2, Z = centerPoint.Z + CreepHeight },
+                Max = new Point { X = centerPoint.X + width / 2, Y = centerPoint.Y + width / 2, Z = centerPoint.Z + CreepHeight },
+                Color = color,
             }
         );
     }
 }
 
 public static class Colors {
-    public static Color Red = new Color { R = 255, G = 0, B = 0 };
-    public static Color Green = new Color { R = 0, G = 255, B = 0 };
-    public static Color Blue = new Color { R = 0, G = 0, B = 255 };
+    public static Color White = new Color { R = 1, G = 1, B = 1 };
+    public static Color Black = new Color { R = 255, G = 255, B = 255 };
 
-    public static Color Yellow = new Color { R = 255, G = 255, B = 0 };
-    public static Color Cyan = new Color { R = 0, G = 255, B = 255 };
-    public static Color Magenta = new Color { R = 255, G = 0, B = 255 };
+    public static Color Red = new Color { R = 255, G = 1, B = 1 };
+    public static Color Green = new Color { R = 1, G = 255, B = 1 };
+    public static Color Blue = new Color { R = 1, G = 1, B = 255 };
+
+    public static Color Yellow = new Color { R = 255, G = 255, B = 1 };
+    public static Color Cyan = new Color { R = 1, G = 255, B = 255 };
+    public static Color Magenta = new Color { R = 255, G = 1, B = 255 };
 }

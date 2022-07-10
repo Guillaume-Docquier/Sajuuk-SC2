@@ -272,31 +272,26 @@ public class GameConnection {
                 continue;
             }
 
-            // TODO GD This is questionable
+            // TODO GD Init code (controller & map analysis)
+            // TODO GD Tick controller
+            // TODO GD Tick bot
             Controller.Obs = observation;
 
             var actions = bot.OnFrame().ToList();
-            if (actions.Count > 0) {
-                var actionRequest = new Request
-                {
-                    Action = new RequestAction()
-                };
-                actionRequest.Action.Actions.AddRange(actions);
 
-                await SendRequest(actionRequest);
+            // For some reason it doesn't work before a few seconds after the game starts
+            // Also, this might take a couple of frames, let the bot start the game
+            // TODO GD Precompute this and save it
+            if (Math.Abs(Controller.Frame - Controller.FramesPerSecond * 5) < 1) {
+                MapAnalyzer.Init();
+            }
+
+            if (actions.Count > 0) {
+                await SendRequest(RequestBuilder.ActionRequest(actions));
             }
 
             await SendRequest(Debugger.GetDebugRequest());
-
-            var stepRequest = new Request
-            {
-                Step = new RequestStep
-                {
-                    Count = StepSize
-                }
-            };
-
-            await SendRequest(stepRequest);
+            await SendRequest(RequestBuilder.StepRequest(StepSize));
         }
     }
 

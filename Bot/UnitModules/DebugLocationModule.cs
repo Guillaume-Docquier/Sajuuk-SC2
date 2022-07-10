@@ -10,6 +10,8 @@ public class DebugLocationModule: IUnitModule {
     }
 
     public void Execute() {
-        Debugger.AddSphere(_unit, Colors.Cyan);
+        if (Units.MineralFields.Contains(_unit.UnitType) || Units.GasGeysers.Contains(_unit.UnitType)) {
+            //Debugger.AddSphere(_unit, _unit.Radius * 1.25f, Colors.Cyan);
+        }
     }
 }
