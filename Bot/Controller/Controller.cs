@@ -100,8 +100,6 @@ public static class Controller {
                     }
                 }
             }
-
-            // TODO GD Find expansion slots
         }
     }
 
@@ -325,6 +323,7 @@ public static class Controller {
         }
 
         if (buildingType == Units.Extractor) {
+            // TODO GD Prioritize the main base, get a nearby worker
             var availableGas = GetUnits(NeutralUnits, Units.GasGeysers, onlyVisible: true)
                 .FirstOrDefault(gas => UnitUtils.IsResourceManaged(gas) && !UnitUtils.IsGasExploited(gas));
 

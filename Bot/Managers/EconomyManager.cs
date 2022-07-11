@@ -11,11 +11,11 @@ public class EconomyManager: IManager {
     private readonly Dictionary<ulong, MiningManager> _baseDispatch = new Dictionary<ulong, MiningManager>();
     private readonly List<Color> _expandColors = new List<Color>
     {
-        Colors.DarkGreen,
-        Colors.DarkBlue,
         Colors.Maroon3,
         Colors.Burlywood,
         Colors.Cornflower,
+        Colors.DarkGreen,
+        Colors.DarkBlue,
     };
 
     public EconomyManager() {
@@ -61,7 +61,7 @@ public class EconomyManager: IManager {
         if (newWorkers.Any()) {
             newWorkers.ForEach(worker => worker.AddDeathWatcher(this));
             foreach (var miningManager in _miningManagers) {
-                var availableCapacity = miningManager.IdealAvailableCapacity;
+                var availableCapacity = miningManager.IdealAvailableCapacity; // TODO GD Handle saturation
                 var workersToDispatch = newWorkers.Skip(dispatched).Take(availableCapacity).ToList(); // TODO GD Is there a better way to do this?
                 workersToDispatch.ForEach(worker => _workerDispatch[worker.Tag] = miningManager);
                 miningManager.AssignWorkers(workersToDispatch);

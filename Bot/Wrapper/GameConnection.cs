@@ -282,7 +282,6 @@ public class GameConnection {
             // For some reason it doesn't work before a few seconds after the game starts
             // Also, this might take a couple of frames, let the bot start the game
             // TODO GD Precompute this and save it
-            // TODO GD Sometimes still fails (in debug)
             if (Controller.Frame > Controller.FramesPerSecond * 5 && !MapAnalyzer.IsInitialized) {
                 MapAnalyzer.Init();
             }

@@ -106,7 +106,7 @@ public class MiningManager: IManager {
                 CapacityModule.Assign(_gasses.First(gas => gas.DistanceTo(newExtractor) < 1), newExtractor);
             });
 
-            _extractors.AddRange(newExtractors);
+            _extractors.AddRange(newExtractors); // TODO GD Reassign workers to them
         }
 
         // Get to work!

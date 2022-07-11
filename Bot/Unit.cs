@@ -12,15 +12,14 @@ public class Unit: ICanDie {
     private readonly List<IWatchUnitsDie> _deathWatchers = new List<IWatchUnitsDie>();
     private readonly UnitTypeData _unitTypeData;
 
-    public readonly string Name;
-    public readonly ulong Tag;
-    public readonly uint UnitType; // TODO GD Does this change when morphing?
-    public readonly float HealthMax;
-    public readonly float ShieldMax;
-    public readonly int Supply;
-    public readonly float Radius;
-
-    private SC2APIProtocol.Unit _original;
+    public string Name;
+    public ulong Tag;
+    public uint UnitType;
+    public float HealthMax;
+    public float ShieldMax;
+    public int Supply;
+    public float Radius;
+    public SC2APIProtocol.Unit RawUnitData;
     public Alliance Alliance;
     public Vector3 Position;
     public float Health;
@@ -30,18 +29,23 @@ public class Unit: ICanDie {
     public bool IsVisible;
     public int IdealWorkerCount;
     public int AssignedWorkers;
-    public bool IsCargoFull;
     public ulong LastSeen;
 
     public ulong DeathDelay = 1;
 
     public readonly Dictionary<string, IUnitModule> Modules = new Dictionary<string, IUnitModule>();
 
-    public float Integrity => (_original.Health + _original.Shield) / (_original.HealthMax + _original.ShieldMax);
+    public float Integrity => (RawUnitData.Health + RawUnitData.Shield) / (RawUnitData.HealthMax + RawUnitData.ShieldMax);
     public bool IsOperational => _buildProgress >= 1;
 
     public Unit(SC2APIProtocol.Unit unit, ulong frame) {
         _unitTypeData = GameData.GetUnitTypeData(unit.UnitType);
+
+        Update(unit, frame);
+    }
+
+    public void Update(SC2APIProtocol.Unit unit, ulong frame) {
+        RawUnitData = unit;
 
         Name = _unitTypeData.Name;
         Tag = unit.Tag;
@@ -50,12 +54,6 @@ public class Unit: ICanDie {
         ShieldMax = unit.ShieldMax;
         Supply = (int)_unitTypeData.FoodRequired;
         Radius = unit.Radius;
-
-        Update(unit, frame);
-    }
-
-    public void Update(SC2APIProtocol.Unit unit, ulong frame) {
-        _original = unit;
 
         Alliance = unit.Alliance; // Alliance can probably change if being mind controlled?
         Position = new Vector3(unit.Pos.X, unit.Pos.Y, unit.Pos.Z);
@@ -66,8 +64,6 @@ public class Unit: ICanDie {
         IsVisible = unit.DisplayType == DisplayType.Visible;
         IdealWorkerCount = unit.IdealHarvesters;
         AssignedWorkers = unit.AssignedHarvesters;
-        // TODO GD This doesn't work!? Both are always 0
-        IsCargoFull = unit.CargoSpaceTaken == unit.CargoSpaceMax;
         LastSeen = frame;
     }
 

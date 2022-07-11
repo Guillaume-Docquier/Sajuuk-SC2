@@ -28,9 +28,6 @@ public class UnitsTracker {
         NewOwnedUnits.Clear();
         DeadOwnedUnits.Clear();
 
-        var newNeutralUnits = new List<Unit>();
-        var deadNeutralUnits = new List<Unit>();
-
         // Find new units and update existing ones
         newRawUnits.ForEach(newRawUnit => {
             // Existing unit, update it
@@ -45,7 +42,22 @@ public class UnitsTracker {
                     NewOwnedUnits.Add(newUnit);
                 }
                 else if (newUnit.Alliance == Alliance.Neutral) {
-                    newNeutralUnits.Add(newUnit);
+                    var equivalentUnit = _unitsMap
+                        .Select(kv => kv.Value)
+                        .FirstOrDefault(unit => unit.Position == newUnit.Position);
+
+                    // Resources have 2 units representing them
+                    // The snapshot version and the real version
+                    // The real version is only available when visible
+                    // The snapshot is only available when not visible
+                    if (equivalentUnit != default) {
+                        _unitsMap.Remove(equivalentUnit.Tag);
+                        equivalentUnit.Update(newRawUnit, frame);
+                        newUnit = equivalentUnit;
+                    }
+                    else {
+                        Logger.Warning("New neutral unit: {0}", newUnit.Name);
+                    }
                 }
 
                 // New unit
@@ -53,7 +65,6 @@ public class UnitsTracker {
             }
         });
 
-        // TODO GD Minerals and gasses can also 'die' (deplete)
         // Find dead units
         foreach (var unit in _unitsMap.Select(unit => unit.Value).ToList()) {
             if (unit.IsDead(frame)) {
@@ -62,9 +73,8 @@ public class UnitsTracker {
                     DeadOwnedUnits.Add(unit);
                 }
                 else if (unit.Alliance == Alliance.Neutral) {
-                    // Neutral units change tag when revealed...
-                    // Try to update them and their tag based on the position? Or just refresh whoever is watching it?
-                    deadNeutralUnits.Add(unit);
+                    // TODO GD Handle neutral units dying
+                    Logger.Warning("Neutral unit died: {0}", unit.Name);
                 }
 
                 // Dead unit

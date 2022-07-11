@@ -121,7 +121,7 @@ internal static class Units {
     public const uint Corruptor = 112;
     public const uint BroodLordCocoon = 113;
     public const uint BroodLord = 114;
-    public const uint Broodling = 289;
+    public const uint Broodling = 289; // TODO GD Which one is it?
     public const uint BroodlingEscort = 143; // TODO GD Which one is it?
     public const uint BanelingBurrowed = 115;
     public const uint DroneBurrowed = 116;
