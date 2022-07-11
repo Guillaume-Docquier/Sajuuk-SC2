@@ -57,6 +57,19 @@ public static class BuildOrders {
             new BuildStep(BuildType.Train, 19, Units.Overlord),
         });
     }
+
+    public static BuildOrder TestExpands() {
+        return new BuildOrder(new[]
+        {
+            new BuildStep(BuildType.Train, 13, Units.Overlord),
+            new BuildStep(BuildType.Build, 16, Units.Extractor),
+            new BuildStep(BuildType.Expand, 16, Units.Hatchery),
+            new BuildStep(BuildType.Build, 20, Units.Extractor, 3),
+            new BuildStep(BuildType.Train, 19, Units.Overlord),
+            new BuildStep(BuildType.Expand, 24, Units.Hatchery),
+            new BuildStep(BuildType.Train, 30, Units.Overlord, 2),
+        });
+    }
 }
 
 public enum BuildType {

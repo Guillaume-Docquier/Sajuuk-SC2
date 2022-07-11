@@ -95,4 +95,5 @@ public static class Colors {
     public static Color Maroon3 = new Color { R = 176, G = 48, B = 96 };
     public static Color Burlywood = new Color { R = 222, G = 184, B = 135 };
     public static Color Cornflower = new Color { R = 100, G = 149, B = 237 };
+    public static Color Lime = new Color { R = 175, G = 255, B = 1 };
 }

@@ -19,6 +19,6 @@ public class MineralMiningModule: IUnitModule {
             _worker.Gather(_targetMineral);
         }
 
-        Debugger.AddLine(_worker.Position, _targetMineral.Position, Colors.Magenta);
+        Debugger.AddLine(_worker.Position, _targetMineral.Position, Colors.Cyan);
     }
 }

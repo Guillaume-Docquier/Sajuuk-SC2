@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Bot.Managers;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -10,7 +9,7 @@ namespace Bot;
 using BuildOrder = Queue<BuildOrders.BuildStep>;
 
 public class ZergBot: PoliteBot {
-    private readonly BuildOrder _buildOrder = BuildOrders.TwoBasesRoach();
+    private readonly BuildOrder _buildOrder = BuildOrders.TestGasMining();
     private readonly List<IManager> _managers = new List<IManager>();
 
     public override string Name => "ZergBot";
@@ -18,7 +17,6 @@ public class ZergBot: PoliteBot {
     public override Race Race => Race.Zerg;
 
     protected override void DoOnFrame() {
-        // TODO GD Replace this with some init code?
         if (Controller.Frame == 0) {
             _managers.Add(new EconomyManager());
             _managers.Add(new WarManager());

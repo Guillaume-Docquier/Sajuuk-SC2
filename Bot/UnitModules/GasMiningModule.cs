@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Bot.Wrapper;
 
 namespace Bot.UnitModules;
 
@@ -22,5 +23,7 @@ public class GasMiningModule: IUnitModule {
         if (_worker.Orders.Count == 0 || _worker.Orders.Count == 1 && _worker.Orders.Any(order => order.AbilityId == Abilities.DroneGather && order.TargetUnitTag != _targetGasExtractor.Tag)) {
             _worker.Gather(_targetGasExtractor);
         }
+
+        Debugger.AddLine(_worker.Position, _targetGasExtractor.Position, Colors.Lime);
     }
 }

@@ -15,6 +15,7 @@ public static class Controller {
     private static readonly List<Action> Actions = new List<Action>();
     private static readonly Random Random = new Random();
     public const double FramesPerSecond = 22.4;
+    public const float ExpandIsTakenRadius = 4f;
 
     private static UnitsTracker _unitsTracker;
 
@@ -402,6 +403,7 @@ public static class Controller {
         // TODO GD Should be based on shortest path, not distance
         var expandLocation = MapAnalyzer.ExpandLocations
             .OrderBy(expandLocation => StartingTownHall.DistanceTo(expandLocation))
+            .Where(expandLocation => !GetUnits(OwnedUnits, Units.Hatchery).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius)) // Ignore expands that are taken
             .First(expandLocation => CanPlace(buildingType, expandLocation));
 
         return PlaceBuilding(buildingType, expandLocation);

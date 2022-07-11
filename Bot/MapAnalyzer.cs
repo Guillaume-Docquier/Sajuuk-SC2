@@ -19,16 +19,18 @@ public static class MapAnalyzer {
 
     // The controller must be initialized first
     public static void Init() {
+        Logger.Info("Initializing MapAnalyzer");
+
         ResourceClusters = FindResourceClusters().ToList();
         Logger.Info("Found {0} resource clusters", ResourceClusters.Count);
 
         ExpandLocations = FindExpandLocations().ToList();
-        // TODO GD Uncomment after adding logic of skipping over expands taken
-        // ExpandLocations.Add(Controller.StartingTownHall.Position); // Not found because already built
-        Logger.Info("Found {0} expansions", ExpandLocations.Count);
+        ExpandLocations.Add(Controller.StartingTownHall.Position); // Not found because already built
+        Logger.Info("Found {0} expand locations", ExpandLocations.Count);
 
-        // TODO GD Remove '- 1' after adding logic of skipping over expands taken
-        IsInitialized = ExpandLocations.Count == ResourceClusters.Count - 1;
+        IsInitialized = ExpandLocations.Count == ResourceClusters.Count;
+
+        Logger.Info("{0}", IsInitialized ? "Success!" : "Failed...");
     }
 
     private static IEnumerable<List<Unit>> FindResourceClusters() {
