@@ -283,12 +283,22 @@ public class GameConnection {
             // Also, this might take a couple of frames, let the bot start the game
             // TODO GD Precompute this and save it
             // TODO GD Sometimes still fails (in debug)
-            if (Math.Abs(Controller.Frame - Controller.FramesPerSecond * 5) < 1) {
+            if (Controller.Frame > Controller.FramesPerSecond * 5 && !MapAnalyzer.IsInitialized) {
                 MapAnalyzer.Init();
             }
 
             if (actions.Count > 0) {
-                await SendRequest(RequestBuilder.ActionRequest(actions));
+                var response = await SendRequest(RequestBuilder.ActionRequest(actions));
+
+                var unsuccessfulActions = actions
+                    .Zip(response.Action.Result, (action, result) => (action, result))
+                    .Where(action => action.result != ActionResult.Success)
+                    .Select(action => $"({action.action.ActionRaw.UnitCommand.AbilityId}, {action.result})")
+                    .ToList();
+
+                if (unsuccessfulActions.Count > 0) {
+                    Logger.Warning("Unsuccessful actions: [{0}]", string.Join("; ", unsuccessfulActions));
+                }
             }
 
             await SendRequest(Debugger.GetDebugRequest());

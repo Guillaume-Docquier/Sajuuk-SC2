@@ -28,6 +28,9 @@ public class UnitsTracker {
         NewOwnedUnits.Clear();
         DeadOwnedUnits.Clear();
 
+        var newNeutralUnits = new List<Unit>();
+        var deadNeutralUnits = new List<Unit>();
+
         // Find new units and update existing ones
         newRawUnits.ForEach(newRawUnit => {
             // Existing unit, update it
@@ -40,6 +43,9 @@ public class UnitsTracker {
                 // New owned unit
                 if (newUnit.Alliance == Alliance.Self) {
                     NewOwnedUnits.Add(newUnit);
+                }
+                else if (newUnit.Alliance == Alliance.Neutral) {
+                    newNeutralUnits.Add(newUnit);
                 }
 
                 // New unit
@@ -54,6 +60,11 @@ public class UnitsTracker {
                 // Dead owned unit
                 if (unit.Alliance == Alliance.Self) {
                     DeadOwnedUnits.Add(unit);
+                }
+                else if (unit.Alliance == Alliance.Neutral) {
+                    // Neutral units change tag when revealed...
+                    // Try to update them and their tag based on the position? Or just refresh whoever is watching it?
+                    deadNeutralUnits.Add(unit);
                 }
 
                 // Dead unit

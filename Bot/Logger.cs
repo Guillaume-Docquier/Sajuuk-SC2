@@ -36,14 +36,14 @@ public static class Logger {
     }
 
     public static void Info(string line, params object[] parameters) {
-        WriteLine("INFO", line, parameters);
+        WriteLine("INFO", $"[{Controller.Frame}] " + line, parameters);
     }
 
     public static void Warning(string line, params object[] parameters) {
-        WriteLine("WARNING", line, parameters);
+        WriteLine("WARNING", $"[{Controller.Frame}] " + line, parameters);
     }
 
     public static void Error(string line, params object[] parameters) {
-        WriteLine("ERROR", line, parameters);
+        WriteLine("ERROR", $"[{Controller.Frame}] " + line, parameters);
     }
 }

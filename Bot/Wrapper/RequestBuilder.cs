@@ -24,10 +24,9 @@ public static class RequestBuilder {
         };
     }
 
-    public static Request DebugRequest(IEnumerable<DebugText> debugTexts, IEnumerable<DebugSphere> debugSpheres, IEnumerable<DebugBox> debugBoxes) {
+    public static Request DebugRequest(IEnumerable<DebugText> debugTexts, IEnumerable<DebugSphere> debugSpheres, IEnumerable<DebugBox> debugBoxes, IEnumerable<DebugLine> debugLines) {
         return new Request
         {
-
             Debug = new RequestDebug
             {
                 Debug =
@@ -38,7 +37,8 @@ public static class RequestBuilder {
                         {
                             Text = { debugTexts },
                             Spheres = { debugSpheres },
-                            Boxes = { debugBoxes }
+                            Boxes = { debugBoxes },
+                            Lines = { debugLines },
                         },
                     },
                 }

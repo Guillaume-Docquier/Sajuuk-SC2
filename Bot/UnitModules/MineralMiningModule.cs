@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Bot.Wrapper;
 
 namespace Bot.UnitModules;
 
@@ -17,5 +18,7 @@ public class MineralMiningModule: IUnitModule {
         if (_worker.Orders.Count == 0 || _worker.Orders.Count == 1 && _worker.Orders.Any(order => order.AbilityId == Abilities.DroneGather && order.TargetUnitTag != _targetMineral.Tag)) {
             _worker.Gather(_targetMineral);
         }
+
+        Debugger.AddLine(_worker.Position, _targetMineral.Position, Colors.Magenta);
     }
 }

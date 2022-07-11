@@ -23,9 +23,12 @@ public static class MapAnalyzer {
         Logger.Info("Found {0} resource clusters", ResourceClusters.Count);
 
         ExpandLocations = FindExpandLocations().ToList();
+        // TODO GD Uncomment after adding logic of skipping over expands taken
+        // ExpandLocations.Add(Controller.StartingTownHall.Position); // Not found because already built
         Logger.Info("Found {0} expansions", ExpandLocations.Count);
 
-        IsInitialized = true;
+        // TODO GD Remove '- 1' after adding logic of skipping over expands taken
+        IsInitialized = ExpandLocations.Count == ResourceClusters.Count - 1;
     }
 
     private static IEnumerable<List<Unit>> FindResourceClusters() {

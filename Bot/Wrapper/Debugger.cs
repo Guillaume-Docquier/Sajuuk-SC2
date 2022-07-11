@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using SC2APIProtocol;
 
 namespace Bot.Wrapper;
@@ -10,14 +11,16 @@ public static class Debugger {
     private static readonly List<DebugText> DebugTexts = new List<DebugText>();
     private static readonly List<DebugSphere> DebugSpheres = new List<DebugSphere>();
     private static readonly List<DebugBox> DebugBoxes = new List<DebugBox>();
+    private static readonly List<DebugLine> DebugLines = new List<DebugLine>();
 
     // TODO GD Add some optional persistence to the debug elements otherwise they last only 1 frame
     public static Request GetDebugRequest() {
-        var request = RequestBuilder.DebugRequest(DebugTexts, DebugSpheres, DebugBoxes);
+        var request = RequestBuilder.DebugRequest(DebugTexts, DebugSpheres, DebugBoxes, DebugLines);
 
         DebugTexts.Clear();
         DebugSpheres.Clear();
         DebugBoxes.Clear();
+        DebugLines.Clear();
 
         return request;
     }
@@ -55,6 +58,20 @@ public static class Debugger {
             {
                 Min = new Point { X = centerPoint.X - width / 2, Y = centerPoint.Y - width / 2, Z = centerPoint.Z + CreepHeight },
                 Max = new Point { X = centerPoint.X + width / 2, Y = centerPoint.Y + width / 2, Z = centerPoint.Z + CreepHeight },
+                Color = color,
+            }
+        );
+    }
+
+    public static void AddLine(Vector3 start, Vector3 end, Color color) {
+        DebugLines.Add(
+            new DebugLine
+            {
+                Line = new Line
+                {
+                    P0 = new Point { X = start.X, Y = start.Y, Z = start.Z + CreepHeight },
+                    P1 = new Point { X = end.X, Y = end.Y, Z = end.Z + CreepHeight },
+                },
                 Color = color,
             }
         );
