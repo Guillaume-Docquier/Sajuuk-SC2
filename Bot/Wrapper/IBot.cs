@@ -8,5 +8,5 @@ public interface IBot {
 
     Race Race { get; }
 
-    IEnumerable<Action> OnFrame();
+    void OnFrame();
 }

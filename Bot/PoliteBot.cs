@@ -11,15 +11,11 @@ public abstract class PoliteBot: IBot {
 
     public abstract Race Race { get; }
 
-    public IEnumerable<Action> OnFrame() {
-        Controller.OpenFrame();
-
+    public void OnFrame() {
         EnsureGreeting();
         EnsureGG();
 
         DoOnFrame();
-
-        return Controller.CloseFrame();
     }
 
     private void EnsureGreeting() {

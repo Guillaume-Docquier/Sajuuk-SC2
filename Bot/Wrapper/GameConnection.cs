@@ -272,12 +272,9 @@ public class GameConnection {
                 continue;
             }
 
-            // TODO GD Init code (controller & map analysis)
-            // TODO GD Tick controller
-            // TODO GD Tick bot
-            Controller.Obs = observation;
-
-            var actions = bot.OnFrame().ToList();
+            Controller.NewObservation(observation);
+            bot.OnFrame();
+            var actions = Controller.GetActions().ToList();
 
             // For some reason it doesn't work before a few seconds after the game starts
             // Also, this might take a couple of frames, let the bot start the game

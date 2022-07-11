@@ -19,7 +19,7 @@ public static class Controller {
     private static UnitsTracker _unitsTracker;
 
     public static ResponseGameInfo GameInfo;
-    public static ResponseObservation Obs; // TODO GD Make this private and add a setter
+    private static ResponseObservation _obs;
 
     public static ulong Frame = ulong.MaxValue;
 
@@ -51,10 +51,11 @@ public static class Controller {
         return (ulong)(FramesPerSecond * seconds);
     }
 
-    public static void OpenFrame() {
-        Frame = Obs.Observation.GameLoop;
+    public static void NewObservation(ResponseObservation obs) {
+        _obs = obs;
+        Frame = _obs.Observation.GameLoop;
 
-        if (GameInfo == null || GameData.Data == null || Obs == null) {
+        if (GameInfo == null || GameData.Data == null || _obs == null) {
             if (GameInfo == null) {
                 Logger.Info("GameInfo is null! The application will terminate.");
             }
@@ -70,23 +71,23 @@ public static class Controller {
         }
 
         if (_unitsTracker == null) {
-            _unitsTracker = new UnitsTracker(Obs.Observation.RawData.Units, Frame);
+            _unitsTracker = new UnitsTracker(_obs.Observation.RawData.Units, Frame);
         }
         else {
-            _unitsTracker.Update(Obs.Observation.RawData.Units.ToList(), Frame);
+            _unitsTracker.Update(_obs.Observation.RawData.Units.ToList(), Frame);
         }
 
         Actions.Clear();
 
-        foreach (var chat in Obs.Chat) {
+        foreach (var chat in _obs.Chat) {
             ChatLog.Add(chat.Message);
         }
 
-        CurrentSupply = Obs.Observation.PlayerCommon.FoodUsed;
-        MaxSupply = Obs.Observation.PlayerCommon.FoodCap;
+        CurrentSupply = _obs.Observation.PlayerCommon.FoodUsed;
+        MaxSupply = _obs.Observation.PlayerCommon.FoodCap;
 
-        AvailableMinerals = Obs.Observation.PlayerCommon.Minerals;
-        AvailableVespene = Obs.Observation.PlayerCommon.Vespene;
+        AvailableMinerals = _obs.Observation.PlayerCommon.Minerals;
+        AvailableVespene = _obs.Observation.PlayerCommon.Vespene;
 
         if (Frame == 0) {
             var townHalls = GetUnits(OwnedUnits, Units.ResourceCenters).ToList();
@@ -103,7 +104,7 @@ public static class Controller {
         }
     }
 
-    public static IEnumerable<Action> CloseFrame() {
+    public static IEnumerable<Action> GetActions() {
         return Actions;
     }
 
