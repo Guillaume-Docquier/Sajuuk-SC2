@@ -4,7 +4,7 @@ namespace Bot;
 
 public static class UnitUtils {
     public static bool IsResourceManaged(Unit resource) {
-        return resource.Modules.ContainsKey(CapacityModule.GlobalTag);
+        return resource.Modules.ContainsKey(CapacityModule.Tag);
     }
 
     public static bool IsGasExploited(Unit gas) {

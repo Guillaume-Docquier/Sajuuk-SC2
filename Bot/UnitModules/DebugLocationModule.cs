@@ -4,6 +4,8 @@ using SC2APIProtocol;
 namespace Bot.UnitModules;
 
 public class DebugLocationModule: IUnitModule {
+    public const string Tag = "debug-location";
+
     private readonly Unit _unit;
     private readonly Color _color;
 

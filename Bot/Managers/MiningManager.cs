@@ -24,10 +24,6 @@ public class MiningManager: IManager {
 
     private int _mineralRoundRobinIndex = 0;
 
-    private string MiningModuleTag => $"{_base.Tag}-mining";
-
-    private string DebugLocationModuleTag => $"{_base.Tag}-debug-location";
-
     public int IdealAvailableCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor - _workers.Count;
     public int SaturatedAvailableCapacity => IdealAvailableCapacity + _minerals.Count; // Can allow 1 more per mineral patch
 
@@ -35,8 +31,8 @@ public class MiningManager: IManager {
         _base = hatchery;
         _color = color;
 
-        _base.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(_base, _color));
-        _base.Modules[DebugLocationModuleTag].Execute();
+        _base.Modules.Add(DebugLocationModule.Tag, new DebugLocationModule(_base, _color));
+        _base.Modules[DebugLocationModule.Tag].Execute();
 
         _minerals = Controller.GetUnits(Controller.NeutralUnits, Units.MineralFields)
             .Where(mineral => mineral.DistanceTo(_base) < MaxDistanceToExpand)
@@ -45,8 +41,8 @@ public class MiningManager: IManager {
             .ToList();
 
         _minerals.ForEach(mineral => {
-            mineral.Modules.Add(CapacityModule.GlobalTag, new CapacityModule(MaxPerMinerals)); // TODO GD Use the module to equalize workers
-            mineral.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(mineral, _color));
+            mineral.Modules.Add(CapacityModule.Tag, new CapacityModule(MaxPerMinerals)); // TODO GD Use the module to equalize workers
+            mineral.Modules.Add(DebugLocationModule.Tag, new DebugLocationModule(mineral, _color));
         });
 
         _gasses = Controller.GetUnits(Controller.NeutralUnits, Units.GasGeysers)
@@ -56,15 +52,17 @@ public class MiningManager: IManager {
             .ToList();
 
         _gasses.ForEach(gas => {
-            gas.Modules.Add(CapacityModule.GlobalTag, new CapacityModule(MaxExtractorsPerGas));
-            gas.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(gas, _color));
+            gas.Modules.Add(CapacityModule.Tag, new CapacityModule(MaxExtractorsPerGas));
+            gas.Modules.Add(DebugLocationModule.Tag, new DebugLocationModule(gas, _color));
         });
+
+        // TODO GD Discover extractors
     }
 
     public void AssignWorkers(List<Unit> workers) {
         workers.ForEach(worker => {
             worker.AddDeathWatcher(this);
-            worker.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(worker, _color));
+            worker.Modules.Add(DebugLocationModule.Tag, new DebugLocationModule(worker, _color));
         });
         _workers.AddRange(workers);
 
@@ -77,14 +75,14 @@ public class MiningManager: IManager {
             var assignedWorkers = workers.Skip(dispatched).Take(availableCapacity).ToList();
 
             CapacityModule.Assign(extractor, assignedWorkers);
-            assignedWorkers.ForEach(worker => worker.Modules.Add(MiningModuleTag, new GasMiningModule(worker, extractor)));
+            assignedWorkers.ForEach(worker => worker.Modules.Add(MiningModule.Tag, new GasMiningModule(worker, extractor)));
 
             dispatched += availableCapacity;
         });
 
         // Assign workers to minerals
         workers.Skip(dispatched).ToList().ForEach(worker => {
-            worker.Modules.Add(MiningModuleTag, new MineralMiningModule(worker, _minerals[_mineralRoundRobinIndex]));
+            worker.Modules.Add(MiningModule.Tag, new MineralMiningModule(worker, _minerals[_mineralRoundRobinIndex]));
             _mineralRoundRobinIndex = (_mineralRoundRobinIndex + 1) % _minerals.Count;
         });
 
@@ -99,26 +97,29 @@ public class MiningManager: IManager {
                 .Take(MaxGas - _extractors.Count)
                 .ToList();
 
-            newExtractors.ForEach(newExtractor => {
-                newExtractor.AddDeathWatcher(this);
-                newExtractor.Modules.Add(CapacityModule.GlobalTag, new CapacityModule(MaxPerExtractor));
-                newExtractor.Modules.Add(DebugLocationModuleTag, new DebugLocationModule(newExtractor, _color));
-                CapacityModule.Assign(_gasses.First(gas => gas.DistanceTo(newExtractor) < 1), newExtractor);
-            });
+            ManageExtractors(newExtractors);
+        }
 
-            _extractors.AddRange(newExtractors); // TODO GD Reassign workers to them
+        if (_minerals.Sum(CapacityModule.GetAvailableCapacity) <= _minerals.Count) {
+            foreach (var extractor in _extractors.Where(extractor => extractor.IsOperational)) {
+                var workers = _workers.Take(CapacityModule.GetAvailableCapacity(extractor));
+                foreach (var worker in workers) {
+                    worker.Modules[MiningModule.Tag] = new GasMiningModule(worker, extractor);
+                    CapacityModule.Assign(extractor, worker);
+                }
+            }
         }
 
         // Get to work!
         _workers.ForEach(worker => {
-            worker.Modules[MiningModuleTag].Execute();
-            worker.Modules[DebugLocationModuleTag].Execute();
+            worker.Modules[MiningModule.Tag].Execute();
+            worker.Modules[DebugLocationModule.Tag].Execute();
         });
 
-        _base.Modules[DebugLocationModuleTag].Execute();
-        _minerals.ForEach(mineral => mineral.Modules[DebugLocationModuleTag].Execute());
-        _gasses.ForEach(gas => gas.Modules[DebugLocationModuleTag].Execute());
-        _extractors.ForEach(extractor => extractor.Modules[DebugLocationModuleTag].Execute());
+        _base.Modules[DebugLocationModule.Tag].Execute();
+        _minerals.ForEach(mineral => mineral.Modules[DebugLocationModule.Tag].Execute());
+        _gasses.ForEach(gas => gas.Modules[DebugLocationModule.Tag].Execute());
+        _extractors.ForEach(extractor => extractor.Modules[DebugLocationModule.Tag].Execute());
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
@@ -134,5 +135,16 @@ public class MiningManager: IManager {
         else if (deadUnit.UnitType == Units.Extractor) {
             _extractors.Remove(deadUnit);
         }
+    }
+
+    private void ManageExtractors(List<Unit> extractors) {
+        foreach (var extractor in extractors) {
+            extractor.AddDeathWatcher(this);
+            extractor.Modules.Add(CapacityModule.Tag, new CapacityModule(MaxPerExtractor));
+            extractor.Modules.Add(DebugLocationModule.Tag, new DebugLocationModule(extractor, _color));
+            CapacityModule.Assign(_gasses.First(gas => gas.DistanceTo(extractor) < 1), extractor);
+        }
+
+        _extractors.AddRange(extractors);
     }
 }

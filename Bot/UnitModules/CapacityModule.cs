@@ -3,7 +3,7 @@
 namespace Bot.UnitModules;
 
 public class CapacityModule: IUnitModule, IWatchUnitsDie {
-    public const string GlobalTag = "capacity-module-tag";
+    public const string Tag = "capacity";
 
     private readonly int _maxCapacity;
     private readonly List<Unit> _assignedUnits = new List<Unit>();
@@ -15,19 +15,19 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
     }
 
     public static int GetAvailableCapacity(Unit unit) {
-        var capacityModule = unit.Modules[GlobalTag] as CapacityModule;
+        var capacityModule = unit.Modules[Tag] as CapacityModule;
 
         return capacityModule!.AvailableCapacity;
     }
 
     public static void Assign(Unit toUnit, Unit unit) {
-        var capacityModule = toUnit.Modules[GlobalTag] as CapacityModule;
+        var capacityModule = toUnit.Modules[Tag] as CapacityModule;
 
         capacityModule!.Assign(unit);
     }
 
     public static void Assign(Unit toUnit, List<Unit> units) {
-        var capacityModule = toUnit.Modules[GlobalTag] as CapacityModule;
+        var capacityModule = toUnit.Modules[Tag] as CapacityModule;
 
         capacityModule!.Assign(units);
     }
