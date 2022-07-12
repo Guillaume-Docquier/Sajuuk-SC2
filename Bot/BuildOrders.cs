@@ -68,6 +68,8 @@ public static class BuildOrders {
             new BuildStep(BuildType.Train, 19, Units.Overlord),
             new BuildStep(BuildType.Expand, 24, Units.Hatchery),
             new BuildStep(BuildType.Train, 30, Units.Overlord, 2),
+            new BuildStep(BuildType.Train, 53, Units.Overlord),
+            new BuildStep(BuildType.Train, 63, Units.Overlord),
         });
     }
 }

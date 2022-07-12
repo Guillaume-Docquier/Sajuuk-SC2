@@ -8,8 +8,8 @@ namespace Bot.Managers;
 
 public class EconomyManager: IManager {
     private readonly List<MiningManager> _miningManagers = new List<MiningManager>();
-    private readonly Dictionary<ulong, MiningManager> _workerDispatch = new Dictionary<ulong, MiningManager>();
-    private readonly Dictionary<ulong, MiningManager> _townHallDispatch = new Dictionary<ulong, MiningManager>();
+    private readonly Dictionary<Unit, MiningManager> _workerDispatch = new Dictionary<Unit, MiningManager>();
+    private readonly Dictionary<Unit, MiningManager> _townHallDispatch = new Dictionary<Unit, MiningManager>();
     private readonly List<Color> _expandColors = new List<Color>
     {
         Colors.Maroon3,
@@ -29,10 +29,12 @@ public class EconomyManager: IManager {
         ManageTownHalls(Controller.GetUnits(Controller.NewOwnedUnits, Units.Hatchery));
 
         // TODO GD Redistribute extra workers from managers
-        // TODO GD Gather all idle workers
-        DispatchWorkers(Controller.GetUnits(Controller.NewOwnedUnits, Units.Drone).ToList());
+        var workersToDispatch = Controller.GetUnits(Controller.NewOwnedUnits, Units.Drone).ToList();
+        workersToDispatch.AddRange(GetIdleWorkers());
 
-        // Order more workers
+        DispatchWorkers(workersToDispatch);
+
+        // TODO GD Order more workers
 
         // Execute managers
         _miningManagers.ForEach(manager => manager.OnFrame());
@@ -41,17 +43,17 @@ public class EconomyManager: IManager {
     public void ReportUnitDeath(Unit deadUnit) {
         switch (deadUnit.UnitType) {
             case Units.Hatchery:
-                var manager = _townHallDispatch[deadUnit.Tag];
+                var manager = _townHallDispatch[deadUnit];
                 _workerDispatch
                     .Where(dispatch => dispatch.Value == manager)
                     .ToList()
-                    .ForEach(dispatch => _workerDispatch.Remove(dispatch.Key));
+                    .ForEach(dispatch => _workerDispatch[dispatch.Key] = null);
 
-                _townHallDispatch.Remove(deadUnit.Tag);
+                _townHallDispatch.Remove(deadUnit);
                 _miningManagers.Remove(manager);
                 break;
             case Units.Drone:
-                _workerDispatch.Remove(deadUnit.Tag);
+                _workerDispatch.Remove(deadUnit);
                 break;
         }
     }
@@ -61,49 +63,47 @@ public class EconomyManager: IManager {
             townHall.AddDeathWatcher(this);
 
             var miningManager = new MiningManager(townHall, _expandColors[_townHallDispatch.Count]); // TODO GD Not very resilient, but simple enough for now
-            _townHallDispatch[townHall.Tag] = miningManager;
+            _townHallDispatch[townHall] = miningManager;
             _miningManagers.Add(miningManager);
         }
     }
 
-    // TODO GD Try to dispatch to closest base if under ideal threshold
     private void DispatchWorkers(List<Unit> workers) {
-        workers.ForEach(worker => worker.AddDeathWatcher(this));
+        foreach (var worker in workers) {
+            worker.AddDeathWatcher(this);
 
-        var dispatched = 0;
+            var manager = GetClosestManagerWithIdealCapacityNotMet(worker);
+            manager ??= GetClosestManagerWithSaturatedCapacityNotMet(worker);
+            manager ??= GetManagerWithHighestAvailableCapacity();
 
-        foreach (var miningManager in _miningManagers) {
-            dispatched += AssignWorkersToManager(workers.Skip(dispatched), miningManager, miningManager.IdealAvailableCapacity);
-        }
-
-        // TODO GD Saturate evenly
-        foreach (var miningManager in _miningManagers) {
-            dispatched += AssignWorkersToManager(workers.Skip(dispatched), miningManager, miningManager.SaturatedAvailableCapacity);
-        }
-
-        // Equalize over saturation
-        var maxOverSaturation = _miningManagers.Select(miningManager => Math.Abs(miningManager.SaturatedAvailableCapacity)).Max();
-        foreach (var miningManager in _miningManagers) {
-            dispatched += AssignWorkersToManager(workers.Skip(dispatched), miningManager, maxOverSaturation - Math.Abs(miningManager.SaturatedAvailableCapacity));
-        }
-
-        // Over saturate evenly
-        var managerRoundRobinIndex = 0;
-        foreach (var worker in workers.Skip(dispatched)) {
-            AssignWorkerToManager(worker, _miningManagers[managerRoundRobinIndex]);
-            managerRoundRobinIndex = (managerRoundRobinIndex + 1) % _miningManagers.Count;
+            _workerDispatch[worker] = manager;
+            manager.AssignWorker(worker);
         }
     }
 
-    private int AssignWorkerToManager(Unit worker, MiningManager miningManager) {
-        return AssignWorkersToManager(new List<Unit> { worker }, miningManager, 1);
+    private MiningManager GetClosestManagerWithIdealCapacityNotMet(Unit worker) {
+        return _miningManagers
+            .Where(manager => manager.IdealAvailableCapacity > 0)
+            .OrderBy(manager => manager.TownHall.DistanceTo(worker))
+            .FirstOrDefault();
     }
 
-    private int AssignWorkersToManager(IEnumerable<Unit> workers, MiningManager miningManager, int maxAmount) {
-        var workersToDispatch = workers.Take(maxAmount).ToList();
-        workersToDispatch.ForEach(workerToDispatch => _workerDispatch[workerToDispatch.Tag] = miningManager);
-        miningManager.AssignWorkers(workersToDispatch);
+    private MiningManager GetClosestManagerWithSaturatedCapacityNotMet(Unit worker) {
+        return _miningManagers
+            .Where(manager => manager.SaturatedAvailableCapacity > 0)
+            .OrderBy(manager => manager.TownHall.DistanceTo(worker))
+            .FirstOrDefault();
+    }
 
-        return workersToDispatch.Count;
+    private MiningManager GetManagerWithHighestAvailableCapacity() {
+        return _miningManagers
+            .OrderByDescending(manager => manager.SaturatedAvailableCapacity)
+            .FirstOrDefault();
+    }
+
+    private IEnumerable<Unit> GetIdleWorkers() {
+        return _workerDispatch
+            .Where(dispatch => dispatch.Value == null)
+            .Select(dispatch => dispatch.Key);
     }
 }

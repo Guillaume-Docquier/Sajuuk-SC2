@@ -14,7 +14,7 @@ public class MiningManager: IManager {
     private const int MaxPerMinerals = 2;
     private const int MaxDistanceToExpand = 10;
 
-    private readonly Unit _base;
+    public readonly Unit TownHall;
     private readonly Color _color;
 
     private readonly List<Unit> _workers = new List<Unit>();
@@ -27,15 +27,15 @@ public class MiningManager: IManager {
     public int IdealAvailableCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor - _workers.Count;
     public int SaturatedAvailableCapacity => IdealAvailableCapacity + _minerals.Count; // Can allow 1 more per mineral patch
 
-    public MiningManager(Unit hatchery, Color color) {
-        _base = hatchery;
+    public MiningManager(Unit townHall, Color color) {
+        TownHall = townHall;
         _color = color;
 
-        _base.Modules.Add(DebugLocationModule.Tag, new DebugLocationModule(_base, _color));
-        _base.Modules[DebugLocationModule.Tag].Execute();
+        TownHall.Modules.Add(DebugLocationModule.Tag, new DebugLocationModule(TownHall, _color));
+        TownHall.Modules[DebugLocationModule.Tag].Execute();
 
         _minerals = Controller.GetUnits(Controller.NeutralUnits, Units.MineralFields)
-            .Where(mineral => mineral.DistanceTo(_base) < MaxDistanceToExpand)
+            .Where(mineral => mineral.DistanceTo(TownHall) < MaxDistanceToExpand)
             .Where(mineral => !UnitUtils.IsResourceManaged(mineral))
             .Take(MaxMinerals)
             .ToList();
@@ -46,7 +46,7 @@ public class MiningManager: IManager {
         });
 
         _gasses = Controller.GetUnits(Controller.NeutralUnits, Units.GasGeysers)
-            .Where(gas => gas.DistanceTo(_base) < MaxDistanceToExpand)
+            .Where(gas => gas.DistanceTo(TownHall) < MaxDistanceToExpand)
             .Where(gas => !UnitUtils.IsResourceManaged(gas))
             .Take(MaxGas)
             .ToList();
@@ -57,6 +57,10 @@ public class MiningManager: IManager {
         });
 
         // TODO GD Discover extractors
+    }
+
+    public void AssignWorker(Unit worker) {
+        AssignWorkers(new List<Unit> { worker });
     }
 
     public void AssignWorkers(List<Unit> workers) {
@@ -93,7 +97,7 @@ public class MiningManager: IManager {
         // Get new extractors
         if (_extractors.Count < _gasses.Count) {
             var newExtractors = Controller.GetUnits(Controller.NewOwnedUnits, Units.Extractor)
-                .Where(extractor => extractor.DistanceTo(_base) < MaxDistanceToExpand)
+                .Where(extractor => extractor.DistanceTo(TownHall) < MaxDistanceToExpand)
                 .Take(MaxGas - _extractors.Count)
                 .ToList();
 
@@ -116,7 +120,7 @@ public class MiningManager: IManager {
             worker.Modules[DebugLocationModule.Tag].Execute();
         });
 
-        _base.Modules[DebugLocationModule.Tag].Execute();
+        TownHall.Modules[DebugLocationModule.Tag].Execute();
         _minerals.ForEach(mineral => mineral.Modules[DebugLocationModule.Tag].Execute());
         _gasses.ForEach(gas => gas.Modules[DebugLocationModule.Tag].Execute());
         _extractors.ForEach(extractor => extractor.Modules[DebugLocationModule.Tag].Execute());
