@@ -13,30 +13,41 @@ public class MiningModule: IUnitModule {
 
     private readonly Mining _work;
     private readonly Unit _worker;
-    private readonly Unit _assignedResource;
+    public readonly Unit AssignedResource;
+    public readonly UnitUtils.ResourceType ResourceType;
 
     public static void Install(Unit worker, Unit assignedResource) {
-        worker.Modules.Remove(Tag);
+        Uninstall(worker);
         worker.Modules.Add(Tag, new MiningModule(worker, assignedResource));
     }
 
+    public static MiningModule Uninstall(Unit worker) {
+        var module = GetFrom(worker);
+        worker.Modules.Remove(Tag);
+
+        return module;
+    }
+
     public static MiningModule GetFrom(Unit worker) {
-        return worker.Modules[Tag] as MiningModule;
+        if (worker.Modules.TryGetValue(Tag, out var module)) {
+            return module as MiningModule;
+        }
+
+        return null;
     }
 
     private MiningModule(Unit worker, Unit assignedResource) {
         _worker = worker;
-        _assignedResource = assignedResource;
-
-        var resourceType = UnitUtils.GetResourceType(assignedResource);
+        AssignedResource = assignedResource;
+        ResourceType = UnitUtils.GetResourceType(assignedResource);
 
         // Workers disappear when going inside extractors for 1.415 seconds
         // Change their death delay so that we don't think they're dead
-        if (resourceType == UnitUtils.ResourceType.Gas) {
+        if (ResourceType == UnitUtils.ResourceType.Gas) {
             _worker.DeathDelay = GasDeathDelay;
             _work = GasMining;
         }
-        else if (resourceType == UnitUtils.ResourceType.Mineral) {
+        else if (ResourceType == UnitUtils.ResourceType.Mineral) {
             _work = MineralMining;
         }
     }
@@ -48,18 +59,18 @@ public class MiningModule: IUnitModule {
     private void MineralMining() {
         // Make sure each worker gathers from its target patch
         // TODO GD Fast mining consists of moving to the base, not using return cargo
-        if (_worker.Orders.Count == 0 || _worker.Orders.Count == 1 && _worker.Orders.Any(order => order.AbilityId == Abilities.DroneGather && order.TargetUnitTag != _assignedResource.Tag)) {
-            _worker.Gather(_assignedResource);
+        if (_worker.Orders.Count == 0 || _worker.Orders.Count == 1 && _worker.Orders.Any(order => order.AbilityId == Abilities.DroneGather && order.TargetUnitTag != AssignedResource.Tag)) {
+            _worker.Gather(AssignedResource);
         }
 
-        Debugger.AddLine(_worker.Position, _assignedResource.Position, Colors.Cyan);
+        Debugger.AddLine(_worker.Position, AssignedResource.Position, Colors.Cyan);
     }
 
     private void GasMining() {
-        if (_worker.Orders.Count == 0 || _worker.Orders.Count == 1 && _worker.Orders.Any(order => order.AbilityId == Abilities.DroneGather && order.TargetUnitTag != _assignedResource.Tag)) {
-            _worker.Gather(_assignedResource);
+        if (_worker.Orders.Count == 0 || _worker.Orders.Count == 1 && _worker.Orders.Any(order => order.AbilityId == Abilities.DroneGather && order.TargetUnitTag != AssignedResource.Tag)) {
+            _worker.Gather(AssignedResource);
         }
 
-        Debugger.AddLine(_worker.Position, _assignedResource.Position, Colors.Lime);
+        Debugger.AddLine(_worker.Position, AssignedResource.Position, Colors.Lime);
     }
 }

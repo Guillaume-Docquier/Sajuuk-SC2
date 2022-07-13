@@ -13,8 +13,19 @@ public class DebugLocationModule: IUnitModule {
         unit.Modules.Add(Tag, new DebugLocationModule(unit, color));
     }
 
-    public static DebugLocationModule GetFrom(Unit unit) {
-        return unit.Modules[Tag] as DebugLocationModule;
+    public static DebugLocationModule Uninstall(Unit unit) {
+        var module = GetFrom(unit);
+        unit.Modules.Remove(Tag);
+
+        return module;
+    }
+
+    public static DebugLocationModule GetFrom(Unit worker) {
+        if (worker.Modules.TryGetValue(Tag, out var module)) {
+            return module as DebugLocationModule;
+        }
+
+        return null;
     }
 
     private DebugLocationModule(Unit unit, Color color = null) {

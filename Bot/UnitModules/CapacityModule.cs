@@ -6,16 +6,27 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
     public const string Tag = "capacity";
 
     private readonly int _maxCapacity;
-    private readonly List<Unit> _assignedUnits = new List<Unit>();
+    public readonly List<Unit> AssignedUnits = new List<Unit>();
 
-    public int AvailableCapacity => _maxCapacity - _assignedUnits.Count;
+    public int AvailableCapacity => _maxCapacity - AssignedUnits.Count;
 
     public static void Install(Unit unit, int maxCapacity) {
         unit.Modules.Add(Tag, new CapacityModule(maxCapacity));
     }
 
+    public static CapacityModule Uninstall(Unit unit) {
+        var module = GetFrom(unit);
+        unit.Modules.Remove(Tag);
+
+        return module;
+    }
+
     public static CapacityModule GetFrom(Unit unit) {
-        return unit.Modules[Tag] as CapacityModule;
+        if (unit.Modules.TryGetValue(Tag, out var module)) {
+            return module as CapacityModule;
+        }
+
+        return null;
     }
 
     private CapacityModule(int maxCapacity) {
@@ -28,12 +39,12 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
 
     public void Assign(List<Unit> units) {
         units.ForEach(unit => unit.AddDeathWatcher(this));
-        _assignedUnits.AddRange(units);
+        AssignedUnits.AddRange(units);
     }
 
     public void Release(Unit unitToRelease) {
         unitToRelease.RemoveDeathWatcher(this);
-        _assignedUnits.Remove(unitToRelease);
+        AssignedUnits.Remove(unitToRelease);
     }
 
     public void Execute() {
@@ -41,6 +52,6 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
-        _assignedUnits.Remove(deadUnit);
+        AssignedUnits.Remove(deadUnit);
     }
 }
