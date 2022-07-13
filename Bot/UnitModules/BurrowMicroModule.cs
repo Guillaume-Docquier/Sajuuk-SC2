@@ -34,7 +34,10 @@ public class BurrowMicroModule: IUnitModule {
     }
 
     public void Execute() {
-        // TODO GD Check if burrow is researched
+        if (!Controller.ResearchedUpgrades.Contains(Upgrades.Burrow)) {
+            return;
+        }
+
         if (_unit.Integrity <= BurrowDownThreshold && !_unit.IsBurrowed) {
             Controller.AddAction(ActionBuilder.UnitCommand(Abilities.BurrowRoachDown, _unit.Tag));
         }

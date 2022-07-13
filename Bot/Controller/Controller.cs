@@ -29,6 +29,7 @@ public static class Controller {
 
     public static int AvailableMinerals;
     public static int AvailableVespene;
+    public static HashSet<uint> ResearchedUpgrades;
 
     public static Unit StartingTownHall;
     public static readonly List<Vector3> EnemyLocations = new List<Vector3>();
@@ -89,6 +90,7 @@ public static class Controller {
 
         AvailableMinerals = _obs.Observation.PlayerCommon.Minerals;
         AvailableVespene = _obs.Observation.PlayerCommon.Vespene;
+        ResearchedUpgrades = new HashSet<uint>(_obs.Observation.RawData.Player.UpgradeIds);
 
         if (Frame == 0) {
             var townHalls = GetUnits(OwnedUnits, Units.ResourceCenters).ToList();
