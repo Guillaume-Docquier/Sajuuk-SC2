@@ -8,8 +8,9 @@ namespace Bot.Managers;
 
 public class EconomyManager: IManager {
     private readonly List<MiningManager> _miningManagers = new List<MiningManager>();
-    private readonly Dictionary<Unit, MiningManager> _workerDispatch = new Dictionary<Unit, MiningManager>();
     private readonly Dictionary<Unit, MiningManager> _townHallDispatch = new Dictionary<Unit, MiningManager>();
+    private readonly Dictionary<Unit, MiningManager> _queenDispatch = new Dictionary<Unit, MiningManager>();
+    private readonly Dictionary<Unit, MiningManager> _workerDispatch = new Dictionary<Unit, MiningManager>();
     private readonly List<Color> _expandColors = new List<Color>
     {
         Colors.Maroon3,
@@ -31,10 +32,13 @@ public class EconomyManager: IManager {
         // TODO GD Redistribute extra workers from managers
         var workersToDispatch = Controller.GetUnits(Controller.NewOwnedUnits, Units.Drone).ToList();
         workersToDispatch.AddRange(GetIdleWorkers());
-
         DispatchWorkers(workersToDispatch);
 
-        // TODO GD Order more workers
+        var queensToDispatch = Controller.GetUnits(Controller.NewOwnedUnits, Units.Queen).ToList();
+        queensToDispatch.AddRange(GetIdleQueens());
+        DispatchQueens(queensToDispatch);
+
+        // TODO GD Order more workers and queens
 
         // Execute managers
         _miningManagers.ForEach(manager => manager.OnFrame());
@@ -54,6 +58,9 @@ public class EconomyManager: IManager {
                 break;
             case Units.Drone:
                 _workerDispatch.Remove(deadUnit);
+                break;
+            case Units.Queen:
+                _queenDispatch.Remove(deadUnit);
                 break;
         }
     }
@@ -81,28 +88,55 @@ public class EconomyManager: IManager {
         }
     }
 
+    private void DispatchQueens(List<Unit> queens) {
+        foreach (var queen in queens) {
+            queen.AddDeathWatcher(this);
+
+            var manager = GetClosestManagerWithNoQueen(queen);
+
+            _queenDispatch[queen] = manager;
+            manager?.AssignQueen(queen);
+        }
+    }
+
     private MiningManager GetClosestManagerWithIdealCapacityNotMet(Unit worker) {
-        return _miningManagers
+        return GetAvailableManagers()
             .Where(manager => manager.IdealAvailableCapacity > 0)
             .OrderBy(manager => manager.TownHall.DistanceTo(worker))
             .FirstOrDefault();
     }
 
     private MiningManager GetClosestManagerWithSaturatedCapacityNotMet(Unit worker) {
-        return _miningManagers
+        return GetAvailableManagers()
             .Where(manager => manager.SaturatedAvailableCapacity > 0)
             .OrderBy(manager => manager.TownHall.DistanceTo(worker))
             .FirstOrDefault();
     }
 
     private MiningManager GetManagerWithHighestAvailableCapacity() {
-        return _miningManagers
+        return GetAvailableManagers()
             .OrderByDescending(manager => manager.SaturatedAvailableCapacity)
             .FirstOrDefault();
     }
 
+    private MiningManager GetClosestManagerWithNoQueen(Unit queen) {
+        return GetAvailableManagers()
+            .OrderBy(manager => manager.TownHall.DistanceTo(queen))
+            .FirstOrDefault(manager => manager.Queen == null);
+    }
+
+    private IEnumerable<MiningManager> GetAvailableManagers() {
+        return _miningManagers.Where(manager => manager.TownHall.IsOperational);
+    }
+
     private IEnumerable<Unit> GetIdleWorkers() {
         return _workerDispatch
+            .Where(dispatch => dispatch.Value == null)
+            .Select(dispatch => dispatch.Key);
+    }
+
+    private IEnumerable<Unit> GetIdleQueens() {
+        return _queenDispatch
             .Where(dispatch => dispatch.Value == null)
             .Select(dispatch => dispatch.Key);
     }

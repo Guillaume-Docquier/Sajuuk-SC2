@@ -39,7 +39,7 @@ public static class BuildOrders {
             new BuildStep(BuildType.Build, 38, Units.EvolutionChamber), // TODO GD Tries to build on top of roach warren nad sometimes not enough minerals
             new BuildStep(BuildType.Train, 44, Units.Overlord),
             new BuildStep(BuildType.Research, 44, Upgrades.ZergMissileWeaponsLevel1),
-            new BuildStep(BuildType.Build, 52, Units.Extractor, 2),
+            new BuildStep(BuildType.Build, 52, Units.Extractor, 2), // TODO GD Doesn't build on snapshot units
             new BuildStep(BuildType.Train, 50, Units.Overlord, 2),
             new BuildStep(BuildType.Research, 50, Upgrades.Burrow),
             new BuildStep(BuildType.Research, 50, Upgrades.GlialReconstitution),
@@ -69,12 +69,16 @@ public static class BuildOrders {
             new BuildStep(BuildType.Train, 13, Units.Overlord),
             new BuildStep(BuildType.Build, 16, Units.Extractor),
             new BuildStep(BuildType.Expand, 16, Units.Hatchery),
-            new BuildStep(BuildType.Build, 20, Units.Extractor, 3),
+            new BuildStep(BuildType.Build, 17, Units.SpawningPool),
             new BuildStep(BuildType.Train, 19, Units.Overlord),
+            new BuildStep(BuildType.Build, 20, Units.Extractor, 3),
+            new BuildStep(BuildType.Train, 20, Units.Queen),
             new BuildStep(BuildType.Expand, 24, Units.Hatchery),
             new BuildStep(BuildType.Train, 30, Units.Overlord, 2),
-            new BuildStep(BuildType.Train, 53, Units.Overlord),
+            new BuildStep(BuildType.Train, 30, Units.Queen, 2),
+            new BuildStep(BuildType.Train, 50, Units.Overlord),
             new BuildStep(BuildType.Train, 63, Units.Overlord),
+            new BuildStep(BuildType.Train, 70, Units.Overlord, 6),
         });
     }
 }

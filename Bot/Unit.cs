@@ -31,7 +31,6 @@ public class Unit: ICanDie {
     public int AssignedWorkers;
     public ulong LastSeen;
     public HashSet<uint> Buffs;
-    public bool IsBurrowed;
 
     public ulong DeathDelay = 1;
 
@@ -68,7 +67,6 @@ public class Unit: ICanDie {
         AssignedWorkers = unit.AssignedHarvesters;
         LastSeen = frame;
         Buffs = new HashSet<uint>(unit.BuffIds);
-        IsBurrowed = unit.IsBurrowed;
     }
 
     public double DistanceTo(Unit otherUnit) {
@@ -162,6 +160,21 @@ public class Unit: ICanDie {
         ProcessAction(ActionBuilder.ReturnCargo(Tag, @base.Tag));
 
         Logger.Info("{0} returning cargo to {1} at [{2}, {3}]", Name, @base.Name, @base.Position.X, @base.Position.Y);
+    }
+
+    public void UseAbility(int abilityId, Point2D position = null, ulong targetUnitTag = ulong.MaxValue) {
+        ProcessAction(ActionBuilder.UnitCommand(abilityId, Tag, position, targetUnitTag));
+
+        var abilityName = GameData.GetAbilityData(abilityId).FriendlyName;
+        if (targetUnitTag != ulong.MaxValue) {
+            Logger.Info("{0} using ability {1} on {2}", Name, abilityName, Controller.UnitsByTag[targetUnitTag].Name);
+        }
+        else if (position != null) {
+            Logger.Info("{0} using ability {1} at [{2}, {3}]", Name, abilityName, position.X, position.Y);
+        }
+        else {
+            Logger.Info("{0} using ability {1}", Name, abilityName);
+        }
     }
 
     private void ProcessAction(Action action) {

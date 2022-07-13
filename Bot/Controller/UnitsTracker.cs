@@ -5,7 +5,7 @@ using SC2APIProtocol;
 namespace Bot;
 
 public class UnitsTracker {
-    private readonly Dictionary<ulong, Unit> _unitsMap;
+    public readonly Dictionary<ulong, Unit> UnitsByTag;
 
     public readonly List<Unit> NeutralUnits;
     public readonly List<Unit> NewOwnedUnits = new List<Unit>();
@@ -17,7 +17,7 @@ public class UnitsTracker {
     public UnitsTracker(IEnumerable<SC2APIProtocol.Unit> rawUnits, ulong frame) {
         var units = rawUnits.Select(rawUnit => new Unit(rawUnit, frame)).ToList();
 
-        _unitsMap = units.ToDictionary(unit => unit.Tag);
+        UnitsByTag = units.ToDictionary(unit => unit.Tag);
 
         NeutralUnits = units.Where(unit => unit.Alliance == Alliance.Neutral).ToList();
         OwnedUnits = units.Where(unit => unit.Alliance == Alliance.Self).ToList();
@@ -31,8 +31,8 @@ public class UnitsTracker {
         // Find new units and update existing ones
         newRawUnits.ForEach(newRawUnit => {
             // Existing unit, update it
-            if (_unitsMap.ContainsKey(newRawUnit.Tag)) {
-                _unitsMap[newRawUnit.Tag].Update(newRawUnit, frame);
+            if (UnitsByTag.ContainsKey(newRawUnit.Tag)) {
+                UnitsByTag[newRawUnit.Tag].Update(newRawUnit, frame);
             }
             else {
                 var newUnit = new Unit(newRawUnit, frame);
@@ -42,16 +42,15 @@ public class UnitsTracker {
                     NewOwnedUnits.Add(newUnit);
                 }
                 else if (newUnit.Alliance == Alliance.Neutral) {
-                    var equivalentUnit = _unitsMap
+                    var equivalentUnit = UnitsByTag
                         .Select(kv => kv.Value)
                         .FirstOrDefault(unit => unit.Position == newUnit.Position);
 
-                    // Resources have 2 units representing them
-                    // The snapshot version and the real version
+                    // Resources have 2 units representing them: the snapshot version and the real version
                     // The real version is only available when visible
                     // The snapshot is only available when not visible
                     if (equivalentUnit != default) {
-                        _unitsMap.Remove(equivalentUnit.Tag);
+                        UnitsByTag.Remove(equivalentUnit.Tag);
                         equivalentUnit.Update(newRawUnit, frame);
                         newUnit = equivalentUnit;
                     }
@@ -61,29 +60,29 @@ public class UnitsTracker {
                 }
 
                 // New unit
-                _unitsMap[newUnit.Tag] = newUnit;
+                UnitsByTag[newUnit.Tag] = newUnit;
             }
         });
 
         // Find dead units
-        foreach (var unit in _unitsMap.Select(unit => unit.Value).ToList()) {
+        foreach (var unit in UnitsByTag.Select(unit => unit.Value).ToList()) {
             if (unit.IsDead(frame)) {
                 // Dead owned unit
                 if (unit.Alliance == Alliance.Self) {
                     DeadOwnedUnits.Add(unit);
                 }
                 else if (unit.Alliance == Alliance.Neutral) {
-                    // TODO GD Handle neutral units dying
-                    Logger.Warning("Neutral unit died: {0}", unit.Name);
+                    // TODO GD Should we handle it like we do for our own units and vice versa?
+                    unit.Died();
                 }
 
                 // Dead unit
-                _unitsMap.Remove(unit.Tag);
+                UnitsByTag.Remove(unit.Tag);
             }
         }
 
         // Update unit lists
-        OwnedUnits = _unitsMap.Where(unit => unit.Value.Alliance == Alliance.Self).Select(unit => unit.Value).ToList();
-        EnemyUnits = _unitsMap.Where(unit => unit.Value.Alliance == Alliance.Enemy).Select(unit => unit.Value).ToList();
+        OwnedUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Self).Select(unit => unit.Value).ToList();
+        EnemyUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Enemy).Select(unit => unit.Value).ToList();
     }
 }

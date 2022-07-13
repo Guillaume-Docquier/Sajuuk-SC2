@@ -36,6 +36,7 @@ public static class Controller {
     public static readonly List<string> ChatLog = new List<string>();
 
     public static uint AvailableSupply => MaxSupply - CurrentSupply;
+    public static Dictionary<ulong, Unit> UnitsByTag => _unitsTracker.UnitsByTag;
     public static List<Unit> OwnedUnits => _unitsTracker.OwnedUnits;
     public static List<Unit> NewOwnedUnits => _unitsTracker.NewOwnedUnits;
     public static List<Unit> DeadOwnedUnits => _unitsTracker.DeadOwnedUnits;

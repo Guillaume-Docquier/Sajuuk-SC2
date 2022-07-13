@@ -43,4 +43,7 @@ internal static class Abilities {
     // TODO GD Each unit has its burrow command
     public const int BurrowRoachUp = 1388;
     public const int BurrowRoachDown = 1386;
+
+    public const int InjectLarvae = 251;
+    public const int SpawnCreepTumor = 3691;
 }

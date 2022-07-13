@@ -38,11 +38,12 @@ public class BurrowMicroModule: IUnitModule {
             return;
         }
 
-        if (_unit.Integrity <= BurrowDownThreshold && !_unit.IsBurrowed) {
-            Controller.AddAction(ActionBuilder.UnitCommand(Abilities.BurrowRoachDown, _unit.Tag));
+        // TODO GD Only works on roaches for now
+        if (_unit.Integrity <= BurrowDownThreshold && !_unit.RawUnitData.IsBurrowed) {
+            _unit.UseAbility(Abilities.BurrowRoachDown);
         }
-        else if (_unit.Integrity >= BurrowUpThreshold && _unit.IsBurrowed) {
-            Controller.AddAction(ActionBuilder.UnitCommand(Abilities.BurrowRoachUp, _unit.Tag));
+        else if (_unit.Integrity >= BurrowUpThreshold && _unit.RawUnitData.IsBurrowed) {
+            _unit.UseAbility(Abilities.BurrowRoachUp);
         }
     }
 }

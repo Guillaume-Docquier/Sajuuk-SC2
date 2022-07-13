@@ -69,6 +69,7 @@
     <Compile Include="UnitModules\KitingModule.cs" />
     <Compile Include="UnitModules\MiningModule.cs" />
     <Compile Include="UnitModules\IUnitModule.cs" />
+    <Compile Include="UnitModules\QueenMicroModule.cs" />
     <Compile Include="UnitUtils.cs" />
     <Compile Include="Upgrades.cs" />
     <Compile Include="Vector3Extensions.cs" />

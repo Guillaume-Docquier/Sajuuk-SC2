@@ -39,4 +39,8 @@ public static class GameData {
     public static UpgradeData GetUpgradeData(uint upgradeId) {
         return Data.Upgrades[(int)upgradeId];
     }
+
+    public static AbilityData GetAbilityData(int abilityId) {
+        return Data.Abilities[abilityId];
+    }
 }

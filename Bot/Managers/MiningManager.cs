@@ -15,6 +15,7 @@ public class MiningManager: IManager {
     private const int MaxDistanceToExpand = 10;
 
     public readonly Unit TownHall;
+    public Unit Queen;
     private readonly Color _color;
 
     private readonly List<Unit> _workers = new List<Unit>();
@@ -56,6 +57,14 @@ public class MiningManager: IManager {
         DiscoverExtractors();
     }
 
+    public void AssignQueen(Unit queen) {
+        Queen = queen;
+
+        Queen.AddDeathWatcher(this);
+        DebugLocationModule.Install(Queen, _color);
+        QueenMicroModule.Install(Queen, TownHall);
+    }
+
     public void AssignWorker(Unit worker) {
         AssignWorkers(new List<Unit> { worker });
     }
@@ -72,7 +81,6 @@ public class MiningManager: IManager {
     }
 
     public void OnFrame() {
-        // Get new extractors
         if (_extractors.Count < _gasses.Count) {
             DiscoverExtractors();
         }
@@ -87,6 +95,11 @@ public class MiningManager: IManager {
             MiningModule.GetFrom(worker).Execute();
             DebugLocationModule.GetFrom(worker).Execute();
         });
+
+        if (Queen != null) {
+            QueenMicroModule.GetFrom(Queen).Execute();
+            DebugLocationModule.GetFrom(Queen).Execute();
+        }
 
         DebugLocationModule.GetFrom(TownHall).Execute();
         _minerals.ForEach(mineral => DebugLocationModule.GetFrom(mineral).Execute());
@@ -116,6 +129,9 @@ public class MiningManager: IManager {
                 CapacityModule.GetFrom(extractor).AssignedUnits.ForEach(worker => MiningModule.Uninstall(worker));
             }
         }
+        else if (deadUnit.UnitType == Units.Queen) {
+            Queen = null;
+        }
     }
 
     private IEnumerable<Unit> GetIdleWorkers() {
@@ -127,9 +143,12 @@ public class MiningManager: IManager {
             var assignedResource = GetClosestExtractorWithAvailableCapacity(worker);
             assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: 1);
             assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: 0);
+            assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: -999);
 
-            MiningModule.Install(worker, assignedResource);
-            CapacityModule.GetFrom(assignedResource).Assign(worker);
+            if (assignedResource != null) {
+                MiningModule.Install(worker, assignedResource);
+                CapacityModule.GetFrom(assignedResource).Assign(worker);
+            }
         }
     }
 
