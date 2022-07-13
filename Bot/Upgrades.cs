@@ -3,6 +3,7 @@
 public class Upgrades {
     public const uint GlialReconstitution = 2;
     public const uint TunnelingClaws = 3;
+    public const uint Burrow = 64;
 
     public const uint ZergMeleeWeaponsLevel1 = 53;
     public const uint ZergMeleeWeaponsLevel2 = 54;

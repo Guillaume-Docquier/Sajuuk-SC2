@@ -39,4 +39,8 @@ internal static class Abilities {
     public const int ProbeReturnCargo = 299;
     public const int DroneGather = 1183;
     public const int DroneReturnCargo = 1184;
+
+    // TODO GD Each unit has its burrow command
+    public const int BurrowRoachUp = 1388;
+    public const int BurrowRoachDown = 1386;
 }

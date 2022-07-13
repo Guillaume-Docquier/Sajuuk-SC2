@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
+using Bot.UnitModules;
 
 namespace Bot.Managers;
 
@@ -17,10 +19,17 @@ public class BattleManager: IManager {
     }
 
     public void Assign(List<Unit> soldiers) {
-        soldiers.ForEach(unit => unit.AddDeathWatcher(this));
+        soldiers.ForEach(unit => {
+            unit.AddDeathWatcher(this);
+
+            if (unit.UnitType == Units.Roach) {
+                BurrowMicroModule.Install(unit);
+            }
+        });
+
         _army.AddRange(soldiers);
 
-        if (_army.Count > 12) {
+        if (_army.Sum(unit => unit.Supply) >= 20) {
             _startAttacking = true;
         }
     }
@@ -29,6 +38,8 @@ public class BattleManager: IManager {
         if (_startAttacking) {
             _army.ForEach(unit => unit.AttackMove(_target));
         }
+
+        _army.ForEach(unit => BurrowMicroModule.GetFrom(unit)?.Execute());
     }
 
     public void ReportUnitDeath(Unit deadUnit) {

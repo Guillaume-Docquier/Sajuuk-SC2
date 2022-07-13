@@ -9,7 +9,7 @@ namespace Bot;
 using BuildOrder = Queue<BuildOrders.BuildStep>;
 
 public class ZergBot: PoliteBot {
-    private readonly BuildOrder _buildOrder = BuildOrders.TestExpands();
+    private readonly BuildOrder _buildOrder = BuildOrders.TwoBasesRoach();
     private readonly List<IManager> _managers = new List<IManager>();
 
     public override string Name => "ZergBot";

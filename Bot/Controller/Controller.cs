@@ -221,7 +221,6 @@ public static class Controller {
         return null;
     }
 
-    // TODO GD Get rid?
     private static Vector3 FindConstructionSpot(uint buildingType) {
         Vector3 startingSpot;
 
@@ -234,29 +233,25 @@ public static class Controller {
             return Vector3.Zero;
         }
 
-        const int radius = 12;
+        var searchGrid = MapAnalyzer.BuildSearchGrid(startingSpot, gridRadius: 12, stepSize: 2);
 
-        //trying to find a valid construction spot
-        var mineralFields = GetUnits(OwnedUnits, Units.MineralFields, onlyVisible: true).ToList();
-        Vector3 constructionSpot;
-        while (true) {
-            constructionSpot = new Vector3(startingSpot.X + Random.Next(-radius, radius + 1), startingSpot.Y + Random.Next(-radius, radius + 1), 0);
-
-            //avoid building in the mineral line
-            if (IsInRange(constructionSpot, mineralFields, 5)) {
+        // Trying to find a valid construction spot
+        var mineralFields = GetUnits(NeutralUnits, Units.MineralFields).ToList();
+        foreach (var constructionCandidate in searchGrid) {
+            // Avoid building in the mineral line
+            if (IsInRange(constructionCandidate, mineralFields, 5)) {
                 continue;
             }
 
-            //check if the building fits
-            if (!CanPlace(buildingType, constructionSpot)) {
-                continue;
+            // Check if the building fits
+            if (CanPlace(buildingType, constructionCandidate)) {
+                return constructionCandidate;
             }
-
-            //ok, we found a spot
-            break;
         }
 
-        return constructionSpot;
+        Logger.Error("Could not find a construction spot for {0}", GameData.GetUnitTypeData(buildingType).Name);
+
+        return default;
     }
 
     /*

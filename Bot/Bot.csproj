@@ -63,8 +63,10 @@
     <Compile Include="MapAnalyzer.cs" />
     <Compile Include="PoliteBot.cs" />
     <Compile Include="Logger.cs" />
+    <Compile Include="UnitModules\BurrowMicroModule.cs" />
     <Compile Include="UnitModules\CapacityModule.cs" />
     <Compile Include="UnitModules\DebugLocationModule.cs" />
+    <Compile Include="UnitModules\KitingModule.cs" />
     <Compile Include="UnitModules\MiningModule.cs" />
     <Compile Include="UnitModules\IUnitModule.cs" />
     <Compile Include="UnitUtils.cs" />

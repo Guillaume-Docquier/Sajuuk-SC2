@@ -46,12 +46,9 @@ public static class MapAnalyzer {
 
         foreach (var resourceCluster in ResourceClusters) {
             var centerPosition = GetClusterCenter(resourceCluster);
-            var searchGrid = BuildSearchGrid(centerPosition);
+            var searchGrid = BuildSearchGrid(centerPosition, gridRadius: ExpandSearchRadius);
 
-            // Search starting with the closest points
-            var sortedBuildSpots = searchGrid.OrderBy(position => Vector3.Distance(centerPosition, position));
-
-            var goodBuildSpot = sortedBuildSpots.FirstOrDefault(buildSpot => Controller.CanPlace(Units.Hatchery, buildSpot));
+            var goodBuildSpot = searchGrid.FirstOrDefault(buildSpot => Controller.CanPlace(Units.Hatchery, buildSpot));
             if (goodBuildSpot != default) {
                 expandLocations.Add(goodBuildSpot);
                 Debugger.AddSphere(goodBuildSpot.ToPoint(), GameGridCellRadius, Colors.Green);
@@ -62,7 +59,7 @@ public static class MapAnalyzer {
         return expandLocations;
     }
 
-    private static Vector3 GetClusterCenter(IReadOnlyList<Unit> unitCluster) {
+    public static Vector3 GetClusterCenter(IReadOnlyList<Unit> unitCluster) {
         var minX = unitCluster.Select(unit => unit.Position.X).Min();
         var maxX = unitCluster.Select(unit => unit.Position.X).Max();
         var minY = unitCluster.Select(unit => unit.Position.Y).Min();
@@ -77,14 +74,14 @@ public static class MapAnalyzer {
         return new Vector3((float)Math.Floor(centerX) + GameGridCellRadius, (float)Math.Floor(centerY) + GameGridCellRadius, centerZ);
     }
 
-    private static IEnumerable<Vector3> BuildSearchGrid(Vector3 centerPosition) {
+    public static IEnumerable<Vector3> BuildSearchGrid(Vector3 centerPosition, float gridRadius, float stepSize = GameGridCellWidth) {
         var buildSpots = new List<Vector3>();
-        for (var x = centerPosition.X - ExpandSearchRadius; x <= centerPosition.X + ExpandSearchRadius; x += GameGridCellWidth) {
-            for (var y = centerPosition.Y - ExpandSearchRadius; y <= centerPosition.Y + ExpandSearchRadius; y += GameGridCellWidth) {
+        for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x += stepSize) {
+            for (var y = centerPosition.Y - gridRadius; y <= centerPosition.Y + gridRadius; y += stepSize) {
                 buildSpots.Add(new Vector3(x, y, centerPosition.Z));
             }
         }
 
-        return buildSpots;
+        return buildSpots.OrderBy(position => Vector3.Distance(centerPosition, position));
     }
 }

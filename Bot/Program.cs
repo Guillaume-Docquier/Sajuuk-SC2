@@ -9,7 +9,7 @@ internal class Program {
     private const string MapName = "AcropolisLE.SC2Map";
 
     private const Race OpponentRace = Race.Random;
-    private const Difficulty OpponentDifficulty = Difficulty.Easy;
+    private const Difficulty OpponentDifficulty = Difficulty.Medium;
 
     private const bool RealTime = true;
 

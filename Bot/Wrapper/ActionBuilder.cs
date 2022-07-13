@@ -69,7 +69,7 @@ public static class ActionBuilder {
         };
     }
 
-    private static Action UnitCommand(int abilityId, ulong unitTag, Point2D position = null, ulong targetUnitTag = ulong.MaxValue) {
+    public static Action UnitCommand(int abilityId, ulong unitTag, Point2D position = null, ulong targetUnitTag = ulong.MaxValue) {
         return UnitCommand(abilityId, new List<ulong> { unitTag }, position, targetUnitTag);
     }
 

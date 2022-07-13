@@ -30,6 +30,8 @@ public class Unit: ICanDie {
     public int IdealWorkerCount;
     public int AssignedWorkers;
     public ulong LastSeen;
+    public HashSet<uint> Buffs;
+    public bool IsBurrowed;
 
     public ulong DeathDelay = 1;
 
@@ -65,6 +67,8 @@ public class Unit: ICanDie {
         IdealWorkerCount = unit.IdealHarvesters;
         AssignedWorkers = unit.AssignedHarvesters;
         LastSeen = frame;
+        Buffs = new HashSet<uint>(unit.BuffIds);
+        IsBurrowed = unit.IsBurrowed;
     }
 
     public double DistanceTo(Unit otherUnit) {

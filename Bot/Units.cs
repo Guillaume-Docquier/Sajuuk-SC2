@@ -330,8 +330,8 @@ internal static class Units {
     public static readonly HashSet<uint> ZergMilitary = new HashSet<uint>
     {
         // Ground
-        Queen,
-        QueenBurrowed,
+        // Queen,
+        // QueenBurrowed,
         Zergling,
         ZerglingBurrowed,
         Baneling,
@@ -553,6 +553,8 @@ internal static class Units {
         { UltraliskCavern,                   new HashSet<uint> { Drone }},
         { Upgrades.ZergMissileWeaponsLevel1, new HashSet<uint> { EvolutionChamber }},
         { Upgrades.GlialReconstitution,      new HashSet<uint> { RoachWarren }},
+        { Upgrades.TunnelingClaws,           new HashSet<uint> { RoachWarren }},
+        { Upgrades.Burrow,                   new HashSet<uint> { Hatchery }},
     };
 
     public static readonly Dictionary<uint, uint> MorphInto = new Dictionary<uint, uint>
@@ -635,5 +637,7 @@ internal static class Units {
 
         { Upgrades.ZergMissileWeaponsLevel1, EvolutionChamber },
         { Upgrades.GlialReconstitution,      RoachWarren },
+        { Upgrades.TunnelingClaws,           RoachWarren },
+        { Upgrades.Burrow,                   Lair },
     };
 }
