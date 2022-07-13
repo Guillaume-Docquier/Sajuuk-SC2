@@ -20,6 +20,10 @@ public class MiningModule: IUnitModule {
         worker.Modules.Add(Tag, new MiningModule(worker, assignedResource));
     }
 
+    public static MiningModule GetFrom(Unit worker) {
+        return worker.Modules[Tag] as MiningModule;
+    }
+
     private MiningModule(Unit worker, Unit assignedResource) {
         _worker = worker;
         _assignedResource = assignedResource;

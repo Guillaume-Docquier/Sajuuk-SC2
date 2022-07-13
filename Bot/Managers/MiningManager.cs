@@ -32,7 +32,6 @@ public class MiningManager: IManager {
         _color = color;
 
         DebugLocationModule.Install(TownHall, _color);
-        TownHall.Modules[DebugLocationModule.Tag].Execute();
 
         _minerals = Controller.GetUnits(Controller.NeutralUnits, Units.MineralFields)
             .Where(mineral => mineral.DistanceTo(TownHall) < MaxDistanceToExpand)
@@ -75,7 +74,7 @@ public class MiningManager: IManager {
             assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: 0);
 
             MiningModule.Install(worker, assignedResource);
-            CapacityModule.Assign(assignedResource, worker);
+            CapacityModule.GetFrom(assignedResource).Assign(worker);
 
             _assignedResources[worker] = assignedResource;
         }
@@ -92,13 +91,13 @@ public class MiningManager: IManager {
             ManageExtractors(newExtractors);
         }
 
-        if (_minerals.Sum(CapacityModule.GetAvailableCapacity) <= _minerals.Count) {
+        if (_minerals.Sum(mineral => CapacityModule.GetFrom(mineral).AvailableCapacity) <= _minerals.Count) {
             foreach (var extractor in _extractors.Where(extractor => extractor.IsOperational)) {
                 // TODO GD Select from busiest minerals instead
                 var workersToReassign = _assignedResources
                     .Where(dispatch => UnitUtils.GetResourceType(dispatch.Value) == UnitUtils.ResourceType.Mineral)
                     .Select(dispatch => dispatch.Key)
-                    .Take(CapacityModule.GetAvailableCapacity(extractor))
+                    .Take(CapacityModule.GetFrom(extractor).AvailableCapacity)
                     .ToList();
 
                 foreach (var worker in workersToReassign) {
@@ -109,14 +108,14 @@ public class MiningManager: IManager {
 
         // Get to work!
         _workers.ForEach(worker => {
-            worker.Modules[MiningModule.Tag].Execute();
-            worker.Modules[DebugLocationModule.Tag].Execute();
+            MiningModule.GetFrom(worker).Execute();
+            DebugLocationModule.GetFrom(worker).Execute();
         });
 
-        TownHall.Modules[DebugLocationModule.Tag].Execute();
-        _minerals.ForEach(mineral => mineral.Modules[DebugLocationModule.Tag].Execute());
-        _gasses.ForEach(gas => gas.Modules[DebugLocationModule.Tag].Execute());
-        _extractors.ForEach(extractor => extractor.Modules[DebugLocationModule.Tag].Execute());
+        DebugLocationModule.GetFrom(TownHall).Execute();
+        _minerals.ForEach(mineral => DebugLocationModule.GetFrom(mineral).Execute());
+        _gasses.ForEach(gas => DebugLocationModule.GetFrom(gas).Execute());
+        _extractors.ForEach(extractor => DebugLocationModule.GetFrom(extractor).Execute());
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
@@ -144,7 +143,7 @@ public class MiningManager: IManager {
 
             DebugLocationModule.Install(extractor, _color);
             CapacityModule.Install(extractor, MaxPerExtractor);
-            CapacityModule.Assign(_gasses.First(gas => gas.DistanceTo(extractor) < 1), extractor);
+            CapacityModule.GetFrom(_gasses.First(gas => gas.DistanceTo(extractor) < 1)).Assign(extractor);
         }
 
         _extractors.AddRange(extractors);
@@ -153,23 +152,23 @@ public class MiningManager: IManager {
     private Unit GetClosestExtractorWithAvailableCapacity(Unit worker) {
         return _extractors
             .Where(extractor => extractor.IsOperational)
-            .Where(extractor => CapacityModule.GetAvailableCapacity(extractor) > 0)
+            .Where(extractor => CapacityModule.GetFrom(extractor).AvailableCapacity > 0)
             .OrderBy(extractor => extractor.DistanceTo(worker))
             .FirstOrDefault();
     }
 
     private Unit GetClosestMineralWithAvailableCapacity(Unit worker, int minAvailableCapacity) {
         return _minerals
-            .Where(mineral => CapacityModule.GetAvailableCapacity(mineral) > minAvailableCapacity)
+            .Where(mineral => CapacityModule.GetFrom(mineral).AvailableCapacity > minAvailableCapacity)
             .OrderBy(mineral => mineral.DistanceTo(worker))
             .FirstOrDefault();
     }
 
     private void UpdateWorkerAssignment(Unit worker, Unit assignedResource) {
-        CapacityModule.Release(_assignedResources[worker], worker);
+        CapacityModule.GetFrom(_assignedResources[worker]).Release(worker);
 
         MiningModule.Install(worker, assignedResource);
-        CapacityModule.Assign(assignedResource, worker);
+        CapacityModule.GetFrom(assignedResource).Assign(worker);
         _assignedResources[worker] = assignedResource;
     }
 }

@@ -9,8 +9,12 @@ public class DebugLocationModule: IUnitModule {
     private readonly Unit _unit;
     private readonly Color _color;
 
-    public static void Install(Unit worker, Color color = null) {
-        worker.Modules.Add(Tag, new DebugLocationModule(worker, color));
+    public static void Install(Unit unit, Color color = null) {
+        unit.Modules.Add(Tag, new DebugLocationModule(unit, color));
+    }
+
+    public static DebugLocationModule GetFrom(Unit unit) {
+        return unit.Modules[Tag] as DebugLocationModule;
     }
 
     private DebugLocationModule(Unit unit, Color color = null) {

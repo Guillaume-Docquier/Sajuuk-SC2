@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace Bot.UnitModules;
 
@@ -11,26 +10,12 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
 
     public int AvailableCapacity => _maxCapacity - _assignedUnits.Count;
 
-    public static void Install(Unit worker, int maxCapacity) {
-        worker.Modules.Add(Tag, new CapacityModule(maxCapacity));
+    public static void Install(Unit unit, int maxCapacity) {
+        unit.Modules.Add(Tag, new CapacityModule(maxCapacity));
     }
 
-    public static int GetAvailableCapacity(Unit unit) {
-        var capacityModule = unit.Modules[Tag] as CapacityModule;
-
-        return capacityModule!.AvailableCapacity;
-    }
-
-    public static void Assign(Unit toUnit, Unit unit) {
-        var capacityModule = toUnit.Modules[Tag] as CapacityModule;
-
-        capacityModule!.Assign(unit);
-    }
-
-    public static void Release(Unit fromUnit, Unit unit) {
-        var capacityModule = fromUnit.Modules[Tag] as CapacityModule;
-
-        capacityModule!.Release(unit);
+    public static CapacityModule GetFrom(Unit unit) {
+        return unit.Modules[Tag] as CapacityModule;
     }
 
     private CapacityModule(int maxCapacity) {
