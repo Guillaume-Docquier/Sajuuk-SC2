@@ -9,7 +9,11 @@ public class DebugLocationModule: IUnitModule {
     private readonly Unit _unit;
     private readonly Color _color;
 
-    public DebugLocationModule(Unit unit, Color color = null) {
+    public static void Install(Unit worker, Color color = null) {
+        worker.Modules.Add(Tag, new DebugLocationModule(worker, color));
+    }
+
+    private DebugLocationModule(Unit unit, Color color = null) {
         _unit = unit;
         _color = color ?? Colors.White;
     }

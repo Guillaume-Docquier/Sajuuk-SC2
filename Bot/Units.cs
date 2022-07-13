@@ -390,6 +390,13 @@ internal static class Units {
         BattleStationMineralField750
     };
 
+    public static readonly HashSet<uint> Extractors = new HashSet<uint>
+    {
+        Extractor,
+        Refinery,
+        Assimilator,
+    };
+
     // Gas geyser types seem to differ from map to map
     public static readonly HashSet<uint> GasGeysers = new HashSet<uint>
     {

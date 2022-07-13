@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Bot.UnitModules;
 
@@ -10,8 +11,8 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
 
     public int AvailableCapacity => _maxCapacity - _assignedUnits.Count;
 
-    public CapacityModule(int maxCapacity) {
-        _maxCapacity = maxCapacity;
+    public static void Install(Unit worker, int maxCapacity) {
+        worker.Modules.Add(Tag, new CapacityModule(maxCapacity));
     }
 
     public static int GetAvailableCapacity(Unit unit) {
@@ -26,10 +27,14 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
         capacityModule!.Assign(unit);
     }
 
-    public static void Assign(Unit toUnit, List<Unit> units) {
-        var capacityModule = toUnit.Modules[Tag] as CapacityModule;
+    public static void Release(Unit fromUnit, Unit unit) {
+        var capacityModule = fromUnit.Modules[Tag] as CapacityModule;
 
-        capacityModule!.Assign(units);
+        capacityModule!.Release(unit);
+    }
+
+    private CapacityModule(int maxCapacity) {
+        _maxCapacity = maxCapacity;
     }
 
     public void Assign(Unit unit) {
@@ -41,11 +46,9 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
         _assignedUnits.AddRange(units);
     }
 
-    public void Release(List<Unit> units) {
-        units.ForEach(unit => {
-            unit.RemoveDeathWatcher(this);
-            _assignedUnits.Remove(unit);
-        });
+    public void Release(Unit unitToRelease) {
+        unitToRelease.RemoveDeathWatcher(this);
+        _assignedUnits.Remove(unitToRelease);
     }
 
     public void Execute() {

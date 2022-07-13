@@ -65,10 +65,8 @@
     <Compile Include="Logger.cs" />
     <Compile Include="UnitModules\CapacityModule.cs" />
     <Compile Include="UnitModules\DebugLocationModule.cs" />
-    <Compile Include="UnitModules\GasMiningModule.cs" />
     <Compile Include="UnitModules\MiningModule.cs" />
     <Compile Include="UnitModules\IUnitModule.cs" />
-    <Compile Include="UnitModules\MineralMiningModule.cs" />
     <Compile Include="UnitUtils.cs" />
     <Compile Include="Upgrades.cs" />
     <Compile Include="Vector3Extensions.cs" />
