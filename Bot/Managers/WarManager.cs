@@ -51,12 +51,7 @@ public class WarManager: IManager {
 
     private static Vector3 GetTownHallDefensePosition(Unit townHall, Vector3 threatPosition) {
         // TODO GD Use pathing instead of direct distance
-        var townHallPosition = townHall.Position;
-        var threatDirection = threatPosition - townHallPosition;
-        threatDirection.Z = 0; // TODO GD Use heightMap to set terrain Z
-
-        var townHallDefenseDirection = Vector3.Normalize(threatDirection) * GuardDistance;
-
-        return townHallPosition + townHallDefenseDirection;
+        // TODO GD Use heightMap to set terrain Z
+        return townHall.Position.TranslateTowards(threatPosition, GuardDistance, ignoreZAxis: true);
     }
 }
