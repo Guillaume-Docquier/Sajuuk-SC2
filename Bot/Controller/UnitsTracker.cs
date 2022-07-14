@@ -30,14 +30,12 @@ public class UnitsTracker {
 
         // Find new units and update existing ones
         newRawUnits.ForEach(newRawUnit => {
-            // Existing unit, update it
             if (UnitsByTag.ContainsKey(newRawUnit.Tag)) {
                 UnitsByTag[newRawUnit.Tag].Update(newRawUnit, frame);
             }
             else {
                 var newUnit = new Unit(newRawUnit, frame);
 
-                // New owned unit
                 if (newUnit.Alliance == Alliance.Self) {
                     NewOwnedUnits.Add(newUnit);
                 }
@@ -59,24 +57,21 @@ public class UnitsTracker {
                     }
                 }
 
-                // New unit
                 UnitsByTag[newUnit.Tag] = newUnit;
             }
         });
 
-        // Find dead units
+        // Handle dead units
         foreach (var unit in UnitsByTag.Select(unit => unit.Value).ToList()) {
             if (unit.IsDead(frame)) {
-                // Dead owned unit
                 if (unit.Alliance == Alliance.Self) {
                     DeadOwnedUnits.Add(unit);
+                    unit.Died();
                 }
                 else if (unit.Alliance == Alliance.Neutral) {
-                    // TODO GD Should we handle it like we do for our own units and vice versa?
                     unit.Died();
                 }
 
-                // Dead unit
                 UnitsByTag.Remove(unit.Tag);
             }
         }

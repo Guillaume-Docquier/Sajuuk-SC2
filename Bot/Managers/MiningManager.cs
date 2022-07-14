@@ -90,21 +90,6 @@ public class MiningManager: IManager {
         if (_minerals.Sum(mineral => CapacityModule.GetFrom(mineral).AvailableCapacity) <= _minerals.Count) {
             FillExtractors();
         }
-
-        _workers.ForEach(worker => {
-            MiningModule.GetFrom(worker).Execute();
-            DebugLocationModule.GetFrom(worker).Execute();
-        });
-
-        if (Queen != null) {
-            QueenMicroModule.GetFrom(Queen).Execute();
-            DebugLocationModule.GetFrom(Queen).Execute();
-        }
-
-        DebugLocationModule.GetFrom(TownHall).Execute();
-        _minerals.ForEach(mineral => DebugLocationModule.GetFrom(mineral).Execute());
-        _gasses.ForEach(gas => DebugLocationModule.GetFrom(gas).Execute());
-        _extractors.ForEach(extractor => DebugLocationModule.GetFrom(extractor).Execute());
     }
 
     public void ReportUnitDeath(Unit deadUnit) {

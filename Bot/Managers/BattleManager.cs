@@ -38,8 +38,6 @@ public class BattleManager: IManager {
         if (_startAttacking) {
             _army.ForEach(unit => unit.AttackMove(_target));
         }
-
-        _army.ForEach(unit => BurrowMicroModule.GetFrom(unit)?.Execute());
     }
 
     public void ReportUnitDeath(Unit deadUnit) {

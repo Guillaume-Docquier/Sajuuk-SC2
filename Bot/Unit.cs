@@ -218,4 +218,10 @@ public class Unit: ICanDie {
     public bool IsDead(ulong atFrame) {
         return atFrame - LastSeen > DeathDelay;
     }
+
+    public void ExecuteModules() {
+        foreach (var module in Modules.Values) {
+            module.Execute();
+        }
+    }
 }

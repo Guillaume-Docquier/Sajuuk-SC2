@@ -22,16 +22,15 @@ public class ZergBot: PoliteBot {
             _managers.Add(new WarManager());
         }
 
-        // Some units died
-        Controller.DeadOwnedUnits.ForEach(unit => unit.Died());
-
         FollowBuildOrder();
         if (!IsBuildOrderBlocking()) {
             SpawnDrones();
         }
 
-        // Execute managers
         _managers.ForEach(manager => manager.OnFrame());
+        foreach (var unit in Controller.UnitsByTag.Values) {
+            unit.ExecuteModules();
+        }
     }
 
     private void FollowBuildOrder() {
