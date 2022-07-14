@@ -1,21 +1,19 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using Bot.UnitModules;
 
 namespace Bot.Managers;
 
 public class BattleManager: IManager {
-    private Vector3 _target;
-    private readonly List<Unit> _army = new List<Unit>();
-    private bool _startAttacking = false;
+    public Vector3 Target;
+    public readonly List<Unit> Army = new List<Unit>();
 
-    public BattleManager() {
-
+    public BattleManager(Vector3 target) {
+        Target = target;
     }
 
     public void Assign(Vector3 target) {
-        _target = target;
+        Target = target;
     }
 
     public void Assign(List<Unit> soldiers) {
@@ -27,20 +25,15 @@ public class BattleManager: IManager {
             }
         });
 
-        _army.AddRange(soldiers);
-
-        if (_army.Sum(unit => unit.Supply) >= 20) {
-            _startAttacking = true;
-        }
+        // TODO GD Use a targeting module
+        Army.AddRange(soldiers);
     }
 
     public void OnFrame() {
-        if (_startAttacking) {
-            _army.ForEach(unit => unit.AttackMove(_target));
-        }
+        Army.ForEach(unit => unit.AttackMove(Target));
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
-        _army.Remove(deadUnit);
+        Army.Remove(deadUnit);
     }
 }

@@ -180,20 +180,20 @@ public static class Controller {
 
             var actionResult = result.Result.Placements[0].Result;
             if (actionResult == ActionResult.NotSupported) {
-                Debugger.AddSquare(targetPos.ToPoint(), 1f, Colors.Black);
+                Debugger.AddSquare(targetPos, 1f, Colors.Black);
             }
             else if (actionResult == ActionResult.CantBuildLocationInvalid) {
-                Debugger.AddSquare(targetPos.ToPoint(), 1f, Colors.Red);
+                Debugger.AddSquare(targetPos, 1f, Colors.Red);
             }
             else if (actionResult == ActionResult.CantBuildTooCloseToResources) {
-                Debugger.AddSquare(targetPos.ToPoint(), 1f, Colors.Cyan);
+                Debugger.AddSquare(targetPos, 1f, Colors.Cyan);
             }
             else if (actionResult == ActionResult.Success) {
-                Debugger.AddSquare(targetPos.ToPoint(), 1f, Colors.Green);
+                Debugger.AddSquare(targetPos, 1f, Colors.Green);
             }
             else {
                 Logger.Warning("[CanPlace] Unexpected placement result: {0}", actionResult);
-                Debugger.AddSquare(targetPos.ToPoint(), 1f, Colors.Magenta);
+                Debugger.AddSquare(targetPos, 1f, Colors.Magenta);
             }
 
             return actionResult == ActionResult.Success;

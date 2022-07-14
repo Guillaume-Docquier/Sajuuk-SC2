@@ -289,7 +289,7 @@ public class GameConnection {
                 var unsuccessfulActions = actions
                     .Zip(response.Action.Result, (action, result) => (action, result))
                     .Where(action => action.result != ActionResult.Success)
-                    .Select(action => $"({action.action.ActionRaw.UnitCommand.AbilityId}, {action.result})")
+                    .Select(action => $"({GameData.GetAbilityData(action.action.ActionRaw.UnitCommand.AbilityId).FriendlyName}, {action.result})")
                     .ToList();
 
                 if (unsuccessfulActions.Count > 0) {

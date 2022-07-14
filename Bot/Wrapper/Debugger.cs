@@ -35,29 +35,29 @@ public static class Debugger {
 
     public static void AddSphere(Unit unit, Color color) {
         AddSphere(
-            new Point { X = unit.Position.X, Y = unit.Position.Y, Z = unit.Position.Z + CreepHeight },
+            unit.Position,
             unit.Radius * 1.25f,
             color
         );
     }
 
-    public static void AddSphere(Point point, float radius, Color color) {
+    public static void AddSphere(Vector3 position, float radius, Color color) {
         DebugSpheres.Add(
             new DebugSphere
             {
-                P = point,
+                P = position.ToPoint(zOffset: CreepHeight),
                 R = radius,
                 Color = color,
             }
         );
     }
 
-    public static void AddSquare(Point centerPoint, float width, Color color) {
+    public static void AddSquare(Vector3 centerPosition, float width, Color color) {
         DebugBoxes.Add(
             new DebugBox
             {
-                Min = new Point { X = centerPoint.X - width / 2, Y = centerPoint.Y - width / 2, Z = centerPoint.Z + CreepHeight },
-                Max = new Point { X = centerPoint.X + width / 2, Y = centerPoint.Y + width / 2, Z = centerPoint.Z + CreepHeight },
+                Min = new Point { X = centerPosition.X - width / 2, Y = centerPosition.Y - width / 2, Z = centerPosition.Z + CreepHeight },
+                Max = new Point { X = centerPosition.X + width / 2, Y = centerPosition.Y + width / 2, Z = centerPosition.Z + CreepHeight },
                 Color = color,
             }
         );
@@ -69,8 +69,8 @@ public static class Debugger {
             {
                 Line = new Line
                 {
-                    P0 = new Point { X = start.X, Y = start.Y, Z = start.Z + CreepHeight },
-                    P1 = new Point { X = end.X, Y = end.Y, Z = end.Z + CreepHeight },
+                    P0 = start.ToPoint(zOffset: CreepHeight),
+                    P1 = end.ToPoint(zOffset: CreepHeight),
                 },
                 Color = color,
             }
