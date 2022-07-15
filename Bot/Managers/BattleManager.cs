@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Bot.UnitModules;
 
@@ -30,7 +31,10 @@ public class BattleManager: IManager {
     }
 
     public void OnFrame() {
-        Army.ForEach(unit => unit.AttackMove(Target));
+        Army.Where(unit => unit.Orders.All(order => order.AbilityId != Abilities.Attack))
+            .Where(unit => unit.DistanceTo(Target) > 3)
+            .ToList()
+            .ForEach(unit => unit.AttackMove(Target));
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
