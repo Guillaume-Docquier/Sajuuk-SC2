@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Bot.GameData;
 
 namespace Bot;
 
@@ -36,7 +37,7 @@ public static class BuildOrders {
             new BuildStep(BuildType.Train, 30, Units.Queen),
             new BuildStep(BuildType.UpgradeInto, 33, Units.Lair),
             new BuildStep(BuildType.Build, 37, Units.RoachWarren),
-            new BuildStep(BuildType.Build, 38, Units.EvolutionChamber), // TODO GD Tries to build on top of roach warren nad sometimes not enough minerals
+            new BuildStep(BuildType.Build, 37, Units.EvolutionChamber), // TODO GD Tries to build on top of roach warren and sometimes not enough minerals
             new BuildStep(BuildType.Train, 44, Units.Overlord),
             new BuildStep(BuildType.Research, 44, Upgrades.ZergMissileWeaponsLevel1),
             new BuildStep(BuildType.Build, 52, Units.Extractor, 2), // TODO GD Doesn't build on snapshot units

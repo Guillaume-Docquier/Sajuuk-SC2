@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Bot.GameData;
 using Bot.Wrapper;
 
 namespace Bot.UnitModules;

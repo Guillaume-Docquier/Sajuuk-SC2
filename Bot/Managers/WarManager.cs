@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Numerics;
+using Bot.GameData;
 using Bot.Wrapper;
 
 namespace Bot.Managers;

@@ -1,8 +1,8 @@
 ﻿using SC2APIProtocol;
 
-namespace Bot.Wrapper;
+namespace Bot.GameData;
 
-public static class GameData {
+public static class TypeData {
     private static ResponseData _data;
 
     public static ResponseData Data {

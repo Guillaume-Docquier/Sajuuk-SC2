@@ -48,11 +48,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Abilities.cs" />
     <Compile Include="BuildOrders.cs" />
     <Compile Include="Clustering.cs" />
+    <Compile Include="Controller\BuildingTracker.cs" />
     <Compile Include="Controller\Controller.cs" />
     <Compile Include="Controller\UnitsTracker.cs" />
+    <Compile Include="GameData\Abilities.cs" />
+    <Compile Include="GameData\Buildings.cs" />
+    <Compile Include="GameData\TypeData.cs" />
+    <Compile Include="GameData\Units.cs" />
+    <Compile Include="GameData\Upgrades.cs" />
     <Compile Include="ICanDie.cs" />
     <Compile Include="IWatchUnitsDie.cs" />
     <Compile Include="Managers\BattleManager.cs" />
@@ -72,10 +77,8 @@
     <Compile Include="UnitModules\QueenMicroModule.cs" />
     <Compile Include="UnitModules\TargetingModule.cs" />
     <Compile Include="UnitUtils.cs" />
-    <Compile Include="Upgrades.cs" />
     <Compile Include="Vector3Extensions.cs" />
     <Compile Include="Wrapper\Debugger.cs" />
-    <Compile Include="Wrapper\GameData.cs" />
     <Compile Include="Wrapper\RequestBuilder.cs" />
     <Compile Include="ZergBot.cs" />
     <Compile Include="Program.cs" />
@@ -95,7 +98,6 @@
     <Compile Include="Wrapper\CommandLine.cs" />
     <Compile Include="Wrapper\GameConnection.cs" />
     <Compile Include="Wrapper\ProtobufProxy.cs" />
-    <Compile Include="Units.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

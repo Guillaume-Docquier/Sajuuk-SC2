@@ -1,30 +1,31 @@
 ﻿using System.Collections.Generic;
 using System.Numerics;
+using Bot.GameData;
 using SC2APIProtocol;
 
 namespace Bot.Wrapper;
 
 public static class ActionBuilder {
     public static Action TrainUnit(uint unitType, ulong producerTag) {
-        var unitAbilityId = (int)GameData.GetUnitTypeData(unitType).AbilityId;
+        var unitAbilityId = (int)TypeData.GetUnitTypeData(unitType).AbilityId;
 
         return UnitCommand(unitAbilityId, producerTag);
     }
 
     public static Action PlaceBuilding(uint buildingType, ulong producerTag, Vector3 position) {
-        var buildingAbilityId = (int)GameData.GetUnitTypeData(buildingType).AbilityId;
+        var buildingAbilityId = (int)TypeData.GetUnitTypeData(buildingType).AbilityId;
 
         return UnitCommand(buildingAbilityId, producerTag, position: new Point2D { X = position.X, Y = position.Y });
     }
 
     public static Action PlaceExtractor(uint buildingType, ulong producerTag, ulong gasTag) {
-        var buildingAbilityId = (int)GameData.GetUnitTypeData(buildingType).AbilityId;
+        var buildingAbilityId = (int)TypeData.GetUnitTypeData(buildingType).AbilityId;
 
         return UnitCommand(buildingAbilityId, producerTag, targetUnitTag: gasTag);
     }
 
     public static Action ResearchUpgrade(uint upgradeType, ulong producerTag) {
-        var upgradeAbilityId = (int)GameData.GetUpgradeData(upgradeType).AbilityId;
+        var upgradeAbilityId = (int)TypeData.GetUpgradeData(upgradeType).AbilityId;
 
         return UnitCommand(upgradeAbilityId, producerTag);
     }

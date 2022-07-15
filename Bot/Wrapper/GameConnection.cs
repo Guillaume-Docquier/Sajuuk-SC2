@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Bot.GameData;
 using SC2APIProtocol;
 
 namespace Bot.Wrapper;
@@ -246,7 +247,7 @@ public class GameConnection {
             }
         };
         var dataResponse = await SendRequest(dataRequest);
-        GameData.Data = dataResponse.Data;
+        TypeData.Data = dataResponse.Data;
 
         while (true) {
             var observationResponse = await SendRequest(new Request
@@ -289,7 +290,7 @@ public class GameConnection {
                 var unsuccessfulActions = actions
                     .Zip(response.Action.Result, (action, result) => (action, result))
                     .Where(action => action.result != ActionResult.Success)
-                    .Select(action => $"({GameData.GetAbilityData(action.action.ActionRaw.UnitCommand.AbilityId).FriendlyName}, {action.result})")
+                    .Select(action => $"({TypeData.GetAbilityData(action.action.ActionRaw.UnitCommand.AbilityId).FriendlyName}, {action.result})")
                     .ToList();
 
                 if (unsuccessfulActions.Count > 0) {

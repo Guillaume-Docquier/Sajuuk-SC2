@@ -1,4 +1,5 @@
-﻿using Bot.UnitModules;
+﻿using Bot.GameData;
+using Bot.UnitModules;
 
 namespace Bot;
 

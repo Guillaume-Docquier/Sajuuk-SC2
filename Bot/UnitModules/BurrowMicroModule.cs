@@ -1,4 +1,5 @@
-﻿using Bot.Wrapper;
+﻿using Bot.GameData;
+using Bot.Wrapper;
 
 namespace Bot.UnitModules;
 

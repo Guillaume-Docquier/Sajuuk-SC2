@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.GameData;
 using Bot.Managers;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -60,8 +61,8 @@ public class ZergBot: PoliteBot {
             .Take(3)
             .Select(nextBuildStep => {
                 var buildStepUnitOrUpgradeName = nextBuildStep.BuildType == BuildType.Research
-                    ? GameData.GetUpgradeData(nextBuildStep.UnitOrUpgradeType).Name
-                    : $"{nextBuildStep.Quantity} {GameData.GetUnitTypeData(nextBuildStep.UnitOrUpgradeType).Name}";
+                    ? TypeData.GetUpgradeData(nextBuildStep.UnitOrUpgradeType).Name
+                    : $"{nextBuildStep.Quantity} {TypeData.GetUnitTypeData(nextBuildStep.UnitOrUpgradeType).Name}";
 
                 return $"{nextBuildStep.BuildType.ToString()} {buildStepUnitOrUpgradeName} at {nextBuildStep.AtSupply} supply";
             });

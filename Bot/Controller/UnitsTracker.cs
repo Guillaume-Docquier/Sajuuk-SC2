@@ -5,26 +5,24 @@ using SC2APIProtocol;
 namespace Bot;
 
 public class UnitsTracker {
-    public readonly Dictionary<ulong, Unit> UnitsByTag;
+    public Dictionary<ulong, Unit> UnitsByTag;
 
-    public readonly List<Unit> NeutralUnits;
     public readonly List<Unit> NewOwnedUnits = new List<Unit>();
     public readonly List<Unit> DeadOwnedUnits = new List<Unit>();
 
+    public List<Unit> NeutralUnits;
     public List<Unit> OwnedUnits;
     public List<Unit> EnemyUnits;
 
-    public UnitsTracker(IEnumerable<SC2APIProtocol.Unit> rawUnits, ulong frame) {
-        var units = rawUnits.Select(rawUnit => new Unit(rawUnit, frame)).ToList();
-
-        UnitsByTag = units.ToDictionary(unit => unit.Tag);
-
-        NeutralUnits = units.Where(unit => unit.Alliance == Alliance.Neutral).ToList();
-        OwnedUnits = units.Where(unit => unit.Alliance == Alliance.Self).ToList();
-        EnemyUnits = units.Where(unit => unit.Alliance == Alliance.Enemy).ToList();
-    }
+    private bool _isInitialized = false;
 
     public void Update(List<SC2APIProtocol.Unit> newRawUnits, ulong frame) {
+        if (!_isInitialized) {
+            Init(newRawUnits, frame);
+
+            return;
+        }
+
         NewOwnedUnits.Clear();
         DeadOwnedUnits.Clear();
 
@@ -79,5 +77,17 @@ public class UnitsTracker {
         // Update unit lists
         OwnedUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Self).Select(unit => unit.Value).ToList();
         EnemyUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Enemy).Select(unit => unit.Value).ToList();
+    }
+
+    private void Init(IEnumerable<SC2APIProtocol.Unit> rawUnits, ulong frame) {
+        var units = rawUnits.Select(rawUnit => new Unit(rawUnit, frame)).ToList();
+
+        UnitsByTag = units.ToDictionary(unit => unit.Tag);
+
+        NeutralUnits = units.Where(unit => unit.Alliance == Alliance.Neutral).ToList();
+        OwnedUnits = units.Where(unit => unit.Alliance == Alliance.Self).ToList();
+        EnemyUnits = units.Where(unit => unit.Alliance == Alliance.Enemy).ToList();
+
+        _isInitialized = true;
     }
 }

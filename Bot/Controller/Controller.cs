@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.GameData;
 using Bot.UnitModules;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -17,7 +18,8 @@ public static class Controller {
     public const double FramesPerSecond = 22.4;
     public const float ExpandIsTakenRadius = 4f;
 
-    private static UnitsTracker _unitsTracker;
+    private static UnitsTracker _unitsTracker = new UnitsTracker();
+    private static BuildingTracker _buildingTracker = new BuildingTracker();
 
     public static ResponseGameInfo GameInfo;
     private static ResponseObservation _obs;
@@ -58,12 +60,12 @@ public static class Controller {
         _obs = obs;
         Frame = _obs.Observation.GameLoop;
 
-        if (GameInfo == null || GameData.Data == null || _obs == null) {
+        if (GameInfo == null || TypeData.Data == null || _obs == null) {
             if (GameInfo == null) {
                 Logger.Info("GameInfo is null! The application will terminate.");
             }
-            else if (GameData.Data == null) {
-                Logger.Info("GameData is null! The application will terminate.");
+            else if (TypeData.Data == null) {
+                Logger.Info("TypeData is null! The application will terminate.");
             }
             else {
                 Logger.Info("ResponseObservation is null! The application will terminate.");
@@ -73,12 +75,8 @@ public static class Controller {
             Environment.Exit(0);
         }
 
-        if (_unitsTracker == null) {
-            _unitsTracker = new UnitsTracker(_obs.Observation.RawData.Units, Frame);
-        }
-        else {
-            _unitsTracker.Update(_obs.Observation.RawData.Units.ToList(), Frame);
-        }
+        _unitsTracker.Update(_obs.Observation.RawData.Units.ToList(), Frame);
+        _buildingTracker.Update();
 
         Actions.Clear();
 
@@ -129,7 +127,7 @@ public static class Controller {
 
     private static int GetPendingCount(uint unitType, bool inConstruction = true) {
         var workers = GetUnits(OwnedUnits, Units.Workers);
-        var abilityId = GameData.GetUnitTypeData(unitType).AbilityId;
+        var abilityId = TypeData.GetUnitTypeData(unitType).AbilityId;
 
         var counter = 0;
 
@@ -152,118 +150,9 @@ public static class Controller {
         return counter;
     }
 
-    // This is a blocking call! Use it sparingly, or you will slow down your execution significantly!
-    public static bool CanPlace(uint unitType, Vector3 targetPos) {
-        var abilityId = GameData.GetUnitTypeData(unitType).AbilityId;
-
-        var queryBuildingPlacement = new RequestQueryBuildingPlacement
-        {
-            AbilityId = (int)abilityId, // TODO GD Can I just sync the types?
-            TargetPos = new Point2D
-            {
-                X = targetPos.X,
-                Y = targetPos.Y
-            }
-        };
-
-        var requestQuery = new Request
-        {
-            Query = new RequestQuery()
-        };
-        requestQuery.Query.Placements.Add(queryBuildingPlacement);
-
-        var result = Program.GameConnection.SendQuery(requestQuery.Query);
-        if (result.Result.Placements.Count > 0) {
-            if (result.Result.Placements.Count > 1) {
-                Logger.Warning("[CanPlace] Expected 1 placement, found {0}", result.Result.Placements.Count);
-            }
-
-            var actionResult = result.Result.Placements[0].Result;
-            if (actionResult == ActionResult.NotSupported) {
-                Debugger.AddSquare(targetPos, 1f, Colors.Black);
-            }
-            else if (actionResult == ActionResult.CantBuildLocationInvalid) {
-                Debugger.AddSquare(targetPos, 1f, Colors.Red);
-            }
-            else if (actionResult == ActionResult.CantBuildTooCloseToResources) {
-                Debugger.AddSquare(targetPos, 1f, Colors.Cyan);
-            }
-            else if (actionResult == ActionResult.Success) {
-                Debugger.AddSquare(targetPos, 1f, Colors.Green);
-            }
-            else {
-                Logger.Warning("[CanPlace] Unexpected placement result: {0}", actionResult);
-                Debugger.AddSquare(targetPos, 1f, Colors.Magenta);
-            }
-
-            return actionResult == ActionResult.Success;
-        }
-
-        if (result.Result.Placements.Count > 1) {
-            Logger.Warning("[CanPlace] Expected 1 placement, found 0");
-        }
-
-        return false;
-    }
-
-    // TODO GD Get rid?
-    private static bool IsInRange(Vector3 targetPosition, List<Unit> units, float maxDistance) {
-        return GetFirstInRange(targetPosition, units, maxDistance) != null;
-    }
-
-    // TODO GD Get rid?
-    private static Unit GetFirstInRange(Vector3 targetPosition, List<Unit> units, float maxDistance) {
-        //squared distance is faster to calculate
-        var maxDistanceSqr = maxDistance * maxDistance;
-        foreach (var unit in units) {
-            if (Vector3.DistanceSquared(targetPosition, unit.Position) <= maxDistanceSqr) {
-                return unit;
-            }
-        }
-
-        return null;
-    }
-
-    private static Vector3 FindConstructionSpot(uint buildingType) {
-        Vector3 startingSpot;
-
-        var resourceCenters = GetUnits(OwnedUnits, Units.ResourceCenters).ToList();
-        if (resourceCenters.Count > 0)
-            startingSpot = StartingTownHall.Position;
-        else {
-            Logger.Error("Unable to construct: {0}. No resource center was found.", GameData.GetUnitTypeData(buildingType).Name);
-
-            return Vector3.Zero;
-        }
-
-        var searchGrid = MapAnalyzer.BuildSearchGrid(startingSpot, gridRadius: 12, stepSize: 2);
-
-        // Trying to find a valid construction spot
-        var mineralFields = GetUnits(NeutralUnits, Units.MineralFields).ToList();
-        foreach (var constructionCandidate in searchGrid) {
-            // Avoid building in the mineral line
-            if (IsInRange(constructionCandidate, mineralFields, 5)) {
-                continue;
-            }
-
-            // Check if the building fits
-            if (CanPlace(buildingType, constructionCandidate)) {
-                return constructionCandidate;
-            }
-        }
-
-        Logger.Error("Could not find a construction spot for {0}", GameData.GetUnitTypeData(buildingType).Name);
-
-        return default;
-    }
-
-    /*
-     * OKAY!
-     */
-
     public static Unit GetAvailableProducer(uint unitOrAbilityType) {
         if (!Units.Producers.ContainsKey(unitOrAbilityType)) {
-            throw new NotImplementedException($"Producer for unit {GameData.GetUnitTypeData(unitOrAbilityType).Name} not found");
+            throw new NotImplementedException($"Producer for unit {TypeData.GetUnitTypeData(unitOrAbilityType).Name} not found");
         }
 
         var possibleProducers = Units.Producers[unitOrAbilityType];
@@ -273,20 +162,15 @@ public static class Controller {
     }
 
     public static bool ExecuteBuildStep(BuildOrders.BuildStep buildStep) {
-        switch (buildStep.BuildType) {
-            case BuildType.Train:
-                return TrainUnit(buildStep.UnitOrUpgradeType);
-            case BuildType.Build:
-                return PlaceBuilding(buildStep.UnitOrUpgradeType);
-            case BuildType.Research:
-                return ResearchUpgrade(buildStep.UnitOrUpgradeType);
-            case BuildType.UpgradeInto:
-                return UpgradeInto(buildStep.UnitOrUpgradeType);
-            case BuildType.Expand:
-                return PlaceExpand(buildStep.UnitOrUpgradeType);
-        }
-
-        return false;
+        return buildStep.BuildType switch
+        {
+            BuildType.Train => TrainUnit(buildStep.UnitOrUpgradeType),
+            BuildType.Build => PlaceBuilding(buildStep.UnitOrUpgradeType),
+            BuildType.Research => ResearchUpgrade(buildStep.UnitOrUpgradeType),
+            BuildType.UpgradeInto => UpgradeInto(buildStep.UnitOrUpgradeType),
+            BuildType.Expand => PlaceExpand(buildStep.UnitOrUpgradeType),
+            _ => false
+        };
     }
 
     public static bool TrainUnit(uint unitType) {
@@ -297,7 +181,7 @@ public static class Controller {
 
     public static bool TrainUnit(uint unitType, Unit producer)
     {
-        var unitTypeData = GameData.GetUnitTypeData(unitType);
+        var unitTypeData = TypeData.GetUnitTypeData(unitType);
         if (producer == null || !CanAfford(unitTypeData) || !HasEnoughSupply(unitType) || !IsUnlocked(unitType)) {
             return false;
         }
@@ -317,7 +201,7 @@ public static class Controller {
     }
 
     public static bool PlaceBuilding(uint buildingType, Unit producer, Vector3 location = default) {
-        var buildingTypeData = GameData.GetUnitTypeData(buildingType);
+        var buildingTypeData = TypeData.GetUnitTypeData(buildingType);
         if (producer == null || !CanAfford(buildingTypeData) || !IsUnlocked(buildingType)) {
             return false;
         }
@@ -333,24 +217,31 @@ public static class Controller {
 
             producer.PlaceExtractor(buildingType, availableGas);
             CapacityModule.GetFrom(availableGas).Assign(producer); // Assign the worker until extractor is spawned
+            _buildingTracker.ConfirmPlacement(buildingType, availableGas.Position, producer);
         }
         else if (location != default) {
-            if (!CanPlace(buildingType, location)) {
+            if (!_buildingTracker.CanPlace(buildingType, location)) {
                 return false;
             }
 
             producer.PlaceBuilding(buildingType, location);
+            _buildingTracker.ConfirmPlacement(buildingType, location, producer);
         }
         else {
-            var constructionSpot = FindConstructionSpot(buildingType);
+            var constructionSpot = _buildingTracker.FindConstructionSpot(buildingType);
 
             producer.PlaceBuilding(buildingType, constructionSpot);
+            _buildingTracker.ConfirmPlacement(buildingType, constructionSpot, producer);
         }
 
         AvailableMinerals -= buildingTypeData.MineralCost;
         AvailableVespene -= buildingTypeData.VespeneCost;
 
         return true;
+    }
+
+    public static bool CanPlace(uint unitType, Vector3 targetPos) {
+        return _buildingTracker.CanPlace(unitType, targetPos);
     }
 
     public static bool ResearchUpgrade(uint upgradeType) {
@@ -360,7 +251,7 @@ public static class Controller {
     }
 
     public static bool ResearchUpgrade(uint upgradeType, Unit producer) {
-        var researchTypeData = GameData.GetUpgradeData(upgradeType);
+        var researchTypeData = TypeData.GetUpgradeData(upgradeType);
         if (producer == null || !CanAfford(researchTypeData) || !IsUnlocked(upgradeType)) {
             return false;
         }
@@ -380,7 +271,7 @@ public static class Controller {
     }
 
     public static bool UpgradeInto(uint buildingType, Unit producer) {
-        var buildingTypeData = GameData.GetUnitTypeData(buildingType);
+        var buildingTypeData = TypeData.GetUnitTypeData(buildingType);
         if (producer == null || !CanAfford(buildingTypeData) || !IsUnlocked(buildingType)) {
             return false;
         }
@@ -402,7 +293,7 @@ public static class Controller {
         var expandLocation = MapAnalyzer.ExpandLocations
             .OrderBy(expandLocation => StartingTownHall.DistanceTo(expandLocation))
             .Where(expandLocation => !GetUnits(OwnedUnits, Units.Hatchery).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius)) // Ignore expands that are taken
-            .First(expandLocation => CanPlace(buildingType, expandLocation));
+            .First(expandLocation => _buildingTracker.CanPlace(buildingType, expandLocation));
 
         return PlaceBuilding(buildingType, expandLocation);
     }
@@ -461,6 +352,6 @@ public static class Controller {
     }
 
     public static bool HasEnoughSupply(uint unitType) {
-        return AvailableSupply >= GameData.GetUnitTypeData(unitType).FoodRequired;
+        return AvailableSupply >= TypeData.GetUnitTypeData(unitType).FoodRequired;
     }
 }

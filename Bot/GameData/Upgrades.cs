@@ -1,6 +1,6 @@
-﻿namespace Bot;
+﻿namespace Bot.GameData;
 
-public class Upgrades {
+public static class Upgrades {
     public const uint GlialReconstitution = 2;
     public const uint TunnelingClaws = 3;
     public const uint Burrow = 64;

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Numerics;
+using Bot.GameData;
 using Bot.UnitModules;
 using Bot.Wrapper;
 using Google.Protobuf.Collections;
@@ -40,7 +41,7 @@ public class Unit: ICanDie {
     public bool IsOperational => _buildProgress >= 1;
 
     public Unit(SC2APIProtocol.Unit unit, ulong frame) {
-        _unitTypeData = GameData.GetUnitTypeData(unit.UnitType);
+        _unitTypeData = TypeData.GetUnitTypeData(unit.UnitType);
 
         Update(unit, frame);
     }
@@ -117,39 +118,39 @@ public class Unit: ICanDie {
 
         ProcessAction(ActionBuilder.TrainUnit(unitType, Tag));
 
-        var targetName = GameData.GetUnitTypeData(unitType).Name;
-        Logger.Info("{0} started training {1}", Name, targetName);
+        var targetName = TypeData.GetUnitTypeData(unitType).Name;
+        Logger.Info("{0} {1} started training {2}", Name, Tag, targetName);
     }
 
     public void UpgradeInto(uint unitOrBuildingType) {
         // You upgrade a unit or building by training the upgrade from the producer
         ProcessAction(ActionBuilder.TrainUnit(unitOrBuildingType, Tag));
 
-        var upgradeName = GameData.GetUnitTypeData(unitOrBuildingType).Name;
-        Logger.Info("Upgrading {0} into {1}", Name, upgradeName);
+        var upgradeName = TypeData.GetUnitTypeData(unitOrBuildingType).Name;
+        Logger.Info("Upgrading {0} {1} into {2}", Name, Tag, upgradeName);
     }
 
     public void PlaceBuilding(uint buildingType, Vector3 target) {
         ProcessAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
 
-        var buildingName = GameData.GetUnitTypeData(buildingType).Name;
-        Logger.Info("{0} started building {1} at [{2}, {3}]", Name, buildingName, target.X, target.Y);
+        var buildingName = TypeData.GetUnitTypeData(buildingType).Name;
+        Logger.Info("{0} {1} started building {2} at [{3}, {4}]", Name, Tag, buildingName, target.X, target.Y);
     }
 
     public void PlaceExtractor(uint buildingType, Unit gas)
     {
         ProcessAction(ActionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
 
-        var buildingName = GameData.GetUnitTypeData(buildingType).Name;
-        Logger.Info("{0} started building {1} on gas at [{2}, {3}]", Name, buildingName, gas.Position.X, gas.Position.Y);
+        var buildingName = TypeData.GetUnitTypeData(buildingType).Name;
+        Logger.Info("{0} {1} started building {2} on gas at [{3}, {4}]", Name, Tag, buildingName, gas.Position.X, gas.Position.Y);
     }
 
     public void ResearchUpgrade(uint upgradeType)
     {
         ProcessAction(ActionBuilder.ResearchUpgrade(upgradeType, Tag));
 
-        var researchName = GameData.GetUpgradeData(upgradeType).Name;
-        Logger.Info("{0} started researching {1}", Name, researchName);
+        var researchName = TypeData.GetUpgradeData(upgradeType).Name;
+        Logger.Info("{0} {1} started researching {2}", Name, Tag, researchName);
     }
 
     public void Gather(Unit mineralOrGas) {
@@ -159,21 +160,22 @@ public class Unit: ICanDie {
     public void ReturnCargo(Unit @base) {
         ProcessAction(ActionBuilder.ReturnCargo(Tag, @base.Tag));
 
-        Logger.Info("{0} returning cargo to {1} at [{2}, {3}]", Name, @base.Name, @base.Position.X, @base.Position.Y);
+        Logger.Info("{0} {1} returning cargo to {2} {3} at [{4}, {5}]", Name, Tag, @base.Name, @base.Tag, @base.Position.X, @base.Position.Y);
     }
 
     public void UseAbility(int abilityId, Point2D position = null, ulong targetUnitTag = ulong.MaxValue) {
         ProcessAction(ActionBuilder.UnitCommand(abilityId, Tag, position, targetUnitTag));
 
-        var abilityName = GameData.GetAbilityData(abilityId).FriendlyName;
+        var abilityName = TypeData.GetAbilityData(abilityId).FriendlyName;
         if (targetUnitTag != ulong.MaxValue) {
-            Logger.Info("{0} using ability {1} on {2}", Name, abilityName, Controller.UnitsByTag[targetUnitTag].Name);
+            var targetUnit = Controller.UnitsByTag[targetUnitTag];
+            Logger.Info("{0} {1} using ability {2} on {3} {4}", Name, Tag, abilityName, targetUnit.Name, targetUnit.Tag);
         }
         else if (position != null) {
-            Logger.Info("{0} using ability {1} at [{2}, {3}]", Name, abilityName, position.X, position.Y);
+            Logger.Info("{0} {1} using ability {2} at [{4}, {5}]", Name, Tag, abilityName, position.X, position.Y);
         }
         else {
-            Logger.Info("{0} using ability {1}", Name, abilityName);
+            Logger.Info("{0} {1} using ability {2}", Name, Tag, abilityName);
         }
     }
 
@@ -211,7 +213,7 @@ public class Unit: ICanDie {
 
         // Reduce the noise
         if (UnitType != Units.Larva) {
-            Logger.Info("{0} died for the greater good!", Name);
+            Logger.Info("{0} {1} died", Name, Tag);
         }
     }
 
