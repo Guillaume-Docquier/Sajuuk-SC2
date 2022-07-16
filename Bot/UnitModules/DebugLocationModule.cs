@@ -34,6 +34,6 @@ public class DebugLocationModule: IUnitModule {
     }
 
     public void Execute() {
-        Debugger.AddSphere(_unit, _color);
+        GraphicalDebugger.AddSphere(_unit, _color);
     }
 }

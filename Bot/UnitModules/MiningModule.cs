@@ -64,7 +64,7 @@ public class MiningModule: IUnitModule {
             _worker.Gather(AssignedResource);
         }
 
-        Debugger.AddLine(_worker.Position, AssignedResource.Position, Colors.Cyan);
+        GraphicalDebugger.AddLine(_worker.Position, AssignedResource.Position, Colors.Cyan);
     }
 
     private void GasMining() {
@@ -72,6 +72,6 @@ public class MiningModule: IUnitModule {
             _worker.Gather(AssignedResource);
         }
 
-        Debugger.AddLine(_worker.Position, AssignedResource.Position, Colors.Lime);
+        GraphicalDebugger.AddLine(_worker.Position, AssignedResource.Position, Colors.Lime);
     }
 }

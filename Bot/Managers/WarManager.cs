@@ -41,8 +41,8 @@ public class WarManager: IManager {
             _battleManager.Assign(enemyPosition);
         }
 
-        Debugger.AddLine(_townHallToDefend.Position, _battleManager.Target, Colors.Red);
-        Debugger.AddSphere(_battleManager.Target, 1, Colors.Red);
+        GraphicalDebugger.AddLine(_townHallToDefend.Position, _battleManager.Target, Colors.Red);
+        GraphicalDebugger.AddSphere(_battleManager.Target, 1, Colors.Red);
         _battleManager.OnFrame();
     }
 

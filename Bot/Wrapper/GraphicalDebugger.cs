@@ -5,7 +5,7 @@ using SC2APIProtocol;
 
 namespace Bot.Wrapper;
 
-public static class Debugger {
+public static class GraphicalDebugger {
     private const float CreepHeight = 0.008f;
 
     private static readonly List<DebugText> DebugTexts = new List<DebugText>();

@@ -52,8 +52,8 @@ public static class MapAnalyzer {
             var goodBuildSpot = searchGrid.FirstOrDefault(buildSpot => Controller.CanPlace(Units.Hatchery, buildSpot));
             if (goodBuildSpot != default) {
                 expandLocations.Add(goodBuildSpot);
-                Debugger.AddSphere(goodBuildSpot, GameGridCellRadius, Colors.Green);
-                Debugger.AddSphere(centerPosition, GameGridCellRadius, Colors.Yellow);
+                GraphicalDebugger.AddSphere(goodBuildSpot, GameGridCellRadius, Colors.Green);
+                GraphicalDebugger.AddSphere(centerPosition, GameGridCellRadius, Colors.Yellow);
             }
         }
 

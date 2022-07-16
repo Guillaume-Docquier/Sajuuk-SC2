@@ -298,7 +298,7 @@ public class GameConnection {
                 }
             }
 
-            await SendRequest(Debugger.GetDebugRequest());
+            await SendRequest(GraphicalDebugger.GetDebugRequest());
             await SendRequest(RequestBuilder.StepRequest(StepSize));
         }
     }

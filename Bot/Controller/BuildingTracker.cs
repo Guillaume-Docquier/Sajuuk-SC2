@@ -14,7 +14,7 @@ public class BuildingTracker: IWatchUnitsDie {
 
     public void Update() {
         foreach (var reservedBuildingCell in _reservedBuildingCells.Keys) {
-            Debugger.AddSquare(reservedBuildingCell, 1, Colors.Yellow);
+            GraphicalDebugger.AddSquare(reservedBuildingCell, 1, Colors.Yellow);
         }
     }
 
@@ -112,20 +112,20 @@ public class BuildingTracker: IWatchUnitsDie {
 
     private static void DebugBuildingPlacementResult(ActionResult actionResult, Vector3 targetPos) {
         if (actionResult == ActionResult.NotSupported) {
-            Debugger.AddSquare(targetPos, 1f, Colors.Black);
+            GraphicalDebugger.AddSquare(targetPos, 1f, Colors.Black);
         }
         else if (actionResult == ActionResult.CantBuildLocationInvalid) {
-            Debugger.AddSquare(targetPos, 1f, Colors.Red);
+            GraphicalDebugger.AddSquare(targetPos, 1f, Colors.Red);
         }
         else if (actionResult == ActionResult.CantBuildTooCloseToResources) {
-            Debugger.AddSquare(targetPos, 1f, Colors.Cyan);
+            GraphicalDebugger.AddSquare(targetPos, 1f, Colors.Cyan);
         }
         else if (actionResult == ActionResult.Success) {
-            Debugger.AddSquare(targetPos, 1f, Colors.Green);
+            GraphicalDebugger.AddSquare(targetPos, 1f, Colors.Green);
         }
         else {
             Logger.Warning("[CanPlace] Unexpected placement result: {0}", actionResult);
-            Debugger.AddSquare(targetPos, 1f, Colors.Magenta);
+            GraphicalDebugger.AddSquare(targetPos, 1f, Colors.Magenta);
         }
     }
 
