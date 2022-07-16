@@ -31,4 +31,10 @@ public static class Vector3Extensions {
 
         return origin + direction * distance;
     }
+
+    public static Vector3 TranslateAwayFrom(this Vector3 origin, Vector3 destination, float distance, bool ignoreZAxis = true) {
+        var direction = origin.DirectionTo(destination, ignoreZAxis);
+
+        return origin - direction * distance;
+    }
 }

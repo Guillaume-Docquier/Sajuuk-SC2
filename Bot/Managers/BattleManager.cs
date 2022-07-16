@@ -34,7 +34,8 @@ public class BattleManager: IManager {
     }
 
     public void OnFrame() {
-        Army.Where(unit => unit.Orders.All(order => order.AbilityId != Abilities.Attack))
+        Army.Where(unit => !unit.Orders.Any())
+            .Where(unit => !unit.RawUnitData.IsBurrowed)
             .Where(unit => unit.DistanceTo(Target) > AcceptableDistanceToTarget)
             .ToList()
             .ForEach(unit => unit.AttackMove(Target));

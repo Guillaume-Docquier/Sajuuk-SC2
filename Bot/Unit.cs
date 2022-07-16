@@ -170,6 +170,10 @@ public class Unit: ICanDie {
     }
 
     public void UseAbility(int abilityId, Point2D position = null, ulong targetUnitTag = ulong.MaxValue) {
+        if (Orders.Any(order => order.AbilityId == abilityId)) {
+            return;
+        }
+
         ProcessAction(ActionBuilder.UnitCommand(abilityId, Tag, position, targetUnitTag));
 
         var abilityName = KnowledgeBase.GetAbilityData(abilityId).FriendlyName;
