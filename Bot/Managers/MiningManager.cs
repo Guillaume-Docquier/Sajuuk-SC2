@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Bot.GameData;
 using Bot.UnitModules;
@@ -23,6 +24,9 @@ public class MiningManager: IManager {
     private readonly List<Unit> _extractors = new List<Unit>();
     private readonly List<Unit> _minerals;
     private readonly List<Unit> _gasses;
+
+    private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep> { new BuildOrders.BuildStep(BuildType.Train, 0, Units.Drone, 0) };
+    public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests;
 
     public int IdealAvailableCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor - _workers.Count;
     public int SaturatedAvailableCapacity => IdealAvailableCapacity + _minerals.Count; // Can allow 1 more per mineral patch
@@ -85,6 +89,9 @@ public class MiningManager: IManager {
     }
 
     public void OnFrame() {
+        // TODO GD They don't count the drone eggs, so they'll always request more drones than needed
+        _buildStepRequests[0].Quantity = (uint)Math.Max(0, SaturatedAvailableCapacity);
+
         HandleDepletedGasses();
         DiscoverExtractors(Controller.NewOwnedUnits);
 

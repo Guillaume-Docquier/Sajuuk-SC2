@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Bot.GameData;
 using Bot.Wrapper;
@@ -11,6 +12,9 @@ public class WarManager: IManager {
 
     private readonly BattleManager _battleManager;
     private Unit _townHallToDefend;
+
+    private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>();
+    public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests;
 
     public WarManager() {
         var townHallDefensePosition = GetTownHallDefensePosition(Controller.StartingTownHall, Controller.EnemyLocations[0]);
@@ -37,7 +41,8 @@ public class WarManager: IManager {
             _townHallToDefend = newTownHallToDefend;
         }
 
-        if (_battleManager.Army.Sum(soldier => soldier.FoodRequired) >= SupplyRequiredBeforeAttacking) {
+        if (_battleManager.Army.Sum(soldier => soldier.FoodRequired) >= SupplyRequiredBeforeAttacking && _buildStepRequests.Count == 0) {
+            _buildStepRequests.Add(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Roach, 1000));
             _battleManager.Assign(enemyPosition);
         }
 

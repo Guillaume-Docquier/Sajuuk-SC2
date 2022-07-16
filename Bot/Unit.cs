@@ -12,25 +12,19 @@ namespace Bot;
 
 public class Unit: ICanDie {
     private readonly List<IWatchUnitsDie> _deathWatchers = new List<IWatchUnitsDie>();
-    private readonly UnitTypeData _unitTypeData;
+    private UnitTypeData _unitTypeData;
 
     public string Name;
     public ulong Tag;
     public uint UnitType;
-    public float HealthMax;
-    public float ShieldMax;
     public float FoodRequired;
     public float Radius;
     public SC2APIProtocol.Unit RawUnitData;
     public Alliance Alliance;
     public Vector3 Position;
-    public float Health;
-    public float Shield;
     private float _buildProgress;
     public RepeatedField<UnitOrder> Orders;
     public bool IsVisible;
-    public int IdealWorkerCount;
-    public int AssignedWorkers;
     public ulong LastSeen;
     public HashSet<uint> Buffs;
 
@@ -47,31 +41,23 @@ public class Unit: ICanDie {
     public IEnumerable<UnitOrder> OrdersExceptMining => Orders.Where(order => order.AbilityId != Abilities.DroneGather && order.AbilityId != Abilities.DroneReturnCargo);
 
     public Unit(SC2APIProtocol.Unit unit, ulong frame) {
-        _unitTypeData = KnowledgeBase.GetUnitTypeData(unit.UnitType);
-
         Update(unit, frame);
     }
 
     public void Update(SC2APIProtocol.Unit unit, ulong frame) {
+        _unitTypeData = KnowledgeBase.GetUnitTypeData(unit.UnitType); // Not sure if it can change over time
         RawUnitData = unit;
 
         Name = _unitTypeData.Name;
         Tag = unit.Tag;
         UnitType = unit.UnitType;
-        HealthMax = unit.HealthMax;
-        ShieldMax = unit.ShieldMax;
         FoodRequired = _unitTypeData.FoodRequired;
         Radius = unit.Radius;
-
-        Alliance = unit.Alliance; // Alliance can probably change if being mind controlled?
+        Alliance = unit.Alliance;
         Position = new Vector3(unit.Pos.X, unit.Pos.Y, unit.Pos.Z);
-        Health = unit.Health;
-        Shield = unit.Shield;
         _buildProgress = unit.BuildProgress;
         Orders = unit.Orders;
         IsVisible = unit.DisplayType == DisplayType.Visible;
-        IdealWorkerCount = unit.IdealHarvesters;
-        AssignedWorkers = unit.AssignedHarvesters;
         LastSeen = frame;
         Buffs = new HashSet<uint>(unit.BuffIds);
     }

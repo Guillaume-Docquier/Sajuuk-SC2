@@ -12,6 +12,9 @@ public class BattleManager: IManager {
     public Vector3 Target;
     public readonly List<Unit> Army = new List<Unit>();
 
+    private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>();
+    public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests;
+
     public BattleManager(Vector3 target) {
         Target = target;
     }

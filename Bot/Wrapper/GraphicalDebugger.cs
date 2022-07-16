@@ -25,12 +25,22 @@ public static class GraphicalDebugger {
         return request;
     }
 
-    public static void AddText(string text) {
-        DebugTexts.Add(new DebugText { Text = text, Size = 18 });
+    // Size doesn't work when pos is not defined
+    public static void AddTextGroup(string text, uint size = 15, Point virtualPos = null, Point worldPos = null) {
+        AddTextGroup(new List<string> { text }, size, virtualPos, worldPos);
     }
 
-    public static void AddText(IEnumerable<string> texts) {
-        DebugTexts.AddRange(texts.Select(text => new DebugText { Text = text, Size = 18 }));
+    public static void AddTextGroup(IEnumerable<string> texts, uint size = 15, Point virtualPos = null, Point worldPos = null) {
+        var text = string.Join("\n", texts);
+
+        DebugTexts.Add(new DebugText
+        {
+            Text = text,
+            Size = size,
+            VirtualPos = virtualPos,
+            WorldPos = worldPos,
+            Color = Colors.Yellow,
+        });
     }
 
     public static void AddSphere(Unit unit, Color color) {

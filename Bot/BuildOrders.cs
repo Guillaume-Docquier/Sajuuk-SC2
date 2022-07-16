@@ -21,6 +21,14 @@ public static class BuildOrders {
             UnitOrUpgradeType = unitOrUpgradeType;
             Quantity = quantity;
         }
+
+        public override string ToString() {
+            var buildStepUnitOrUpgradeName = BuildType == BuildType.Research
+                ? KnowledgeBase.GetUpgradeData(UnitOrUpgradeType).Name
+                : $"{Quantity} {KnowledgeBase.GetUnitTypeData(UnitOrUpgradeType).Name}";
+
+            return $"{BuildType.ToString()} {buildStepUnitOrUpgradeName} at {AtSupply} supply";
+        }
     }
 
     public static BuildOrder TwoBasesRoach() {
@@ -45,13 +53,12 @@ public static class BuildOrders {
             new BuildStep(BuildType.Research, 50, Upgrades.Burrow),
             new BuildStep(BuildType.Research, 50, Upgrades.GlialReconstitution),
             new BuildStep(BuildType.Train, 50, Units.Roach, 8),
-            // All in
             new BuildStep(BuildType.Research, 1, Upgrades.TunnelingClaws),
+            new BuildStep(BuildType.Build, 1, Units.Extractor),
+            // All in
             new BuildStep(BuildType.Train, 1, Units.Overlord, 2),
             new BuildStep(BuildType.Train, 1, Units.Roach, 8),
             new BuildStep(BuildType.Train, 1, Units.Overlord, 5), // TODO GD Auto raise the cap
-            new BuildStep(BuildType.Build, 1, Units.Extractor),
-            new BuildStep(BuildType.Train, 1, Units.Roach, 1000),
         });
     }
 

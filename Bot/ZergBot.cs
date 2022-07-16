@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Bot.GameData;
 using Bot.Managers;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -13,6 +12,9 @@ public class ZergBot: PoliteBot {
     private readonly BuildOrder _buildOrder = BuildOrders.TwoBasesRoach();
     private readonly List<IManager> _managers = new List<IManager>();
 
+    private const int PriorityChangePeriod = 100;
+    private int _managerPriorityIndex = 0;
+
     public override string Name => "ZergBot";
 
     public override Race Race => Race.Zerg;
@@ -24,11 +26,26 @@ public class ZergBot: PoliteBot {
         }
 
         FollowBuildOrder();
-        if (!IsBuildOrderBlocking()) {
-            SpawnDrones();
-        }
 
         _managers.ForEach(manager => manager.OnFrame());
+
+        // TODO GD Most likely we will consume all the larvae in one shot
+        // TODO GD A larvae round robin might be more interesting?
+        // Make sure every one gets a turn
+        if (Controller.Frame % PriorityChangePeriod == 0) {
+            _managerPriorityIndex = (_managerPriorityIndex + 1) % _managers.Count;
+        }
+
+        // Do everything you can
+        foreach (var buildStep in GetManagersBuildRequests()) {
+            while (!IsBuildOrderBlocking() && buildStep.Quantity > 0 && Controller.ExecuteBuildStep(buildStep)) {
+                buildStep.Quantity--;
+                FollowBuildOrder(); // Sometimes the build order will be unblocked
+            }
+        }
+
+        DebugBuildOrder();
+
         foreach (var unit in Controller.UnitsByTag.Values) {
             unit.ExecuteModules();
         }
@@ -50,24 +67,28 @@ public class ZergBot: PoliteBot {
                 _buildOrder.Dequeue();
             }
         }
-
-        DebugBuildOrder();
     }
 
     private void DebugBuildOrder() {
-        GraphicalDebugger.AddText("Next 3 builds:");
-
         var nextBuildStepsData = _buildOrder
             .Take(3)
-            .Select(nextBuildStep => {
-                var buildStepUnitOrUpgradeName = nextBuildStep.BuildType == BuildType.Research
-                    ? KnowledgeBase.GetUpgradeData(nextBuildStep.UnitOrUpgradeType).Name
-                    : $"{nextBuildStep.Quantity} {KnowledgeBase.GetUnitTypeData(nextBuildStep.UnitOrUpgradeType).Name}";
+            .Select(nextBuildStep => nextBuildStep.ToString())
+            .ToList();
 
-                return $"{nextBuildStep.BuildType.ToString()} {buildStepUnitOrUpgradeName} at {nextBuildStep.AtSupply} supply";
-            });
+        if (nextBuildStepsData.Count > 0) {
+            nextBuildStepsData.Insert(0, $"Next {nextBuildStepsData.Count} bot builds:\n");
+        }
 
-        GraphicalDebugger.AddText(nextBuildStepsData);
+        var managersBuildStepsData = GetManagersBuildRequests()
+            .Select(nextBuildStep => nextBuildStep.ToString())
+            .ToList();
+
+        if (managersBuildStepsData.Count > 0) {
+            nextBuildStepsData.Add($"\nNext {managersBuildStepsData.Count} manager requests:\n");
+        }
+        nextBuildStepsData.AddRange(managersBuildStepsData);
+
+        GraphicalDebugger.AddTextGroup(nextBuildStepsData, virtualPos: new Point { X = 0.02f, Y = 0.02f });
     }
 
     private bool IsBuildOrderBlocking() {
@@ -76,7 +97,15 @@ public class ZergBot: PoliteBot {
         return _buildOrder.Count > 0 && Controller.CurrentSupply >= _buildOrder.Peek().AtSupply;
     }
 
-    private void SpawnDrones() {
-        while (Controller.TrainUnit(Units.Drone)) {}
+    private IEnumerable<BuildOrders.BuildStep> GetManagersBuildRequests() {
+        for (var managerIndex = 0; managerIndex < _managers.Count; managerIndex++) {
+            var index = (_managerPriorityIndex + managerIndex) % _managers.Count;
+
+            foreach (var buildRequest in _managers[index].BuildStepRequests) {
+                if (buildRequest.Quantity > 0) {
+                    yield return buildRequest;
+                }
+            }
+        }
     }
 }

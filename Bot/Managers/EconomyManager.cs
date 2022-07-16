@@ -21,6 +21,8 @@ public class EconomyManager: IManager {
         Colors.DarkBlue,
     };
 
+    public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _miningManagers.SelectMany(manager => manager.BuildStepRequests);
+
     public EconomyManager() {
         ManageTownHalls(Controller.GetUnits(Controller.OwnedUnits, Units.Hatchery));
         DispatchWorkers(Controller.GetUnits(Controller.OwnedUnits, Units.Drone).ToList());
