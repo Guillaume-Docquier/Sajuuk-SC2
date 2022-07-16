@@ -49,6 +49,7 @@ public class MiningManager: IManager {
         _gasses = Controller.GetUnits(Controller.NeutralUnits, Units.GasGeysers)
             .Where(gas => gas.DistanceTo(TownHall) < MaxDistanceToExpand)
             .Where(gas => !UnitUtils.IsResourceManaged(gas))
+            .Where(gas => !IsGasDepleted(gas))
             .Take(MaxGas)
             .ToList();
 
@@ -57,7 +58,7 @@ public class MiningManager: IManager {
             DebugLocationModule.Install(gas, _color);
         });
 
-        DiscoverExtractors();
+        DiscoverExtractors(Controller.OwnedUnits);
     }
 
     public void AssignQueen(Unit queen) {
@@ -84,9 +85,8 @@ public class MiningManager: IManager {
     }
 
     public void OnFrame() {
-        if (_extractors.Count < _gasses.Count) {
-            DiscoverExtractors();
-        }
+        HandleDepletedGasses();
+        DiscoverExtractors(Controller.NewOwnedUnits);
 
         DispatchWorkers(GetIdleWorkers());
 
@@ -104,19 +104,7 @@ public class MiningManager: IManager {
             CapacityModule.GetFrom(deadUnit).AssignedUnits.ForEach(worker => MiningModule.Uninstall(worker));
         }
         else if (deadUnit.UnitType == Units.Extractor) {
-            _extractors.Remove(deadUnit);
-            CapacityModule.GetFrom(deadUnit).AssignedUnits.ForEach(worker => MiningModule.Uninstall(worker));
-        }
-        else if (Units.GasGeysers.Contains(deadUnit.UnitType)) {
-            // TODO GD We're not tracking gasses
-            // TODO GD We can probably fake death by checking if the geyser contained gas is 0
-            _gasses.Remove(deadUnit);
-            var extractor = CapacityModule.GetFrom(deadUnit).AssignedUnits.FirstOrDefault();
-            if (extractor != null) {
-                _extractors.Remove(extractor);
-                extractor.RemoveDeathWatcher(this);
-                CapacityModule.GetFrom(extractor).AssignedUnits.ForEach(worker => MiningModule.Uninstall(worker));
-            }
+            HandleDeadExtractor(deadUnit);
         }
         else if (deadUnit.UnitType == Units.Queen) {
             Queen = null;
@@ -155,10 +143,14 @@ public class MiningManager: IManager {
         }
     }
 
-    private void DiscoverExtractors() {
-        var newExtractors = Controller.GetUnits(Controller.OwnedUnits, Units.Extractor)
-            .Where(extractor => extractor.DistanceTo(TownHall) < MaxDistanceToExpand)
-            .Where(extractor => !_extractors.Contains(extractor))
+    private void DiscoverExtractors(IEnumerable<Unit> newUnits) {
+        if (_extractors.Count >= _gasses.Count) {
+            return;
+        }
+
+        var newExtractors = Controller.GetUnits(newUnits, Units.Extractor)
+            .Where(extractor => _gasses.Any(gas => extractor.DistanceTo(gas) < 1)) // Should be 0, we chose 1 just in case
+            .Where(extractor => !_extractors.Contains(extractor)) // Safety check
             .ToList();
 
         ManageExtractors(newExtractors);
@@ -197,5 +189,26 @@ public class MiningManager: IManager {
 
         MiningModule.Install(worker, assignedResource);
         CapacityModule.GetFrom(assignedResource).Assign(worker);
+    }
+
+    private bool IsGasDepleted(Unit gas) {
+        return gas.RawUnitData.DisplayType != DisplayType.Snapshot && gas.RawUnitData.VespeneContents <= 0;
+    }
+
+    private void HandleDepletedGasses() {
+        foreach (var depletedGas in _gasses.Where(IsGasDepleted)) {
+            _gasses.Remove(depletedGas);
+
+            var uselessExtractor = CapacityModule.GetFrom(depletedGas).AssignedUnits.FirstOrDefault();
+            if (uselessExtractor != null) {
+                uselessExtractor.RemoveDeathWatcher(this);
+                HandleDeadExtractor(uselessExtractor);
+            }
+        }
+    }
+
+    private void HandleDeadExtractor(Unit deadExtractor) {
+        _extractors.Remove(deadExtractor);
+        CapacityModule.GetFrom(deadExtractor).AssignedUnits.ForEach(worker => MiningModule.Uninstall(worker));
     }
 }
