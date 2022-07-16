@@ -202,6 +202,7 @@ public static class Controller {
 
         AvailableMinerals -= unitTypeData.MineralCost;
         AvailableVespene -= unitTypeData.VespeneCost;
+        CurrentSupply += Convert.ToUInt32(Math.Ceiling(unitTypeData.FoodRequired)); // Round up zerglings food, will be corrected on next frame
 
         return true;
     }
