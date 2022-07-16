@@ -40,6 +40,9 @@ public class Unit: ICanDie {
     public float Integrity => (RawUnitData.Health + RawUnitData.Shield) / (RawUnitData.HealthMax + RawUnitData.ShieldMax);
     public bool IsOperational => _buildProgress >= 1;
 
+    // Units inside extractors are not available. We keep them in memory but they're not in the game for some time
+    public bool IsAvailable => LastSeen >= Controller.Frame;
+
     public Unit(SC2APIProtocol.Unit unit, ulong frame) {
         _unitTypeData = TypeData.GetUnitTypeData(unit.UnitType);
 

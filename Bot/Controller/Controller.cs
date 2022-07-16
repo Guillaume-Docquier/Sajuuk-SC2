@@ -158,6 +158,7 @@ public static class Controller {
         var possibleProducers = Units.Producers[unitOrAbilityType];
 
         return GetUnits(OwnedUnits, possibleProducers, onlyCompleted: true)
+            .Where(unit => unit.IsAvailable)
             .FirstOrDefault(unit => unit.Orders.Count(order => order.AbilityId != Abilities.DroneGather && order.AbilityId != Abilities.DroneReturnCargo) == 0);
     }
 
