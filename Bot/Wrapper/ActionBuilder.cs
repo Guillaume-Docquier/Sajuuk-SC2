@@ -27,7 +27,7 @@ public static class ActionBuilder {
     public static Action ResearchUpgrade(uint upgradeType, ulong producerTag) {
         var upgradeAbilityId = (int)TypeData.GetUpgradeData(upgradeType).AbilityId;
 
-        return UnitCommand(upgradeAbilityId, producerTag);
+        return UnitCommand(upgradeAbilityId, producerTag, queueCommand: true);
     }
 
     public static Action Move(ulong unitTag, Vector3 position) {
@@ -70,11 +70,11 @@ public static class ActionBuilder {
         };
     }
 
-    public static Action UnitCommand(int abilityId, ulong unitTag, Point2D position = null, ulong targetUnitTag = ulong.MaxValue) {
-        return UnitCommand(abilityId, new List<ulong> { unitTag }, position, targetUnitTag);
+    public static Action UnitCommand(int abilityId, ulong unitTag, Point2D position = null, ulong targetUnitTag = ulong.MaxValue, bool queueCommand = false) {
+        return UnitCommand(abilityId, new List<ulong> { unitTag }, position, targetUnitTag, queueCommand);
     }
 
-    private static Action UnitCommand(int abilityId, IEnumerable<ulong> unitTags = null, Point2D position = null, ulong targetUnitTag = ulong.MaxValue) {
+    private static Action UnitCommand(int abilityId, IEnumerable<ulong> unitTags = null, Point2D position = null, ulong targetUnitTag = ulong.MaxValue, bool queueCommand = false) {
         var action = new Action
         {
             ActionRaw = new ActionRaw
@@ -84,6 +84,7 @@ public static class ActionBuilder {
                     AbilityId = abilityId,
                     UnitTags = { unitTags },
                     TargetWorldSpacePos = position,
+                    QueueCommand = queueCommand,
                 }
             }
         };

@@ -150,16 +150,22 @@ public static class Controller {
         return counter;
     }
 
-    public static Unit GetAvailableProducer(uint unitOrAbilityType) {
+    public static Unit GetAvailableProducer(uint unitOrAbilityType, bool allowQueue = false) {
         if (!Units.Producers.ContainsKey(unitOrAbilityType)) {
             throw new NotImplementedException($"Producer for unit {TypeData.GetUnitTypeData(unitOrAbilityType).Name} not found");
         }
 
         var possibleProducers = Units.Producers[unitOrAbilityType];
 
-        return GetUnits(OwnedUnits, possibleProducers, onlyCompleted: true)
+        var producers = GetUnits(OwnedUnits, possibleProducers, onlyCompleted: true)
             .Where(unit => unit.IsAvailable)
-            .FirstOrDefault(unit => unit.Orders.Count(order => order.AbilityId != Abilities.DroneGather && order.AbilityId != Abilities.DroneReturnCargo) == 0);
+            .OrderBy(unit => unit.OrdersExceptMining.Count());
+
+        if (!allowQueue) {
+            return producers.FirstOrDefault(unit => !unit.OrdersExceptMining.Any());
+        }
+
+        return producers.FirstOrDefault();
     }
 
     public static bool ExecuteBuildStep(BuildOrders.BuildStep buildStep) {
@@ -246,7 +252,7 @@ public static class Controller {
     }
 
     public static bool ResearchUpgrade(uint upgradeType) {
-        var producer = GetAvailableProducer(upgradeType);
+        var producer = GetAvailableProducer(upgradeType, allowQueue: true);
 
         return ResearchUpgrade(upgradeType, producer);
     }

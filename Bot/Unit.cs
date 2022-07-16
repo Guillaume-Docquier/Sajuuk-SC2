@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Bot.GameData;
 using Bot.UnitModules;
@@ -42,6 +43,8 @@ public class Unit: ICanDie {
 
     // Units inside extractors are not available. We keep them in memory but they're not in the game for some time
     public bool IsAvailable => LastSeen >= Controller.Frame;
+
+    public IEnumerable<UnitOrder> OrdersExceptMining => Orders.Where(order => order.AbilityId != Abilities.DroneGather && order.AbilityId != Abilities.DroneReturnCargo);
 
     public Unit(SC2APIProtocol.Unit unit, ulong frame) {
         _unitTypeData = TypeData.GetUnitTypeData(unit.UnitType);
