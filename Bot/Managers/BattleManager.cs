@@ -7,6 +7,8 @@ using Bot.UnitModules;
 namespace Bot.Managers;
 
 public class BattleManager: IManager {
+    public const float AcceptableDistanceToTarget = 3;
+
     public Vector3 Target;
     public readonly List<Unit> Army = new List<Unit>();
 
@@ -33,7 +35,7 @@ public class BattleManager: IManager {
 
     public void OnFrame() {
         Army.Where(unit => unit.Orders.All(order => order.AbilityId != Abilities.Attack))
-            .Where(unit => unit.DistanceTo(Target) > 3)
+            .Where(unit => unit.DistanceTo(Target) > AcceptableDistanceToTarget)
             .ToList()
             .ForEach(unit => unit.AttackMove(Target));
     }

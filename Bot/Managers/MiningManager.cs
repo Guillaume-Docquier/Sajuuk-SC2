@@ -40,6 +40,8 @@ public class MiningManager: IManager {
             .ToList();
 
         _minerals.ForEach(mineral => {
+            mineral.AddDeathWatcher(this);
+
             CapacityModule.Install(mineral, MaxPerMinerals);
             DebugLocationModule.Install(mineral, _color);
         });
@@ -106,7 +108,8 @@ public class MiningManager: IManager {
             CapacityModule.GetFrom(deadUnit).AssignedUnits.ForEach(worker => MiningModule.Uninstall(worker));
         }
         else if (Units.GasGeysers.Contains(deadUnit.UnitType)) {
-            // TODO GD Is this how gasses die?
+            // TODO GD We're not tracking gasses
+            // TODO GD We can probably fake death by checking if the geyser contained gas is 0
             _gasses.Remove(deadUnit);
             var extractor = CapacityModule.GetFrom(deadUnit).AssignedUnits.FirstOrDefault();
             if (extractor != null) {
