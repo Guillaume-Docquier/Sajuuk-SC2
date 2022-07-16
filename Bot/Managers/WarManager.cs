@@ -28,7 +28,7 @@ public class WarManager: IManager {
         var newSoldiers = Controller.GetUnits(Controller.NewOwnedUnits, Units.ZergMilitary).ToList();
         _battleManager.Assign(newSoldiers);
 
-        // TODO GD Handle multiple managers
+        // TODO GD Use multiple managers
 
         var enemyPosition = Controller.EnemyLocations[0];
         var currentDistanceToEnemy = _townHallToDefend.DistanceTo(enemyPosition);

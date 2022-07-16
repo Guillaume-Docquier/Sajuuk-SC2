@@ -203,12 +203,15 @@ public class MiningManager: IManager {
     }
 
     private void HandleDepletedGasses() {
-        foreach (var depletedGas in _gasses.Where(IsGasDepleted)) {
+        foreach (var depletedGas in _gasses.Where(IsGasDepleted).ToList()) {
             _gasses.Remove(depletedGas);
+            DebugLocationModule.Uninstall(depletedGas);
 
             var uselessExtractor = CapacityModule.GetFrom(depletedGas).AssignedUnits.FirstOrDefault();
             if (uselessExtractor != null) {
                 uselessExtractor.RemoveDeathWatcher(this);
+                DebugLocationModule.Uninstall(uselessExtractor);
+
                 HandleDeadExtractor(uselessExtractor);
             }
         }
