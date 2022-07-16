@@ -40,7 +40,7 @@ public class BuildingTracker: IWatchUnitsDie {
             }
         }
 
-        Logger.Error("Could not find a construction spot for {0}", TypeData.GetUnitTypeData(buildingType).Name);
+        Logger.Error("Could not find a construction spot for {0}", KnowledgeBase.GetUnitTypeData(buildingType).Name);
 
         return default;
     }
@@ -65,7 +65,7 @@ public class BuildingTracker: IWatchUnitsDie {
 
         var queryBuildingPlacement = new RequestQueryBuildingPlacement
         {
-            AbilityId = (int)TypeData.GetUnitTypeData(buildingType).AbilityId,
+            AbilityId = (int)KnowledgeBase.GetUnitTypeData(buildingType).AbilityId,
             TargetPos = new Point2D
             {
                 X = position.X,

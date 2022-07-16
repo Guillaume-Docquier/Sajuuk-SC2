@@ -60,11 +60,11 @@ public static class Controller {
         _obs = obs;
         Frame = _obs.Observation.GameLoop;
 
-        if (GameInfo == null || TypeData.Data == null || _obs == null) {
+        if (GameInfo == null || KnowledgeBase.Data == null || _obs == null) {
             if (GameInfo == null) {
                 Logger.Info("GameInfo is null! The application will terminate.");
             }
-            else if (TypeData.Data == null) {
+            else if (KnowledgeBase.Data == null) {
                 Logger.Info("TypeData is null! The application will terminate.");
             }
             else {
@@ -127,7 +127,7 @@ public static class Controller {
 
     private static int GetPendingCount(uint unitType, bool inConstruction = true) {
         var workers = GetUnits(OwnedUnits, Units.Workers);
-        var abilityId = TypeData.GetUnitTypeData(unitType).AbilityId;
+        var abilityId = KnowledgeBase.GetUnitTypeData(unitType).AbilityId;
 
         var counter = 0;
 
@@ -152,7 +152,7 @@ public static class Controller {
 
     public static Unit GetAvailableProducer(uint unitOrAbilityType, bool allowQueue = false) {
         if (!Units.Producers.ContainsKey(unitOrAbilityType)) {
-            throw new NotImplementedException($"Producer for unit {TypeData.GetUnitTypeData(unitOrAbilityType).Name} not found");
+            throw new NotImplementedException($"Producer for unit {KnowledgeBase.GetUnitTypeData(unitOrAbilityType).Name} not found");
         }
 
         var possibleProducers = Units.Producers[unitOrAbilityType];
@@ -188,7 +188,7 @@ public static class Controller {
 
     public static bool TrainUnit(uint unitType, Unit producer)
     {
-        var unitTypeData = TypeData.GetUnitTypeData(unitType);
+        var unitTypeData = KnowledgeBase.GetUnitTypeData(unitType);
         if (producer == null || !CanAfford(unitTypeData) || !HasEnoughSupply(unitType) || !IsUnlocked(unitType)) {
             return false;
         }
@@ -208,7 +208,7 @@ public static class Controller {
     }
 
     public static bool PlaceBuilding(uint buildingType, Unit producer, Vector3 location = default) {
-        var buildingTypeData = TypeData.GetUnitTypeData(buildingType);
+        var buildingTypeData = KnowledgeBase.GetUnitTypeData(buildingType);
         if (producer == null || !CanAfford(buildingTypeData) || !IsUnlocked(buildingType)) {
             return false;
         }
@@ -258,7 +258,7 @@ public static class Controller {
     }
 
     public static bool ResearchUpgrade(uint upgradeType, Unit producer) {
-        var researchTypeData = TypeData.GetUpgradeData(upgradeType);
+        var researchTypeData = KnowledgeBase.GetUpgradeData(upgradeType);
         if (producer == null || !CanAfford(researchTypeData) || !IsUnlocked(upgradeType)) {
             return false;
         }
@@ -278,7 +278,7 @@ public static class Controller {
     }
 
     public static bool UpgradeInto(uint buildingType, Unit producer) {
-        var buildingTypeData = TypeData.GetUnitTypeData(buildingType);
+        var buildingTypeData = KnowledgeBase.GetUnitTypeData(buildingType);
         if (producer == null || !CanAfford(buildingTypeData) || !IsUnlocked(buildingType)) {
             return false;
         }
@@ -359,6 +359,6 @@ public static class Controller {
     }
 
     public static bool HasEnoughSupply(uint unitType) {
-        return AvailableSupply >= TypeData.GetUnitTypeData(unitType).FoodRequired;
+        return AvailableSupply >= KnowledgeBase.GetUnitTypeData(unitType).FoodRequired;
     }
 }

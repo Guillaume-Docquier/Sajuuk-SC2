@@ -247,7 +247,7 @@ public class GameConnection {
             }
         };
         var dataResponse = await SendRequest(dataRequest);
-        TypeData.Data = dataResponse.Data;
+        KnowledgeBase.Data = dataResponse.Data;
 
         while (true) {
             var observationResponse = await SendRequest(new Request
@@ -290,7 +290,7 @@ public class GameConnection {
                 var unsuccessfulActions = actions
                     .Zip(response.Action.Result, (action, result) => (action, result))
                     .Where(action => action.result != ActionResult.Success)
-                    .Select(action => $"({TypeData.GetAbilityData(action.action.ActionRaw.UnitCommand.AbilityId).FriendlyName}, {action.result})")
+                    .Select(action => $"({KnowledgeBase.GetAbilityData(action.action.ActionRaw.UnitCommand.AbilityId).FriendlyName}, {action.result})")
                     .ToList();
 
                 if (unsuccessfulActions.Count > 0) {

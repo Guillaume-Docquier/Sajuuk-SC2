@@ -2,7 +2,7 @@
 
 namespace Bot.GameData;
 
-public static class TypeData {
+public static class KnowledgeBase {
     private static ResponseData _data;
 
     public static ResponseData Data {

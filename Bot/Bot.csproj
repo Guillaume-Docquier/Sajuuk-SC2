@@ -55,7 +55,7 @@
     <Compile Include="Controller\UnitsTracker.cs" />
     <Compile Include="GameData\Abilities.cs" />
     <Compile Include="GameData\Buildings.cs" />
-    <Compile Include="GameData\TypeData.cs" />
+    <Compile Include="GameData\KnowledgeBase.cs" />
     <Compile Include="GameData\Units.cs" />
     <Compile Include="GameData\Upgrades.cs" />
     <Compile Include="ICanDie.cs" />

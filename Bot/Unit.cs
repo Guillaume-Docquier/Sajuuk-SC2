@@ -47,7 +47,7 @@ public class Unit: ICanDie {
     public IEnumerable<UnitOrder> OrdersExceptMining => Orders.Where(order => order.AbilityId != Abilities.DroneGather && order.AbilityId != Abilities.DroneReturnCargo);
 
     public Unit(SC2APIProtocol.Unit unit, ulong frame) {
-        _unitTypeData = TypeData.GetUnitTypeData(unit.UnitType);
+        _unitTypeData = KnowledgeBase.GetUnitTypeData(unit.UnitType);
 
         Update(unit, frame);
     }
@@ -124,7 +124,7 @@ public class Unit: ICanDie {
 
         ProcessAction(ActionBuilder.TrainUnit(unitType, Tag));
 
-        var targetName = TypeData.GetUnitTypeData(unitType).Name;
+        var targetName = KnowledgeBase.GetUnitTypeData(unitType).Name;
         Logger.Info("{0} {1} started training {2}", Name, Tag, targetName);
     }
 
@@ -132,14 +132,14 @@ public class Unit: ICanDie {
         // You upgrade a unit or building by training the upgrade from the producer
         ProcessAction(ActionBuilder.TrainUnit(unitOrBuildingType, Tag));
 
-        var upgradeName = TypeData.GetUnitTypeData(unitOrBuildingType).Name;
+        var upgradeName = KnowledgeBase.GetUnitTypeData(unitOrBuildingType).Name;
         Logger.Info("Upgrading {0} {1} into {2}", Name, Tag, upgradeName);
     }
 
     public void PlaceBuilding(uint buildingType, Vector3 target) {
         ProcessAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
 
-        var buildingName = TypeData.GetUnitTypeData(buildingType).Name;
+        var buildingName = KnowledgeBase.GetUnitTypeData(buildingType).Name;
         Logger.Info("{0} {1} started building {2} at [{3}, {4}]", Name, Tag, buildingName, target.X, target.Y);
     }
 
@@ -147,7 +147,7 @@ public class Unit: ICanDie {
     {
         ProcessAction(ActionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
 
-        var buildingName = TypeData.GetUnitTypeData(buildingType).Name;
+        var buildingName = KnowledgeBase.GetUnitTypeData(buildingType).Name;
         Logger.Info("{0} {1} started building {2} on gas at [{3}, {4}]", Name, Tag, buildingName, gas.Position.X, gas.Position.Y);
     }
 
@@ -155,7 +155,7 @@ public class Unit: ICanDie {
     {
         ProcessAction(ActionBuilder.ResearchUpgrade(upgradeType, Tag));
 
-        var researchName = TypeData.GetUpgradeData(upgradeType).Name;
+        var researchName = KnowledgeBase.GetUpgradeData(upgradeType).Name;
         Logger.Info("{0} {1} started researching {2}", Name, Tag, researchName);
     }
 
@@ -172,7 +172,7 @@ public class Unit: ICanDie {
     public void UseAbility(int abilityId, Point2D position = null, ulong targetUnitTag = ulong.MaxValue) {
         ProcessAction(ActionBuilder.UnitCommand(abilityId, Tag, position, targetUnitTag));
 
-        var abilityName = TypeData.GetAbilityData(abilityId).FriendlyName;
+        var abilityName = KnowledgeBase.GetAbilityData(abilityId).FriendlyName;
         if (targetUnitTag != ulong.MaxValue) {
             var targetUnit = Controller.UnitsByTag[targetUnitTag];
             Logger.Info("{0} {1} using ability {2} on {3} {4}", Name, Tag, abilityName, targetUnit.Name, targetUnit.Tag);

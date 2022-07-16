@@ -61,8 +61,8 @@ public class ZergBot: PoliteBot {
             .Take(3)
             .Select(nextBuildStep => {
                 var buildStepUnitOrUpgradeName = nextBuildStep.BuildType == BuildType.Research
-                    ? TypeData.GetUpgradeData(nextBuildStep.UnitOrUpgradeType).Name
-                    : $"{nextBuildStep.Quantity} {TypeData.GetUnitTypeData(nextBuildStep.UnitOrUpgradeType).Name}";
+                    ? KnowledgeBase.GetUpgradeData(nextBuildStep.UnitOrUpgradeType).Name
+                    : $"{nextBuildStep.Quantity} {KnowledgeBase.GetUnitTypeData(nextBuildStep.UnitOrUpgradeType).Name}";
 
                 return $"{nextBuildStep.BuildType.ToString()} {buildStepUnitOrUpgradeName} at {nextBuildStep.AtSupply} supply";
             });
