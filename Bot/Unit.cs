@@ -19,7 +19,7 @@ public class Unit: ICanDie {
     public uint UnitType;
     public float HealthMax;
     public float ShieldMax;
-    public int Supply;
+    public float FoodRequired;
     public float Radius;
     public SC2APIProtocol.Unit RawUnitData;
     public Alliance Alliance;
@@ -60,7 +60,7 @@ public class Unit: ICanDie {
         UnitType = unit.UnitType;
         HealthMax = unit.HealthMax;
         ShieldMax = unit.ShieldMax;
-        Supply = (int)_unitTypeData.FoodRequired;
+        FoodRequired = _unitTypeData.FoodRequired;
         Radius = unit.Radius;
 
         Alliance = unit.Alliance; // Alliance can probably change if being mind controlled?

@@ -55,7 +55,7 @@ public class ZergBot: PoliteBot {
     }
 
     private void DebugBuildOrder() {
-        Debugger.AddDebugText("Next 3 builds:");
+        Debugger.AddText("Next 3 builds:");
 
         var nextBuildStepsData = _buildOrder
             .Take(3)
@@ -67,7 +67,7 @@ public class ZergBot: PoliteBot {
                 return $"{nextBuildStep.BuildType.ToString()} {buildStepUnitOrUpgradeName} at {nextBuildStep.AtSupply} supply";
             });
 
-        Debugger.AddDebugText(nextBuildStepsData);
+        Debugger.AddText(nextBuildStepsData);
     }
 
     private bool IsBuildOrderBlocking() {

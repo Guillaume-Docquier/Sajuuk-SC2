@@ -28,6 +28,7 @@ public static class Controller {
 
     public static uint CurrentSupply;
     public static uint MaxSupply;
+    public static uint AvailableSupply => MaxSupply - CurrentSupply;
 
     public static int AvailableMinerals;
     public static int AvailableVespene;
@@ -36,8 +37,6 @@ public static class Controller {
     public static Unit StartingTownHall;
     public static readonly List<Vector3> EnemyLocations = new List<Vector3>();
     public static readonly List<string> ChatLog = new List<string>();
-
-    public static uint AvailableSupply => MaxSupply - CurrentSupply;
     public static Dictionary<ulong, Unit> UnitsByTag => _unitsTracker.UnitsByTag;
     public static List<Unit> OwnedUnits => _unitsTracker.OwnedUnits;
     public static List<Unit> NewOwnedUnits => _unitsTracker.NewOwnedUnits;
@@ -85,6 +84,12 @@ public static class Controller {
         }
 
         CurrentSupply = _obs.Observation.PlayerCommon.FoodUsed;
+        var hasOddAmountOfZerglings = OwnedUnits.Count(unit => unit.UnitType == Units.Zergling) % 2 == 1;
+        if (hasOddAmountOfZerglings) {
+            // Zerglings have 0.5 supply. The api returns a rounded down supply, but the game considers the rounded up supply.
+            CurrentSupply += 1;
+        }
+
         MaxSupply = _obs.Observation.PlayerCommon.FoodCap;
 
         AvailableMinerals = _obs.Observation.PlayerCommon.Minerals;

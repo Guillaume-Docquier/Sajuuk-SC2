@@ -25,11 +25,11 @@ public static class Debugger {
         return request;
     }
 
-    public static void AddDebugText(string text) {
+    public static void AddText(string text) {
         DebugTexts.Add(new DebugText { Text = text, Size = 18 });
     }
 
-    public static void AddDebugText(IEnumerable<string> texts) {
+    public static void AddText(IEnumerable<string> texts) {
         DebugTexts.AddRange(texts.Select(text => new DebugText { Text = text, Size = 18 }));
     }
 

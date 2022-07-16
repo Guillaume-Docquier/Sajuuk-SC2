@@ -37,7 +37,7 @@ public class WarManager: IManager {
             _townHallToDefend = newTownHallToDefend;
         }
 
-        if (_battleManager.Army.Sum(soldier => soldier.Supply) >= SupplyRequiredBeforeAttacking) {
+        if (_battleManager.Army.Sum(soldier => soldier.FoodRequired) >= SupplyRequiredBeforeAttacking) {
             _battleManager.Assign(enemyPosition);
         }
 
