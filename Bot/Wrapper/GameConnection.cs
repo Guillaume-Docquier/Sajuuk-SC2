@@ -19,6 +19,12 @@ public class GameConnection {
     private string _starcraftDir;
     private string _starcraftMapsDir;
 
+    private readonly ulong _runEvery;
+
+    public GameConnection(ulong runEvery) {
+        _runEvery = runEvery;
+    }
+
     private void FindExecutableInfo() {
         var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         var executeInfo = Path.Combine(myDocuments, "StarCraft II", "ExecuteInfo.txt");
@@ -276,32 +282,37 @@ public class GameConnection {
                 continue;
             }
 
-            Controller.NewObservation(observation);
-            bot.OnFrame();
-            var actions = Controller.GetActions().ToList();
+            Controller.Frame = observation.Observation.GameLoop;
 
-            // For some reason it doesn't work before a few seconds after the game starts
-            // Also, this might take a couple of frames, let the bot start the game
-            // TODO GD Precompute this and save it
-            if (Controller.Frame > Controller.FramesPerSecond * 5 && !MapAnalyzer.IsInitialized) {
-                MapAnalyzer.Init();
-            }
+            if (observation.Observation.GameLoop % _runEvery == 0) {
+                Controller.NewObservation(observation);
+                bot.OnFrame();
+                var actions = Controller.GetActions().ToList();
 
-            if (actions.Count > 0) {
-                var response = await SendRequest(RequestBuilder.ActionRequest(actions));
-
-                var unsuccessfulActions = actions
-                    .Zip(response.Action.Result, (action, result) => (action, result))
-                    .Where(action => action.result != ActionResult.Success)
-                    .Select(action => $"({KnowledgeBase.GetAbilityData(action.action.ActionRaw.UnitCommand.AbilityId).FriendlyName}, {action.result})")
-                    .ToList();
-
-                if (unsuccessfulActions.Count > 0) {
-                    Logger.Warning("Unsuccessful actions: [{0}]", string.Join("; ", unsuccessfulActions));
+                // For some reason it doesn't work before a few seconds after the game starts
+                // Also, this might take a couple of frames, let the bot start the game
+                // TODO GD Precompute this and save it
+                if (Controller.Frame > Controller.FramesPerSecond * 5 && !MapAnalyzer.IsInitialized) {
+                    MapAnalyzer.Init();
                 }
+
+                if (actions.Count > 0) {
+                    var response = await SendRequest(RequestBuilder.ActionRequest(actions));
+
+                    var unsuccessfulActions = actions
+                        .Zip(response.Action.Result, (action, result) => (action, result))
+                        .Where(action => action.result != ActionResult.Success)
+                        .Select(action => $"({KnowledgeBase.GetAbilityData(action.action.ActionRaw.UnitCommand.AbilityId).FriendlyName}, {action.result})")
+                        .ToList();
+
+                    if (unsuccessfulActions.Count > 0) {
+                        Logger.Warning("Unsuccessful actions: [{0}]", string.Join("; ", unsuccessfulActions));
+                    }
+                }
+
+                await SendRequest(GraphicalDebugger.GetDebugRequest());
             }
 
-            await SendRequest(GraphicalDebugger.GetDebugRequest());
             await SendRequest(RequestBuilder.StepRequest(StepSize));
         }
     }

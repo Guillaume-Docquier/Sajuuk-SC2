@@ -9,19 +9,22 @@ public class Program {
 
     private const string MapName = "BlackburnAIE.SC2Map";
     private const Race OpponentRace = Race.Random;
-    private const Difficulty OpponentDifficulty = Difficulty.Easy;
+    private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
-    private const bool RealTime = true;
+    private const bool RealTime = false;
 
     public static GameConnection GameConnection;
 
     public static void Main(string[] args) {
         try {
-            GameConnection = new GameConnection();
             if (args.Length == 0) {
+                GameConnection = new GameConnection(runEvery: 2);
                 GameConnection.RunSinglePlayer(Bot, MapName, OpponentRace, OpponentDifficulty, RealTime).Wait();
             }
             else {
+                // On the ladder, for some reason, actions have a 1 frame delay before being received and applied
+                // We will run every 2 frames, this way we won't notice the delay
+                GameConnection = new GameConnection(runEvery: 2);
                 GameConnection.RunLadder(Bot, args).Wait();
             }
         }
