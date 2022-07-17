@@ -80,7 +80,7 @@
     <Compile Include="Vector3Extensions.cs" />
     <Compile Include="Wrapper\GraphicalDebugger.cs" />
     <Compile Include="Wrapper\RequestBuilder.cs" />
-    <Compile Include="ZergBot.cs" />
+    <Compile Include="SajuukBot.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Protocol\Common.cs" />
     <Compile Include="Protocol\Data.cs" />

@@ -1,6 +1,6 @@
 .idea
-Bot/bin
-Bot/obj
+*/bin
+*/obj
 *.log
 
 Bot.sln.DotSettings.user

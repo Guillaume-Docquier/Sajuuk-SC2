@@ -15,11 +15,11 @@ public class GameConnection {
     private const int StepSize = 1;
     private readonly ProtobufProxy _proxy = new ProtobufProxy();
 
-    private readonly string _starcraftExe;
-    private readonly string _starcraftDir;
-    private readonly string _starcraftMapsDir;
+    private string _starcraftExe;
+    private string _starcraftDir;
+    private string _starcraftMapsDir;
 
-    public GameConnection() {
+    private void FindExecutableInfo() {
         var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         var executeInfo = Path.Combine(myDocuments, "StarCraft II", "ExecuteInfo.txt");
 
@@ -45,6 +45,9 @@ public class GameConnection {
 
     public async Task RunSinglePlayer(IBot bot, string mapName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {
         const int port = 5678;
+
+        Logger.Info("Finding the SC2 executable info");
+        FindExecutableInfo();
 
         Logger.Info("Starting SinglePlayer Instance");
         StartSc2Instance(port);

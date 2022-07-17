@@ -8,14 +8,14 @@ namespace Bot;
 
 using BuildOrder = Queue<BuildOrders.BuildStep>;
 
-public class ZergBot: PoliteBot {
+public class SajuukBot: PoliteBot {
     private readonly BuildOrder _buildOrder = BuildOrders.TwoBasesRoach();
     private readonly List<IManager> _managers = new List<IManager>();
 
     private const int PriorityChangePeriod = 100;
     private int _managerPriorityIndex = 0;
 
-    public override string Name => "ZergBot";
+    public override string Name => "SajuukBot";
 
     public override Race Race => Race.Zerg;
 

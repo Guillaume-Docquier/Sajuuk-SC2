@@ -28,13 +28,14 @@ public abstract class PoliteBot: IBot {
         }
 
         if (Controller.Frame == Controller.SecsToFrames(1)) {
-            Controller.Chat("gl hf");
+            Controller.Chat("Hi, my name is Sajuuk");
+            Controller.Chat("I wish you good luck and good fun!");
         }
     }
 
     private void EnsureGG() {
-        var structures = Controller.GetUnits(Controller.OwnedUnits, Units.Structures);
-        if (structures.Count() == 1 && structures.First().Integrity < 0.4) {
+        var structures = Controller.GetUnits(Controller.OwnedUnits, Units.Structures).ToList();
+        if (structures.Count == 1 && structures.First().Integrity < 0.4) {
             if (!Controller.ChatLog.Contains("gg wp")) {
                 Controller.Chat("gg wp");
             }

@@ -19,8 +19,13 @@ public class BuildingTracker: IWatchUnitsDie {
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
-        _ongoingBuildingOrders[deadUnit].ForEach(buildingCell => _reservedBuildingCells.Remove(buildingCell));
-        _ongoingBuildingOrders.Remove(deadUnit);
+        if (!_ongoingBuildingOrders.ContainsKey(deadUnit)) {
+            Logger.Error("Could not find builder {0} in the ongoingBuildingOrders: [{1}]", deadUnit.Tag, string.Join(", ", _ongoingBuildingOrders.Keys.Select(unit => unit.Tag)));
+        }
+        else {
+            _ongoingBuildingOrders[deadUnit].ForEach(buildingCell => _reservedBuildingCells.Remove(buildingCell));
+            _ongoingBuildingOrders.Remove(deadUnit);
+        }
     }
 
     public Vector3 FindConstructionSpot(uint buildingType) {

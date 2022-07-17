@@ -4,18 +4,18 @@ using SC2APIProtocol;
 
 namespace Bot;
 
-internal class Program {
-    private static readonly IBot Bot = new ZergBot();
-    private const string MapName = "AcropolisLE.SC2Map";
+public class Program {
+    private static readonly IBot Bot = new SajuukBot();
 
+    private const string MapName = "BlackburnAIE.SC2Map";
     private const Race OpponentRace = Race.Random;
     private const Difficulty OpponentDifficulty = Difficulty.Easy;
 
-    private const bool RealTime = false;
+    private const bool RealTime = true;
 
     public static GameConnection GameConnection;
 
-    private static void Main(string[] args) {
+    public static void Main(string[] args) {
         try {
             GameConnection = new GameConnection();
             if (args.Length == 0) {
