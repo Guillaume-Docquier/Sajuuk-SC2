@@ -24,12 +24,18 @@ public class MiningModule: IUnitModule {
 
     public static MiningModule Uninstall(Unit worker) {
         var module = GetFrom(worker);
-        worker.Modules.Remove(Tag);
+        if (module != null) {
+            worker.Modules.Remove(Tag);
+        }
 
         return module;
     }
 
     public static MiningModule GetFrom(Unit worker) {
+        if (worker == null) {
+            return null;
+        }
+
         if (worker.Modules.TryGetValue(Tag, out var module)) {
             return module as MiningModule;
         }

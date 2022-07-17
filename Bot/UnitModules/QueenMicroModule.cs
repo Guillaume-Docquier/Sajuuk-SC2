@@ -13,15 +13,21 @@ public class QueenMicroModule: IUnitModule {
         queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall));
     }
 
-    public static QueenMicroModule Uninstall(Unit worker) {
-        var module = GetFrom(worker);
-        worker.Modules.Remove(Tag);
+    public static QueenMicroModule Uninstall(Unit queen) {
+        var module = GetFrom(queen);
+        if (module != null) {
+            queen.Modules.Remove(Tag);
+        }
 
         return module;
     }
 
-    public static QueenMicroModule GetFrom(Unit worker) {
-        if (worker.Modules.TryGetValue(Tag, out var module)) {
+    public static QueenMicroModule GetFrom(Unit queen) {
+        if (queen == null) {
+            return null;
+        }
+
+        if (queen.Modules.TryGetValue(Tag, out var module)) {
             return module as QueenMicroModule;
         }
 

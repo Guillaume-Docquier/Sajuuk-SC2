@@ -16,15 +16,21 @@ public class BurrowMicroModule: IUnitModule {
         unit.Modules.Add(Tag, new BurrowMicroModule(unit));
     }
 
-    public static BurrowMicroModule Uninstall(Unit worker) {
-        var module = GetFrom(worker);
-        worker.Modules.Remove(Tag);
+    public static BurrowMicroModule Uninstall(Unit unit) {
+        var module = GetFrom(unit);
+        if (module != null) {
+            unit.Modules.Remove(Tag);
+        }
 
         return module;
     }
 
-    public static BurrowMicroModule GetFrom(Unit worker) {
-        if (worker.Modules.TryGetValue(Tag, out var module)) {
+    public static BurrowMicroModule GetFrom(Unit unit) {
+        if (unit == null) {
+            return null;
+        }
+
+        if (unit.Modules.TryGetValue(Tag, out var module)) {
             return module as BurrowMicroModule;
         }
 

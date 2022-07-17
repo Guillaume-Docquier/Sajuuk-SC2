@@ -16,12 +16,18 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
 
     public static CapacityModule Uninstall(Unit unit) {
         var module = GetFrom(unit);
-        unit.Modules.Remove(Tag);
+        if (module != null) {
+            unit.Modules.Remove(Tag);
+        }
 
         return module;
     }
 
     public static CapacityModule GetFrom(Unit unit) {
+        if (unit == null) {
+            return null;
+        }
+
         if (unit.Modules.TryGetValue(Tag, out var module)) {
             return module as CapacityModule;
         }

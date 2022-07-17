@@ -46,8 +46,8 @@ public class MiningManager: IManager {
         _minerals.ForEach(mineral => {
             mineral.AddDeathWatcher(this);
 
-            CapacityModule.Install(mineral, MaxPerMinerals);
             DebugLocationModule.Install(mineral, _color);
+            CapacityModule.Install(mineral, MaxPerMinerals);
         });
 
         _gasses = Controller.GetUnits(Controller.NeutralUnits, Units.GasGeysers)
@@ -58,8 +58,8 @@ public class MiningManager: IManager {
             .ToList();
 
         _gasses.ForEach(gas => {
-            CapacityModule.Install(gas, MaxExtractorsPerGas);
             DebugLocationModule.Install(gas, _color);
+            CapacityModule.Install(gas, MaxExtractorsPerGas);
         });
 
         DiscoverExtractors(Controller.OwnedUnits);
@@ -100,6 +100,33 @@ public class MiningManager: IManager {
         if (_minerals.Sum(mineral => CapacityModule.GetFrom(mineral).AvailableCapacity) <= _minerals.Count) {
             FillExtractors();
         }
+    }
+
+    public void Retire() {
+        DebugLocationModule.Uninstall(TownHall);
+
+        _workers.ForEach(worker => {
+            DebugLocationModule.Uninstall(worker);
+            MiningModule.Uninstall(worker);
+        });
+
+        _minerals.ForEach(mineral => {
+            DebugLocationModule.Uninstall(mineral);
+            CapacityModule.Uninstall(mineral);
+        });
+
+        _gasses.ForEach(gas => {
+            DebugLocationModule.Uninstall(gas);
+            CapacityModule.Uninstall(gas);
+        });
+
+        _extractors.ForEach(extractor => {
+            DebugLocationModule.Uninstall(extractor);
+            CapacityModule.Uninstall(extractor);
+        });
+
+        DebugLocationModule.Uninstall(Queen);
+        QueenMicroModule.Uninstall(Queen);
     }
 
     public void ReportUnitDeath(Unit deadUnit) {

@@ -15,12 +15,18 @@ public class DebugLocationModule: IUnitModule {
 
     public static DebugLocationModule Uninstall(Unit unit) {
         var module = GetFrom(unit);
-        unit.Modules.Remove(Tag);
+        if (module != null) {
+            unit.Modules.Remove(Tag);
+        }
 
         return module;
     }
 
     public static DebugLocationModule GetFrom(Unit worker) {
+        if (worker == null) {
+            return null;
+        }
+
         if (worker.Modules.TryGetValue(Tag, out var module)) {
             return module as DebugLocationModule;
         }

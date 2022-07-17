@@ -44,6 +44,10 @@ public class BattleManager: IManager {
             .ForEach(unit => unit.AttackMove(Target));
     }
 
+    public void Retire() {
+        Army.ForEach(soldier => BurrowMicroModule.Uninstall(soldier));
+    }
+
     public void ReportUnitDeath(Unit deadUnit) {
         Army.Remove(deadUnit);
     }

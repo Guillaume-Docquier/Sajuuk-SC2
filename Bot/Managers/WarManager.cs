@@ -51,6 +51,10 @@ public class WarManager: IManager {
         _battleManager.OnFrame();
     }
 
+    public void Retire() {
+        throw new System.NotImplementedException();
+    }
+
     public void ReportUnitDeath(Unit deadUnit) {
         // Nothing to do
     }

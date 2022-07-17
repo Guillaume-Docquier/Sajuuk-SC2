@@ -47,6 +47,10 @@ public class EconomyManager: IManager {
         _miningManagers.ForEach(manager => manager.OnFrame());
     }
 
+    public void Retire() {
+        throw new System.NotImplementedException();
+    }
+
     public void ReportUnitDeath(Unit deadUnit) {
         switch (deadUnit.UnitType) {
             case Units.Hatchery:
@@ -58,6 +62,7 @@ public class EconomyManager: IManager {
 
                 _townHallDispatch.Remove(deadUnit);
                 _miningManagers.Remove(manager);
+                manager.Retire();
                 break;
             case Units.Drone:
                 _workerDispatch.Remove(deadUnit);

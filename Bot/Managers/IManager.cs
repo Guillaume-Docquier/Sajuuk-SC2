@@ -6,4 +6,6 @@ public interface IManager: IWatchUnitsDie {
     IEnumerable<BuildOrders.BuildStep> BuildStepRequests { get; }
 
     void OnFrame();
+
+    void Retire();
 }
