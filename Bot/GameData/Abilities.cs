@@ -1,4 +1,6 @@
-﻿namespace Bot.GameData;
+﻿using System.Collections.Generic;
+
+namespace Bot.GameData;
 
 // You can get all these values from the stableid.json file (Generally found in 'C:\Users\your_username\Documents\StarCraft II' on Windows)
 internal static class Abilities {
@@ -46,4 +48,10 @@ internal static class Abilities {
 
     public const int InjectLarvae = 251;
     public const int SpawnCreepTumor = 3691;
+
+    public static readonly Dictionary<int, int> EnergyCost = new Dictionary<int, int>
+    {
+        { InjectLarvae,    25 },
+        { SpawnCreepTumor, 25 },
+    };
 }

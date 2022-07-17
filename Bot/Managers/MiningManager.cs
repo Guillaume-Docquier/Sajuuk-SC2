@@ -106,27 +106,34 @@ public class MiningManager: IManager {
         UnitModule.Uninstall<DebugLocationModule>(TownHall);
 
         _workers.ForEach(worker => {
+            worker.RemoveDeathWatcher(this);
             UnitModule.Uninstall<DebugLocationModule>(worker);
             UnitModule.Uninstall<MiningModule>(worker);
         });
 
         _minerals.ForEach(mineral => {
+            mineral.RemoveDeathWatcher(this);
             UnitModule.Uninstall<DebugLocationModule>(mineral);
             UnitModule.Uninstall<CapacityModule>(mineral);
         });
 
         _gasses.ForEach(gas => {
+            gas.RemoveDeathWatcher(this);
             UnitModule.Uninstall<DebugLocationModule>(gas);
             UnitModule.Uninstall<CapacityModule>(gas);
         });
 
         _extractors.ForEach(extractor => {
+            extractor.RemoveDeathWatcher(this);
             UnitModule.Uninstall<DebugLocationModule>(extractor);
             UnitModule.Uninstall<CapacityModule>(extractor);
         });
 
-        UnitModule.Uninstall<DebugLocationModule>(Queen);
-        UnitModule.Uninstall<QueenMicroModule>(Queen);
+        if (Queen != null) {
+            Queen.RemoveDeathWatcher(this);
+            UnitModule.Uninstall<DebugLocationModule>(Queen);
+            UnitModule.Uninstall<QueenMicroModule>(Queen);
+        }
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
@@ -246,6 +253,11 @@ public class MiningManager: IManager {
 
     private void HandleDeadExtractor(Unit deadExtractor) {
         _extractors.Remove(deadExtractor);
-        UnitModule.Get<CapacityModule>(deadExtractor).AssignedUnits.ForEach(worker => UnitModule.Uninstall<MiningModule>(worker));
+        deadExtractor.RemoveDeathWatcher(this);
+
+        var capacityModule = UnitModule.Uninstall<CapacityModule>(deadExtractor);
+        if (capacityModule != null) {
+            capacityModule.AssignedUnits.ForEach(worker => UnitModule.Uninstall<MiningModule>(worker));
+        }
     }
 }

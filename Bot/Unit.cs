@@ -160,6 +160,10 @@ public class Unit: ICanDie {
             return;
         }
 
+        if (Abilities.EnergyCost.TryGetValue(abilityId, out var energyCost) && RawUnitData.Energy < energyCost) {
+            RawUnitData.Energy -= energyCost;
+        }
+
         ProcessAction(ActionBuilder.UnitCommand(abilityId, Tag, position, targetUnitTag));
 
         var abilityName = KnowledgeBase.GetAbilityData(abilityId).FriendlyName;
@@ -221,5 +225,13 @@ public class Unit: ICanDie {
         foreach (var module in Modules.Values) {
             module.Execute();
         }
+    }
+
+    public bool HasEnoughEnergy(int abilityId) {
+        if (Abilities.EnergyCost.TryGetValue(abilityId, out var energyCost) && RawUnitData.Energy < energyCost) {
+            return false;
+        }
+
+        return true;
     }
 }
