@@ -12,27 +12,6 @@ public class TargetingModule: IUnitModule {
         unit.Modules.Add(Tag, new TargetingModule(unit, target));
     }
 
-    public static TargetingModule Uninstall(Unit unit) {
-        var module = GetFrom(unit);
-        if (module != null) {
-            unit.Modules.Remove(Tag);
-        }
-
-        return module;
-    }
-
-    public static TargetingModule GetFrom(Unit unit) {
-        if (unit == null) {
-            return null;
-        }
-
-        if (unit.Modules.TryGetValue(Tag, out var module)) {
-            return module as TargetingModule;
-        }
-
-        return null;
-    }
-
     private TargetingModule(Unit unit, Vector3 target) {
         _unit = unit;
         _target = target;

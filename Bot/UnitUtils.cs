@@ -27,6 +27,6 @@ public static class UnitUtils {
     }
 
     public static bool IsGasExploited(Unit gas) {
-        return IsResourceManaged(gas) && CapacityModule.GetFrom(gas).AvailableCapacity == 0;
+        return IsResourceManaged(gas) && UnitModule.Get<CapacityModule>(gas).AvailableCapacity == 0;
     }
 }

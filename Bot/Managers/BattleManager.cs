@@ -45,7 +45,7 @@ public class BattleManager: IManager {
     }
 
     public void Retire() {
-        Army.ForEach(soldier => BurrowMicroModule.Uninstall(soldier));
+        Army.ForEach(soldier => UnitModule.Uninstall<BurrowMicroModule>(soldier));
     }
 
     public void ReportUnitDeath(Unit deadUnit) {

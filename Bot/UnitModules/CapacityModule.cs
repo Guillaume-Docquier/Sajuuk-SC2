@@ -14,27 +14,6 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
         unit.Modules.Add(Tag, new CapacityModule(maxCapacity));
     }
 
-    public static CapacityModule Uninstall(Unit unit) {
-        var module = GetFrom(unit);
-        if (module != null) {
-            unit.Modules.Remove(Tag);
-        }
-
-        return module;
-    }
-
-    public static CapacityModule GetFrom(Unit unit) {
-        if (unit == null) {
-            return null;
-        }
-
-        if (unit.Modules.TryGetValue(Tag, out var module)) {
-            return module as CapacityModule;
-        }
-
-        return null;
-    }
-
     private CapacityModule(int maxCapacity) {
         _maxCapacity = maxCapacity;
     }

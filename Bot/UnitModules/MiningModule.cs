@@ -18,29 +18,8 @@ public class MiningModule: IUnitModule {
     public readonly UnitUtils.ResourceType ResourceType;
 
     public static void Install(Unit worker, Unit assignedResource) {
-        Uninstall(worker);
+        UnitModule.Uninstall<MiningModule>(worker);
         worker.Modules.Add(Tag, new MiningModule(worker, assignedResource));
-    }
-
-    public static MiningModule Uninstall(Unit worker) {
-        var module = GetFrom(worker);
-        if (module != null) {
-            worker.Modules.Remove(Tag);
-        }
-
-        return module;
-    }
-
-    public static MiningModule GetFrom(Unit worker) {
-        if (worker == null) {
-            return null;
-        }
-
-        if (worker.Modules.TryGetValue(Tag, out var module)) {
-            return module as MiningModule;
-        }
-
-        return null;
     }
 
     private MiningModule(Unit worker, Unit assignedResource) {

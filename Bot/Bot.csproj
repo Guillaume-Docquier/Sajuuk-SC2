@@ -76,6 +76,7 @@
     <Compile Include="UnitModules\IUnitModule.cs" />
     <Compile Include="UnitModules\QueenMicroModule.cs" />
     <Compile Include="UnitModules\TargetingModule.cs" />
+    <Compile Include="UnitModules\UnitModule.cs" />
     <Compile Include="UnitUtils.cs" />
     <Compile Include="Vector3Extensions.cs" />
     <Compile Include="Wrapper\GraphicalDebugger.cs" />

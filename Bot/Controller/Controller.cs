@@ -229,7 +229,7 @@ public static class Controller {
             }
 
             producer.PlaceExtractor(buildingType, availableGas);
-            CapacityModule.GetFrom(availableGas).Assign(producer); // Assign the worker until extractor is spawned
+            UnitModule.Get<CapacityModule>(availableGas).Assign(producer); // Assign the worker until extractor is spawned
             _buildingTracker.ConfirmPlacement(buildingType, availableGas.Position, producer);
         }
         else if (location != default) {

@@ -97,36 +97,36 @@ public class MiningManager: IManager {
 
         DispatchWorkers(GetIdleWorkers());
 
-        if (_minerals.Sum(mineral => CapacityModule.GetFrom(mineral).AvailableCapacity) <= _minerals.Count) {
+        if (_minerals.Sum(mineral => UnitModule.Get<CapacityModule>(mineral).AvailableCapacity) <= _minerals.Count) {
             FillExtractors();
         }
     }
 
     public void Retire() {
-        DebugLocationModule.Uninstall(TownHall);
+        UnitModule.Uninstall<DebugLocationModule>(TownHall);
 
         _workers.ForEach(worker => {
-            DebugLocationModule.Uninstall(worker);
-            MiningModule.Uninstall(worker);
+            UnitModule.Uninstall<DebugLocationModule>(worker);
+            UnitModule.Uninstall<MiningModule>(worker);
         });
 
         _minerals.ForEach(mineral => {
-            DebugLocationModule.Uninstall(mineral);
-            CapacityModule.Uninstall(mineral);
+            UnitModule.Uninstall<DebugLocationModule>(mineral);
+            UnitModule.Uninstall<CapacityModule>(mineral);
         });
 
         _gasses.ForEach(gas => {
-            DebugLocationModule.Uninstall(gas);
-            CapacityModule.Uninstall(gas);
+            UnitModule.Uninstall<DebugLocationModule>(gas);
+            UnitModule.Uninstall<CapacityModule>(gas);
         });
 
         _extractors.ForEach(extractor => {
-            DebugLocationModule.Uninstall(extractor);
-            CapacityModule.Uninstall(extractor);
+            UnitModule.Uninstall<DebugLocationModule>(extractor);
+            UnitModule.Uninstall<CapacityModule>(extractor);
         });
 
-        DebugLocationModule.Uninstall(Queen);
-        QueenMicroModule.Uninstall(Queen);
+        UnitModule.Uninstall<DebugLocationModule>(Queen);
+        UnitModule.Uninstall<QueenMicroModule>(Queen);
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
@@ -135,7 +135,7 @@ public class MiningManager: IManager {
         }
         else if (Units.MineralFields.Contains(deadUnit.UnitType)) {
             _minerals.Remove(deadUnit);
-            CapacityModule.GetFrom(deadUnit).AssignedUnits.ForEach(worker => MiningModule.Uninstall(worker));
+            UnitModule.Get<CapacityModule>(deadUnit).AssignedUnits.ForEach(worker => UnitModule.Uninstall<MiningModule>(worker));
         }
         else if (deadUnit.UnitType == Units.Extractor) {
             HandleDeadExtractor(deadUnit);
@@ -146,7 +146,7 @@ public class MiningManager: IManager {
     }
 
     private IEnumerable<Unit> GetIdleWorkers() {
-        return _workers.Where(worker => MiningModule.GetFrom(worker) == null);
+        return _workers.Where(worker => UnitModule.Get<MiningModule>(worker) == null);
     }
 
     private void DispatchWorkers(IEnumerable<Unit> workers) {
@@ -158,7 +158,7 @@ public class MiningManager: IManager {
 
             if (assignedResource != null) {
                 MiningModule.Install(worker, assignedResource);
-                CapacityModule.GetFrom(assignedResource).Assign(worker);
+                UnitModule.Get<CapacityModule>(assignedResource).Assign(worker);
             }
         }
     }
@@ -167,8 +167,8 @@ public class MiningManager: IManager {
         foreach (var extractor in _extractors.Where(extractor => extractor.IsOperational)) {
             // TODO GD Select from busiest minerals instead
             var workersToReassign = _workers
-                .Where(worker => MiningModule.GetFrom(worker).ResourceType == UnitUtils.ResourceType.Mineral)
-                .Take(CapacityModule.GetFrom(extractor).AvailableCapacity)
+                .Where(worker => UnitModule.Get<MiningModule>(worker).ResourceType == UnitUtils.ResourceType.Mineral)
+                .Take(UnitModule.Get<CapacityModule>(extractor).AvailableCapacity)
                 .ToList();
 
             foreach (var worker in workersToReassign) {
@@ -196,7 +196,7 @@ public class MiningManager: IManager {
 
             DebugLocationModule.Install(extractor, _color);
             CapacityModule.Install(extractor, MaxPerExtractor);
-            CapacityModule.GetFrom(_gasses.First(gas => gas.DistanceTo(extractor) < 1)).Assign(extractor);
+            UnitModule.Get<CapacityModule>(_gasses.First(gas => gas.DistanceTo(extractor) < 1)).Assign(extractor);
         }
 
         _extractors.AddRange(extractors);
@@ -205,24 +205,24 @@ public class MiningManager: IManager {
     private Unit GetClosestExtractorWithAvailableCapacity(Unit worker) {
         return _extractors
             .Where(extractor => extractor.IsOperational)
-            .Where(extractor => CapacityModule.GetFrom(extractor).AvailableCapacity > 0)
+            .Where(extractor => UnitModule.Get<CapacityModule>(extractor).AvailableCapacity > 0)
             .OrderBy(extractor => extractor.DistanceTo(worker))
             .FirstOrDefault();
     }
 
     private Unit GetClosestMineralWithAvailableCapacity(Unit worker, int minAvailableCapacity) {
         return _minerals
-            .Where(mineral => CapacityModule.GetFrom(mineral).AvailableCapacity > minAvailableCapacity)
+            .Where(mineral => UnitModule.Get<CapacityModule>(mineral).AvailableCapacity > minAvailableCapacity)
             .OrderBy(mineral => mineral.DistanceTo(worker))
             .FirstOrDefault();
     }
 
     private void UpdateWorkerAssignment(Unit worker, Unit assignedResource) {
-        var oldMiningModule = MiningModule.Uninstall(worker);
-        CapacityModule.GetFrom(oldMiningModule.AssignedResource).Release(worker);
+        var oldMiningModule = UnitModule.Uninstall<MiningModule>(worker);
+        UnitModule.Get<CapacityModule>(oldMiningModule.AssignedResource).Release(worker);
 
         MiningModule.Install(worker, assignedResource);
-        CapacityModule.GetFrom(assignedResource).Assign(worker);
+        UnitModule.Get<CapacityModule>(assignedResource).Assign(worker);
     }
 
     private bool IsGasDepleted(Unit gas) {
@@ -232,12 +232,12 @@ public class MiningManager: IManager {
     private void HandleDepletedGasses() {
         foreach (var depletedGas in _gasses.Where(IsGasDepleted).ToList()) {
             _gasses.Remove(depletedGas);
-            DebugLocationModule.Uninstall(depletedGas);
+            UnitModule.Uninstall<DebugLocationModule>(depletedGas);
 
-            var uselessExtractor = CapacityModule.GetFrom(depletedGas).AssignedUnits.FirstOrDefault();
+            var uselessExtractor = UnitModule.Get<CapacityModule>(depletedGas).AssignedUnits.FirstOrDefault();
             if (uselessExtractor != null) {
                 uselessExtractor.RemoveDeathWatcher(this);
-                DebugLocationModule.Uninstall(uselessExtractor);
+                UnitModule.Uninstall<DebugLocationModule>(uselessExtractor);
 
                 HandleDeadExtractor(uselessExtractor);
             }
@@ -246,6 +246,6 @@ public class MiningManager: IManager {
 
     private void HandleDeadExtractor(Unit deadExtractor) {
         _extractors.Remove(deadExtractor);
-        CapacityModule.GetFrom(deadExtractor).AssignedUnits.ForEach(worker => MiningModule.Uninstall(worker));
+        UnitModule.Get<CapacityModule>(deadExtractor).AssignedUnits.ForEach(worker => UnitModule.Uninstall<MiningModule>(worker));
     }
 }
