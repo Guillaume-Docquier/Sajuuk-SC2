@@ -20,6 +20,10 @@ public static class MapAnalyzer {
 
     // The controller must be initialized first
     public static void Init() {
+        if (IsInitialized) {
+            return;
+        }
+
         Logger.Info("Initializing MapAnalyzer");
 
         ResourceClusters = FindResourceClusters().ToList();
@@ -71,8 +75,7 @@ public static class MapAnalyzer {
         var centerZ = unitCluster[0].Position.Z; // Assume they're all on the same level
 
         // Sync with building grid
-        // Center of cells are on .5, e.g: (1.5, 2.5)
-        return new Vector3((float)Math.Floor(centerX) + GameGridCellRadius, (float)Math.Floor(centerY) + GameGridCellRadius, centerZ);
+        return AsWorldGridCenter(centerX, centerY, centerZ);
     }
 
     public static IEnumerable<Vector3> BuildSearchGrid(Vector3 centerPosition, float gridRadius, float stepSize = GameGridCellWidth) {
@@ -84,5 +87,23 @@ public static class MapAnalyzer {
         }
 
         return buildSpots.OrderBy(position => Vector3.Distance(centerPosition, position));
+    }
+
+    // Center of cells are on .5, e.g: (1.5, 2.5)
+    public static Vector3 AsWorldGridCenter(float x, float y, float z = 0) {
+        return new Vector3((float)Math.Floor(x) + GameGridCellRadius, (float)Math.Floor(y) + GameGridCellRadius, z);
+    }
+
+    public static Vector3 AsWorldGridCenter(Vector3 vector) {
+        return new Vector3((float)Math.Floor(vector.X) + GameGridCellRadius, (float)Math.Floor(vector.Y) + GameGridCellRadius, vector.Z);
+    }
+
+    // Center of cells are on .5, e.g: (1.5, 2.5)
+    public static Vector3 AsWorldGridCorner(float x, float y, float z = 0) {
+        return new Vector3((float)Math.Floor(x), (float)Math.Floor(y), z);
+    }
+
+    public static Vector3 AsWorldGridCorner(Vector3 vector) {
+        return new Vector3((float)Math.Floor(vector.X), (float)Math.Floor(vector.Y), vector.Z);
     }
 }

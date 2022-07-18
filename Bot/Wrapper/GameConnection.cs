@@ -296,6 +296,10 @@ public class GameConnection {
                     MapAnalyzer.Init();
                 }
 
+                if (!Pathfinder.IsInitialized) {
+                    Pathfinder.Init();
+                }
+
                 if (actions.Count > 0) {
                     var response = await SendRequest(RequestBuilder.ActionRequest(actions));
 

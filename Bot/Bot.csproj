@@ -66,6 +66,7 @@
     <Compile Include="Managers\MiningManager.cs" />
     <Compile Include="Managers\WarManager.cs" />
     <Compile Include="MapAnalyzer.cs" />
+    <Compile Include="Pathfinder.cs" />
     <Compile Include="PoliteBot.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="UnitModules\BurrowMicroModule.cs" />
