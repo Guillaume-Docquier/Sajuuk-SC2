@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using SC2APIProtocol;
 
 namespace Bot.Wrapper;
 
 public static class GraphicalDebugger {
-    private const float CreepHeight = 0.008f;
+    private const float CreepHeight = 0.01f;
+    private const float Padding = 0.05f;
 
     private static readonly List<DebugText> DebugTexts = new List<DebugText>();
     private static readonly List<DebugSphere> DebugSpheres = new List<DebugSphere>();
@@ -26,13 +26,7 @@ public static class GraphicalDebugger {
     }
 
     // Size doesn't work when pos is not defined
-    public static void AddTextGroup(string text, uint size = 15, Point virtualPos = null, Point worldPos = null) {
-        AddTextGroup(new List<string> { text }, size, virtualPos, worldPos);
-    }
-
-    public static void AddTextGroup(IEnumerable<string> texts, uint size = 15, Point virtualPos = null, Point worldPos = null) {
-        var text = string.Join("\n", texts);
-
+    public static void AddText(string text, uint size = 15, Point virtualPos = null, Point worldPos = null) {
         DebugTexts.Add(new DebugText
         {
             Text = text,
@@ -41,6 +35,10 @@ public static class GraphicalDebugger {
             WorldPos = worldPos,
             Color = Colors.Yellow,
         });
+    }
+
+    public static void AddTextGroup(IEnumerable<string> texts, uint size = 15, Point virtualPos = null, Point worldPos = null) {
+        AddText(string.Join("\n", texts), size, virtualPos, worldPos);
     }
 
     public static void AddSphere(Unit unit, Color color) {
@@ -66,8 +64,8 @@ public static class GraphicalDebugger {
         DebugBoxes.Add(
             new DebugBox
             {
-                Min = new Point { X = centerPosition.X - width / 2, Y = centerPosition.Y - width / 2, Z = centerPosition.Z + CreepHeight },
-                Max = new Point { X = centerPosition.X + width / 2, Y = centerPosition.Y + width / 2, Z = centerPosition.Z + CreepHeight },
+                Min = new Point { X = centerPosition.X - width / 2 + Padding, Y = centerPosition.Y - width / 2 + Padding, Z = centerPosition.Z + CreepHeight },
+                Max = new Point { X = centerPosition.X + width / 2 - Padding, Y = centerPosition.Y + width / 2 - Padding, Z = centerPosition.Z + CreepHeight },
                 Color = color,
             }
         );
@@ -89,21 +87,21 @@ public static class GraphicalDebugger {
 }
 
 public static class Colors {
-    public static Color White = new Color { R = 1, G = 1, B = 1 };
-    public static Color Black = new Color { R = 255, G = 255, B = 255 };
+    public static readonly Color White = new Color { R = 1, G = 1, B = 1 };
+    public static readonly Color Black = new Color { R = 255, G = 255, B = 255 };
 
-    public static Color Red = new Color { R = 255, G = 1, B = 1 };
-    public static Color Green = new Color { R = 1, G = 255, B = 1 };
-    public static Color Blue = new Color { R = 1, G = 1, B = 255 };
+    public static readonly Color Red = new Color { R = 255, G = 1, B = 1 };
+    public static readonly Color Green = new Color { R = 1, G = 255, B = 1 };
+    public static readonly Color Blue = new Color { R = 1, G = 1, B = 255 };
 
-    public static Color Yellow = new Color { R = 255, G = 255, B = 1 };
-    public static Color Cyan = new Color { R = 1, G = 255, B = 255 };
-    public static Color Magenta = new Color { R = 255, G = 1, B = 255 };
+    public static readonly Color Yellow = new Color { R = 255, G = 255, B = 1 };
+    public static readonly Color Cyan = new Color { R = 1, G = 255, B = 255 };
+    public static readonly Color Magenta = new Color { R = 255, G = 1, B = 255 };
 
-    public static Color DarkGreen = new Color { R = 1, G = 100, B = 1 };
-    public static Color DarkBlue = new Color { R = 1, G = 1, B = 139 };
-    public static Color Maroon3 = new Color { R = 176, G = 48, B = 96 };
-    public static Color Burlywood = new Color { R = 222, G = 184, B = 135 };
-    public static Color Cornflower = new Color { R = 100, G = 149, B = 237 };
-    public static Color Lime = new Color { R = 175, G = 255, B = 1 };
+    public static readonly Color DarkGreen = new Color { R = 1, G = 100, B = 1 };
+    public static readonly Color DarkBlue = new Color { R = 1, G = 1, B = 139 };
+    public static readonly Color Maroon3 = new Color { R = 176, G = 48, B = 96 };
+    public static readonly Color Burlywood = new Color { R = 222, G = 184, B = 135 };
+    public static readonly Color Cornflower = new Color { R = 100, G = 149, B = 237 };
+    public static readonly Color Lime = new Color { R = 175, G = 255, B = 1 };
 }
