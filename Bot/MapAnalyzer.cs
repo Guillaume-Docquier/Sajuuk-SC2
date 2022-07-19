@@ -50,7 +50,7 @@ public static class MapAnalyzer {
         var expandLocations = new List<Vector3>();
 
         foreach (var resourceCluster in ResourceClusters) {
-            var centerPosition = GetClusterCenter(resourceCluster);
+            var centerPosition = AsWorldGridCenter(Clustering.GetBoundingBoxCenter(resourceCluster));
             var searchGrid = BuildSearchGrid(centerPosition, gridRadius: ExpandSearchRadius);
 
             var goodBuildSpot = searchGrid.FirstOrDefault(buildSpot => Controller.CanPlace(Units.Hatchery, buildSpot));
@@ -62,20 +62,6 @@ public static class MapAnalyzer {
         }
 
         return expandLocations;
-    }
-
-    public static Vector3 GetClusterCenter(IReadOnlyList<Unit> unitCluster) {
-        var minX = unitCluster.Select(unit => unit.Position.X).Min();
-        var maxX = unitCluster.Select(unit => unit.Position.X).Max();
-        var minY = unitCluster.Select(unit => unit.Position.Y).Min();
-        var maxY = unitCluster.Select(unit => unit.Position.Y).Max();
-
-        var centerX = minX + (maxX - minX) / 2;
-        var centerY = minY + (maxY - minY) / 2;
-        var centerZ = unitCluster[0].Position.Z; // Assume they're all on the same level
-
-        // Sync with building grid
-        return AsWorldGridCenter(centerX, centerY, centerZ);
     }
 
     public static IEnumerable<Vector3> BuildSearchGrid(Vector3 centerPosition, float gridRadius, float stepSize = GameGridCellWidth) {

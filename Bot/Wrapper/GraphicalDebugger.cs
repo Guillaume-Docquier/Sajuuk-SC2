@@ -120,4 +120,5 @@ public static class Colors {
     public static readonly Color Burlywood = new Color { R = 222, G = 184, B = 135 };
     public static readonly Color Cornflower = new Color { R = 100, G = 149, B = 237 };
     public static readonly Color Lime = new Color { R = 175, G = 255, B = 1 };
+    public static readonly Color Orange = new Color { R = 226, G = 131, B = 36 };
 }

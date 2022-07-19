@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using Bot.Wrapper;
 
 namespace Bot;
 
@@ -57,6 +59,40 @@ public static class Clustering {
             currentCluster = new List<Unit>();
         }
 
+        clusters.ForEach(DrawBoundingBox);
+
         return clusters;
+    }
+
+    public static Vector3 GetCenter(List<Unit> cluster) {
+        var avgX = cluster.Average(soldier => soldier.Position.X);
+        var avgY = cluster.Average(soldier => soldier.Position.Y);
+
+        return Pathfinder.WithWorldHeight(avgX, avgY);
+    }
+
+    public static Vector3 GetBoundingBoxCenter(List<Unit> cluster) {
+        var minX = cluster.Select(unit => unit.Position.X).Min();
+        var maxX = cluster.Select(unit => unit.Position.X).Max();
+        var minY = cluster.Select(unit => unit.Position.Y).Min();
+        var maxY = cluster.Select(unit => unit.Position.Y).Max();
+
+        var centerX = minX + (maxX - minX) / 2;
+        var centerY = minY + (maxY - minY) / 2;
+
+        return Pathfinder.WithWorldHeight(centerX, centerY);
+    }
+
+    private static void DrawBoundingBox(IReadOnlyCollection<Unit> cluster) {
+        var minX = cluster.Select(unit => unit.Position.X).Min();
+        var maxX = cluster.Select(unit => unit.Position.X).Max();
+        var minY = cluster.Select(unit => unit.Position.Y).Min();
+        var maxY = cluster.Select(unit => unit.Position.Y).Max();
+
+        var centerX = minX + (maxX - minX) / 2;
+        var centerY = minY + (maxY - minY) / 2;
+        var boundingBoxCenter = Pathfinder.WithWorldHeight(centerX, centerY);
+
+        GraphicalDebugger.AddSquare(boundingBoxCenter, maxX - minX, Colors.Orange);
     }
 }

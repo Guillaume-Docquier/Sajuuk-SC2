@@ -8,7 +8,7 @@ using Bot.Wrapper;
 namespace Bot;
 
 public static class Pathfinder {
-    private static List<List<float>> _heightMap;
+    public  static List<List<float>> HeightMap; // TODO GD Should be in map analyzer, probably
     private static List<List<bool>> _walkMap;
     private static int _maxX;
     private static int _maxY;
@@ -30,9 +30,9 @@ public static class Pathfinder {
     }
 
     private static void InitHeightMap() {
-        _heightMap = new List<List<float>>();
+        HeightMap = new List<List<float>>();
         for (var x = 0; x < _maxX; x++) {
-            _heightMap.Add(new List<float>(new float[_maxY]));
+            HeightMap.Add(new List<float>(new float[_maxY]));
         }
 
         var heightVector = Controller.GameInfo.StartRaw.TerrainHeight.Data
@@ -42,7 +42,7 @@ public static class Pathfinder {
 
         for (var x = 0; x < _maxX; x++) {
             for (var y = 0; y < _maxY; y++) {
-                _heightMap[x][y] = heightVector[y * _maxX + x]; // heightVector[4] is (4, 0)
+                HeightMap[x][y] = heightVector[y * _maxX + x]; // heightVector[4] is (4, 0)
             }
         }
     }
@@ -106,8 +106,8 @@ public static class Pathfinder {
             .Select(MapAnalyzer.AsWorldGridCenter)
             .ToList();
 
-        GraphicalDebugger.AddSphere(origin, 3, Colors.Cyan);
-        GraphicalDebugger.AddSphere(destination, 3, Colors.DarkBlue);
+        GraphicalDebugger.AddSphere(WithWorldHeight(origin), 1.5f, Colors.Cyan); // TODO GD Move WithWorldHeight, AsWorldGridCorner and friends to Vector3 extensions
+        GraphicalDebugger.AddSphere(WithWorldHeight(destination), 1.5f, Colors.DarkBlue);
         for (var i = 0; i < path.Count; i++) {
             GraphicalDebugger.AddSquare(path[i], MapAnalyzer.GameGridCellWidth, Colors.Gradient(Colors.Cyan, Colors.DarkBlue, (float)i / path.Count));
         }
@@ -196,12 +196,11 @@ public static class Pathfinder {
         return path.Select(WithWorldHeight);
     }
 
-    private static Vector3 WithWorldHeight(Vector3 position) {
-        return new Vector3
-        {
-            X = position.X,
-            Y = position.Y,
-            Z = _heightMap[(int)position.X][(int)position.Y],
-        };
+    public static Vector3 WithWorldHeight(float x, float y) {
+        return new Vector3(x, y, HeightMap[(int)x][(int)y]);
+    }
+
+    public static Vector3 WithWorldHeight(Vector3 position) {
+        return position with { Z = HeightMap[(int)position.X][(int)position.Y] };
     }
 }
