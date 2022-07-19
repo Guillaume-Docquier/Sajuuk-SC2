@@ -302,9 +302,8 @@ public static class Controller {
             return false;
         }
 
-        // TODO GD Should be based on shortest path, not distance
         var expandLocation = MapAnalyzer.ExpandLocations
-            .OrderBy(expandLocation => StartingTownHall.DistanceTo(expandLocation))
+            .OrderBy(expandLocation => Pathfinder.FindPath(StartingTownHall.Position, expandLocation).Count)
             .Where(expandLocation => !GetUnits(OwnedUnits, Units.Hatchery).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius)) // Ignore expands that are taken
             .First(expandLocation => _buildingTracker.CanPlace(buildingType, expandLocation));
 

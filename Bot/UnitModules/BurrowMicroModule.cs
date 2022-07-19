@@ -71,6 +71,6 @@ public class BurrowMicroModule: IUnitModule {
 
     // TODO GD Cache this
     private Unit GetClosestEnemyUnit() {
-        return Controller.EnemyUnits.OrderBy(enemyUnit => _unit.DistanceTo(enemyUnit)).FirstOrDefault();
+        return Controller.EnemyUnits.MinBy(enemyUnit => _unit.DistanceTo(enemyUnit));
     }
 }
