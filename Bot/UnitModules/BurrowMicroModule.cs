@@ -56,10 +56,10 @@ public class BurrowMicroModule: IUnitModule {
     }
 
     private bool ThereIsAUnitAtYourLocation(bool checkUnderground) {
-       return Controller.UnitsByTag.Values
+       return Controller.UnitsByTag.Values // TODO GD Ignore buildings
             .Where(otherUnit => otherUnit != _unit)
             .Where(otherUnit => otherUnit.RawUnitData.IsBurrowed == checkUnderground)
-            .Any(otherUnit => otherUnit.DistanceTo(_unit) <= otherUnit.Radius + _unit.Radius);
+            .Any(otherUnit => otherUnit.DistanceTo(_unit) < (otherUnit.Radius + _unit.Radius) * 0.95); // Some terrain causes collisions
     }
 
     private void MoveAwayFromTheEnemy(Unit closestEnemyUnit) {

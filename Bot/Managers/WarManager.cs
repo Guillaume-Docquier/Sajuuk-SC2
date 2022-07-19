@@ -43,7 +43,7 @@ public class WarManager: IManager {
             _townHallToDefend = newTownHallToDefend;
         }
 
-        if (_battleManager.Army.Sum(soldier => soldier.FoodRequired) >= SupplyRequiredBeforeAttacking && _buildStepRequests.Count == 0) {
+        if (_battleManager.Force >= SupplyRequiredBeforeAttacking && _buildStepRequests.Count == 0) {
             _buildStepRequests.Add(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Roach, 1000));
             _battleManager.Assign(enemyPosition);
         }

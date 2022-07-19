@@ -46,15 +46,15 @@ public static class BuildOrders {
             new BuildStep(BuildType.UpgradeInto, 33, Units.Lair),
             new BuildStep(BuildType.Build, 37, Units.RoachWarren),
             new BuildStep(BuildType.Build, 37, Units.EvolutionChamber),
+            new BuildStep(BuildType.Research, 40, Upgrades.Burrow),
             new BuildStep(BuildType.Train, 44, Units.Overlord),
             new BuildStep(BuildType.Research, 44, Upgrades.ZergMissileWeaponsLevel1),
-            new BuildStep(BuildType.Build, 52, Units.Extractor, 2), // TODO GD Doesn't build on snapshot units
+            new BuildStep(BuildType.Build, 50, Units.Extractor, 2), // TODO GD Doesn't build on snapshot units
             new BuildStep(BuildType.Train, 50, Units.Overlord, 2),
-            new BuildStep(BuildType.Research, 50, Upgrades.Burrow),
             new BuildStep(BuildType.Research, 50, Upgrades.GlialReconstitution),
+            new BuildStep(BuildType.Build, 50, Units.Extractor),
             new BuildStep(BuildType.Train, 50, Units.Roach, 8),
             new BuildStep(BuildType.Research, 1, Upgrades.TunnelingClaws),
-            new BuildStep(BuildType.Build, 1, Units.Extractor),
             // All in
             new BuildStep(BuildType.Train, 1, Units.Overlord, 2),
             new BuildStep(BuildType.Train, 1, Units.Roach, 8),

@@ -303,8 +303,10 @@ public static class Controller {
         }
 
         var expandLocation = MapAnalyzer.ExpandLocations
-            .OrderBy(expandLocation => Pathfinder.FindPath(StartingTownHall.Position, expandLocation).Count)
             .Where(expandLocation => !GetUnits(OwnedUnits, Units.Hatchery).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius)) // Ignore expands that are taken
+            .OrderBy(expandLocation => StartingTownHall.DistanceTo(expandLocation))
+            .Take(3) // TODO GD Keep going if you don't find in the first 3
+            .OrderBy(expandLocation => Pathfinder.FindPath(StartingTownHall.Position, expandLocation).Count)
             .First(expandLocation => _buildingTracker.CanPlace(buildingType, expandLocation));
 
         return PlaceBuilding(buildingType, expandLocation);

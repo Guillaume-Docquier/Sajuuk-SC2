@@ -95,7 +95,12 @@ public class Unit: ICanDie {
     }
 
     public void AttackMove(Vector3 target) {
-        Controller.AddAction(ActionBuilder.AttackMove(Tag, target));
+        if (RawUnitData.IsBurrowed) {
+            Move(target);
+        }
+        else {
+            Controller.AddAction(ActionBuilder.AttackMove(Tag, target));
+        }
     }
 
     public void Smart(Unit unit) {
