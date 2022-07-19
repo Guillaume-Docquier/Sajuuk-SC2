@@ -72,7 +72,7 @@ public class GameConnection {
     private void StartSc2Instance(int port) {
         var processStartInfo = new ProcessStartInfo(_starcraftExe)
         {
-            Arguments = $"-listen {Address} -port {port} -displayMode 0",
+            Arguments = $"-listen {Address} -port {port} -displayMode 1",
             WorkingDirectory = Path.Combine(_starcraftDir, "Support64")
         };
 
@@ -286,19 +286,20 @@ public class GameConnection {
 
             if (observation.Observation.GameLoop % _runEvery == 0) {
                 Controller.NewObservation(observation);
-                bot.OnFrame();
-                var actions = Controller.GetActions().ToList();
 
                 // For some reason it doesn't work before a few seconds after the game starts
                 // Also, this might take a couple of frames, let the bot start the game
                 // TODO GD Precompute this and save it
-                if (Controller.Frame > Controller.FramesPerSecond * 5 && !MapAnalyzer.IsInitialized) {
+                if (!MapAnalyzer.IsInitialized && Controller.Frame > Controller.FramesPerSecond * 5) {
                     MapAnalyzer.Init();
                 }
 
                 if (!Pathfinder.IsInitialized) {
                     Pathfinder.Init();
                 }
+
+                bot.OnFrame();
+                var actions = Controller.GetActions().ToList();
 
                 if (actions.Count > 0) {
                     var response = await SendRequest(RequestBuilder.ActionRequest(actions));

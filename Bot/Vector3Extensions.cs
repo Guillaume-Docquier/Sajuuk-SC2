@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using SC2APIProtocol;
 
 namespace Bot;
@@ -36,5 +37,16 @@ public static class Vector3Extensions {
         var direction = origin.DirectionTo(destination, ignoreZAxis);
 
         return origin - direction * distance;
+    }
+
+    public static Vector3 Translate(this Vector3 origin, float xTranslation = 0, float yTranslation = 0, float zTranslation = 0) {
+        return new Vector3 { X = origin.X + xTranslation, Y = origin.Y + yTranslation, Z = origin.Z + zTranslation };
+    }
+
+    public static float HorizontalDistance(this Vector3 origin, Vector3 destination) {
+        var deltaX = origin.X - destination.X;
+        var deltaY = origin.Y - destination.Y;
+
+        return (float)Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.GameData;
@@ -31,9 +32,10 @@ public class WarManager: IManager {
         // TODO GD Use multiple managers
 
         var enemyPosition = Controller.EnemyLocations[0];
-        var currentDistanceToEnemy = _townHallToDefend.DistanceTo(enemyPosition);
+        // TODO GD Cache this, buildings don't move
+        var currentDistanceToEnemy = Pathfinder.FindPath(_townHallToDefend.Position, enemyPosition).Count; // Not exact, but the distance difference should not matter
         var newTownHallToDefend = Controller.GetUnits(Controller.NewOwnedUnits, Units.Hatchery)
-            .FirstOrDefault(townHall => townHall.DistanceTo(enemyPosition) < currentDistanceToEnemy); // TODO GD Use pathing instead of direct distance
+            .FirstOrDefault(townHall => Pathfinder.FindPath(townHall.Position, enemyPosition).Count < currentDistanceToEnemy);
 
         // TODO GD Fallback on other townhalls when destroyed
         if (newTownHallToDefend != default) {
@@ -60,8 +62,9 @@ public class WarManager: IManager {
     }
 
     private static Vector3 GetTownHallDefensePosition(Unit townHall, Vector3 threatPosition) {
-        // TODO GD Use pathing instead of direct distance
-        // TODO GD Use heightMap to set terrain Z
-        return townHall.Position.TranslateTowards(threatPosition, GuardDistance, ignoreZAxis: true);
+        var pathToThreat = Pathfinder.FindPath(townHall.Position, threatPosition);
+        var guardDistance = Math.Min(pathToThreat.Count, GuardDistance);
+
+        return pathToThreat[guardDistance];
     }
 }

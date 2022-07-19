@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Numerics;
 using SC2APIProtocol;
 
@@ -87,6 +88,21 @@ public static class GraphicalDebugger {
 }
 
 public static class Colors {
+    public static Color Gradient(Color start, Color end, float percent) {
+        var deltaR = (int)end.R - (int)start.R;
+        var deltaG = (int)end.G - (int)start.G;
+        var deltaB = (int)end.B - (int)start.B;
+
+        var gradient = new Color
+        {
+            R = (uint)Math.Round(start.R + deltaR * percent),
+            G = (uint)Math.Round(start.G + deltaG * percent),
+            B = (uint)Math.Round(start.B + deltaB * percent),
+        };
+
+        return gradient;
+    }
+
     public static readonly Color White = new Color { R = 1, G = 1, B = 1 };
     public static readonly Color Black = new Color { R = 255, G = 255, B = 255 };
 
