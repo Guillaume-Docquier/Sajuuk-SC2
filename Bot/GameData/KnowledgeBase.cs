@@ -5,6 +5,9 @@ namespace Bot.GameData;
 public static class KnowledgeBase {
     private static ResponseData _data;
 
+    public const float GameGridCellWidth = 1f;
+    public const float GameGridCellRadius = GameGridCellWidth / 2;
+
     public static ResponseData Data {
         get => _data;
         set {

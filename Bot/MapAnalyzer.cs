@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.GameData;
@@ -9,9 +8,6 @@ namespace Bot;
 
 public static class MapAnalyzer {
     public static bool IsInitialized = false;
-
-    public const float GameGridCellWidth = 1f;
-    public const float GameGridCellRadius = GameGridCellWidth / 2;
 
     public static List<List<Unit>> ResourceClusters;
     public static List<Vector3> ExpandLocations;
@@ -50,21 +46,21 @@ public static class MapAnalyzer {
         var expandLocations = new List<Vector3>();
 
         foreach (var resourceCluster in ResourceClusters) {
-            var centerPosition = AsWorldGridCenter(Clustering.GetBoundingBoxCenter(resourceCluster));
+            var centerPosition = Clustering.GetBoundingBoxCenter(resourceCluster).AsWorldGridCenter();
             var searchGrid = BuildSearchGrid(centerPosition, gridRadius: ExpandSearchRadius);
 
             var goodBuildSpot = searchGrid.FirstOrDefault(buildSpot => Controller.CanPlace(Units.Hatchery, buildSpot));
             if (goodBuildSpot != default) {
                 expandLocations.Add(goodBuildSpot);
-                GraphicalDebugger.AddSphere(goodBuildSpot, GameGridCellRadius, Colors.Green);
-                GraphicalDebugger.AddSphere(centerPosition, GameGridCellRadius, Colors.Yellow);
+                GraphicalDebugger.AddSphere(goodBuildSpot, KnowledgeBase.GameGridCellRadius, Colors.Green);
+                GraphicalDebugger.AddSphere(centerPosition, KnowledgeBase.GameGridCellRadius, Colors.Yellow);
             }
         }
 
         return expandLocations;
     }
 
-    public static IEnumerable<Vector3> BuildSearchGrid(Vector3 centerPosition, float gridRadius, float stepSize = GameGridCellWidth) {
+    public static IEnumerable<Vector3> BuildSearchGrid(Vector3 centerPosition, float gridRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
         var buildSpots = new List<Vector3>();
         for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x += stepSize) {
             for (var y = centerPosition.Y - gridRadius; y <= centerPosition.Y + gridRadius; y += stepSize) {
@@ -73,23 +69,5 @@ public static class MapAnalyzer {
         }
 
         return buildSpots.OrderBy(position => Vector3.Distance(centerPosition, position));
-    }
-
-    // Center of cells are on .5, e.g: (1.5, 2.5)
-    public static Vector3 AsWorldGridCenter(float x, float y, float z = 0) {
-        return new Vector3((float)Math.Floor(x) + GameGridCellRadius, (float)Math.Floor(y) + GameGridCellRadius, z);
-    }
-
-    public static Vector3 AsWorldGridCenter(Vector3 vector) {
-        return new Vector3((float)Math.Floor(vector.X) + GameGridCellRadius, (float)Math.Floor(vector.Y) + GameGridCellRadius, vector.Z);
-    }
-
-    // Center of cells are on .5, e.g: (1.5, 2.5)
-    public static Vector3 AsWorldGridCorner(float x, float y, float z = 0) {
-        return new Vector3((float)Math.Floor(x), (float)Math.Floor(y), z);
-    }
-
-    public static Vector3 AsWorldGridCorner(Vector3 vector) {
-        return new Vector3((float)Math.Floor(vector.X), (float)Math.Floor(vector.Y), vector.Z);
     }
 }

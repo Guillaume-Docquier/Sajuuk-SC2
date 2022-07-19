@@ -100,16 +100,16 @@ public static class Pathfinder {
 
     public static List<Vector3> FindPath(Vector3 origin, Vector3 destination) {
         var path = AStar(
-                MapAnalyzer.AsWorldGridCorner(origin.X, origin.Y),
-                MapAnalyzer.AsWorldGridCorner(destination.X, destination.Y),
+                origin.AsWorldGridCorner().WithoutZ(),
+                destination.AsWorldGridCorner().WithoutZ(),
                 (from, to) => from.HorizontalDistance(to))
-            .Select(MapAnalyzer.AsWorldGridCenter)
+            .Select(step => step.AsWorldGridCenter())
             .ToList();
 
-        GraphicalDebugger.AddSphere(WithWorldHeight(origin), 1.5f, Colors.Cyan); // TODO GD Move WithWorldHeight, AsWorldGridCorner and friends to Vector3 extensions
-        GraphicalDebugger.AddSphere(WithWorldHeight(destination), 1.5f, Colors.DarkBlue);
+        GraphicalDebugger.AddSphere(origin.WithWorldHeight(), 1.5f, Colors.Cyan);
+        GraphicalDebugger.AddSphere(destination.WithWorldHeight(), 1.5f, Colors.DarkBlue);
         for (var i = 0; i < path.Count; i++) {
-            GraphicalDebugger.AddSquare(path[i], MapAnalyzer.GameGridCellWidth, Colors.Gradient(Colors.Cyan, Colors.DarkBlue, (float)i / path.Count));
+            GraphicalDebugger.AddSquare(path[i], KnowledgeBase.GameGridCellWidth, Colors.Gradient(Colors.Cyan, Colors.DarkBlue, (float)i / path.Count));
         }
 
         return path;
@@ -193,14 +193,6 @@ public static class Pathfinder {
 
         path.Reverse();
 
-        return path.Select(WithWorldHeight);
-    }
-
-    public static Vector3 WithWorldHeight(float x, float y) {
-        return new Vector3(x, y, HeightMap[(int)x][(int)y]);
-    }
-
-    public static Vector3 WithWorldHeight(Vector3 position) {
-        return position with { Z = HeightMap[(int)position.X][(int)position.Y] };
+        return path.Select(step => step.WithWorldHeight());
     }
 }

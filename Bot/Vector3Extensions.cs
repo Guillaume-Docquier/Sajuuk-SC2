@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using Bot.GameData;
 using SC2APIProtocol;
 
 namespace Bot;
@@ -48,5 +49,23 @@ public static class Vector3Extensions {
         var deltaY = origin.Y - destination.Y;
 
         return (float)Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+    }
+
+    // Center of cells are on .5, e.g: (1.5, 2.5)
+    public static Vector3 AsWorldGridCenter(this Vector3 vector) {
+        return new Vector3((float)Math.Floor(vector.X) + KnowledgeBase.GameGridCellRadius, (float)Math.Floor(vector.Y) + KnowledgeBase.GameGridCellRadius, vector.Z);
+    }
+
+    // Corner of cells are on .0, e.g: (1.0, 2.0)
+    public static Vector3 AsWorldGridCorner(this Vector3 vector) {
+        return new Vector3((float)Math.Floor(vector.X), (float)Math.Floor(vector.Y), vector.Z);
+    }
+
+    public static Vector3 WithoutZ(this Vector3 vector) {
+        return vector with { Z = 0 };
+    }
+
+    public static Vector3 WithWorldHeight(this Vector3 vector) {
+        return vector with { Z = Pathfinder.HeightMap[(int)vector.X][(int)vector.Y] };
     }
 }

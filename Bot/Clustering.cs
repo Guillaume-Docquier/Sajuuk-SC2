@@ -68,7 +68,7 @@ public static class Clustering {
         var avgX = cluster.Average(soldier => soldier.Position.X);
         var avgY = cluster.Average(soldier => soldier.Position.Y);
 
-        return Pathfinder.WithWorldHeight(avgX, avgY);
+        return new Vector3(avgX, avgY, 0).WithWorldHeight();
     }
 
     public static Vector3 GetBoundingBoxCenter(List<Unit> cluster) {
@@ -80,7 +80,7 @@ public static class Clustering {
         var centerX = minX + (maxX - minX) / 2;
         var centerY = minY + (maxY - minY) / 2;
 
-        return Pathfinder.WithWorldHeight(centerX, centerY);
+        return new Vector3(centerX, centerY, 0).WithWorldHeight();
     }
 
     private static void DrawBoundingBox(IReadOnlyCollection<Unit> cluster) {
@@ -91,7 +91,7 @@ public static class Clustering {
 
         var centerX = minX + (maxX - minX) / 2;
         var centerY = minY + (maxY - minY) / 2;
-        var boundingBoxCenter = Pathfinder.WithWorldHeight(centerX, centerY);
+        var boundingBoxCenter = new Vector3(centerX, centerY, 0).WithWorldHeight();
 
         GraphicalDebugger.AddSquare(boundingBoxCenter, maxX - minX, Colors.Orange);
     }

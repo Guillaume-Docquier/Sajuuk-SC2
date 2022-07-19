@@ -23,7 +23,7 @@ public class BattleManager: IManager {
     }
 
     public void Assign(Vector3 target) {
-        Target = Pathfinder.WithWorldHeight(target);
+        Target = target.WithWorldHeight();
     }
 
     public void Assign(List<Unit> soldiers) {
