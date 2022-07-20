@@ -214,15 +214,15 @@ public class Unit: ICanDie {
     }
 
     public void Died() {
-        // We .ToList() to make a copy of _deathWatchers because some ReportUnitDeath will call RemoveDeathWatcher
-        // They shouldn't because it modifies the collection while we are iterating it
-        // Also, units die once
-        _deathWatchers.ToList().ForEach(watcher => watcher.ReportUnitDeath(this));
-
         // Reduce the noise
         if (UnitType != Units.Larva) {
             Logger.Info("{0} {1} died", Name, Tag);
         }
+
+        // We .ToList() to make a copy of _deathWatchers because some ReportUnitDeath will call RemoveDeathWatcher
+        // They shouldn't because it modifies the collection while we are iterating it
+        // Also, units die once
+        _deathWatchers.ToList().ForEach(watcher => watcher.ReportUnitDeath(this));
     }
 
     public bool IsDead(ulong atFrame) {
