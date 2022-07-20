@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.GameData;
@@ -13,10 +14,15 @@ public class BattleManager: IManager {
     public Vector3 Target;
     public readonly List<Unit> Army = new List<Unit>();
 
-    public float Force => Army.Sum(soldier => soldier.FoodRequired);
+    public float Force => GetForceOf(Army);
 
     private float RetreatForceThreshold => _initialForce * 0.5f;
     private float _initialForce;
+
+    private float AttackForceThreshold => _strongestForce * 1.2f;
+    private float _strongestForce;
+
+    private bool _attackStarted = false;
 
     private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>();
     public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests;
@@ -28,6 +34,7 @@ public class BattleManager: IManager {
     public void Assign(Vector3 target) {
         Target = target.WithWorldHeight();
         _initialForce = Force;
+        _strongestForce = Force;
     }
 
     public void Assign(List<Unit> soldiers) {
@@ -51,16 +58,36 @@ public class BattleManager: IManager {
         var clusters = Clustering.DBSCAN(Army, 3, 3).OrderByDescending(cluster => cluster.Count).ToList();
 
         var biggestCluster = clusters.FirstOrDefault();
-        var biggestClusterForce = biggestCluster?.Sum(soldier => soldier.FoodRequired);
-        if (biggestCluster == null || biggestClusterForce < RetreatForceThreshold) {
+        if (biggestCluster == null || ShouldRetreat(biggestCluster)) {
+            _attackStarted = false;
+
             Retreat(Clustering.GetCenter(Army), Army);
         }
-        else {
+        else if (ShouldGrowStronger(biggestCluster)) {
+            _initialForce = GetForceOf(biggestCluster);
+
             var clusterCenter = Clustering.GetCenter(biggestCluster).Translate(1f, 1f);
             GraphicalDebugger.AddTextGroup(
                 new[]
                 {
-                    $"Force: {biggestClusterForce}",
+                    $"Force: {GetForceOf(biggestCluster)}",
+                    $"Strongest: {_strongestForce}",
+                    $"Attack at: {AttackForceThreshold}"
+                },
+                worldPos: clusterCenter.ToPoint());
+
+            Retreat(Clustering.GetCenter(Army), Army);
+        }
+        else {
+            _attackStarted = true;
+            _strongestForce = Math.Max(_strongestForce, GetForceOf(biggestCluster));
+
+            var clusterCenter = Clustering.GetCenter(biggestCluster).Translate(1f, 1f);
+            GraphicalDebugger.AddTextGroup(
+                new[]
+                {
+                    $"Force: {GetForceOf(biggestCluster)}",
+                    $"Initial: {_initialForce}",
                     $"Retreat at: {RetreatForceThreshold}"
                 },
                 worldPos: clusterCenter.ToPoint());
@@ -82,8 +109,6 @@ public class BattleManager: IManager {
         if (soldiers.Count <= 0) {
             return;
         }
-
-        _initialForce = Force;
 
         GraphicalDebugger.AddSphere(retreat, AcceptableDistanceToTarget, Colors.Yellow);
         GraphicalDebugger.AddText("Retreat", worldPos: retreat.ToPoint());
@@ -132,5 +157,17 @@ public class BattleManager: IManager {
         foreach (var soldier in soldiers) {
             GraphicalDebugger.AddLine(soldier.Position, rallyPoint, Colors.DarkGreen);
         }
+    }
+
+    private static float GetForceOf(IEnumerable<Unit> soldiers) {
+        return soldiers.Sum(soldier => soldier.FoodRequired);
+    }
+
+    private bool ShouldRetreat(IEnumerable<Unit> soldiers) {
+        return _attackStarted && GetForceOf(soldiers) < RetreatForceThreshold;
+    }
+
+    private bool ShouldGrowStronger(IEnumerable<Unit> soldiers) {
+        return !_attackStarted && GetForceOf(soldiers) < AttackForceThreshold && !Controller.IsSupplyCapped; // TODO GD Not exactly
     }
 }
