@@ -213,15 +213,13 @@ public class MiningManager: IManager {
         return _extractors
             .Where(extractor => extractor.IsOperational)
             .Where(extractor => UnitModule.Get<CapacityModule>(extractor).AvailableCapacity > 0)
-            .OrderBy(extractor => extractor.DistanceTo(worker))
-            .FirstOrDefault();
+            .MinBy(extractor => extractor.DistanceTo(worker));
     }
 
     private Unit GetClosestMineralWithAvailableCapacity(Unit worker, int minAvailableCapacity) {
         return _minerals
             .Where(mineral => UnitModule.Get<CapacityModule>(mineral).AvailableCapacity > minAvailableCapacity)
-            .OrderBy(mineral => mineral.DistanceTo(worker))
-            .FirstOrDefault();
+            .MinBy(mineral => mineral.DistanceTo(worker));
     }
 
     private void UpdateWorkerAssignment(Unit worker, Unit assignedResource) {
@@ -253,7 +251,6 @@ public class MiningManager: IManager {
 
     private void HandleDeadExtractor(Unit deadExtractor) {
         _extractors.Remove(deadExtractor);
-        deadExtractor.RemoveDeathWatcher(this);
 
         var capacityModule = UnitModule.Uninstall<CapacityModule>(deadExtractor);
         if (capacityModule != null) {
