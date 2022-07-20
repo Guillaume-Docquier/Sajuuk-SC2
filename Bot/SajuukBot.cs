@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.GameData;
 using Bot.Managers;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -43,6 +44,8 @@ public class SajuukBot: PoliteBot {
                 FollowBuildOrder(); // Sometimes the build order will be unblocked
             }
         }
+
+        FixSupply();
 
         DebugBuildOrder();
 
@@ -107,5 +110,18 @@ public class SajuukBot: PoliteBot {
                 }
             }
         }
+    }
+
+    private void FixSupply() {
+        // TODO GD Put 200 in KnowledgeBase
+        if (_buildOrder.Count <= 0 && Controller.AvailableSupply <= 2 && Controller.MaxSupply < 200 && !GetOverlordsInConstruction().Any()) {
+            _buildOrder.Enqueue(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Overlord, 4));
+        }
+    }
+
+    // TODO GD Make this cute and in Controller
+    private IEnumerable<Unit> GetOverlordsInConstruction() {
+        return Controller.GetUnits(Controller.OwnedUnits, Units.Egg)
+            .Where(egg => egg.Orders.Any(order => order.AbilityId == KnowledgeBase.GetUnitTypeData(Units.Overlord).AbilityId));
     }
 }
