@@ -109,7 +109,7 @@ public static class Pathfinder {
         GraphicalDebugger.AddSphere(origin.WithWorldHeight(), 1.5f, Colors.Cyan);
         GraphicalDebugger.AddSphere(destination.WithWorldHeight(), 1.5f, Colors.DarkBlue);
         for (var i = 0; i < path.Count; i++) {
-            GraphicalDebugger.AddSquare(path[i], KnowledgeBase.GameGridCellWidth, Colors.Gradient(Colors.Cyan, Colors.DarkBlue, (float)i / path.Count));
+            GraphicalDebugger.AddGridSquare(path[i], Colors.Gradient(Colors.Cyan, Colors.DarkBlue, (float)i / path.Count));
         }
 
         return path;

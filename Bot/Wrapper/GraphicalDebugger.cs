@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using Bot.GameData;
 using SC2APIProtocol;
 
 namespace Bot.Wrapper;
@@ -61,12 +62,22 @@ public static class GraphicalDebugger {
         );
     }
 
-    public static void AddSquare(Vector3 centerPosition, float width, Color color) {
+    public static void AddGridSquare(Vector3 centerPosition, Color color) {
+        AddSquare(centerPosition, KnowledgeBase.GameGridCellWidth, color, padded: true);
+    }
+
+    public static void AddSquare(Vector3 centerPosition, float width, Color color, bool padded = false) {
+        AddRectangle(centerPosition, width, width, color, padded);
+    }
+
+    public static void AddRectangle(Vector3 centerPosition, float width, float length, Color color, bool padded = false) {
+        var padding = padded ? Padding : 0;
+
         DebugBoxes.Add(
             new DebugBox
             {
-                Min = new Point { X = centerPosition.X - width / 2 + Padding, Y = centerPosition.Y - width / 2 + Padding, Z = centerPosition.Z + CreepHeight },
-                Max = new Point { X = centerPosition.X + width / 2 - Padding, Y = centerPosition.Y + width / 2 - Padding, Z = centerPosition.Z + CreepHeight },
+                Min = new Point { X = centerPosition.X - width / 2 + padding, Y = centerPosition.Y - length / 2 + padding, Z = centerPosition.Z + CreepHeight },
+                Max = new Point { X = centerPosition.X + width / 2 - padding, Y = centerPosition.Y + length / 2 - padding, Z = centerPosition.Z + CreepHeight },
                 Color = color,
             }
         );
