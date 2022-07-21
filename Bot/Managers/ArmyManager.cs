@@ -8,7 +8,7 @@ using Bot.Wrapper;
 
 namespace Bot.Managers;
 
-public class BattleManager: IManager {
+public class ArmyManager: IManager {
     public const float AcceptableDistanceToTarget = 3;
 
     public readonly List<Unit> Army = new List<Unit>();
@@ -26,6 +26,9 @@ public class BattleManager: IManager {
     private Stage _currentStage = Stage.Attack;
 
     private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>();
+    private Dictionary<Vector3, bool> _expandLocations;
+    private bool _chase = true;
+
     public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests;
 
     private enum Stage {
@@ -35,12 +38,13 @@ public class BattleManager: IManager {
         Defend,
     }
 
-    public void Assign(Vector3 target, float blastRadius) {
+    public void Assign(Vector3 target, float blastRadius, bool chase = true) {
         Target = target.WithWorldHeight();
         _blastRadius = blastRadius;
         _initialForce = Force;
         _strongestForce = Force;
         _currentStage = Stage.Attack;
+        _chase = chase;
     }
 
     public void Assign(List<Unit> soldiers) {
@@ -57,6 +61,10 @@ public class BattleManager: IManager {
     }
 
     public void OnFrame() {
+        if (MapAnalyzer.IsInitialized && _expandLocations == null) {
+            _expandLocations = MapAnalyzer.ExpandLocations.ToDictionary(expand => expand, _ => false);
+        }
+
         if (Army.Count < 1) {
             return;
         }
@@ -100,7 +108,7 @@ public class BattleManager: IManager {
             Attack(Target, biggestCluster);
             Rally(Clustering.GetCenter(biggestCluster), Army.Where(soldier => !biggestCluster.Contains(soldier)).ToList());
         }
-        else {
+        else if (Controller.EnemyUnits.Any(enemy => !enemy.RawUnitData.IsFlying))  {
             _currentStage = Stage.Defend;
 
             GraphicalDebugger.AddTextGroup(
@@ -112,6 +120,27 @@ public class BattleManager: IManager {
 
             Defend(Target, biggestCluster);
             Rally(Clustering.GetCenter(biggestCluster), Army.Where(soldier => !biggestCluster.Contains(soldier)).ToList());
+        }
+        // TODO GD This is fragile
+        else if (_chase) {
+            if (_expandLocations == null) {
+                Logger.Error("_expandLocations was not initialized");
+                return;
+            }
+
+            if (_expandLocations.Values.All(scouted => scouted)) {
+                foreach (var expandLocation in _expandLocations.Keys) {
+                    _expandLocations[expandLocation] = false;
+                }
+            }
+            _expandLocations[Target] = true;
+
+            var nextUnScoutedExpand = MapAnalyzer.ExpandLocations
+                .Where(expandLocation => !_expandLocations[expandLocation])
+                .OrderBy(expandLocation => Vector3.Distance(Target, expandLocation))
+                .FirstOrDefault();
+
+            Assign(nextUnScoutedExpand, _blastRadius);
         }
     }
 
@@ -131,7 +160,7 @@ public class BattleManager: IManager {
         GraphicalDebugger.AddSphere(retreatPosition, AcceptableDistanceToTarget, Colors.Yellow);
         GraphicalDebugger.AddText("Retreat", worldPos: retreatPosition.ToPoint());
 
-        soldiers.Where(unit => unit.Orders.All(order => order.TargetWorldSpacePos == null || !order.TargetWorldSpacePos.Equals(retreatPosition.ToPoint())))
+        soldiers.Where(unit => !IsAlreadyTargeting(retreatPosition, unit))
             .Where(unit => unit.DistanceTo(retreatPosition) > AcceptableDistanceToTarget)
             .ToList()
             .ForEach(unit => unit.Move(retreatPosition));
@@ -149,7 +178,8 @@ public class BattleManager: IManager {
         GraphicalDebugger.AddSphere(targetToAttack, AcceptableDistanceToTarget, Colors.Red);
         GraphicalDebugger.AddText("Attack", worldPos: targetToAttack.ToPoint());
 
-        soldiers.Where(unit => unit.Orders.All(order => order.AbilityId is Abilities.Move or Abilities.Attack))
+        soldiers.Where(IsMovingOrAttacking)
+            .Where(unit => !IsAlreadyTargeting(targetToAttack, unit))
             .Where(unit => !unit.RawUnitData.IsBurrowed)
             .Where(unit => unit.DistanceTo(targetToAttack) > AcceptableDistanceToTarget)
             .ToList()
@@ -168,7 +198,8 @@ public class BattleManager: IManager {
         GraphicalDebugger.AddSphere(rallyPoint, AcceptableDistanceToTarget, Colors.Blue);
         GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToPoint());
 
-        soldiers.Where(unit => unit.DistanceTo(rallyPoint) > AcceptableDistanceToTarget)
+        soldiers.Where(unit => !IsAlreadyTargeting(rallyPoint, unit))
+            .Where(unit => unit.DistanceTo(rallyPoint) > AcceptableDistanceToTarget)
             .ToList()
             .ForEach(unit => unit.AttackMove(rallyPoint));
 
@@ -186,12 +217,14 @@ public class BattleManager: IManager {
         GraphicalDebugger.AddTextGroup(new[] { "Defend", $"Radius: {_blastRadius}" }, worldPos: targetToDefend.ToPoint());
 
         var targetList = Controller.EnemyUnits
+            .Where(enemy => !enemy.RawUnitData.IsFlying) // TODO GD Some units should hit these
             .Where(enemy => enemy.DistanceTo(targetToDefend) < _blastRadius)
             .OrderBy(enemy => enemy.DistanceTo(targetToDefend))
             .ToList();
 
         if (targetList.Any()) {
-            soldiers.Where(unit => unit.Orders.All(order => order.AbilityId is Abilities.Move or Abilities.Attack))
+            soldiers.Where(IsMovingOrAttacking)
+                .Where(unit => !IsAlreadyTargeting(targetToDefend, unit))
                 .Where(unit => !unit.RawUnitData.IsBurrowed)
                 .ToList()
                 .ForEach(soldier => {
@@ -217,5 +250,16 @@ public class BattleManager: IManager {
 
     private bool ShouldGrowStronger(IEnumerable<Unit> soldiers) {
         return _currentStage is Stage.Retreat or Stage.Grow && GetForceOf(soldiers) < AttackForceThreshold && !Controller.IsSupplyCapped; // TODO GD Not exactly
+    }
+
+    private static bool IsMovingOrAttacking(Unit unit) {
+        return unit.Orders.All(order => order.AbilityId is Abilities.Move or Abilities.Attack);
+    }
+
+    private static bool IsAlreadyTargeting(Vector3 target, Unit unit) {
+        var targetAsPoint = target.ToPoint();
+        targetAsPoint.Z = 0;
+
+        return unit.Orders.Any(order => order.TargetWorldSpacePos != null && order.TargetWorldSpacePos.Equals(targetAsPoint));
     }
 }

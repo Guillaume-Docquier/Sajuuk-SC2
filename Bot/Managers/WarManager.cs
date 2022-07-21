@@ -13,7 +13,9 @@ public class WarManager: IManager {
     private const int AttackRadius = 999; // Basically the whole map
     private const int SupplyRequiredBeforeAttacking = 18;
 
-    private readonly BattleManager _battleManager;
+    private bool _hasAssaultStarted = false;
+
+    private readonly ArmyManager _armyManager;
     private Unit _townHallToDefend;
 
     private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>();
@@ -21,18 +23,21 @@ public class WarManager: IManager {
 
     public WarManager() {
         var townHallDefensePosition = GetTownHallDefensePosition(Controller.StartingTownHall, Controller.EnemyLocations[0]);
-        _battleManager = new BattleManager();
-        _battleManager.Assign(townHallDefensePosition, GuardRadius);
+        _armyManager = new ArmyManager();
+        _armyManager.Assign(townHallDefensePosition, GuardRadius, false);
         _townHallToDefend = Controller.StartingTownHall;
+
+        // TODO GD Handle this better
+        _buildStepRequests.Add(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Roach, 1000));
     }
 
     public void OnFrame() {
         // Assign forces
         // TODO GD Use queens
         var newSoldiers = Controller.GetUnits(Controller.NewOwnedUnits, Units.ZergMilitary).ToList();
-        _battleManager.Assign(newSoldiers);
+        _armyManager.Assign(newSoldiers);
 
-        // TODO GD Use multiple managers
+        // TODO GD Use multiple managers, probably
 
         var enemyPosition = Controller.EnemyLocations[0];
         // TODO GD Cache this, buildings don't move
@@ -42,18 +47,18 @@ public class WarManager: IManager {
 
         // TODO GD Fallback on other townhalls when destroyed
         if (newTownHallToDefend != default) {
-            _battleManager.Assign(GetTownHallDefensePosition(newTownHallToDefend, Controller.EnemyLocations[0]), GuardRadius);
+            _armyManager.Assign(GetTownHallDefensePosition(newTownHallToDefend, Controller.EnemyLocations[0]), GuardRadius, false);
             _townHallToDefend = newTownHallToDefend;
         }
 
-        if (_battleManager.Force >= SupplyRequiredBeforeAttacking && _buildStepRequests.Count == 0) {
-            _buildStepRequests.Add(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Roach, 1000));
-            _battleManager.Assign(enemyPosition, AttackRadius);
+        if (_armyManager.Force >= SupplyRequiredBeforeAttacking && !_hasAssaultStarted) {
+            _hasAssaultStarted = true;
+            _armyManager.Assign(enemyPosition, AttackRadius);
         }
 
-        GraphicalDebugger.AddLine(_townHallToDefend.Position, _battleManager.Target, Colors.Red);
-        GraphicalDebugger.AddSphere(_battleManager.Target, 1, Colors.Red);
-        _battleManager.OnFrame();
+        GraphicalDebugger.AddLine(_townHallToDefend.Position, _armyManager.Target, Colors.Red);
+        GraphicalDebugger.AddSphere(_armyManager.Target, 1, Colors.Red);
+        _armyManager.OnFrame();
     }
 
     public void Retire() {
