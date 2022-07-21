@@ -7,7 +7,7 @@ using SC2APIProtocol;
 
 namespace Bot;
 
-using BuildOrder = Queue<BuildOrders.BuildStep>;
+using BuildOrder = LinkedList<BuildOrders.BuildStep>;
 
 public class SajuukBot: PoliteBot {
     private readonly BuildOrder _buildOrder = BuildOrders.TwoBasesRoach();
@@ -60,14 +60,14 @@ public class SajuukBot: PoliteBot {
         }
 
         while(_buildOrder.Count > 0) {
-            var buildStep = _buildOrder.Peek();
+            var buildStep = _buildOrder.First();
             if (Controller.CurrentSupply < buildStep.AtSupply || !Controller.ExecuteBuildStep(buildStep)) {
                 break;
             }
 
             buildStep.Quantity -= 1;
-            if (_buildOrder.Peek().Quantity == 0) {
-                _buildOrder.Dequeue();
+            if (_buildOrder.First().Quantity == 0) {
+                _buildOrder.RemoveFirst();
             }
         }
     }
@@ -97,7 +97,7 @@ public class SajuukBot: PoliteBot {
     private bool IsBuildOrderBlocking() {
         // TODO GD Replace this by a 'Controller.ReserveMinerals' and 'Controller.ReserveGas' method
         // TODO GD Allow other stuff to happen if we have to wait for tech or something
-        return _buildOrder.Count > 0 && Controller.CurrentSupply >= _buildOrder.Peek().AtSupply;
+        return _buildOrder.Count > 0 && Controller.CurrentSupply >= _buildOrder.First().AtSupply;
     }
 
     private IEnumerable<BuildOrders.BuildStep> GetManagersBuildRequests() {
@@ -112,16 +112,13 @@ public class SajuukBot: PoliteBot {
         }
     }
 
+    // TODO GD Handle overlords dying early game
     private void FixSupply() {
-        // TODO GD Put 200 in KnowledgeBase
-        if (_buildOrder.Count <= 0 && Controller.AvailableSupply <= 2 && Controller.MaxSupply < 200 && !GetOverlordsInConstruction().Any()) {
-            _buildOrder.Enqueue(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Overlord, 4));
+        if (_buildOrder.Count <= 0
+            && Controller.AvailableSupply <= 2
+            && Controller.MaxSupply < KnowledgeBase.MaxSupplyAllowed
+            && !Controller.GetUnitsInProduction(Units.Overlord).Any()) {
+            _buildOrder.AddFirst(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Overlord, 4));
         }
-    }
-
-    // TODO GD Make this cute and in Controller
-    private IEnumerable<Unit> GetOverlordsInConstruction() {
-        return Controller.GetUnits(Controller.OwnedUnits, Units.Egg)
-            .Where(egg => egg.Orders.Any(order => order.AbilityId == KnowledgeBase.GetUnitTypeData(Units.Overlord).AbilityId));
     }
 }

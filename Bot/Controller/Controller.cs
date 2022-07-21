@@ -313,8 +313,11 @@ public static class Controller {
         return PlaceBuilding(buildingType, expandLocation);
     }
 
-    public static IList<Unit> GetAvailableLarvae() {
-        return GetUnits(OwnedUnits, Units.Larva, onlyCompleted: true).Where(larva => larva.Orders.Count == 0).ToList();
+    // TODO GD Zerg Specific
+    public static IEnumerable<Unit> GetUnitsInProduction(uint unitType) {
+        var unitToGetAbilityId =  KnowledgeBase.GetUnitTypeData(unitType).AbilityId;
+
+        return GetUnits(OwnedUnits, Units.Egg).Where(egg => egg.Orders.Any(order => order.AbilityId == unitToGetAbilityId));
     }
 
     public static IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, uint unitToGet, bool onlyCompleted = false, bool onlyVisible = false) {

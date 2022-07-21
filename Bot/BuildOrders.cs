@@ -3,7 +3,7 @@ using Bot.GameData;
 
 namespace Bot;
 
-using BuildOrder = Queue<BuildOrders.BuildStep>;
+using BuildOrder = LinkedList<BuildOrders.BuildStep>;
 
 public static class BuildOrders {
     public class BuildStep {

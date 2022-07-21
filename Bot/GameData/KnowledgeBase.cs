@@ -7,6 +7,7 @@ public static class KnowledgeBase {
 
     public const float GameGridCellWidth = 1f;
     public const float GameGridCellRadius = GameGridCellWidth / 2;
+    public const int MaxSupplyAllowed = 200;
 
     public static ResponseData Data {
         get => _data;
