@@ -11,8 +11,9 @@ namespace Bot.Managers;
 public class BattleManager: IManager {
     public const float AcceptableDistanceToTarget = 3;
 
-    public Vector3 Target;
     public readonly List<Unit> Army = new List<Unit>();
+    public Vector3 Target;
+    private float _blastRadius;
 
     public float Force => GetForceOf(Army);
 
@@ -22,19 +23,24 @@ public class BattleManager: IManager {
     private float AttackForceThreshold => _strongestForce * 1.2f;
     private float _strongestForce;
 
-    private bool _attackStarted = false;
+    private Stage _currentStage = Stage.Attack;
 
     private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>();
     public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests;
 
-    public BattleManager(Vector3 target) {
-        Target = target;
+    private enum Stage {
+        Retreat,
+        Grow,
+        Attack,
+        Defend,
     }
 
-    public void Assign(Vector3 target) {
+    public void Assign(Vector3 target, float blastRadius) {
         Target = target.WithWorldHeight();
+        _blastRadius = blastRadius;
         _initialForce = Force;
         _strongestForce = Force;
+        _currentStage = Stage.Attack;
     }
 
     public void Assign(List<Unit> soldiers) {
@@ -56,17 +62,17 @@ public class BattleManager: IManager {
         }
 
         var clusters = Clustering.DBSCAN(Army, 3, 3).OrderByDescending(cluster => cluster.Count).ToList();
-
         var biggestCluster = clusters.FirstOrDefault();
+
         if (biggestCluster == null || ShouldRetreat(biggestCluster)) {
-            _attackStarted = false;
+            _currentStage = Stage.Retreat;
 
             Retreat(Clustering.GetCenter(Army), Army);
         }
         else if (ShouldGrowStronger(biggestCluster)) {
+            _currentStage = Stage.Grow;
             _initialForce = GetForceOf(biggestCluster);
 
-            var clusterCenter = Clustering.GetCenter(biggestCluster).Translate(1f, 1f);
             GraphicalDebugger.AddTextGroup(
                 new[]
                 {
@@ -74,15 +80,14 @@ public class BattleManager: IManager {
                     $"Strongest: {_strongestForce}",
                     $"Attack at: {AttackForceThreshold}"
                 },
-                worldPos: clusterCenter.ToPoint());
+                worldPos: Clustering.GetCenter(biggestCluster).Translate(1f, 1f).ToPoint());
 
             Retreat(Clustering.GetCenter(Army), Army);
         }
-        else {
-            _attackStarted = true;
+        else if (_currentStage != Stage.Defend && Vector3.Distance(Target, Clustering.GetCenter(biggestCluster)) > AcceptableDistanceToTarget) {
+            _currentStage = Stage.Attack;
             _strongestForce = Math.Max(_strongestForce, GetForceOf(biggestCluster));
 
-            var clusterCenter = Clustering.GetCenter(biggestCluster).Translate(1f, 1f);
             GraphicalDebugger.AddTextGroup(
                 new[]
                 {
@@ -90,9 +95,22 @@ public class BattleManager: IManager {
                     $"Initial: {_initialForce}",
                     $"Retreat at: {RetreatForceThreshold}"
                 },
-                worldPos: clusterCenter.ToPoint());
+                worldPos: Clustering.GetCenter(biggestCluster).Translate(1f, 1f).ToPoint());
 
             Attack(Target, biggestCluster);
+            Rally(Clustering.GetCenter(biggestCluster), Army.Where(soldier => !biggestCluster.Contains(soldier)).ToList());
+        }
+        else {
+            _currentStage = Stage.Defend;
+
+            GraphicalDebugger.AddTextGroup(
+                new[]
+                {
+                    $"Force: {GetForceOf(biggestCluster)}",
+                },
+                worldPos: Clustering.GetCenter(biggestCluster).Translate(1f, 1f).ToPoint());
+
+            Defend(Target, biggestCluster);
             Rally(Clustering.GetCenter(biggestCluster), Army.Where(soldier => !biggestCluster.Contains(soldier)).ToList());
         }
     }
@@ -105,40 +123,40 @@ public class BattleManager: IManager {
         Army.Remove(deadUnit);
     }
 
-    private void Retreat(Vector3 retreat, IReadOnlyCollection<Unit> soldiers) {
+    private void Retreat(Vector3 retreatPosition, IReadOnlyCollection<Unit> soldiers) {
         if (soldiers.Count <= 0) {
             return;
         }
 
-        GraphicalDebugger.AddSphere(retreat, AcceptableDistanceToTarget, Colors.Yellow);
-        GraphicalDebugger.AddText("Retreat", worldPos: retreat.ToPoint());
+        GraphicalDebugger.AddSphere(retreatPosition, AcceptableDistanceToTarget, Colors.Yellow);
+        GraphicalDebugger.AddText("Retreat", worldPos: retreatPosition.ToPoint());
 
-        soldiers.Where(unit => unit.Orders.All(order => order.TargetWorldSpacePos == null || !order.TargetWorldSpacePos.Equals(retreat.ToPoint())))
-            .Where(unit => unit.DistanceTo(retreat) > AcceptableDistanceToTarget)
+        soldiers.Where(unit => unit.Orders.All(order => order.TargetWorldSpacePos == null || !order.TargetWorldSpacePos.Equals(retreatPosition.ToPoint())))
+            .Where(unit => unit.DistanceTo(retreatPosition) > AcceptableDistanceToTarget)
             .ToList()
-            .ForEach(unit => unit.Move(retreat));
+            .ForEach(unit => unit.Move(retreatPosition));
 
         foreach (var soldier in soldiers) {
-            GraphicalDebugger.AddLine(soldier.Position, retreat, Colors.Yellow);
+            GraphicalDebugger.AddLine(soldier.Position, retreatPosition, Colors.Yellow);
         }
     }
 
-    private static void Attack(Vector3 target, IReadOnlyCollection<Unit> soldiers) {
+    private static void Attack(Vector3 targetToAttack, IReadOnlyCollection<Unit> soldiers) {
         if (soldiers.Count <= 0) {
             return;
         }
 
-        GraphicalDebugger.AddSphere(target, AcceptableDistanceToTarget, Colors.Red);
-        GraphicalDebugger.AddText("Attack", worldPos: target.ToPoint());
+        GraphicalDebugger.AddSphere(targetToAttack, AcceptableDistanceToTarget, Colors.Red);
+        GraphicalDebugger.AddText("Attack", worldPos: targetToAttack.ToPoint());
 
         soldiers.Where(unit => unit.Orders.All(order => order.AbilityId is Abilities.Move or Abilities.Attack))
             .Where(unit => !unit.RawUnitData.IsBurrowed)
-            .Where(unit => unit.DistanceTo(target) > AcceptableDistanceToTarget)
+            .Where(unit => unit.DistanceTo(targetToAttack) > AcceptableDistanceToTarget)
             .ToList()
-            .ForEach(unit => unit.AttackMove(target));
+            .ForEach(unit => unit.AttackMove(targetToAttack));
 
         foreach (var soldier in soldiers) {
-            GraphicalDebugger.AddLine(soldier.Position, target, Colors.Red);
+            GraphicalDebugger.AddLine(soldier.Position, targetToAttack, Colors.Red);
         }
     }
 
@@ -147,7 +165,7 @@ public class BattleManager: IManager {
             return;
         }
 
-        GraphicalDebugger.AddSphere(rallyPoint, AcceptableDistanceToTarget, Colors.DarkGreen);
+        GraphicalDebugger.AddSphere(rallyPoint, AcceptableDistanceToTarget, Colors.Blue);
         GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToPoint());
 
         soldiers.Where(unit => unit.DistanceTo(rallyPoint) > AcceptableDistanceToTarget)
@@ -155,7 +173,37 @@ public class BattleManager: IManager {
             .ForEach(unit => unit.AttackMove(rallyPoint));
 
         foreach (var soldier in soldiers) {
-            GraphicalDebugger.AddLine(soldier.Position, rallyPoint, Colors.DarkGreen);
+            GraphicalDebugger.AddLine(soldier.Position, rallyPoint, Colors.Blue);
+        }
+    }
+
+    private void Defend(Vector3 targetToDefend, IReadOnlyCollection<Unit> soldiers) {
+        if (soldiers.Count <= 0) {
+            return;
+        }
+
+        GraphicalDebugger.AddSphere(targetToDefend, AcceptableDistanceToTarget, Colors.Green);
+        GraphicalDebugger.AddTextGroup(new[] { "Defend", $"Radius: {_blastRadius}" }, worldPos: targetToDefend.ToPoint());
+
+        var targetList = Controller.EnemyUnits
+            .Where(enemy => enemy.DistanceTo(targetToDefend) < _blastRadius)
+            .OrderBy(enemy => enemy.DistanceTo(targetToDefend))
+            .ToList();
+
+        if (targetList.Any()) {
+            soldiers.Where(unit => unit.Orders.All(order => order.AbilityId is Abilities.Move or Abilities.Attack))
+                .Where(unit => !unit.RawUnitData.IsBurrowed)
+                .ToList()
+                .ForEach(soldier => {
+                    var closestEnemy = targetList.Take(5).OrderBy(enemy => enemy.DistanceTo(soldier)).First();
+
+                    soldier.AttackMove(closestEnemy.Position);
+                    GraphicalDebugger.AddLine(soldier.Position, closestEnemy.Position, Colors.Red);
+                    GraphicalDebugger.AddLine(soldier.Position, targetToDefend, Colors.Green);
+                });
+        }
+        else {
+            Rally(targetToDefend, soldiers);
         }
     }
 
@@ -164,10 +212,10 @@ public class BattleManager: IManager {
     }
 
     private bool ShouldRetreat(IEnumerable<Unit> soldiers) {
-        return _attackStarted && GetForceOf(soldiers) < RetreatForceThreshold;
+        return _currentStage is Stage.Attack or Stage.Defend && GetForceOf(soldiers) < RetreatForceThreshold;
     }
 
     private bool ShouldGrowStronger(IEnumerable<Unit> soldiers) {
-        return !_attackStarted && GetForceOf(soldiers) < AttackForceThreshold && !Controller.IsSupplyCapped; // TODO GD Not exactly
+        return _currentStage is Stage.Retreat or Stage.Grow && GetForceOf(soldiers) < AttackForceThreshold && !Controller.IsSupplyCapped; // TODO GD Not exactly
     }
 }

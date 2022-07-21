@@ -9,6 +9,8 @@ namespace Bot.Managers;
 
 public class WarManager: IManager {
     private const int GuardDistance = 8;
+    private const int GuardRadius = 8;
+    private const int AttackRadius = 999; // Basically the whole map
     private const int SupplyRequiredBeforeAttacking = 18;
 
     private readonly BattleManager _battleManager;
@@ -19,7 +21,8 @@ public class WarManager: IManager {
 
     public WarManager() {
         var townHallDefensePosition = GetTownHallDefensePosition(Controller.StartingTownHall, Controller.EnemyLocations[0]);
-        _battleManager = new BattleManager(townHallDefensePosition);
+        _battleManager = new BattleManager();
+        _battleManager.Assign(townHallDefensePosition, GuardRadius);
         _townHallToDefend = Controller.StartingTownHall;
     }
 
@@ -39,13 +42,13 @@ public class WarManager: IManager {
 
         // TODO GD Fallback on other townhalls when destroyed
         if (newTownHallToDefend != default) {
-            _battleManager.Assign(GetTownHallDefensePosition(newTownHallToDefend, Controller.EnemyLocations[0]));
+            _battleManager.Assign(GetTownHallDefensePosition(newTownHallToDefend, Controller.EnemyLocations[0]), GuardRadius);
             _townHallToDefend = newTownHallToDefend;
         }
 
         if (_battleManager.Force >= SupplyRequiredBeforeAttacking && _buildStepRequests.Count == 0) {
             _buildStepRequests.Add(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Roach, 1000));
-            _battleManager.Assign(enemyPosition);
+            _battleManager.Assign(enemyPosition, AttackRadius);
         }
 
         GraphicalDebugger.AddLine(_townHallToDefend.Position, _battleManager.Target, Colors.Red);
