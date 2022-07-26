@@ -178,6 +178,42 @@ internal static class Units {
     public const uint Ravager = 688;
     public const uint RavagerBurrowed = 690;
 
+    public const uint DestructibleSearchlight = 345;
+    public const uint DestructibleBullhornLights = 346;
+    public const uint DestructibleStreetlight = 347;
+    public const uint DestructibleSpacePlatformSign = 348;
+    public const uint DestructibleStoreFrontCityProps = 349;
+    public const uint DestructibleBillboardTall = 350;
+    public const uint DestructibleBillboardScrollingText = 351;
+    public const uint DestructibleSpacePlatformBarrier = 352;
+    public const uint DestructibleSignsDirectional = 353;
+    public const uint DestructibleSignsConstruction = 354;
+    public const uint DestructibleSignsFunny = 355;
+    public const uint DestructibleSignsIcons = 356;
+    public const uint DestructibleSignsWarning = 357;
+    public const uint DestructibleGarage = 358;
+    public const uint DestructibleGarageLarge = 359;
+    public const uint DestructibleTrafficSignal = 360;
+    public const uint BraxisAlphaDestructible1x1 = 362;
+    public const uint BraxisAlphaDestructible2x2 = 363;
+    public const uint DestructibleDebris4x4 = 364;
+    public const uint DestructibleDebris6x6 = 365;
+    public const uint DestructibleRock2x4Vertical = 366;
+    public const uint DestructibleRock2x4Horizontal = 367;
+    public const uint DestructibleRock2x6Vertical = 368;
+    public const uint DestructibleRock2x6Horizontal = 369;
+    public const uint DestructibleRock4x4 = 370;
+    public const uint DestructibleRock6x6 = 371;
+    public const uint DestructibleRampDiagonalHugeULBR = 372;
+    public const uint DestructibleRampDiagonalHugeBLUR = 373;
+    public const uint DestructibleRampVerticalHuge = 374;
+    public const uint DestructibleRampHorizontalHuge = 375;
+    public const uint DestructibleDebrisRampDiagonalHugeULBR = 376;
+    public const uint DestructibleDebrisRampDiagonalHugeBLUR = 377;
+
+    // TODO GD There's more but I'm too lazy right now
+    public const uint UnbuildablePlatesDestructible = 474;
+
     public static readonly HashSet<uint> Structures = new HashSet<uint>
     {
         Armory,
@@ -513,6 +549,43 @@ internal static class Units {
     {
         SupplyDepot,
         SupplyDepotLowered
+    };
+
+    public static readonly HashSet<uint> Destructibles = new HashSet<uint>
+    {
+        DestructibleSearchlight,
+        DestructibleBullhornLights,
+        DestructibleStreetlight,
+        DestructibleSpacePlatformSign,
+        DestructibleStoreFrontCityProps,
+        DestructibleBillboardTall,
+        DestructibleBillboardScrollingText,
+        DestructibleSpacePlatformBarrier,
+        DestructibleSignsDirectional,
+        DestructibleSignsConstruction,
+        DestructibleSignsFunny,
+        DestructibleSignsIcons,
+        DestructibleSignsWarning,
+        DestructibleGarage,
+        DestructibleGarageLarge,
+        DestructibleTrafficSignal,
+        BraxisAlphaDestructible1x1,
+        BraxisAlphaDestructible2x2,
+        DestructibleDebris4x4,
+        DestructibleDebris6x6,
+        DestructibleRock2x4Vertical,
+        DestructibleRock2x4Horizontal,
+        DestructibleRock2x6Vertical,
+        DestructibleRock2x6Horizontal,
+        DestructibleRock4x4,
+        DestructibleRock6x6,
+        DestructibleRampDiagonalHugeULBR,
+        DestructibleRampDiagonalHugeBLUR,
+        DestructibleRampVerticalHuge,
+        DestructibleRampHorizontalHuge,
+        DestructibleDebrisRampDiagonalHugeULBR,
+        DestructibleDebrisRampDiagonalHugeBLUR,
+        UnbuildablePlatesDestructible,
     };
 
     public static readonly Dictionary<uint, HashSet<uint>> Producers = new Dictionary<uint, HashSet<uint>>

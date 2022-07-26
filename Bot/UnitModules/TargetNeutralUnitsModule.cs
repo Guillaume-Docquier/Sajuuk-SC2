@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Bot.GameData;
 
 namespace Bot.UnitModules;
 
@@ -26,11 +27,11 @@ public class TargetNeutralUnitsModule: IUnitModule {
             return;
         }
 
-        var neutralUnitInRange = Controller.NeutralUnits
+        var neutralUnitInRange = Controller.GetUnits(Controller.NeutralUnits, Units.Destructibles)
             .Where(neutralUnit => !neutralUnit.RawUnitData.IsFlying)
             .FirstOrDefault(neutralUnit => neutralUnit.Position.HorizontalDistance(_unit.Position) <= _unit.UnitTypeData.SightRange);
 
-        if (neutralUnitInRange != null) {
+        if (neutralUnitInRange != null && !_unit.IsAlreadyAttacking(neutralUnitInRange)) {
             _unit.Attack(neutralUnitInRange);
         }
     }

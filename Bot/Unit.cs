@@ -257,4 +257,8 @@ public class Unit: ICanDie {
 
         return Orders.Any(order => order.TargetWorldSpacePos != null && order.TargetWorldSpacePos.Equals(targetAsPoint));
     }
+
+    public bool IsAlreadyAttacking(Unit unit) {
+        return Orders.Any(order => order.TargetUnitTag == unit.Tag);
+    }
 }

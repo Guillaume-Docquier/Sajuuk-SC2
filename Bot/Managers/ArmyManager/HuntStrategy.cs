@@ -60,7 +60,8 @@ public partial class ArmyManager {
             // TODO GD Handle this better
             // We do this to break rocks because sometimes some locations will be unreachable
             // We should know about it, but the simplest way to fix this is to break the rocks and get on with it
-            _armyManager.Army.ForEach(TargetNeutralUnitsModule.Install);
+            // TODO GD The module and the manager are giving orders to the unit, freezing it
+            // _armyManager.Army.ForEach(TargetNeutralUnitsModule.Install);
 
             var nextUncheckedLocation = MapAnalyzer.ExpandLocations
                 .Where(expandLocation => !_checkedLocations[expandLocation])
