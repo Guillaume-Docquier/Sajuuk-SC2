@@ -18,8 +18,8 @@ public static class Controller {
     public const double FramesPerSecond = 22.4;
     public const float ExpandIsTakenRadius = 4f;
 
-    private static UnitsTracker _unitsTracker = new UnitsTracker();
-    private static BuildingTracker _buildingTracker = new BuildingTracker();
+    private static readonly UnitsTracker UnitsTracker = new UnitsTracker();
+    private static readonly BuildingTracker BuildingTracker = new BuildingTracker();
 
     public static ResponseGameInfo GameInfo;
     private static ResponseObservation _obs;
@@ -38,12 +38,12 @@ public static class Controller {
     public static Unit StartingTownHall;
     public static readonly List<Vector3> EnemyLocations = new List<Vector3>();
     public static readonly List<string> ChatLog = new List<string>();
-    public static Dictionary<ulong, Unit> UnitsByTag => _unitsTracker.UnitsByTag;
-    public static List<Unit> OwnedUnits => _unitsTracker.OwnedUnits;
-    public static List<Unit> NewOwnedUnits => _unitsTracker.NewOwnedUnits;
-    public static List<Unit> DeadOwnedUnits => _unitsTracker.DeadOwnedUnits;
-    public static List<Unit> NeutralUnits => _unitsTracker.NeutralUnits;
-    public static List<Unit> EnemyUnits => _unitsTracker.EnemyUnits;
+    public static Dictionary<ulong, Unit> UnitsByTag => UnitsTracker.UnitsByTag;
+    public static List<Unit> OwnedUnits => UnitsTracker.OwnedUnits;
+    public static List<Unit> NewOwnedUnits => UnitsTracker.NewOwnedUnits;
+    public static List<Unit> DeadOwnedUnits => UnitsTracker.DeadOwnedUnits;
+    public static List<Unit> NeutralUnits => UnitsTracker.NeutralUnits;
+    public static List<Unit> EnemyUnits => UnitsTracker.EnemyUnits;
 
     public static void Pause() {
         Console.WriteLine("Press any key to continue...");
@@ -75,8 +75,8 @@ public static class Controller {
             Environment.Exit(0);
         }
 
-        _unitsTracker.Update(_obs.Observation.RawData.Units.ToList(), Frame);
-        _buildingTracker.Update();
+        UnitsTracker.Update(_obs.Observation.RawData.Units.ToList(), Frame);
+        BuildingTracker.Update();
 
         Actions.Clear();
 
@@ -231,21 +231,21 @@ public static class Controller {
 
             producer.PlaceExtractor(buildingType, availableGas);
             UnitModule.Get<CapacityModule>(availableGas).Assign(producer); // Assign the worker until extractor is spawned
-            _buildingTracker.ConfirmPlacement(buildingType, availableGas.Position, producer);
+            BuildingTracker.ConfirmPlacement(buildingType, availableGas.Position, producer);
         }
         else if (location != default) {
-            if (!_buildingTracker.CanPlace(buildingType, location)) {
+            if (!BuildingTracker.CanPlace(buildingType, location)) {
                 return false;
             }
 
             producer.PlaceBuilding(buildingType, location);
-            _buildingTracker.ConfirmPlacement(buildingType, location, producer);
+            BuildingTracker.ConfirmPlacement(buildingType, location, producer);
         }
         else {
-            var constructionSpot = _buildingTracker.FindConstructionSpot(buildingType);
+            var constructionSpot = BuildingTracker.FindConstructionSpot(buildingType);
 
             producer.PlaceBuilding(buildingType, constructionSpot);
-            _buildingTracker.ConfirmPlacement(buildingType, constructionSpot, producer);
+            BuildingTracker.ConfirmPlacement(buildingType, constructionSpot, producer);
         }
 
         AvailableMinerals -= buildingTypeData.MineralCost;
@@ -255,7 +255,7 @@ public static class Controller {
     }
 
     public static bool CanPlace(uint unitType, Vector3 targetPos) {
-        return _buildingTracker.CanPlace(unitType, targetPos);
+        return BuildingTracker.CanPlace(unitType, targetPos);
     }
 
     public static bool ResearchUpgrade(uint upgradeType) {
@@ -308,7 +308,7 @@ public static class Controller {
             .OrderBy(expandLocation => StartingTownHall.DistanceTo(expandLocation))
             .Take(3) // TODO GD Keep going if you don't find in the first 3
             .OrderBy(expandLocation => Pathfinder.FindPath(StartingTownHall.Position, expandLocation).Count)
-            .First(expandLocation => _buildingTracker.CanPlace(buildingType, expandLocation));
+            .First(expandLocation => BuildingTracker.CanPlace(buildingType, expandLocation));
 
         return PlaceBuilding(buildingType, expandLocation);
     }

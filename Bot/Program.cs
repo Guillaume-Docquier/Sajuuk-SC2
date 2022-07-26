@@ -8,10 +8,10 @@ public class Program {
     private static readonly IBot Bot = new SajuukBot();
 
     private const string MapName = "BlackburnAIE.SC2Map";
-    private const Race OpponentRace = Race.Random;
+    private const Race OpponentRace = Race.Terran;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
-    private const bool RealTime = false;
+    private const bool RealTime = true;
 
     public static GameConnection GameConnection;
 

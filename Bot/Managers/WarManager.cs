@@ -25,9 +25,6 @@ public class WarManager: IManager {
         _armyManager = new ArmyManager();
         _armyManager.Assign(townHallDefensePosition, GuardRadius, false);
         _townHallToDefend = Controller.StartingTownHall;
-
-        // TODO GD Handle this better
-        _buildStepRequests.Add(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Roach, 1000));
     }
 
     public void OnFrame() {
@@ -53,6 +50,11 @@ public class WarManager: IManager {
         if (_armyManager.Army.GetForce() >= SupplyRequiredBeforeAttacking && !_hasAssaultStarted) {
             _hasAssaultStarted = true;
             _armyManager.Assign(enemyPosition, AttackRadius);
+
+            // TODO GD Handle this better
+            if (_buildStepRequests.Count == 0) {
+                _buildStepRequests.Add(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Roach, 1000));
+            }
         }
 
         _armyManager.OnFrame();
