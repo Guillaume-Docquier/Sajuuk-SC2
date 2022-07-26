@@ -58,7 +58,8 @@ public partial class ArmyManager {
         private void AssignNewTarget() {
             var nextUncheckedLocation = MapAnalyzer.ExpandLocations
                 .Where(expandLocation => !_checkedLocations[expandLocation])
-                .OrderBy(expandLocation => _armyManager._target.DistanceTo(expandLocation))
+                .Where(expandLocation => Pathfinder.FindPath(_armyManager._target, expandLocation) != null)
+                .OrderBy(expandLocation => Pathfinder.FindPath(_armyManager._target, expandLocation).Count)
                 .FirstOrDefault();
 
             Logger.Info("HuntStrategy next target is: {0}", nextUncheckedLocation);

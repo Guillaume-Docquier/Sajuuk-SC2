@@ -10,7 +10,7 @@ namespace Bot;
 using Path = List<Vector3>;
 
 public static class Pathfinder {
-    public  static List<List<float>> HeightMap; // TODO GD Should be in map analyzer, probably
+    public static List<List<float>> HeightMap; // TODO GD Should be in map analyzer, probably
     private static List<List<bool>> _walkMap;
     private static int _maxX;
     private static int _maxY;
