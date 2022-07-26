@@ -15,6 +15,8 @@ public partial class ArmyManager {
             _armyManager = armyManager;
         }
 
+        public string Name => "Defend";
+
         public bool CanTransition() {
             return _armyManager._canHuntTheEnemy && Controller.EnemyUnits.All(enemy => enemy.RawUnitData.IsFlying); // TODO GD Handle air units
         }

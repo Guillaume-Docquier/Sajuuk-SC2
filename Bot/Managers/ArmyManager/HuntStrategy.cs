@@ -16,6 +16,8 @@ public partial class ArmyManager {
             _armyManager = armyManager;
         }
 
+        public string Name => "Hunt";
+
         public bool CanTransition() {
             return _isNextTargetSet;
         }

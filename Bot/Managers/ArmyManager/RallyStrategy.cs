@@ -31,6 +31,8 @@ public partial class ArmyManager {
             Grow(_armyManager._mainArmy.GetCenter(), _armyManager.Army);
         }
 
+        public string Name => "Rally";
+
         private void DrawArmyData() {
             GraphicalDebugger.AddTextGroup(
                 new[]

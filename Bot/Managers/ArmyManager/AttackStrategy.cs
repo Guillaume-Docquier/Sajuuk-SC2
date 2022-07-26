@@ -22,6 +22,8 @@ public partial class ArmyManager {
             _retreatAtForce = _initialForce * 0.5f;
         }
 
+        public string Name => "Attack";
+
         public bool CanTransition() {
             if (_armyManager._mainArmy.GetCenter().DistanceTo(_armyManager._target) < AcceptableDistanceToTarget) {
                 nextStrategy = new DefenseStrategy(_armyManager);

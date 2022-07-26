@@ -18,6 +18,8 @@ public partial class ArmyManager {
             _rallyAtForce = _armyManager._strongestForce;
         }
 
+        public string Name => "Retreat";
+
         public bool CanTransition() {
             return _armyManager._mainArmy.GetForce() >= _rallyAtForce
                    || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed

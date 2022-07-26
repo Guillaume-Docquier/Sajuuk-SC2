@@ -49,8 +49,13 @@ public partial class ArmyManager: IManager {
         _mainArmy = Clustering.DBSCAN(Army, 3, 3).MaxBy(army => army.GetForce());
         _mainArmy ??= Army;
 
+        var startingStrategyName = _strategy.Name;
         while (_strategy.CanTransition()) {
             _strategy = _strategy.Transition();
+        }
+
+        if (_strategy.Name != startingStrategyName) {
+            Logger.Info("WarManager strategy changed from {0} to {1}", startingStrategyName, _strategy.Name);
         }
 
         _strategy.Execute();
