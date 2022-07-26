@@ -61,6 +61,7 @@ public partial class ArmyManager {
                 .OrderBy(expandLocation => _armyManager._target.DistanceTo(expandLocation))
                 .FirstOrDefault();
 
+            Logger.Info("HuntStrategy next target is: {0}", nextUncheckedLocation);
             _armyManager._target = nextUncheckedLocation;
             _isNextTargetSet = true;
         }
