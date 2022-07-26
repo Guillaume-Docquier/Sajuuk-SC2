@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Numerics;
 using Bot.GameData;
+using Bot.UnitModules;
 
 namespace Bot.Managers;
 
@@ -56,6 +57,11 @@ public partial class ArmyManager {
         }
 
         private void AssignNewTarget() {
+            // TODO GD Handle this better
+            // We do this to break rocks because sometimes some locations will be unreachable
+            // We should know about it, but the simplest way to fix this is to break the rocks and get on with it
+            _armyManager.Army.ForEach(TargetNeutralUnitsModule.Install);
+
             var nextUncheckedLocation = MapAnalyzer.ExpandLocations
                 .Where(expandLocation => !_checkedLocations[expandLocation])
                 .Where(expandLocation => Pathfinder.FindPath(_armyManager._target, expandLocation) != null)

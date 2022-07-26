@@ -12,7 +12,7 @@ namespace Bot;
 
 public class Unit: ICanDie {
     private readonly List<IWatchUnitsDie> _deathWatchers = new List<IWatchUnitsDie>();
-    private UnitTypeData _unitTypeData;
+    public UnitTypeData UnitTypeData;
 
     public string Name;
     public ulong Tag;
@@ -45,13 +45,13 @@ public class Unit: ICanDie {
     }
 
     public void Update(SC2APIProtocol.Unit unit, ulong frame) {
-        _unitTypeData = KnowledgeBase.GetUnitTypeData(unit.UnitType); // Not sure if it can change over time
+        UnitTypeData = KnowledgeBase.GetUnitTypeData(unit.UnitType); // Not sure if it can change over time
         RawUnitData = unit;
 
-        Name = _unitTypeData.Name;
+        Name = UnitTypeData.Name;
         Tag = unit.Tag;
         UnitType = unit.UnitType;
-        FoodRequired = _unitTypeData.FoodRequired;
+        FoodRequired = UnitTypeData.FoodRequired;
         Radius = unit.Radius;
         Alliance = unit.Alliance;
         Position = new Vector3(unit.Pos.X, unit.Pos.Y, unit.Pos.Z);
@@ -87,11 +87,15 @@ public class Unit: ICanDie {
             }
         };
 
-        Controller.AddAction(action);
+        ProcessAction(action);
     }
 
     public void Move(Vector3 target) {
-        Controller.AddAction(ActionBuilder.Move(Tag, target));
+        ProcessAction(ActionBuilder.Move(Tag, target));
+    }
+
+    public void Attack(Unit target) {
+        ProcessAction(ActionBuilder.Attack(Tag, target.Tag));
     }
 
     public void AttackMove(Vector3 target) {
@@ -99,12 +103,12 @@ public class Unit: ICanDie {
             Move(target);
         }
         else {
-            Controller.AddAction(ActionBuilder.AttackMove(Tag, target));
+            ProcessAction(ActionBuilder.AttackMove(Tag, target));
         }
     }
 
     public void Smart(Unit unit) {
-        Controller.AddAction(ActionBuilder.Smart(Tag, unit.Tag));
+        ProcessAction(ActionBuilder.Smart(Tag, unit.Tag));
     }
 
     public void TrainUnit(uint unitType, bool queue = false) {
