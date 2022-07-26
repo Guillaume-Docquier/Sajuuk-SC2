@@ -36,7 +36,6 @@ public class WarManager: IManager {
         // TODO GD Use multiple managers, probably
 
         var enemyPosition = Controller.EnemyLocations[0];
-        // TODO GD Cache this, buildings don't move
         var currentDistanceToEnemy = Pathfinder.FindPath(_townHallToDefend.Position, enemyPosition).Count; // Not exact, but the distance difference should not matter
         var newTownHallToDefend = Controller.GetUnits(Controller.NewOwnedUnits, Units.Hatchery)
             .FirstOrDefault(townHall => Pathfinder.FindPath(townHall.Position, enemyPosition).Count < currentDistanceToEnemy);

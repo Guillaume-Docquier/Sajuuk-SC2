@@ -7,11 +7,16 @@ using Bot.Wrapper;
 
 namespace Bot;
 
+using Path = List<Vector3>;
+
 public static class Pathfinder {
     public  static List<List<float>> HeightMap; // TODO GD Should be in map analyzer, probably
     private static List<List<bool>> _walkMap;
     private static int _maxX;
     private static int _maxY;
+
+    // TODO GD Save to file, per map
+    private static readonly Dictionary<Vector3, Dictionary<Vector3, Path>> Memory = new Dictionary<Vector3, Dictionary<Vector3, List<Vector3>>>();
 
     public static bool IsInitialized = false;
 
@@ -98,7 +103,12 @@ public static class Pathfinder {
         return values;
     }
 
-    public static List<Vector3> FindPath(Vector3 origin, Vector3 destination) {
+    public static Path FindPath(Vector3 origin, Vector3 destination) {
+        var knownPath = GetPathFromMemory(origin, destination);
+        if (knownPath != null) {
+            return knownPath;
+        }
+
         var path = AStar(
                 origin.AsWorldGridCorner().WithoutZ(),
                 destination.AsWorldGridCorner().WithoutZ(),
@@ -111,6 +121,8 @@ public static class Pathfinder {
         for (var i = 0; i < path.Count; i++) {
             GraphicalDebugger.AddGridSquare(path[i], Colors.Gradient(Colors.Cyan, Colors.DarkBlue, (float)i / path.Count));
         }
+
+        SavePathToMemory(origin, destination, path);
 
         return path;
     }
@@ -194,5 +206,38 @@ public static class Pathfinder {
         path.Reverse();
 
         return path.Select(step => step.WithWorldHeight());
+    }
+
+    private static Path GetPathFromMemory(Vector3 origin, Vector3 destination) {
+        // Z doesn't matter, only X/Y does
+        // Make sure we don't query the same X/Y with a different Z
+        origin.Z = 0;
+        destination.Z = 0;
+
+        if (Memory.ContainsKey(origin) && Memory[origin].ContainsKey(destination)) {
+            return Memory[origin][destination];
+        }
+
+        if (Memory.ContainsKey(destination) && Memory[destination].ContainsKey(origin)) {
+            var path = Memory[destination][origin];
+
+            return Enumerable.Reverse(path).ToList();
+        }
+
+        return null;
+    }
+
+    private static void SavePathToMemory(Vector3 origin, Vector3 destination, Path path) {
+        // Z doesn't matter, only X/Y does
+        // Make sure we don't query the same X/Y with a different Z
+        origin.Z = 0;
+        destination.Z = 0;
+
+        if (!Memory.ContainsKey(origin)) {
+            Memory[origin] = new Dictionary<Vector3, Path> { [destination] = path };
+        }
+        else {
+            Memory[origin][destination] = path;
+        }
     }
 }
