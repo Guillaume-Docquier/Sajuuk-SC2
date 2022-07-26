@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using Bot.GameData;
@@ -297,6 +298,8 @@ public class GameConnection {
                 if (!Pathfinder.IsInitialized) {
                     Pathfinder.Init();
                 }
+
+                VisibilityTracker.Update(observation.Observation.RawData.MapState.Visibility);
 
                 bot.OnFrame();
                 var actions = Controller.GetActions().ToList();

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.GameData;
 
 namespace Bot.Managers;
 
@@ -28,31 +29,30 @@ public partial class ArmyManager {
 
         public void Execute() {
             if (MapAnalyzer.IsInitialized && _checkedLocations == null) {
-                _checkedLocations = MapAnalyzer.ExpandLocations.ToDictionary(expand => expand, _ => false);
+                InitCheckedLocations();
             }
 
             if (_checkedLocations == null) {
                 return;
             }
 
-            if (AllLocationsHaveBeenChecked()) {
-                ResetCheckedLocations();
+            foreach (var locationToCheck in _checkedLocations.Keys) {
+                _checkedLocations[locationToCheck] |= VisibilityTracker.IsVisible(locationToCheck);
             }
 
-            // TODO GD Check that we see it, don't rely on the fact that we reached the current state
-            _checkedLocations[_armyManager._target] = true;
+            if (AllLocationsHaveBeenChecked()) {
+                InitCheckedLocations();
+            }
 
             AssignNewTarget();
         }
 
         private static bool AllLocationsHaveBeenChecked() {
-            return _checkedLocations.Values.All(scouted => scouted);
+            return _checkedLocations.Values.All(isChecked => isChecked);
         }
 
-        private static void ResetCheckedLocations() {
-            foreach (var expandLocation in _checkedLocations.Keys) {
-                _checkedLocations[expandLocation] = false;
-            }
+        private static void InitCheckedLocations() {
+            _checkedLocations = MapAnalyzer.ExpandLocations.ToDictionary(expand => expand, VisibilityTracker.IsVisible);
         }
 
         private void AssignNewTarget() {
