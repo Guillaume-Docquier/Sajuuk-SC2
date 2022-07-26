@@ -242,4 +242,15 @@ public class Unit: ICanDie {
 
         return true;
     }
+
+    public bool IsMovingOrAttacking() {
+        return Orders.All(order => order.AbilityId is Abilities.Move or Abilities.Attack);
+    }
+
+    public bool IsAlreadyTargeting(Vector3 target) {
+        var targetAsPoint = target.ToPoint();
+        targetAsPoint.Z = 0;
+
+        return Orders.Any(order => order.TargetWorldSpacePos != null && order.TargetWorldSpacePos.Equals(targetAsPoint));
+    }
 }

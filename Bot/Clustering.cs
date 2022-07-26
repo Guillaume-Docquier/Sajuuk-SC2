@@ -65,6 +65,12 @@ public static class Clustering {
     }
 
     public static Vector3 GetCenter(List<Unit> cluster) {
+        if (cluster.Count <= 0) {
+            Logger.Error("Trying to GetCenter of an empty cluster");
+
+            return default;
+        }
+
         var avgX = cluster.Average(soldier => soldier.Position.X);
         var avgY = cluster.Average(soldier => soldier.Position.Y);
 

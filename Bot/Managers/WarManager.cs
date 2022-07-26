@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.GameData;
-using Bot.Wrapper;
 
 namespace Bot.Managers;
 
@@ -51,18 +50,16 @@ public class WarManager: IManager {
             _townHallToDefend = newTownHallToDefend;
         }
 
-        if (_armyManager.Force >= SupplyRequiredBeforeAttacking && !_hasAssaultStarted) {
+        if (_armyManager.Army.GetForce() >= SupplyRequiredBeforeAttacking && !_hasAssaultStarted) {
             _hasAssaultStarted = true;
             _armyManager.Assign(enemyPosition, AttackRadius);
         }
 
-        GraphicalDebugger.AddLine(_townHallToDefend.Position, _armyManager.Target, Colors.Red);
-        GraphicalDebugger.AddSphere(_armyManager.Target, 1, Colors.Red);
         _armyManager.OnFrame();
     }
 
     public void Retire() {
-        throw new System.NotImplementedException();
+        throw new NotImplementedException();
     }
 
     public void ReportUnitDeath(Unit deadUnit) {

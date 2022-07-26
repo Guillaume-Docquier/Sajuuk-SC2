@@ -19,6 +19,10 @@ public static class Vector3Extensions {
         return new Point2D { X = vector.X, Y = vector.Y };
     }
 
+    public static float DistanceTo(this Vector3 origin, Vector3 destination) {
+        return Vector3.Distance(origin, destination);
+    }
+
     public static Vector3 DirectionTo(this Vector3 origin, Vector3 destination, bool ignoreZAxis = true) {
         var direction = Vector3.Normalize(destination - origin);
         if (ignoreZAxis) {
