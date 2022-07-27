@@ -9,6 +9,8 @@ namespace Bot.Managers;
 public partial class ArmyManager {
     public class AttackStrategy : IStrategy {
         private const float AcceptableDistanceToTarget = 3;
+        private const float MaxDistanceForPathfinding = 50;
+        private const int PathfindingStep = 3;
 
         private readonly ArmyManager _armyManager;
         private readonly float _initialForce;
@@ -76,12 +78,27 @@ public partial class ArmyManager {
             GraphicalDebugger.AddSphere(targetToAttack, AcceptableDistanceToTarget, Colors.Red);
             GraphicalDebugger.AddText("Attack", worldPos: targetToAttack.ToPoint());
 
-            soldiers.Where(unit => unit.IsMovingOrAttacking())
-                .Where(unit => !unit.IsAlreadyTargeting(targetToAttack))
+            var unitsToAttackWith = soldiers.Where(unit => unit.IsMovingOrAttacking())
                 .Where(unit => !unit.RawUnitData.IsBurrowed)
                 .Where(unit => unit.DistanceTo(targetToAttack) > AcceptableDistanceToTarget)
-                .ToList()
-                .ForEach(unit => unit.AttackMove(targetToAttack));
+                .ToList();
+
+            var armyLocation = soldiers.GetCenter();
+            var absoluteDistanceToTarget = armyLocation.DistanceTo(targetToAttack);
+            if (absoluteDistanceToTarget <= MaxDistanceForPathfinding) {
+                var targetAlongThePath = Pathfinder.FindPath(armyLocation, targetToAttack)[PathfindingStep];
+
+                unitsToAttackWith
+                    .Where(unit => !unit.IsAlreadyTargeting(targetAlongThePath))
+                    .ToList()
+                    .ForEach(unit => unit.AttackMove(targetAlongThePath));
+            }
+            else {
+                unitsToAttackWith
+                    .Where(unit => !unit.IsAlreadyTargeting(targetToAttack))
+                    .ToList()
+                    .ForEach(unit => unit.AttackMove(targetToAttack));
+            }
 
             foreach (var soldier in soldiers) {
                 GraphicalDebugger.AddLine(soldier.Position, targetToAttack, Colors.Red);

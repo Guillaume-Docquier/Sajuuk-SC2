@@ -104,15 +104,16 @@ public static class Pathfinder {
     }
 
     public static Path FindPath(Vector3 origin, Vector3 destination) {
+        // Improve caching performance
+        origin = origin.AsWorldGridCorner().WithoutZ();
+        destination = destination.AsWorldGridCorner().WithoutZ();
+
         var knownPath = GetPathFromMemory(origin, destination);
         if (knownPath != null) {
             return knownPath;
         }
 
-        var path = AStar(
-                origin.AsWorldGridCorner().WithoutZ(),
-                destination.AsWorldGridCorner().WithoutZ(),
-                (from, to) => from.HorizontalDistance(to))
+        var path = AStar(origin, destination, (from, to) => from.HorizontalDistance(to))
             .Select(step => step.AsWorldGridCenter())
             .ToList();
 
@@ -209,11 +210,6 @@ public static class Pathfinder {
     }
 
     private static Path GetPathFromMemory(Vector3 origin, Vector3 destination) {
-        // Z doesn't matter, only X/Y does
-        // Make sure we don't query the same X/Y with a different Z
-        origin.Z = 0;
-        destination.Z = 0;
-
         if (Memory.ContainsKey(origin) && Memory[origin].ContainsKey(destination)) {
             return Memory[origin][destination];
         }
@@ -228,11 +224,6 @@ public static class Pathfinder {
     }
 
     private static void SavePathToMemory(Vector3 origin, Vector3 destination, Path path) {
-        // Z doesn't matter, only X/Y does
-        // Make sure we don't query the same X/Y with a different Z
-        origin.Z = 0;
-        destination.Z = 0;
-
         if (!Memory.ContainsKey(origin)) {
             Memory[origin] = new Dictionary<Vector3, Path> { [destination] = path };
         }

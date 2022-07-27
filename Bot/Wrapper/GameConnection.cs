@@ -325,7 +325,10 @@ public class GameConnection {
                 Logger.Info("==== Memory Debug Start ====");
                 Logger.Info("Memory used: {0} MB", (Process.GetCurrentProcess().WorkingSet64 * 1e-6).ToString("0.00"));
                 Logger.Info("Units: {0} owned, {1} neutral, {2} enemy", Controller.OwnedUnits.Count, Controller.NeutralUnits.Count, Controller.EnemyUnits.Count);
-                Logger.Info("Pathfinding cache: {0} paths, {1} tiles", Pathfinder.Memory.Keys.Count, Pathfinder.Memory.Values.SelectMany(destinations => destinations.Values).Sum(path => path.Count));
+                Logger.Info(
+                    "Pathfinding cache: {0} paths, {1} tiles",
+                    Pathfinder.Memory.Values.Sum(destinations => destinations.Keys.Count),
+                    Pathfinder.Memory.Values.SelectMany(destinations => destinations.Values).Sum(path => path.Count));
                 Logger.Info("==== Memory Debug End ====");
             }
 
