@@ -14,7 +14,7 @@ public partial class ArmyManager {
         private readonly float _initialForce;
         private readonly float _retreatAtForce;
 
-        private IStrategy nextStrategy;
+        private IStrategy _nextStrategy;
 
         public AttackStrategy(ArmyManager armyManager) {
             _armyManager = armyManager;
@@ -26,13 +26,13 @@ public partial class ArmyManager {
 
         public bool CanTransition() {
             if (_armyManager._mainArmy.GetCenter().DistanceTo(_armyManager._target) < AcceptableDistanceToTarget) {
-                nextStrategy = new DefenseStrategy(_armyManager);
+                _nextStrategy = new DefenseStrategy(_armyManager);
 
                 return true;
             }
 
             if (_armyManager._mainArmy.GetForce() <= _retreatAtForce) {
-                nextStrategy = new RetreatStrategy(_armyManager);
+                _nextStrategy = new RetreatStrategy(_armyManager);
 
                 return true;
             }
@@ -41,7 +41,7 @@ public partial class ArmyManager {
         }
 
         public IStrategy Transition() {
-            return nextStrategy;
+            return _nextStrategy;
         }
 
         public void Execute() {

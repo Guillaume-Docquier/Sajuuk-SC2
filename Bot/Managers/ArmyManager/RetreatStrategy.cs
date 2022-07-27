@@ -8,6 +8,7 @@ namespace Bot.Managers;
 
 public partial class ArmyManager {
     public class RetreatStrategy: IStrategy {
+        private const int RetreatDistanceFromBase = 8;
         private const float AcceptableDistanceToTarget = 3;
 
         private readonly ArmyManager _armyManager;
@@ -21,9 +22,9 @@ public partial class ArmyManager {
         public string Name => "Retreat";
 
         public bool CanTransition() {
-            return _armyManager._mainArmy.GetForce() >= _rallyAtForce
-                   || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed
-                   || _armyManager._mainArmy.GetCenter().DistanceTo(GetRetreatPosition()) <= AcceptableDistanceToTarget;
+            return _armyManager.Army.GetForce() >= _rallyAtForce
+               || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed
+               || _armyManager._mainArmy.GetCenter().DistanceTo(GetRetreatPosition()) <= AcceptableDistanceToTarget;
         }
 
         public IStrategy Transition() {
@@ -32,7 +33,7 @@ public partial class ArmyManager {
 
         public void Execute() {
             DrawArmyData();
-            // TODO GD Retreat to base, cache the pathfinding
+
             Retreat(GetRetreatPosition(), _armyManager.Army);
         }
 
@@ -65,8 +66,14 @@ public partial class ArmyManager {
             }
         }
 
-        private Vector3 GetRetreatPosition() {
-            return _armyManager.Army.GetCenter();
+        private static Vector3 GetRetreatPosition() {
+            var shortestPathBetweenBaseAndEnemy = Controller.GetUnits(Controller.OwnedUnits, Units.Hatchery)
+                .Select(townHall => Pathfinder.FindPath(townHall.Position, Controller.EnemyLocations[0]))
+                .MinBy(path => path.Count);
+
+            shortestPathBetweenBaseAndEnemy ??= Pathfinder.FindPath(Controller.StartingTownHall.Position, Controller.EnemyLocations[0]);
+
+            return shortestPathBetweenBaseAndEnemy[RetreatDistanceFromBase];
         }
     }
 }
