@@ -16,7 +16,7 @@ public static class Pathfinder {
     private static int _maxY;
 
     // TODO GD Save to file, per map
-    private static readonly Dictionary<Vector3, Dictionary<Vector3, Path>> Memory = new Dictionary<Vector3, Dictionary<Vector3, List<Vector3>>>();
+    public static readonly Dictionary<Vector3, Dictionary<Vector3, Path>> Memory = new Dictionary<Vector3, Dictionary<Vector3, List<Vector3>>>();
 
     public static bool IsInitialized = false;
 

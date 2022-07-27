@@ -50,8 +50,15 @@ public partial class ArmyManager: IManager {
         _mainArmy ??= Army;
 
         var startingStrategyName = _strategy.Name;
+        var count = 0;
         while (_strategy.CanTransition()) {
             _strategy = _strategy.Transition();
+            count++;
+
+            if (count >= 6) {
+                Logger.Error("ArmyManager: Looped more than 6 times trying to find a strategy");
+                break;
+            }
         }
 
         if (_strategy.Name != startingStrategyName) {

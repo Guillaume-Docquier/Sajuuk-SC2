@@ -18,6 +18,8 @@ public partial class ArmyManager {
             _attackAtForce = armyManager._strongestForce * 1.2f;
         }
 
+        public string Name => "Rally";
+
         public bool CanTransition() {
             return _armyManager._mainArmy.GetForce() >= _attackAtForce || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed;
         }
@@ -28,10 +30,9 @@ public partial class ArmyManager {
 
         public void Execute() {
             DrawArmyData();
-            Grow(_armyManager._mainArmy.GetCenter(), _armyManager.Army);
-        }
 
-        public string Name => "Rally";
+            Grow(_armyManager.Army.GetCenter(), _armyManager.Army);
+        }
 
         private void DrawArmyData() {
             GraphicalDebugger.AddTextGroup(

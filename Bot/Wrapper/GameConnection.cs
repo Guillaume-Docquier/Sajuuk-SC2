@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.WebSockets;
-using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using Bot.GameData;
@@ -21,6 +20,7 @@ public class GameConnection {
     private string _starcraftMapsDir;
 
     private readonly ulong _runEvery;
+    private const ulong DebugMemoryEvery = (ulong)(5 * Controller.FramesPerSecond);
 
     public GameConnection(ulong runEvery) {
         _runEvery = runEvery;
@@ -319,6 +319,14 @@ public class GameConnection {
                 }
 
                 await SendRequest(GraphicalDebugger.GetDebugRequest());
+            }
+
+            if (observation.Observation.GameLoop % DebugMemoryEvery == 0) {
+                Logger.Info("==== Memory Debug Start ====");
+                Logger.Info("Memory used: {0} MB", (Process.GetCurrentProcess().WorkingSet64 * 1e-6).ToString("0.00"));
+                Logger.Info("Units: {0} owned, {1} neutral, {2} enemy", Controller.OwnedUnits.Count, Controller.NeutralUnits.Count, Controller.EnemyUnits.Count);
+                Logger.Info("Pathfinding cache: {0} paths, {1} tiles", Pathfinder.Memory.Keys.Count, Pathfinder.Memory.Values.SelectMany(destinations => destinations.Values).Sum(path => path.Count));
+                Logger.Info("==== Memory Debug End ====");
             }
 
             await SendRequest(RequestBuilder.StepRequest(StepSize));
