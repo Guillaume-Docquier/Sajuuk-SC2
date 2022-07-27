@@ -94,10 +94,18 @@ public partial class ArmyManager {
 
             // Try to take down rocks
             if (_ticksWithoutRealMove > ReasonableMoveDelay) {
+                Logger.Info("AttackStrategy: I'm stuck!");
                 var closestRock = Controller.GetUnits(Controller.NeutralUnits, Units.Destructibles).MinBy(rock => rock.DistanceTo(armyLocation));
-                if (closestRock != null && closestRock.DistanceTo(armyLocation) <= RocksDestructionRange) {
-                    Attack(closestRock, unitsToAttackWith);
-                    return;
+                if (closestRock != null) {
+                    Logger.Info("AttackStrategy: Closest rock is {0} units away", closestRock.DistanceTo(armyLocation).ToString("0.00"));
+                    if (closestRock.DistanceTo(armyLocation) <= RocksDestructionRange) {
+                        Logger.Info("AttackStrategy: Attacking rock");
+                        Attack(closestRock, unitsToAttackWith);
+                        return;
+                    }
+                }
+                else {
+                    Logger.Info("AttackStrategy: No rocks found");
                 }
             }
 

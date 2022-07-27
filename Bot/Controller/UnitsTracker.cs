@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.GameData;
 using SC2APIProtocol;
 
 namespace Bot;
@@ -19,6 +20,13 @@ public class UnitsTracker {
     public void Update(List<SC2APIProtocol.Unit> newRawUnits, ulong frame) {
         if (!_isInitialized) {
             Init(newRawUnits, frame);
+
+            var unknownNeutralUnits = NeutralUnits.DistinctBy(unit => unit.UnitType)
+                .Where(unit => !Units.Destructibles.Contains(unit.UnitType) && !Units.MineralFields.Contains(unit.UnitType) && !Units.GasGeysers.Contains(unit.UnitType))
+                .Select(unit => (unit.Name, unit.UnitType))
+                .ToList();
+
+            Logger.Info("Unknown neutral units ({0}): {1}", unknownNeutralUnits.Count, string.Join(", ", unknownNeutralUnits));
 
             return;
         }

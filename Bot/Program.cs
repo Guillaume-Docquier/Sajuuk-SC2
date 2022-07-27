@@ -7,7 +7,7 @@ namespace Bot;
 public class Program {
     private static readonly IBot Bot = new SajuukBot();
 
-    private const string MapName = "BerlingradAIE.SC2Map";
+    private const string MapName = "BlackburnAIE.SC2Map";
     private const Race OpponentRace = Race.Terran;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
