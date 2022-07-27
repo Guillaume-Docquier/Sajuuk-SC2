@@ -75,8 +75,7 @@ public partial class ArmyManager {
                 return;
             }
 
-            GraphicalDebugger.AddSphere(targetToAttack, AcceptableDistanceToTarget, Colors.Red);
-            GraphicalDebugger.AddText("Attack", worldPos: targetToAttack.ToPoint());
+            DrawAttackData(targetToAttack, soldiers);
 
             var unitsToAttackWith = soldiers.Where(unit => unit.IsMovingOrAttacking())
                 .Where(unit => !unit.RawUnitData.IsBurrowed)
@@ -85,24 +84,34 @@ public partial class ArmyManager {
 
             var armyLocation = soldiers.GetCenter();
             var absoluteDistanceToTarget = armyLocation.DistanceTo(targetToAttack);
-            if (absoluteDistanceToTarget <= MaxDistanceForPathfinding) {
-                var targetAlongThePath = Pathfinder.FindPath(armyLocation, targetToAttack)[PathfindingStep];
 
-                unitsToAttackWith
-                    .Where(unit => !unit.IsAlreadyTargeting(targetAlongThePath))
-                    .ToList()
-                    .ForEach(unit => unit.AttackMove(targetAlongThePath));
+            if (absoluteDistanceToTarget <= MaxDistanceForPathfinding) {
+                WalkAlongThePath(targetToAttack, armyLocation, unitsToAttackWith);
             }
             else {
-                unitsToAttackWith
-                    .Where(unit => !unit.IsAlreadyTargeting(targetToAttack))
-                    .ToList()
-                    .ForEach(unit => unit.AttackMove(targetToAttack));
+                AttackMove(targetToAttack, unitsToAttackWith);
             }
+        }
 
+        private static void DrawAttackData(Vector3 targetToAttack, IEnumerable<Unit> soldiers) {
+            GraphicalDebugger.AddSphere(targetToAttack, AcceptableDistanceToTarget, Colors.Red);
+            GraphicalDebugger.AddText("Attack", worldPos: targetToAttack.ToPoint());
             foreach (var soldier in soldiers) {
                 GraphicalDebugger.AddLine(soldier.Position, targetToAttack, Colors.Red);
             }
+        }
+
+        private static void WalkAlongThePath(Vector3 targetToAttack, Vector3 armyLocation, IEnumerable<Unit> soldiers) {
+            var targetAlongThePath = Pathfinder.FindPath(armyLocation, targetToAttack)[PathfindingStep];
+
+            AttackMove(targetAlongThePath, soldiers);
+        }
+
+        private static void AttackMove(Vector3 targetToAttack, IEnumerable<Unit> soldiers) {
+            soldiers
+                .Where(unit => !unit.IsAlreadyTargeting(targetToAttack))
+                .ToList()
+                .ForEach(unit => unit.AttackMove(targetToAttack));
         }
 
         private static void Rally(Vector3 rallyPoint, IReadOnlyCollection<Unit> soldiers) {
@@ -110,14 +119,14 @@ public partial class ArmyManager {
                 return;
             }
 
+            DrawRallyData(rallyPoint, soldiers);
+
+            AttackMove(rallyPoint, soldiers.Where(unit => unit.DistanceTo(rallyPoint) > AcceptableDistanceToTarget));
+        }
+
+        private static void DrawRallyData(Vector3 rallyPoint, IEnumerable<Unit> soldiers) {
             GraphicalDebugger.AddSphere(rallyPoint, AcceptableDistanceToTarget, Colors.Blue);
             GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToPoint());
-
-            soldiers.Where(unit => !unit.IsAlreadyTargeting(rallyPoint))
-                .Where(unit => unit.DistanceTo(rallyPoint) > AcceptableDistanceToTarget)
-                .ToList()
-                .ForEach(unit => unit.AttackMove(rallyPoint));
-
             foreach (var soldier in soldiers) {
                 GraphicalDebugger.AddLine(soldier.Position, rallyPoint, Colors.Blue);
             }
