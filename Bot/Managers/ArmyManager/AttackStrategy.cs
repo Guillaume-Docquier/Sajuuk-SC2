@@ -102,7 +102,8 @@ public partial class ArmyManager {
         }
 
         private static void WalkAlongThePath(Vector3 targetToAttack, Vector3 armyLocation, IEnumerable<Unit> soldiers) {
-            var targetAlongThePath = Pathfinder.FindPath(armyLocation, targetToAttack)[PathfindingStep];
+            var path = Pathfinder.FindPath(armyLocation, targetToAttack);
+            var targetAlongThePath = path[Math.Min(path.Count - 1, PathfindingStep)];
 
             AttackMove(targetAlongThePath, soldiers);
         }

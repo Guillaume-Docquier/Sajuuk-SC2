@@ -35,6 +35,8 @@ public partial class ArmyManager: IManager {
             if (unit.UnitType == Units.Roach) {
                 BurrowMicroModule.Install(unit);
             }
+
+            AttackPriorityModule.Install(unit);
         });
 
         // TODO GD Use a targeting module
