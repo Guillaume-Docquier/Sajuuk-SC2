@@ -15,6 +15,6 @@ public static class ArmyExtensions {
     }
 
     public static bool IsFighting(this IEnumerable<Unit> army) {
-        return army.Any(soldier => soldier.Orders.Any(order => order.AbilityId == Abilities.Attack));
+        return army.Any(soldier => soldier.RawUnitData.EngagedTargetTag != 0);
     }
 }

@@ -64,7 +64,7 @@ public partial class ArmyManager: IManager {
         }
 
         if (_strategy.Name != startingStrategyName) {
-            Logger.Info("WarManager strategy changed from {0} to {1}", startingStrategyName, _strategy.Name);
+            Logger.Info("ArmyManager strategy changed from {0} to {1}", startingStrategyName, _strategy.Name);
         }
 
         _strategy.Execute();
