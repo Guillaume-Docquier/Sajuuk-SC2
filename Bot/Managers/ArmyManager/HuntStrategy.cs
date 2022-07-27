@@ -63,10 +63,11 @@ public partial class ArmyManager {
             // TODO GD The module and the manager are giving orders to the unit, freezing it
             // _armyManager.Army.ForEach(TargetNeutralUnitsModule.Install);
 
+            var armyCenter = _armyManager._mainArmy.GetCenter();
             var nextUncheckedLocation = MapAnalyzer.ExpandLocations
                 .Where(expandLocation => !_checkedLocations[expandLocation])
-                .Where(expandLocation => Pathfinder.FindPath(_armyManager._target, expandLocation) != null)
-                .OrderBy(expandLocation => Pathfinder.FindPath(_armyManager._target, expandLocation).Count)
+                .Where(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation) != null)
+                .OrderBy(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation).Count)
                 .FirstOrDefault();
 
             Logger.Info("HuntStrategy next target is: {0}", nextUncheckedLocation);
