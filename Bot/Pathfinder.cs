@@ -113,9 +113,13 @@ public static class Pathfinder {
             return knownPath;
         }
 
-        var path = AStar(origin, destination, (from, to) => from.HorizontalDistance(to))
-            .Select(step => step.AsWorldGridCenter())
-            .ToList();
+        var maybeNullPath = AStar(origin, destination, (from, to) => from.HorizontalDistance(to));
+        if (maybeNullPath == null) {
+            Logger.Error("Path from {0} to {1} was null", origin, destination);
+            return null;
+        }
+
+        var path = maybeNullPath.Select(step => step.AsWorldGridCenter()).ToList();
 
         GraphicalDebugger.AddSphere(origin.WithWorldHeight(), 1.5f, Colors.Cyan);
         GraphicalDebugger.AddSphere(destination.WithWorldHeight(), 1.5f, Colors.DarkBlue);
