@@ -2,12 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.GameData;
 using Bot.Wrapper;
 
 namespace Bot.Managers;
 
 public partial class ArmyManager {
     public class AttackStrategy : IStrategy {
+        private const int ReasonableMoveDelay = (int)(5 * Controller.FramesPerSecond);
+        private const float NegligibleMovement = 2f;
+        private const float RocksDestructionRange = 8f;
         private const float AcceptableDistanceToTarget = 3;
         private const float MaxDistanceForPathfinding = 50;
         private const int PathfindingStep = 3;
@@ -17,6 +21,9 @@ public partial class ArmyManager {
         private readonly float _retreatAtForce;
 
         private IStrategy _nextStrategy;
+
+        private Vector3 _previousArmyLocation;
+        private ulong _ticksWithoutRealMove;
 
         public AttackStrategy(ArmyManager armyManager) {
             _armyManager = armyManager;
@@ -70,7 +77,7 @@ public partial class ArmyManager {
                 worldPos: soldiers.GetCenter().Translate(1f, 1f).ToPoint());
         }
 
-        private static void Attack(Vector3 targetToAttack, IReadOnlyCollection<Unit> soldiers) {
+        private void Attack(Vector3 targetToAttack, IReadOnlyCollection<Unit> soldiers) {
             if (soldiers.Count <= 0) {
                 return;
             }
@@ -85,11 +92,30 @@ public partial class ArmyManager {
             var armyLocation = soldiers.GetCenter();
             var absoluteDistanceToTarget = armyLocation.DistanceTo(targetToAttack);
 
-            if (absoluteDistanceToTarget <= MaxDistanceForPathfinding) {
+            // Try to take down rocks
+            if (_ticksWithoutRealMove > ReasonableMoveDelay) {
+                var closestRock = Controller.GetUnits(Controller.NeutralUnits, Units.Destructibles).MinBy(rock => rock.DistanceTo(armyLocation));
+                if (closestRock != null && closestRock.DistanceTo(armyLocation) <= RocksDestructionRange) {
+                    Attack(closestRock, unitsToAttackWith);
+                    return;
+                }
+            }
+
+            if (absoluteDistanceToTarget <= MaxDistanceForPathfinding && _ticksWithoutRealMove <= ReasonableMoveDelay) {
                 WalkAlongThePath(targetToAttack, armyLocation, unitsToAttackWith);
             }
             else {
                 AttackMove(targetToAttack, unitsToAttackWith);
+            }
+
+            // Sometime the army gets stuck, try something different if it happens
+            // This will often time be due to rocks, so I need to fix that
+            if (armyLocation.DistanceTo(_previousArmyLocation) < NegligibleMovement && !soldiers.IsFighting()) {
+                _ticksWithoutRealMove++;
+            }
+            else {
+                _ticksWithoutRealMove = 0;
+                _previousArmyLocation = armyLocation;
             }
         }
 
@@ -115,6 +141,13 @@ public partial class ArmyManager {
                 .Where(unit => !unit.IsAlreadyTargeting(targetToAttack))
                 .ToList()
                 .ForEach(unit => unit.AttackMove(targetToAttack));
+        }
+
+        private static void Attack(Unit targetToAttack, IEnumerable<Unit> soldiers) {
+            soldiers
+                .Where(unit => !unit.IsAlreadyAttacking(targetToAttack))
+                .ToList()
+                .ForEach(unit => unit.Attack(targetToAttack));
         }
 
         private static void Rally(Vector3 rallyPoint, IReadOnlyCollection<Unit> soldiers) {
