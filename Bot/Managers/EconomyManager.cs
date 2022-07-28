@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Bot.GameData;
 using Bot.Wrapper;
@@ -7,6 +8,9 @@ using SC2APIProtocol;
 namespace Bot.Managers;
 
 public class EconomyManager: IManager {
+    private const int MacroHatchBuildRequestIndex = 0;
+    private const int QueenBuildRequestIndex = 1;
+
     private readonly List<TownHallManager> _miningManagers = new List<TownHallManager>();
     private readonly Dictionary<Unit, TownHallManager> _townHallDispatch = new Dictionary<Unit, TownHallManager>();
     private readonly Dictionary<Unit, TownHallManager> _queenDispatch = new Dictionary<Unit, TownHallManager>();
@@ -20,7 +24,13 @@ public class EconomyManager: IManager {
         Colors.DarkBlue,
     };
 
-    public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _miningManagers.SelectMany(manager => manager.BuildStepRequests);
+    private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>
+    {
+        new BuildOrders.BuildStep(BuildType.Build, 0, Units.Hatchery, 0),
+        new BuildOrders.BuildStep(BuildType.Train, 0, Units.Queen, 0),
+    };
+
+    public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests.Concat(_miningManagers.SelectMany(manager => manager.BuildStepRequests));
 
     public EconomyManager() {
         ManageTownHalls(Controller.GetUnits(Controller.OwnedUnits, Units.Hatchery));
@@ -28,7 +38,6 @@ public class EconomyManager: IManager {
     }
 
     public void OnFrame() {
-        // TODO GD Only select expand hatches, not macro hatches
         ManageTownHalls(Controller.GetUnits(Controller.NewOwnedUnits, Units.Hatchery));
 
         // TODO GD Redistribute extra workers from managers
@@ -40,10 +49,14 @@ public class EconomyManager: IManager {
         queensToDispatch.AddRange(GetIdleQueens());
         DispatchQueens(queensToDispatch);
 
-        // TODO GD Order more workers and queens
-
         // Execute managers
         _miningManagers.ForEach(manager => manager.OnFrame());
+
+        // Build macro hatches
+        if (!GetIdleLarvae().Any() && BankIsTooBig() && !HasEnoughMacroTownHalls()) {
+            _buildStepRequests[MacroHatchBuildRequestIndex].Quantity += 1;
+            _buildStepRequests[QueenBuildRequestIndex].Quantity += 1;
+        }
     }
 
     public void Retire() {
@@ -132,6 +145,10 @@ public class EconomyManager: IManager {
         return _miningManagers.Where(manager => manager.TownHall.IsOperational);
     }
 
+    private IEnumerable<TownHallManager> GetUnavailableManagers() {
+        return _miningManagers.Where(manager => !manager.TownHall.IsOperational);
+    }
+
     private IEnumerable<Unit> GetIdleWorkers() {
         return _workerDispatch
             .Where(dispatch => dispatch.Value == null)
@@ -142,5 +159,18 @@ public class EconomyManager: IManager {
         return _queenDispatch
             .Where(dispatch => dispatch.Value == null)
             .Select(dispatch => dispatch.Key);
+    }
+
+    private static IEnumerable<Unit> GetIdleLarvae() {
+        return Controller.GetUnits(Controller.OwnedUnits, Units.Larva)
+            .Where(larva => !larva.Orders.Any());
+    }
+
+    private static bool BankIsTooBig() {
+        return Controller.AvailableMinerals > KnowledgeBase.GetUnitTypeData(Units.Hatchery).MineralCost * 2;
+    }
+
+    private bool HasEnoughMacroTownHalls() {
+        return _townHallDispatch.Count >= Controller.GetMiningTownHalls().Count() * 2;
     }
 }

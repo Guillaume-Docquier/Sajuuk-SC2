@@ -373,4 +373,9 @@ public static class Controller {
     public static bool HasEnoughSupply(uint unitType) {
         return AvailableSupply >= KnowledgeBase.GetUnitTypeData(unitType).FoodRequired;
     }
+
+    public static IEnumerable<Unit> GetMiningTownHalls() {
+        return GetUnits(OwnedUnits, Units.Hatchery)
+            .Where(townHall => MapAnalyzer.ExpandLocations.Any(expandLocation => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius));
+    }
 }

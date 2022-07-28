@@ -8,8 +8,8 @@ using SC2APIProtocol;
 namespace Bot.Managers;
 
 public class TownHallManager: IManager {
-    private const int DronesBuildRequestIndex = 0;
-    private const int QueenBuildRequestIndex = 1;
+    private const int QueenBuildRequestIndex = 0;
+    private const int DronesBuildRequestIndex = 1;
 
     private const int MaxGas = 2;
     private const int MaxExtractorsPerGas = 1;
@@ -30,8 +30,8 @@ public class TownHallManager: IManager {
 
     private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>
     {
-        new BuildOrders.BuildStep(BuildType.Train, 0, Units.Drone, 0),
         new BuildOrders.BuildStep(BuildType.Train, 0, Units.Queen, 0),
+        new BuildOrders.BuildStep(BuildType.Train, 0, Units.Drone, 0),
     };
 
     public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests;

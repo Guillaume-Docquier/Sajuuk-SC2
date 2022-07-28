@@ -42,7 +42,7 @@ public static class BuildOrders {
             new BuildStep(BuildType.Train, 19, Units.Queen, 2),
             new BuildStep(BuildType.Train, 24, Units.Zergling, 3),
             new BuildStep(BuildType.Train, 30, Units.Overlord),
-            new BuildStep(BuildType.Train, 30, Units.Queen),
+            // new BuildStep(BuildType.Train, 30, Units.Queen), // TODO Enable when creep spread
             new BuildStep(BuildType.UpgradeInto, 33, Units.Lair),
             new BuildStep(BuildType.Build, 37, Units.RoachWarren),
             new BuildStep(BuildType.Build, 37, Units.EvolutionChamber),
