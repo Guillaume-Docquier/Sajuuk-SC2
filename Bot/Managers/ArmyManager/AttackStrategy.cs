@@ -13,7 +13,7 @@ public partial class ArmyManager {
         private const float NegligibleMovement = 2f;
         private const float RocksDestructionRange = 9f;
         private const float AcceptableDistanceToTarget = 3;
-        private const float MaxDistanceForPathfinding = 50;
+        private const float MaxDistanceForPathfinding = 25;
         private const int PathfindingStep = 3;
 
         private readonly ArmyManager _armyManager;
