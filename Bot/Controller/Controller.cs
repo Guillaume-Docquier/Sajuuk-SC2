@@ -175,7 +175,7 @@ public static class Controller {
         return producers.FirstOrDefault();
     }
 
-    public static bool ExecuteBuildStep(BuildOrders.BuildStep buildStep) {
+    public static RequestResult ExecuteBuildStep(BuildOrders.BuildStep buildStep) {
         return buildStep.BuildType switch
         {
             BuildType.Train => TrainUnit(buildStep.UnitOrUpgradeType),
@@ -183,21 +183,51 @@ public static class Controller {
             BuildType.Research => ResearchUpgrade(buildStep.UnitOrUpgradeType),
             BuildType.UpgradeInto => UpgradeInto(buildStep.UnitOrUpgradeType),
             BuildType.Expand => PlaceExpand(buildStep.UnitOrUpgradeType),
-            _ => false
+            _ => RequestResult.NotSupported
         };
     }
 
-    public static bool TrainUnit(uint unitType) {
+    private static RequestResult ValidateRequirements(uint unitType, Unit producer, UnitTypeData unitTypeData) {
+        return ValidateRequirements(unitType, producer, unitTypeData.MineralCost, unitTypeData.VespeneCost, unitTypeData.FoodRequired);
+    }
+
+    private static RequestResult ValidateRequirements(uint upgradeType, Unit producer, UpgradeData upgradeData) {
+        return ValidateRequirements(upgradeType, producer, upgradeData.MineralCost, upgradeData.VespeneCost);
+    }
+
+    private static RequestResult ValidateRequirements(uint unitType, Unit producer, int mineralCost, int vespeneCost, float foodCost = 0) {
+        if (producer == null) {
+            return RequestResult.NoProducersAvailable;
+        }
+
+        var canAffordResult = CanAfford(mineralCost, vespeneCost);
+        if (canAffordResult != RequestResult.Ok) {
+            return canAffordResult;
+        }
+
+        if (!HasEnoughSupply(foodCost)) {
+            return RequestResult.NotEnoughSupply;
+        }
+
+        if (!IsUnlocked(unitType)) {
+            return RequestResult.TechRequirementsNotMet;
+        }
+
+        return RequestResult.Ok;
+    }
+
+    public static RequestResult TrainUnit(uint unitType) {
         var producer = GetAvailableProducer(unitType);
 
         return TrainUnit(unitType, producer);
     }
 
-    public static bool TrainUnit(uint unitType, Unit producer)
-    {
+    public static RequestResult TrainUnit(uint unitType, Unit producer) {
         var unitTypeData = KnowledgeBase.GetUnitTypeData(unitType);
-        if (producer == null || !CanAfford(unitTypeData) || !HasEnoughSupply(unitType) || !IsUnlocked(unitType)) {
-            return false;
+
+        var requirementsValidationResult = ValidateRequirements(unitType, producer, unitTypeData);
+        if (requirementsValidationResult != RequestResult.Ok) {
+            return requirementsValidationResult;
         }
 
         producer.TrainUnit(unitType);
@@ -206,19 +236,21 @@ public static class Controller {
         AvailableVespene -= unitTypeData.VespeneCost;
         CurrentSupply += Convert.ToUInt32(Math.Ceiling(unitTypeData.FoodRequired)); // Round up zerglings food, will be corrected on next frame
 
-        return true;
+        return RequestResult.Ok;
     }
 
-    public static bool PlaceBuilding(uint buildingType, Vector3 location = default) {
+    public static RequestResult PlaceBuilding(uint buildingType, Vector3 location = default) {
         var producer = GetAvailableProducer(buildingType);
 
         return PlaceBuilding(buildingType, producer, location);
     }
 
-    public static bool PlaceBuilding(uint buildingType, Unit producer, Vector3 location = default) {
+    public static RequestResult PlaceBuilding(uint buildingType, Unit producer, Vector3 location = default) {
         var buildingTypeData = KnowledgeBase.GetUnitTypeData(buildingType);
-        if (producer == null || !CanAfford(buildingTypeData) || !IsUnlocked(buildingType)) {
-            return false;
+
+        var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
+        if (requirementsValidationResult != RequestResult.Ok) {
+            return requirementsValidationResult;
         }
 
         if (buildingType == Units.Extractor) {
@@ -227,7 +259,7 @@ public static class Controller {
                 .FirstOrDefault(gas => UnitUtils.IsResourceManaged(gas) && !UnitUtils.IsGasExploited(gas));
 
             if (availableGas == null) {
-                return false;
+                return RequestResult.NoSuitableLocation;
             }
 
             producer.PlaceExtractor(buildingType, availableGas);
@@ -236,7 +268,7 @@ public static class Controller {
         }
         else if (location != default) {
             if (!BuildingTracker.CanPlace(buildingType, location)) {
-                return false;
+                return RequestResult.NoSuitableLocation;
             }
 
             producer.PlaceBuilding(buildingType, location);
@@ -252,23 +284,25 @@ public static class Controller {
         AvailableMinerals -= buildingTypeData.MineralCost;
         AvailableVespene -= buildingTypeData.VespeneCost;
 
-        return true;
+        return RequestResult.Ok;
     }
 
     public static bool CanPlace(uint unitType, Vector3 targetPos) {
         return BuildingTracker.CanPlace(unitType, targetPos);
     }
 
-    public static bool ResearchUpgrade(uint upgradeType) {
+    public static RequestResult ResearchUpgrade(uint upgradeType) {
         var producer = GetAvailableProducer(upgradeType, allowQueue: true);
 
         return ResearchUpgrade(upgradeType, producer);
     }
 
-    public static bool ResearchUpgrade(uint upgradeType, Unit producer) {
+    public static RequestResult ResearchUpgrade(uint upgradeType, Unit producer) {
         var researchTypeData = KnowledgeBase.GetUpgradeData(upgradeType);
-        if (producer == null || !CanAfford(researchTypeData) || !IsUnlocked(upgradeType)) {
-            return false;
+
+        var requirementsValidationResult = ValidateRequirements(upgradeType, producer, researchTypeData);
+        if (requirementsValidationResult != RequestResult.Ok) {
+            return requirementsValidationResult;
         }
 
         producer.ResearchUpgrade(upgradeType);
@@ -276,19 +310,21 @@ public static class Controller {
         AvailableMinerals -= researchTypeData.MineralCost;
         AvailableVespene -= researchTypeData.VespeneCost;
 
-        return true;
+        return RequestResult.Ok;
     }
 
-    public static bool UpgradeInto(uint buildingType) {
+    public static RequestResult UpgradeInto(uint buildingType) {
         var producer = GetAvailableProducer(buildingType);
 
         return UpgradeInto(buildingType, producer);
     }
 
-    public static bool UpgradeInto(uint buildingType, Unit producer) {
+    public static RequestResult UpgradeInto(uint buildingType, Unit producer) {
         var buildingTypeData = KnowledgeBase.GetUnitTypeData(buildingType);
-        if (producer == null || !CanAfford(buildingTypeData) || !IsUnlocked(buildingType)) {
-            return false;
+
+        var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
+        if (requirementsValidationResult != RequestResult.Ok) {
+            return requirementsValidationResult;
         }
 
         producer.UpgradeInto(buildingType);
@@ -296,20 +332,21 @@ public static class Controller {
         AvailableMinerals -= buildingTypeData.MineralCost;
         AvailableVespene -= buildingTypeData.VespeneCost;
 
-        return true;
+        return RequestResult.Ok;
     }
 
-    public static bool PlaceExpand(uint buildingType) {
+    public static RequestResult PlaceExpand(uint buildingType) {
         if (!MapAnalyzer.IsInitialized) {
-            return false;
+            return RequestResult.NotSupported;
         }
 
-        var expandLocation = MapAnalyzer.ExpandLocations
-            .Where(expandLocation => !GetUnits(OwnedUnits, Units.Hatchery).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius)) // Ignore expands that are taken
-            .OrderBy(expandLocation => StartingTownHall.DistanceTo(expandLocation))
-            .Take(3) // TODO GD Keep going if you don't find in the first 3
+        var expandLocation = GetFreeExpandLocations()
             .OrderBy(expandLocation => Pathfinder.FindPath(StartingTownHall.Position, expandLocation).Count)
-            .First(expandLocation => BuildingTracker.CanPlace(buildingType, expandLocation));
+            .FirstOrDefault(expandLocation => BuildingTracker.CanPlace(buildingType, expandLocation));
+
+        if (expandLocation == default) {
+            return RequestResult.NoSuitableLocation;
+        }
 
         return PlaceBuilding(buildingType, expandLocation);
     }
@@ -348,18 +385,17 @@ public static class Controller {
         }
     }
 
-    public static bool CanAfford(UpgradeData upgradeData)
+    public static RequestResult CanAfford(int mineralCost, int vespeneCost)
     {
-        return CanAfford(upgradeData.MineralCost, upgradeData.VespeneCost);
-    }
+        if (AvailableMinerals < mineralCost) {
+            return RequestResult.NotEnoughMinerals;
+        }
 
-    public static bool CanAfford(UnitTypeData unitTypeData) {
-        return CanAfford(unitTypeData.MineralCost, unitTypeData.VespeneCost);
-    }
+        if (AvailableVespene < vespeneCost) {
+            return RequestResult.NotEnoughVespeneGas;
+        }
 
-    public static bool CanAfford(int mineralCost, int vespeneCost)
-    {
-        return AvailableMinerals >= mineralCost && AvailableVespene >= vespeneCost;
+        return RequestResult.Ok;
     }
 
     public static bool IsUnlocked(uint unitType) {
@@ -370,12 +406,20 @@ public static class Controller {
         return true;
     }
 
-    public static bool HasEnoughSupply(uint unitType) {
-        return AvailableSupply >= KnowledgeBase.GetUnitTypeData(unitType).FoodRequired;
+    public static bool HasEnoughSupply(float foodCost) {
+        return AvailableSupply >= foodCost;
     }
 
     public static IEnumerable<Unit> GetMiningTownHalls() {
         return GetUnits(OwnedUnits, Units.Hatchery)
             .Where(townHall => MapAnalyzer.ExpandLocations.Any(expandLocation => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius));
+    }
+
+    // TODO GD Implement a more robust check
+    public static IEnumerable<Vector3> GetFreeExpandLocations() {
+        return MapAnalyzer.ExpandLocations
+            .Where(expandLocation => !GetUnits(OwnedUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
+            .Where(expandLocation => !GetUnits(EnemyUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
+            .Where(expandLocation => !GetUnits(NeutralUnits, Units.Destructibles).Any(destructible => destructible.DistanceTo(expandLocation) < ExpandIsTakenRadius));
     }
 }

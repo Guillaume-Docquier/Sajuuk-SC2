@@ -588,6 +588,13 @@ internal static class Units {
         UnbuildablePlatesDestructible,
     };
 
+    public static readonly HashSet<uint> TownHalls = new HashSet<uint>
+    {
+        Hatchery,
+        CommandCenter,
+        Nexus,
+    };
+
     public static readonly Dictionary<uint, HashSet<uint>> Producers = new Dictionary<uint, HashSet<uint>>
     {
         { Drone,                             new HashSet<uint> { Larva }},
@@ -672,6 +679,7 @@ internal static class Units {
         { Hatchery, new HashSet<uint> { Lair, Hive } },
         { Lair,     new HashSet<uint> { Hive } },
         { Spire,    new HashSet<uint> { GreaterSpire } },
+        { CommandCenter, new HashSet<uint> { OrbitalCommand, PlanetaryFortress } },
     };
 
     public static readonly Dictionary<uint, uint> Prerequisites = new Dictionary<uint, uint>

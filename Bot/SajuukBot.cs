@@ -47,9 +47,19 @@ public class SajuukBot: PoliteBot {
                 continue;
             }
 
-            while (!IsBuildOrderBlocking() && buildStep.Quantity > 0 && Controller.ExecuteBuildStep(buildStep)) {
-                buildStep.Quantity--;
-                FollowBuildOrder(); // Sometimes the build order will be unblocked
+            while (!IsBuildOrderBlocking() && buildStep.Quantity > 0) {
+                var buildStepResult = Controller.ExecuteBuildStep(buildStep);
+                if (buildStepResult == RequestResult.Ok) {
+                    buildStep.Quantity--;
+                    FollowBuildOrder(); // Sometimes the build order will be unblocked
+                }
+                // Don't retry expands if they are all taken
+                else if (buildStep.BuildType == BuildType.Expand && buildStepResult == RequestResult.NoSuitableLocation) {
+                    buildStep.Quantity--;
+                }
+                else {
+                    break;
+                }
             }
 
             // Ensure expands get made
@@ -74,7 +84,7 @@ public class SajuukBot: PoliteBot {
 
         while(_buildOrder.Count > 0) {
             var buildStep = _buildOrder.First();
-            if (Controller.CurrentSupply < buildStep.AtSupply || !Controller.ExecuteBuildStep(buildStep)) {
+            if (Controller.CurrentSupply < buildStep.AtSupply || Controller.ExecuteBuildStep(buildStep) != RequestResult.Ok) {
                 break;
             }
 
