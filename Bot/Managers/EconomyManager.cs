@@ -55,7 +55,7 @@ public class EconomyManager: IManager {
         _townHallManagers.ForEach(manager => manager.OnFrame());
 
         // Build macro hatches
-        if (!GetIdleLarvae().Any() && BankIsTooBig() && !HasEnoughMacroTownHalls()) {
+        if (ShouldBuildMacroHatch()) {
             _buildStepRequests[MacroHatchBuildRequestIndex].Quantity += 1;
             _buildStepRequests[QueenBuildRequestIndex].Quantity += 1;
         }
@@ -180,6 +180,19 @@ public class EconomyManager: IManager {
             .Select(dispatch => dispatch.Key);
     }
 
+    private Color GetNewExpandColor() {
+        // TODO GD Not very resilient, but simple enough for now
+        return _expandColors[_townHallDispatch.Count % _expandColors.Count];
+    }
+
+    private bool ShouldBuildMacroHatch() {
+        return _buildStepRequests[MacroHatchBuildRequestIndex].Quantity == 0
+               && BankIsTooBig()
+               && !GetIdleLarvae().Any()
+               && !HasEnoughMacroTownHalls()
+               && !GetTownHallsInConstruction().Any();
+    }
+
     private static IEnumerable<Unit> GetIdleLarvae() {
         return Controller.GetUnits(Controller.OwnedUnits, Units.Larva)
             .Where(larva => !larva.Orders.Any());
@@ -197,8 +210,9 @@ public class EconomyManager: IManager {
         return nbTownHalls >= Controller.GetMiningTownHalls().Count() * 2;
     }
 
-    private Color GetNewExpandColor() {
-        // TODO GD Not very resilient, but simple enough for now
-        return _expandColors[_townHallDispatch.Count % _expandColors.Count];
+    private static IEnumerable<Unit> GetTownHallsInConstruction() {
+        return Controller.GetUnits(Controller.OwnedUnits, Units.Hatchery)
+            .Where(townHall => !townHall.IsOperational)
+            .Concat(Controller.GetUnitsInProduction(Units.Hatchery));
     }
 }

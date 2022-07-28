@@ -10,6 +10,8 @@ namespace Bot;
 using BuildOrder = LinkedList<BuildOrders.BuildStep>;
 
 public class SajuukBot: PoliteBot {
+    private const int MaxDroneCount = 70;
+
     private readonly BuildOrder _buildOrder = BuildOrders.TwoBasesRoach();
     private readonly List<IManager> _managers = new List<IManager>();
 
@@ -37,11 +39,22 @@ public class SajuukBot: PoliteBot {
             _managerPriorityIndex = (_managerPriorityIndex + 1) % _managers.Count;
         }
 
+        // TODO GD Check if we should stop when we can't fulfill a build order
         // Do everything you can
         foreach (var buildStep in GetManagersBuildRequests()) {
+            // Cap the amount of drones
+            if (buildStep.UnitOrUpgradeType == Units.Drone && HasEnoughDrones()) {
+                continue;
+            }
+
             while (!IsBuildOrderBlocking() && buildStep.Quantity > 0 && Controller.ExecuteBuildStep(buildStep)) {
                 buildStep.Quantity--;
                 FollowBuildOrder(); // Sometimes the build order will be unblocked
+            }
+
+            // Ensure expands get made
+            if (buildStep.BuildType == BuildType.Expand && buildStep.Quantity > 0) {
+                break;
             }
         }
 
@@ -120,5 +133,9 @@ public class SajuukBot: PoliteBot {
             && !Controller.GetUnitsInProduction(Units.Overlord).Any()) {
             _buildOrder.AddFirst(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Overlord, 4));
         }
+    }
+
+    private static bool HasEnoughDrones() {
+        return Controller.GetUnits(Controller.OwnedUnits, Units.Drone).Count() >= MaxDroneCount;
     }
 }

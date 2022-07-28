@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Bot.GameData;
 using Bot.UnitModules;
+using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot.Managers;
@@ -125,7 +126,12 @@ public class TownHallManager: IManager {
 
     public void OnFrame() {
         // TODO GD They don't count the drone eggs, so they might request more drones than needed
-        _buildStepRequests[DronesBuildRequestIndex].Quantity = (uint)Math.Max(0, SaturatedAvailableCapacity);
+        // TODO GD This simple counter mesure will slow down the production and ensure we don't go over too much
+        if (TownHall.IsOperational) {
+            _buildStepRequests[DronesBuildRequestIndex].Quantity = (uint)Math.Max(0, SaturatedAvailableCapacity - Controller.GetUnitsInProduction(Units.Drone).Count());
+        }
+
+        DrawAvailableCapacityInfo();
 
         HandleDepletedGasses();
         DiscoverExtractors(Controller.NewOwnedUnits);
@@ -140,7 +146,7 @@ public class TownHallManager: IManager {
     public void Retire() {
         UnitModule.Uninstall<DebugLocationModule>(TownHall);
 
-        _workers.ForEach(worker => ReleaseWorker(worker));
+        _workers.ToList().ForEach(worker => ReleaseWorker(worker));
 
         _minerals.ForEach(mineral => {
             mineral.RemoveDeathWatcher(this);
@@ -176,6 +182,7 @@ public class TownHallManager: IManager {
         worker.RemoveDeathWatcher(this);
         UnitModule.Uninstall<DebugLocationModule>(worker);
         UnitModule.Uninstall<MiningModule>(worker);
+        _workers.Remove(worker);
 
         return worker;
     }
@@ -308,9 +315,20 @@ public class TownHallManager: IManager {
     }
 
     private void RequestExpand() {
+        // TODO GD Gas won't be taken automatically
+        // TODO GD There should be a switch that tells managers to auto manage queens and extractor
         _buildStepRequests[ExpandBuildRequestIndex].Quantity += 1;
         _buildStepRequests[QueenBuildRequestIndex].Quantity += 1;
 
         _expandHasBeenRequested = true;
+    }
+
+    private void DrawAvailableCapacityInfo() {
+        GraphicalDebugger.AddTextGroup(new[]
+            {
+                $"IdealAvailableCapacity: {IdealAvailableCapacity}",
+                $"SaturatedAvailableCapacity: {SaturatedAvailableCapacity}",
+            },
+            worldPos: TownHall.Position.Translate(xTranslation: -2.5f, yTranslation: 1f).ToPoint());
     }
 }
