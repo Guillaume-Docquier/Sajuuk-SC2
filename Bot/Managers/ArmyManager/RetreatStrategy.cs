@@ -56,8 +56,7 @@ public partial class ArmyManager {
             GraphicalDebugger.AddSphere(retreatPosition, AcceptableDistanceToTarget, Colors.Yellow);
             GraphicalDebugger.AddText("Retreat", worldPos: retreatPosition.ToPoint());
 
-            soldiers.Where(unit => !unit.IsAlreadyTargeting(retreatPosition))
-                .Where(unit => unit.DistanceTo(retreatPosition) > AcceptableDistanceToTarget)
+            soldiers.Where(unit => unit.DistanceTo(retreatPosition) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.Move(retreatPosition));
 

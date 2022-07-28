@@ -31,7 +31,7 @@ public class TargetNeutralUnitsModule: IUnitModule {
             .Where(neutralUnit => !neutralUnit.RawUnitData.IsFlying)
             .FirstOrDefault(neutralUnit => neutralUnit.Position.HorizontalDistance(_unit.Position) <= _unit.UnitTypeData.SightRange);
 
-        if (neutralUnitInRange != null && !_unit.IsAlreadyAttacking(neutralUnitInRange)) {
+        if (neutralUnitInRange != null) {
             _unit.Attack(neutralUnitInRange);
         }
     }

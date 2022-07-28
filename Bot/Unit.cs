@@ -70,45 +70,33 @@ public class Unit: ICanDie {
         return Vector3.Distance(Position, location);
     }
 
-    private void FocusCamera() {
-        var action = new Action
-        {
-            ActionRaw = new ActionRaw
-            {
-                CameraMove = new ActionRawCameraMove
-                {
-                    CenterWorldSpace = new Point
-                    {
-                        X = Position.X,
-                        Y = Position.Y,
-                        Z = Position.Z
-                    }
-                }
-            }
-        };
-
-        ProcessAction(action);
-    }
-
     public void Move(Vector3 target) {
+        if (IsAlreadyTargeting(target)) {
+            return;
+        }
+
         ProcessAction(ActionBuilder.Move(Tag, target));
     }
 
     public void Attack(Unit target) {
+        if (IsAlreadyAttacking(target)) {
+            return;
+        }
+
         ProcessAction(ActionBuilder.Attack(Tag, target.Tag));
     }
 
     public void AttackMove(Vector3 target) {
+        if (IsAlreadyTargeting(target)) {
+            return;
+        }
+
         if (RawUnitData.IsBurrowed) {
             Move(target);
         }
         else {
             ProcessAction(ActionBuilder.AttackMove(Tag, target));
         }
-    }
-
-    public void Smart(Unit unit) {
-        ProcessAction(ActionBuilder.Smart(Tag, unit.Tag));
     }
 
     public void TrainUnit(uint unitType, bool queue = false) {
@@ -251,14 +239,14 @@ public class Unit: ICanDie {
         return Orders.All(order => order.AbilityId is Abilities.Move or Abilities.Attack);
     }
 
-    public bool IsAlreadyTargeting(Vector3 target) {
+    private bool IsAlreadyTargeting(Vector3 target) {
         var targetAsPoint = target.ToPoint();
         targetAsPoint.Z = 0;
 
         return Orders.Any(order => order.TargetWorldSpacePos != null && order.TargetWorldSpacePos.Equals(targetAsPoint));
     }
 
-    public bool IsAlreadyAttacking(Unit unit) {
+    private bool IsAlreadyAttacking(Unit unit) {
         return Orders.Any(order => order.TargetUnitTag == unit.Tag);
     }
 

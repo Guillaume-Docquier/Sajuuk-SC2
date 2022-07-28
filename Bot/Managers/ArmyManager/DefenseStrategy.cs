@@ -61,7 +61,6 @@ public partial class ArmyManager {
 
             if (targetList.Any()) {
                 soldiers.Where(unit => unit.IsMovingOrAttacking())
-                    .Where(unit => !unit.IsAlreadyTargeting(targetToDefend))
                     .Where(unit => !unit.RawUnitData.IsBurrowed)
                     .ToList()
                     .ForEach(soldier => {
@@ -85,8 +84,7 @@ public partial class ArmyManager {
             GraphicalDebugger.AddSphere(rallyPoint, AcceptableDistanceToTarget, Colors.Blue);
             GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToPoint());
 
-            soldiers.Where(unit => !unit.IsAlreadyTargeting(rallyPoint))
-                .Where(unit => unit.DistanceTo(rallyPoint) > AcceptableDistanceToTarget)
+            soldiers.Where(unit => unit.DistanceTo(rallyPoint) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.AttackMove(rallyPoint));
 

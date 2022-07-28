@@ -146,14 +146,12 @@ public partial class ArmyManager {
 
         private static void AttackMove(Vector3 targetToAttack, IEnumerable<Unit> soldiers) {
             soldiers
-                .Where(unit => !unit.IsAlreadyTargeting(targetToAttack))
                 .ToList()
                 .ForEach(unit => unit.AttackMove(targetToAttack));
         }
 
         private static void Attack(Unit targetToAttack, IEnumerable<Unit> soldiers) {
             soldiers
-                .Where(unit => !unit.IsAlreadyAttacking(targetToAttack))
                 .ToList()
                 .ForEach(unit => unit.Attack(targetToAttack));
         }

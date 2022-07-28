@@ -53,8 +53,7 @@ public partial class ArmyManager {
             GraphicalDebugger.AddSphere(growPosition, AcceptableDistanceToTarget, Colors.Yellow);
             GraphicalDebugger.AddText("Grow", worldPos: growPosition.ToPoint());
 
-            soldiers.Where(unit => !unit.IsAlreadyTargeting(growPosition))
-                .Where(unit => unit.DistanceTo(growPosition) > AcceptableDistanceToTarget)
+            soldiers.Where(unit => unit.DistanceTo(growPosition) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.AttackMove(growPosition));
 
