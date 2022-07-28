@@ -101,15 +101,15 @@ public class SajuukBot: PoliteBot {
     }
 
     private IEnumerable<BuildOrders.BuildStep> GetManagersBuildRequests() {
-        for (var managerIndex = 0; managerIndex < _managers.Count; managerIndex++) {
-            var index = (_managerPriorityIndex + managerIndex) % _managers.Count;
+        var buildRequests = new List<BuildOrders.BuildStep>();
+        for (var i = 0; i < _managers.Count; i++) {
+            var managerIndex = (_managerPriorityIndex + i) % _managers.Count;
 
-            foreach (var buildRequest in _managers[index].BuildStepRequests) {
-                if (buildRequest.Quantity > 0) {
-                    yield return buildRequest;
-                }
-            }
+            buildRequests.AddRange(_managers[managerIndex].BuildStepRequests.Where(buildRequest => buildRequest.Quantity > 0));
         }
+
+        // Prioritize expands
+        return buildRequests.OrderBy(buildRequest => buildRequest.BuildType == BuildType.Expand ? 0 : 1);
     }
 
     // TODO GD Handle overlords dying early game

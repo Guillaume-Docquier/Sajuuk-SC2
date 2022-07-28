@@ -261,4 +261,10 @@ public class Unit: ICanDie {
     public bool IsAlreadyAttacking(Unit unit) {
         return Orders.Any(order => order.TargetUnitTag == unit.Tag);
     }
+
+    public bool IsBuilding(uint buildingType) {
+        var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingType).AbilityId;
+
+        return Orders.Any(order => order.AbilityId == buildingAbilityId);
+    }
 }

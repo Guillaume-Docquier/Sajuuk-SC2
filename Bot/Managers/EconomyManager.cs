@@ -11,7 +11,7 @@ public class EconomyManager: IManager {
     private const int MacroHatchBuildRequestIndex = 0;
     private const int QueenBuildRequestIndex = 1;
 
-    private readonly List<TownHallManager> _miningManagers = new List<TownHallManager>();
+    private readonly List<TownHallManager> _townHallManagers = new List<TownHallManager>();
     private readonly Dictionary<Unit, TownHallManager> _townHallDispatch = new Dictionary<Unit, TownHallManager>();
     private readonly Dictionary<Unit, TownHallManager> _queenDispatch = new Dictionary<Unit, TownHallManager>();
     private readonly Dictionary<Unit, TownHallManager> _workerDispatch = new Dictionary<Unit, TownHallManager>();
@@ -30,7 +30,7 @@ public class EconomyManager: IManager {
         new BuildOrders.BuildStep(BuildType.Train, 0, Units.Queen, 0),
     };
 
-    public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests.Concat(_miningManagers.SelectMany(manager => manager.BuildStepRequests));
+    public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests.Concat(_townHallManagers.SelectMany(manager => manager.BuildStepRequests));
 
     public EconomyManager() {
         ManageTownHalls(Controller.GetUnits(Controller.OwnedUnits, Units.Hatchery));
@@ -45,12 +45,14 @@ public class EconomyManager: IManager {
         workersToDispatch.AddRange(GetIdleWorkers());
         DispatchWorkers(workersToDispatch);
 
+        EqualizeWorkers();
+
         var queensToDispatch = Controller.GetUnits(Controller.NewOwnedUnits, Units.Queen).ToList();
         queensToDispatch.AddRange(GetIdleQueens());
         DispatchQueens(queensToDispatch);
 
         // Execute managers
-        _miningManagers.ForEach(manager => manager.OnFrame());
+        _townHallManagers.ForEach(manager => manager.OnFrame());
 
         // Build macro hatches
         if (!GetIdleLarvae().Any() && BankIsTooBig() && !HasEnoughMacroTownHalls()) {
@@ -73,7 +75,7 @@ public class EconomyManager: IManager {
                     .ForEach(dispatch => _workerDispatch[dispatch.Key] = null);
 
                 _townHallDispatch.Remove(deadUnit);
-                _miningManagers.Remove(manager);
+                _townHallManagers.Remove(manager);
                 manager.Retire();
                 break;
             case Units.Drone:
@@ -89,9 +91,9 @@ public class EconomyManager: IManager {
         foreach (var townHall in townHalls) {
             townHall.AddDeathWatcher(this);
 
-            var miningManager = new TownHallManager(townHall, _expandColors[_townHallDispatch.Count]); // TODO GD Not very resilient, but simple enough for now
+            var miningManager = new TownHallManager(townHall, GetNewExpandColor());
             _townHallDispatch[townHall] = miningManager;
-            _miningManagers.Add(miningManager);
+            _townHallManagers.Add(miningManager);
         }
     }
 
@@ -105,6 +107,23 @@ public class EconomyManager: IManager {
 
             _workerDispatch[worker] = manager;
             manager.AssignWorker(worker);
+        }
+    }
+
+    private void EqualizeWorkers() {
+        var managerInNeed = GetClosestManagerWithIdealCapacityNotMet(Controller.StartingTownHall);
+        while (managerInNeed != null) {
+            var requiredWorkers = managerInNeed.IdealAvailableCapacity;
+            var managerWithExtraWorkers = _townHallManagers.FirstOrDefault(manager => manager.IdealAvailableCapacity < 0); // Negative IdealAvailableCapacity means they have extra workers
+            if (managerWithExtraWorkers == null) {
+                break;
+            }
+
+            var nbWorkersToRelease = Math.Min(-1 * managerWithExtraWorkers.IdealAvailableCapacity, requiredWorkers);
+            var freeWorkers = managerWithExtraWorkers.ReleaseWorkers(nbWorkersToRelease);
+            managerInNeed.AssignWorkers(freeWorkers.ToList());
+
+            managerInNeed = GetClosestManagerWithIdealCapacityNotMet(Controller.StartingTownHall);
         }
     }
 
@@ -142,11 +161,11 @@ public class EconomyManager: IManager {
     }
 
     private IEnumerable<TownHallManager> GetAvailableManagers() {
-        return _miningManagers.Where(manager => manager.TownHall.IsOperational);
+        return _townHallManagers.Where(manager => manager.TownHall.IsOperational);
     }
 
     private IEnumerable<TownHallManager> GetUnavailableManagers() {
-        return _miningManagers.Where(manager => !manager.TownHall.IsOperational);
+        return _townHallManagers.Where(manager => !manager.TownHall.IsOperational);
     }
 
     private IEnumerable<Unit> GetIdleWorkers() {
@@ -171,6 +190,15 @@ public class EconomyManager: IManager {
     }
 
     private bool HasEnoughMacroTownHalls() {
-        return _townHallDispatch.Count >= Controller.GetMiningTownHalls().Count() * 2;
+        var nbTownHalls = _townHallDispatch.Count
+                          + Controller.GetUnits(Controller.OwnedUnits, Units.Producers[Units.Hatchery]).Count(producer => producer.IsBuilding(Units.Hatchery))
+                          + _buildStepRequests[MacroHatchBuildRequestIndex].Quantity;
+
+        return nbTownHalls >= Controller.GetMiningTownHalls().Count() * 2;
+    }
+
+    private Color GetNewExpandColor() {
+        // TODO GD Not very resilient, but simple enough for now
+        return _expandColors[_townHallDispatch.Count % _expandColors.Count];
     }
 }

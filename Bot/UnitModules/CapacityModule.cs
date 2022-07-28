@@ -27,6 +27,19 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
         AssignedUnits.AddRange(units);
     }
 
+    public Unit ReleaseOne() {
+        if (AssignedUnits.Count <= 0) {
+            Logger.Error("Trying to release one unit from CapacityModule, but there's no assigned units");
+            return null;
+        }
+
+        var unitToRelease = AssignedUnits[0];
+
+        Release(unitToRelease);
+
+        return unitToRelease;
+    }
+
     public void Release(Unit unitToRelease) {
         unitToRelease.RemoveDeathWatcher(this);
         AssignedUnits.Remove(unitToRelease);

@@ -8,9 +8,6 @@ using SC2APIProtocol;
 namespace Bot.Managers;
 
 public class TownHallManager: IManager {
-    private const int QueenBuildRequestIndex = 0;
-    private const int DronesBuildRequestIndex = 1;
-
     private const int MaxGas = 2;
     private const int MaxExtractorsPerGas = 1;
     private const int MaxPerExtractor = 3;
@@ -18,6 +15,8 @@ public class TownHallManager: IManager {
     private const int IdealPerMinerals = 2;
     private const int MaxPerMinerals = 3;
     private const int MaxDistanceToExpand = 10;
+
+    private bool _expandHasBeenRequested = false;
 
     public readonly Unit TownHall;
     public Unit Queen;
@@ -28,8 +27,12 @@ public class TownHallManager: IManager {
     private readonly List<Unit> _minerals;
     private readonly List<Unit> _gasses;
 
+    private const int ExpandBuildRequestIndex = 0;
+    private const int QueenBuildRequestIndex = 1;
+    private const int DronesBuildRequestIndex = 2;
     private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>
     {
+        new BuildOrders.BuildStep(BuildType.Expand, 0, Units.Hatchery, 0),
         new BuildOrders.BuildStep(BuildType.Train, 0, Units.Queen, 0),
         new BuildOrders.BuildStep(BuildType.Train, 0, Units.Drone, 0),
     };
@@ -96,6 +99,30 @@ public class TownHallManager: IManager {
         DispatchWorkers(workers);
     }
 
+    public IEnumerable<Unit> ReleaseWorkers(int count) {
+        foreach (var idleWorker in GetIdleWorkers().Take(count)) {
+            yield return ReleaseWorker(idleWorker);
+            count -= 1;
+        }
+
+        while (count > 0) {
+            var maxWorkersOnMineral = _minerals.Max(mineral => UnitModule.Get<CapacityModule>(mineral).AssignedUnits.Count);
+            if (maxWorkersOnMineral == 0) {
+                Logger.Error("Trying to release mining workers, but there's no mining workers");
+                break;
+            }
+
+            var capacityModulesToPickFrom = _minerals.Select(UnitModule.Get<CapacityModule>)
+                    .Where(capacityModule => capacityModule.AssignedUnits.Count == maxWorkersOnMineral)
+                    .Take(count);
+
+            foreach (var capacityModuleToPickFrom in capacityModulesToPickFrom) {
+                yield return ReleaseWorker(capacityModuleToPickFrom.ReleaseOne());
+                count--;
+            }
+        }
+    }
+
     public void OnFrame() {
         // TODO GD They don't count the drone eggs, so they might request more drones than needed
         _buildStepRequests[DronesBuildRequestIndex].Quantity = (uint)Math.Max(0, SaturatedAvailableCapacity);
@@ -113,11 +140,7 @@ public class TownHallManager: IManager {
     public void Retire() {
         UnitModule.Uninstall<DebugLocationModule>(TownHall);
 
-        _workers.ForEach(worker => {
-            worker.RemoveDeathWatcher(this);
-            UnitModule.Uninstall<DebugLocationModule>(worker);
-            UnitModule.Uninstall<MiningModule>(worker);
-        });
+        _workers.ForEach(worker => ReleaseWorker(worker));
 
         _minerals.ForEach(mineral => {
             mineral.RemoveDeathWatcher(this);
@@ -144,6 +167,19 @@ public class TownHallManager: IManager {
         }
     }
 
+    private Unit ReleaseWorker(Unit worker) {
+        if (worker == null) {
+            Logger.Error("Trying to release a null worker");
+            return null;
+        }
+
+        worker.RemoveDeathWatcher(this);
+        UnitModule.Uninstall<DebugLocationModule>(worker);
+        UnitModule.Uninstall<MiningModule>(worker);
+
+        return worker;
+    }
+
     public void ReportUnitDeath(Unit deadUnit) {
         if (deadUnit.UnitType == Units.Drone) {
             _workers.Remove(deadUnit);
@@ -151,13 +187,17 @@ public class TownHallManager: IManager {
         else if (Units.MineralFields.Contains(deadUnit.UnitType)) {
             _minerals.Remove(deadUnit);
             UnitModule.Get<CapacityModule>(deadUnit).AssignedUnits.ForEach(worker => UnitModule.Uninstall<MiningModule>(worker));
+
+            if (!_expandHasBeenRequested) {
+                RequestExpand();
+            }
         }
         else if (deadUnit.UnitType == Units.Extractor) {
             HandleDeadExtractor(deadUnit);
         }
         else if (deadUnit.UnitType == Units.Queen) {
             Queen = null;
-            _buildStepRequests[QueenBuildRequestIndex].Quantity = 1;
+            _buildStepRequests[QueenBuildRequestIndex].Quantity += 1;
         }
     }
 
@@ -265,5 +305,12 @@ public class TownHallManager: IManager {
         if (capacityModule != null) {
             capacityModule.AssignedUnits.ForEach(worker => UnitModule.Uninstall<MiningModule>(worker));
         }
+    }
+
+    private void RequestExpand() {
+        _buildStepRequests[ExpandBuildRequestIndex].Quantity += 1;
+        _buildStepRequests[QueenBuildRequestIndex].Quantity += 1;
+
+        _expandHasBeenRequested = true;
     }
 }

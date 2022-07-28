@@ -10,7 +10,7 @@ public class WarManager: IManager {
     private const int GuardDistance = 8;
     private const int GuardRadius = 8;
     private const int AttackRadius = 999; // Basically the whole map
-    private const int SupplyRequiredBeforeAttacking = 18;
+    private const int ForceRequiredBeforeAttacking = 18;
 
     private bool _hasAssaultStarted = false;
 
@@ -27,15 +27,26 @@ public class WarManager: IManager {
         _townHallToDefend = Controller.StartingTownHall;
     }
 
+    // TODO GD Use queens?
+    // TODO GD Use multiple managers, probably
     public void OnFrame() {
-        // Assign forces
-        // TODO GD Use queens
         var newSoldiers = Controller.GetUnits(Controller.NewOwnedUnits, Units.ZergMilitary).ToList();
         _armyManager.Assign(newSoldiers);
 
-        // TODO GD Use multiple managers, probably
-
         var enemyPosition = Controller.EnemyLocations[0];
+
+        if (!_hasAssaultStarted) {
+            DefendNewTownHalls(enemyPosition);
+        }
+
+        if (!_hasAssaultStarted && _armyManager.Army.GetForce() >= ForceRequiredBeforeAttacking) {
+            StartTheAssault(enemyPosition);
+        }
+
+        _armyManager.OnFrame();
+    }
+
+    private void DefendNewTownHalls(Vector3 enemyPosition) {
         var currentDistanceToEnemy = Pathfinder.FindPath(_townHallToDefend.Position, enemyPosition).Count; // Not exact, but the distance difference should not matter
         var newTownHallToDefend = Controller.GetUnits(Controller.NewOwnedUnits, Units.Hatchery)
             .FirstOrDefault(townHall => Pathfinder.FindPath(townHall.Position, enemyPosition).Count < currentDistanceToEnemy);
@@ -45,18 +56,16 @@ public class WarManager: IManager {
             _armyManager.Assign(GetTownHallDefensePosition(newTownHallToDefend, Controller.EnemyLocations[0]), GuardRadius, false);
             _townHallToDefend = newTownHallToDefend;
         }
+    }
 
-        if (_armyManager.Army.GetForce() >= SupplyRequiredBeforeAttacking && !_hasAssaultStarted) {
-            _hasAssaultStarted = true;
-            _armyManager.Assign(enemyPosition, AttackRadius);
+    private void StartTheAssault(Vector3 enemyPosition) {
+        _hasAssaultStarted = true;
+        _armyManager.Assign(enemyPosition, AttackRadius);
 
-            // TODO GD Handle this better
-            if (_buildStepRequests.Count == 0) {
-                _buildStepRequests.Add(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Roach, 1000));
-            }
+        // TODO GD Handle this better
+        if (_buildStepRequests.Count == 0) {
+            _buildStepRequests.Add(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Roach, 1000));
         }
-
-        _armyManager.OnFrame();
     }
 
     public void Retire() {
