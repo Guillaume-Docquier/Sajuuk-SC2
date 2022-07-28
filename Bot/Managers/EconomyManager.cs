@@ -198,6 +198,7 @@ public class EconomyManager: IManager {
             .Where(larva => !larva.Orders.Any());
     }
 
+    // TODO GD This should increase for every macro hatch built?
     private static bool BankIsTooBig() {
         return Controller.AvailableMinerals > KnowledgeBase.GetUnitTypeData(Units.Hatchery).MineralCost * 2;
     }

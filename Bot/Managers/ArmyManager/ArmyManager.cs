@@ -48,6 +48,7 @@ public partial class ArmyManager: IManager {
             return;
         }
 
+        // TODO GD Tweak this, the cluster gets broken when it shouldn't
         _mainArmy = Clustering.DBSCAN(Army, 3, 3).MaxBy(army => army.GetForce());
         _mainArmy ??= Army;
 
