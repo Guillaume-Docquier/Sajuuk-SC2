@@ -84,6 +84,7 @@ public class UnitsTracker {
 
         // Update unit lists
         OwnedUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Self).Select(unit => unit.Value).ToList();
+        NeutralUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Neutral).Select(unit => unit.Value).ToList();
         EnemyUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Enemy).Select(unit => unit.Value).ToList();
     }
 
@@ -92,8 +93,8 @@ public class UnitsTracker {
 
         UnitsByTag = units.ToDictionary(unit => unit.Tag);
 
-        NeutralUnits = units.Where(unit => unit.Alliance == Alliance.Neutral).ToList();
         OwnedUnits = units.Where(unit => unit.Alliance == Alliance.Self).ToList();
+        NeutralUnits = units.Where(unit => unit.Alliance == Alliance.Neutral).ToList();
         EnemyUnits = units.Where(unit => unit.Alliance == Alliance.Enemy).ToList();
 
         _isInitialized = true;

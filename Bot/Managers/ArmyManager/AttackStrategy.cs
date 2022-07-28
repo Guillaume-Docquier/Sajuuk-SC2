@@ -11,7 +11,7 @@ public partial class ArmyManager {
     public class AttackStrategy : IStrategy {
         private const int ReasonableMoveDelay = (int)(5 * Controller.FramesPerSecond);
         private const float NegligibleMovement = 2f;
-        private const float RocksDestructionRange = 12f;
+        private const float RocksDestructionRange = 9f;
         private const float AcceptableDistanceToTarget = 3;
         private const float MaxDistanceForPathfinding = 50;
         private const int PathfindingStep = 3;
