@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.GameData;
 using Bot.Wrapper;
@@ -8,10 +7,10 @@ using SC2APIProtocol;
 namespace Bot.Managers;
 
 public class EconomyManager: IManager {
-    private readonly List<MiningManager> _miningManagers = new List<MiningManager>();
-    private readonly Dictionary<Unit, MiningManager> _townHallDispatch = new Dictionary<Unit, MiningManager>();
-    private readonly Dictionary<Unit, MiningManager> _queenDispatch = new Dictionary<Unit, MiningManager>();
-    private readonly Dictionary<Unit, MiningManager> _workerDispatch = new Dictionary<Unit, MiningManager>();
+    private readonly List<TownHallManager> _miningManagers = new List<TownHallManager>();
+    private readonly Dictionary<Unit, TownHallManager> _townHallDispatch = new Dictionary<Unit, TownHallManager>();
+    private readonly Dictionary<Unit, TownHallManager> _queenDispatch = new Dictionary<Unit, TownHallManager>();
+    private readonly Dictionary<Unit, TownHallManager> _workerDispatch = new Dictionary<Unit, TownHallManager>();
     private readonly List<Color> _expandColors = new List<Color>
     {
         Colors.Maroon3,
@@ -77,7 +76,7 @@ public class EconomyManager: IManager {
         foreach (var townHall in townHalls) {
             townHall.AddDeathWatcher(this);
 
-            var miningManager = new MiningManager(townHall, _expandColors[_townHallDispatch.Count]); // TODO GD Not very resilient, but simple enough for now
+            var miningManager = new TownHallManager(townHall, _expandColors[_townHallDispatch.Count]); // TODO GD Not very resilient, but simple enough for now
             _townHallDispatch[townHall] = miningManager;
             _miningManagers.Add(miningManager);
         }
@@ -107,33 +106,29 @@ public class EconomyManager: IManager {
         }
     }
 
-    private MiningManager GetClosestManagerWithIdealCapacityNotMet(Unit worker) {
+    private TownHallManager GetClosestManagerWithIdealCapacityNotMet(Unit worker) {
         return GetAvailableManagers()
             .Where(manager => manager.IdealAvailableCapacity > 0)
-            .OrderBy(manager => manager.TownHall.DistanceTo(worker))
-            .FirstOrDefault();
+            .MinBy(manager => manager.TownHall.DistanceTo(worker));
     }
 
-    private MiningManager GetClosestManagerWithSaturatedCapacityNotMet(Unit worker) {
+    private TownHallManager GetClosestManagerWithSaturatedCapacityNotMet(Unit worker) {
         return GetAvailableManagers()
             .Where(manager => manager.SaturatedAvailableCapacity > 0)
-            .OrderBy(manager => manager.TownHall.DistanceTo(worker))
-            .FirstOrDefault();
+            .MinBy(manager => manager.TownHall.DistanceTo(worker));
     }
 
-    private MiningManager GetManagerWithHighestAvailableCapacity() {
-        return GetAvailableManagers()
-            .OrderByDescending(manager => manager.SaturatedAvailableCapacity)
-            .FirstOrDefault();
+    private TownHallManager GetManagerWithHighestAvailableCapacity() {
+        return GetAvailableManagers().MaxBy(manager => manager.SaturatedAvailableCapacity);
     }
 
-    private MiningManager GetClosestManagerWithNoQueen(Unit queen) {
+    private TownHallManager GetClosestManagerWithNoQueen(Unit queen) {
         return GetAvailableManagers()
             .OrderBy(manager => manager.TownHall.DistanceTo(queen))
             .FirstOrDefault(manager => manager.Queen == null);
     }
 
-    private IEnumerable<MiningManager> GetAvailableManagers() {
+    private IEnumerable<TownHallManager> GetAvailableManagers() {
         return _miningManagers.Where(manager => manager.TownHall.IsOperational);
     }
 

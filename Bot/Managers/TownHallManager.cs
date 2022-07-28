@@ -7,7 +7,10 @@ using SC2APIProtocol;
 
 namespace Bot.Managers;
 
-public class MiningManager: IManager {
+public class TownHallManager: IManager {
+    private const int DronesBuildRequestIndex = 0;
+    private const int QueenBuildRequestIndex = 1;
+
     private const int MaxGas = 2;
     private const int MaxExtractorsPerGas = 1;
     private const int MaxPerExtractor = 3;
@@ -25,13 +28,18 @@ public class MiningManager: IManager {
     private readonly List<Unit> _minerals;
     private readonly List<Unit> _gasses;
 
-    private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep> { new BuildOrders.BuildStep(BuildType.Train, 0, Units.Drone, 0) };
+    private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>
+    {
+        new BuildOrders.BuildStep(BuildType.Train, 0, Units.Drone, 0),
+        new BuildOrders.BuildStep(BuildType.Train, 0, Units.Queen, 0),
+    };
+
     public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests;
 
     public int IdealAvailableCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor - _workers.Count;
     public int SaturatedAvailableCapacity => IdealAvailableCapacity + _minerals.Count; // Can allow 1 more per mineral patch
 
-    public MiningManager(Unit townHall, Color color) {
+    public TownHallManager(Unit townHall, Color color) {
         TownHall = townHall;
         _color = color;
 
@@ -89,8 +97,8 @@ public class MiningManager: IManager {
     }
 
     public void OnFrame() {
-        // TODO GD They don't count the drone eggs, so they'll always request more drones than needed
-        _buildStepRequests[0].Quantity = (uint)Math.Max(0, SaturatedAvailableCapacity);
+        // TODO GD They don't count the drone eggs, so they might request more drones than needed
+        _buildStepRequests[DronesBuildRequestIndex].Quantity = (uint)Math.Max(0, SaturatedAvailableCapacity);
 
         HandleDepletedGasses();
         DiscoverExtractors(Controller.NewOwnedUnits);
@@ -149,6 +157,7 @@ public class MiningManager: IManager {
         }
         else if (deadUnit.UnitType == Units.Queen) {
             Queen = null;
+            _buildStepRequests[QueenBuildRequestIndex].Quantity = 1;
         }
     }
 
