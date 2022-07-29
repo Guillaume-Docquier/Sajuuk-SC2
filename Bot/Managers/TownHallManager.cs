@@ -143,6 +143,20 @@ public class TownHallManager: IManager {
         }
     }
 
+    public void Release(Unit unit) {
+        if (unit == null) {
+            return;
+        }
+
+        if (Queen == unit) {
+            ReleaseQueen();
+        }
+
+        if (_workers.Contains(unit)) {
+            ReleaseWorker(unit);
+        }
+    }
+
     public void Retire() {
         UnitModule.Uninstall<DebugLocationModule>(TownHall);
 
@@ -167,9 +181,7 @@ public class TownHallManager: IManager {
         });
 
         if (Queen != null) {
-            Queen.RemoveDeathWatcher(this);
-            UnitModule.Uninstall<DebugLocationModule>(Queen);
-            UnitModule.Uninstall<QueenMicroModule>(Queen);
+            ReleaseQueen();
         }
     }
 
@@ -185,6 +197,12 @@ public class TownHallManager: IManager {
         _workers.Remove(worker);
 
         return worker;
+    }
+
+    private void ReleaseQueen() {
+        Queen.RemoveDeathWatcher(this);
+        UnitModule.Uninstall<DebugLocationModule>(Queen);
+        UnitModule.Uninstall<QueenMicroModule>(Queen);
     }
 
     public void ReportUnitDeath(Unit deadUnit) {

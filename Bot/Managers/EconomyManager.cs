@@ -61,6 +61,15 @@ public class EconomyManager: IManager {
         }
     }
 
+    public void Release(Unit unit) {
+        if (_workerDispatch.TryGetValue(unit, out var townHallManager)) {
+            townHallManager.Release(unit);
+
+            _workerDispatch.Remove(unit);
+            unit.RemoveDeathWatcher(this);
+        }
+    }
+
     public void Retire() {
         throw new System.NotImplementedException();
     }
@@ -90,6 +99,7 @@ public class EconomyManager: IManager {
     private void ManageTownHalls(IEnumerable<Unit> townHalls) {
         foreach (var townHall in townHalls) {
             townHall.AddDeathWatcher(this);
+            townHall.Manager = this;
 
             var miningManager = new TownHallManager(townHall, GetNewExpandColor());
             _townHallDispatch[townHall] = miningManager;
@@ -100,6 +110,7 @@ public class EconomyManager: IManager {
     private void DispatchWorkers(List<Unit> workers) {
         foreach (var worker in workers) {
             worker.AddDeathWatcher(this);
+            worker.Manager = this;
 
             var manager = GetClosestManagerWithIdealCapacityNotMet(worker);
             manager ??= GetClosestManagerWithSaturatedCapacityNotMet(worker);
@@ -130,6 +141,7 @@ public class EconomyManager: IManager {
     private void DispatchQueens(List<Unit> queens) {
         foreach (var queen in queens) {
             queen.AddDeathWatcher(this);
+            queen.Manager = this;
 
             var manager = GetClosestManagerWithNoQueen(queen);
 

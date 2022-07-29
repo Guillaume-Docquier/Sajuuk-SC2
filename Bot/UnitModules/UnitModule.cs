@@ -6,6 +6,7 @@ namespace Bot.UnitModules;
 public static class UnitModule {
     private static readonly Dictionary<Type, string> Tags = new Dictionary<Type, string>()
     {
+        { typeof(AttackPriorityModule), AttackPriorityModule.Tag },
         { typeof(BurrowMicroModule), BurrowMicroModule.Tag },
         { typeof(CapacityModule), CapacityModule.Tag },
         { typeof(DebugLocationModule), DebugLocationModule.Tag },
@@ -13,6 +14,7 @@ public static class UnitModule {
         { typeof(MiningModule), MiningModule.Tag },
         { typeof(QueenMicroModule), QueenMicroModule.Tag },
         { typeof(TargetingModule), TargetingModule.Tag },
+        { typeof(TargetNeutralUnitsModule), TargetNeutralUnitsModule.Tag },
     };
 
     public static T Uninstall<T>(Unit unit) where T: class, IUnitModule {

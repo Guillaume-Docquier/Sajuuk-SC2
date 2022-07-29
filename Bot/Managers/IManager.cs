@@ -7,5 +7,7 @@ public interface IManager: IWatchUnitsDie {
 
     void OnFrame();
 
+    void Release(Unit unit);
+
     void Retire();
 }

@@ -71,6 +71,15 @@ public partial class ArmyManager: IManager {
         _strategy.Execute();
     }
 
+    public void Release(Unit unit) {
+        if (Army.Contains(unit)) {
+            Army.Remove(unit);
+            unit.RemoveDeathWatcher(this);
+            UnitModule.Uninstall<BurrowMicroModule>(unit);
+            UnitModule.Uninstall<AttackPriorityModule>(unit);
+        }
+    }
+
     public void Retire() {
         Army.ForEach(soldier => UnitModule.Uninstall<BurrowMicroModule>(soldier));
     }

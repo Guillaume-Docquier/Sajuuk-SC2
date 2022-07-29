@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.GameData;
+using Bot.Managers;
 using Bot.UnitModules;
 using Bot.Wrapper;
 using Google.Protobuf.Collections;
@@ -29,6 +30,15 @@ public class Unit: ICanDie {
     public HashSet<uint> Buffs;
 
     public ulong DeathDelay = 1;
+
+    private IManager _manager;
+    public IManager Manager {
+        get => _manager;
+        set {
+            _manager?.Release(this);
+            _manager = value;
+        }
+    }
 
     public readonly Dictionary<string, IUnitModule> Modules = new Dictionary<string, IUnitModule>();
 
@@ -102,6 +112,7 @@ public class Unit: ICanDie {
     public void TrainUnit(uint unitType, bool queue = false) {
         // TODO GD This should be handled when choosing a producer
         if (!queue && Orders.Count > 0) {
+            Logger.Error("A unit is trying to train another unit, but it already has another order and queue is false");
             return;
         }
 
@@ -120,14 +131,15 @@ public class Unit: ICanDie {
     }
 
     public void PlaceBuilding(uint buildingType, Vector3 target) {
+        Manager = null;
         ProcessAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
 
         var buildingName = KnowledgeBase.GetUnitTypeData(buildingType).Name;
         Logger.Info("{0} {1} started building {2} at [{3}, {4}]", Name, Tag, buildingName, target.X, target.Y);
     }
 
-    public void PlaceExtractor(uint buildingType, Unit gas)
-    {
+    public void PlaceExtractor(uint buildingType, Unit gas) {
+        Manager = null;
         ProcessAction(ActionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
 
         var buildingName = KnowledgeBase.GetUnitTypeData(buildingType).Name;

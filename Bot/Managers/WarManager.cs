@@ -31,6 +31,7 @@ public class WarManager: IManager {
     // TODO GD Use multiple managers, probably
     public void OnFrame() {
         var newSoldiers = Controller.GetUnits(Controller.NewOwnedUnits, Units.ZergMilitary).ToList();
+        newSoldiers.ForEach(soldier => soldier.Manager = this);
         _armyManager.Assign(newSoldiers);
 
         var enemyPosition = Controller.EnemyLocations[0];
@@ -44,6 +45,10 @@ public class WarManager: IManager {
         }
 
         _armyManager.OnFrame();
+    }
+
+    public void Release(Unit unit) {
+        _armyManager.Release(unit);
     }
 
     private void DefendNewTownHalls(Vector3 enemyPosition) {
