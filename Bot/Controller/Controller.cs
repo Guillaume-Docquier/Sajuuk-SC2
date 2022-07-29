@@ -81,6 +81,7 @@ public static class Controller {
 
         Actions.Clear();
 
+        // This doesn't work? I don't really care but it would be nice if it did
         foreach (var chat in _obs.Chat) {
             ChatLog.Add(chat.Message);
         }

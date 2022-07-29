@@ -37,7 +37,7 @@ public abstract class PoliteBot: IBot {
         var structures = Controller.GetUnits(Controller.OwnedUnits, Units.Structures).ToList();
         if (structures.Count == 1 && structures.First().Integrity < 0.4) {
             if (!Controller.ChatLog.Contains("gg wp")) {
-                Controller.Chat("gg wp");
+                // Controller.Chat("gg wp");
             }
         }
     }
