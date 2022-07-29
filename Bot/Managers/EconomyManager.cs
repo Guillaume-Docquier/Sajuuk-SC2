@@ -63,7 +63,7 @@ public class EconomyManager: IManager {
 
     public void Release(Unit unit) {
         if (_workerDispatch.TryGetValue(unit, out var townHallManager)) {
-            townHallManager.Release(unit);
+            townHallManager?.Release(unit);
 
             _workerDispatch.Remove(unit);
             unit.RemoveDeathWatcher(this);
