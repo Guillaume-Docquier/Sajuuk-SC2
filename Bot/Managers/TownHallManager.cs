@@ -101,7 +101,7 @@ public class TownHallManager: IManager {
     }
 
     public IEnumerable<Unit> ReleaseWorkers(int count) {
-        foreach (var idleWorker in GetIdleWorkers().Take(count)) {
+        foreach (var idleWorker in GetIdleWorkers().Take(count).ToList()) {
             yield return ReleaseWorker(idleWorker);
             count -= 1;
         }
