@@ -25,6 +25,11 @@ public partial class ArmyManager {
         private Vector3 _previousArmyLocation;
         private ulong _ticksWithoutRealMove;
 
+        private const ulong MaximumPathfindingLockDelay = (ulong)(Controller.FramesPerSecond * 15);
+        private bool PathfindingIsUnlocked => _pathfindingLock < Controller.Frame;
+        private ulong _pathfindingLock = 0;
+        private ulong _pathfindingLockDelay = (ulong)(Controller.FramesPerSecond * 4);
+
         public AttackStrategy(ArmyManager armyManager) {
             _armyManager = armyManager;
             _initialForce = _armyManager.Army.GetForce();
@@ -93,8 +98,9 @@ public partial class ArmyManager {
             var absoluteDistanceToTarget = armyLocation.DistanceTo(targetToAttack);
 
             // Try to take down rocks
-            if (_ticksWithoutRealMove > ReasonableMoveDelay) {
-                Logger.Info("AttackStrategy: I'm stuck!");
+            var isStuck = _ticksWithoutRealMove > ReasonableMoveDelay;
+            if (isStuck) {
+                Logger.Warning("AttackStrategy: I'm stuck!");
                 var closestRock = Controller.GetUnits(Controller.NeutralUnits, Units.Destructibles).MinBy(rock => rock.DistanceTo(armyLocation));
                 if (closestRock != null) {
                     Logger.Info("AttackStrategy: Closest rock is {0} units away", closestRock.DistanceTo(armyLocation).ToString("0.00"));
@@ -105,14 +111,23 @@ public partial class ArmyManager {
                     }
                 }
                 else {
-                    Logger.Info("AttackStrategy: No rocks found");
+                    Logger.Warning("AttackStrategy: No rocks found");
                 }
             }
 
-            if (absoluteDistanceToTarget <= MaxDistanceForPathfinding && _ticksWithoutRealMove <= ReasonableMoveDelay) {
+            if (absoluteDistanceToTarget <= MaxDistanceForPathfinding && !isStuck && PathfindingIsUnlocked) {
                 WalkAlongThePath(targetToAttack, armyLocation, unitsToAttackWith);
             }
             else {
+                if (isStuck) {
+                    Logger.Warning("AttackStrategy: disabling pathfinding for {0} seconds", (_pathfindingLockDelay / Controller.FramesPerSecond).ToString("0.00"));
+                    _pathfindingLock = Controller.Frame + _pathfindingLockDelay;
+                    _pathfindingLockDelay = Math.Min(MaximumPathfindingLockDelay, (ulong)(_pathfindingLockDelay * 1.25));
+
+                    _ticksWithoutRealMove = 0;
+                    _previousArmyLocation = armyLocation;
+                }
+
                 AttackMove(targetToAttack, unitsToAttackWith);
             }
 
