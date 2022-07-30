@@ -3,7 +3,7 @@ using System.Linq;
 using System.Numerics;
 using Bot.Wrapper;
 
-namespace Bot.Managers;
+namespace Bot.Managers.ArmyManagement;
 
 public partial class ArmyManager {
     public class DefenseStrategy: IStrategy {
@@ -60,7 +60,7 @@ public partial class ArmyManager {
                 .ToList();
 
             if (targetList.Any()) {
-                soldiers.Where(unit => unit.IsMovingOrAttacking())
+                soldiers.Where(unit => unit.IsIdleOrMovingOrAttacking())
                     .Where(unit => !unit.RawUnitData.IsBurrowed)
                     .ToList()
                     .ForEach(soldier => {

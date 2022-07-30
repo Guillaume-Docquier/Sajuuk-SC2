@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.GameData;
+using Bot.Managers.ArmyManagement;
 
 namespace Bot.Managers;
 

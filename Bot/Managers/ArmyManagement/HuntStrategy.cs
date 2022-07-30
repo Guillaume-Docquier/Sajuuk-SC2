@@ -1,10 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using Bot.GameData;
-using Bot.UnitModules;
 
-namespace Bot.Managers;
+namespace Bot.Managers.ArmyManagement;
 
 public partial class ArmyManager {
     public class HuntStrategy: IStrategy {

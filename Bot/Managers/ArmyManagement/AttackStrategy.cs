@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.GameData;
+using Bot.Managers.ArmyManagement.Tactics;
 using Bot.Wrapper;
 
-namespace Bot.Managers;
+namespace Bot.Managers.ArmyManagement;
 
 public partial class ArmyManager {
     public class AttackStrategy : IStrategy {
@@ -29,6 +30,8 @@ public partial class ArmyManager {
         private bool PathfindingIsUnlocked => _pathfindingLock < Controller.Frame;
         private ulong _pathfindingLock = 0;
         private ulong _pathfindingLockDelay = (ulong)(Controller.FramesPerSecond * 4);
+
+        private readonly ITactic _burrowSurpriseTactic = new BurrowSurpriseTactic();
 
         public AttackStrategy(ArmyManager armyManager) {
             _armyManager = armyManager;
@@ -63,7 +66,14 @@ public partial class ArmyManager {
 
             DrawArmyData(_armyManager._mainArmy);
 
-            Attack(_armyManager._target, _armyManager._mainArmy);
+            if (_burrowSurpriseTactic.IsViable(_armyManager._mainArmy)) {
+                _burrowSurpriseTactic.Execute(_armyManager._mainArmy);
+            }
+            else {
+                _burrowSurpriseTactic.Reset(_armyManager._mainArmy);
+                Attack(_armyManager._target, _armyManager._mainArmy);
+            }
+
             Rally(_armyManager._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
         }
 
@@ -89,7 +99,7 @@ public partial class ArmyManager {
 
             DrawAttackData(targetToAttack, soldiers);
 
-            var unitsToAttackWith = soldiers.Where(unit => unit.IsMovingOrAttacking())
+            var unitsToAttackWith = soldiers.Where(unit => unit.IsIdleOrMovingOrAttacking())
                 .Where(unit => !unit.RawUnitData.IsBurrowed)
                 .Where(unit => unit.DistanceTo(targetToAttack) > AcceptableDistanceToTarget)
                 .ToList();

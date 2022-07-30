@@ -4,7 +4,7 @@ using System.Numerics;
 using Bot.GameData;
 using Bot.UnitModules;
 
-namespace Bot.Managers;
+namespace Bot.Managers.ArmyManagement;
 
 public partial class ArmyManager: IManager {
     public readonly List<Unit> Army = new List<Unit>();
@@ -32,7 +32,7 @@ public partial class ArmyManager: IManager {
         soldiers.ForEach(unit => {
             unit.AddDeathWatcher(this);
 
-            if (unit.UnitType == Units.Roach) {
+            if (unit.UnitType is Units.Roach or Units.RoachBurrowed) {
                 BurrowMicroModule.Install(unit);
             }
 
@@ -49,7 +49,7 @@ public partial class ArmyManager: IManager {
         }
 
         // TODO GD Tweak this, the cluster gets broken when it shouldn't
-        _mainArmy = Clustering.DBSCAN(Army, 3, 3).MaxBy(army => army.GetForce());
+        _mainArmy = Clustering.DBSCAN(Army, 4, 2).MaxBy(army => army.GetForce());
         _mainArmy ??= Army;
 
         var startingStrategyName = _strategy.Name;

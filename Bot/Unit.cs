@@ -75,15 +75,23 @@ public class Unit: ICanDie {
     }
 
     public double DistanceTo(Unit otherUnit) {
-        return Vector3.Distance(Position, otherUnit.Position);
+        return DistanceTo(otherUnit.Position);
     }
 
     public double DistanceTo(Vector3 location) {
-        return Vector3.Distance(Position, location);
+        return Position.DistanceTo(location);
+    }
+
+    public double HorizontalDistanceTo(Unit otherUnit) {
+        return HorizontalDistanceTo(otherUnit.Position);
+    }
+
+    public double HorizontalDistanceTo(Vector3 location) {
+        return Position.HorizontalDistanceTo(location);
     }
 
     public void Move(Vector3 target) {
-        if (IsAlreadyTargeting(target)) {
+        if (IsTargeting(target)) {
             return;
         }
 
@@ -91,7 +99,7 @@ public class Unit: ICanDie {
     }
 
     public void Attack(Unit target) {
-        if (IsAlreadyAttacking(target)) {
+        if (IsAttacking(target)) {
             return;
         }
 
@@ -99,7 +107,7 @@ public class Unit: ICanDie {
     }
 
     public void AttackMove(Vector3 target) {
-        if (IsAlreadyTargeting(target)) {
+        if (IsTargeting(target)) {
             return;
         }
 
@@ -254,19 +262,23 @@ public class Unit: ICanDie {
         return true;
     }
 
-    public bool IsMovingOrAttacking() {
+    public bool IsIdleOrMovingOrAttacking() {
         return Orders.All(order => order.AbilityId is Abilities.Move or Abilities.Attack);
     }
 
-    private bool IsAlreadyTargeting(Vector3 target) {
+    private bool IsTargeting(Vector3 target) {
         var targetAsPoint = target.ToPoint();
         targetAsPoint.Z = 0;
 
         return Orders.Any(order => order.TargetWorldSpacePos != null && order.TargetWorldSpacePos.Equals(targetAsPoint));
     }
 
-    private bool IsAlreadyAttacking(Unit unit) {
+    private bool IsAttacking(Unit unit) {
         return Orders.Any(order => order.TargetUnitTag == unit.Tag);
+    }
+
+    public bool IsAttacking(IReadOnlySet<ulong> unitTags) {
+        return Orders.Any(order => unitTags.Contains(order.TargetUnitTag));
     }
 
     public bool IsBuilding(uint buildingType) {

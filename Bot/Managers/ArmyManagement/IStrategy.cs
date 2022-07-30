@@ -1,4 +1,4 @@
-﻿namespace Bot;
+﻿namespace Bot.Managers.ArmyManagement;
 
 public interface IStrategy {
     string Name { get; }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Bot.GameData;
 
@@ -178,6 +179,10 @@ internal static class Units {
     public const uint Ravager = 688;
     public const uint RavagerBurrowed = 690;
 
+    public const uint Disruptor = 694;
+    public const uint Oracle = 495;
+    public const uint Tempest = 496;
+
     public const uint DestructibleSearchlight = 345;
     public const uint DestructibleBullhornLights = 346;
     public const uint DestructibleStreetlight = 347;
@@ -324,43 +329,52 @@ internal static class Units {
 
     public static readonly HashSet<uint> TerranMilitary = new HashSet<uint>
     {
-        Hellbat,
-        Liberator,
+        Marine,
+        Reaper,
+        Marauder,
+        Ghost,
+        Hellion,
         WidowMine,
         WidowMineBurrowed,
         Cyclone,
+        SiegeTank,
+        SiegeTankSieged,
+        Thor,
+        Hellbat,
+
+        // Flying
+        VikingAssault,
+        VikingFighter,
+        Medivac,
+        Liberator,
+        Raven,
         AutoTurret,
         Banshee,
         Battlecruiser,
-        Ghost,
-        Hellion,
-        VikingAssault,
-        VikingFighter,
-        Thor,
-        Marauder,
-        Marine,
-        Medivac,
-        Raven,
-        Reaper,
-        SiegeTank,
-        SiegeTankSieged,
     };
 
     public static readonly HashSet<uint> ProtossMilitary = new HashSet<uint>
     {
-        Adept,
-        Archon,
-        Carrier,
-        Colossus,
-        DarkTemplar,
-        HighTemplar,
-        Immortal,
-        VoidRay,
         Zealot,
-        Stalker,
         Sentry,
-        Mothership,
+        Stalker,
+        Adept,
+        Immortal,
+        HighTemplar,
+        Archon,
+        DarkTemplar,
+        Colossus,
+        Disruptor,
+
+        // Flying
         Phoenix,
+        Oracle,
+        VoidRay,
+        WarpPrism,
+        WarpPrismPhasing,
+        Tempest,
+        Carrier,
+        Mothership,
     };
 
     public static readonly HashSet<uint> ZergMilitary = new HashSet<uint>
@@ -395,6 +409,8 @@ internal static class Units {
         BroodLord,
         Viper,
     };
+
+    public static readonly HashSet<uint> Military = new HashSet<uint>(TerranMilitary.Concat(ProtossMilitary).Concat(ZergMilitary));
 
     public static readonly HashSet<uint> ResourceCenters = new HashSet<uint>
     {
@@ -597,6 +613,16 @@ internal static class Units {
         OrbitalCommand,
         PlanetaryFortress,
         Nexus,
+    };
+
+    public static readonly HashSet<uint> Detectors = new HashSet<uint>
+    {
+        Overseer,
+        SporeCrawler,
+        Observer,
+        PhotonCannon,
+        Raven,
+        MissileTurret,
     };
 
     public static readonly Dictionary<uint, HashSet<uint>> Producers = new Dictionary<uint, HashSet<uint>>

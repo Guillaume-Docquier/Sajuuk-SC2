@@ -4,7 +4,7 @@ using System.Numerics;
 using Bot.GameData;
 using Bot.Wrapper;
 
-namespace Bot.Managers;
+namespace Bot.Managers.ArmyManagement;
 
 public partial class ArmyManager {
     public class RetreatStrategy: IStrategy {

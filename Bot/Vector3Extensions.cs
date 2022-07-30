@@ -48,7 +48,7 @@ public static class Vector3Extensions {
         return new Vector3 { X = origin.X + xTranslation, Y = origin.Y + yTranslation, Z = origin.Z + zTranslation };
     }
 
-    public static float HorizontalDistance(this Vector3 origin, Vector3 destination) {
+    public static float HorizontalDistanceTo(this Vector3 origin, Vector3 destination) {
         var deltaX = origin.X - destination.X;
         var deltaY = origin.Y - destination.Y;
 

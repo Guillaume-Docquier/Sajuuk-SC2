@@ -113,7 +113,7 @@ public static class Pathfinder {
             return knownPath;
         }
 
-        var maybeNullPath = AStar(origin, destination, (from, to) => from.HorizontalDistance(to));
+        var maybeNullPath = AStar(origin, destination, (from, to) => from.HorizontalDistanceTo(to));
         if (maybeNullPath == null) {
             Logger.Error("Path from {0} to {1} was null", origin, destination);
             return null;
