@@ -35,8 +35,10 @@ public class Unit: ICanDie {
     public IManager Manager {
         get => _manager;
         set {
-            _manager?.Release(this);
-            _manager = value;
+            if (_manager != value) {
+                _manager?.Release(this);
+                _manager = value;
+            }
         }
     }
 
@@ -119,7 +121,7 @@ public class Unit: ICanDie {
         ProcessAction(ActionBuilder.TrainUnit(unitType, Tag));
 
         var targetName = KnowledgeBase.GetUnitTypeData(unitType).Name;
-        Logger.Info("{0} {1} started training {2}", Name, Tag, targetName);
+        Logger.Info("{0} started training {1}", this, targetName);
     }
 
     public void UpgradeInto(uint unitOrBuildingType) {
@@ -127,7 +129,7 @@ public class Unit: ICanDie {
         ProcessAction(ActionBuilder.TrainUnit(unitOrBuildingType, Tag));
 
         var upgradeName = KnowledgeBase.GetUnitTypeData(unitOrBuildingType).Name;
-        Logger.Info("Upgrading {0} {1} into {2}", Name, Tag, upgradeName);
+        Logger.Info("Upgrading {0} into {1}", this, upgradeName);
     }
 
     public void PlaceBuilding(uint buildingType, Vector3 target) {
@@ -135,7 +137,7 @@ public class Unit: ICanDie {
         ProcessAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
 
         var buildingName = KnowledgeBase.GetUnitTypeData(buildingType).Name;
-        Logger.Info("{0} {1} started building {2} at [{3}, {4}]", Name, Tag, buildingName, target.X, target.Y);
+        Logger.Info("{0} started building {1} at {2}", this, buildingName, target);
     }
 
     public void PlaceExtractor(uint buildingType, Unit gas) {
@@ -143,7 +145,7 @@ public class Unit: ICanDie {
         ProcessAction(ActionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
 
         var buildingName = KnowledgeBase.GetUnitTypeData(buildingType).Name;
-        Logger.Info("{0} {1} started building {2} on gas at [{3}, {4}]", Name, Tag, buildingName, gas.Position.X, gas.Position.Y);
+        Logger.Info("{0} started building {1} on gas at {2}", this, buildingName, gas.Position);
     }
 
     public void ResearchUpgrade(uint upgradeType)
@@ -151,17 +153,17 @@ public class Unit: ICanDie {
         ProcessAction(ActionBuilder.ResearchUpgrade(upgradeType, Tag));
 
         var researchName = KnowledgeBase.GetUpgradeData(upgradeType).Name;
-        Logger.Info("{0} {1} started researching {2}", Name, Tag, researchName);
+        Logger.Info("{0} started researching {1}", this, researchName);
     }
 
     public void Gather(Unit mineralOrGas) {
         ProcessAction(ActionBuilder.Gather(Tag, mineralOrGas.Tag));
     }
 
-    public void ReturnCargo(Unit @base) {
-        ProcessAction(ActionBuilder.ReturnCargo(Tag, @base.Tag));
+    public void ReturnCargo(Unit townHall) {
+        ProcessAction(ActionBuilder.ReturnCargo(Tag, townHall.Tag));
 
-        Logger.Info("{0} {1} returning cargo to {2} {3} at [{4}, {5}]", Name, Tag, @base.Name, @base.Tag, @base.Position.X, @base.Position.Y);
+        Logger.Info("{0} returning cargo to {1} at {2}", this, townHall, townHall.Position);
     }
 
     public void UseAbility(int abilityId, Point2D position = null, ulong targetUnitTag = ulong.MaxValue) {
@@ -178,13 +180,13 @@ public class Unit: ICanDie {
         var abilityName = KnowledgeBase.GetAbilityData(abilityId).FriendlyName;
         if (targetUnitTag != ulong.MaxValue) {
             var targetUnit = Controller.UnitsByTag[targetUnitTag];
-            Logger.Info("{0} {1} using ability {2} on {3} {4}", Name, Tag, abilityName, targetUnit.Name, targetUnit.Tag);
+            Logger.Info("{0} using ability {1} on {2}", this, abilityName, targetUnit);
         }
         else if (position != null) {
-            Logger.Info("{0} {1} using ability {2} at [{4}, {5}]", Name, Tag, abilityName, position.X, position.Y);
+            Logger.Info("{0} using ability {1} at {2}", this, abilityName, position);
         }
         else {
-            Logger.Info("{0} {1} using ability {2}", Name, Tag, abilityName);
+            Logger.Info("{0} using ability {1}", this, abilityName);
         }
     }
 
@@ -220,7 +222,7 @@ public class Unit: ICanDie {
     public void Died() {
         // Reduce the noise
         if (UnitType != Units.Larva) {
-            Logger.Info("{0} {1} died", Name, Tag);
+            Logger.Info("{0} died", this);
         }
 
         // We .ToList() to make a copy of _deathWatchers because some ReportUnitDeath will call RemoveDeathWatcher
@@ -266,5 +268,9 @@ public class Unit: ICanDie {
         var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingType).AbilityId;
 
         return Orders.Any(order => order.AbilityId == buildingAbilityId);
+    }
+
+    public override string ToString() {
+        return $"{Name}[{Tag}]";
     }
 }

@@ -25,7 +25,7 @@ public static class UnitModule {
         }
 
         if (unit.Modules.Remove(moduleTag)) {
-            Logger.Error("Pre-install: Removed {0} from unit {1}.", unit.Name, moduleTag);
+            Logger.Error("Pre-install: Removed {0} from {1}.", moduleTag, unit);
         }
 
         return true;

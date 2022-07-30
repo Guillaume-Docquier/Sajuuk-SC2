@@ -591,7 +591,11 @@ internal static class Units {
     public static readonly HashSet<uint> TownHalls = new HashSet<uint>
     {
         Hatchery,
+        Lair,
+        Hive,
         CommandCenter,
+        OrbitalCommand,
+        PlanetaryFortress,
         Nexus,
     };
 

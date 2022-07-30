@@ -40,19 +40,20 @@ public class EconomyManager: IManager {
     public void OnFrame() {
         ManageTownHalls(Controller.GetUnits(Controller.NewOwnedUnits, Units.Hatchery));
 
-        // TODO GD Redistribute extra workers from managers
-        var workersToDispatch = Controller.GetUnits(Controller.NewOwnedUnits, Units.Drone).ToList();
-        workersToDispatch.AddRange(GetIdleWorkers());
-        DispatchWorkers(workersToDispatch);
+        if (_townHallManagers.Count > 0) {
+            var workersToDispatch = Controller.GetUnits(Controller.NewOwnedUnits, Units.Drone).ToList();
+            workersToDispatch.AddRange(GetIdleWorkers());
+            DispatchWorkers(workersToDispatch);
 
-        EqualizeWorkers();
+            EqualizeWorkers();
 
-        var queensToDispatch = Controller.GetUnits(Controller.NewOwnedUnits, Units.Queen).ToList();
-        queensToDispatch.AddRange(GetIdleQueens());
-        DispatchQueens(queensToDispatch);
+            var queensToDispatch = Controller.GetUnits(Controller.NewOwnedUnits, Units.Queen).ToList();
+            queensToDispatch.AddRange(GetIdleQueens());
+            DispatchQueens(queensToDispatch);
 
-        // Execute managers
-        _townHallManagers.ForEach(manager => manager.OnFrame());
+            // Execute managers
+            _townHallManagers.ForEach(manager => manager.OnFrame());
+        }
 
         // Build macro hatches
         if (ShouldBuildMacroHatch()) {
@@ -71,12 +72,14 @@ public class EconomyManager: IManager {
     }
 
     public void Retire() {
-        throw new System.NotImplementedException();
+        throw new NotImplementedException();
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
         switch (deadUnit.UnitType) {
             case Units.Hatchery:
+            case Units.Lair:
+            case Units.Hive:
                 var manager = _townHallDispatch[deadUnit];
                 _workerDispatch
                     .Where(dispatch => dispatch.Value == manager)
@@ -117,7 +120,7 @@ public class EconomyManager: IManager {
             manager ??= GetManagerWithHighestAvailableCapacity();
 
             _workerDispatch[worker] = manager;
-            manager.AssignWorker(worker);
+            manager?.AssignWorker(worker);
         }
     }
 
