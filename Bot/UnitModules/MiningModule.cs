@@ -18,8 +18,9 @@ public class MiningModule: IUnitModule {
     public readonly UnitUtils.ResourceType ResourceType;
 
     public static void Install(Unit worker, Unit assignedResource) {
-        UnitModule.Uninstall<MiningModule>(worker);
-        worker.Modules.Add(Tag, new MiningModule(worker, assignedResource));
+        if (UnitModule.PreInstallCheck(Tag, worker)) {
+            worker.Modules.Add(Tag, new MiningModule(worker, assignedResource));
+        }
     }
 
     private MiningModule(Unit worker, Unit assignedResource) {

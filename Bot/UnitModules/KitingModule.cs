@@ -6,7 +6,9 @@ public class KitingModule: IUnitModule {
     private readonly Unit _unit;
 
     public static void Install(Unit unit) {
-        unit.Modules.Add(Tag, new KitingModule(unit));
+        if (UnitModule.PreInstallCheck(Tag, unit)) {
+            unit.Modules.Add(Tag, new KitingModule(unit));
+        }
     }
 
     private KitingModule(Unit unit) {

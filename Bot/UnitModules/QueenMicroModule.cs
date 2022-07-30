@@ -14,12 +14,9 @@ public class QueenMicroModule: IUnitModule, IWatchUnitsDie {
             return;
         }
 
-        if (queen == null) {
-            Logger.Error("Trying to install a QueenMicroModule with a null queen");
-            return;
+        if (UnitModule.PreInstallCheck(Tag, queen)) {
+            queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall));
         }
-
-        queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall));
     }
 
     private QueenMicroModule(Unit queen, Unit assignedTownHall) {

@@ -9,7 +9,9 @@ public class TargetingModule: IUnitModule {
     private readonly Vector3 _target;
 
     public static void Install(Unit unit, Vector3 target) {
-        unit.Modules.Add(Tag, new TargetingModule(unit, target));
+        if (UnitModule.PreInstallCheck(Tag, unit)) {
+            unit.Modules.Add(Tag, new TargetingModule(unit, target));
+        }
     }
 
     private TargetingModule(Unit unit, Vector3 target) {

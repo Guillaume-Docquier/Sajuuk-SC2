@@ -3,7 +3,7 @@
 namespace Bot.UnitModules;
 
 public class CapacityModule: IUnitModule, IWatchUnitsDie {
-    public const string Tag = "capacity";
+    public const string Tag = "capacity-module";
 
     private readonly int _maxCapacity;
     public readonly List<Unit> AssignedUnits = new List<Unit>();
@@ -11,7 +11,9 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
     public int AvailableCapacity => _maxCapacity - AssignedUnits.Count;
 
     public static void Install(Unit unit, int maxCapacity) {
-        unit.Modules.Add(Tag, new CapacityModule(maxCapacity));
+        if (UnitModule.PreInstallCheck(Tag, unit)) {
+            unit.Modules.Add(Tag, new CapacityModule(maxCapacity));
+        }
     }
 
     private CapacityModule(int maxCapacity) {

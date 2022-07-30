@@ -17,6 +17,20 @@ public static class UnitModule {
         { typeof(TargetNeutralUnitsModule), TargetNeutralUnitsModule.Tag },
     };
 
+    public static bool PreInstallCheck(string moduleTag, Unit unit) {
+        if (unit == null) {
+            Logger.Error("Pre-install: Unit was null when trying to install {0}.", moduleTag);
+
+            return false;
+        }
+
+        if (unit.Modules.Remove(moduleTag)) {
+            Logger.Error("Pre-install: Removed {0} from unit {1}.", unit.Name, moduleTag);
+        }
+
+        return true;
+    }
+
     public static T Uninstall<T>(Unit unit) where T: class, IUnitModule {
         var module = Get<T>(unit);
         if (module != null) {

@@ -9,7 +9,7 @@ public class AttackPriorityModule: IUnitModule {
     private readonly Unit _unit;
 
     public static void Install(Unit unit) {
-        if (!unit.Modules.ContainsKey(Tag)) {
+        if (UnitModule.PreInstallCheck(Tag, unit)) {
             unit.Modules.Add(Tag, new AttackPriorityModule(unit));
         }
     }

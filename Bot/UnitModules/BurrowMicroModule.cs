@@ -13,7 +13,9 @@ public class BurrowMicroModule: IUnitModule {
     private readonly Unit _unit;
 
     public static void Install(Unit unit) {
-        unit.Modules.Add(Tag, new BurrowMicroModule(unit));
+        if (UnitModule.PreInstallCheck(Tag, unit)) {
+            unit.Modules.Add(Tag, new BurrowMicroModule(unit));
+        }
     }
 
     private BurrowMicroModule(Unit unit) {
