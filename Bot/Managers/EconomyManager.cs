@@ -179,10 +179,6 @@ public class EconomyManager: IManager {
         return _townHallManagers.Where(manager => manager.TownHall.IsOperational);
     }
 
-    private IEnumerable<TownHallManager> GetUnavailableManagers() {
-        return _townHallManagers.Where(manager => !manager.TownHall.IsOperational);
-    }
-
     private IEnumerable<Unit> GetIdleWorkers() {
         return _workerDispatch
             .Where(dispatch => dispatch.Value == null)

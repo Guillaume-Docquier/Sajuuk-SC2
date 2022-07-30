@@ -179,6 +179,11 @@ public class Unit: ICanDie {
 
         var abilityName = KnowledgeBase.GetAbilityData(abilityId).FriendlyName;
         if (targetUnitTag != ulong.MaxValue) {
+            if (!Controller.UnitsByTag.ContainsKey(targetUnitTag)) {
+                Logger.Error("Error with {0} trying to {1} on {2}: The target doesn't exist", this, abilityName, Tag);
+                return;
+            }
+
             var targetUnit = Controller.UnitsByTag[targetUnitTag];
             Logger.Info("{0} using ability {1} on {2}", this, abilityName, targetUnit);
         }

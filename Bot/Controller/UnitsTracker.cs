@@ -58,9 +58,6 @@ public class UnitsTracker {
                         equivalentUnit.Update(newRawUnit, frame);
                         newUnit = equivalentUnit;
                     }
-                    else {
-                        Logger.Warning("New neutral unit: {0}", newUnit.Name);
-                    }
                 }
 
                 UnitsByTag[newUnit.Tag] = newUnit;

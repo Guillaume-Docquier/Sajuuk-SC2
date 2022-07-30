@@ -33,6 +33,7 @@ public class QueenMicroModule: IUnitModule, IWatchUnitsDie {
         }
 
         if (_queen.HasEnoughEnergy(Abilities.InjectLarvae)) {
+            Logger.Info("{0} injecting {1}", _queen, _assignedTownHall);
             _queen.UseAbility(Abilities.InjectLarvae, targetUnitTag: _assignedTownHall.Tag);
         }
 
