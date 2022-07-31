@@ -106,6 +106,10 @@ public class TownHallManager: IManager {
             count -= 1;
         }
 
+        if (_minerals.Count <= 0) {
+            yield break;
+        }
+
         while (count > 0) {
             var maxWorkersOnMineral = _minerals.Max(mineral => UnitModule.Get<CapacityModule>(mineral).AssignedUnits.Count);
             if (maxWorkersOnMineral == 0) {
