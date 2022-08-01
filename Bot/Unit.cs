@@ -277,8 +277,8 @@ public class Unit: ICanDie {
         return Orders.Any(order => order.TargetUnitTag == unit.Tag);
     }
 
-    public bool IsAttacking(IReadOnlySet<ulong> unitTags) {
-        return Orders.Any(order => unitTags.Contains(order.TargetUnitTag));
+    public bool IsEngaging(IReadOnlySet<ulong> unitTags) {
+        return unitTags.Contains(RawUnitData.EngagedTargetTag);
     }
 
     public bool IsBuilding(uint buildingType) {

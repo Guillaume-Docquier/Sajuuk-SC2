@@ -4,10 +4,11 @@ using System.Linq;
 using System.Numerics;
 using Bot.GameData;
 using Bot.UnitModules;
+using Bot.Wrapper;
 
 namespace Bot.Managers.ArmyManagement.Tactics;
 
-public class BurrowSurpriseTactic: ITactic {
+public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
     private enum State {
         None,
         Approach,
@@ -16,14 +17,18 @@ public class BurrowSurpriseTactic: ITactic {
         Fight,
     }
 
-    private const float SetupDistance = 2;
-    private const float EngageDistance = 1;
+    private const float SetupDistance = 1;
+    private const float EngageDistance = 0.5f;
 
+    private const float TankRange = 13;
+    private const float OperationRadius = TankRange + 2;
+
+    private readonly HashSet<Unit> _unitsWithUninstalledModule = new HashSet<Unit>();
     private State _state = State.None;
-    private Unit _lastEnemySeen;
     private Vector3 _targetPosition;
+    private bool _isTargetPriority = false;
 
-    private static HashSet<ulong> PriorityTargets = new HashSet<ulong>
+    private static readonly HashSet<uint> PriorityTargets = new HashSet<uint>
     {
         Units.SiegeTank,
         Units.SiegeTankSieged,
@@ -33,7 +38,7 @@ public class BurrowSurpriseTactic: ITactic {
 
     public bool IsViable(IReadOnlyCollection<Unit> army) {
         if (_state == State.None) {
-            if (!Controller.ResearchedUpgrades.Contains(Upgrades.TunnelingClaws) || !Controller.ResearchedUpgrades.Contains(Upgrades.Burrow)) {
+            if (!HasProperTech()) {
                 return false;
             }
 
@@ -47,19 +52,14 @@ public class BurrowSurpriseTactic: ITactic {
                 .Max();
 
             var enemiesInSight = GetGroundEnemiesInSight(army).ToList();
-
             if (!enemiesInSight.Any()) {
                 return false;
             }
 
-            return enemiesInSight.MinBy(enemy => enemy.DistanceTo(armyCenter))!.DistanceTo(armyCenter) >= maxSightRange / 2;
+            return enemiesInSight.MinBy(enemy => enemy.HorizontalDistanceTo(armyCenter))!.HorizontalDistanceTo(armyCenter) >= maxSightRange / 2;
         }
 
         if (_state is State.Approach or State.Setup) {
-            if (_lastEnemySeen == null) {
-                return false;
-            }
-
             // If we're engaged, it means they see us, abort!
             return !GetEnemiesEngagingArmy(army).Any();
         }
@@ -68,42 +68,93 @@ public class BurrowSurpriseTactic: ITactic {
     }
 
     public void Execute(IReadOnlyCollection<Unit> army) {
+        Controller.FrameDelayMs = Controller.RealTime;
+
         var armyCenter = army.GetCenter();
+        GraphicalDebugger.AddSphere(armyCenter, 1, Colors.Magenta);
+
         if (_state == State.None) {
             foreach (var roach in army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed)) {
-                UnitModule.Uninstall<BurrowMicroModule>(roach);
+                if (!_unitsWithUninstalledModule.Contains(roach)) {
+                    roach.AddDeathWatcher(this);
+                    _unitsWithUninstalledModule.Add(roach);
+                    UnitModule.Uninstall<BurrowMicroModule>(roach);
+                }
             }
 
             BurrowOverlings(army);
 
-            _lastEnemySeen = GetGroundEnemiesInSight(army).MinBy(enemy => enemy.HorizontalDistanceTo(armyCenter));
-            _state = State.Approach;
-        } else if (_state == State.Approach) {
-            var closestVisibleEnemy = GetGroundEnemiesInSight(army).MinBy(enemy => enemy.HorizontalDistanceTo(armyCenter));
-            if (closestVisibleEnemy != null) {
-                _lastEnemySeen = closestVisibleEnemy;
+            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(armyCenter).MinBy(enemy => enemy.HorizontalDistanceTo(armyCenter));
+            if (closestPriorityTarget != null) {
+                _targetPosition = closestPriorityTarget.Position;
+                _isTargetPriority = true;
+            }
+            else {
+                var closestEnemy = GetGroundEnemiesInSight(army).MinBy(enemy => enemy.HorizontalDistanceTo(armyCenter));
+                if (closestEnemy == null) {
+                    Logger.Error("BurrowSurprise: Went from None -> Fight because no enemies nearby");
+                    _state = State.Fight;
+                    return;
+                }
+
+                _targetPosition = closestEnemy.Position;
             }
 
-            if (_lastEnemySeen.DistanceTo(armyCenter) > SetupDistance) {
+            _state = State.Approach;
+        } else if (_state == State.Approach) {
+            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(armyCenter).MinBy(enemy => enemy.HorizontalDistanceTo(armyCenter));
+            if (closestPriorityTarget != null) {
+                _targetPosition = closestPriorityTarget.Position;
+                _isTargetPriority = true;
+            }
+            else if (!_isTargetPriority) {
+                var closestVisibleEnemy = GetGroundEnemiesInSight(army).MinBy(enemy => enemy.HorizontalDistanceTo(armyCenter));
+                if (closestVisibleEnemy != null) {
+                    _targetPosition = closestVisibleEnemy.Position;
+                    _isTargetPriority = false;
+                }
+            }
+
+            if (_targetPosition == default) {
+                Logger.Warning("BurrowSurprise: Went from Approach -> Fight because _targetPosition == default");
+                _isTargetPriority = false;
+                _state = State.Fight;
+                return;
+            }
+
+            if (_targetPosition.HorizontalDistanceTo(armyCenter) > SetupDistance) {
                 BurrowOverlings(army);
 
                 foreach (var soldier in army.Where(soldier => soldier.IsIdleOrMovingOrAttacking())) {
-                    soldier.Move(_lastEnemySeen.Position);
+                    soldier.Move(_targetPosition);
                 }
             }
             else {
+                _targetPosition = default;
+                _isTargetPriority = false;
                 _state = State.Setup;
             }
         } else if (_state == State.Setup) {
-            // TODO GD Track priority targets in a radius of 13 (siege tank range)
-
-            var enemies = Controller.GetUnits(Controller.EnemyUnits, Units.Military).ToList();
-            var closestEnemyCluster = Clustering.DBSCAN(enemies, 5, 2).MinBy(cluster => cluster.GetCenter().HorizontalDistanceTo(armyCenter));
-            if (closestEnemyCluster == null) {
-                _state = State.Engage;
+            // TODO GD do we need _isTargetPriority at this point? We shouldn't lose sight at this point, right?
+            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(armyCenter).MinBy(enemy => enemy.HorizontalDistanceTo(armyCenter));
+            if (closestPriorityTarget != null) {
+                _targetPosition = closestPriorityTarget.Position;
+                _isTargetPriority = true;
             }
             else {
-                _targetPosition = closestEnemyCluster.GetCenter();
+                var enemies = Controller.GetUnits(Controller.EnemyUnits, Units.Military).ToList();
+                var closestEnemyCluster = Clustering.DBSCAN(enemies, 5, 2).MinBy(cluster => cluster.GetCenter().HorizontalDistanceTo(armyCenter));
+                if (closestEnemyCluster != null && armyCenter.HorizontalDistanceTo(closestEnemyCluster.GetCenter()) > OperationRadius) {
+                    _targetPosition = closestEnemyCluster.GetCenter();
+                    _isTargetPriority = false;
+                }
+            }
+
+            if (_targetPosition == default) {
+                Logger.Warning("BurrowSurprise: Went from Setup -> Fight because _targetPosition == default");
+                _state = State.Fight;
+            }
+            else {
                 if (_targetPosition.HorizontalDistanceTo(armyCenter) > EngageDistance) {
                     foreach (var soldier in army.Where(soldier => soldier.IsIdleOrMovingOrAttacking())) {
                         soldier.Move(_targetPosition);
@@ -118,6 +169,15 @@ public class BurrowSurpriseTactic: ITactic {
 
             _state = State.Fight;
         }
+
+        if (_targetPosition != default) {
+            GraphicalDebugger.AddLine(_targetPosition, armyCenter, Colors.Magenta);
+            GraphicalDebugger.AddSphere(_targetPosition, 1, Colors.Magenta);
+
+            if (_isTargetPriority) {
+                GraphicalDebugger.AddText("!", size: 20, worldPos: _targetPosition.ToPoint());
+            }
+        }
     }
 
     public void Reset(IReadOnlyCollection<Unit> army) {
@@ -125,14 +185,25 @@ public class BurrowSurpriseTactic: ITactic {
             return;
         }
 
-        _state = State.None;
-        _lastEnemySeen = null;
+        foreach (var roach in _unitsWithUninstalledModule) {
+            if (roach.RawUnitData.IsBurrowed) {
+                roach.UseAbility(Abilities.BurrowRoachUp);
+            }
 
-        UnburrowUnderlings(army);
-
-        foreach (var roach in army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed)) {
-            BurrowMicroModule.Install(roach); // TODO Will this take over because of 'collisions'?
+            BurrowMicroModule.Install(roach);
         }
+
+        _state = State.None;
+        _targetPosition = default;
+        _unitsWithUninstalledModule.Clear();
+    }
+
+    public void ReportUnitDeath(Unit deadUnit) {
+        _unitsWithUninstalledModule.Remove(deadUnit);
+    }
+
+    private static bool HasProperTech() {
+        return Controller.ResearchedUpgrades.Contains(Upgrades.TunnelingClaws) && Controller.ResearchedUpgrades.Contains(Upgrades.Burrow);
     }
 
     private static IEnumerable<Unit> GetDetectorsThatCanSee(IReadOnlyCollection<Unit> army) {
@@ -143,7 +214,7 @@ public class BurrowSurpriseTactic: ITactic {
     private static IEnumerable<Unit> GetEnemiesEngagingArmy(IEnumerable<Unit> army) {
         var armyTags = new HashSet<ulong>(army.Select(soldier => soldier.Tag));
 
-        return Controller.GetUnits(Controller.EnemyUnits, Units.Military).Where(enemy => enemy.IsAttacking(armyTags));
+        return Controller.GetUnits(Controller.EnemyUnits, Units.Military).Where(enemy => enemy.IsEngaging(armyTags));
     }
 
     private static IEnumerable<Unit> GetGroundEnemiesInSight(IReadOnlyCollection<Unit> army) {
@@ -163,5 +234,9 @@ public class BurrowSurpriseTactic: ITactic {
         foreach (var soldier in army.Where(soldier => soldier.RawUnitData.IsBurrowed)) {
             soldier.UseAbility(Abilities.BurrowRoachUp);
         }
+    }
+
+    private static IEnumerable<Unit> GetPriorityTargetsInOperationRadius(Vector3 armyCenter) {
+        return Controller.GetUnits(Controller.EnemyUnits, PriorityTargets).Where(enemy => enemy.HorizontalDistanceTo(armyCenter) <= OperationRadius);
     }
 }

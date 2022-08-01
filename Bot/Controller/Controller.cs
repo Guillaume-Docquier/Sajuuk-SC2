@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using Bot.GameData;
 using Bot.UnitModules;
 using Bot.Wrapper;
@@ -11,7 +12,8 @@ using Action = SC2APIProtocol.Action;
 namespace Bot;
 
 public static class Controller {
-    private const int FrameDelay = 0; // Too fast? increase this to e.g. 20
+    public const int RealTime = (int)(1000 / FramesPerSecond);
+    public static int FrameDelayMs = 0; // Too fast? increase this to e.g. 20
 
     private static readonly List<Action> Actions = new List<Action>();
     private static readonly Random Random = new Random();
@@ -115,6 +117,10 @@ public static class Controller {
     }
 
     public static IEnumerable<Action> GetActions() {
+        if (FrameDelayMs > 0) {
+            Thread.Sleep(FrameDelayMs);
+        }
+
         return Actions;
     }
 
