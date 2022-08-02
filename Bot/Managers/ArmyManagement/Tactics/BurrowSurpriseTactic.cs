@@ -20,6 +20,7 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
 
     private const float SetupDistance = 1.25f;
     private const float EngageDistance = 0.75f;
+    private const float MinimumEngagementArmyThreshold = 0.75f;
 
     private const float TankRange = 13;
     private const float OperationRadius = TankRange + 2;
@@ -182,7 +183,7 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
                         soldier.Move(_targetPosition);
                     }
                 }
-                else {
+                else if (GetArmyWithEnoughHealth(army).Count() >= army.Count * MinimumEngagementArmyThreshold) {
                     _state = State.Engage;
                 }
             }
@@ -254,5 +255,9 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
 
     private static IEnumerable<Unit> GetPriorityTargetsInOperationRadius(Vector3 armyCenter) {
         return Controller.GetUnits(Controller.EnemyUnits, PriorityTargets).Where(enemy => enemy.HorizontalDistanceTo(armyCenter) <= OperationRadius);
+    }
+
+    private static IEnumerable<Unit> GetArmyWithEnoughHealth(IEnumerable<Unit> army) {
+        return army.Where(soldier => soldier.Integrity > BurrowMicroModule.BurrowDownThreshold);
     }
 }

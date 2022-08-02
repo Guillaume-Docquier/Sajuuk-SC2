@@ -8,7 +8,7 @@ namespace Bot.UnitModules;
 public class BurrowMicroModule: IUnitModule {
     public const string Tag = "burrow-micro-module";
 
-    private const double BurrowDownThreshold = 0.5;
+    public const double BurrowDownThreshold = 0.5;
     private const double BurrowUpThreshold = 0.6;
 
     private readonly Unit _unit;
