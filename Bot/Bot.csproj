@@ -22,4 +22,7 @@
     <Compile Remove="Units\Codes.cs" />
     <Compile Remove="Units\Zerg.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="BugLogs" />
+  </ItemGroup>
 </Project>
