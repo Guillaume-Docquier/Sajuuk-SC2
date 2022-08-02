@@ -192,8 +192,12 @@ public static class Pathfinder {
         yield return position.Translate(xTranslation: 1, yTranslation: 1);
     }
 
-    private static bool IsInBounds(Vector3 position) {
-        return position.X < _maxX && position.X >= 0 && position.Y < _maxY && position.Y >= 0;
+    public static bool IsInBounds(Vector3 position) {
+        return IsInBounds(position.X, position.Y);
+    }
+
+    public static bool IsInBounds(float x, float y) {
+        return x >= 0 && x < _maxX && y >= 0 && y < _maxY;
     }
 
     private static bool IsWalkable(Vector3 position) {

@@ -71,6 +71,7 @@ public class SajuukBot: PoliteBot {
         FixSupply();
 
         DebugBuildOrder();
+        DebugEnemyDetectors();
 
         foreach (var unit in Controller.UnitsByTag.Values) {
             unit.ExecuteModules();
@@ -115,6 +116,14 @@ public class SajuukBot: PoliteBot {
         nextBuildStepsData.AddRange(managersBuildStepsData);
 
         GraphicalDebugger.AddTextGroup(nextBuildStepsData, virtualPos: new Point { X = 0.02f, Y = 0.02f });
+    }
+
+    private static void DebugEnemyDetectors() {
+        var detectors = Controller.GetUnits(Controller.EnemyUnits, Units.Detectors);
+        foreach (var detector in detectors) {
+            GraphicalDebugger.AddText("!", size: 20, worldPos: detector.Position.ToPoint(), color: Colors.Purple);
+            GraphicalDebugger.AddGridSquaresInRadius(detector.Position, detector.UnitTypeData.SightRange, Colors.Purple);
+        }
     }
 
     private bool IsBuildOrderBlocking() {

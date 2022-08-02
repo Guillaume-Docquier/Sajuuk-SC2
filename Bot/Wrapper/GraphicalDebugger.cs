@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Bot.GameData;
 using SC2APIProtocol;
@@ -28,19 +29,19 @@ public static class GraphicalDebugger {
     }
 
     // Size doesn't work when pos is not defined
-    public static void AddText(string text, uint size = 15, Point virtualPos = null, Point worldPos = null) {
+    public static void AddText(string text, uint size = 15, Point virtualPos = null, Point worldPos = null, Color color = null) {
         DebugTexts.Add(new DebugText
         {
             Text = text,
             Size = size,
             VirtualPos = virtualPos,
             WorldPos = worldPos,
-            Color = Colors.Yellow,
+            Color = color ?? Colors.Yellow,
         });
     }
 
-    public static void AddTextGroup(IEnumerable<string> texts, uint size = 15, Point virtualPos = null, Point worldPos = null) {
-        AddText(string.Join("\n", texts), size, virtualPos, worldPos);
+    public static void AddTextGroup(IEnumerable<string> texts, uint size = 15, Point virtualPos = null, Point worldPos = null, Color color = null) {
+        AddText(string.Join("\n", texts), size, virtualPos, worldPos, color);
     }
 
     public static void AddSphere(Unit unit, Color color) {
@@ -64,6 +65,14 @@ public static class GraphicalDebugger {
 
     public static void AddGridSquare(Vector3 centerPosition, Color color) {
         AddSquare(centerPosition, KnowledgeBase.GameGridCellWidth, color, padded: true);
+    }
+
+    public static void AddGridSquaresInRadius(Vector3 centerPosition, float radius, Color color) {
+        var cells = MapAnalyzer.BuildSearchGrid(centerPosition, radius).Where(cell => cell.HorizontalDistanceTo(centerPosition) <= radius);
+
+        foreach (var cell in cells) {
+            AddSquare(cell.WithWorldHeight(), KnowledgeBase.GameGridCellWidth, color, padded: true);
+        }
     }
 
     public static void AddSquare(Vector3 centerPosition, float width, Color color, bool padded = false) {
@@ -95,6 +104,20 @@ public static class GraphicalDebugger {
                 Color = color,
             }
         );
+    }
+
+    public static void AddLink(Unit start, Unit end, Color color) {
+        AddLink(start.Position, end.Position, color);
+    }
+
+    public static void AddLink(Vector3 start, Vector3 end, Color color) {
+        AddText("from", worldPos: start.ToPoint(), color: color);
+        AddSphere(start, 1, color);
+
+        AddLine(start, end, color);
+
+        AddText("to", worldPos: end.ToPoint(), color: color);
+        AddSphere(end, 1, color);
     }
 }
 
@@ -132,4 +155,5 @@ public static class Colors {
     public static readonly Color Cornflower = new Color { R = 100, G = 149, B = 237 };
     public static readonly Color Lime = new Color { R = 175, G = 255, B = 1 };
     public static readonly Color Orange = new Color { R = 226, G = 131, B = 36 };
+    public static readonly Color Purple = new Color { R = 153, G = 51, B = 255 };
 }

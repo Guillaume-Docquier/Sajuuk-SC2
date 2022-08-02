@@ -42,6 +42,10 @@ public partial class ArmyManager {
         public string Name => "Attack";
 
         public bool CanTransition() {
+            if (_burrowSurpriseTactic.IsExecuting()) {
+                return false;
+            }
+
             if (_armyManager._mainArmy.GetCenter().DistanceTo(_armyManager._target) < AcceptableDistanceToTarget) {
                 _nextStrategy = new DefenseStrategy(_armyManager);
 
@@ -58,6 +62,8 @@ public partial class ArmyManager {
         }
 
         public IStrategy Transition() {
+            _burrowSurpriseTactic.Reset(null);
+
             return _nextStrategy;
         }
 

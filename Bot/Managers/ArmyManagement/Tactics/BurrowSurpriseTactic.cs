@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.GameData;
+using Bot.GameSense;
 using Bot.UnitModules;
 using Bot.Wrapper;
 
@@ -17,8 +18,8 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
         Fight,
     }
 
-    private const float SetupDistance = 1;
-    private const float EngageDistance = 0.5f;
+    private const float SetupDistance = 1.25f;
+    private const float EngageDistance = 0.75f;
 
     private const float TankRange = 13;
     private const float OperationRadius = TankRange + 2;
@@ -37,12 +38,16 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
     };
 
     public bool IsViable(IReadOnlyCollection<Unit> army) {
+        if (!DetectionTracker.IsStealthEffective()) {
+            return false;
+        }
+
         if (_state == State.None) {
             if (!HasProperTech()) {
                 return false;
             }
 
-            if (GetDetectorsThatCanSee(army).Any()) {
+            if (IsArmyDetected(army)) {
                 return false;
             }
 
@@ -60,11 +65,19 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
         }
 
         if (_state is State.Approach or State.Setup) {
-            // If we're engaged, it means they see us, abort!
-            return !GetEnemiesEngagingArmy(army).Any();
+            if (IsArmyDetected(army)) {
+                return false;
+            }
+
+            // If we're engaged, it means they somehow see us, abort!
+            return !IsArmyGettingEngaged(army);
         }
 
         return _state != State.Fight;
+    }
+
+    public bool IsExecuting() {
+        return _state != State.None;
     }
 
     public void Execute(IReadOnlyCollection<Unit> army) {
@@ -135,7 +148,7 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
                 _state = State.Setup;
             }
         } else if (_state == State.Setup) {
-            // TODO GD do we need _isTargetPriority at this point? We shouldn't lose sight at this point, right?
+            // Do we need _isTargetPriority at this point? We shouldn't lose sight at this point, right?
             var closestPriorityTarget = GetPriorityTargetsInOperationRadius(armyCenter).MinBy(enemy => enemy.HorizontalDistanceTo(armyCenter));
             if (closestPriorityTarget != null) {
                 _targetPosition = closestPriorityTarget.Position;
@@ -206,15 +219,26 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
         return Controller.ResearchedUpgrades.Contains(Upgrades.TunnelingClaws) && Controller.ResearchedUpgrades.Contains(Upgrades.Burrow);
     }
 
+    private static bool IsArmyDetected(IReadOnlyCollection<Unit> army) {
+        return IsArmyScanned(army) || GetDetectorsThatCanSee(army).Any();
+    }
+
+    private static bool IsArmyScanned(IReadOnlyCollection<Unit> army) {
+        var scanRadius = KnowledgeBase.GetEffectData(Effects.ScanSweep).Radius;
+
+        return Controller.GetEffects(Effects.ScanSweep)
+            .SelectMany(scanEffect => scanEffect.Pos.ToList())
+            .Any(scan => army.Any(soldier => scan.ToVector3().HorizontalDistanceTo(soldier.Position) <= scanRadius));
+    }
+
     private static IEnumerable<Unit> GetDetectorsThatCanSee(IReadOnlyCollection<Unit> army) {
         return Controller.GetUnits(Controller.EnemyUnits, Units.Detectors)
             .Where(detector => army.Any(soldier => soldier.HorizontalDistanceTo(detector) <= detector.UnitTypeData.SightRange));
     }
 
-    private static IEnumerable<Unit> GetEnemiesEngagingArmy(IEnumerable<Unit> army) {
-        var armyTags = new HashSet<ulong>(army.Select(soldier => soldier.Tag));
-
-        return Controller.GetUnits(Controller.EnemyUnits, Units.Military).Where(enemy => enemy.IsEngaging(armyTags));
+    private static bool IsArmyGettingEngaged(IEnumerable<Unit> army) {
+        // TODO GD Track HP loss, EngagedTargetTag is only set on our units
+        return false;
     }
 
     private static IEnumerable<Unit> GetGroundEnemiesInSight(IReadOnlyCollection<Unit> army) {

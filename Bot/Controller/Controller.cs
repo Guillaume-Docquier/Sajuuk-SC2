@@ -392,6 +392,10 @@ public static class Controller {
         }
     }
 
+    public static IEnumerable<Effect> GetEffects(int effectId) {
+        return _obs.Observation.RawData.Effects.Where(effect => effect.EffectId == effectId);
+    }
+
     public static RequestResult CanAfford(int mineralCost, int vespeneCost)
     {
         if (AvailableMinerals < mineralCost) {

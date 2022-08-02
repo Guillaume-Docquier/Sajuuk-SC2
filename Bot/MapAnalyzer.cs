@@ -64,7 +64,9 @@ public static class MapAnalyzer {
         var buildSpots = new List<Vector3>();
         for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x += stepSize) {
             for (var y = centerPosition.Y - gridRadius; y <= centerPosition.Y + gridRadius; y += stepSize) {
-                buildSpots.Add(new Vector3(x, y, centerPosition.Z));
+                if (!Pathfinder.IsInitialized || Pathfinder.IsInBounds(x, y)) {
+                    buildSpots.Add(new Vector3(x, y, centerPosition.Z));
+                }
             }
         }
 

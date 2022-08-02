@@ -615,15 +615,21 @@ internal static class Units {
         Nexus,
     };
 
-    public static readonly HashSet<uint> Detectors = new HashSet<uint>
+    public static readonly HashSet<uint> MobileDetectors = new HashSet<uint>
     {
         Overseer,
-        SporeCrawler,
         Observer,
-        PhotonCannon,
         Raven,
+    };
+
+    public static readonly HashSet<uint> StaticDetectors = new HashSet<uint>
+    {
+        SporeCrawler,
+        PhotonCannon,
         MissileTurret,
     };
+
+    public static readonly HashSet<uint> Detectors = new HashSet<uint>(MobileDetectors.Concat(StaticDetectors));
 
     public static readonly Dictionary<uint, HashSet<uint>> Producers = new Dictionary<uint, HashSet<uint>>
     {
