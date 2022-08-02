@@ -46,7 +46,7 @@ public partial class ArmyManager {
                 return false;
             }
 
-            if (_armyManager._mainArmy.GetCenter().DistanceTo(_armyManager._target) < AcceptableDistanceToTarget) {
+            if (_armyManager._mainArmy.GetCenter().HorizontalDistanceTo(_armyManager._target) < AcceptableDistanceToTarget) {
                 _nextStrategy = new DefenseStrategy(_armyManager);
 
                 return true;
@@ -107,20 +107,20 @@ public partial class ArmyManager {
 
             var unitsToAttackWith = soldiers.Where(unit => unit.IsIdleOrMovingOrAttacking())
                 .Where(unit => !unit.RawUnitData.IsBurrowed)
-                .Where(unit => unit.DistanceTo(targetToAttack) > AcceptableDistanceToTarget)
+                .Where(unit => unit.HorizontalDistanceTo(targetToAttack) > AcceptableDistanceToTarget)
                 .ToList();
 
             var armyLocation = soldiers.GetCenter();
-            var absoluteDistanceToTarget = armyLocation.DistanceTo(targetToAttack);
+            var absoluteDistanceToTarget = armyLocation.HorizontalDistanceTo(targetToAttack);
 
             // Try to take down rocks
             var isStuck = _ticksWithoutRealMove > ReasonableMoveDelay;
             if (isStuck) {
                 Logger.Warning("AttackStrategy: I'm stuck!");
-                var closestRock = Controller.GetUnits(Controller.NeutralUnits, Units.Destructibles).MinBy(rock => rock.DistanceTo(armyLocation));
+                var closestRock = Controller.GetUnits(Controller.NeutralUnits, Units.Destructibles).MinBy(rock => rock.HorizontalDistanceTo(armyLocation));
                 if (closestRock != null) {
-                    Logger.Info("AttackStrategy: Closest rock is {0} units away", closestRock.DistanceTo(armyLocation).ToString("0.00"));
-                    if (closestRock.DistanceTo(armyLocation) <= RocksDestructionRange) {
+                    Logger.Info("AttackStrategy: Closest rock is {0} units away", closestRock.HorizontalDistanceTo(armyLocation).ToString("0.00"));
+                    if (closestRock.HorizontalDistanceTo(armyLocation) <= RocksDestructionRange) {
                         Logger.Info("AttackStrategy: Attacking rock");
                         Attack(closestRock, unitsToAttackWith);
                         return;
@@ -149,7 +149,7 @@ public partial class ArmyManager {
 
             // Sometime the army gets stuck, try something different if it happens
             // This will often time be due to rocks, so I need to fix that
-            if (armyLocation.DistanceTo(_previousArmyLocation) < NegligibleMovement && !soldiers.IsFighting()) {
+            if (armyLocation.HorizontalDistanceTo(_previousArmyLocation) < NegligibleMovement && !soldiers.IsFighting()) {
                 _ticksWithoutRealMove++;
             }
             else {
@@ -176,6 +176,8 @@ public partial class ArmyManager {
         }
 
         private static void AttackMove(Vector3 targetToAttack, IEnumerable<Unit> soldiers) {
+            targetToAttack = targetToAttack.ClosestWalkable();
+
             soldiers
                 .ToList()
                 .ForEach(unit => unit.AttackMove(targetToAttack));
@@ -192,9 +194,11 @@ public partial class ArmyManager {
                 return;
             }
 
+            rallyPoint = rallyPoint.ClosestWalkable();
+
             DrawRallyData(rallyPoint, soldiers);
 
-            AttackMove(rallyPoint, soldiers.Where(unit => unit.DistanceTo(rallyPoint) > AcceptableDistanceToTarget));
+            AttackMove(rallyPoint, soldiers.Where(unit => unit.HorizontalDistanceTo(rallyPoint) > AcceptableDistanceToTarget));
         }
 
         private static void DrawRallyData(Vector3 rallyPoint, IEnumerable<Unit> soldiers) {

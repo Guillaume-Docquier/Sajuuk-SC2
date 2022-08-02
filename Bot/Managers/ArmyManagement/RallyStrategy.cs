@@ -50,10 +50,12 @@ public partial class ArmyManager {
                 return;
             }
 
+            growPosition = growPosition.ClosestWalkable();
+
             GraphicalDebugger.AddSphere(growPosition, AcceptableDistanceToTarget, Colors.Yellow);
             GraphicalDebugger.AddText("Grow", worldPos: growPosition.ToPoint());
 
-            soldiers.Where(unit => unit.DistanceTo(growPosition) > AcceptableDistanceToTarget)
+            soldiers.Where(unit => unit.HorizontalDistanceTo(growPosition) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.AttackMove(growPosition));
 

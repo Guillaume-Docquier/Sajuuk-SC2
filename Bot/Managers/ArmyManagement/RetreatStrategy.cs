@@ -24,7 +24,7 @@ public partial class ArmyManager {
         public bool CanTransition() {
             return _armyManager.Army.GetForce() >= _rallyAtForce
                || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed
-               || _armyManager._mainArmy.GetCenter().DistanceTo(GetRetreatPosition()) <= AcceptableDistanceToTarget;
+               || _armyManager._mainArmy.GetCenter().HorizontalDistanceTo(GetRetreatPosition()) <= AcceptableDistanceToTarget;
         }
 
         public IStrategy Transition() {
@@ -56,7 +56,7 @@ public partial class ArmyManager {
             GraphicalDebugger.AddSphere(retreatPosition, AcceptableDistanceToTarget, Colors.Yellow);
             GraphicalDebugger.AddText("Retreat", worldPos: retreatPosition.ToPoint());
 
-            soldiers.Where(unit => unit.DistanceTo(retreatPosition) > AcceptableDistanceToTarget)
+            soldiers.Where(unit => unit.HorizontalDistanceTo(retreatPosition) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.Move(retreatPosition));
 

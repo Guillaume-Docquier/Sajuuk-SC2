@@ -105,8 +105,8 @@ public static class Pathfinder {
 
     public static Path FindPath(Vector3 origin, Vector3 destination) {
         // Improve caching performance
-        origin = origin.AsWorldGridCorner().WithoutZ();
-        destination = destination.AsWorldGridCorner().WithoutZ();
+        origin = origin.ClosestWalkable().AsWorldGridCorner().WithoutZ();
+        destination = destination.ClosestWalkable().AsWorldGridCorner().WithoutZ();
 
         var knownPath = GetPathFromMemory(origin, destination);
         if (knownPath != null) {
@@ -200,7 +200,7 @@ public static class Pathfinder {
         return x >= 0 && x < _maxX && y >= 0 && y < _maxY;
     }
 
-    private static bool IsWalkable(Vector3 position) {
+    public static bool IsWalkable(Vector3 position) {
         return _walkMap[(int)position.X][(int)position.Y];
     }
 

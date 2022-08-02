@@ -92,7 +92,7 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
         army = army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed).ToList();
 
         _coolDownUntil = Controller.Frame + Controller.SecsToFrames(5);
-        Controller.FrameDelayMs = Controller.RealTime;
+        //Controller.FrameDelayMs = Controller.RealTime;
 
         var armyCenter = army.GetCenter();
         GraphicalDebugger.AddSphere(armyCenter, 1, Colors.Magenta);

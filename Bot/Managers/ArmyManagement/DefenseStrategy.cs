@@ -50,13 +50,15 @@ public partial class ArmyManager {
                 return;
             }
 
+            targetToDefend = targetToDefend.ClosestWalkable();
+
             GraphicalDebugger.AddSphere(targetToDefend, AcceptableDistanceToTarget, Colors.Green);
             GraphicalDebugger.AddTextGroup(new[] { "Defend", $"Radius: {defenseRadius}" }, worldPos: targetToDefend.ToPoint());
 
             var targetList = Controller.EnemyUnits
                 .Where(enemy => !enemy.RawUnitData.IsFlying) // TODO GD Some units should hit these
-                .Where(enemy => enemy.DistanceTo(targetToDefend) < defenseRadius)
-                .OrderBy(enemy => enemy.DistanceTo(targetToDefend))
+                .Where(enemy => enemy.HorizontalDistanceTo(targetToDefend) < defenseRadius)
+                .OrderBy(enemy => enemy.HorizontalDistanceTo(targetToDefend))
                 .ToList();
 
             if (targetList.Any()) {
@@ -64,7 +66,7 @@ public partial class ArmyManager {
                     .Where(unit => !unit.RawUnitData.IsBurrowed)
                     .ToList()
                     .ForEach(soldier => {
-                        var closestEnemy = targetList.Take(5).OrderBy(enemy => enemy.DistanceTo(soldier)).First();
+                        var closestEnemy = targetList.Take(5).OrderBy(enemy => enemy.HorizontalDistanceTo(soldier)).First();
 
                         soldier.AttackMove(closestEnemy.Position);
                         GraphicalDebugger.AddLine(soldier.Position, closestEnemy.Position, Colors.Red);
@@ -81,10 +83,12 @@ public partial class ArmyManager {
                 return;
             }
 
+            rallyPoint = rallyPoint.ClosestWalkable();
+
             GraphicalDebugger.AddSphere(rallyPoint, AcceptableDistanceToTarget, Colors.Blue);
             GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToPoint());
 
-            soldiers.Where(unit => unit.DistanceTo(rallyPoint) > AcceptableDistanceToTarget)
+            soldiers.Where(unit => unit.HorizontalDistanceTo(rallyPoint) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.AttackMove(rallyPoint));
 
