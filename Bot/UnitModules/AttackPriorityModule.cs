@@ -1,10 +1,20 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Bot.GameData;
 
 namespace Bot.UnitModules;
 
 public class AttackPriorityModule: IUnitModule {
     public const string Tag = "attack-priority-module";
+
+    // TODO GD Get Unit specific priorities
+    private static readonly HashSet<uint> PriorityTargets = new HashSet<uint>
+    {
+        Units.SiegeTank,
+        Units.SiegeTankSieged,
+        Units.Colossus,
+        Units.Immortal,
+    };
 
     private readonly Unit _unit;
 
@@ -29,14 +39,12 @@ public class AttackPriorityModule: IUnitModule {
         }
 
         // TODO GD Add other units to prioritize
-        var priorityTargetInRange = Controller.GetUnits(Controller.EnemyUnits, Units.SiegeTanks)
-            .Where(priorityTarget => priorityTarget.DistanceTo(_unit) < unitWeapon.Range)
-            .MinBy(priorityTarget => priorityTarget.DistanceTo(_unit));
+        var priorityTargetInRange = Controller.GetUnits(Controller.EnemyUnits, PriorityTargets)
+            .Where(priorityTarget => priorityTarget.HorizontalDistanceTo(_unit) < unitWeapon.Range)
+            .MinBy(priorityTarget => priorityTarget.HorizontalDistanceTo(_unit));
 
-        if (priorityTargetInRange == null) {
-            return;
+        if (priorityTargetInRange != null) {
+            _unit.Attack(priorityTargetInRange);
         }
-
-        _unit.Attack(priorityTargetInRange);
     }
 }

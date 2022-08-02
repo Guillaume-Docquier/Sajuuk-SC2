@@ -29,10 +29,7 @@ public class BurrowMicroModule: IUnitModule {
 
         // Try to burrow down
         if (_unit.Integrity <= BurrowDownThreshold && !_unit.RawUnitData.IsBurrowed) {
-            if (ThereIsAUnitAtYourLocation(checkUnderground: true)) {
-                MoveAwayFromTheEnemy(GetClosestEnemyUnit());
-            }
-            else {
+            if (!ThereIsAUnitAtYourLocation(checkUnderground: true)) {
                 _unit.UseAbility(Abilities.BurrowRoachDown);
             }
         }
@@ -71,8 +68,7 @@ public class BurrowMicroModule: IUnitModule {
         }
     }
 
-    // TODO GD Cache this
     private Unit GetClosestEnemyUnit() {
-        return Controller.EnemyUnits.MinBy(enemyUnit => _unit.DistanceTo(enemyUnit));
+        return Controller.GetUnits(Controller.EnemyUnits, Units.Military).MinBy(enemyUnit => _unit.DistanceTo(enemyUnit));
     }
 }
