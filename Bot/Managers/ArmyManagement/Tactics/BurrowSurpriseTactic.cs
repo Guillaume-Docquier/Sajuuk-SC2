@@ -40,6 +40,8 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
     };
 
     public bool IsViable(IReadOnlyCollection<Unit> army) {
+        army = army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed).ToList();
+
         if (!DetectionTracker.IsStealthEffective()) {
             return false;
         }
@@ -87,20 +89,19 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
     }
 
     public void Execute(IReadOnlyCollection<Unit> army) {
-        _coolDownUntil = Controller.Frame + Controller.SecsToFrames(5);
+        army = army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed).ToList();
 
+        _coolDownUntil = Controller.Frame + Controller.SecsToFrames(5);
         Controller.FrameDelayMs = Controller.RealTime;
 
         var armyCenter = army.GetCenter();
         GraphicalDebugger.AddSphere(armyCenter, 1, Colors.Magenta);
 
         if (_state == State.None) {
-            foreach (var roach in army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed)) {
-                if (!_unitsWithUninstalledModule.Contains(roach)) {
-                    roach.AddDeathWatcher(this);
-                    _unitsWithUninstalledModule.Add(roach);
-                    UnitModule.Uninstall<BurrowMicroModule>(roach);
-                }
+            foreach (var roach in army.Where(roach => !_unitsWithUninstalledModule.Contains(roach))) {
+                roach.AddDeathWatcher(this);
+                _unitsWithUninstalledModule.Add(roach);
+                UnitModule.Uninstall<BurrowMicroModule>(roach);
             }
 
             BurrowOverlings(army);
