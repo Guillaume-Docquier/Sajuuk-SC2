@@ -55,7 +55,7 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
                 return false;
             }
 
-            if (IsArmyDetected(army)) {
+            if (DetectionTracker.IsDetected(army)) {
                 return false;
             }
 
@@ -73,7 +73,7 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
         }
 
         if (_state is State.Approach or State.Setup) {
-            if (IsArmyDetected(army)) {
+            if (DetectionTracker.IsDetected(army)) {
                 return false;
             }
 
@@ -226,23 +226,6 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
 
     private static bool HasProperTech() {
         return Controller.ResearchedUpgrades.Contains(Upgrades.TunnelingClaws) && Controller.ResearchedUpgrades.Contains(Upgrades.Burrow);
-    }
-
-    private static bool IsArmyDetected(IReadOnlyCollection<Unit> army) {
-        return IsArmyScanned(army) || GetDetectorsThatCanSee(army).Any();
-    }
-
-    private static bool IsArmyScanned(IReadOnlyCollection<Unit> army) {
-        var scanRadius = KnowledgeBase.GetEffectData(Effects.ScanSweep).Radius;
-
-        return Controller.GetEffects(Effects.ScanSweep)
-            .SelectMany(scanEffect => scanEffect.Pos.ToList())
-            .Any(scan => army.Any(soldier => scan.ToVector3().HorizontalDistanceTo(soldier.Position) <= scanRadius));
-    }
-
-    private static IEnumerable<Unit> GetDetectorsThatCanSee(IReadOnlyCollection<Unit> army) {
-        return Controller.GetUnits(Controller.EnemyUnits, Units.Detectors)
-            .Where(detector => army.Any(soldier => soldier.HorizontalDistanceTo(detector) <= detector.UnitTypeData.SightRange));
     }
 
     private static bool IsArmyGettingEngaged(IEnumerable<Unit> army) {

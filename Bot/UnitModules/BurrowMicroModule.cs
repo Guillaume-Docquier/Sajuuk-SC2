@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Bot.GameData;
+using Bot.GameSense;
 
 namespace Bot.UnitModules;
 
@@ -24,6 +25,15 @@ public class BurrowMicroModule: IUnitModule {
 
     public void Execute() {
         if (!Controller.ResearchedUpgrades.Contains(Upgrades.Burrow)) {
+            return;
+        }
+
+        // Detection, abort
+        if (DetectionTracker.IsDetected(_unit)) {
+            if (_unit.RawUnitData.IsBurrowed) {
+                _unit.UseAbility(Abilities.BurrowRoachUp);
+            }
+
             return;
         }
 
