@@ -20,7 +20,7 @@ public class GameConnection {
     private string _starcraftMapsDir;
 
     private readonly ulong _runEvery;
-    private const ulong DebugMemoryEvery = (ulong)(5 * Controller.FramesPerSecond);
+    private static readonly ulong DebugMemoryEvery = Controller.SecsToFrames(5);
 
     public GameConnection(ulong runEvery) {
         _runEvery = runEvery;
@@ -291,7 +291,7 @@ public class GameConnection {
                 // For some reason it doesn't work before a few seconds after the game starts
                 // Also, this might take a couple of frames, let the bot start the game
                 // TODO GD Precompute this and save it
-                if (!MapAnalyzer.IsInitialized && Controller.Frame > Controller.FramesPerSecond * 5) {
+                if (!MapAnalyzer.IsInitialized && Controller.Frame > Controller.SecsToFrames(5)) {
                     MapAnalyzer.Init();
                 }
 

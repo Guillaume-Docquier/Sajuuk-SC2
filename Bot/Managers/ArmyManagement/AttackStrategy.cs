@@ -10,7 +10,7 @@ namespace Bot.Managers.ArmyManagement;
 
 public partial class ArmyManager {
     public class AttackStrategy : IStrategy {
-        private const int ReasonableMoveDelay = (int)(5 * Controller.FramesPerSecond);
+        private static readonly ulong ReasonableMoveDelay = Controller.SecsToFrames(5);
         private const float NegligibleMovement = 2f;
         private const float RocksDestructionRange = 9f;
         private const float AcceptableDistanceToTarget = 3;
@@ -26,10 +26,10 @@ public partial class ArmyManager {
         private Vector3 _previousArmyLocation;
         private ulong _ticksWithoutRealMove;
 
-        private const ulong MaximumPathfindingLockDelay = (ulong)(Controller.FramesPerSecond * 15);
+        private static readonly ulong MaximumPathfindingLockDelay = Controller.SecsToFrames(15);
         private bool PathfindingIsUnlocked => _pathfindingLock < Controller.Frame;
         private ulong _pathfindingLock = 0;
-        private ulong _pathfindingLockDelay = (ulong)(Controller.FramesPerSecond * 4);
+        private ulong _pathfindingLockDelay = Controller.SecsToFrames(4);
 
         private readonly ITactic _burrowSurpriseTactic = new BurrowSurpriseTactic();
 

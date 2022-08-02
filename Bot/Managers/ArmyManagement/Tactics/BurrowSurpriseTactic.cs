@@ -29,6 +29,8 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
     private Vector3 _targetPosition;
     private bool _isTargetPriority = false;
 
+    private ulong _coolDownUntil = 0;
+
     private static readonly HashSet<uint> PriorityTargets = new HashSet<uint>
     {
         Units.SiegeTank,
@@ -43,6 +45,10 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
         }
 
         if (_state == State.None) {
+            if (_coolDownUntil > Controller.Frame) {
+                return false;
+            }
+
             if (!HasProperTech()) {
                 return false;
             }
@@ -81,6 +87,8 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
     }
 
     public void Execute(IReadOnlyCollection<Unit> army) {
+        _coolDownUntil = Controller.Frame + Controller.SecsToFrames(5);
+
         Controller.FrameDelayMs = Controller.RealTime;
 
         var armyCenter = army.GetCenter();
