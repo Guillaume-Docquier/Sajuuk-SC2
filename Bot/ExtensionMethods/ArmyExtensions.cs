@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using Bot.GameData;
 
-namespace Bot;
+namespace Bot.ExtensionMethods;
 
 public static class ArmyExtensions {
     public static float GetForce(this IEnumerable<Unit> army) {

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using Bot.GameData;
+using Bot.MapKnowledge;
 using Bot.UnitModules;
 using Bot.Wrapper;
 using SC2APIProtocol;

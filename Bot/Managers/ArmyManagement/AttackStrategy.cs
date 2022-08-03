@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.Managers.ArmyManagement.Tactics;
+using Bot.MapKnowledge;
 using Bot.Wrapper;
 
 namespace Bot.Managers.ArmyManagement;

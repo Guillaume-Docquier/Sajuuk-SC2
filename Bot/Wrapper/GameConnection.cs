@@ -6,6 +6,8 @@ using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Bot.GameData;
+using Bot.GameSense;
+using Bot.MapKnowledge;
 using SC2APIProtocol;
 
 namespace Bot.Wrapper;

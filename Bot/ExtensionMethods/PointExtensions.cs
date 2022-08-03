@@ -1,7 +1,8 @@
 ﻿using System.Numerics;
+using Bot.MapKnowledge;
 using SC2APIProtocol;
 
-namespace Bot;
+namespace Bot.ExtensionMethods;
 
 public static class PointExtensions {
     public static Vector3 ToVector3(this Point point) {

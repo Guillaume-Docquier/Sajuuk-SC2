@@ -2,9 +2,10 @@
 using System.Linq;
 using System.Numerics;
 using Bot.GameData;
+using Bot.MapKnowledge;
 using SC2APIProtocol;
 
-namespace Bot;
+namespace Bot.ExtensionMethods;
 
 public static class Vector3Extensions {
     public static Point ToPoint(this Vector3 vector, float xOffset = 0, float yOffset = 0, float zOffset = 0) {

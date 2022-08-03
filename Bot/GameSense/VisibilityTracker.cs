@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using Bot.Wrapper;
 using SC2APIProtocol;
 
-namespace Bot;
+namespace Bot.GameSense;
 
 public static class VisibilityTracker {
     private enum Visibility {

@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.Wrapper;
 
-namespace Bot;
+namespace Bot.MapKnowledge;
 
 public static class MapAnalyzer {
     public static bool IsInitialized = false;
