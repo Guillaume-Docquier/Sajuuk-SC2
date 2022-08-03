@@ -80,7 +80,6 @@ public static class Vector3Extensions {
             return vector;
         }
 
-
         var closestWalkableCell = MapAnalyzer.BuildSearchGrid(vector, 10)
             .Where(MapAnalyzer.IsWalkable)
             .MinBy(cell => cell.HorizontalDistanceTo(vector));

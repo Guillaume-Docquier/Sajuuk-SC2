@@ -17,7 +17,7 @@ public class ExpandAnalyzer: INeedUpdating {
     public static List<List<Unit>> ResourceClusters;
     public static List<Vector3> ExpandLocations;
 
-    private const float ExpandSearchRadius = 5;
+    private const int ExpandSearchRadius = 5;
 
     private ExpandAnalyzer() {}
 

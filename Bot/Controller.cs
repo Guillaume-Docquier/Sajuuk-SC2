@@ -355,6 +355,7 @@ public static class Controller {
         }
 
         var expandLocation = GetFreeExpandLocations()
+            .Where(expandLocation => Pathfinder.FindPath(MapAnalyzer.StartingLocation, expandLocation) != null)
             .OrderBy(expandLocation => Pathfinder.FindPath(MapAnalyzer.StartingLocation, expandLocation).Count)
             .FirstOrDefault(expandLocation => BuildingTracker.CanPlace(buildingType, expandLocation));
 

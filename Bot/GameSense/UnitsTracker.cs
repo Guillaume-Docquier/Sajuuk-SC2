@@ -33,7 +33,7 @@ public class UnitsTracker: INeedUpdating {
                 .Select(unit => (unit.Name, unit.UnitType))
                 .ToList();
 
-            Logger.Info("Unknown neutral units ({0}): {1}", unknownNeutralUnits.Count, string.Join(", ", unknownNeutralUnits));
+            Logger.Info("{0} unknown neutral units: {1}", unknownNeutralUnits.Count, string.Join(", ", unknownNeutralUnits));
 
             return;
         }

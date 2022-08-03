@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers;
+using Bot.MapKnowledge;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
@@ -74,6 +76,8 @@ public class SajuukBot: PoliteBot {
 
         DebugBuildOrder();
         DebugEnemyDetectors();
+        // DebugWalkableAreas();
+        // DebugDestructibles();
 
         foreach (var unit in UnitsTracker.UnitsByTag.Values) {
             unit.ExecuteModules();
@@ -124,7 +128,24 @@ public class SajuukBot: PoliteBot {
         var detectors = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Detectors);
         foreach (var detector in detectors) {
             GraphicalDebugger.AddText("!", size: 20, worldPos: detector.Position.ToPoint(), color: Colors.Purple);
-            GraphicalDebugger.AddGridSquaresInRadius(detector.Position, detector.UnitTypeData.SightRange, Colors.Purple);
+            GraphicalDebugger.AddGridSquaresInRadius(detector.Position, (int)detector.UnitTypeData.SightRange, Colors.Purple);
+        }
+    }
+
+    private static void DebugWalkableAreas() {
+        for (var x = 0; x < MapAnalyzer.MaxX; x++) {
+            for (var y = 0; y < MapAnalyzer.MaxY; y++) {
+                var position = new Vector3(x, y, 0).AsWorldGridCenter().WithWorldHeight();
+                if (!MapAnalyzer.IsWalkable(position)) {
+                    GraphicalDebugger.AddGridSquare(position, Colors.LightRed);
+                }
+            }
+        }
+    }
+
+    private static void DebugDestructibles() {
+        foreach (var unit in Controller.GetUnits(UnitsTracker.NeutralUnits, Units.Destructibles).ToList()) {
+            GraphicalDebugger.AddText(unit.Name, worldPos: unit.Position.ToPoint());
         }
     }
 

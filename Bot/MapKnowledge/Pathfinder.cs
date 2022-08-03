@@ -17,14 +17,15 @@ public static class Pathfinder {
         origin = origin.ClosestWalkable().AsWorldGridCorner().WithoutZ();
         destination = destination.ClosestWalkable().AsWorldGridCorner().WithoutZ();
 
-        var knownPath = GetPathFromMemory(origin, destination);
-        if (knownPath != null) {
+        var isPathKnown = TryGetPathFromMemory(origin, destination, out var knownPath);
+        if (isPathKnown) {
             return knownPath;
         }
 
         var maybeNullPath = AStar(origin, destination, (from, to) => from.HorizontalDistanceTo(to));
         if (maybeNullPath == null) {
-            Logger.Error("Path from {0} to {1} was null", origin, destination);
+            Logger.Info("No path found between {0} and {1}", origin, destination);
+            SavePathToMemory(origin, destination, null);
             return null;
         }
 
@@ -114,18 +115,19 @@ public static class Pathfinder {
         return path.Select(step => step.WithWorldHeight());
     }
 
-    private static Path GetPathFromMemory(Vector3 origin, Vector3 destination) {
+    private static bool TryGetPathFromMemory(Vector3 origin, Vector3 destination, out Path path) {
         if (Memory.ContainsKey(origin) && Memory[origin].ContainsKey(destination)) {
-            return Memory[origin][destination];
+            path = Memory[origin][destination];
+            return true;
         }
 
         if (Memory.ContainsKey(destination) && Memory[destination].ContainsKey(origin)) {
-            var path = Memory[destination][origin];
-
-            return Enumerable.Reverse(path).ToList();
+            path = Enumerable.Reverse(Memory[destination][origin]).ToList();
+            return true;
         }
 
-        return null;
+        path = null;
+        return false;
     }
 
     private static void SavePathToMemory(Vector3 origin, Vector3 destination, Path path) {
