@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Bot.GameData;
+using Bot.GameSense;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
@@ -34,7 +35,7 @@ public abstract class PoliteBot: IBot {
     }
 
     private void EnsureGG() {
-        var structures = Controller.GetUnits(Controller.OwnedUnits, Units.Structures).ToList();
+        var structures = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Structures).ToList();
         if (structures.Count == 1 && structures.First().Integrity < 0.4) {
             if (!Controller.ChatLog.Contains("gg wp")) {
                 // Controller.Chat("gg wp");

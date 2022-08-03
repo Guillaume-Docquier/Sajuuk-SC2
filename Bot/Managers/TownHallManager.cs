@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameData;
+using Bot.GameSense;
 using Bot.UnitModules;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -50,7 +51,7 @@ public class TownHallManager: IManager {
 
         DebugLocationModule.Install(TownHall, _color);
 
-        _minerals = Controller.GetUnits(Controller.NeutralUnits, Units.MineralFields)
+        _minerals = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.MineralFields)
             .Where(mineral => mineral.DistanceTo(TownHall) < MaxDistanceToExpand)
             .Where(mineral => !UnitUtils.IsResourceManaged(mineral))
             .Take(MaxMinerals)
@@ -63,7 +64,7 @@ public class TownHallManager: IManager {
             CapacityModule.Install(mineral, MaxPerMinerals);
         });
 
-        _gasses = Controller.GetUnits(Controller.NeutralUnits, Units.GasGeysers)
+        _gasses = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers)
             .Where(gas => gas.DistanceTo(TownHall) < MaxDistanceToExpand)
             .Where(gas => !UnitUtils.IsResourceManaged(gas))
             .Where(gas => !IsGasDepleted(gas))
@@ -75,7 +76,7 @@ public class TownHallManager: IManager {
             CapacityModule.Install(gas, MaxExtractorsPerGas);
         });
 
-        DiscoverExtractors(Controller.OwnedUnits);
+        DiscoverExtractors(UnitsTracker.OwnedUnits);
     }
 
     public void AssignQueen(Unit queen) {
@@ -139,7 +140,7 @@ public class TownHallManager: IManager {
         DrawAvailableCapacityInfo();
 
         HandleDepletedGasses();
-        DiscoverExtractors(Controller.NewOwnedUnits);
+        DiscoverExtractors(UnitsTracker.NewOwnedUnits);
 
         DispatchWorkers(GetIdleWorkers());
 

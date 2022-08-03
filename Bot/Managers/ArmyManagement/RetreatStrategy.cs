@@ -3,6 +3,7 @@ using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
+using Bot.GameSense;
 using Bot.MapKnowledge;
 using Bot.Wrapper;
 
@@ -68,11 +69,11 @@ public partial class ArmyManager {
         }
 
         private static Vector3 GetRetreatPosition() {
-            var shortestPathBetweenBaseAndEnemy = Controller.GetUnits(Controller.OwnedUnits, Units.Hatchery)
-                .Select(townHall => Pathfinder.FindPath(townHall.Position, Controller.EnemyLocations[0]))
+            var shortestPathBetweenBaseAndEnemy = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery)
+                .Select(townHall => Pathfinder.FindPath(townHall.Position, MapAnalyzer.EnemyStartingLocation))
                 .MinBy(path => path.Count);
 
-            shortestPathBetweenBaseAndEnemy ??= Pathfinder.FindPath(Controller.StartingTownHall.Position, Controller.EnemyLocations[0]);
+            shortestPathBetweenBaseAndEnemy ??= Pathfinder.FindPath(MapAnalyzer.StartingLocation, MapAnalyzer.EnemyStartingLocation);
 
             return shortestPathBetweenBaseAndEnemy[RetreatDistanceFromBase];
         }

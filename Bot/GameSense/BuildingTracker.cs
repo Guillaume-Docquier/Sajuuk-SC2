@@ -7,13 +7,17 @@ using Bot.MapKnowledge;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
-namespace Bot;
+namespace Bot.GameSense;
 
-public class BuildingTracker: IWatchUnitsDie {
+public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
+    public static readonly BuildingTracker Instance = new BuildingTracker();
+
     private readonly Dictionary<Vector3, Unit> _reservedBuildingCells = new Dictionary<Vector3, Unit>();
     private readonly Dictionary<Unit, List<Vector3>> _ongoingBuildingOrders = new Dictionary<Unit, List<Vector3>>();
 
-    public void Update() {
+    private BuildingTracker() {}
+
+    public void Update(ResponseObservation observation) {
         foreach (var reservedBuildingCell in _reservedBuildingCells.Keys) {
             GraphicalDebugger.AddGridSquare(reservedBuildingCell, Colors.Yellow);
         }
@@ -29,10 +33,10 @@ public class BuildingTracker: IWatchUnitsDie {
         }
     }
 
-    public Vector3 FindConstructionSpot(uint buildingType) {
-        var startingSpot = Controller.StartingTownHall.Position;
+    public static Vector3 FindConstructionSpot(uint buildingType) {
+        var startingSpot = MapAnalyzer.StartingLocation;
         var searchGrid = MapAnalyzer.BuildSearchGrid(startingSpot, gridRadius: 12, stepSize: 2);
-        var mineralFields = Controller.GetUnits(Controller.NeutralUnits, Units.MineralFields).ToList();
+        var mineralFields = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.MineralFields).ToList();
 
         foreach (var constructionCandidate in searchGrid) {
             // Avoid building in the mineral line
@@ -51,21 +55,21 @@ public class BuildingTracker: IWatchUnitsDie {
         return default;
     }
 
-    public void ConfirmPlacement(uint buildingType, Vector3 position, Unit builder) {
-        builder.AddDeathWatcher(this);
+    public static void ConfirmPlacement(uint buildingType, Vector3 position, Unit builder) {
+        builder.AddDeathWatcher(Instance);
 
         var buildingCells = GetBuildingCells(buildingType, position).ToList();
-        buildingCells.ForEach(buildingCell => _reservedBuildingCells[buildingCell] = builder);
-        _ongoingBuildingOrders[builder] = buildingCells;
+        buildingCells.ForEach(buildingCell => Instance._reservedBuildingCells[buildingCell] = builder);
+        Instance._ongoingBuildingOrders[builder] = buildingCells;
     }
 
     // This is a blocking call! Use it sparingly, or you will slow down your execution significantly!
-    public bool CanPlace(uint buildingType, Vector3 position) {
-        if (IsTooCloseToTownHall(buildingType, position)) {
+    public static bool CanPlace(uint buildingType, Vector3 position) {
+        if (Instance.IsTooCloseToTownHall(buildingType, position)) {
             return false;
         }
 
-        if (GetBuildingCells(buildingType, position).Any(buildingCell => _reservedBuildingCells.ContainsKey(buildingCell))) {
+        if (GetBuildingCells(buildingType, position).Any(buildingCell => Instance._reservedBuildingCells.ContainsKey(buildingCell))) {
             return false;
         }
 
@@ -165,6 +169,6 @@ public class BuildingTracker: IWatchUnitsDie {
         // Leave at least 1 cell around town halls
         var minDistance = buildingDimension.Radius + townHallDimension.Radius + 1;
 
-        return Controller.GetUnits(Controller.OwnedUnits, Units.Hatchery).Any(townHall => townHall.DistanceTo(position) <= minDistance);
+        return Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).Any(townHall => townHall.DistanceTo(position) <= minDistance);
     }
 }

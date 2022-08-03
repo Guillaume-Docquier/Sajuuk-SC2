@@ -3,6 +3,7 @@ using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
+using Bot.GameSense;
 using Bot.Managers;
 using Bot.UnitModules;
 using Bot.Wrapper;
@@ -188,12 +189,12 @@ public class Unit: ICanDie {
 
         var abilityName = KnowledgeBase.GetAbilityData(abilityId).FriendlyName;
         if (targetUnitTag != ulong.MaxValue) {
-            if (!Controller.UnitsByTag.ContainsKey(targetUnitTag)) {
+            if (!UnitsTracker.UnitsByTag.ContainsKey(targetUnitTag)) {
                 Logger.Error("Error with {0} trying to {1} on {2}: The target doesn't exist", this, abilityName, Tag);
                 return;
             }
 
-            var targetUnit = Controller.UnitsByTag[targetUnitTag];
+            var targetUnit = UnitsTracker.UnitsByTag[targetUnitTag];
             Logger.Info("{0} using ability {1} on {2}", this, abilityName, targetUnit);
         }
         else if (position != null) {

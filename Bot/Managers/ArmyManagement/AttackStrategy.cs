@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
+using Bot.GameSense;
 using Bot.Managers.ArmyManagement.Tactics;
 using Bot.MapKnowledge;
 using Bot.Wrapper;
@@ -119,7 +120,7 @@ public partial class ArmyManager {
             var isStuck = _ticksWithoutRealMove > ReasonableMoveDelay;
             if (isStuck) {
                 Logger.Warning("AttackStrategy: I'm stuck!");
-                var closestRock = Controller.GetUnits(Controller.NeutralUnits, Units.Destructibles).MinBy(rock => rock.HorizontalDistanceTo(armyLocation));
+                var closestRock = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.Destructibles).MinBy(rock => rock.HorizontalDistanceTo(armyLocation));
                 if (closestRock != null) {
                     Logger.Info("AttackStrategy: Closest rock is {0} units away", closestRock.HorizontalDistanceTo(armyLocation).ToString("0.00"));
                     if (closestRock.HorizontalDistanceTo(armyLocation) <= RocksDestructionRange) {

@@ -5,7 +5,9 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
-public static class VisibilityTracker {
+public class VisibilityTracker: INeedUpdating {
+    public static readonly VisibilityTracker Instance = new VisibilityTracker();
+
     private enum Visibility {
         NotExplored = 0,
         Explored = 1,
@@ -17,8 +19,10 @@ public static class VisibilityTracker {
 
     private static ImageData _rawVisibilityMap;
 
-    public static void Update(ImageData visibility) {
-        _rawVisibilityMap = visibility;
+    private VisibilityTracker() {}
+
+    public void Update(ResponseObservation observation) {
+        _rawVisibilityMap = observation.Observation.RawData.MapState.Visibility;
     }
 
     public static bool IsVisible(Vector3 location) {

@@ -14,7 +14,7 @@ public static class DetectionTracker {
         }
 
         // We can't kill flying units for now, so we can cache this value
-        _enemyHasDetectors = Controller.GetUnits(Controller.EnemyUnits, Units.MobileDetectors).Any();
+        _enemyHasDetectors = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.MobileDetectors).Any();
 
         return !_enemyHasDetectors;
     }
@@ -36,7 +36,7 @@ public static class DetectionTracker {
     }
 
     public static IEnumerable<Unit> GetDetectorsThatCanSee(IReadOnlyCollection<Unit> army) {
-        return Controller.GetUnits(Controller.EnemyUnits, Units.Detectors)
+        return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Detectors)
             .Where(detector => army.Any(soldier => soldier.HorizontalDistanceTo(detector) <= detector.UnitTypeData.SightRange));
     }
 }

@@ -19,7 +19,7 @@ public static class PointExtensions {
         {
             X = point.X,
             Y = point.Y,
-            Z = Pathfinder.HeightMap[(int)point.X][(int)point.Y],
+            Z = MapAnalyzer.HeightMap[(int)point.X][(int)point.Y],
         };
     }
 }

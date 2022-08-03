@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
+using Bot.GameSense;
 using Bot.Wrapper;
 
 namespace Bot.Managers.ArmyManagement;
@@ -19,7 +20,7 @@ public partial class ArmyManager {
         public string Name => "Defend";
 
         public bool CanTransition() {
-            return _armyManager._canHuntTheEnemy && Controller.EnemyUnits.All(enemy => enemy.RawUnitData.IsFlying); // TODO GD Handle air units
+            return _armyManager._canHuntTheEnemy && UnitsTracker.EnemyUnits.All(enemy => enemy.RawUnitData.IsFlying); // TODO GD Handle air units
         }
 
         public IStrategy Transition() {
@@ -56,7 +57,7 @@ public partial class ArmyManager {
             GraphicalDebugger.AddSphere(targetToDefend, AcceptableDistanceToTarget, Colors.Green);
             GraphicalDebugger.AddTextGroup(new[] { "Defend", $"Radius: {defenseRadius}" }, worldPos: targetToDefend.ToPoint());
 
-            var targetList = Controller.EnemyUnits
+            var targetList = UnitsTracker.EnemyUnits
                 .Where(enemy => !enemy.RawUnitData.IsFlying) // TODO GD Some units should hit these
                 .Where(enemy => enemy.HorizontalDistanceTo(targetToDefend) < defenseRadius)
                 .OrderBy(enemy => enemy.HorizontalDistanceTo(targetToDefend))

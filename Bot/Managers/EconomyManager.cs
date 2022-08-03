@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using Bot.GameData;
+using Bot.GameSense;
+using Bot.MapKnowledge;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
@@ -33,21 +36,21 @@ public class EconomyManager: IManager {
     public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests.Concat(_townHallManagers.SelectMany(manager => manager.BuildStepRequests));
 
     public EconomyManager() {
-        ManageTownHalls(Controller.GetUnits(Controller.OwnedUnits, Units.Hatchery));
-        DispatchWorkers(Controller.GetUnits(Controller.OwnedUnits, Units.Drone).ToList());
+        ManageTownHalls(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery));
+        DispatchWorkers(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone).ToList());
     }
 
     public void OnFrame() {
-        ManageTownHalls(Controller.GetUnits(Controller.NewOwnedUnits, Units.Hatchery));
+        ManageTownHalls(Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.Hatchery));
 
         if (_townHallManagers.Count > 0) {
-            var workersToDispatch = Controller.GetUnits(Controller.NewOwnedUnits, Units.Drone).ToList();
+            var workersToDispatch = Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.Drone).ToList();
             workersToDispatch.AddRange(GetIdleWorkers());
             DispatchWorkers(workersToDispatch);
 
             EqualizeWorkers();
 
-            var queensToDispatch = Controller.GetUnits(Controller.NewOwnedUnits, Units.Queen).ToList();
+            var queensToDispatch = Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.Queen).ToList();
             queensToDispatch.AddRange(GetIdleQueens());
             DispatchQueens(queensToDispatch);
 
@@ -115,8 +118,8 @@ public class EconomyManager: IManager {
             worker.AddDeathWatcher(this);
             worker.Manager = this;
 
-            var manager = GetClosestManagerWithIdealCapacityNotMet(worker);
-            manager ??= GetClosestManagerWithSaturatedCapacityNotMet(worker);
+            var manager = GetClosestManagerWithIdealCapacityNotMet(worker.Position);
+            manager ??= GetClosestManagerWithSaturatedCapacityNotMet(worker.Position);
             manager ??= GetManagerWithHighestAvailableCapacity();
 
             _workerDispatch[worker] = manager;
@@ -125,7 +128,7 @@ public class EconomyManager: IManager {
     }
 
     private void EqualizeWorkers() {
-        var managerInNeed = GetClosestManagerWithIdealCapacityNotMet(Controller.StartingTownHall);
+        var managerInNeed = GetClosestManagerWithIdealCapacityNotMet(MapAnalyzer.StartingLocation);
         while (managerInNeed != null) {
             var requiredWorkers = managerInNeed.IdealAvailableCapacity;
             var managerWithExtraWorkers = _townHallManagers.FirstOrDefault(manager => manager.IdealAvailableCapacity < 0); // Negative IdealAvailableCapacity means they have extra workers
@@ -137,7 +140,7 @@ public class EconomyManager: IManager {
             var freeWorkers = managerWithExtraWorkers.ReleaseWorkers(nbWorkersToRelease);
             managerInNeed.AssignWorkers(freeWorkers.ToList());
 
-            managerInNeed = GetClosestManagerWithIdealCapacityNotMet(Controller.StartingTownHall);
+            managerInNeed = GetClosestManagerWithIdealCapacityNotMet(MapAnalyzer.StartingLocation);
         }
     }
 
@@ -153,16 +156,16 @@ public class EconomyManager: IManager {
         }
     }
 
-    private TownHallManager GetClosestManagerWithIdealCapacityNotMet(Unit worker) {
+    private TownHallManager GetClosestManagerWithIdealCapacityNotMet(Vector3 position) {
         return GetAvailableManagers()
             .Where(manager => manager.IdealAvailableCapacity > 0)
-            .MinBy(manager => manager.TownHall.DistanceTo(worker));
+            .MinBy(manager => manager.TownHall.DistanceTo(position));
     }
 
-    private TownHallManager GetClosestManagerWithSaturatedCapacityNotMet(Unit worker) {
+    private TownHallManager GetClosestManagerWithSaturatedCapacityNotMet(Vector3 position) {
         return GetAvailableManagers()
             .Where(manager => manager.SaturatedAvailableCapacity > 0)
-            .MinBy(manager => manager.TownHall.DistanceTo(worker));
+            .MinBy(manager => manager.TownHall.DistanceTo(position));
     }
 
     private TownHallManager GetManagerWithHighestAvailableCapacity() {
@@ -205,7 +208,7 @@ public class EconomyManager: IManager {
     }
 
     private static IEnumerable<Unit> GetIdleLarvae() {
-        return Controller.GetUnits(Controller.OwnedUnits, Units.Larva)
+        return Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Larva)
             .Where(larva => !larva.Orders.Any());
     }
 
@@ -216,14 +219,14 @@ public class EconomyManager: IManager {
 
     private bool HasEnoughMacroTownHalls() {
         var nbTownHalls = _townHallDispatch.Count
-                          + Controller.GetUnits(Controller.OwnedUnits, Units.Producers[Units.Hatchery]).Count(producer => producer.IsBuilding(Units.Hatchery))
+                          + Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Producers[Units.Hatchery]).Count(producer => producer.IsBuilding(Units.Hatchery))
                           + _buildStepRequests[MacroHatchBuildRequestIndex].Quantity;
 
         return nbTownHalls >= Controller.GetMiningTownHalls().Count() * 2;
     }
 
     private static IEnumerable<Unit> GetTownHallsInConstruction() {
-        return Controller.GetUnits(Controller.OwnedUnits, Units.Hatchery)
+        return Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery)
             .Where(townHall => !townHall.IsOperational)
             .Concat(Controller.GetUnitsInProduction(Units.Hatchery));
     }

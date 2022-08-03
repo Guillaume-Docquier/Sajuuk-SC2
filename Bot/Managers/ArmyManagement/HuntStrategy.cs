@@ -54,7 +54,7 @@ public partial class ArmyManager {
         }
 
         private static void InitCheckedLocations() {
-            _checkedLocations = MapAnalyzer.ExpandLocations.ToDictionary(expand => expand, VisibilityTracker.IsVisible);
+            _checkedLocations = ExpandAnalyzer.ExpandLocations.ToDictionary(expand => expand, VisibilityTracker.IsVisible);
         }
 
         private void AssignNewTarget() {
@@ -65,7 +65,7 @@ public partial class ArmyManager {
             // _armyManager.Army.ForEach(TargetNeutralUnitsModule.Install);
 
             var armyCenter = _armyManager._mainArmy.GetCenter().ClosestWalkable();
-            var nextUncheckedLocation = MapAnalyzer.ExpandLocations
+            var nextUncheckedLocation = ExpandAnalyzer.ExpandLocations
                 .Where(expandLocation => !_checkedLocations[expandLocation])
                 .Where(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation) != null)
                 .OrderBy(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation).Count)

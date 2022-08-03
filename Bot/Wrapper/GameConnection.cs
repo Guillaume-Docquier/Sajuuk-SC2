@@ -285,23 +285,8 @@ public class GameConnection {
                 continue;
             }
 
-            Controller.Frame = observation.Observation.GameLoop;
-
             if (observation.Observation.GameLoop % _runEvery == 0) {
                 Controller.NewObservation(observation);
-
-                // For some reason it doesn't work before a few seconds after the game starts
-                // Also, this might take a couple of frames, let the bot start the game
-                // TODO GD Precompute this and save it
-                if (!MapAnalyzer.IsInitialized && Controller.Frame > Controller.SecsToFrames(5)) {
-                    MapAnalyzer.Init();
-                }
-
-                if (!Pathfinder.IsInitialized) {
-                    Pathfinder.Init();
-                }
-
-                VisibilityTracker.Update(observation.Observation.RawData.MapState.Visibility);
 
                 bot.OnFrame();
                 var actions = Controller.GetActions().ToList();
@@ -328,7 +313,7 @@ public class GameConnection {
                 if (memoryUsed > 200) {
                     Logger.Info("==== Memory Debug Start ====");
                     Logger.Info("Memory used: {0} MB", memoryUsed.ToString("0.00"));
-                    Logger.Info("Units: {0} owned, {1} neutral, {2} enemy", Controller.OwnedUnits.Count, Controller.NeutralUnits.Count, Controller.EnemyUnits.Count);
+                    Logger.Info("Units: {0} owned, {1} neutral, {2} enemy", UnitsTracker.OwnedUnits.Count, UnitsTracker.NeutralUnits.Count, UnitsTracker.EnemyUnits.Count);
                     Logger.Info(
                         "Pathfinding cache: {0} paths, {1} tiles",
                         Pathfinder.Memory.Values.Sum(destinations => destinations.Keys.Count),

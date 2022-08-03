@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
+using Bot.GameSense;
 using Bot.Managers.ArmyManagement;
 using Bot.MapKnowledge;
 
@@ -24,20 +25,20 @@ public class WarManager: IManager {
     public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests;
 
     public WarManager() {
-        var townHallDefensePosition = GetTownHallDefensePosition(Controller.StartingTownHall, Controller.EnemyLocations[0]);
+        var townHallDefensePosition = GetTownHallDefensePosition(MapAnalyzer.StartingLocation, MapAnalyzer.EnemyStartingLocation);
         _armyManager = new ArmyManager();
         _armyManager.Assign(townHallDefensePosition, GuardRadius, false);
-        _townHallToDefend = Controller.StartingTownHall;
+        _townHallToDefend = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First(townHall => townHall.Position == MapAnalyzer.StartingLocation);
     }
 
     // TODO GD Use queens?
     // TODO GD Use multiple managers, probably
     public void OnFrame() {
-        var newSoldiers = Controller.GetUnits(Controller.NewOwnedUnits, Units.ZergMilitary).ToList();
+        var newSoldiers = Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.ZergMilitary).ToList();
         newSoldiers.ForEach(soldier => soldier.Manager = this);
         _armyManager.Assign(newSoldiers);
 
-        var enemyPosition = Controller.EnemyLocations[0];
+        var enemyPosition = MapAnalyzer.EnemyStartingLocation;
 
         if (!_hasAssaultStarted) {
             DefendNewTownHalls(enemyPosition);
@@ -56,12 +57,12 @@ public class WarManager: IManager {
 
     private void DefendNewTownHalls(Vector3 enemyPosition) {
         var currentDistanceToEnemy = Pathfinder.FindPath(_townHallToDefend.Position, enemyPosition).Count; // Not exact, but the distance difference should not matter
-        var newTownHallToDefend = Controller.GetUnits(Controller.NewOwnedUnits, Units.Hatchery)
+        var newTownHallToDefend = Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.Hatchery)
             .FirstOrDefault(townHall => Pathfinder.FindPath(townHall.Position, enemyPosition).Count < currentDistanceToEnemy);
 
         // TODO GD Fallback on other townhalls when destroyed
         if (newTownHallToDefend != default) {
-            _armyManager.Assign(GetTownHallDefensePosition(newTownHallToDefend, Controller.EnemyLocations[0]), GuardRadius, false);
+            _armyManager.Assign(GetTownHallDefensePosition(newTownHallToDefend.Position, MapAnalyzer.EnemyStartingLocation), GuardRadius, false);
             _townHallToDefend = newTownHallToDefend;
         }
     }
@@ -84,8 +85,8 @@ public class WarManager: IManager {
         // Nothing to do
     }
 
-    private static Vector3 GetTownHallDefensePosition(Unit townHall, Vector3 threatPosition) {
-        var pathToThreat = Pathfinder.FindPath(townHall.Position, threatPosition);
+    private static Vector3 GetTownHallDefensePosition(Vector3 townHallPosition, Vector3 threatPosition) {
+        var pathToThreat = Pathfinder.FindPath(townHallPosition, threatPosition);
         var guardDistance = Math.Min(pathToThreat.Count, GuardDistance);
 
         return pathToThreat[guardDistance];

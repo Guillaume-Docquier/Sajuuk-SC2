@@ -72,17 +72,17 @@ public static class Vector3Extensions {
     }
 
     public static Vector3 WithWorldHeight(this Vector3 vector) {
-        return vector with { Z = Pathfinder.HeightMap[(int)vector.X][(int)vector.Y] };
+        return vector with { Z = MapAnalyzer.HeightMap[(int)vector.X][(int)vector.Y] };
     }
 
     public static Vector3 ClosestWalkable(this Vector3 vector) {
-        if (Pathfinder.IsWalkable(vector)) {
+        if (MapAnalyzer.IsWalkable(vector)) {
             return vector;
         }
 
 
         var closestWalkableCell = MapAnalyzer.BuildSearchGrid(vector, 10)
-            .Where(Pathfinder.IsWalkable)
+            .Where(MapAnalyzer.IsWalkable)
             .MinBy(cell => cell.HorizontalDistanceTo(vector));
 
         // It's probably good to avoid returning default

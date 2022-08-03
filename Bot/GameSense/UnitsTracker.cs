@@ -3,21 +3,28 @@ using System.Linq;
 using Bot.GameData;
 using SC2APIProtocol;
 
-namespace Bot;
+namespace Bot.GameSense;
 
-public class UnitsTracker {
-    public Dictionary<ulong, Unit> UnitsByTag;
+public class UnitsTracker: INeedUpdating {
+    public static readonly UnitsTracker Instance = new UnitsTracker();
 
-    public readonly List<Unit> NewOwnedUnits = new List<Unit>();
-    public readonly List<Unit> DeadOwnedUnits = new List<Unit>();
+    public static Dictionary<ulong, Unit> UnitsByTag;
 
-    public List<Unit> NeutralUnits;
-    public List<Unit> OwnedUnits;
-    public List<Unit> EnemyUnits;
+    public static readonly List<Unit> NewOwnedUnits = new List<Unit>();
+    public static readonly List<Unit> DeadOwnedUnits = new List<Unit>();
+
+    public static List<Unit> NeutralUnits;
+    public static List<Unit> OwnedUnits;
+    public static List<Unit> EnemyUnits;
 
     private bool _isInitialized = false;
 
-    public void Update(List<SC2APIProtocol.Unit> newRawUnits, ulong frame) {
+    private UnitsTracker() {}
+
+    public void Update(ResponseObservation observation) {
+        var newRawUnits = observation.Observation.RawData.Units.ToList();
+        var frame = observation.Observation.GameLoop;
+
         if (!_isInitialized) {
             Init(newRawUnits, frame);
 

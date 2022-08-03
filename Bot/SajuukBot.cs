@@ -2,6 +2,7 @@
 using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameData;
+using Bot.GameSense;
 using Bot.Managers;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -50,12 +51,12 @@ public class SajuukBot: PoliteBot {
 
             while (!IsBuildOrderBlocking() && buildStep.Quantity > 0) {
                 var buildStepResult = Controller.ExecuteBuildStep(buildStep);
-                if (buildStepResult == RequestResult.Ok) {
+                if (buildStepResult == Controller.RequestResult.Ok) {
                     buildStep.Quantity--;
                     FollowBuildOrder(); // Sometimes the build order will be unblocked
                 }
                 // Don't retry expands if they are all taken
-                else if (buildStep.BuildType == BuildType.Expand && buildStepResult == RequestResult.NoSuitableLocation) {
+                else if (buildStep.BuildType == BuildType.Expand && buildStepResult == Controller.RequestResult.NoSuitableLocation) {
                     buildStep.Quantity--;
                 }
                 else {
@@ -74,7 +75,7 @@ public class SajuukBot: PoliteBot {
         DebugBuildOrder();
         DebugEnemyDetectors();
 
-        foreach (var unit in Controller.UnitsByTag.Values) {
+        foreach (var unit in UnitsTracker.UnitsByTag.Values) {
             unit.ExecuteModules();
         }
     }
@@ -86,7 +87,7 @@ public class SajuukBot: PoliteBot {
 
         while(_buildOrder.Count > 0) {
             var buildStep = _buildOrder.First();
-            if (Controller.CurrentSupply < buildStep.AtSupply || Controller.ExecuteBuildStep(buildStep) != RequestResult.Ok) {
+            if (Controller.CurrentSupply < buildStep.AtSupply || Controller.ExecuteBuildStep(buildStep) != Controller.RequestResult.Ok) {
                 break;
             }
 
@@ -120,7 +121,7 @@ public class SajuukBot: PoliteBot {
     }
 
     private static void DebugEnemyDetectors() {
-        var detectors = Controller.GetUnits(Controller.EnemyUnits, Units.Detectors);
+        var detectors = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Detectors);
         foreach (var detector in detectors) {
             GraphicalDebugger.AddText("!", size: 20, worldPos: detector.Position.ToPoint(), color: Colors.Purple);
             GraphicalDebugger.AddGridSquaresInRadius(detector.Position, detector.UnitTypeData.SightRange, Colors.Purple);
@@ -156,6 +157,6 @@ public class SajuukBot: PoliteBot {
     }
 
     private static bool HasEnoughDrones() {
-        return Controller.GetUnits(Controller.OwnedUnits, Units.Drone).Count() >= MaxDroneCount;
+        return Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone).Count() >= MaxDroneCount;
     }
 }

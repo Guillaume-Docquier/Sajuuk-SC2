@@ -66,7 +66,7 @@ public class BurrowMicroModule: IUnitModule {
     }
 
     private bool ThereIsAUnitAtYourLocation(bool checkUnderground) {
-       return Controller.UnitsByTag.Values // TODO GD Ignore buildings
+       return UnitsTracker.UnitsByTag.Values // TODO GD Ignore buildings
             .Where(otherUnit => otherUnit != _unit)
             .Where(otherUnit => otherUnit.RawUnitData.IsBurrowed == checkUnderground)
             .Any(otherUnit => otherUnit.DistanceTo(_unit) < (otherUnit.Radius + _unit.Radius) * 0.95); // Some terrain causes collisions
@@ -80,6 +80,6 @@ public class BurrowMicroModule: IUnitModule {
     }
 
     private Unit GetClosestEnemyUnit() {
-        return Controller.GetUnits(Controller.EnemyUnits, Units.Military).MinBy(enemyUnit => _unit.DistanceTo(enemyUnit));
+        return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military).MinBy(enemyUnit => _unit.DistanceTo(enemyUnit));
     }
 }

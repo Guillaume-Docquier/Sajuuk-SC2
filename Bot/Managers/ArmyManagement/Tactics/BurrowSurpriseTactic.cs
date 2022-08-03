@@ -166,7 +166,7 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
                 _isTargetPriority = true;
             }
             else {
-                var enemies = Controller.GetUnits(Controller.EnemyUnits, Units.Military).ToList();
+                var enemies = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military).ToList();
                 var closestEnemyCluster = Clustering.DBSCAN(enemies, 5, 2).MinBy(cluster => cluster.GetCenter().HorizontalDistanceTo(armyCenter));
                 if (closestEnemyCluster != null && armyCenter.HorizontalDistanceTo(closestEnemyCluster.GetCenter()) > OperationRadius) {
                     _targetPosition = closestEnemyCluster.GetCenter();
@@ -236,7 +236,7 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
     }
 
     private static IEnumerable<Unit> GetGroundEnemiesInSight(IReadOnlyCollection<Unit> army) {
-        return Controller.GetUnits(Controller.EnemyUnits, Units.Military)
+        return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military)
             .Where(enemy => enemy.IsVisible)
             .Where(enemy => !enemy.RawUnitData.IsFlying)
             .Where(enemy => army.Any(soldier => enemy.HorizontalDistanceTo(soldier) <= Math.Max(enemy.UnitTypeData.SightRange, soldier.UnitTypeData.SightRange)));
@@ -255,7 +255,7 @@ public class BurrowSurpriseTactic: IWatchUnitsDie, ITactic {
     }
 
     private static IEnumerable<Unit> GetPriorityTargetsInOperationRadius(Vector3 armyCenter) {
-        return Controller.GetUnits(Controller.EnemyUnits, PriorityTargets).Where(enemy => enemy.HorizontalDistanceTo(armyCenter) <= OperationRadius);
+        return Controller.GetUnits(UnitsTracker.EnemyUnits, PriorityTargets).Where(enemy => enemy.HorizontalDistanceTo(armyCenter) <= OperationRadius);
     }
 
     private static IEnumerable<Unit> GetArmyWithEnoughHealth(IEnumerable<Unit> army) {

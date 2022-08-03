@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using Bot.GameData;
+using Bot.GameSense;
 using Bot.MapKnowledge;
 using Bot.UnitModules;
 using Bot.Wrapper;
@@ -13,6 +14,17 @@ using Action = SC2APIProtocol.Action;
 namespace Bot;
 
 public static class Controller {
+    public enum RequestResult {
+        Ok,
+        NoProducersAvailable,
+        NotEnoughMinerals,
+        NotEnoughVespeneGas,
+        NotEnoughSupply,
+        NoSuitableLocation,
+        TechRequirementsNotMet,
+        NotSupported,
+    }
+
     public const int RealTime = (int)(1000 / FramesPerSecond);
     public static int FrameDelayMs = 0; // Too fast? increase this to e.g. 20
 
@@ -21,15 +33,12 @@ public static class Controller {
     public const double FramesPerSecond = 22.4;
     public const float ExpandIsTakenRadius = 4f;
 
-    private static readonly UnitsTracker UnitsTracker = new UnitsTracker();
-    private static readonly BuildingTracker BuildingTracker = new BuildingTracker();
-
     public static ResponseGameInfo GameInfo;
     private static ResponseObservation _obs;
 
-    public static ulong Frame = ulong.MaxValue;
+    public static uint Frame { get; private set; } = uint.MaxValue;
 
-    public static uint CurrentSupply;
+    public static uint CurrentSupply { get; set; }
     public static uint MaxSupply;
     public static int AvailableSupply => (int)(MaxSupply - CurrentSupply);
 
@@ -39,15 +48,18 @@ public static class Controller {
     public static int AvailableVespene;
     public static HashSet<uint> ResearchedUpgrades;
 
-    public static Unit StartingTownHall;
-    public static readonly List<Vector3> EnemyLocations = new List<Vector3>();
     public static readonly List<string> ChatLog = new List<string>();
-    public static Dictionary<ulong, Unit> UnitsByTag => UnitsTracker.UnitsByTag;
-    public static List<Unit> OwnedUnits => UnitsTracker.OwnedUnits;
-    public static List<Unit> NewOwnedUnits => UnitsTracker.NewOwnedUnits;
-    public static List<Unit> DeadOwnedUnits => UnitsTracker.DeadOwnedUnits;
-    public static List<Unit> NeutralUnits => UnitsTracker.NeutralUnits;
-    public static List<Unit> EnemyUnits => UnitsTracker.EnemyUnits;
+
+    private static readonly List<INeedUpdating> ThoseWhoNeedUpdating = new List<INeedUpdating>
+    {
+        UnitsTracker.Instance, // Depends on nothing
+        VisibilityTracker.Instance, // Depends on nothing
+
+        MapAnalyzer.Instance, // Depends on UnitsTracker
+
+        ExpandAnalyzer.Instance, // Depends on UnitsTracker and MapAnalyzer
+        BuildingTracker.Instance, // Depends on UnitsTracker and MapAnalyzer
+    };
 
     public static void Pause() {
         Console.WriteLine("Press any key to continue...");
@@ -60,27 +72,16 @@ public static class Controller {
         return (ulong)(FramesPerSecond * seconds);
     }
 
-    public static void NewObservation(ResponseObservation obs) {
-        _obs = obs;
+    public static void NewObservation(ResponseObservation observation) {
+        _obs = observation;
         Frame = _obs.Observation.GameLoop;
 
-        if (GameInfo == null || KnowledgeBase.Data == null || _obs == null) {
-            if (GameInfo == null) {
-                Logger.Info("GameInfo is null! The application will terminate.");
-            }
-            else if (KnowledgeBase.Data == null) {
-                Logger.Info("TypeData is null! The application will terminate.");
-            }
-            else {
-                Logger.Info("ResponseObservation is null! The application will terminate.");
-            }
-
+        if (!IsProperlyInitialized()) {
             Pause();
             Environment.Exit(0);
         }
 
-        UnitsTracker.Update(_obs.Observation.RawData.Units.ToList(), Frame);
-        BuildingTracker.Update();
+        ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Update(_obs));
 
         Actions.Clear();
 
@@ -90,9 +91,9 @@ public static class Controller {
         }
 
         CurrentSupply = _obs.Observation.PlayerCommon.FoodUsed;
-        var hasOddAmountOfZerglings = OwnedUnits.Count(unit => unit.UnitType == Units.Zergling) % 2 == 1;
+        var hasOddAmountOfZerglings = UnitsTracker.OwnedUnits.Count(unit => unit.UnitType == Units.Zergling) % 2 == 1;
         if (hasOddAmountOfZerglings) {
-            // Zerglings have 0.5 supply. The api returns a rounded down supply, but the game considers the rounded up supply.
+            // Zerglings have 0.5 supply. The api returns the supply rounded down, but the game considers the supply rounded up.
             CurrentSupply += 1;
         }
 
@@ -101,20 +102,25 @@ public static class Controller {
         AvailableMinerals = _obs.Observation.PlayerCommon.Minerals;
         AvailableVespene = _obs.Observation.PlayerCommon.Vespene;
         ResearchedUpgrades = new HashSet<uint>(_obs.Observation.RawData.Player.UpgradeIds);
+    }
 
-        if (Frame == 0) {
-            var townHalls = GetUnits(OwnedUnits, Units.ResourceCenters).ToList();
-            if (townHalls.Count > 0) {
-                StartingTownHall = townHalls[0];
-
-                foreach (var startLocation in GameInfo.StartRaw.StartLocations) {
-                    var enemyLocation = new Vector3(startLocation.X, startLocation.Y, 0);
-                    if (StartingTownHall.DistanceTo(enemyLocation) > 30) {
-                        EnemyLocations.Add(enemyLocation);
-                    }
-                }
-            }
+    private static bool IsProperlyInitialized() {
+        if (GameInfo == null) {
+            Logger.Error("GameInfo is null! The application will terminate.");
+            return false;
         }
+
+        if (KnowledgeBase.Data == null) {
+            Logger.Error("TypeData is null! The application will terminate.");
+            return false;
+        }
+
+        if (_obs == null) {
+            Logger.Error("ResponseObservation is null! The application will terminate.");
+            return false;
+        }
+
+        return true;
     }
 
     public static IEnumerable<Action> GetActions() {
@@ -135,13 +141,13 @@ public static class Controller {
 
     private static int GetTotalCount(uint unitType) {
         var pendingCount = GetPendingCount(unitType, inConstruction: false);
-        var constructionCount = GetUnits(OwnedUnits, unitType).Count();
+        var constructionCount = GetUnits(UnitsTracker.OwnedUnits, unitType).Count();
 
         return pendingCount + constructionCount;
     }
 
     private static int GetPendingCount(uint unitType, bool inConstruction = true) {
-        var workers = GetUnits(OwnedUnits, Units.Workers);
+        var workers = GetUnits(UnitsTracker.OwnedUnits, Units.Workers);
         var abilityId = KnowledgeBase.GetUnitTypeData(unitType).AbilityId;
 
         var counter = 0;
@@ -155,7 +161,7 @@ public static class Controller {
 
         // Count buildings that are already in construction
         if (inConstruction) {
-            foreach (var unit in GetUnits(OwnedUnits, unitType)) {
+            foreach (var unit in GetUnits(UnitsTracker.OwnedUnits, unitType)) {
                 if (!unit.IsOperational) {
                     counter += 1;
                 }
@@ -172,7 +178,7 @@ public static class Controller {
 
         var possibleProducers = Units.Producers[unitOrAbilityType];
 
-        var producers = GetUnits(OwnedUnits, possibleProducers, onlyCompleted: true)
+        var producers = GetUnits(UnitsTracker.OwnedUnits, possibleProducers, onlyCompleted: true)
             .Where(unit => unit.IsAvailable)
             .OrderBy(unit => unit.OrdersExceptMining.Count());
 
@@ -263,7 +269,7 @@ public static class Controller {
 
         if (buildingType == Units.Extractor) {
             // TODO GD Prioritize the main base, get a nearby worker
-            var availableGas = GetUnits(NeutralUnits, Units.GasGeysers, onlyVisible: true)
+            var availableGas = GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers, onlyVisible: true)
                 .FirstOrDefault(gas => UnitUtils.IsResourceManaged(gas) && !UnitUtils.IsGasExploited(gas));
 
             if (availableGas == null) {
@@ -349,7 +355,7 @@ public static class Controller {
         }
 
         var expandLocation = GetFreeExpandLocations()
-            .OrderBy(expandLocation => Pathfinder.FindPath(StartingTownHall.Position, expandLocation).Count)
+            .OrderBy(expandLocation => Pathfinder.FindPath(MapAnalyzer.StartingLocation, expandLocation).Count)
             .FirstOrDefault(expandLocation => BuildingTracker.CanPlace(buildingType, expandLocation));
 
         if (expandLocation == default) {
@@ -359,11 +365,10 @@ public static class Controller {
         return PlaceBuilding(buildingType, expandLocation);
     }
 
-    // TODO GD Zerg Specific
     public static IEnumerable<Unit> GetUnitsInProduction(uint unitType) {
         var unitToGetAbilityId =  KnowledgeBase.GetUnitTypeData(unitType).AbilityId;
 
-        return GetUnits(OwnedUnits, Units.Egg).Where(egg => egg.Orders.Any(order => order.AbilityId == unitToGetAbilityId));
+        return GetUnits(UnitsTracker.OwnedUnits, Units.Egg).Where(egg => egg.Orders.Any(order => order.AbilityId == unitToGetAbilityId));
     }
 
     public static IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, uint unitToGet, bool onlyCompleted = false, bool onlyVisible = false) {
@@ -412,7 +417,7 @@ public static class Controller {
 
     public static bool IsUnlocked(uint unitType) {
         if (Units.Prerequisites.TryGetValue(unitType, out var prerequisiteUnitType)) {
-            return GetUnits(OwnedUnits, prerequisiteUnitType, onlyCompleted: true).Any();
+            return GetUnits(UnitsTracker.OwnedUnits, prerequisiteUnitType, onlyCompleted: true).Any();
         }
 
         return true;
@@ -423,15 +428,15 @@ public static class Controller {
     }
 
     public static IEnumerable<Unit> GetMiningTownHalls() {
-        return GetUnits(OwnedUnits, Units.Hatchery)
-            .Where(townHall => MapAnalyzer.ExpandLocations.Any(expandLocation => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius));
+        return GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery)
+            .Where(townHall => ExpandAnalyzer.ExpandLocations.Any(expandLocation => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius));
     }
 
     // TODO GD Implement a more robust check
     public static IEnumerable<Vector3> GetFreeExpandLocations() {
-        return MapAnalyzer.ExpandLocations
-            .Where(expandLocation => !GetUnits(OwnedUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
-            .Where(expandLocation => !GetUnits(EnemyUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
-            .Where(expandLocation => !GetUnits(NeutralUnits, Units.Destructibles).Any(destructible => destructible.DistanceTo(expandLocation) < ExpandIsTakenRadius));
+        return ExpandAnalyzer.ExpandLocations
+            .Where(expandLocation => !GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
+            .Where(expandLocation => !GetUnits(UnitsTracker.EnemyUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
+            .Where(expandLocation => !GetUnits(UnitsTracker.NeutralUnits, Units.Destructibles).Any(destructible => destructible.DistanceTo(expandLocation) < ExpandIsTakenRadius));
     }
 }

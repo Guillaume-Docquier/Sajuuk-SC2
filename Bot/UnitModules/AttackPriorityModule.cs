@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.GameData;
+using Bot.GameSense;
 
 namespace Bot.UnitModules;
 
@@ -39,7 +40,7 @@ public class AttackPriorityModule: IUnitModule {
         }
 
         // TODO GD Add other units to prioritize
-        var priorityTargetInRange = Controller.GetUnits(Controller.EnemyUnits, PriorityTargets)
+        var priorityTargetInRange = Controller.GetUnits(UnitsTracker.EnemyUnits, PriorityTargets)
             .Where(priorityTarget => priorityTarget.HorizontalDistanceTo(_unit) < unitWeapon.Range)
             .MinBy(priorityTarget => priorityTarget.HorizontalDistanceTo(_unit));
 
