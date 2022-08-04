@@ -7,12 +7,13 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.ArmyManagement.Tactics;
 using Bot.MapKnowledge;
+using Bot.StateManagement;
 using Bot.Wrapper;
 
 namespace Bot.Managers.ArmyManagement;
 
 public partial class ArmyManager {
-    public class AttackStrategy : IStrategy {
+    public class AttackState: State<ArmyManager> {
         private static readonly ulong ReasonableMoveDelay = Controller.SecsToFrames(5);
         private const float NegligibleMovement = 2f;
         private const float RocksDestructionRange = 9f;
@@ -20,11 +21,8 @@ public partial class ArmyManager {
         private const float MaxDistanceForPathfinding = 25;
         private const int PathfindingStep = 3;
 
-        private readonly ArmyManager _armyManager;
-        private readonly float _initialForce;
-        private readonly float _retreatAtForce;
-
-        private IStrategy _nextStrategy;
+        private float _initialForce;
+        private float _retreatAtForce;
 
         private Vector3 _previousArmyLocation;
         private ulong _ticksWithoutRealMove;
@@ -36,54 +34,47 @@ public partial class ArmyManager {
 
         private readonly ITactic _burrowSurpriseTactic = new BurrowSurpriseTactic();
 
-        public AttackStrategy(ArmyManager armyManager) {
-            _armyManager = armyManager;
-            _initialForce = _armyManager.Army.GetForce();
+        protected override void OnSetStateMachine() {
+            _initialForce = StateMachine.Army.GetForce();
             _retreatAtForce = _initialForce * 0.5f;
         }
 
-        public string Name => "Attack";
+        protected override void OnTransition() {
+            _burrowSurpriseTactic.Reset(null);
+        }
 
-        public bool CanTransition() {
+        protected override bool TryTransitioning() {
             if (_burrowSurpriseTactic.IsExecuting()) {
                 return false;
             }
 
-            if (_armyManager._mainArmy.GetCenter().HorizontalDistanceTo(_armyManager._target) < AcceptableDistanceToTarget) {
-                _nextStrategy = new DefenseStrategy(_armyManager);
-
+            if (StateMachine._mainArmy.GetCenter().HorizontalDistanceTo(StateMachine._target) < AcceptableDistanceToTarget) {
+                StateMachine.TransitionTo(new DefenseState());
                 return true;
             }
 
-            if (_armyManager._mainArmy.GetForce() <= _retreatAtForce) {
-                _nextStrategy = new RetreatStrategy(_armyManager);
-
+            if (StateMachine._mainArmy.GetForce() <= _retreatAtForce) {
+                StateMachine.TransitionTo(new RetreatState());
                 return true;
             }
 
             return false;
         }
 
-        public IStrategy Transition() {
-            _burrowSurpriseTactic.Reset(null);
+        protected override void Execute() {
+            StateMachine._strongestForce = Math.Max(StateMachine._strongestForce, StateMachine._mainArmy.GetForce());
 
-            return _nextStrategy;
-        }
+            DrawArmyData(StateMachine._mainArmy);
 
-        public void Execute() {
-            _armyManager._strongestForce = Math.Max(_armyManager._strongestForce, _armyManager._mainArmy.GetForce());
-
-            DrawArmyData(_armyManager._mainArmy);
-
-            if (_burrowSurpriseTactic.IsViable(_armyManager._mainArmy)) {
-                _burrowSurpriseTactic.Execute(_armyManager._mainArmy);
+            if (_burrowSurpriseTactic.IsViable(StateMachine._mainArmy)) {
+                _burrowSurpriseTactic.Execute(StateMachine._mainArmy);
             }
             else {
-                _burrowSurpriseTactic.Reset(_armyManager._mainArmy);
-                Attack(_armyManager._target, _armyManager._mainArmy);
+                _burrowSurpriseTactic.Reset(StateMachine._mainArmy);
+                Attack(StateMachine._target, StateMachine._mainArmy);
             }
 
-            Rally(_armyManager._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
+            Rally(StateMachine._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
         }
 
         private void DrawArmyData(IReadOnlyCollection<Unit> soldiers) {
@@ -213,7 +204,7 @@ public partial class ArmyManager {
         }
 
         private IEnumerable<Unit> GetSoldiersNotInMainArmy() {
-            return _armyManager.Army.Where(soldier => !_armyManager._mainArmy.Contains(soldier));
+            return StateMachine.Army.Where(soldier => !StateMachine._mainArmy.Contains(soldier));
         }
     }
 }

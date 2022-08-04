@@ -5,50 +5,48 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapKnowledge;
+using Bot.StateManagement;
 using Bot.Wrapper;
 
 namespace Bot.Managers.ArmyManagement;
 
 public partial class ArmyManager {
-    public class RetreatStrategy: IStrategy {
+    public class RetreatState: State<ArmyManager> {
         private const int RetreatDistanceFromBase = 8;
         private const float AcceptableDistanceToTarget = 3;
 
-        private readonly ArmyManager _armyManager;
-        private readonly float _rallyAtForce;
+        private float _rallyAtForce;
 
-        public RetreatStrategy(ArmyManager armyManager) {
-            _armyManager = armyManager;
-            _rallyAtForce = _armyManager._strongestForce;
+        protected override void OnSetStateMachine() {
+            _rallyAtForce = StateMachine._strongestForce;
         }
 
-        public string Name => "Retreat";
+        protected override bool TryTransitioning() {
+            if (StateMachine.Army.GetForce() >= _rallyAtForce
+                || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed
+                || StateMachine._mainArmy.GetCenter().HorizontalDistanceTo(GetRetreatPosition()) <= AcceptableDistanceToTarget) {
+                StateMachine.TransitionTo(new RallyState());
+                return true;
+            }
 
-        public bool CanTransition() {
-            return _armyManager.Army.GetForce() >= _rallyAtForce
-               || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed
-               || _armyManager._mainArmy.GetCenter().HorizontalDistanceTo(GetRetreatPosition()) <= AcceptableDistanceToTarget;
+            return false;
         }
 
-        public IStrategy Transition() {
-            return new RallyStrategy(_armyManager);
-        }
-
-        public void Execute() {
+        protected override void Execute() {
             DrawArmyData();
 
-            Retreat(GetRetreatPosition(), _armyManager.Army);
+            Retreat(GetRetreatPosition(), StateMachine.Army);
         }
 
         private void DrawArmyData() {
             GraphicalDebugger.AddTextGroup(
                 new[]
                 {
-                    $"Force: {_armyManager._mainArmy.GetForce()}",
-                    $"Strongest: {_armyManager._strongestForce}",
+                    $"Force: {StateMachine._mainArmy.GetForce()}",
+                    $"Strongest: {StateMachine._strongestForce}",
                     $"Rally at: {_rallyAtForce}"
                 },
-                worldPos: _armyManager._mainArmy.GetCenter().Translate(1f, 1f).ToPoint());
+                worldPos: StateMachine._mainArmy.GetCenter().Translate(1f, 1f).ToPoint());
         }
 
         private static void Retreat(Vector3 retreatPosition, IReadOnlyCollection<Unit> soldiers) {

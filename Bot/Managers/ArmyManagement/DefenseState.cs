@@ -3,35 +3,29 @@ using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
+using Bot.StateManagement;
 using Bot.Wrapper;
 
 namespace Bot.Managers.ArmyManagement;
 
 public partial class ArmyManager {
-    public class DefenseStrategy: IStrategy {
+    public class DefenseState: State<ArmyManager> {
         private const float AcceptableDistanceToTarget = 3;
 
-        private readonly ArmyManager _armyManager;
+        protected override bool TryTransitioning() {
+            if (StateMachine._canHuntTheEnemy && UnitsTracker.EnemyUnits.All(enemy => enemy.RawUnitData.IsFlying)) { // TODO GD Handle air units
+                StateMachine.TransitionTo(new HuntState());
+                return true;
+            }
 
-        public DefenseStrategy(ArmyManager armyManager) {
-            _armyManager = armyManager;
+            return false;
         }
 
-        public string Name => "Defend";
+        protected override void Execute() {
+            DrawArmyData(StateMachine._mainArmy);
 
-        public bool CanTransition() {
-            return _armyManager._canHuntTheEnemy && UnitsTracker.EnemyUnits.All(enemy => enemy.RawUnitData.IsFlying); // TODO GD Handle air units
-        }
-
-        public IStrategy Transition() {
-            return new HuntStrategy(_armyManager);
-        }
-
-        public void Execute() {
-            DrawArmyData(_armyManager._mainArmy);
-
-            Defend(_armyManager._target, _armyManager._mainArmy, _armyManager._blastRadius);
-            Rally(_armyManager._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
+            Defend(StateMachine._target, StateMachine._mainArmy, StateMachine._blastRadius);
+            Rally(StateMachine._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
         }
 
         private static void DrawArmyData(IReadOnlyCollection<Unit> soldiers) {
@@ -100,7 +94,7 @@ public partial class ArmyManager {
         }
 
         private IEnumerable<Unit> GetSoldiersNotInMainArmy() {
-            return _armyManager.Army.Where(soldier => !_armyManager._mainArmy.Contains(soldier));
+            return StateMachine.Army.Where(soldier => !StateMachine._mainArmy.Contains(soldier));
         }
     }
 }

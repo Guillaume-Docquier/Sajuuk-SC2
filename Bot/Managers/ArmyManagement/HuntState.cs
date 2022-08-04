@@ -4,32 +4,26 @@ using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.MapKnowledge;
+using Bot.StateManagement;
 
 namespace Bot.Managers.ArmyManagement;
 
 public partial class ArmyManager {
-    public class HuntStrategy: IStrategy {
+    public class HuntState: State<ArmyManager> {
         private static Dictionary<Vector3, bool> _checkedLocations;
 
         private bool _isNextTargetSet = false;
 
-        private readonly ArmyManager _armyManager;
+        protected override bool TryTransitioning() {
+            if (_isNextTargetSet) {
+                StateMachine.TransitionTo(new AttackState());
+                return true;
+            }
 
-        public HuntStrategy(ArmyManager armyManager) {
-            _armyManager = armyManager;
+            return false;
         }
 
-        public string Name => "Hunt";
-
-        public bool CanTransition() {
-            return _isNextTargetSet;
-        }
-
-        public IStrategy Transition() {
-            return new AttackStrategy(_armyManager);
-        }
-
-        public void Execute() {
+        protected override void Execute() {
             if (MapAnalyzer.IsInitialized && _checkedLocations == null) {
                 InitCheckedLocations();
             }
@@ -64,7 +58,7 @@ public partial class ArmyManager {
             // TODO GD The module and the manager are giving orders to the unit, freezing it
             // _armyManager.Army.ForEach(TargetNeutralUnitsModule.Install);
 
-            var armyCenter = _armyManager._mainArmy.GetCenter().ClosestWalkable();
+            var armyCenter = StateMachine._mainArmy.GetCenter().ClosestWalkable();
             var nextUncheckedLocation = ExpandAnalyzer.ExpandLocations
                 .Where(expandLocation => !_checkedLocations[expandLocation])
                 .Where(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation) != null)
@@ -76,7 +70,7 @@ public partial class ArmyManager {
             }
             else {
                 Logger.Info("<HuntStrategy> next target is: {0}", nextUncheckedLocation);
-                _armyManager._target = nextUncheckedLocation;
+                StateMachine._target = nextUncheckedLocation;
                 _isNextTargetSet = true;
             }
         }

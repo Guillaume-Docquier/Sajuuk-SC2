@@ -3,47 +3,45 @@ using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
+using Bot.StateManagement;
 using Bot.Wrapper;
 
 namespace Bot.Managers.ArmyManagement;
 
 public partial class ArmyManager {
-    public class RallyStrategy: IStrategy {
+    public class RallyState: State<ArmyManager> {
         private const float AcceptableDistanceToTarget = 3;
 
-        private readonly ArmyManager _armyManager;
-        private readonly float _attackAtForce;
+        private float _attackAtForce;
 
-        public RallyStrategy(ArmyManager armyManager) {
-            _armyManager = armyManager;
-            _attackAtForce = armyManager._strongestForce * 1.2f;
+        protected override void OnSetStateMachine() {
+            _attackAtForce = StateMachine._strongestForce * 1.2f;
         }
 
-        public string Name => "Rally";
+        protected override bool TryTransitioning() {
+            if (StateMachine._mainArmy.GetForce() >= _attackAtForce || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed) {
+                StateMachine.TransitionTo(new AttackState());
+                return true;
+            }
 
-        public bool CanTransition() {
-            return _armyManager._mainArmy.GetForce() >= _attackAtForce || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed;
+            return false;
         }
 
-        public IStrategy Transition() {
-            return new AttackStrategy(_armyManager);
-        }
-
-        public void Execute() {
+        protected override void Execute() {
             DrawArmyData();
 
-            Grow(_armyManager.Army.GetCenter(), _armyManager.Army);
+            Grow(StateMachine.Army.GetCenter(), StateMachine.Army);
         }
 
         private void DrawArmyData() {
             GraphicalDebugger.AddTextGroup(
                 new[]
                 {
-                    $"Force: {_armyManager._mainArmy.GetForce()}",
-                    $"Strongest: {_armyManager._strongestForce}",
+                    $"Force: {StateMachine._mainArmy.GetForce()}",
+                    $"Strongest: {StateMachine._strongestForce}",
                     $"Attack at: {_attackAtForce}"
                 },
-                worldPos: _armyManager._mainArmy.GetCenter().Translate(1f, 1f).ToPoint());
+                worldPos: StateMachine._mainArmy.GetCenter().Translate(1f, 1f).ToPoint());
         }
 
         private static void Grow(Vector3 growPosition, IReadOnlyCollection<Unit> soldiers) {

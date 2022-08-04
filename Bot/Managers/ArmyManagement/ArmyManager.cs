@@ -3,11 +3,12 @@ using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
+using Bot.StateManagement;
 using Bot.UnitModules;
 
 namespace Bot.Managers.ArmyManagement;
 
-public partial class ArmyManager: IManager {
+public partial class ArmyManager: StateMachine, IManager {
     public readonly List<Unit> Army = new List<Unit>();
     private List<Unit> _mainArmy;
 
@@ -17,16 +18,16 @@ public partial class ArmyManager: IManager {
 
     private float _strongestForce;
 
-    private IStrategy _strategy;
-
     public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => Enumerable.Empty<BuildOrders.BuildStep>();
+
+    public ArmyManager() : base(new AttackState()) {}
 
     public void Assign(Vector3 target, float blastRadius, bool canHuntTheEnemy = true) {
         _target = target.WithWorldHeight();
         _blastRadius = blastRadius;
         _strongestForce = Army.GetForce();
         _canHuntTheEnemy = canHuntTheEnemy;
-        _strategy = new AttackStrategy(this);
+        TransitionTo(new AttackState());
     }
 
     public void Assign(List<Unit> soldiers) {
@@ -53,23 +54,7 @@ public partial class ArmyManager: IManager {
         _mainArmy = Clustering.DBSCAN(Army, 4, 2).MaxBy(army => army.GetForce());
         _mainArmy ??= Army;
 
-        var startingStrategyName = _strategy.Name;
-        var count = 0;
-        while (_strategy.CanTransition()) {
-            _strategy = _strategy.Transition();
-            count++;
-
-            if (count >= 6) {
-                Logger.Error("ArmyManager: Looped more than 6 times trying to find a strategy");
-                break;
-            }
-        }
-
-        if (_strategy.Name != startingStrategyName) {
-            Logger.Info("ArmyManager strategy changed from {0} to {1}", startingStrategyName, _strategy.Name);
-        }
-
-        _strategy.Execute();
+        State.OnFrame();
     }
 
     public void Release(Unit unit) {
