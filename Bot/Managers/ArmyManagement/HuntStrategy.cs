@@ -68,15 +68,14 @@ public partial class ArmyManager {
             var nextUncheckedLocation = ExpandAnalyzer.ExpandLocations
                 .Where(expandLocation => !_checkedLocations[expandLocation])
                 .Where(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation) != null)
-                .OrderBy(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation).Count)
-                .FirstOrDefault();
+                .MinBy(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation).Count);
 
             if (nextUncheckedLocation == default) {
-                Logger.Error("HuntStrategy could not find a next target", nextUncheckedLocation);
+                Logger.Info("<HuntStrategy> could not find a next target, resetting search");
                 InitCheckedLocations();
             }
             else {
-                Logger.Info("HuntStrategy next target is: {0}", nextUncheckedLocation);
+                Logger.Info("<HuntStrategy> next target is: {0}", nextUncheckedLocation);
                 _armyManager._target = nextUncheckedLocation;
                 _isNextTargetSet = true;
             }

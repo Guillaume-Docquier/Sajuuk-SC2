@@ -56,7 +56,13 @@ public class WarManager: IManager {
     }
 
     private void DefendNewTownHalls(Vector3 enemyPosition) {
-        var currentDistanceToEnemy = Pathfinder.FindPath(_townHallToDefend.Position, enemyPosition).Count; // Not exact, but the distance difference should not matter
+        var pathToTheEnemy = Pathfinder.FindPath(_townHallToDefend.Position, enemyPosition);
+        if (pathToTheEnemy == null) {
+            Logger.Error("<DefendNewTownHalls> No path found from base {0} to enemy base {1}", _townHallToDefend.Position, enemyPosition);
+            return;
+        }
+
+        var currentDistanceToEnemy = pathToTheEnemy.Count; // Not exact, but the distance difference should not matter
         var newTownHallToDefend = Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.Hatchery)
             .FirstOrDefault(townHall => Pathfinder.FindPath(townHall.Position, enemyPosition).Count < currentDistanceToEnemy);
 

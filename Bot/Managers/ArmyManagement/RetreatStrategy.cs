@@ -70,6 +70,7 @@ public partial class ArmyManager {
 
         private static Vector3 GetRetreatPosition() {
             var shortestPathBetweenBaseAndEnemy = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery)
+                .Where(townHall => Pathfinder.FindPath(townHall.Position, MapAnalyzer.EnemyStartingLocation) != null)
                 .Select(townHall => Pathfinder.FindPath(townHall.Position, MapAnalyzer.EnemyStartingLocation))
                 .MinBy(path => path.Count);
 
