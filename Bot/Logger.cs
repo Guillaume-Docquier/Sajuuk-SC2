@@ -14,12 +14,12 @@ public static class Logger {
         Directory.CreateDirectory(Path.GetDirectoryName(_logFile));
     }
 
-    private static void WriteLine(string type, string line, params object[] parameters) {
+    private static void WriteLine(string logLevel, string line, params object[] parameters) {
         if (_logFile == null) {
             Initialize();
         }
 
-        var msg = "[" + DateTime.UtcNow.ToString("HH:mm:ss") + " " + type + "] " + string.Format(line, parameters);
+        var msg = $"[{DateTime.UtcNow.ToString("HH:mm:ss")} | {GetGameTime()} @ {Controller.Frame,5}] {logLevel,7}: {string.Format(line, parameters)}";
 
         var file = new StreamWriter(_logFile, true);
         file.WriteLine(msg);
@@ -36,14 +36,22 @@ public static class Logger {
     }
 
     public static void Info(string line, params object[] parameters) {
-        WriteLine("INFO", $"[{Controller.Frame}] " + line, parameters);
+        WriteLine("INFO", line, parameters);
     }
 
     public static void Warning(string line, params object[] parameters) {
-        WriteLine("WARNING", $"[{Controller.Frame}] " + line, parameters);
+        WriteLine("WARNING", line, parameters);
     }
 
     public static void Error(string line, params object[] parameters) {
-        WriteLine("ERROR", $"[{Controller.Frame}] " + line, parameters);
+        WriteLine("ERROR", line, parameters);
+    }
+
+    private static string GetGameTime() {
+        var totalSeconds = (int)(Controller.Frame / Controller.FramesPerSecond);
+        var minutes = totalSeconds / 60;
+        var seconds = totalSeconds % 60;
+
+        return $"{minutes:00}:{seconds:00}";
     }
 }
