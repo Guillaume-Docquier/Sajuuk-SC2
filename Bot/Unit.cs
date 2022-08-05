@@ -236,7 +236,7 @@ public class Unit: ICanDie {
 
     public void Died() {
         // Reduce the noise
-        if (UnitType != Units.Larva) {
+        if (UnitType is not Units.Larva and not Units.Egg) {
             Logger.Info("{0} died", this);
         }
 

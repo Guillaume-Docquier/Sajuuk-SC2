@@ -6,6 +6,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.ArmyManagement.Tactics;
+using Bot.Managers.ArmyManagement.Tactics.SneakAttack;
 using Bot.MapKnowledge;
 using Bot.StateManagement;
 using Bot.Wrapper;
@@ -32,7 +33,7 @@ public partial class ArmyManager {
         private ulong _pathfindingLock = 0;
         private ulong _pathfindingLockDelay = Controller.SecsToFrames(4);
 
-        private readonly ITactic _burrowSurpriseTactic = new BurrowSurpriseTactic();
+        private readonly ITactic _sneakAttackTactic = new SneakAttackTactic();
 
         protected override void OnSetStateMachine() {
             _initialForce = StateMachine.Army.GetForce();
@@ -40,11 +41,11 @@ public partial class ArmyManager {
         }
 
         protected override void OnTransition() {
-            _burrowSurpriseTactic.Reset(null);
+            _sneakAttackTactic.Reset(null);
         }
 
         protected override bool TryTransitioning() {
-            if (_burrowSurpriseTactic.IsExecuting()) {
+            if (_sneakAttackTactic.IsExecuting()) {
                 return false;
             }
 
@@ -66,11 +67,11 @@ public partial class ArmyManager {
 
             DrawArmyData(StateMachine._mainArmy);
 
-            if (_burrowSurpriseTactic.IsViable(StateMachine._mainArmy)) {
-                _burrowSurpriseTactic.Execute(StateMachine._mainArmy);
+            if (_sneakAttackTactic.IsViable(StateMachine._mainArmy)) {
+                _sneakAttackTactic.Execute(StateMachine._mainArmy);
             }
             else {
-                _burrowSurpriseTactic.Reset(StateMachine._mainArmy);
+                _sneakAttackTactic.Reset(StateMachine._mainArmy);
                 Attack(StateMachine._target, StateMachine._mainArmy);
             }
 

@@ -64,16 +64,14 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     }
 
     private static void RemoveObstacle(Unit obstacle) {
-        Logger.Info("Before: {0} obstacles with {1} cells", _obstacles.Count, ObstructionMap.Count);
         _obstacles.Remove(obstacle);
         foreach (var cell in GetObstacleFootprint(obstacle)) {
             ObstructionMap.Remove(cell);
         }
-        Logger.Info("After: {0} obstacles with {1} cells", _obstacles.Count, ObstructionMap.Count);
 
-        // We removed an obstacle, so we need to invalidate the pathfinding cache
+        Logger.Info("Obstacle removed, invalidating Pathfinder cache");
+
         // This is a big ugly, the pathfinder should know about this
-        Logger.Info("Invalidating Pathfinding cache");
         Pathfinder.Memory.Clear();
     }
 

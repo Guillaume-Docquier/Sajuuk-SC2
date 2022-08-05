@@ -1,7 +1,7 @@
 ﻿namespace Bot.StateManagement;
 
 public abstract class State {
-    protected StateMachine StateMachine;
+    protected StateMachine StateMachine { get; private set; }
 
     public void SetStateMachine(StateMachine stateMachine)
     {
