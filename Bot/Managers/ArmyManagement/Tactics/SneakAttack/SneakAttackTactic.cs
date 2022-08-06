@@ -57,7 +57,7 @@ public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUn
     }
 
     public void Execute(IReadOnlyCollection<Unit> army) {
-        Controller.FrameDelayMs = Controller.RealTime;
+        //Controller.FrameDelayMs = Controller.RealTime;
         _coolDownUntil = Controller.Frame + Controller.SecsToFrames(5);
 
         _army = army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed).ToList();
