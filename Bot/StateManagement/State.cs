@@ -13,13 +13,11 @@ public abstract class State {
     protected virtual void OnSetStateMachine() {}
 
     public void OnFrame() {
+        Execute();
+
         if (TryTransitioning()) {
             OnTransition();
-
-            return;
         }
-
-        Execute();
     }
 
     protected abstract bool TryTransitioning();

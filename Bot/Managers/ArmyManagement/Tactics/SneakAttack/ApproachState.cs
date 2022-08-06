@@ -9,9 +9,6 @@ public partial class SneakAttackTactic {
     public class ApproachState : SneakAttackState {
         private const float SetupDistance = 1.25f;
 
-        private bool _goToSetupState = false;
-        private bool _goToExitState = false;
-
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
             if (DetectionTracker.IsDetected(army)) {
                 return false;
@@ -19,20 +16,6 @@ public partial class SneakAttackTactic {
 
             // If we're engaged, it means they somehow see us, abort!
             return !IsArmyGettingEngaged(army);
-        }
-
-        protected override bool TryTransitioning() {
-            if (_goToSetupState) {
-                StateMachine.TransitionTo(new SetupState());
-                return true;
-            }
-
-            if (_goToExitState) {
-                StateMachine.TransitionTo(new FightState());
-                return true;
-            }
-
-            return false;
         }
 
         protected override void Execute() {
@@ -50,23 +33,22 @@ public partial class SneakAttackTactic {
             }
 
             if (StateMachine._targetPosition == default) {
-                Logger.Warning("BurrowSurprise: Went from Approach -> Fight because _targetPosition == default");
+                Logger.Warning("{0}: {1} has no target", StateMachine.GetType().Name, GetType().Name);
                 StateMachine._isTargetPriority = false;
-                _goToExitState = true;
+                NextState = new TerminalState();
+
                 return;
             }
 
-            if (StateMachine._targetPosition.HorizontalDistanceTo(StateMachine._armyCenter) > SetupDistance) {
-                BurrowOverlings(StateMachine._army);
+            BurrowOverlings(StateMachine._army);
 
+            if (StateMachine._targetPosition.HorizontalDistanceTo(StateMachine._armyCenter) > SetupDistance) {
                 foreach (var soldier in StateMachine._army.Where(soldier => soldier.IsIdleOrMovingOrAttacking())) {
                     soldier.Move(StateMachine._targetPosition);
                 }
             }
             else {
-                StateMachine._targetPosition = default;
-                StateMachine._isTargetPriority = false;
-                _goToSetupState = true;
+                NextState = new SetupState();
             }
         }
     }

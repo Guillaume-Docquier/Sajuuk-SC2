@@ -11,9 +11,6 @@ public partial class SneakAttackTactic {
         private const float EngageDistance = 0.75f;
         private const float MinimumEngagementArmyThreshold = 0.75f;
 
-        private bool _goToNextState = false;
-        private bool _goToExitState = false;
-
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
             if (DetectionTracker.IsDetected(army)) {
                 return false;
@@ -23,18 +20,9 @@ public partial class SneakAttackTactic {
             return !IsArmyGettingEngaged(army);
         }
 
-        protected override bool TryTransitioning() {
-            if (_goToNextState) {
-                StateMachine.TransitionTo(new EngageState());
-                return true;
-            }
-
-            if (_goToExitState) {
-                StateMachine.TransitionTo(new FightState());
-                return true;
-            }
-
-            return false;
+        protected override void OnSetStateMachine() {
+            StateMachine._targetPosition = default;
+            StateMachine._isTargetPriority = false;
         }
 
         protected override void Execute() {
@@ -47,25 +35,31 @@ public partial class SneakAttackTactic {
             else {
                 var enemies = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military).ToList();
                 var closestEnemyCluster = Clustering.DBSCAN(enemies, 5, 2).MinBy(cluster => cluster.GetCenter().HorizontalDistanceTo(StateMachine._armyCenter));
-                if (closestEnemyCluster != null && StateMachine._armyCenter.HorizontalDistanceTo(closestEnemyCluster.GetCenter()) > OperationRadius) {
+
+                // TODO GD Tweak this to put most of our army in range of the cluster instead
+                if (closestEnemyCluster != null && StateMachine._armyCenter.HorizontalDistanceTo(closestEnemyCluster.GetCenter()) <= OperationRadius) {
                     StateMachine._targetPosition = closestEnemyCluster.GetCenter();
                     StateMachine._isTargetPriority = false;
                 }
             }
 
             if (StateMachine._targetPosition == default) {
-                Logger.Warning("BurrowSurprise: Went from Setup -> Fight because _targetPosition == default");
-                _goToExitState = true;
+                Logger.Warning("{0}: {1} has no target", StateMachine.GetType().Name, GetType().Name);
+                NextState = new TerminalState();
+                StateMachine._isTargetPriority = false;
+
+                return;
             }
-            else {
-                if (StateMachine._targetPosition.HorizontalDistanceTo(StateMachine._armyCenter) > EngageDistance) {
-                    foreach (var soldier in StateMachine._army.Where(soldier => soldier.IsIdleOrMovingOrAttacking())) {
-                        soldier.Move(StateMachine._targetPosition);
-                    }
+
+            BurrowOverlings(StateMachine._army);
+
+            if (StateMachine._targetPosition.HorizontalDistanceTo(StateMachine._armyCenter) > EngageDistance) {
+                foreach (var soldier in StateMachine._army.Where(soldier => soldier.IsIdleOrMovingOrAttacking())) {
+                    soldier.Move(StateMachine._targetPosition);
                 }
-                else if (GetArmyWithEnoughHealth(StateMachine._army).Count() >= StateMachine._army.Count * MinimumEngagementArmyThreshold) {
-                    _goToNextState = true;
-                }
+            }
+            else if (GetArmyWithEnoughHealth(StateMachine._army).Count() >= StateMachine._army.Count * MinimumEngagementArmyThreshold) {
+                NextState = new EngageState();
             }
         }
     }

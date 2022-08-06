@@ -35,13 +35,21 @@ public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUn
     public SneakAttackTactic() : base(new InactiveState()) {}
 
     public bool IsViable(IReadOnlyCollection<Unit> army) {
-        army = army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed).ToList();
-
         if (!DetectionTracker.IsStealthEffective()) {
             return false;
         }
 
-        return State.IsViable(army);
+        if (!HasProperTech()) {
+            return false;
+        }
+
+        // TODO GD Make RoachBurrowed equivalent to Roach and use Controller.GetUnits
+        var effectiveArmy = army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed).ToList();
+        if (effectiveArmy.Count <= 0) {
+            return false;
+        }
+
+        return State.IsViable(effectiveArmy);
     }
 
     public bool IsExecuting() {
@@ -49,17 +57,27 @@ public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUn
     }
 
     public void Execute(IReadOnlyCollection<Unit> army) {
-        //Controller.FrameDelayMs = Controller.RealTime;
+        Controller.FrameDelayMs = Controller.RealTime;
         _coolDownUntil = Controller.Frame + Controller.SecsToFrames(5);
 
         _army = army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed).ToList();
+        if (_army.Count <= 0) {
+            Logger.Error("Trying to execute sneak attack without roaches in the army");
+            return;
+        }
+
         _armyCenter = army.GetCenter();
+
+        foreach (var roach in _army.Where(roach => !_unitsWithUninstalledModule.Contains(roach))) {
+            roach.AddDeathWatcher(this);
+            _unitsWithUninstalledModule.Add(roach);
+            UnitModule.Uninstall<BurrowMicroModule>(roach);
+        }
 
         State.OnFrame();
 
-        GraphicalDebugger.AddSphere(_armyCenter, 1, Colors.Magenta);
         if (_targetPosition != default) {
-            GraphicalDebugger.AddLine(_targetPosition, _armyCenter, Colors.Magenta);
+            GraphicalDebugger.AddLink(_targetPosition, _armyCenter, Colors.Magenta);
             GraphicalDebugger.AddSphere(_targetPosition, 1, Colors.Magenta);
 
             if (_isTargetPriority) {
@@ -74,16 +92,14 @@ public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUn
         }
 
         foreach (var roach in _unitsWithUninstalledModule) {
-            if (roach.RawUnitData.IsBurrowed) {
-                roach.UseAbility(Abilities.BurrowRoachUp);
-            }
-
             BurrowMicroModule.Install(roach);
+            roach.RemoveDeathWatcher(this);
         }
 
-        TransitionTo(new InactiveState());
         _targetPosition = default;
         _unitsWithUninstalledModule.Clear();
+
+        TransitionTo(new InactiveState());
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
