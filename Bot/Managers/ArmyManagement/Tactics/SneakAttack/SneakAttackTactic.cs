@@ -128,17 +128,7 @@ public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUn
         }
     }
 
-    private static void UnburrowUnderlings(IEnumerable<Unit> army) {
-        foreach (var soldier in army.Where(soldier => soldier.RawUnitData.IsBurrowed)) {
-            soldier.UseAbility(Abilities.BurrowRoachUp);
-        }
-    }
-
     private static IEnumerable<Unit> GetPriorityTargetsInOperationRadius(Vector3 armyCenter) {
         return Controller.GetUnits(UnitsTracker.EnemyUnits, PriorityTargets).Where(enemy => enemy.HorizontalDistanceTo(armyCenter) <= OperationRadius);
-    }
-
-    private static IEnumerable<Unit> GetArmyWithEnoughHealth(IEnumerable<Unit> army) {
-        return army.Where(soldier => soldier.Integrity > BurrowMicroModule.BurrowDownThreshold);
     }
 }

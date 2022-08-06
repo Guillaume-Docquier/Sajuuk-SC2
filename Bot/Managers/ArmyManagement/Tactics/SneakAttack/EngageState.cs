@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using Bot.GameData;
 
 namespace Bot.Managers.ArmyManagement.Tactics.SneakAttack;
 
@@ -12,6 +14,12 @@ public partial class SneakAttackTactic {
             UnburrowUnderlings(StateMachine._army);
 
             NextState = new TerminalState();
+        }
+
+        private static void UnburrowUnderlings(IEnumerable<Unit> army) {
+            foreach (var soldier in army.Where(soldier => soldier.RawUnitData.IsBurrowed)) {
+                soldier.UseAbility(Abilities.BurrowRoachUp);
+            }
         }
     }
 }

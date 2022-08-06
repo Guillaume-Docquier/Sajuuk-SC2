@@ -3,6 +3,7 @@ using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.UnitModules;
 
 namespace Bot.Managers.ArmyManagement.Tactics.SneakAttack;
 
@@ -61,6 +62,10 @@ public partial class SneakAttackTactic {
             else if (GetArmyWithEnoughHealth(StateMachine._army).Count() >= StateMachine._army.Count * MinimumEngagementArmyThreshold) {
                 NextState = new EngageState();
             }
+        }
+
+        private static IEnumerable<Unit> GetArmyWithEnoughHealth(IEnumerable<Unit> army) {
+            return army.Where(soldier => soldier.Integrity > BurrowMicroModule.BurrowDownThreshold);
         }
     }
 }
