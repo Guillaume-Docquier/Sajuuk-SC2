@@ -170,6 +170,7 @@ internal static class Units {
     public const uint PurifierMineralField750 = 885;
     public const uint BattleStationMineralField = 886;
     public const uint BattleStationMineralField750 = 887;
+    public const uint MineralField450  = 1996;
     public const uint SwarmHost = 494; // SwarmHostMP?
     public const uint SwarmHostBurrowed = 493; // SwarmHostBurrowedMP?
     public const uint Viper = 499;
@@ -215,9 +216,12 @@ internal static class Units {
     public const uint DestructibleRampHorizontalHuge = 375;
     public const uint DestructibleDebrisRampDiagonalHugeULBR = 376;
     public const uint DestructibleDebrisRampDiagonalHugeBLUR = 377;
+    public const uint DestructibleRockEx16x6 = 639;
+    public const uint DestructibleRockEx1DiagonalHugeULBR = 640;
 
     // TODO GD There's more but I'm too lazy right now
     public const uint UnbuildablePlatesDestructible = 474;
+    public const uint UnbuildableRocksDestructible = 472;
 
     public static readonly HashSet<uint> Structures = new HashSet<uint>
     {
@@ -282,49 +286,7 @@ internal static class Units {
         TemplarArchive,
         TwilightCounsel,
         UltraliskCavern,
-        WarpGate
-    };
-
-    public static readonly HashSet<uint> Production = new HashSet<uint>
-    {
-        Armory,
-        BanelingNest,
-        Barracks,
-        BarracksTechlab,
-        CommandCenter,
-        CyberneticsCore,
-        EngineeringBay,
-        EvolutionChamber,
-        Factory,
-        FactoryTechlab,
-        FleetBeacon,
-        Forge,
-        FusionCore,
-        Gateway,
-        GhostAcademy,
-        GreaterSpire,
-        Hatchery,
-        Hive,
-        HydraliskDen,
-        InfestationPit,
-        Lair,
-        Nexus,
-        NydusNetwork,
-        OrbitalCommand,
-        PlanetaryFortress,
-        RoachWarren,
-        RoboticsBay,
-        RoboticsFacility,
-        SpawningPool,
-        Spire,
-        Starport,
-        Stargate,
-        StarportTechlab,
-        Techlab,
-        TemplarArchive,
-        TwilightCounsel,
-        UltraliskCavern,
-        WarpGate
+        WarpGate,
     };
 
     public static readonly HashSet<uint> TerranMilitary = new HashSet<uint>
@@ -422,7 +384,7 @@ internal static class Units {
         Nexus,
         OrbitalCommand,
         OrbitalCommandFlying,
-        PlanetaryFortress
+        PlanetaryFortress,
     };
 
     // Mineral field types seem to differ from map to map
@@ -439,7 +401,8 @@ internal static class Units {
         PurifierMineralField,
         PurifierMineralField750,
         BattleStationMineralField,
-        BattleStationMineralField750
+        BattleStationMineralField750,
+        MineralField450,
     };
 
     public static readonly HashSet<uint> Extractors = new HashSet<uint>
@@ -464,110 +427,16 @@ internal static class Units {
     {
         Scv,
         Probe,
-        Drone
+        Drone,
     };
 
-    public static readonly HashSet<uint> Mechanical = new HashSet<uint>
+    public static readonly HashSet<uint> BuildBlockers = new HashSet<uint>
     {
-        Hellbat,
-        Banshee,
-        Thor,
-        SiegeTank,
-        SiegeTankSieged,
-        Battlecruiser,
-        VikingAssault,
-        VikingFighter,
-        Hellion,
-        Cyclone,
-        WidowMine,
-        WidowMineBurrowed,
-        Liberator,
-        Raven,
-        Medivac
+        UnbuildablePlatesDestructible,
+        UnbuildableRocksDestructible,
     };
 
-    public static readonly HashSet<uint> Liftable = new HashSet<uint>
-    {
-        CommandCenter,
-        OrbitalCommand,
-        Barracks,
-        Factory,
-        Starport
-    };
-
-    public static readonly HashSet<uint> StaticAirDefense = new HashSet<uint>
-    {
-        PhotonCannon,
-        MissileTurret,
-        SporeCrawler,
-        Bunker
-    };
-
-    public static readonly HashSet<uint> StaticGroundDefense = new HashSet<uint>
-    {
-        PhotonCannon,
-        Bunker,
-        SpineCrawler,
-        PlanetaryFortress
-    };
-
-    public static readonly HashSet<uint> SiegeTanks = new HashSet<uint>
-    {
-        SiegeTank,
-        SiegeTankSieged
-    };
-
-    public static readonly HashSet<uint> Vikings = new HashSet<uint>
-    {
-        VikingAssault,
-        VikingFighter
-    };
-
-    public static readonly HashSet<uint> FromBarracks = new HashSet<uint>
-    {
-        Reaper,
-        Marine,
-        Marauder,
-        Ghost
-    };
-
-    public static readonly HashSet<uint> FromFactory = new HashSet<uint>
-    {
-        Thor,
-        Hellion,
-        Hellbat,
-        SiegeTank,
-        Cyclone
-    };
-
-    public static readonly HashSet<uint> FromStarport = new HashSet<uint>
-    {
-        VikingFighter,
-        Raven,
-        Banshee,
-        Battlecruiser,
-        Liberator
-    };
-
-    public static readonly HashSet<uint> AddOns = new HashSet<uint>
-    {
-        Techlab,
-        Reactor,
-        BarracksReactor,
-        BarracksTechlab,
-        FactoryTechlab,
-        FactoryReactor,
-        StarportTechlab,
-        StarportReactor
-    };
-
-    public static readonly HashSet<uint> SupplyDepots = new HashSet<uint>
-    {
-        SupplyDepot,
-        SupplyDepotLowered
-    };
-
-    public static readonly HashSet<uint> Destructibles = new HashSet<uint>
+    public static readonly HashSet<uint> Obstacles = new HashSet<uint>
     {
         DestructibleSearchlight,
         DestructibleBullhornLights,
@@ -601,8 +470,11 @@ internal static class Units {
         DestructibleRampHorizontalHuge,
         DestructibleDebrisRampDiagonalHugeULBR,
         DestructibleDebrisRampDiagonalHugeBLUR,
-        UnbuildablePlatesDestructible,
+        DestructibleRockEx16x6,
+        DestructibleRockEx1DiagonalHugeULBR,
     };
+
+    public static readonly HashSet<uint> Destructibles = new HashSet<uint>(BuildBlockers.Concat(Obstacles));
 
     public static readonly HashSet<uint> TownHalls = new HashSet<uint>
     {

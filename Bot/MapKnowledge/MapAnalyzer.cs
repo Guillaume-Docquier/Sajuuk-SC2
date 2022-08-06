@@ -50,7 +50,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     }
 
     private static void InitObstacles() {
-        var obstacleIds = new HashSet<uint>(Units.Destructibles.Concat(Units.MineralFields).Concat(Units.GasGeysers));
+        var obstacleIds = new HashSet<uint>(Units.Obstacles.Concat(Units.MineralFields).Concat(Units.GasGeysers));
         obstacleIds.Remove(Units.UnbuildablePlatesDestructible); // It is destructible but you can walk on it
 
         _obstacles = Controller.GetUnits(UnitsTracker.NeutralUnits, obstacleIds).ToList();
