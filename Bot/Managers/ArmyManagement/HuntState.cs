@@ -59,18 +59,19 @@ public partial class ArmyManager {
             // _armyManager.Army.ForEach(TargetNeutralUnitsModule.Install);
 
             var armyCenter = StateMachine._mainArmy.GetCenter().ClosestWalkable();
-            var nextUncheckedLocation = ExpandAnalyzer.ExpandLocations
+            var nextUncheckedLocations = ExpandAnalyzer.ExpandLocations
                 .Where(expandLocation => !_checkedLocations[expandLocation])
                 .Where(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation) != null)
-                .MinBy(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation).Count);
+                .ToList();
 
-            if (nextUncheckedLocation == default) {
+            if (nextUncheckedLocations.Count == 0) {
                 Logger.Info("<HuntStrategy> could not find a next target, resetting search");
                 InitCheckedLocations();
             }
             else {
-                Logger.Info("<HuntStrategy> next target is: {0}", nextUncheckedLocation);
-                StateMachine._target = nextUncheckedLocation;
+                var nextTarget = nextUncheckedLocations.MinBy(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation).Count);
+                Logger.Info("<HuntStrategy> next target is: {0}", nextTarget);
+                StateMachine._target = nextTarget;
                 _isNextTargetSet = true;
             }
         }
