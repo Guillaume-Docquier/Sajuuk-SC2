@@ -35,6 +35,10 @@ public static class Logger {
         }
     }
 
+    public static void Debug(string line, params object[] parameters) {
+        WriteLine("DEBUG", line, parameters);
+    }
+
     public static void Info(string line, params object[] parameters) {
         WriteLine("INFO", line, parameters);
     }

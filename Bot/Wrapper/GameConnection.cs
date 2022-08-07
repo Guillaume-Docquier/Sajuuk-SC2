@@ -24,6 +24,8 @@ public class GameConnection {
     private readonly ulong _runEvery;
     private static readonly ulong DebugMemoryEvery = Controller.SecsToFrames(5);
 
+    private readonly PerformanceDebugger _performanceDebugger = new PerformanceDebugger();
+
     public GameConnection(ulong runEvery) {
         _runEvery = runEvery;
     }
@@ -270,10 +272,11 @@ public class GameConnection {
             var observation = observationResponse.Observation;
 
             if (observationResponse.Status is Status.Ended or Status.Quit) {
+                _performanceDebugger.LogAveragePerformance();
+
                 foreach (var result in observation.PlayerResult) {
                     if (result.PlayerId == playerId) {
                         Logger.Info("Result: {0}", result.Result);
-                        // Do whatever you want with the info
                     }
                 }
 
@@ -286,9 +289,16 @@ public class GameConnection {
             }
 
             if (observation.Observation.GameLoop % _runEvery == 0) {
+                _performanceDebugger.FrameStopWatch.Start();
+                _performanceDebugger.ControllerStopWatch.Start();
                 Controller.NewObservation(observation);
+                _performanceDebugger.ControllerStopWatch.Stop();
 
+                _performanceDebugger.BotStopWatch.Start();
                 bot.OnFrame();
+                _performanceDebugger.BotStopWatch.Stop();
+
+                _performanceDebugger.ActionsStopWatch.Start();
                 var actions = Controller.GetActions().ToList();
 
                 if (actions.Count > 0) {
@@ -304,25 +314,39 @@ public class GameConnection {
                         Logger.Warning("Unsuccessful actions: [{0}]", string.Join("; ", unsuccessfulActions));
                     }
                 }
+                _performanceDebugger.ActionsStopWatch.Stop();
 
+                _performanceDebugger.DebuggerStopWatch.Start();
                 await SendRequest(GraphicalDebugger.GetDebugRequest());
+                _performanceDebugger.DebuggerStopWatch.Stop();
+                _performanceDebugger.FrameStopWatch.Stop();
+
+                if (_performanceDebugger.FrameStopWatch.ElapsedMilliseconds > 5) {
+                    _performanceDebugger.LogTimers(actions.Count);
+                }
+
+                _performanceDebugger.ResetTimers();
             }
 
             if (observation.Observation.GameLoop % DebugMemoryEvery == 0) {
-                var memoryUsed = Process.GetCurrentProcess().WorkingSet64 * 1e-6;
-                if (memoryUsed > 200) {
-                    Logger.Info("==== Memory Debug Start ====");
-                    Logger.Info("Memory used: {0} MB", memoryUsed.ToString("0.00"));
-                    Logger.Info("Units: {0} owned, {1} neutral, {2} enemy", UnitsTracker.OwnedUnits.Count, UnitsTracker.NeutralUnits.Count, UnitsTracker.EnemyUnits.Count);
-                    Logger.Info(
-                        "Pathfinding cache: {0} paths, {1} tiles",
-                        Pathfinder.Memory.Values.Sum(destinations => destinations.Keys.Count),
-                        Pathfinder.Memory.Values.SelectMany(destinations => destinations.Values).Sum(path => path.Count));
-                    Logger.Info("==== Memory Debug End ====");
-                }
+                PrintMemoryInfo();
             }
 
             await SendRequest(RequestBuilder.StepRequest(StepSize));
+        }
+    }
+
+    private static void PrintMemoryInfo() {
+        var memoryUsedMb = Process.GetCurrentProcess().WorkingSet64 * 1e-6;
+        if (memoryUsedMb > 200) {
+            Logger.Info("==== Memory Debug Start ====");
+            Logger.Info("Memory used: {0} MB", memoryUsedMb.ToString("0.00"));
+            Logger.Info("Units: {0} owned, {1} neutral, {2} enemy", UnitsTracker.OwnedUnits.Count, UnitsTracker.NeutralUnits.Count, UnitsTracker.EnemyUnits.Count);
+            Logger.Info(
+                "Pathfinding cache: {0} paths, {1} tiles",
+                Pathfinder.Memory.Values.Sum(destinations => destinations.Keys.Count),
+                Pathfinder.Memory.Values.SelectMany(destinations => destinations.Values).Sum(path => path.Count));
+            Logger.Info("==== Memory Debug End ====");
         }
     }
 
