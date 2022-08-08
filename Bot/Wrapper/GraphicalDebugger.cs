@@ -17,8 +17,13 @@ public static class GraphicalDebugger {
     private static readonly List<DebugBox> DebugBoxes = new List<DebugBox>();
     private static readonly List<DebugLine> DebugLines = new List<DebugLine>();
 
-    // TODO GD Add some optional persistence to the debug elements otherwise they last only 1 frame
-    public static Request GetDebugRequest() {
+    public static bool IsActive = true;
+
+    public static async void SendDebugRequest() {
+        if (!IsActive) {
+            return;
+        }
+
         var request = RequestBuilder.DebugRequest(DebugTexts, DebugSpheres, DebugBoxes, DebugLines);
 
         DebugTexts.Clear();
@@ -26,11 +31,15 @@ public static class GraphicalDebugger {
         DebugBoxes.Clear();
         DebugLines.Clear();
 
-        return request;
+        await Program.GameConnection.SendRequest(request);
     }
 
     // Size doesn't work when pos is not defined
     public static void AddText(string text, uint size = 15, Point virtualPos = null, Point worldPos = null, Color color = null) {
+        if (!IsActive) {
+            return;
+        }
+
         DebugTexts.Add(new DebugText
         {
             Text = text,
@@ -42,10 +51,18 @@ public static class GraphicalDebugger {
     }
 
     public static void AddTextGroup(IEnumerable<string> texts, uint size = 15, Point virtualPos = null, Point worldPos = null, Color color = null) {
+        if (!IsActive) {
+            return;
+        }
+
         AddText(string.Join("\n", texts), size, virtualPos, worldPos, color);
     }
 
     public static void AddSphere(Unit unit, Color color) {
+        if (!IsActive) {
+            return;
+        }
+
         AddSphere(
             unit.Position,
             unit.Radius * 1.25f,
@@ -54,6 +71,10 @@ public static class GraphicalDebugger {
     }
 
     public static void AddSphere(Vector3 position, float radius, Color color) {
+        if (!IsActive) {
+            return;
+        }
+
         DebugSpheres.Add(
             new DebugSphere
             {
@@ -65,20 +86,36 @@ public static class GraphicalDebugger {
     }
 
     public static void AddGridSquare(Vector3 centerPosition, Color color) {
+        if (!IsActive) {
+            return;
+        }
+
         AddSquare(centerPosition, KnowledgeBase.GameGridCellWidth, color, padded: true);
     }
 
     public static void AddGridSquaresInRadius(Vector3 centerPosition, int radius, Color color) {
+        if (!IsActive) {
+            return;
+        }
+
         foreach (var cell in MapAnalyzer.BuildSearchCircle(centerPosition, radius)) {
             AddSquare(cell.WithWorldHeight(), KnowledgeBase.GameGridCellWidth, color, padded: true);
         }
     }
 
     public static void AddSquare(Vector3 centerPosition, float width, Color color, bool padded = false) {
+        if (!IsActive) {
+            return;
+        }
+
         AddRectangle(centerPosition, width, width, color, padded);
     }
 
     public static void AddRectangle(Vector3 centerPosition, float width, float length, Color color, bool padded = false) {
+        if (!IsActive) {
+            return;
+        }
+
         var padding = padded ? Padding : 0;
 
         DebugBoxes.Add(
@@ -92,6 +129,10 @@ public static class GraphicalDebugger {
     }
 
     public static void AddLine(Vector3 start, Vector3 end, Color color) {
+        if (!IsActive) {
+            return;
+        }
+
         DebugLines.Add(
             new DebugLine
             {
@@ -106,10 +147,18 @@ public static class GraphicalDebugger {
     }
 
     public static void AddLink(Unit start, Unit end, Color color) {
+        if (!IsActive) {
+            return;
+        }
+
         AddLink(start.Position, end.Position, color);
     }
 
     public static void AddLink(Vector3 start, Vector3 end, Color color) {
+        if (!IsActive) {
+            return;
+        }
+
         AddText("from", worldPos: start.ToPoint(), color: color);
         AddSphere(start, 1, color);
 

@@ -18,12 +18,14 @@ public class Program {
     public static void Main(string[] args) {
         try {
             if (args.Length == 0) {
+                GraphicalDebugger.IsActive = true;
                 GameConnection = new GameConnection(runEvery: 2);
                 GameConnection.RunSinglePlayer(Bot, MapName, OpponentRace, OpponentDifficulty, RealTime).Wait();
             }
             else {
                 // On the ladder, for some reason, actions have a 1 frame delay before being received and applied
                 // We will run every 2 frames, this way we won't notice the delay
+                GraphicalDebugger.IsActive = false;
                 GameConnection = new GameConnection(runEvery: 2);
                 GameConnection.RunLadder(Bot, args).Wait();
             }

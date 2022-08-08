@@ -317,7 +317,7 @@ public class GameConnection {
                 _performanceDebugger.ActionsStopWatch.Stop();
 
                 _performanceDebugger.DebuggerStopWatch.Start();
-                await SendRequest(GraphicalDebugger.GetDebugRequest());
+                GraphicalDebugger.SendDebugRequest();
                 _performanceDebugger.DebuggerStopWatch.Stop();
                 _performanceDebugger.FrameStopWatch.Stop();
 
@@ -366,7 +366,7 @@ public class GameConnection {
         });
     }
 
-    private async Task<Response> SendRequest(Request request, bool logErrors = false) {
+    public async Task<Response> SendRequest(Request request, bool logErrors = false) {
         var response = await _proxy.SendRequest(request);
         if (logErrors) {
             LogResponseErrors(response);
