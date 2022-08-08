@@ -70,7 +70,7 @@ public static class Pathfinder {
                 return BuildPath(cameFrom, current);
             }
 
-            foreach (var neighbor in GetNeighbors(current).Where(MapAnalyzer.IsInBounds).Where(MapAnalyzer.IsWalkable)) {
+            foreach (var neighbor in GetReachableNeighbors(current)) {
                 var neighborGScore = gScore[current] + getHeuristicCost(current, neighbor);
 
                 if (!gScore.ContainsKey(neighbor) || neighborGScore < gScore[neighbor]) {
@@ -89,17 +89,59 @@ public static class Pathfinder {
         return null;
     }
 
-    private static IEnumerable<Vector3> GetNeighbors(Vector3 position) {
-        yield return position.Translate(xTranslation: -1, yTranslation: -1);
-        yield return position.Translate(xTranslation: -1);
-        yield return position.Translate(xTranslation: -1, yTranslation: 1);
+    // Diagonal makes more direct paths, but you can't walk diagonally if both sides of the diagonal are blocked
+    private static IEnumerable<Vector3> GetReachableNeighbors(Vector3 position) {
+        var leftPos = position.Translate(xTranslation: -1);
+        var isLeftOk = MapAnalyzer.IsInBounds(leftPos) && MapAnalyzer.IsWalkable(leftPos);
+        if (isLeftOk) {
+            yield return leftPos;
+        }
 
-        yield return position.Translate(yTranslation: -1);
-        yield return position.Translate(yTranslation: 1);
+        var rightPos = position.Translate(xTranslation: 1);
+        var isRightOk = MapAnalyzer.IsInBounds(rightPos) && MapAnalyzer.IsWalkable(rightPos);
+        if (isRightOk) {
+            yield return rightPos;
+        }
 
-        yield return position.Translate(xTranslation: 1, yTranslation: -1);
-        yield return position.Translate(xTranslation: 1);
-        yield return position.Translate(xTranslation: 1, yTranslation: 1);
+        var upPos = position.Translate(yTranslation: 1);
+        var isUpOk = MapAnalyzer.IsInBounds(upPos) && MapAnalyzer.IsWalkable(upPos);
+        if (isUpOk) {
+            yield return upPos;
+        }
+
+        var downPos = position.Translate(yTranslation: -1);
+        var isDownOk = MapAnalyzer.IsInBounds(downPos) && MapAnalyzer.IsWalkable(downPos);
+        if (isDownOk) {
+            yield return downPos;
+        }
+
+        if (isLeftOk || isUpOk) {
+            var leftUpPos = position.Translate(xTranslation: -1, yTranslation: 1);
+            if (MapAnalyzer.IsInBounds(leftUpPos) && MapAnalyzer.IsWalkable(leftUpPos)) {
+                yield return leftUpPos;
+            }
+        }
+
+        if (isLeftOk || isDownOk) {
+            var leftDownPos = position.Translate(xTranslation: -1, yTranslation: -1);
+            if (MapAnalyzer.IsInBounds(leftDownPos) && MapAnalyzer.IsWalkable(leftDownPos)) {
+                yield return leftDownPos;
+            }
+        }
+
+        if (isRightOk || isUpOk) {
+            var rightUpPos = position.Translate(xTranslation: 1, yTranslation: 1);
+            if (MapAnalyzer.IsInBounds(rightUpPos) && MapAnalyzer.IsWalkable(rightUpPos)) {
+                yield return rightUpPos;
+            }
+        }
+
+        if (isRightOk || isDownOk) {
+            var rightDownPos = position.Translate(xTranslation: 1, yTranslation: -1);
+            if (MapAnalyzer.IsInBounds(rightDownPos) && MapAnalyzer.IsWalkable(rightDownPos)) {
+                yield return rightDownPos;
+            }
+        }
     }
 
     private static IEnumerable<Vector3> BuildPath(IReadOnlyDictionary<Vector3, Vector3> cameFrom, Vector3 end) {
