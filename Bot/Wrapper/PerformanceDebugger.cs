@@ -27,7 +27,7 @@ public class PerformanceDebugger {
         var debuggerTime = DebuggerStopWatch.GetElapsedTimeMs();
 
         Logger.Debug(
-            "Actions {0,3} | Frame {1,5} ms | Controller ({2,3:P0}) {3,5} ms | Bot ({4,3:P0}) {5,5} ms | Actions ({6,3:P0}) {7,5} ms | Debugger ({8,3:P0}) {9,5} ms",
+            "Actions {0,3} | Frame {1,5:F2} ms | Controller ({2,3:P0}) {3,5:F2} ms | Bot ({4,3:P0}) {5,5:F2} ms | Actions ({6,3:P0}) {7,5:F2} ms | Debugger ({8,3:P0}) {9,5:F2} ms",
             actionCount,
             frameTime,
             controllerTime / frameTime,
@@ -54,16 +54,16 @@ public class PerformanceDebugger {
         var averageDebuggerTime = _debuggerTotalTime / _dataPointsCount;
 
         Logger.Debug(
-            "Average performance: Frame {0,5} ms | Controller ({1,3:P0}) {2,5} ms | Bot ({3,3:P0}) {4,5} ms | Actions ({5,3:P0}) {6,5} ms | Debugger ({7,3:P0}) {8,5} ms",
-            Math.Round(averageFrameTime, 2),
+            "Average performance: Frame {0,5:F2} ms | Controller ({1,3:P0}) {2,5:F2} ms | Bot ({3,3:P0}) {4,5:F2} ms | Actions ({5,3:P0}) {6,5:F2} ms | Debugger ({7,3:P0}) {8,5:F2} ms",
+            averageFrameTime,
             averageControllerPercent,
-            Math.Round(averageControllerTime, 2),
+            averageControllerTime,
             averageBotPercent,
-            Math.Round(averageBotTime, 2),
+            averageBotTime,
             averageActionsPercent,
-            Math.Round(averageActionsTime, 2),
+            averageActionsTime,
             averageDebuggerPercent,
-            Math.Round(averageDebuggerTime, 2)
+            averageDebuggerTime
         );
     }
 
