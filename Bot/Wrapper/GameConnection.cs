@@ -325,7 +325,7 @@ public class GameConnection {
                     _performanceDebugger.LogTimers(actions.Count);
                 }
 
-                _performanceDebugger.ResetTimers();
+                _performanceDebugger.CompileData();
             }
 
             if (observation.Observation.GameLoop % DebugMemoryEvery == 0) {

@@ -67,7 +67,7 @@ public class PerformanceDebugger {
         );
     }
 
-    public void ResetTimers() {
+    public void CompileData() {
         _dataPointsCount++;
 
         _frameTotalTime += FrameStopWatch.GetElapsedTimeMs();
@@ -75,6 +75,11 @@ public class PerformanceDebugger {
         _controllerTotalTime += BotStopWatch.GetElapsedTimeMs();
         _actionsTotalTime += ActionsStopWatch.GetElapsedTimeMs();
         _debuggerTotalTime += DebuggerStopWatch.GetElapsedTimeMs();
+
+        ResetTimers();
+    }
+
+    public void ResetTimers() {
 
         FrameStopWatch.Reset();
         ControllerStopWatch.Reset();
