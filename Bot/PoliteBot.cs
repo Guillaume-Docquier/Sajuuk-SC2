@@ -7,11 +7,16 @@ using SC2APIProtocol;
 namespace Bot;
 
 public abstract class PoliteBot: IBot {
+    private readonly string _version;
     private bool _greetDone = false;
 
     public abstract string Name { get; }
 
     public abstract Race Race { get; }
+
+    public PoliteBot(string version) {
+        _version = version;
+    }
 
     public void OnFrame() {
         EnsureGreeting();
@@ -31,7 +36,7 @@ public abstract class PoliteBot: IBot {
         if (!_greetDone && Controller.Frame >= Controller.SecsToFrames(1)) {
             Controller.Chat("Hi, my name is Sajuuk");
             Controller.Chat("I wish you good luck and good fun!");
-            Controller.Chat("tag: 1.7.3");
+            Controller.Chat($"tag: {_version}");
 
             _greetDone = true;
         }

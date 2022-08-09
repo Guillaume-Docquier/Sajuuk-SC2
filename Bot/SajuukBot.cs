@@ -26,6 +26,8 @@ public class SajuukBot: PoliteBot {
 
     public override Race Race => Race.Zerg;
 
+    public SajuukBot(string version) : base(version) {}
+
     protected override void DoOnFrame() {
         if (Controller.Frame == 0) {
             _managers.Add(new EconomyManager());
