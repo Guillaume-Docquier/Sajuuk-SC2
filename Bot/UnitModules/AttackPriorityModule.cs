@@ -39,7 +39,6 @@ public class AttackPriorityModule: IUnitModule {
             return;
         }
 
-        // TODO GD Add other units to prioritize
         var priorityTargetInRange = Controller.GetUnits(UnitsTracker.EnemyUnits, PriorityTargets)
             .Where(priorityTarget => priorityTarget.HorizontalDistanceTo(_unit) < unitWeapon.Range)
             .MinBy(priorityTarget => priorityTarget.HorizontalDistanceTo(_unit));

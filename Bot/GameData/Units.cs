@@ -219,7 +219,6 @@ internal static class Units {
     public const uint DestructibleRockEx16x6 = 639;
     public const uint DestructibleRockEx1DiagonalHugeULBR = 640;
 
-    // TODO GD There's more but I'm too lazy right now
     public const uint UnbuildablePlatesDestructible = 474;
     public const uint UnbuildableRocksDestructible = 472;
 

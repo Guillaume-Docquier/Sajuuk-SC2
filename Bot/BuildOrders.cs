@@ -58,7 +58,7 @@ public static class BuildOrders {
             // All in
             new BuildStep(BuildType.Train, 1, Units.Overlord, 2),
             new BuildStep(BuildType.Train, 1, Units.Roach, 8),
-            new BuildStep(BuildType.Train, 1, Units.Overlord, 5), // TODO GD Auto raise the cap
+            new BuildStep(BuildType.Train, 1, Units.Overlord, 5),
         });
     }
 
