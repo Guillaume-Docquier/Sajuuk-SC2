@@ -1,6 +1,16 @@
 ﻿namespace Bot.StateManagement;
 
 public abstract class State {
+    protected string Name {
+        get {
+            if (StateMachine == null) {
+                return $"{GetType().Name}";
+            }
+
+            return $"{StateMachine.GetType().Name} {GetType().Name}";
+        }
+    }
+
     protected StateMachine StateMachine { get; private set; }
 
     public void SetStateMachine(StateMachine stateMachine)

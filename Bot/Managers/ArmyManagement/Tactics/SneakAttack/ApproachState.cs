@@ -9,6 +9,8 @@ public partial class SneakAttackTactic {
     public class ApproachState : SneakAttackState {
         private const float SetupDistance = 1.25f;
 
+        private readonly StuckDetector _stuckDetector = new StuckDetector();
+
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
             if (DetectionTracker.IsDetected(army)) {
                 return false;
@@ -19,6 +21,14 @@ public partial class SneakAttackTactic {
         }
 
         protected override void Execute() {
+            _stuckDetector.Tick(StateMachine._armyCenter);
+            if (_stuckDetector.IsStuck) {
+                Logger.Warning("{0} army is stuck", Name);
+                NextState = new TerminalState();
+
+                return;
+            }
+
             var closestPriorityTarget = GetPriorityTargetsInOperationRadius(StateMachine._armyCenter).MinBy(enemy => enemy.HorizontalDistanceTo(StateMachine._armyCenter));
             if (closestPriorityTarget != null) {
                 StateMachine._targetPosition = closestPriorityTarget.Position;
@@ -33,7 +43,7 @@ public partial class SneakAttackTactic {
             }
 
             if (StateMachine._targetPosition == default) {
-                Logger.Warning("{0}: {1} has no target", StateMachine.GetType().Name, GetType().Name);
+                Logger.Warning("{0} has no target", Name);
                 StateMachine._isTargetPriority = false;
                 NextState = new TerminalState();
 

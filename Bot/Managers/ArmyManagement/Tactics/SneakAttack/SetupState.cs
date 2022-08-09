@@ -12,6 +12,8 @@ public partial class SneakAttackTactic {
         private const float EngageDistance = 0.75f;
         private const float MinimumEngagementArmyThreshold = 0.75f;
 
+        private readonly StuckDetector _stuckDetector = new StuckDetector();
+
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
             if (DetectionTracker.IsDetected(army)) {
                 return false;
@@ -27,6 +29,14 @@ public partial class SneakAttackTactic {
         }
 
         protected override void Execute() {
+            _stuckDetector.Tick(StateMachine._armyCenter);
+            if (_stuckDetector.IsStuck) {
+                Logger.Warning("{0} army is stuck", Name);
+                NextState = new TerminalState();
+
+                return;
+            }
+
             // Do we need _isTargetPriority at this point? We shouldn't lose sight at this point, right?
             var closestPriorityTarget = GetPriorityTargetsInOperationRadius(StateMachine._armyCenter).MinBy(enemy => enemy.HorizontalDistanceTo(StateMachine._armyCenter));
             if (closestPriorityTarget != null) {
@@ -45,7 +55,7 @@ public partial class SneakAttackTactic {
             }
 
             if (StateMachine._targetPosition == default) {
-                Logger.Warning("{0}: {1} has no target", StateMachine.GetType().Name, GetType().Name);
+                Logger.Warning("{0} has no target", Name);
                 NextState = new TerminalState();
                 StateMachine._isTargetPriority = false;
 

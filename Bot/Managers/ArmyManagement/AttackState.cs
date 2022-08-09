@@ -15,8 +15,6 @@ namespace Bot.Managers.ArmyManagement;
 
 public partial class ArmyManager {
     public class AttackState: State<ArmyManager> {
-        private static readonly ulong ReasonableMoveDelay = Controller.SecsToFrames(5);
-        private const float NegligibleMovement = 2f;
         private const float RocksDestructionRange = 9f;
         private const float AcceptableDistanceToTarget = 3;
         private const float MaxDistanceForPathfinding = 25;
@@ -25,8 +23,7 @@ public partial class ArmyManager {
         private float _initialForce;
         private float _retreatAtForce;
 
-        private Vector3 _previousArmyLocation;
-        private ulong _ticksWithoutRealMove;
+        private readonly StuckDetector _stuckDetector = new StuckDetector();
 
         private static readonly ulong MaximumPathfindingLockDelay = Controller.SecsToFrames(15);
         private bool PathfindingIsUnlocked => _pathfindingLock < Controller.Frame;
@@ -93,63 +90,59 @@ public partial class ArmyManager {
                 worldPos: soldiers.GetCenter().Translate(1f, 1f).ToPoint());
         }
 
-        private void Attack(Vector3 targetToAttack, IReadOnlyCollection<Unit> soldiers) {
-            if (soldiers.Count <= 0) {
+        private void Attack(Vector3 targetToAttack, IReadOnlyCollection<Unit> army) {
+            if (army.Count <= 0) {
                 return;
             }
 
-            DrawAttackData(targetToAttack, soldiers);
+            DrawAttackData(targetToAttack, army);
 
-            var unitsToAttackWith = soldiers.Where(unit => unit.IsIdleOrMovingOrAttacking())
+            var unitsToAttackWith = army.Where(unit => unit.IsIdleOrMovingOrAttacking())
                 .Where(unit => !unit.RawUnitData.IsBurrowed)
                 .Where(unit => unit.HorizontalDistanceTo(targetToAttack) > AcceptableDistanceToTarget)
                 .ToList();
 
-            var armyLocation = soldiers.GetCenter();
+            var armyLocation = army.GetCenter();
             var absoluteDistanceToTarget = armyLocation.HorizontalDistanceTo(targetToAttack);
 
+            if (!army.IsFighting()) {
+                _stuckDetector.Tick(armyLocation);
+            }
+            else {
+                _stuckDetector.Reset(armyLocation);
+            }
+
             // Try to take down rocks
-            var isStuck = _ticksWithoutRealMove > ReasonableMoveDelay;
-            if (isStuck) {
-                Logger.Warning("AttackStrategy: I'm stuck!");
+            if (_stuckDetector.IsStuck) {
+                Logger.Warning("{0} army is stuck", Name);
+
                 var closestRock = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.Destructibles).MinBy(rock => rock.HorizontalDistanceTo(armyLocation));
                 if (closestRock != null) {
-                    Logger.Info("AttackStrategy: Closest rock is {0} units away", closestRock.HorizontalDistanceTo(armyLocation).ToString("0.00"));
+                    Logger.Info("{0} closest rock is {1:F2} units away", Name, closestRock.HorizontalDistanceTo(armyLocation));
                     if (closestRock.HorizontalDistanceTo(armyLocation) <= RocksDestructionRange) {
-                        Logger.Info("AttackStrategy: Attacking rock");
+                        Logger.Info("{0} attacking nearby rock", Name);
                         Attack(closestRock, unitsToAttackWith);
                         return;
                     }
                 }
                 else {
-                    Logger.Warning("AttackStrategy: No rocks found");
+                    Logger.Warning("{0} no rocks found", Name);
                 }
             }
 
-            if (absoluteDistanceToTarget <= MaxDistanceForPathfinding && !isStuck && PathfindingIsUnlocked) {
+            if (absoluteDistanceToTarget <= MaxDistanceForPathfinding && !_stuckDetector.IsStuck && PathfindingIsUnlocked) {
                 WalkAlongThePath(targetToAttack, armyLocation, unitsToAttackWith);
             }
             else {
-                if (isStuck) {
-                    Logger.Warning("AttackStrategy: disabling pathfinding for {0} seconds", (_pathfindingLockDelay / Controller.FramesPerSecond).ToString("0.00"));
+                if (_stuckDetector.IsStuck) {
+                    Logger.Warning("{0} disabling pathfinding for {1:F2} seconds", Name, _pathfindingLockDelay / Controller.FramesPerSecond);
                     _pathfindingLock = Controller.Frame + _pathfindingLockDelay;
                     _pathfindingLockDelay = Math.Min(MaximumPathfindingLockDelay, (ulong)(_pathfindingLockDelay * 1.25));
 
-                    _ticksWithoutRealMove = 0;
-                    _previousArmyLocation = armyLocation;
+                    _stuckDetector.Reset(armyLocation);
                 }
 
                 AttackMove(targetToAttack, unitsToAttackWith);
-            }
-
-            // Sometime the army gets stuck, try something different if it happens
-            // This will often time be due to rocks, so I need to fix that
-            if (armyLocation.HorizontalDistanceTo(_previousArmyLocation) < NegligibleMovement && !soldiers.IsFighting()) {
-                _ticksWithoutRealMove++;
-            }
-            else {
-                _ticksWithoutRealMove = 0;
-                _previousArmyLocation = armyLocation;
             }
         }
 
