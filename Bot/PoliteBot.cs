@@ -7,6 +7,8 @@ using SC2APIProtocol;
 namespace Bot;
 
 public abstract class PoliteBot: IBot {
+    private bool _greetDone = false;
+
     public abstract string Name { get; }
 
     public abstract Race Race { get; }
@@ -26,9 +28,12 @@ public abstract class PoliteBot: IBot {
             Logger.Info("--------------------------------------");
         }
 
-        if (Controller.Frame == Controller.SecsToFrames(1)) {
+        if (!_greetDone && Controller.Frame >= Controller.SecsToFrames(1)) {
             Controller.Chat("Hi, my name is Sajuuk");
             Controller.Chat("I wish you good luck and good fun!");
+            Controller.Chat("tag: 1.7.3");
+
+            _greetDone = true;
         }
     }
 
