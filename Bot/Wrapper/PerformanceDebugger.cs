@@ -13,18 +13,18 @@ public class PerformanceDebugger {
     private double _actionsTotalTime = 0;
     private double _debuggerTotalTime = 0;
 
-    public readonly Stopwatch FrameStopWatch = new Stopwatch();
-    public readonly Stopwatch BotStopWatch = new Stopwatch();
-    public readonly Stopwatch ControllerStopWatch = new Stopwatch();
-    public readonly Stopwatch ActionsStopWatch = new Stopwatch();
-    public readonly Stopwatch DebuggerStopWatch = new Stopwatch();
+    public readonly Stopwatch FrameStopwatch = new Stopwatch();
+    public readonly Stopwatch BotStopwatch = new Stopwatch();
+    public readonly Stopwatch ControllerStopwatch = new Stopwatch();
+    public readonly Stopwatch ActionsStopwatch = new Stopwatch();
+    public readonly Stopwatch DebuggerStopwatch = new Stopwatch();
 
     public void LogTimers(int actionCount) {
-        var frameTime = FrameStopWatch.GetElapsedTimeMs();
-        var controllerTime = ControllerStopWatch.GetElapsedTimeMs();
-        var botTime = BotStopWatch.GetElapsedTimeMs();
-        var actionsTime = ActionsStopWatch.GetElapsedTimeMs();
-        var debuggerTime = DebuggerStopWatch.GetElapsedTimeMs();
+        var frameTime = FrameStopwatch.GetElapsedTimeMs();
+        var controllerTime = ControllerStopwatch.GetElapsedTimeMs();
+        var botTime = BotStopwatch.GetElapsedTimeMs();
+        var actionsTime = ActionsStopwatch.GetElapsedTimeMs();
+        var debuggerTime = DebuggerStopwatch.GetElapsedTimeMs();
 
         Logger.Debug(
             "Actions {0,3} | Frame {1,5:F2} ms | Controller ({2,3:P0}) {3,5:F2} ms | Bot ({4,3:P0}) {5,5:F2} ms | Actions ({6,3:P0}) {7,5:F2} ms | Debugger ({8,3:P0}) {9,5:F2} ms",
@@ -70,21 +70,21 @@ public class PerformanceDebugger {
     public void CompileData() {
         _dataPointsCount++;
 
-        _frameTotalTime += FrameStopWatch.GetElapsedTimeMs();
-        _botTotalTime += ControllerStopWatch.GetElapsedTimeMs();
-        _controllerTotalTime += BotStopWatch.GetElapsedTimeMs();
-        _actionsTotalTime += ActionsStopWatch.GetElapsedTimeMs();
-        _debuggerTotalTime += DebuggerStopWatch.GetElapsedTimeMs();
+        _frameTotalTime += FrameStopwatch.GetElapsedTimeMs();
+        _botTotalTime += ControllerStopwatch.GetElapsedTimeMs();
+        _controllerTotalTime += BotStopwatch.GetElapsedTimeMs();
+        _actionsTotalTime += ActionsStopwatch.GetElapsedTimeMs();
+        _debuggerTotalTime += DebuggerStopwatch.GetElapsedTimeMs();
 
         ResetTimers();
     }
 
     public void ResetTimers() {
 
-        FrameStopWatch.Reset();
-        ControllerStopWatch.Reset();
-        BotStopWatch.Reset();
-        ActionsStopWatch.Reset();
-        DebuggerStopWatch.Reset();
+        FrameStopwatch.Reset();
+        ControllerStopwatch.Reset();
+        BotStopwatch.Reset();
+        ActionsStopwatch.Reset();
+        DebuggerStopwatch.Reset();
     }
 }

@@ -206,17 +206,17 @@ public class GameConnection {
             if (observation.Observation.GameLoop % _runEvery == 0) {
                 var gameInfoResponse = await SendRequest(RequestBuilder.RequestGameInfo());
 
-                _performanceDebugger.FrameStopWatch.Start();
-                _performanceDebugger.ControllerStopWatch.Start();
+                _performanceDebugger.FrameStopwatch.Start();
+                _performanceDebugger.ControllerStopwatch.Start();
                 Controller.NewGameInfo(gameInfoResponse.GameInfo);
                 Controller.NewObservation(observation);
-                _performanceDebugger.ControllerStopWatch.Stop();
+                _performanceDebugger.ControllerStopwatch.Stop();
 
-                _performanceDebugger.BotStopWatch.Start();
+                _performanceDebugger.BotStopwatch.Start();
                 bot.OnFrame();
-                _performanceDebugger.BotStopWatch.Stop();
+                _performanceDebugger.BotStopwatch.Stop();
 
-                _performanceDebugger.ActionsStopWatch.Start();
+                _performanceDebugger.ActionsStopwatch.Start();
                 var actions = Controller.GetActions().ToList();
 
                 if (actions.Count > 0) {
@@ -232,14 +232,14 @@ public class GameConnection {
                         Logger.Warning("Unsuccessful actions: [{0}]", string.Join("; ", unsuccessfulActions));
                     }
                 }
-                _performanceDebugger.ActionsStopWatch.Stop();
+                _performanceDebugger.ActionsStopwatch.Stop();
 
-                _performanceDebugger.DebuggerStopWatch.Start();
+                _performanceDebugger.DebuggerStopwatch.Start();
                 GraphicalDebugger.SendDebugRequest();
-                _performanceDebugger.DebuggerStopWatch.Stop();
-                _performanceDebugger.FrameStopWatch.Stop();
+                _performanceDebugger.DebuggerStopwatch.Stop();
+                _performanceDebugger.FrameStopwatch.Stop();
 
-                if (_performanceDebugger.FrameStopWatch.ElapsedMilliseconds > 5) {
+                if (_performanceDebugger.FrameStopwatch.ElapsedMilliseconds > 5) {
                     _performanceDebugger.LogTimers(actions.Count);
                 }
 
