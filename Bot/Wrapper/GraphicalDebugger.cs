@@ -24,14 +24,14 @@ public static class GraphicalDebugger {
             return;
         }
 
-        var request = RequestBuilder.DebugRequest(DebugTexts, DebugSpheres, DebugBoxes, DebugLines);
+        var debugRequest = RequestBuilder.RequestDebug(DebugTexts, DebugSpheres, DebugBoxes, DebugLines);
 
         DebugTexts.Clear();
         DebugSpheres.Clear();
         DebugBoxes.Clear();
         DebugLines.Clear();
 
-        await Program.GameConnection.SendRequest(request);
+        await Program.GameConnection.SendRequest(debugRequest);
     }
 
     // Size doesn't work when pos is not defined

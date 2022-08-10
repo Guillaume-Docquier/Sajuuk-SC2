@@ -73,32 +73,16 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
             return false;
         }
 
-        var queryBuildingPlacement = new RequestQueryBuildingPlacement
-        {
-            AbilityId = (int)KnowledgeBase.GetUnitTypeData(buildingType).AbilityId,
-            TargetPos = new Point2D
-            {
-                X = position.X,
-                Y = position.Y
-            }
-        };
-
-        var requestQuery = new Request
-        {
-            Query = new RequestQuery()
-        };
-        requestQuery.Query.Placements.Add(queryBuildingPlacement); // TODO GD Can I send multiple placements at the same time?
-
-        var result = Program.GameConnection.SendQuery(requestQuery.Query);
-        if (result.Result.Placements.Count == 0) {
+        var queryBuildingPlacementResponse = Program.GameConnection.SendRequest(RequestBuilder.RequestQueryBuildingPlacement(buildingType, position)).Result;
+        if (queryBuildingPlacementResponse.Query.Placements.Count == 0) {
             return false;
         }
 
-        if (result.Result.Placements.Count > 1) {
-            Logger.Warning("[CanPlace] Expected 1 placement, found {0}", result.Result.Placements.Count);
+        if (queryBuildingPlacementResponse.Query.Placements.Count > 1) {
+            Logger.Warning("[CanPlace] Expected 1 placement, found {0}", queryBuildingPlacementResponse.Query.Placements.Count);
         }
 
-        var actionResult = result.Result.Placements[0].Result;
+        var actionResult = queryBuildingPlacementResponse.Query.Placements[0].Result;
         DebugBuildingPlacementResult(actionResult, position);
 
         return actionResult == ActionResult.Success;

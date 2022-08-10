@@ -18,7 +18,8 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
 
     private static List<Unit> _obstacles;
     private static readonly HashSet<Vector3> ObstructionMap = new HashSet<Vector3>();
-    private static List<List<bool>> _walkMap;
+    private static List<List<bool>> _terrainWalkMap;
+    private static List<List<bool>> _currentWalkMap;
 
     public static int MaxX;
     public static int MaxY;
@@ -28,6 +29,8 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     private MapAnalyzer() {}
 
     public void Update(ResponseObservation observation) {
+        _currentWalkMap = ParseWalkMap();
+
         if (IsInitialized) {
             return;
         }
@@ -38,9 +41,8 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         InitSpawnLocations();
         InitObstacles();
 
-        // Controller.GameInfo is only requested once
         InitHeightMap();
-        InitWalkMap();
+        InitTerrainWalkMap();
 
         IsInitialized = true;
     }
@@ -120,10 +122,24 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         return 0.125f * byteValue - 15.888f;
     }
 
-    private static void InitWalkMap() {
-        _walkMap = new List<List<bool>>();
+    private static void InitTerrainWalkMap() {
+        _terrainWalkMap = ParseWalkMap();
+
+        // The walk data makes cells occupied by buildings impassable
+        // However, if I want to find a path from my hatch to the enemy, the pathfinding will fail because the hatchery is impassable
+        // Lucky for us, when we init the walk map, there's only 1 building so we'll make its cells walkable
+        var startingTownHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
+        var townHallCells = BuildSearchGrid(startingTownHall.Position, (int)startingTownHall.Radius);
+
+        foreach (var cell in townHallCells) {
+            _terrainWalkMap[(int)cell.X][(int)cell.Y] = true;
+        }
+    }
+
+    private static List<List<bool>> ParseWalkMap() {
+        var walkMap = new List<List<bool>>();
         for (var x = 0; x < MaxX; x++) {
-            _walkMap.Add(new List<bool>(new bool[MaxY]));
+            walkMap.Add(new List<bool>(new bool[MaxY]));
         }
 
         var walkVector = Controller.GameInfo.StartRaw.PathingGrid.Data
@@ -133,25 +149,17 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
 
         for (var x = 0; x < MaxX; x++) {
             for (var y = 0; y < MaxY; y++) {
-                _walkMap[x][y] = walkVector[y * MaxX + x]; // walkVector[4] is (4, 0)
+                walkMap[x][y] = walkVector[y * MaxX + x]; // walkVector[4] is (4, 0)
 
                 // On some maps, some tiles under destructibles are not walkable
                 // We'll consider them walkable, but they won't be until the obstacle is cleared
                 if (ObstructionMap.Contains(new Vector3(x, y, 0).AsWorldGridCenter())) {
-                    _walkMap[x][y] = true;
+                    walkMap[x][y] = true;
                 }
             }
         }
 
-        // The walk data makes cells occupied by buildings impassable
-        // However, if I want to find a path from my hatch to the enemy, the pathfinding will fail because the hatchery is impassable
-        // Lucky for us, when we init the walk map, there's only 1 building so we'll make its cells walkable
-        var startingTownHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
-        var townHallCells = BuildSearchGrid(startingTownHall.Position, (int)startingTownHall.Radius);
-
-        foreach (var cell in townHallCells) {
-            _walkMap[(int)cell.X][(int)cell.Y] = true;
-        }
+        return walkMap;
     }
 
     private static bool[] ByteToBoolArray(byte byteValue)
@@ -197,6 +205,6 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     }
 
     public static bool IsWalkable(Vector3 position) {
-        return _walkMap[(int)position.X][(int)position.Y] && !ObstructionMap.Contains(position.AsWorldGridCenter().WithoutZ());
+        return _terrainWalkMap[(int)position.X][(int)position.Y] && !ObstructionMap.Contains(position.AsWorldGridCenter().WithoutZ());
     }
 }

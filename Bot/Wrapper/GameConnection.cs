@@ -115,32 +115,7 @@ public class GameConnection {
             throw new Exception($"Unable to locate map: {mapPath}");
         }
 
-        var createGame = new RequestCreateGame
-        {
-            Realtime = realTime,
-            LocalMap = new LocalMap
-            {
-                MapPath = mapPath
-            }
-        };
-
-        createGame.PlayerSetup.Add(new PlayerSetup
-        {
-            Type = PlayerType.Participant
-        });
-
-        createGame.PlayerSetup.Add(new PlayerSetup
-        {
-            Type = PlayerType.Computer,
-            Race = opponentRace,
-            Difficulty = opponentDifficulty
-        });
-
-        var createGameRequest = new Request
-        {
-            CreateGame = createGame
-        };
-        var createGameResponse = await SendRequest(createGameRequest, logErrors: true);
+        var createGameResponse = await SendRequest(RequestBuilder.RequestCreateComputerGame(realTime, mapPath, opponentRace, opponentDifficulty), logErrors: true);
 
         if (createGameResponse.CreateGame.Error != ResponseCreateGame.Types.Error.Unset) {
             Logger.Error("CreateGame error: {0}", createGameResponse.CreateGame.Error.ToString());
@@ -151,21 +126,7 @@ public class GameConnection {
     }
 
     private async Task<uint> JoinGame(Race race) {
-        var joinGame = new RequestJoinGame
-        {
-            Race = race,
-            Options = new InterfaceOptions
-            {
-                Raw = true,
-                Score = true
-            }
-        };
-
-        var joinGameRequest = new Request
-        {
-            JoinGame = joinGame
-        };
-        var joinGameResponse = await SendRequest(joinGameRequest, logErrors: true);
+        var joinGameResponse = await SendRequest(RequestBuilder.RequestJoinLocalGame(race), logErrors: true);
 
         if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.Unset) {
             Logger.Error("JoinGame error: {0}", joinGameResponse.JoinGame.Error.ToString());
@@ -181,15 +142,6 @@ public class GameConnection {
         await _proxy.Ping();
     }
 
-    public async Task<ResponseQuery> SendQuery(RequestQuery query) {
-        var response = await SendRequest(new Request
-        {
-            Query = query
-        });
-
-        return response.Query;
-    }
-
     public async Task RunLadder(IBot bot, string[] args) {
         var commandLineArgs = new CommandLineArguments(args);
         await RunLadder(bot, commandLineArgs.GamePort, commandLineArgs.StartPort);
@@ -203,33 +155,7 @@ public class GameConnection {
     }
 
     private async Task<uint> JoinGameLadder(Race race, int startPort) {
-        var joinGame = new RequestJoinGame
-        {
-            Race = race,
-            SharedPort = startPort + 1,
-            ServerPorts = new PortSet
-            {
-                GamePort = startPort + 2,
-                BasePort = startPort + 3
-            },
-            Options = new InterfaceOptions
-            {
-                Raw = true,
-                Score = true
-            }
-        };
-
-        joinGame.ClientPorts.Add(new PortSet
-        {
-            GamePort = startPort + 4,
-            BasePort = startPort + 5
-        });
-
-        var joinGameRequest = new Request
-        {
-            JoinGame = joinGame
-        };
-        var joinGameResponse = await SendRequest(joinGameRequest, logErrors: true);
+        var joinGameResponse = await SendRequest(RequestBuilder.RequestJoinLadderGame(race, startPort), logErrors: true);
 
         if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.Unset) {
             Logger.Error("JoinGame error: {0}", joinGameResponse.JoinGame.Error.ToString());
@@ -242,13 +168,6 @@ public class GameConnection {
     }
 
     private async Task Run(IBot bot, uint playerId) {
-        var gameInfoRequest = new Request
-        {
-            GameInfo = new RequestGameInfo()
-        };
-        var gameInfoResponse = await SendRequest(gameInfoRequest);
-        Controller.GameInfo = gameInfoResponse.GameInfo;
-
         var dataRequest = new Request
         {
             Data = new RequestData
@@ -264,13 +183,9 @@ public class GameConnection {
         KnowledgeBase.Data = dataResponse.Data;
 
         while (true) {
-            var observationResponse = await SendRequest(new Request
-            {
-                Observation = new RequestObservation()
-            });
+            var observationResponse = await SendRequest(RequestBuilder.RequestObservation());
 
             var observation = observationResponse.Observation;
-
             if (observationResponse.Status is Status.Ended or Status.Quit) {
                 _performanceDebugger.LogAveragePerformance();
 
@@ -289,8 +204,11 @@ public class GameConnection {
             }
 
             if (observation.Observation.GameLoop % _runEvery == 0) {
+                var gameInfoResponse = await SendRequest(RequestBuilder.RequestGameInfo());
+
                 _performanceDebugger.FrameStopWatch.Start();
                 _performanceDebugger.ControllerStopWatch.Start();
+                Controller.NewGameInfo(gameInfoResponse.GameInfo);
                 Controller.NewObservation(observation);
                 _performanceDebugger.ControllerStopWatch.Stop();
 
@@ -302,7 +220,7 @@ public class GameConnection {
                 var actions = Controller.GetActions().ToList();
 
                 if (actions.Count > 0) {
-                    var response = await SendRequest(RequestBuilder.ActionRequest(actions));
+                    var response = await SendRequest(RequestBuilder.RequestAction(actions));
 
                     var unsuccessfulActions = actions
                         .Zip(response.Action.Result, (action, result) => (action, result))
@@ -332,7 +250,7 @@ public class GameConnection {
                 PrintMemoryInfo();
             }
 
-            await SendRequest(RequestBuilder.StepRequest(StepSize));
+            await SendRequest(RequestBuilder.RequestStep(StepSize));
         }
     }
 

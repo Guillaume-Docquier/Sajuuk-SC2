@@ -33,7 +33,7 @@ public static class Controller {
     public const double FramesPerSecond = 22.4;
     public const float ExpandIsTakenRadius = 4f;
 
-    public static ResponseGameInfo GameInfo;
+    public static ResponseGameInfo GameInfo { get; private set; }
     private static ResponseObservation _obs;
 
     public static uint Frame { get; private set; } = uint.MaxValue;
@@ -70,6 +70,10 @@ public static class Controller {
 
     public static ulong SecsToFrames(int seconds) {
         return (ulong)(FramesPerSecond * seconds);
+    }
+
+    public static void NewGameInfo(ResponseGameInfo gameInfo) {
+        GameInfo = gameInfo;
     }
 
     public static void NewObservation(ResponseObservation observation) {
