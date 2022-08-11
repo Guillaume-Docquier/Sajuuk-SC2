@@ -5,9 +5,14 @@ using SC2APIProtocol;
 namespace Bot;
 
 public class Program {
-    private static readonly IBot Bot = new SajuukBot("1_8_0");
+    private static class Maps {
+        public const string Blackburn = "BlackburnAIE.SC2Map";
+        public const string GlitteringAshes = "GlitteringAshesAIE.SC2Map";
+    }
 
-    private const string MapName = "BlackburnAIE.SC2Map";
+    private static readonly IBot Bot = new SajuukBot("1_8_1");
+
+    private const string MapName = Maps.GlitteringAshes;
     private const Race OpponentRace = Race.Terran;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
+using Bot.GameData;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
 
@@ -54,10 +55,18 @@ public class CreepTracker: INeedUpdating {
     private static void GenerateCreepFrontier() {
         _creepFrontier = new List<Vector3>();
 
+        var creepTumors = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.CreepTumor).ToList();
         for (var x = 0; x < _maxX; x++) {
             for (var y = 0; y < _maxY; y++) {
-                var position = new Vector3(x, y, 0).WithWorldHeight();
+                var position = new Vector3(x, y, 0).AsWorldGridCenter().WithWorldHeight();
+                // We spread towards non visible creep because if it is not visible, it is receding (tumor died) or it is not our creep and we want the vision
                 if (HasCreep(position) && (TouchesNonCreep(position) || TouchesNonVisibleCreep(position))) {
+                    // On GlitteringAshes there is a spot that is walkable but cannot have creep
+                    // If we have a tumor close to it, consider that it has creep
+                    if (creepTumors.Count > 0 && creepTumors.Min(tumor => tumor.HorizontalDistanceTo(position)) < 1.5) {
+                        continue;
+                    }
+
                     _creepFrontier.Add(position);
                 }
             }

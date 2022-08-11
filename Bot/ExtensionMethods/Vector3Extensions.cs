@@ -77,6 +77,10 @@ public static class Vector3Extensions {
     }
 
     public static Vector3 WithWorldHeight(this Vector3 vector) {
+        if (!MapAnalyzer.IsInitialized) {
+            return vector;
+        }
+
         return vector with { Z = MapAnalyzer.HeightMap[(int)vector.X][(int)vector.Y] };
     }
 
