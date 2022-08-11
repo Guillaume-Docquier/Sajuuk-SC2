@@ -151,6 +151,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
             for (var y = 0; y < MaxY; y++) {
                 walkMap[x][y] = walkVector[y * MaxX + x]; // walkVector[4] is (4, 0)
 
+                // TODO GD This is problematic for _currentWalkMap
                 // On some maps, some tiles under destructibles are not walkable
                 // We'll consider them walkable, but they won't be until the obstacle is cleared
                 if (ObstructionMap.Contains(new Vector3(x, y, 0).AsWorldGridCenter())) {
@@ -192,7 +193,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         return buildSpots.OrderBy(position => Vector3.Distance(centerPosition, position));
     }
 
-    public static IEnumerable<Vector3> BuildSearchCircle(Vector3 centerPosition, int circleRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
+    public static IEnumerable<Vector3> BuildSearchRadius(Vector3 centerPosition, int circleRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
         return BuildSearchGrid(centerPosition, circleRadius, stepSize).Where(cell => cell.HorizontalDistanceTo(centerPosition) <= circleRadius);
     }
 
@@ -205,6 +206,11 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     }
 
     public static bool IsWalkable(Vector3 position) {
+        if (!IsInBounds(position)) {
+            Logger.Error("IsWalkable called on out of bounds position");
+            return false;
+        }
+
         return _terrainWalkMap[(int)position.X][(int)position.Y] && !ObstructionMap.Contains(position.AsWorldGridCenter().WithoutZ());
     }
 }

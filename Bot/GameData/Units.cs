@@ -583,10 +583,11 @@ internal static class Units {
 
     public static readonly Dictionary<uint, HashSet<uint>> EquivalentTo = new Dictionary<uint, HashSet<uint>>
     {
-        { Hatchery, new HashSet<uint> { Lair, Hive } },
-        { Lair,     new HashSet<uint> { Hive } },
-        { Spire,    new HashSet<uint> { GreaterSpire } },
+        { Hatchery,      new HashSet<uint> { Lair, Hive } },
+        { Lair,          new HashSet<uint> { Hive } },
+        { Spire,         new HashSet<uint> { GreaterSpire } },
         { CommandCenter, new HashSet<uint> { OrbitalCommand, PlanetaryFortress } },
+        { CreepTumor,    new HashSet<uint> { CreepTumorQueen, CreepTumorBurrowed } },
     };
 
     public static readonly Dictionary<uint, uint> Prerequisites = new Dictionary<uint, uint>

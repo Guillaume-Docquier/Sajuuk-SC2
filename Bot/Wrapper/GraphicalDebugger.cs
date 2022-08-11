@@ -98,7 +98,7 @@ public static class GraphicalDebugger {
             return;
         }
 
-        foreach (var cell in MapAnalyzer.BuildSearchCircle(centerPosition, radius)) {
+        foreach (var cell in MapAnalyzer.BuildSearchRadius(centerPosition, radius)) {
             AddSquare(cell.WithWorldHeight(), KnowledgeBase.GameGridCellWidth, color, padded: true);
         }
     }
@@ -185,8 +185,8 @@ public static class Colors {
         return gradient;
     }
 
-    public static readonly Color White = new Color { R = 1, G = 1, B = 1 };
-    public static readonly Color Black = new Color { R = 255, G = 255, B = 255 };
+    public static readonly Color White = new Color { R = 255, G = 255, B = 255 };
+    public static readonly Color Black = new Color { R = 1, G = 1, B = 1 };
 
     public static readonly Color Red = new Color { R = 255, G = 1, B = 1 };
     public static readonly Color Green = new Color { R = 1, G = 255, B = 1 };

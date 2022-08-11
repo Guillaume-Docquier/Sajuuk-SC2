@@ -18,6 +18,7 @@ public class ExpandAnalyzer: INeedUpdating {
     public static List<Vector3> ExpandLocations;
 
     private const int ExpandSearchRadius = 5;
+    private const int ExpandRadius = 3; // It's 2.5, we put 3 to be safe
 
     private ExpandAnalyzer() {}
 
@@ -45,6 +46,11 @@ public class ExpandAnalyzer: INeedUpdating {
         _isInitialized = ExpandLocations.Count == ResourceClusters.Count;
 
         Logger.Info("{0}", _isInitialized ? "Success!" : "Failed...");
+    }
+
+    // TODO GD Doesn't take into account the building dimensions, but good enough for creep spread since it's 1x1
+    public static bool IsNotBlockingExpand(Vector3 position) {
+        return ExpandLocations.MinBy(expandLocation => expandLocation.HorizontalDistanceTo(position)).HorizontalDistanceTo(position) > ExpandRadius + 1;
     }
 
     private static IEnumerable<List<Unit>> FindResourceClusters() {

@@ -30,14 +30,14 @@ public class TownHallManager: IManager {
     private readonly List<Unit> _minerals;
     private readonly List<Unit> _gasses;
 
-    private const int ExpandBuildRequestIndex = 0;
-    private const int QueenBuildRequestIndex = 1;
-    private const int DronesBuildRequestIndex = 2;
+    private static readonly BuildOrders.BuildStep ExpandBuildRequest = new BuildOrders.BuildStep(BuildType.Expand, 0, Units.Hatchery, 0);
+    private static readonly BuildOrders.BuildStep QueenBuildRequest = new BuildOrders.BuildStep(BuildType.Train, 0, Units.Queen, 0);
+    private static readonly BuildOrders.BuildStep DronesBuildRequest = new BuildOrders.BuildStep(BuildType.Train, 0, Units.Drone, 0);
     private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>
     {
-        new BuildOrders.BuildStep(BuildType.Expand, 0, Units.Hatchery, 0),
-        new BuildOrders.BuildStep(BuildType.Train, 0, Units.Queen, 0),
-        new BuildOrders.BuildStep(BuildType.Train, 0, Units.Drone, 0),
+        ExpandBuildRequest,
+        QueenBuildRequest,
+        DronesBuildRequest,
     };
 
     public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests;
@@ -134,7 +134,7 @@ public class TownHallManager: IManager {
         // TODO GD They don't count the drone eggs, so they might request more drones than needed
         // TODO GD This simple counter mesure will slow down the production and ensure we don't go over too much
         if (TownHall.IsOperational) {
-            _buildStepRequests[DronesBuildRequestIndex].Quantity = (uint)Math.Max(0, SaturatedAvailableCapacity - Controller.GetUnitsInProduction(Units.Drone).Count());
+            DronesBuildRequest.Quantity = (uint)Math.Max(0, SaturatedAvailableCapacity - Controller.GetUnitsInProduction(Units.Drone).Count());
         }
 
         DrawAvailableCapacityInfo();
@@ -228,7 +228,7 @@ public class TownHallManager: IManager {
         }
         else if (deadUnit.UnitType == Units.Queen) {
             Queen = null;
-            _buildStepRequests[QueenBuildRequestIndex].Quantity += 1;
+            QueenBuildRequest.Quantity += 1;
         }
     }
 
@@ -341,8 +341,8 @@ public class TownHallManager: IManager {
     private void RequestExpand() {
         // TODO GD Gas won't be taken automatically
         // TODO GD There should be a switch that tells managers to auto manage queens and extractor
-        _buildStepRequests[ExpandBuildRequestIndex].Quantity += 1;
-        _buildStepRequests[QueenBuildRequestIndex].Quantity += 1;
+        ExpandBuildRequest.Quantity += 1;
+        QueenBuildRequest.Quantity += 1;
 
         _expandHasBeenRequested = true;
     }

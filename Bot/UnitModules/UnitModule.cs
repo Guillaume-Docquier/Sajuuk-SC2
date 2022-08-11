@@ -15,6 +15,7 @@ public static class UnitModule {
         { typeof(QueenMicroModule), QueenMicroModule.Tag },
         { typeof(TargetingModule), TargetingModule.Tag },
         { typeof(TargetNeutralUnitsModule), TargetNeutralUnitsModule.Tag },
+        { typeof(TumorCreepSpreadModule), TumorCreepSpreadModule.Tag },
     };
 
     public static bool PreInstallCheck(string moduleTag, Unit unit) {

@@ -14,6 +14,7 @@ public static class DetectionTracker {
         }
 
         // We can't kill flying units for now, so we can cache this value
+        // TODO GD Observers are not found?
         _enemyHasDetectors = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.MobileDetectors).Any();
 
         return !_enemyHasDetectors;

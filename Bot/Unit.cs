@@ -198,7 +198,7 @@ public class Unit: ICanDie {
             Logger.Info("{0} using ability {1} on {2}", this, abilityName, targetUnit);
         }
         else if (position != null) {
-            Logger.Info("{0} using ability {1} at {2}", this, abilityName, position);
+            Logger.Info("{0} using ability {1} at {2}", this, abilityName, position.ToVector3().WithWorldHeight());
         }
         else {
             Logger.Info("{0} using ability {1}", this, abilityName);

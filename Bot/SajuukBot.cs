@@ -32,6 +32,7 @@ public class SajuukBot: PoliteBot {
         if (Controller.Frame == 0) {
             _managers.Add(new EconomyManager());
             _managers.Add(new WarManager());
+            _managers.Add(new CreepManager());
         }
 
         FollowBuildOrder();

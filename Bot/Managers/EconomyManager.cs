@@ -5,15 +5,13 @@ using System.Numerics;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapKnowledge;
+using Bot.UnitModules;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot.Managers;
 
 public class EconomyManager: IManager {
-    private const int MacroHatchBuildRequestIndex = 0;
-    private const int QueenBuildRequestIndex = 1;
-
     private readonly List<TownHallManager> _townHallManagers = new List<TownHallManager>();
     private readonly Dictionary<Unit, TownHallManager> _townHallDispatch = new Dictionary<Unit, TownHallManager>();
     private readonly Dictionary<Unit, TownHallManager> _queenDispatch = new Dictionary<Unit, TownHallManager>();
@@ -27,10 +25,12 @@ public class EconomyManager: IManager {
         Colors.DarkBlue,
     };
 
+    private static readonly BuildOrders.BuildStep MacroHatchBuildRequest = new BuildOrders.BuildStep(BuildType.Build, 0, Units.Hatchery, 0);
+    private static readonly BuildOrders.BuildStep QueenBuildRequest = new BuildOrders.BuildStep(BuildType.Train, 0, Units.Queen, 0);
     private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>
     {
-        new BuildOrders.BuildStep(BuildType.Build, 0, Units.Hatchery, 0),
-        new BuildOrders.BuildStep(BuildType.Train, 0, Units.Queen, 0),
+        MacroHatchBuildRequest,
+        QueenBuildRequest,
     };
 
     public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests.Concat(_townHallManagers.SelectMany(manager => manager.BuildStepRequests));
@@ -60,9 +60,11 @@ public class EconomyManager: IManager {
 
         // Build macro hatches
         if (ShouldBuildMacroHatch()) {
-            _buildStepRequests[MacroHatchBuildRequestIndex].Quantity += 1;
-            _buildStepRequests[QueenBuildRequestIndex].Quantity += 1;
+            MacroHatchBuildRequest.Quantity += 1;
+            QueenBuildRequest.Quantity += 1;
         }
+
+        QueenBuildRequest.Quantity += GetNumberOfMissingQueens();
     }
 
     public void Release(Unit unit) {
@@ -152,7 +154,13 @@ public class EconomyManager: IManager {
             var manager = GetClosestManagerWithNoQueen(queen);
 
             _queenDispatch[queen] = manager;
-            manager?.AssignQueen(queen);
+
+            if (manager != null) {
+                manager.AssignQueen(queen);
+            }
+            else if (UnitModule.Get<QueenMicroModule>(queen) == null) {
+                QueenMicroModule.Install(queen);
+            }
         }
     }
 
@@ -200,10 +208,10 @@ public class EconomyManager: IManager {
     }
 
     private bool ShouldBuildMacroHatch() {
-        return _buildStepRequests[MacroHatchBuildRequestIndex].Quantity == 0
+        return MacroHatchBuildRequest.Quantity == 0
                && BankIsTooBig()
                && !GetIdleLarvae().Any()
-               && !HasEnoughMacroTownHalls()
+               && !HasReachedMaximumMacroTownHalls()
                && !GetTownHallsInConstruction().Any();
     }
 
@@ -217,10 +225,10 @@ public class EconomyManager: IManager {
         return Controller.AvailableMinerals > KnowledgeBase.GetUnitTypeData(Units.Hatchery).MineralCost * 2;
     }
 
-    private bool HasEnoughMacroTownHalls() {
+    private bool HasReachedMaximumMacroTownHalls() {
         var nbTownHalls = _townHallDispatch.Count
                           + Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Producers[Units.Hatchery]).Count(producer => producer.IsBuilding(Units.Hatchery))
-                          + _buildStepRequests[MacroHatchBuildRequestIndex].Quantity;
+                          + MacroHatchBuildRequest.Quantity;
 
         return nbTownHalls >= Controller.GetMiningTownHalls().Count() * 2;
     }
@@ -229,5 +237,15 @@ public class EconomyManager: IManager {
         return Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery)
             .Where(townHall => !townHall.IsOperational)
             .Concat(Controller.GetUnitsInProduction(Units.Hatchery));
+    }
+
+    private static uint GetNumberOfMissingQueens() {
+        var nbRequiredQueens = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).Count() + 1;
+
+        var nbQueens = Controller.GetUnitsInProduction(Units.Queen).Count()
+                       + QueenBuildRequest.Quantity
+                       + Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Queen).Count();
+
+        return (uint)Math.Max(0, nbRequiredQueens - nbQueens);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.GameData;
@@ -50,6 +51,10 @@ public static class Vector3Extensions {
         return new Vector3 { X = origin.X + xTranslation, Y = origin.Y + yTranslation, Z = origin.Z + zTranslation };
     }
 
+    public static float HorizontalDistanceTo(this Vector3 origin, Unit destination) {
+        return origin.HorizontalDistanceTo(destination.Position);
+    }
+
     public static float HorizontalDistanceTo(this Vector3 origin, Vector3 destination) {
         var deltaX = origin.X - destination.X;
         var deltaY = origin.Y - destination.Y;
@@ -90,5 +95,18 @@ public static class Vector3Extensions {
         }
 
         return closestWalkableCell;
+    }
+
+    public static IEnumerable<Vector3> GetNeighbors(this Vector3 vector) {
+        yield return vector.Translate(xTranslation: -1, yTranslation: 1);
+        yield return vector.Translate(xTranslation: -1, yTranslation: 0);
+        yield return vector.Translate(xTranslation: -1, yTranslation: -1);
+
+        yield return vector.Translate(xTranslation: 0, yTranslation: 1);
+        yield return vector.Translate(xTranslation: 0, yTranslation: -1);
+
+        yield return vector.Translate(xTranslation: 1, yTranslation: 1);
+        yield return vector.Translate(xTranslation: 1, yTranslation: 0);
+        yield return vector.Translate(xTranslation: 1, yTranslation: -1);
     }
 }

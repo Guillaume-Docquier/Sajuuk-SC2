@@ -45,6 +45,7 @@ public static class Buildings {
         { Units.Hive,             new Dimension(width: 5, height: 5) },
         { Units.UltraliskCavern,  new Dimension(width: 3, height: 3) },
         { Units.GreaterSpire,     new Dimension(width: 2, height: 2) },
+        { Units.CreepTumor,       new Dimension(width: 1, height: 1) },
 
         // Protoss
 

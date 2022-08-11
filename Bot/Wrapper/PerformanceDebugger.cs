@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Bot.ExtensionMethods;
 
 namespace Bot.Wrapper;
@@ -71,8 +70,8 @@ public class PerformanceDebugger {
         _dataPointsCount++;
 
         _frameTotalTime += FrameStopwatch.GetElapsedTimeMs();
-        _botTotalTime += ControllerStopwatch.GetElapsedTimeMs();
-        _controllerTotalTime += BotStopwatch.GetElapsedTimeMs();
+        _controllerTotalTime += ControllerStopwatch.GetElapsedTimeMs();
+        _botTotalTime += BotStopwatch.GetElapsedTimeMs();
         _actionsTotalTime += ActionsStopwatch.GetElapsedTimeMs();
         _debuggerTotalTime += DebuggerStopwatch.GetElapsedTimeMs();
 

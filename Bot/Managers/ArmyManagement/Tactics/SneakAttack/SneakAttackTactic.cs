@@ -57,7 +57,6 @@ public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUn
     }
 
     public void Execute(IReadOnlyCollection<Unit> army) {
-        //Controller.FrameDelayMs = Controller.RealTime;
         _coolDownUntil = Controller.Frame + Controller.SecsToFrames(5);
 
         _army = army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed).ToList();
@@ -77,7 +76,7 @@ public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUn
         State.OnFrame();
 
         if (_targetPosition != default) {
-            GraphicalDebugger.AddLink(_targetPosition, _armyCenter, Colors.Magenta);
+            GraphicalDebugger.AddLink(_armyCenter, _targetPosition, Colors.Magenta);
             GraphicalDebugger.AddSphere(_targetPosition, 1, Colors.Magenta);
 
             if (_isTargetPriority) {

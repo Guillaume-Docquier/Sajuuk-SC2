@@ -54,6 +54,7 @@ public static class Controller {
     {
         UnitsTracker.Instance, // Depends on nothing
         VisibilityTracker.Instance, // Depends on nothing
+        CreepTracker.Instance, // Depends on nothing
 
         MapAnalyzer.Instance, // Depends on UnitsTracker
 
@@ -371,9 +372,10 @@ public static class Controller {
     }
 
     public static IEnumerable<Unit> GetUnitsInProduction(uint unitType) {
-        var unitToGetAbilityId =  KnowledgeBase.GetUnitTypeData(unitType).AbilityId;
+        // We add eggs because larvae become eggs
+        var potentialProducers = new HashSet<uint>(Units.Producers[unitType].Concat(new[] { Units.Egg }));
 
-        return GetUnits(UnitsTracker.OwnedUnits, Units.Egg).Where(egg => egg.Orders.Any(order => order.AbilityId == unitToGetAbilityId));
+        return GetUnits(UnitsTracker.OwnedUnits, potentialProducers).Where(producer => producer.IsBuilding(unitType));
     }
 
     public static IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, uint unitToGet, bool onlyCompleted = false, bool onlyVisible = false) {

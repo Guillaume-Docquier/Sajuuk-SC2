@@ -1,4 +1,9 @@
-﻿using Bot.GameData;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using Bot.ExtensionMethods;
+using Bot.GameData;
+using Bot.GameSense;
+using Bot.MapKnowledge;
 
 namespace Bot.UnitModules;
 
@@ -8,12 +13,7 @@ public class QueenMicroModule: IUnitModule, IWatchUnitsDie {
     private Unit _queen;
     private Unit _assignedTownHall;
 
-    public static void Install(Unit queen, Unit assignedTownHall) {
-        if (assignedTownHall == null) {
-            Logger.Error("Trying to install a QueenMicroModule with a null townHall");
-            return;
-        }
-
+    public static void Install(Unit queen, Unit assignedTownHall = null) {
         if (UnitModule.PreInstallCheck(Tag, queen)) {
             queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall));
         }
@@ -24,19 +24,31 @@ public class QueenMicroModule: IUnitModule, IWatchUnitsDie {
         _queen.AddDeathWatcher(this);
 
         _assignedTownHall = assignedTownHall;
-        _assignedTownHall.AddDeathWatcher(this);
+        _assignedTownHall?.AddDeathWatcher(this);
     }
 
     public void Execute() {
-        if (_queen == null || _assignedTownHall == null) {
+        if (_queen == null) {
             return;
         }
 
-        if (_queen.HasEnoughEnergy(Abilities.InjectLarvae)) {
-            _queen.UseAbility(Abilities.InjectLarvae, targetUnitTag: _assignedTownHall.Tag);
+        if (_queen.Orders.Any()) {
+            return;
         }
 
-        // TODO GD Spawn some creep with energy overflow
+        if (_assignedTownHall != null && _queen.HasEnoughEnergy(Abilities.InjectLarvae)) {
+            _queen.UseAbility(Abilities.InjectLarvae, targetUnitTag: _assignedTownHall.Tag);
+        }
+        else if (_queen.HasEnoughEnergy(Abilities.SpawnCreepTumor)) {
+            var tumorPosition = CreepTracker.GetCreepFrontier()
+                .Where(ExpandAnalyzer.IsNotBlockingExpand)
+                .OrderBy(creepNode => _queen.HorizontalDistanceTo(creepNode))
+                .FirstOrDefault(creepNode => Controller.CanPlace(Units.CreepTumor, creepNode) && Pathfinder.FindPath(_queen.Position, creepNode) != null);
+
+            if (tumorPosition != default) {
+                _queen.UseAbility(Abilities.SpawnCreepTumor, position: tumorPosition.ToPoint2D());
+            }
+        }
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
