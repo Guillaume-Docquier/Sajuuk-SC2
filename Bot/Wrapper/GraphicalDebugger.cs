@@ -85,12 +85,12 @@ public static class GraphicalDebugger {
         );
     }
 
-    public static void AddGridSquare(Vector3 centerPosition, Color color) {
+    public static void AddGridSquare(Vector3 centerPosition, Color color = null) {
         if (!IsActive) {
             return;
         }
 
-        AddSquare(centerPosition, KnowledgeBase.GameGridCellWidth, color, padded: true);
+        AddSquare(centerPosition, KnowledgeBase.GameGridCellWidth, color ?? Colors.White, padded: true);
     }
 
     public static void AddGridSquaresInRadius(Vector3 centerPosition, int radius, Color color) {

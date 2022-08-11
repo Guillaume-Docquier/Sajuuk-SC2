@@ -185,7 +185,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x += stepSize) {
             for (var y = centerPosition.Y - gridRadius; y <= centerPosition.Y + gridRadius; y += stepSize) {
                 if (!IsInitialized || IsInBounds(x, y)) {
-                    buildSpots.Add(new Vector3(x, y, centerPosition.Z));
+                    buildSpots.Add(new Vector3(x, y, centerPosition.Z).WithWorldHeight());
                 }
             }
         }
