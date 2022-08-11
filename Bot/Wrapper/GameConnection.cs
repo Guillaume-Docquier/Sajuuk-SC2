@@ -239,7 +239,7 @@ public class GameConnection {
                 _performanceDebugger.DebuggerStopwatch.Stop();
                 _performanceDebugger.FrameStopwatch.Stop();
 
-                if (_performanceDebugger.FrameStopwatch.ElapsedMilliseconds > 5) {
+                if (_performanceDebugger.FrameStopwatch.ElapsedMilliseconds > 10) {
                     _performanceDebugger.LogTimers(actions.Count);
                 }
 
