@@ -5,7 +5,7 @@ using SC2APIProtocol;
 namespace Bot;
 
 public class Program {
-    private static readonly IBot Bot = new SajuukBot("1_7_4");
+    private static readonly IBot Bot = new SajuukBot("1_8_0");
 
     private const string MapName = "BlackburnAIE.SC2Map";
     private const Race OpponentRace = Race.Terran;
