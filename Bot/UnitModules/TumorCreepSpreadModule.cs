@@ -34,8 +34,12 @@ public class TumorCreepSpreadModule: IUnitModule {
             }
         }
         else if (_spreadAt <= Controller.Frame) {
-            var creepTarget = CreepTracker.GetCreepFrontier()
-                .MinBy(creepNode => creepNode.HorizontalDistanceTo(_creepTumor) + creepNode.HorizontalDistanceTo(MapAnalyzer.EnemyStartingLocation) * EnemyBaseConvergenceFactor);
+            var creepFrontier = CreepTracker.GetCreepFrontier().ToList();
+            if (creepFrontier.Count <= 0) {
+                return;
+            }
+
+            var creepTarget = creepFrontier.MinBy(creepNode => creepNode.HorizontalDistanceTo(_creepTumor) + creepNode.HorizontalDistanceTo(MapAnalyzer.EnemyStartingLocation) * EnemyBaseConvergenceFactor);
 
             // Make sure not to go too far out
             var spreadRange = (int)Math.Floor(_creepTumor.UnitTypeData.SightRange - 0.5);
@@ -47,12 +51,14 @@ public class TumorCreepSpreadModule: IUnitModule {
                 .OrderBy(position => position.HorizontalDistanceTo(creepTarget))
                 .FirstOrDefault(position => BuildingTracker.CanPlace(Units.CreepTumor, position));
 
-            if (bestPlaceLocation != default) {
-                _creepTumor.UseAbility(Abilities.SpawnCreepTumor, position: bestPlaceLocation.ToPoint2D());
-                GraphicalDebugger.AddSphere(bestPlaceLocation, 1, Colors.Yellow);
-
-                UnitModule.Uninstall<TumorCreepSpreadModule>(_creepTumor);
+            if (bestPlaceLocation == default) {
+                return;
             }
+
+            _creepTumor.UseAbility(Abilities.SpawnCreepTumor, position: bestPlaceLocation.ToPoint2D());
+            GraphicalDebugger.AddSphere(bestPlaceLocation, 1, Colors.Yellow);
+
+            UnitModule.Uninstall<TumorCreepSpreadModule>(_creepTumor);
         }
     }
 }
