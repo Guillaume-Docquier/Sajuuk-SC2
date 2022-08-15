@@ -9,6 +9,7 @@ public static class UnitModule {
         { typeof(AttackPriorityModule), AttackPriorityModule.Tag },
         { typeof(BurrowMicroModule), BurrowMicroModule.Tag },
         { typeof(CapacityModule), CapacityModule.Tag },
+        { typeof(ChangelingTargetingModule), ChangelingTargetingModule.Tag },
         { typeof(DebugLocationModule), DebugLocationModule.Tag },
         { typeof(KitingModule), KitingModule.Tag },
         { typeof(MiningModule), MiningModule.Tag },

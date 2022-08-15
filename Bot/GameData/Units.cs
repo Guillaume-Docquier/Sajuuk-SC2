@@ -222,6 +222,16 @@ internal static class Units {
     public const uint UnbuildablePlatesDestructible = 474;
     public const uint UnbuildableRocksDestructible = 472;
 
+    public static readonly HashSet<uint> Changelings = new HashSet<uint>
+    {
+        Changeling,
+        ChangelingZealot,
+        ChangelingMarineShield,
+        ChangelingMarine,
+        ChangelingZerglingWings,
+        ChangelingZergling,
+    };
+
     public static readonly HashSet<uint> Structures = new HashSet<uint>
     {
         Armory,

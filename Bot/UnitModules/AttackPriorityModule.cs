@@ -30,17 +30,16 @@ public class AttackPriorityModule: IUnitModule {
     }
 
     public void Execute() {
+        if (_unit.MaxRange == 0) {
+            return;
+        }
+
         if (_unit.Orders.All(order => order.AbilityId != Abilities.Attack)) {
             return;
         }
 
-        var unitWeapon = _unit.UnitTypeData.Weapons.MaxBy(weapon => weapon.Range);
-        if (unitWeapon == null) {
-            return;
-        }
-
         var priorityTargetInRange = Controller.GetUnits(UnitsTracker.EnemyUnits, PriorityTargets)
-            .Where(priorityTarget => priorityTarget.HorizontalDistanceTo(_unit) < unitWeapon.Range)
+            .Where(priorityTarget => priorityTarget.HorizontalDistanceTo(_unit) < _unit.MaxRange)
             .MinBy(priorityTarget => priorityTarget.HorizontalDistanceTo(_unit));
 
         if (priorityTargetInRange != null) {

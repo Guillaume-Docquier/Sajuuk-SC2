@@ -7,6 +7,7 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.ArmyManagement;
 using Bot.MapKnowledge;
+using Bot.UnitModules;
 
 namespace Bot.Managers;
 
@@ -17,6 +18,7 @@ public class WarManager: IManager {
     private const int ForceRequiredBeforeAttacking = 18;
 
     private bool _hasAssaultStarted = false;
+    private HashSet<Unit> _soldiers = new HashSet<Unit>();
 
     private readonly ArmyManager _armyManager;
     private Unit _townHallToDefend;
@@ -35,7 +37,15 @@ public class WarManager: IManager {
     // TODO GD Use multiple managers, probably
     public void OnFrame() {
         var newSoldiers = Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.ZergMilitary).ToList();
-        newSoldiers.ForEach(soldier => soldier.Manager = this);
+
+        foreach (var soldier in newSoldiers) {
+            soldier.Manager = this;
+            soldier.AddDeathWatcher(this);
+            _soldiers.Add(soldier);
+
+            ChangelingTargetingModule.Install(soldier);
+        }
+
         _armyManager.Assign(newSoldiers);
 
         var enemyPosition = MapAnalyzer.EnemyStartingLocation;
@@ -88,7 +98,7 @@ public class WarManager: IManager {
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
-        // Nothing to do
+        _soldiers.Remove(deadUnit);
     }
 
     private static Vector3 GetTownHallDefensePosition(Vector3 townHallPosition, Vector3 threatPosition) {

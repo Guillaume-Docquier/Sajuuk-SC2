@@ -31,6 +31,17 @@ public class Unit: ICanDie {
     public ulong LastSeen;
     public HashSet<uint> Buffs;
 
+    public float MaxRange {
+        get {
+            var weapons = UnitTypeData.Weapons;
+            if (weapons.Count <= 0) {
+                return 0;
+            }
+
+            return UnitTypeData.Weapons.Max(weapon => weapon.Range);
+        }
+    }
+
     public ulong DeathDelay = 1;
 
     private IManager _manager;
