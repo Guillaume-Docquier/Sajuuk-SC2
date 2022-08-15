@@ -10,7 +10,7 @@ public class Program {
         public const string GlitteringAshes = "GlitteringAshesAIE.SC2Map";
     }
 
-    private static readonly IBot Bot = new SajuukBot("1_8_1");
+    private static readonly IBot Bot = new SajuukBot("1_8_2");
 
     private const string MapName = Maps.GlitteringAshes;
     private const Race OpponentRace = Race.Terran;

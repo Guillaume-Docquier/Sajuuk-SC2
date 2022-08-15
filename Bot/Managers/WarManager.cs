@@ -18,7 +18,7 @@ public class WarManager: IManager {
     private const int ForceRequiredBeforeAttacking = 18;
 
     private bool _hasAssaultStarted = false;
-    private HashSet<Unit> _soldiers = new HashSet<Unit>();
+    private readonly HashSet<Unit> _soldiers = new HashSet<Unit>();
 
     private readonly ArmyManager _armyManager;
     private Unit _townHallToDefend;

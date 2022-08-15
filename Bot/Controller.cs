@@ -25,8 +25,8 @@ public static class Controller {
         NotSupported,
     }
 
-    public const int RealTime = (int)(1000 / FramesPerSecond);
-    public static int FrameDelayMs = 0; // Too fast? increase this to e.g. 20
+    private const int RealTime = (int)(1000 / FramesPerSecond);
+    private static int _frameDelayMs = 0;
 
     private static readonly List<Action> Actions = new List<Action>();
     private static readonly Random Random = new Random();
@@ -67,6 +67,10 @@ public static class Controller {
         while (Console.ReadKey().Key != ConsoleKey.Enter) {
             //do nothing
         }
+    }
+
+    public static void SetRealTime() {
+        _frameDelayMs = RealTime;
     }
 
     public static ulong SecsToFrames(int seconds) {
@@ -129,8 +133,8 @@ public static class Controller {
     }
 
     public static IEnumerable<Action> GetActions() {
-        if (FrameDelayMs > 0) {
-            Thread.Sleep(FrameDelayMs);
+        if (_frameDelayMs > 0) {
+            Thread.Sleep(_frameDelayMs);
         }
 
         return Actions;

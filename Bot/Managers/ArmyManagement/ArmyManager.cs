@@ -5,6 +5,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.StateManagement;
 using Bot.UnitModules;
+using Bot.Wrapper;
 
 namespace Bot.Managers.ArmyManagement;
 

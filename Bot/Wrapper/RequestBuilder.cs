@@ -151,4 +151,26 @@ public static class RequestBuilder {
             GameInfo = new RequestGameInfo(),
         };
     }
+
+    public static Request DebugCreateUnit(Owner owner, uint unitType, uint quantity, Point2D position) {
+        return new Request
+        {
+            Debug = new RequestDebug
+            {
+                Debug =
+                {
+                    new DebugCommand
+                    {
+                        CreateUnit = new DebugCreateUnit
+                        {
+                            Owner = (int)owner,
+                            UnitType = unitType,
+                            Quantity = quantity,
+                            Pos = position,
+                        }
+                    }
+                }
+            }
+        };
+    }
 }

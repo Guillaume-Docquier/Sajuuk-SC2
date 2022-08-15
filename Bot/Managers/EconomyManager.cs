@@ -151,16 +151,14 @@ public class EconomyManager: IManager {
             queen.AddDeathWatcher(this);
             queen.Manager = this;
 
-            var manager = GetClosestManagerWithNoQueen(queen);
-
-            _queenDispatch[queen] = manager;
-
-            if (manager != null) {
-                manager.AssignQueen(queen);
-            }
-            else if (UnitModule.Get<QueenMicroModule>(queen) == null) {
+            if (!_queenDispatch.ContainsKey(queen)) {
                 QueenMicroModule.Install(queen);
+                ChangelingTargetingModule.Install(queen);
             }
+
+            var manager = GetClosestManagerWithNoQueen(queen);
+            manager?.AssignQueen(queen);
+            _queenDispatch[queen] = manager;
         }
     }
 
