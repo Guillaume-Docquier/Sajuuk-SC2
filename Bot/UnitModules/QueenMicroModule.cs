@@ -7,7 +7,7 @@ using Bot.MapKnowledge;
 namespace Bot.UnitModules;
 
 public class QueenMicroModule: IUnitModule, IWatchUnitsDie {
-    public const string Tag = "queen-micro-module";
+    public const string Tag = "QueenMicroModule";
 
     private Unit _queen;
     private Unit _assignedTownHall;

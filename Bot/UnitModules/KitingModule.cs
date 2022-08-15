@@ -1,7 +1,7 @@
 ﻿namespace Bot.UnitModules;
 
 public class KitingModule: IUnitModule {
-    public const string Tag = "kiting-module";
+    public const string Tag = "KitingModule";
 
     private readonly Unit _unit;
 

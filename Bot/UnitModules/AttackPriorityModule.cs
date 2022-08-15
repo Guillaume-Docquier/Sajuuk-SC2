@@ -6,7 +6,7 @@ using Bot.GameSense;
 namespace Bot.UnitModules;
 
 public class AttackPriorityModule: IUnitModule {
-    public const string Tag = "attack-priority-module";
+    public const string Tag = "AttackPriorityModule";
 
     // TODO GD Get Unit specific priorities
     private static readonly HashSet<uint> PriorityTargets = new HashSet<uint>

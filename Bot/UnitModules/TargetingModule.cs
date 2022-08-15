@@ -3,7 +3,7 @@
 namespace Bot.UnitModules;
 
 public class TargetingModule: IUnitModule {
-    public const string Tag = "targeting-module";
+    public const string Tag = "TargetingModule";
 
     private readonly Unit _unit;
     private readonly Vector3 _target;

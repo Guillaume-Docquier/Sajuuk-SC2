@@ -7,7 +7,7 @@ namespace Bot.UnitModules;
 
 // TODO GD Only works on roaches for now
 public class BurrowMicroModule: IUnitModule {
-    public const string Tag = "burrow-micro-module";
+    public const string Tag = "BurrowMicroModule";
 
     public const double BurrowDownThreshold = 0.5;
     private const double BurrowUpThreshold = 0.6;

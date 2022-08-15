@@ -6,7 +6,7 @@ using Bot.Wrapper;
 namespace Bot.UnitModules;
 
 public class MiningModule: IUnitModule {
-    public const string Tag = "mining-module";
+    public const string Tag = "MiningModule";
 
     private static readonly ulong GasDeathDelay = Convert.ToUInt64(1.415 * Controller.FramesPerSecond) + 5; // +5 just to be sure
 

@@ -3,7 +3,7 @@
 namespace Bot.UnitModules;
 
 public class CapacityModule: IUnitModule, IWatchUnitsDie {
-    public const string Tag = "capacity-module";
+    public const string Tag = "CapacityModule";
 
     private readonly int _maxCapacity;
     public readonly List<Unit> AssignedUnits = new List<Unit>();

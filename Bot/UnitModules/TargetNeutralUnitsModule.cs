@@ -5,7 +5,7 @@ using Bot.GameSense;
 namespace Bot.UnitModules;
 
 public class TargetNeutralUnitsModule: IUnitModule {
-    public const string Tag = "target-neutral-units-module";
+    public const string Tag = "TargetNeutralUnitsModule";
 
     private readonly Unit _unit;
 

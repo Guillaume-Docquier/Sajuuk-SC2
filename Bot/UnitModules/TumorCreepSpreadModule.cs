@@ -9,7 +9,7 @@ using Bot.Wrapper;
 namespace Bot.UnitModules;
 
 public class TumorCreepSpreadModule: IUnitModule {
-    public const string Tag = "tumor-creep-spread-module";
+    public const string Tag = "TumorCreepSpreadModule";
 
     private const int CreepSpreadCooldown = 12;
     private const double EnemyBaseConvergenceFactor = 0.5;
