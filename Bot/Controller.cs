@@ -181,11 +181,11 @@ public static class Controller {
     }
 
     public static Unit GetAvailableProducer(uint unitOrAbilityType, bool allowQueue = false) {
-        if (!Units.Producers.ContainsKey(unitOrAbilityType)) {
+        if (!TechTree.Producer.ContainsKey(unitOrAbilityType)) {
             throw new NotImplementedException($"Producer for unit {KnowledgeBase.GetUnitTypeData(unitOrAbilityType).Name} not found");
         }
 
-        var possibleProducers = Units.Producers[unitOrAbilityType];
+        var possibleProducers = TechTree.Producer[unitOrAbilityType];
 
         var producers = GetUnits(UnitsTracker.OwnedUnits, possibleProducers, onlyCompleted: true)
             .Where(unit => unit.IsAvailable)
@@ -376,8 +376,8 @@ public static class Controller {
     }
 
     public static IEnumerable<Unit> GetUnitsInProduction(uint unitType) {
-        // We add eggs because larvae become eggs
-        var potentialProducers = new HashSet<uint>(Units.Producers[unitType].Concat(new[] { Units.Egg }));
+        // We add eggs because larvae become eggs and I don't want to add eggs to TechTree.Producer since they're not the original producer
+        var potentialProducers = new HashSet<uint> { TechTree.Producer[unitType], Units.Egg };
 
         return GetUnits(UnitsTracker.OwnedUnits, potentialProducers).Where(producer => producer.IsBuilding(unitType));
     }
@@ -427,7 +427,7 @@ public static class Controller {
     }
 
     public static bool IsUnlocked(uint unitType) {
-        if (Units.Prerequisites.TryGetValue(unitType, out var prerequisiteUnitType)) {
+        if (TechTree.Prerequisite.TryGetValue(unitType, out var prerequisiteUnitType)) {
             return GetUnits(UnitsTracker.OwnedUnits, prerequisiteUnitType, onlyCompleted: true).Any();
         }
 

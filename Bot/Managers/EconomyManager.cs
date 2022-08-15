@@ -225,7 +225,7 @@ public class EconomyManager: IManager {
 
     private bool HasReachedMaximumMacroTownHalls() {
         var nbTownHalls = _townHallDispatch.Count
-                          + Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Producers[Units.Hatchery]).Count(producer => producer.IsBuilding(Units.Hatchery))
+                          + Controller.GetUnits(UnitsTracker.OwnedUnits, TechTree.Producer[Units.Hatchery]).Count(producer => producer.IsBuilding(Units.Hatchery))
                           + MacroHatchBuildRequest.Quantity;
 
         return nbTownHalls >= Controller.GetMiningTownHalls().Count() * 2;

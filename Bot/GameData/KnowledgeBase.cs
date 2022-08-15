@@ -23,7 +23,7 @@ public static class KnowledgeBase {
                     // Zerglings must be spawned in pairs
                     unit.MineralCost *= 2;
                 }
-                else if (Units.MorphInto.TryGetValue(unit.UnitId, out var morpherUnitId)) {
+                else if (TechTree.MorphSource.TryGetValue(unit.UnitId, out var morpherUnitId)) {
                     // The value of a unit that is morphed from another one (e.g: all zerg units) includes the value of the morphed unit
                     // Adjust the cost to be only the extra that you need to pay
                     var morpher = value.Units[(int)morpherUnitId];
