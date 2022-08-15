@@ -8,11 +8,12 @@ public class Program {
     private static class Maps {
         public const string Blackburn = "BlackburnAIE.SC2Map";
         public const string GlitteringAshes = "GlitteringAshesAIE.SC2Map";
+        public const string TwoThousandAtmospheres = "2000AtmospheresAIE.SC2Map";
     }
 
     private static readonly IBot Bot = new SajuukBot("1_8_2");
 
-    private const string MapName = Maps.GlitteringAshes;
+    private const string MapName = Maps.TwoThousandAtmospheres;
     private const Race OpponentRace = Race.Terran;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 

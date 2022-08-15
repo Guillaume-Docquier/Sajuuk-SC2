@@ -64,9 +64,9 @@ public class CreepTracker: INeedUpdating {
                 var position = new Vector3(x, y, 0).AsWorldGridCenter().WithWorldHeight();
                 // We spread towards non visible creep because if it is not visible, it is receding (tumor died) or it is not our creep and we want the vision
                 if (HasCreep(position) && (TouchesNonCreep(position) || TouchesNonVisibleCreep(position))) {
-                    // On GlitteringAshes there is a spot that is walkable but cannot have creep
-                    // If we have a tumor close to it, consider that it has creep
-                    if (creepTumors.Count > 0 && creepTumors.Min(tumor => tumor.HorizontalDistanceTo(position)) < 1.5) {
+                    // On GlitteringAshes and 2000 Atmospheres there are spots that are walkable but cannot have creep
+                    // If we have a tumor close to these, consider that they have creep
+                    if (creepTumors.Count > 0 && creepTumors.Min(tumor => tumor.HorizontalDistanceTo(position)) < 3) {
                         continue;
                     }
 
