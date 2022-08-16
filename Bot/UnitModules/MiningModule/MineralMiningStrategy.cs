@@ -42,24 +42,20 @@ public class MineralMiningStrategy: IStrategy {
         // This is not cute, but it'll work
         var manager = _worker.Supervisor as TownHallManager;
         var townHall = manager!.TownHall;
-        var distanceToTownHall = (float)townHall.HorizontalDistanceTo(_worker);
-        var dropDistance = townHall.Radius + _worker.Radius;
+        var distanceToTownHall = townHall.HorizontalDistanceTo(_worker);
 
-        if (distanceToTownHall <= dropDistance + _worker.Radius) {
-            _worker.UseAbility(Abilities.Smart, targetUnitTag: townHall.Tag);
+        if (distanceToTownHall <= townHall.Radius + _worker.Radius + 0.01f) {
+            _worker.ReturnCargo();
         }
-        else if (_worker.Orders.All(order => order.AbilityId != Abilities.Move)) {
-            var targetPosition = _worker.Position.TranslateTowards(townHall.Position, distanceToTownHall - dropDistance);
+        else {
+            var targetPosition = townHall.Position.TranslateTowards(_worker.Position, townHall.Radius);
 
-            _worker.Move(targetPosition);
+            _worker.Move(targetPosition, spam: true);
         }
     }
 
     private void Gather() {
-        if (!_worker.Orders.Any()) {
-            _worker.Gather(_resource);
-        }
-        else if (_worker.Orders.Any(order => order.AbilityId == Abilities.DroneGather && order.TargetUnitTag != _resource.Tag)) {
+        if (!_worker.Orders.Any() || _worker.Orders.Any(order => Abilities.Gather.Contains(order.AbilityId) && order.TargetUnitTag != _resource.Tag)) {
             _worker.Gather(_resource);
         }
     }

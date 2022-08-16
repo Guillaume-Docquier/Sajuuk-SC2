@@ -7,25 +7,25 @@ namespace Bot.Wrapper;
 
 public static class ActionBuilder {
     public static Action TrainUnit(uint unitType, ulong producerTag) {
-        var unitAbilityId = (int)KnowledgeBase.GetUnitTypeData(unitType).AbilityId;
+        var unitAbilityId = KnowledgeBase.GetUnitTypeData(unitType).AbilityId;
 
         return UnitCommand(unitAbilityId, producerTag);
     }
 
     public static Action PlaceBuilding(uint buildingType, ulong producerTag, Vector3 position) {
-        var buildingAbilityId = (int)KnowledgeBase.GetUnitTypeData(buildingType).AbilityId;
+        var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingType).AbilityId;
 
         return UnitCommand(buildingAbilityId, producerTag, position: new Point2D { X = position.X, Y = position.Y });
     }
 
     public static Action PlaceExtractor(uint buildingType, ulong producerTag, ulong gasTag) {
-        var buildingAbilityId = (int)KnowledgeBase.GetUnitTypeData(buildingType).AbilityId;
+        var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingType).AbilityId;
 
         return UnitCommand(buildingAbilityId, producerTag, targetUnitTag: gasTag);
     }
 
     public static Action ResearchUpgrade(uint upgradeType, ulong producerTag) {
-        var upgradeAbilityId = (int)KnowledgeBase.GetUpgradeData(upgradeType).AbilityId;
+        var upgradeAbilityId = KnowledgeBase.GetUpgradeData(upgradeType).AbilityId;
 
         return UnitCommand(upgradeAbilityId, producerTag, queueCommand: true);
     }
@@ -52,11 +52,11 @@ public static class ActionBuilder {
     }
 
     public static Action Gather(ulong unitTag, ulong mineralOrGasTag) {
-        return UnitCommand(Abilities.DroneGather, unitTag, targetUnitTag: mineralOrGasTag);
+        return UnitCommand(Abilities.HarvestGather, unitTag, targetUnitTag: mineralOrGasTag);
     }
 
-    public static Action ReturnCargo(ulong unitTag, ulong baseTag) {
-        return UnitCommand(Abilities.DroneReturnCargo, unitTag, targetUnitTag: baseTag);
+    public static Action ReturnCargo(ulong unitTag) {
+        return UnitCommand(Abilities.HarvestReturn, unitTag);
     }
 
     public static Action Chat(string message, bool toTeam = false) {
@@ -70,18 +70,18 @@ public static class ActionBuilder {
         };
     }
 
-    public static Action UnitCommand(int abilityId, ulong unitTag, Point2D position = null, ulong targetUnitTag = ulong.MaxValue, bool queueCommand = false) {
+    public static Action UnitCommand(uint abilityId, ulong unitTag, Point2D position = null, ulong targetUnitTag = ulong.MaxValue, bool queueCommand = false) {
         return UnitCommand(abilityId, new List<ulong> { unitTag }, position, targetUnitTag, queueCommand);
     }
 
-    private static Action UnitCommand(int abilityId, IEnumerable<ulong> unitTags = null, Point2D position = null, ulong targetUnitTag = ulong.MaxValue, bool queueCommand = false) {
+    private static Action UnitCommand(uint abilityId, IEnumerable<ulong> unitTags = null, Point2D position = null, ulong targetUnitTag = ulong.MaxValue, bool queueCommand = false) {
         var action = new Action
         {
             ActionRaw = new ActionRaw
             {
                 UnitCommand = new ActionRawUnitCommand
                 {
-                    AbilityId = abilityId,
+                    AbilityId = (int)abilityId,
                     UnitTags = { unitTags },
                     TargetWorldSpacePos = position,
                     QueueCommand = queueCommand,

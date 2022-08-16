@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
@@ -21,6 +22,8 @@ public class SajuukBot: PoliteBot {
 
     private const int PriorityChangePeriod = 100;
     private int _managerPriorityIndex = 0;
+
+    private float _maxMineralRate = 0;
 
     public override string Name => "SajuukBot";
 
@@ -81,10 +84,21 @@ public class SajuukBot: PoliteBot {
         DebugEnemyDetectors();
         // DebugWalkableAreas();
         // DebugDestructibles();
+        DebugIncomeRate();
 
         foreach (var unit in UnitsTracker.UnitsByTag.Values) {
             unit.ExecuteModules();
         }
+    }
+
+    private void DebugIncomeRate() {
+        var scoreDetails = Controller.Observation.Observation.Score.ScoreDetails;
+        _maxMineralRate = Math.Max(_maxMineralRate, scoreDetails.CollectionRateMinerals);
+        GraphicalDebugger.AddTextGroup(new[]
+        {
+            $"Max minerals rate: {_maxMineralRate}",
+            $"Minerals rate: {scoreDetails.CollectionRateMinerals}",
+        }, virtualPos: new Point { X = 0.315f, Y = 0.765f });
     }
 
     private void FollowBuildOrder() {

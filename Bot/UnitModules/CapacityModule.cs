@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
+using Bot.ExtensionMethods;
+using Bot.Wrapper;
 
 namespace Bot.UnitModules;
 
 public class CapacityModule: IUnitModule, IWatchUnitsDie {
     public const string Tag = "CapacityModule";
 
+    private readonly Unit _unit;
     private readonly int _maxCapacity;
     public readonly List<Unit> AssignedUnits = new List<Unit>();
 
@@ -12,11 +15,12 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
 
     public static void Install(Unit unit, int maxCapacity) {
         if (UnitModule.PreInstallCheck(Tag, unit)) {
-            unit.Modules.Add(Tag, new CapacityModule(maxCapacity));
+            unit.Modules.Add(Tag, new CapacityModule(unit, maxCapacity));
         }
     }
 
-    private CapacityModule(int maxCapacity) {
+    private CapacityModule(Unit unit, int maxCapacity) {
+        _unit = unit;
         _maxCapacity = maxCapacity;
     }
 
@@ -48,7 +52,7 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
     }
 
     public void Execute() {
-        // Nothing to do
+        GraphicalDebugger.AddText(AssignedUnits.Count.ToString(), worldPos: _unit.Position.ToPoint());
     }
 
     public void ReportUnitDeath(Unit deadUnit) {

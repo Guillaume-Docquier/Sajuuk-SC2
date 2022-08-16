@@ -34,7 +34,7 @@ public static class Controller {
     public const float ExpandIsTakenRadius = 4f;
 
     public static ResponseGameInfo GameInfo { get; private set; }
-    private static ResponseObservation _obs;
+    public static ResponseObservation Observation { get; private set; }
 
     public static uint Frame { get; private set; } = uint.MaxValue;
 
@@ -82,35 +82,35 @@ public static class Controller {
     }
 
     public static void NewObservation(ResponseObservation observation) {
-        _obs = observation;
-        Frame = _obs.Observation.GameLoop;
+        Observation = observation;
+        Frame = Observation.Observation.GameLoop;
 
         if (!IsProperlyInitialized()) {
             Pause();
             Environment.Exit(0);
         }
 
-        ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Update(_obs));
+        ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Update(Observation));
 
         Actions.Clear();
 
         // This doesn't work? I don't really care but it would be nice if it did
-        foreach (var chat in _obs.Chat) {
+        foreach (var chat in Observation.Chat) {
             ChatLog.Add(chat.Message);
         }
 
-        CurrentSupply = _obs.Observation.PlayerCommon.FoodUsed;
+        CurrentSupply = Observation.Observation.PlayerCommon.FoodUsed;
         var hasOddAmountOfZerglings = UnitsTracker.OwnedUnits.Count(unit => unit.UnitType == Units.Zergling) % 2 == 1;
         if (hasOddAmountOfZerglings) {
             // Zerglings have 0.5 supply. The api returns the supply rounded down, but the game considers the supply rounded up.
             CurrentSupply += 1;
         }
 
-        MaxSupply = _obs.Observation.PlayerCommon.FoodCap;
+        MaxSupply = Observation.Observation.PlayerCommon.FoodCap;
 
-        AvailableMinerals = _obs.Observation.PlayerCommon.Minerals;
-        AvailableVespene = _obs.Observation.PlayerCommon.Vespene;
-        ResearchedUpgrades = new HashSet<uint>(_obs.Observation.RawData.Player.UpgradeIds);
+        AvailableMinerals = Observation.Observation.PlayerCommon.Minerals;
+        AvailableVespene = Observation.Observation.PlayerCommon.Vespene;
+        ResearchedUpgrades = new HashSet<uint>(Observation.Observation.RawData.Player.UpgradeIds);
     }
 
     private static bool IsProperlyInitialized() {
@@ -124,7 +124,7 @@ public static class Controller {
             return false;
         }
 
-        if (_obs == null) {
+        if (Observation == null) {
             Logger.Error("ResponseObservation is null! The application will terminate.");
             return false;
         }
@@ -410,7 +410,7 @@ public static class Controller {
     }
 
     public static IEnumerable<Effect> GetEffects(int effectId) {
-        return _obs.Observation.RawData.Effects.Where(effect => effect.EffectId == effectId);
+        return Observation.Observation.RawData.Effects.Where(effect => effect.EffectId == effectId);
     }
 
     public static RequestResult CanAfford(int mineralCost, int vespeneCost)

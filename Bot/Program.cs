@@ -11,7 +11,7 @@ public class Program {
         public const string TwoThousandAtmospheres = "2000AtmospheresAIE.SC2Map";
     }
 
-    private static readonly IBot Bot = new SajuukBot("1_8_2");
+    private static readonly IBot Bot = new SajuukBot("1_9_0");
 
     private const string MapName = Maps.TwoThousandAtmospheres;
     private const Race OpponentRace = Race.Terran;

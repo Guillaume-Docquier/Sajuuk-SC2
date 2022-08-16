@@ -91,6 +91,15 @@ public static class BuildOrders {
             new BuildStep(BuildType.Train, 70, Units.Overlord, 6),
         });
     }
+
+    public static BuildOrder TestSpeedMining() {
+        return new BuildOrder(new[]
+        {
+            new BuildStep(BuildType.Train, 13, Units.Overlord),
+            // This will block the build
+            new BuildStep(BuildType.Train, 16, Units.Queen),
+        });
+    }
 }
 
 public enum BuildType {

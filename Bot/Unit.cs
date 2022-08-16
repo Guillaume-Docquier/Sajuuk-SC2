@@ -66,7 +66,7 @@ public class Unit: ICanDie {
     // Units inside extractors are not available. We keep them in memory but they're not in the game for some time
     public bool IsAvailable => LastSeen >= Controller.Frame;
 
-    public IEnumerable<UnitOrder> OrdersExceptMining => Orders.Where(order => order.AbilityId != Abilities.DroneGather && order.AbilityId != Abilities.DroneReturnCargo);
+    public IEnumerable<UnitOrder> OrdersExceptMining => Orders.Where(order => !Abilities.Gather.Contains(order.AbilityId) && !Abilities.ReturnCargo.Contains(order.AbilityId));
 
     public Unit(SC2APIProtocol.Unit unit, ulong frame) {
         Update(unit, frame);
@@ -106,8 +106,8 @@ public class Unit: ICanDie {
         return Position.HorizontalDistanceTo(location);
     }
 
-    public void Move(Vector3 target) {
-        if (IsTargeting(target)) {
+    public void Move(Vector3 target, bool spam = false) {
+        if (!spam && IsTargeting(target)) {
             return;
         }
 
@@ -184,13 +184,11 @@ public class Unit: ICanDie {
         ProcessAction(ActionBuilder.Gather(Tag, mineralOrGas.Tag));
     }
 
-    public void ReturnCargo(Unit townHall) {
-        ProcessAction(ActionBuilder.ReturnCargo(Tag, townHall.Tag));
-
-        Logger.Info("{0} returning cargo to {1} at {2}", this, townHall, townHall.Position);
+    public void ReturnCargo() {
+        ProcessAction(ActionBuilder.ReturnCargo(Tag));
     }
 
-    public void UseAbility(int abilityId, Point2D position = null, ulong targetUnitTag = ulong.MaxValue) {
+    public void UseAbility(uint abilityId, Point2D position = null, ulong targetUnitTag = ulong.MaxValue) {
         if (Orders.Any(order => order.AbilityId == abilityId)) {
             return;
         }
@@ -272,7 +270,7 @@ public class Unit: ICanDie {
         }
     }
 
-    public bool HasEnoughEnergy(int abilityId) {
+    public bool HasEnoughEnergy(uint abilityId) {
         if (Abilities.EnergyCost.TryGetValue(abilityId, out var energyCost) && RawUnitData.Energy < energyCost) {
             return false;
         }
@@ -284,6 +282,7 @@ public class Unit: ICanDie {
         return Orders.All(order => order.AbilityId is Abilities.Move or Abilities.Attack);
     }
 
+    // TODO GD Check for move vs attack move, otherwise a move order could be canceled if an attack move order targets the same position
     private bool IsTargeting(Vector3 target) {
         var targetAsPoint = target.ToPoint();
         targetAsPoint.Z = 0;

@@ -4,52 +4,70 @@ namespace Bot.GameData;
 
 // You can get all these values from the stableid.json file (Generally found in 'C:\Users\your_username\Documents\StarCraft II' on Windows)
 internal static class Abilities {
-    public const int CancelConstruction = 314;
-    public const int Cancel = 3659;
-    public const int CancelLast = 3671;
-    public const int Lift = 3679;
-    public const int Land = 3678;
+    public const uint CancelConstruction = 314;
+    public const uint Cancel = 3659;
+    public const uint CancelLast = 3671;
+    public const uint Lift = 3679;
+    public const uint Land = 3678;
 
-    public const int Smart = 1;
-    public const int Stop = 4;
-    public const int Attack = 23;
-    public const int Move = 16;
-    public const int Patrol = 17;
-    public const int Rally = 3673;
-    public const int Repair = 316;
+    public const uint Smart = 1;
+    public const uint Stop = 4;
+    public const uint Attack = 23;
+    public const uint Move = 16;
+    public const uint Patrol = 17;
+    public const uint Rally = 3673;
+    public const uint Repair = 316;
 
-    public const int ThorSwitchAp = 2362;
-    public const int ThorSwitchNormal = 2364;
-    public const int ScannerSweep = 399;
-    public const int Yamato = 401;
-    public const int CallDownMule = 171;
-    public const int Cloak = 3676;
-    public const int ReaperGrenade = 2588;
-    public const int DepotRaise = 558;
-    public const int DepotLower = 556;
-    public const int SiegeTank = 388;
-    public const int UnsiegeTank = 390;
-    public const int TransformToHellbat = 1998;
-    public const int TransformToHellion = 1978;
-    public const int UnloadBunker = 408;
-    public const int SalvageBunker = 32;
+    public const uint ThorSwitchAp = 2362;
+    public const uint ThorSwitchNormal = 2364;
+    public const uint ScannerSweep = 399;
+    public const uint Yamato = 401;
+    public const uint CallDownMule = 171;
+    public const uint Cloak = 3676;
+    public const uint ReaperGrenade = 2588;
+    public const uint DepotRaise = 558;
+    public const uint DepotLower = 556;
+    public const uint SiegeTank = 388;
+    public const uint UnsiegeTank = 390;
+    public const uint TransformToHellbat = 1998;
+    public const uint TransformToHellion = 1978;
+    public const uint UnloadBunker = 408;
+    public const uint SalvageBunker = 32;
 
-    // TODO GD Generalize this?
-    public const int SCVGather = 295;
-    public const int SCVReturnCargo = 296;
-    public const int ProbeGather = 298;
-    public const int ProbeReturnCargo = 299;
-    public const int DroneGather = 1183;
-    public const int DroneReturnCargo = 1184;
+    public const uint HarvestGather = 3666;
+    private const uint SCVGather = 295;
+    private const uint ProbeGather = 298;
+    private const uint DroneGather = 1183;
+
+    public static readonly HashSet<uint> Gather = new HashSet<uint>
+    {
+        HarvestGather,
+        SCVGather,
+        ProbeGather,
+        DroneGather,
+    };
+
+    public const uint HarvestReturn = 3667;
+    private const uint SCVReturnCargo = 296;
+    private const uint ProbeReturnCargo = 299;
+    private const uint DroneReturnCargo = 1184;
+
+    public static readonly HashSet<uint> ReturnCargo = new HashSet<uint>
+    {
+        HarvestReturn,
+        SCVReturnCargo,
+        ProbeReturnCargo,
+        DroneReturnCargo,
+    };
 
     // TODO GD Each unit has its burrow command
-    public const int BurrowRoachUp = 1388;
-    public const int BurrowRoachDown = 1386;
+    public const uint BurrowRoachUp = 1388;
+    public const uint BurrowRoachDown = 1386;
 
-    public const int InjectLarvae = 251;
-    public const int SpawnCreepTumor = 3691;
+    public const uint InjectLarvae = 251;
+    public const uint SpawnCreepTumor = 3691;
 
-    public static readonly Dictionary<int, int> EnergyCost = new Dictionary<int, int>
+    public static readonly Dictionary<uint, uint> EnergyCost = new Dictionary<uint, uint>
     {
         { InjectLarvae,    25 },
         { SpawnCreepTumor, 25 },

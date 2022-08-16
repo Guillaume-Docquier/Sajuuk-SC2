@@ -7,7 +7,7 @@ public static class Buildings {
     public static float GetRadius(uint buildingType) {
         var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingType).AbilityId;
 
-        return KnowledgeBase.GetAbilityData((int)buildingAbilityId).FootprintRadius;
+        return KnowledgeBase.GetAbilityData(buildingAbilityId).FootprintRadius;
     }
 
     public class Dimension {

@@ -21,10 +21,7 @@ public class GasMiningStrategy: IStrategy {
     }
 
     public void Execute() {
-        if (!_worker.Orders.Any()) {
-            _worker.Gather(_resource);
-        }
-        else if (_worker.Orders.Any(order => order.AbilityId == Abilities.DroneGather && order.TargetUnitTag != _resource.Tag)) {
+        if (!_worker.Orders.Any() || _worker.Orders.Any(order => Abilities.Gather.Contains(order.AbilityId) && order.TargetUnitTag != _resource.Tag)) {
             _worker.Gather(_resource);
         }
 

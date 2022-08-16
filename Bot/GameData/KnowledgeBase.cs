@@ -44,6 +44,10 @@ public static class KnowledgeBase {
         return Data.Upgrades[(int)upgradeId];
     }
 
+    public static AbilityData GetAbilityData(uint abilityId) {
+        return GetAbilityData((int)abilityId);
+    }
+
     public static AbilityData GetAbilityData(int abilityId) {
         return Data.Abilities[abilityId];
     }
