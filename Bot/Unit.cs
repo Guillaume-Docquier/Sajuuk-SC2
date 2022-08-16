@@ -55,6 +55,9 @@ public class Unit: ICanDie {
         }
     }
 
+    // TODO GD Probably implement ISupervisor
+    public IManager Supervisor;
+
     public readonly Dictionary<string, IUnitModule> Modules = new Dictionary<string, IUnitModule>();
 
     public float Integrity => (RawUnitData.Health + RawUnitData.Shield) / (RawUnitData.HealthMax + RawUnitData.ShieldMax);
@@ -205,8 +208,10 @@ public class Unit: ICanDie {
                 return;
             }
 
-            var targetUnit = UnitsTracker.UnitsByTag[targetUnitTag];
-            Logger.Info("{0} using ability {1} on {2}", this, abilityName, targetUnit);
+            if (abilityId != Abilities.Smart) {
+                var targetUnit = UnitsTracker.UnitsByTag[targetUnitTag];
+                Logger.Info("{0} using ability {1} on {2}", this, abilityName, targetUnit);
+            }
         }
         else if (position != null) {
             Logger.Info("{0} using ability {1} at {2}", this, abilityName, position.ToVector3().WithWorldHeight());

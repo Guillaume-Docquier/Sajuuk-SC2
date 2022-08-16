@@ -10,6 +10,7 @@ using SC2APIProtocol;
 
 namespace Bot.Managers;
 
+// TODO GD This is a supervisor
 public class TownHallManager: IManager {
     private const int MaxGas = 2;
     private const int MaxExtractorsPerGas = 1;
@@ -95,6 +96,7 @@ public class TownHallManager: IManager {
         _workers.AddRange(workers);
 
         foreach (var worker in workers) {
+            worker.Supervisor = this;
             worker.AddDeathWatcher(this);
             DebugLocationModule.Install(worker, _color);
         }
