@@ -9,7 +9,7 @@ using SC2APIProtocol;
 
 namespace Bot.MapKnowledge;
 
-public class ExpandAnalyzer: INeedUpdating {
+public partial class ExpandAnalyzer: INeedUpdating {
     public static readonly ExpandAnalyzer Instance = new ExpandAnalyzer();
 
     private static bool _isInitialized = false;
@@ -27,21 +27,37 @@ public class ExpandAnalyzer: INeedUpdating {
             return;
         }
 
+        if (_precomputedExpandLocations.ContainsKey(Program.MapName)) {
+            Logger.Info("Initializing ExpandAnalyzer from precomputed locations");
+            ExpandLocations = _precomputedExpandLocations[Program.MapName];
+
+            // This isn't expensive
+            ResourceClusters = FindResourceClusters().ToList();
+
+            _isInitialized = true;
+            return;
+        }
+
         // For some reason it doesn't work before a few seconds after the game starts
-        // Also, this might take a couple of frames, let the bot start the game
-        // TODO GD Precompute this and save it
+        // Also, this might take a couple of frames, so we let the bot start the game
         if (Controller.Frame < Controller.SecsToFrames(5)) {
             return;
         }
 
-        Logger.Info("Initializing MapAnalyzer");
+        Logger.Info("Analyzing expand locations, this can take some time...");
 
         ResourceClusters = FindResourceClusters().ToList();
-        Logger.Info("Found {0} resource clusters", ResourceClusters.Count);
+        Logger.Info("ExpandAnalyzer found {0} resource clusters", ResourceClusters.Count);
 
         ExpandLocations = FindExpandLocations().ToList();
-        ExpandLocations.Add(MapAnalyzer.StartingLocation); // Not found because already built
+        ExpandLocations.Add(MapAnalyzer.StartingLocation); // Not found because already built on (by us)
         Logger.Info("Found {0} expand locations", ExpandLocations.Count);
+
+        Logger.Info("You should add the following to _preComputedExpandLocations");
+        Logger.Info("Map: {0}", Controller.GameInfo.MapName);
+        foreach (var expandLocation in ExpandLocations) {
+            Logger.Info("new Vector3({0}f, {1}f, {2}f),", expandLocation.X, expandLocation.Y, expandLocation.Z);
+        }
 
         _isInitialized = ExpandLocations.Count == ResourceClusters.Count;
 

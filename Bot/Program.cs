@@ -5,15 +5,9 @@ using SC2APIProtocol;
 namespace Bot;
 
 public class Program {
-    private static class Maps {
-        public const string Blackburn = "BlackburnAIE.SC2Map";
-        public const string GlitteringAshes = "GlitteringAshesAIE.SC2Map";
-        public const string TwoThousandAtmospheres = "2000AtmospheresAIE.SC2Map";
-    }
+    private static readonly IBot Bot = new SajuukBot("1_9_1");
 
-    private static readonly IBot Bot = new SajuukBot("1_9_0");
-
-    private const string MapName = Maps.TwoThousandAtmospheres;
+    public const string MapName = Maps.TwoThousandAtmospheres;
     private const Race OpponentRace = Race.Terran;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
