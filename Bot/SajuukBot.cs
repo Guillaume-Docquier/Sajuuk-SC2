@@ -16,8 +16,6 @@ namespace Bot;
 using BuildOrder = LinkedList<BuildRequest>;
 
 public class SajuukBot: PoliteBot {
-    private const int MaxDroneCount = 70;
-
     private readonly BuildOrder _buildOrder = BuildOrders.TwoBasesRoach();
     private readonly List<IManager> _managers = new List<IManager>();
 
@@ -66,37 +64,6 @@ public class SajuukBot: PoliteBot {
         _managers.Add(new EconomyManager());
         _managers.Add(new WarManager());
         _managers.Add(new CreepManager());
-    }
-
-    private void AddressManagerRequests() {
-        // TODO GD Check if we should stop when we can't fulfill a build order
-        // Do everything you can
-        foreach (var buildStep in GetManagersBuildRequests()) {
-            // Cap the amount of drones
-            if (buildStep.UnitOrUpgradeType == Units.Drone && HasEnoughDrones()) {
-                continue;
-            }
-
-            while (!IsBuildOrderBlocking() && buildStep.Remaining > 0) {
-                var buildStepResult = Controller.ExecuteBuildStep(buildStep);
-                if (buildStepResult == Controller.RequestResult.Ok) {
-                    buildStep.Fulfill(1);
-                    FollowBuildOrder(); // Sometimes the build order will be unblocked
-                }
-                // Don't retry expands if they are all taken
-                else if (buildStep.BuildType == BuildType.Expand && buildStepResult == Controller.RequestResult.NoSuitableLocation) {
-                    buildStep.Fulfill(1);
-                }
-                else {
-                    break;
-                }
-            }
-
-            // Ensure expands get made
-            if (buildStep.BuildType == BuildType.Expand && buildStep.Remaining > 0) {
-                break;
-            }
-        }
     }
 
     private void DebugIncomeRate() {
@@ -174,10 +141,41 @@ public class SajuukBot: PoliteBot {
         }
     }
 
+    private void AddressManagerRequests() {
+        // TODO GD Check if we should stop when we can't fulfill a build order
+        // Do everything you can
+        foreach (var buildStep in GetManagersBuildRequests()) {
+            if (buildStep.AtSupply > Controller.CurrentSupply) {
+                continue;
+            }
+
+            while (!IsBuildOrderBlocking() && buildStep.Remaining > 0) {
+                var buildStepResult = Controller.ExecuteBuildStep(buildStep);
+                if (buildStepResult == Controller.RequestResult.Ok) {
+                    buildStep.Fulfill(1);
+                    FollowBuildOrder(); // Sometimes the build order will be unblocked
+                }
+                // Don't retry expands if they are all taken
+                else if (buildStep.BuildType == BuildType.Expand && buildStepResult == Controller.RequestResult.NoSuitableLocation) {
+                    buildStep.Fulfill(1);
+                }
+                else {
+                    break;
+                }
+            }
+
+            // Ensure expands get made
+            if (buildStep.BuildType == BuildType.Expand && buildStep.Remaining > 0) {
+                break;
+            }
+        }
+    }
+
     private bool IsBuildOrderBlocking() {
         // TODO GD Replace this by a 'Controller.ReserveMinerals' and 'Controller.ReserveGas' method
-        // TODO GD Allow other stuff to happen if we have to wait for tech or something
-        return _buildOrder.Count > 0 && Controller.CurrentSupply >= _buildOrder.First().AtSupply;
+        return _buildOrder.Count > 0
+               && _buildOrder.First().AtSupply <= Controller.CurrentSupply
+               && Controller.IsUnlocked(_buildOrder.First().UnitOrUpgradeType);
     }
 
     private IEnumerable<BuildFulfillment> GetManagersBuildRequests() {
@@ -200,9 +198,5 @@ public class SajuukBot: PoliteBot {
             && !Controller.GetProducersCarryingOrders(Units.Overlord).Any()) {
             _buildOrder.AddFirst(new QuantityBuildRequest(BuildType.Train, Units.Overlord, quantity: 4));
         }
-    }
-
-    private static bool HasEnoughDrones() {
-        return Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone).Count() >= MaxDroneCount;
     }
 }

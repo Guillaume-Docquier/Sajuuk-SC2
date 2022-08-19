@@ -519,6 +519,6 @@ internal static class Units {
         { Spire,         new HashSet<uint> { GreaterSpire } },
         { CommandCenter, new HashSet<uint> { OrbitalCommand, PlanetaryFortress } },
         { CreepTumor,    new HashSet<uint> { CreepTumorQueen, CreepTumorBurrowed } },
-        { Roach,         new HashSet<uint> { RoachBurrowed } }, { RoachBurrowed, new HashSet<uint> { Roach } }, // TODO GD All the burrowed, or something nicer
+        { Roach,         new HashSet<uint> { RoachBurrowed } }, // TODO GD Do all the burrowed units, or something nicer
     };
 }

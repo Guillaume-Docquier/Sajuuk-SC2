@@ -32,18 +32,15 @@ public class TownHallManager: IManager {
     private readonly List<Unit> _minerals;
     private readonly List<Unit> _gasses;
 
-    private static readonly BuildRequest ExpandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, quantity: 0);
-    private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>
-    {
-        ExpandBuildRequest,
-    };
+    private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, atSupply: 75, quantity: 0);
+    private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>();
 
     public IEnumerable<BuildFulfillment> BuildFulfillments => _buildStepRequests.Select(buildRequest => buildRequest.Fulfillment);
 
-    public int IdealCapacity => !TownHall.IsOperational ? 0 : _minerals.Count * IdealPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor;
+    public int IdealCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor;
     public int IdealAvailableCapacity => IdealCapacity - _workers.Count;
 
-    public int SaturatedCapacity => !TownHall.IsOperational ? 0 : IdealCapacity + _minerals.Count; // Can allow 1 more per mineral patch;
+    public int SaturatedCapacity => IdealCapacity + _minerals.Count; // Can allow 1 more per mineral patch;
     public int SaturatedAvailableCapacity => SaturatedCapacity - _workers.Count;
 
     public int WorkerCount => _workers.Count;
@@ -83,6 +80,13 @@ public class TownHallManager: IManager {
         });
 
         DiscoverExtractors(UnitsTracker.OwnedUnits);
+
+        _buildStepRequests.Add(_expandBuildRequest);
+
+        // You're a macro hatch
+        if (_minerals.Count == 0) {
+            _expandHasBeenRequested = true;
+        }
     }
 
     public void AssignQueen(Unit queen) {
@@ -138,7 +142,7 @@ public class TownHallManager: IManager {
     }
 
     public void OnFrame() {
-        DrawAvailableCapacityInfo();
+        DrawTownHallInfo();
 
         HandleDepletedGasses();
         DiscoverExtractors(UnitsTracker.NewOwnedUnits);
@@ -148,6 +152,8 @@ public class TownHallManager: IManager {
         if (_minerals.Sum(mineral => UnitModule.Get<CapacityModule>(mineral).AvailableCapacity) <= _minerals.Count) {
             FillExtractors();
         }
+
+        RequestExpand();
     }
 
     public void Release(Unit unit) {
@@ -219,10 +225,6 @@ public class TownHallManager: IManager {
         else if (Units.MineralFields.Contains(deadUnit.UnitType)) {
             _minerals.Remove(deadUnit);
             UnitModule.Get<CapacityModule>(deadUnit).AssignedUnits.ForEach(worker => UnitModule.Uninstall<MiningModule>(worker));
-
-            if (!_expandHasBeenRequested) {
-                RequestExpand();
-            }
         }
         else if (deadUnit.UnitType == Units.Extractor) {
             HandleDeadExtractor(deadUnit);
@@ -339,19 +341,27 @@ public class TownHallManager: IManager {
     }
 
     private void RequestExpand() {
-        // TODO GD Gas won't be taken automatically
-        // TODO GD There should be a switch that tells managers to auto manage themselves
-        ExpandBuildRequest.Requested += 1;
+        // TODO GD Use a target build order to keep mining gas
+        // TODO GD This doesn't count depleted minerals
+        // TODO GD Should probably put this in expand analyzer, but it's fine for now
+        if (TownHall.IsOperational && !_expandHasBeenRequested && (GetMineralsPercent() <= 0.6 || _minerals.Count <= 5)) {
+            _expandBuildRequest.Requested += 1;
 
-        _expandHasBeenRequested = true;
+            _expandHasBeenRequested = true;
+        }
     }
 
-    private void DrawAvailableCapacityInfo() {
+    private void DrawTownHallInfo() {
         GraphicalDebugger.AddTextGroup(new[]
             {
                 $"IdealAvailableCapacity: {IdealAvailableCapacity}",
                 $"SaturatedAvailableCapacity: {SaturatedAvailableCapacity}",
+                $"MineralsPercent: {GetMineralsPercent():P}"
             },
             worldPos: TownHall.Position.Translate(xTranslation: -2.5f, yTranslation: 1f).ToPoint());
+    }
+
+    private float GetMineralsPercent() {
+        return (float)_minerals.Sum(mineral => mineral.RawUnitData.MineralContents) / _minerals.Sum(mineral => mineral.InitialMineralCount);
     }
 }

@@ -30,6 +30,8 @@ public class Unit: ICanDie {
     public bool IsVisible;
     public ulong LastSeen;
     public HashSet<uint> Buffs;
+    public int InitialMineralCount = int.MaxValue;
+    public int InitialVespeneCount = int.MaxValue;
 
     public float MaxRange {
         get {
@@ -61,6 +63,12 @@ public class Unit: ICanDie {
     public readonly Dictionary<string, IUnitModule> Modules = new Dictionary<string, IUnitModule>();
 
     public float Integrity => (RawUnitData.Health + RawUnitData.Shield) / (RawUnitData.HealthMax + RawUnitData.ShieldMax);
+
+    // TODO GD Find a better name
+    public float MineralPercent => (float)RawUnitData.MineralContents / InitialMineralCount;
+
+    public float VespenePercent => (float)RawUnitData.VespeneContents / InitialVespeneCount;
+
     public bool IsOperational => _buildProgress >= 1;
 
     // Units inside extractors are not available. We keep them in memory but they're not in the game for some time
@@ -88,6 +96,12 @@ public class Unit: ICanDie {
         IsVisible = unit.DisplayType == DisplayType.Visible;
         LastSeen = frame;
         Buffs = new HashSet<uint>(unit.BuffIds);
+
+        // Snapshot minerals/gas don't have contents
+        if (IsVisible && InitialMineralCount == int.MaxValue) {
+            InitialMineralCount = RawUnitData.MineralContents;
+            InitialVespeneCount = RawUnitData.VespeneContents;
+        }
     }
 
     public double DistanceTo(Unit otherUnit) {

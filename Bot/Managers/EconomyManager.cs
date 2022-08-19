@@ -13,6 +13,8 @@ using SC2APIProtocol;
 namespace Bot.Managers;
 
 public class EconomyManager: IManager {
+    private const int MaxDroneCount = 70;
+
     private readonly List<TownHallManager> _townHallManagers = new List<TownHallManager>();
     private readonly Dictionary<Unit, TownHallManager> _townHallDispatch = new Dictionary<Unit, TownHallManager>();
     private readonly Dictionary<Unit, TownHallManager> _queenDispatch = new Dictionary<Unit, TownHallManager>();
@@ -26,15 +28,12 @@ public class EconomyManager: IManager {
         Colors.DarkBlue,
     };
 
-    private static readonly BuildRequest MacroHatchBuildRequest = new TargetBuildRequest(BuildType.Build, Units.Hatchery, targetQuantity: 0);
-    private static readonly BuildRequest QueenBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Queen, targetQuantity: 0);
-    private static readonly BuildRequest DronesBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Drone, targetQuantity: 0);
-    private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>
-    {
-        MacroHatchBuildRequest,
-        QueenBuildRequest,
-        DronesBuildRequest,
-    };
+    private readonly BuildRequest _macroHatchBuildRequest = new TargetBuildRequest(BuildType.Build, Units.Hatchery, targetQuantity: 0);
+    private readonly BuildRequest _queenBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Queen, targetQuantity: 0);
+    private readonly BuildRequest _dronesBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Drone, targetQuantity: 0);
+    private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>();
+
+    private int _creepQueensCount = 1;
 
     public IEnumerable<BuildFulfillment> BuildFulfillments => _buildStepRequests.Select(buildRequest => buildRequest.Fulfillment)
         .Concat(_townHallManagers.SelectMany(manager => manager.BuildFulfillments));
@@ -43,7 +42,11 @@ public class EconomyManager: IManager {
         ManageTownHalls(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery));
         DispatchWorkers(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone).ToList());
 
-        MacroHatchBuildRequest.Requested = _townHallDispatch.Count;
+        _macroHatchBuildRequest.Requested = _townHallDispatch.Count;
+
+        _buildStepRequests.Add(_macroHatchBuildRequest);
+        _buildStepRequests.Add(_queenBuildRequest);
+        _buildStepRequests.Add(_dronesBuildRequest);
     }
 
     public void OnFrame() {
@@ -65,11 +68,18 @@ public class EconomyManager: IManager {
         }
 
         if (ShouldBuildExtraMacroHatch()) {
-            MacroHatchBuildRequest.Requested += 1;
+            _macroHatchBuildRequest.Requested += 1;
         }
 
-        QueenBuildRequest.Requested = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).Count() + 1;
-        DronesBuildRequest.Requested = _townHallManagers.Sum(manager => manager.SaturatedCapacity);
+        if (Controller.CurrentSupply >= 130) {
+            _creepQueensCount = 3;
+        }
+        else if (Controller.CurrentSupply >= 100) {
+            _creepQueensCount = 2;
+        }
+
+        _queenBuildRequest.Requested = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).Count() + _creepQueensCount;
+        _dronesBuildRequest.Requested = Math.Min(MaxDroneCount, _townHallManagers.Sum(manager => !manager.TownHall.IsOperational ? 0 : manager.SaturatedCapacity));
     }
 
     public void Release(Unit unit) {
@@ -217,7 +227,7 @@ public class EconomyManager: IManager {
     ////////////////////////////////
 
     private bool ShouldBuildExtraMacroHatch() {
-        return MacroHatchBuildRequest.Fulfillment.Remaining == 0
+        return _macroHatchBuildRequest.Fulfillment.Remaining == 0
                && BankIsTooBig()
                && !GetIdleLarvae().Any()
                && !HasReachedMaximumMacroTownHalls()
