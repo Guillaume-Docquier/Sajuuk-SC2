@@ -34,6 +34,7 @@ public class MineralMiningStrategy: IStrategy {
         return _worker.Buffs.Any(Buffs.CarryMinerals.Contains);
     }
 
+    // TODO GD Speed mining only has to do with forcing drone to not decelerate. You can speed maine on the way back too
     // https://tl.net/forum/starcraft-2/152345-trick-early-game-7-mineral-boost
     // If you carefully observe your workers mining, you will notice that they sit around for half a second after they
     // mine a mineral before realizing they need to return it to your CC. I'm not sure why the AI is slow on this, but

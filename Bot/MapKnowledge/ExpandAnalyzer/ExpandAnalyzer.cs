@@ -27,9 +27,9 @@ public partial class ExpandAnalyzer: INeedUpdating {
             return;
         }
 
-        if (_precomputedExpandLocations.ContainsKey(Program.MapName)) {
-            Logger.Info("Initializing ExpandAnalyzer from precomputed locations");
-            ExpandLocations = _precomputedExpandLocations[Program.MapName];
+        if (_precomputedExpandLocations.ContainsKey(Controller.GameInfo.MapName)) {
+            Logger.Info("Initializing ExpandAnalyzer from precomputed locations for {0}", Controller.GameInfo.MapName);
+            ExpandLocations = _precomputedExpandLocations[Controller.GameInfo.MapName];
 
             // This isn't expensive
             ResourceClusters = FindResourceClusters().ToList();
