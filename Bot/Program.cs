@@ -7,7 +7,7 @@ namespace Bot;
 public class Program {
     private static readonly IBot Bot = new SajuukBot("1_10_2");
 
-    public const string MapName = Maps.FileNames.TwoThousandAtmospheres;
+    public const string MapFileName = Maps.FileNames.TwoThousandAtmospheres;
     private const Race OpponentRace = Race.Terran;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
@@ -20,7 +20,7 @@ public class Program {
             if (args.Length == 0) {
                 GraphicalDebugger.IsActive = true;
                 GameConnection = new GameConnection(runEvery: 2);
-                GameConnection.RunSinglePlayer(Bot, MapName, OpponentRace, OpponentDifficulty, RealTime).Wait();
+                GameConnection.RunSinglePlayer(Bot, MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
             }
             else {
                 // On the ladder, for some reason, actions have a 1 frame delay before being received and applied

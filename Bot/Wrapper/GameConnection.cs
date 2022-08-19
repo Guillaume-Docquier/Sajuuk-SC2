@@ -54,7 +54,7 @@ public class GameConnection {
         }
     }
 
-    public async Task RunSinglePlayer(IBot bot, string mapName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {
+    public async Task RunSinglePlayer(IBot bot, string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {
         const int port = 5678;
 
         Logger.Info("Finding the SC2 executable info");
@@ -66,8 +66,8 @@ public class GameConnection {
         Logger.Info("Connecting to port: {0}", port);
         await Connect(port);
 
-        Logger.Info("Creating game on map: {0}", mapName);
-        await CreateGame(mapName, opponentRace, opponentDifficulty, realTime);
+        Logger.Info("Creating game on map: {0}", mapFileName);
+        await CreateGame(mapFileName, opponentRace, opponentDifficulty, realTime);
 
         Logger.Info("Joining game");
         var playerId = await JoinGame(bot.Race);
@@ -108,8 +108,8 @@ public class GameConnection {
         throw new Exception("Unable to make a connection.");
     }
 
-    private async Task CreateGame(string mapName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {;
-        var mapPath = Path.Combine(_starcraftMapsDir, mapName);
+    private async Task CreateGame(string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {;
+        var mapPath = Path.Combine(_starcraftMapsDir, mapFileName);
         if (!File.Exists(mapPath)) {
             Logger.Info($"Unable to locate map: {mapPath}");
             throw new Exception($"Unable to locate map: {mapPath}");
