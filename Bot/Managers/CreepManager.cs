@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.Builds;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.UnitModules;
@@ -7,7 +8,7 @@ using Bot.UnitModules;
 namespace Bot.Managers;
 
 public class CreepManager: IManager {
-    public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => Enumerable.Empty<BuildOrders.BuildStep>();
+    public IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
     public void OnFrame() {
         Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.CreepTumor)

@@ -25,10 +25,10 @@ public static class DetectionTracker {
     }
 
     public static bool IsDetected(IReadOnlyCollection<Unit> army) {
-        return IsArmyScanned(army) || GetDetectorsThatCanSee(army).Any();
+        return IsArmyScanned(army) || IsArmyInDetectorRange(army);
     }
 
-    public static bool IsArmyScanned(IReadOnlyCollection<Unit> army) {
+    private static bool IsArmyScanned(IReadOnlyCollection<Unit> army) {
         var scanRadius = KnowledgeBase.GetEffectData(Effects.ScanSweep).Radius;
 
         return Controller.GetEffects(Effects.ScanSweep)
@@ -36,8 +36,8 @@ public static class DetectionTracker {
             .Any(scan => army.Any(soldier => scan.ToVector3().HorizontalDistanceTo(soldier.Position) <= scanRadius));
     }
 
-    public static IEnumerable<Unit> GetDetectorsThatCanSee(IReadOnlyCollection<Unit> army) {
+    private static bool IsArmyInDetectorRange(IReadOnlyCollection<Unit> army) {
         return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Detectors)
-            .Where(detector => army.Any(soldier => soldier.HorizontalDistanceTo(detector) <= detector.UnitTypeData.SightRange));
+            .Any(detector => army.Any(soldier => soldier.HorizontalDistanceTo(detector) <= detector.UnitTypeData.SightRange));
     }
 }

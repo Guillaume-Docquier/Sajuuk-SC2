@@ -65,7 +65,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
 
     // This is a blocking call! Use it sparingly, or you will slow down your execution significantly!
     public static bool CanPlace(uint buildingType, Vector3 position) {
-        if (Instance.IsTooCloseToTownHall(buildingType, position)) {
+        if (IsTooCloseToTownHall(buildingType, position)) {
             return false;
         }
 
@@ -146,7 +146,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
         }
     }
 
-    private bool IsTooCloseToTownHall(uint buildingType, Vector3 position) {
+    private static bool IsTooCloseToTownHall(uint buildingType, Vector3 position) {
         var buildingDimension = Buildings.Dimensions[buildingType];
         var townHallDimension = Buildings.Dimensions[Units.Hatchery];
 

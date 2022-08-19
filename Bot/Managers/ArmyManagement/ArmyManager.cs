@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.StateManagement;
 using Bot.UnitModules;
-using Bot.Wrapper;
 
 namespace Bot.Managers.ArmyManagement;
 
@@ -19,7 +19,7 @@ public partial class ArmyManager: StateMachine, IManager {
 
     private float _strongestForce;
 
-    public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => Enumerable.Empty<BuildOrders.BuildStep>();
+    public IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
     public ArmyManager() : base(new AttackState()) {}
 

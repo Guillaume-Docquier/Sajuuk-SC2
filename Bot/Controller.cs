@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
+using Bot.Builds;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapKnowledge;
@@ -187,8 +188,8 @@ public static class Controller {
 
         var possibleProducers = TechTree.Producer[unitOrAbilityType];
 
-        var producers = GetUnits(UnitsTracker.OwnedUnits, possibleProducers, onlyCompleted: true)
-            .Where(unit => unit.IsAvailable)
+        var producers = GetUnits(UnitsTracker.OwnedUnits, possibleProducers)
+            .Where(unit => unit.IsOperational && unit.IsAvailable)
             .OrderBy(unit => unit.OrdersExceptMining.Count());
 
         if (!allowQueue) {
@@ -198,7 +199,8 @@ public static class Controller {
         return producers.FirstOrDefault();
     }
 
-    public static RequestResult ExecuteBuildStep(BuildOrders.BuildStep buildStep) {
+    // TODO GD Should use an IBuildStep, probably. BuildFulfillment seems odd here
+    public static RequestResult ExecuteBuildStep(BuildFulfillment buildStep) {
         return buildStep.BuildType switch
         {
             BuildType.Train => TrainUnit(buildStep.UnitOrUpgradeType),
@@ -278,7 +280,7 @@ public static class Controller {
 
         if (buildingType == Units.Extractor) {
             // TODO GD Prioritize the main base, get a nearby worker
-            var availableGas = GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers, onlyVisible: true)
+            var availableGas = GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers)
                 .FirstOrDefault(gas => UnitUtils.IsResourceManaged(gas) && !UnitUtils.IsGasExploited(gas));
 
             if (availableGas == null) {
@@ -375,18 +377,30 @@ public static class Controller {
         return PlaceBuilding(buildingType, expandLocation);
     }
 
-    public static IEnumerable<Unit> GetUnitsInProduction(uint unitType) {
+    /**
+     * Returns all producers currently carrying production orders.
+     * This includes eggs hatching, units morphing and workers going to build.
+     */
+    public static IEnumerable<Unit> GetProducersCarryingOrders(uint unitTypeToProduce) {
         // We add eggs because larvae become eggs and I don't want to add eggs to TechTree.Producer since they're not the original producer
-        var potentialProducers = new HashSet<uint> { TechTree.Producer[unitType], Units.Egg };
+        var potentialProducers = new HashSet<uint> { TechTree.Producer[unitTypeToProduce], Units.Egg };
 
-        return GetUnits(UnitsTracker.OwnedUnits, potentialProducers).Where(producer => producer.IsBuilding(unitType));
+        return GetUnits(UnitsTracker.OwnedUnits, potentialProducers).Where(producer => producer.IsProducing(unitTypeToProduce));
     }
 
-    public static IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, uint unitToGet, bool onlyCompleted = false, bool onlyVisible = false) {
-        return GetUnits(unitPool, new HashSet<uint>{ unitToGet }, onlyCompleted, onlyVisible);
+    /**
+     * Returns all units of a certain type from the provided unitPool, including units of equivalent types.
+     * Units that are in production are included.
+     */
+    public static IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, uint unitToGet) {
+        return GetUnits(unitPool, new HashSet<uint>{ unitToGet });
     }
 
-    public static IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, HashSet<uint> unitsToGet, bool onlyCompleted = false, bool onlyVisible = false) {
+    /**
+     * Returns all units that match a certain set of types from the provided unitPool, including units of equivalent types.
+     * Units that are in production are included.
+     */
+    public static IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, HashSet<uint> unitsToGet) {
         var equivalentUnits = unitsToGet
             .Where(unitToGet => Units.EquivalentTo.ContainsKey(unitToGet))
             .SelectMany(unitToGet => Units.EquivalentTo[unitToGet])
@@ -396,14 +410,6 @@ public static class Controller {
 
         foreach (var unit in unitPool) {
             if (unitsToGet.Contains(unit.UnitType)) {
-                if (onlyCompleted && !unit.IsOperational) {
-                    continue;
-                }
-
-                if (onlyVisible && !unit.IsVisible) {
-                    continue;
-                }
-
                 yield return unit;
             }
         }
@@ -428,7 +434,7 @@ public static class Controller {
 
     public static bool IsUnlocked(uint unitType) {
         if (TechTree.Prerequisite.TryGetValue(unitType, out var prerequisiteUnitType)) {
-            return GetUnits(UnitsTracker.OwnedUnits, prerequisiteUnitType, onlyCompleted: true).Any();
+            return GetUnits(UnitsTracker.OwnedUnits, prerequisiteUnitType).Any(unit => unit.IsOperational);
         }
 
         return true;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -12,7 +13,7 @@ using SC2APIProtocol;
 
 namespace Bot;
 
-using BuildOrder = LinkedList<BuildOrders.BuildStep>;
+using BuildOrder = LinkedList<BuildRequest>;
 
 public class SajuukBot: PoliteBot {
     private const int MaxDroneCount = 70;
@@ -33,9 +34,7 @@ public class SajuukBot: PoliteBot {
 
     protected override void DoOnFrame() {
         if (Controller.Frame == 0) {
-            _managers.Add(new EconomyManager());
-            _managers.Add(new WarManager());
-            _managers.Add(new CreepManager());
+            InitManagers();
         }
 
         FollowBuildOrder();
@@ -49,35 +48,7 @@ public class SajuukBot: PoliteBot {
             _managerPriorityIndex = (_managerPriorityIndex + 1) % _managers.Count;
         }
 
-        // TODO GD Check if we should stop when we can't fulfill a build order
-        // Do everything you can
-        foreach (var buildStep in GetManagersBuildRequests()) {
-            // Cap the amount of drones
-            if (buildStep.UnitOrUpgradeType == Units.Drone && HasEnoughDrones()) {
-                continue;
-            }
-
-            while (!IsBuildOrderBlocking() && buildStep.Quantity > 0) {
-                var buildStepResult = Controller.ExecuteBuildStep(buildStep);
-                if (buildStepResult == Controller.RequestResult.Ok) {
-                    buildStep.Quantity--;
-                    FollowBuildOrder(); // Sometimes the build order will be unblocked
-                }
-                // Don't retry expands if they are all taken
-                else if (buildStep.BuildType == BuildType.Expand && buildStepResult == Controller.RequestResult.NoSuitableLocation) {
-                    buildStep.Quantity--;
-                }
-                else {
-                    break;
-                }
-            }
-
-            // Ensure expands get made
-            if (buildStep.BuildType == BuildType.Expand && buildStep.Quantity > 0) {
-                break;
-            }
-        }
-
+        AddressManagerRequests();
         FixSupply();
 
         DebugBuildOrder();
@@ -88,6 +59,43 @@ public class SajuukBot: PoliteBot {
 
         foreach (var unit in UnitsTracker.UnitsByTag.Values) {
             unit.ExecuteModules();
+        }
+    }
+
+    private void InitManagers() {
+        _managers.Add(new EconomyManager());
+        _managers.Add(new WarManager());
+        _managers.Add(new CreepManager());
+    }
+
+    private void AddressManagerRequests() {
+        // TODO GD Check if we should stop when we can't fulfill a build order
+        // Do everything you can
+        foreach (var buildStep in GetManagersBuildRequests()) {
+            // Cap the amount of drones
+            if (buildStep.UnitOrUpgradeType == Units.Drone && HasEnoughDrones()) {
+                continue;
+            }
+
+            while (!IsBuildOrderBlocking() && buildStep.Remaining > 0) {
+                var buildStepResult = Controller.ExecuteBuildStep(buildStep);
+                if (buildStepResult == Controller.RequestResult.Ok) {
+                    buildStep.Fulfill(1);
+                    FollowBuildOrder(); // Sometimes the build order will be unblocked
+                }
+                // Don't retry expands if they are all taken
+                else if (buildStep.BuildType == BuildType.Expand && buildStepResult == Controller.RequestResult.NoSuitableLocation) {
+                    buildStep.Fulfill(1);
+                }
+                else {
+                    break;
+                }
+            }
+
+            // Ensure expands get made
+            if (buildStep.BuildType == BuildType.Expand && buildStep.Remaining > 0) {
+                break;
+            }
         }
     }
 
@@ -108,12 +116,12 @@ public class SajuukBot: PoliteBot {
 
         while(_buildOrder.Count > 0) {
             var buildStep = _buildOrder.First();
-            if (Controller.CurrentSupply < buildStep.AtSupply || Controller.ExecuteBuildStep(buildStep) != Controller.RequestResult.Ok) {
+            if (Controller.CurrentSupply < buildStep.AtSupply || Controller.ExecuteBuildStep(buildStep.Fulfillment) != Controller.RequestResult.Ok) {
                 break;
             }
 
-            buildStep.Quantity -= 1;
-            if (_buildOrder.First().Quantity == 0) {
+            buildStep.Fulfillment.Fulfill(1);
+            if (_buildOrder.First().Fulfillment.Remaining == 0) {
                 _buildOrder.RemoveFirst();
             }
         }
@@ -172,16 +180,16 @@ public class SajuukBot: PoliteBot {
         return _buildOrder.Count > 0 && Controller.CurrentSupply >= _buildOrder.First().AtSupply;
     }
 
-    private IEnumerable<BuildOrders.BuildStep> GetManagersBuildRequests() {
-        var buildRequests = new List<BuildOrders.BuildStep>();
+    private IEnumerable<BuildFulfillment> GetManagersBuildRequests() {
+        var buildFulfillments = new List<BuildFulfillment>();
         for (var i = 0; i < _managers.Count; i++) {
             var managerIndex = (_managerPriorityIndex + i) % _managers.Count;
 
-            buildRequests.AddRange(_managers[managerIndex].BuildStepRequests.Where(buildRequest => buildRequest.Quantity > 0));
+            buildFulfillments.AddRange(_managers[managerIndex].BuildFulfillments.Where(buildFulfillment => buildFulfillment.Remaining > 0));
         }
 
         // Prioritize expands
-        return buildRequests.OrderBy(buildRequest => buildRequest.BuildType == BuildType.Expand ? 0 : 1);
+        return buildFulfillments.OrderBy(buildRequest => buildRequest.BuildType == BuildType.Expand ? 0 : 1);
     }
 
     // TODO GD Handle overlords dying early game
@@ -189,8 +197,8 @@ public class SajuukBot: PoliteBot {
         if (_buildOrder.Count <= 0
             && Controller.AvailableSupply <= 2
             && Controller.MaxSupply < KnowledgeBase.MaxSupplyAllowed
-            && !Controller.GetUnitsInProduction(Units.Overlord).Any()) {
-            _buildOrder.AddFirst(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Overlord, 4));
+            && !Controller.GetProducersCarryingOrders(Units.Overlord).Any()) {
+            _buildOrder.AddFirst(new QuantityBuildRequest(BuildType.Train, Units.Overlord, quantity: 4));
         }
     }
 

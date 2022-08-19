@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -31,20 +32,19 @@ public class TownHallManager: IManager {
     private readonly List<Unit> _minerals;
     private readonly List<Unit> _gasses;
 
-    private static readonly BuildOrders.BuildStep ExpandBuildRequest = new BuildOrders.BuildStep(BuildType.Expand, 0, Units.Hatchery, 0);
-    private static readonly BuildOrders.BuildStep QueenBuildRequest = new BuildOrders.BuildStep(BuildType.Train, 0, Units.Queen, 0);
-    private static readonly BuildOrders.BuildStep DronesBuildRequest = new BuildOrders.BuildStep(BuildType.Train, 0, Units.Drone, 0);
-    private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>
+    private static readonly BuildRequest ExpandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, quantity: 0);
+    private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>
     {
         ExpandBuildRequest,
-        QueenBuildRequest,
-        DronesBuildRequest,
     };
 
-    public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests;
+    public IEnumerable<BuildFulfillment> BuildFulfillments => _buildStepRequests.Select(buildRequest => buildRequest.Fulfillment);
 
-    public int IdealAvailableCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor - _workers.Count;
-    public int SaturatedAvailableCapacity => IdealAvailableCapacity + _minerals.Count; // Can allow 1 more per mineral patch
+    public int IdealCapacity => !TownHall.IsOperational ? 0 : _minerals.Count * IdealPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor;
+    public int IdealAvailableCapacity => IdealCapacity - _workers.Count;
+
+    public int SaturatedCapacity => !TownHall.IsOperational ? 0 : IdealCapacity + _minerals.Count; // Can allow 1 more per mineral patch;
+    public int SaturatedAvailableCapacity => SaturatedCapacity - _workers.Count;
 
     public TownHallManager(Unit townHall, Color color) {
         TownHall = townHall;
@@ -133,12 +133,6 @@ public class TownHallManager: IManager {
     }
 
     public void OnFrame() {
-        // TODO GD They don't count the drone eggs, so they might request more drones than needed
-        // TODO GD This simple counter mesure will slow down the production and ensure we don't go over too much
-        if (TownHall.IsOperational) {
-            DronesBuildRequest.Quantity = (uint)Math.Max(0, SaturatedAvailableCapacity - Controller.GetUnitsInProduction(Units.Drone).Count());
-        }
-
         DrawAvailableCapacityInfo();
 
         HandleDepletedGasses();
@@ -230,7 +224,6 @@ public class TownHallManager: IManager {
         }
         else if (deadUnit.UnitType == Units.Queen) {
             Queen = null;
-            QueenBuildRequest.Quantity += 1;
         }
     }
 
@@ -342,9 +335,8 @@ public class TownHallManager: IManager {
 
     private void RequestExpand() {
         // TODO GD Gas won't be taken automatically
-        // TODO GD There should be a switch that tells managers to auto manage queens and extractor
-        ExpandBuildRequest.Quantity += 1;
-        QueenBuildRequest.Quantity += 1;
+        // TODO GD There should be a switch that tells managers to auto manage themselves
+        ExpandBuildRequest.Requested += 1;
 
         _expandHasBeenRequested = true;
     }

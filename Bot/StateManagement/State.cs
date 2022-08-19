@@ -37,6 +37,6 @@ public abstract class State {
     protected abstract void Execute();
 }
 
-public abstract class State<TStateMachine> : State where TStateMachine : StateMachine {
+public abstract class State<TStateMachine>: State where TStateMachine : StateMachine {
     protected new TStateMachine StateMachine => base.StateMachine as TStateMachine;
 }

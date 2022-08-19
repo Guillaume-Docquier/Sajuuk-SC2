@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -23,8 +24,9 @@ public class WarManager: IManager {
     private readonly ArmyManager _armyManager;
     private Unit _townHallToDefend;
 
-    private readonly List<BuildOrders.BuildStep> _buildStepRequests = new List<BuildOrders.BuildStep>();
-    public IEnumerable<BuildOrders.BuildStep> BuildStepRequests => _buildStepRequests;
+    private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
+
+    public IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
     public WarManager() {
         var townHallDefensePosition = GetTownHallDefensePosition(MapAnalyzer.StartingLocation, MapAnalyzer.EnemyStartingLocation);
@@ -88,8 +90,8 @@ public class WarManager: IManager {
         _armyManager.Assign(enemyPosition, AttackRadius);
 
         // TODO GD Handle this better
-        if (_buildStepRequests.Count == 0) {
-            _buildStepRequests.Add(new BuildOrders.BuildStep(BuildType.Train, 0, Units.Roach, 1000));
+        if (_buildRequests.Count == 0) {
+            _buildRequests.Add(new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100));
         }
     }
 

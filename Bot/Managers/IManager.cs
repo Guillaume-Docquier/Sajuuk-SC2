@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
+using Bot.Builds;
 
 namespace Bot.Managers;
 
 public interface IManager: IWatchUnitsDie {
-    IEnumerable<BuildOrders.BuildStep> BuildStepRequests { get; }
+    IEnumerable<BuildFulfillment> BuildFulfillments { get; }
 
     void OnFrame();
 

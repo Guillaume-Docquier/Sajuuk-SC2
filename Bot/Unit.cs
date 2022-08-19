@@ -298,8 +298,8 @@ public class Unit: ICanDie {
         return unitTags.Contains(RawUnitData.EngagedTargetTag);
     }
 
-    public bool IsBuilding(uint buildingType) {
-        var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingType).AbilityId;
+    public bool IsProducing(uint buildingOrUnitType) {
+        var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingOrUnitType).AbilityId;
 
         return Orders.Any(order => order.AbilityId == buildingAbilityId);
     }
