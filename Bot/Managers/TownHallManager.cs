@@ -46,6 +46,8 @@ public class TownHallManager: IManager {
     public int SaturatedCapacity => !TownHall.IsOperational ? 0 : IdealCapacity + _minerals.Count; // Can allow 1 more per mineral patch;
     public int SaturatedAvailableCapacity => SaturatedCapacity - _workers.Count;
 
+    public int WorkerCount => _workers.Count;
+
     public TownHallManager(Unit townHall, Color color) {
         TownHall = townHall;
         _color = color;
@@ -54,12 +56,13 @@ public class TownHallManager: IManager {
 
         _minerals = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.MineralFields)
             .Where(mineral => mineral.DistanceTo(TownHall) < MaxDistanceToExpand)
-            .Where(mineral => !UnitUtils.IsResourceManaged(mineral))
+            .Where(mineral => mineral.Supervisor == null)
             .Take(MaxMinerals)
             .ToList();
 
         _minerals.ForEach(mineral => {
             mineral.AddDeathWatcher(this);
+            mineral.Supervisor = this;
 
             DebugLocationModule.Install(mineral, _color);
             CapacityModule.Install(mineral, MaxPerMinerals);
@@ -67,12 +70,14 @@ public class TownHallManager: IManager {
 
         _gasses = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers)
             .Where(gas => gas.DistanceTo(TownHall) < MaxDistanceToExpand)
-            .Where(gas => !UnitUtils.IsResourceManaged(gas))
+            .Where(gas => gas.Supervisor == null)
             .Where(gas => !IsGasDepleted(gas))
             .Take(MaxGas)
             .ToList();
 
         _gasses.ForEach(gas => {
+            gas.Supervisor = this;
+
             DebugLocationModule.Install(gas, _color);
             CapacityModule.Install(gas, MaxExtractorsPerGas);
         });

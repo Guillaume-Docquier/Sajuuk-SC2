@@ -512,8 +512,6 @@ internal static class Units {
 
     public static readonly HashSet<uint> Detectors = new HashSet<uint>(MobileDetectors.Concat(StaticDetectors));
 
-
-
     public static readonly Dictionary<uint, HashSet<uint>> EquivalentTo = new Dictionary<uint, HashSet<uint>>
     {
         { Hatchery,      new HashSet<uint> { Lair, Hive } },
@@ -521,5 +519,6 @@ internal static class Units {
         { Spire,         new HashSet<uint> { GreaterSpire } },
         { CommandCenter, new HashSet<uint> { OrbitalCommand, PlanetaryFortress } },
         { CreepTumor,    new HashSet<uint> { CreepTumorQueen, CreepTumorBurrowed } },
+        { Roach,         new HashSet<uint> { RoachBurrowed } }, { RoachBurrowed, new HashSet<uint> { Roach } }, // TODO GD All the burrowed, or something nicer
     };
 }

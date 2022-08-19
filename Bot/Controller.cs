@@ -6,6 +6,7 @@ using System.Threading;
 using Bot.Builds;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.Managers;
 using Bot.MapKnowledge;
 using Bot.UnitModules;
 using Bot.Wrapper;
@@ -279,9 +280,10 @@ public static class Controller {
         }
 
         if (buildingType == Units.Extractor) {
-            // TODO GD Prioritize the main base, get a nearby worker
+            // TODO GD Get a nearby worker
             var availableGas = GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers)
-                .FirstOrDefault(gas => UnitUtils.IsResourceManaged(gas) && !UnitUtils.IsGasExploited(gas));
+                .Where(gas => gas.Supervisor != null && !UnitUtils.IsGasExploited(gas))
+                .MaxBy(gas => (gas.Supervisor as TownHallManager)!.WorkerCount);
 
             if (availableGas == null) {
                 return RequestResult.NoSuitableLocation;

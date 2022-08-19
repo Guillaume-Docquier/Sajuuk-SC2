@@ -22,11 +22,11 @@ public static class UnitUtils {
         return ResourceType.None;
     }
 
-    public static bool IsResourceManaged(Unit resource) {
-        return resource.Modules.ContainsKey(CapacityModule.Tag);
-    }
-
     public static bool IsGasExploited(Unit gas) {
         return IsResourceManaged(gas) && UnitModule.Get<CapacityModule>(gas).AvailableCapacity == 0;
+    }
+
+    private static bool IsResourceManaged(Unit resource) {
+        return resource.Modules.ContainsKey(CapacityModule.Tag);
     }
 }
