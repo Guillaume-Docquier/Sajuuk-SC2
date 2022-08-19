@@ -89,12 +89,14 @@ public static class Vector3Extensions {
             return vector;
         }
 
-        var closestWalkableCell = MapAnalyzer.BuildSearchGrid(vector, 10)
+        var closestWalkableCell = MapAnalyzer.BuildSearchGrid(vector, 15)
             .Where(MapAnalyzer.IsWalkable)
+            .DefaultIfEmpty()
             .MinBy(cell => cell.HorizontalDistanceTo(vector));
 
         // It's probably good to avoid returning default
         if (closestWalkableCell == default) {
+            Logger.Error("Vector3.ClosestWalkable returned no elements in a 15 radius around {0}", vector);
             return vector;
         }
 
