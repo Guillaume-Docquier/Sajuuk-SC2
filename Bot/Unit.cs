@@ -14,7 +14,7 @@ using Action = SC2APIProtocol.Action;
 namespace Bot;
 
 public class Unit: ICanDie {
-    private readonly List<IWatchUnitsDie> _deathWatchers = new List<IWatchUnitsDie>();
+    private readonly HashSet<IWatchUnitsDie> _deathWatchers = new HashSet<IWatchUnitsDie>();
     public UnitTypeData UnitTypeData;
 
     public string Name;
@@ -268,9 +268,9 @@ public class Unit: ICanDie {
             Logger.Info("{0} died", this);
         }
 
-        // We .ToList() to make a copy of _deathWatchers because some ReportUnitDeath will call RemoveDeathWatcher
-        // They shouldn't because it modifies the collection while we are iterating it
-        // Also, units die once
+        // We .ToList() to make a copy of _deathWatchers because some ReportUnitDeath might call RemoveDeathWatcher
+        // They shouldn't, partly because it modifies the collection while we are iterating it
+        // But mostly because the unit will only die once
         _deathWatchers.ToList().ForEach(watcher => watcher.ReportUnitDeath(this));
     }
 
