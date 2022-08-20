@@ -303,6 +303,9 @@ public static class Controller {
         }
         else {
             var constructionSpot = BuildingTracker.FindConstructionSpot(buildingType);
+            if (constructionSpot == default) {
+                return RequestResult.NoSuitableLocation;
+            }
 
             producer.PlaceBuilding(buildingType, constructionSpot);
             BuildingTracker.ConfirmPlacement(buildingType, constructionSpot, producer);

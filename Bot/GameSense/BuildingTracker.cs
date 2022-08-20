@@ -28,8 +28,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
             Logger.Error("Could not find builder {0} in the ongoingBuildingOrders: [{1}]", deadUnit.Tag, string.Join(", ", _ongoingBuildingOrders.Keys.Select(unit => unit.Tag)));
         }
         else {
-            _ongoingBuildingOrders[deadUnit].ForEach(buildingCell => _reservedBuildingCells.Remove(buildingCell));
-            _ongoingBuildingOrders.Remove(deadUnit);
+            ClearBuildingOrder(deadUnit);
         }
     }
 
@@ -58,9 +57,18 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
     public static void ConfirmPlacement(uint buildingType, Vector3 position, Unit builder) {
         builder.AddDeathWatcher(Instance);
 
+        if (Instance._ongoingBuildingOrders.ContainsKey(builder)) {
+            Instance.ClearBuildingOrder(builder);
+        }
+
         var buildingCells = GetBuildingCells(buildingType, position).ToList();
         buildingCells.ForEach(buildingCell => Instance._reservedBuildingCells[buildingCell] = builder);
         Instance._ongoingBuildingOrders[builder] = buildingCells;
+    }
+
+    private void ClearBuildingOrder(Unit unit) {
+        _ongoingBuildingOrders[unit].ForEach(buildingCell => _reservedBuildingCells.Remove(buildingCell));
+        _ongoingBuildingOrders.Remove(unit);
     }
 
     // This is a blocking call! Use it sparingly, or you will slow down your execution significantly!
