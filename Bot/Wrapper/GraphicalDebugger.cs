@@ -17,10 +17,8 @@ public static class GraphicalDebugger {
     private static readonly List<DebugBox> DebugBoxes = new List<DebugBox>();
     private static readonly List<DebugLine> DebugLines = new List<DebugLine>();
 
-    public static bool IsActive = true;
-
     public static async void SendDebugRequest() {
-        if (!IsActive) {
+        if (!Program.DebugEnabled) {
             return;
         }
 
@@ -36,7 +34,7 @@ public static class GraphicalDebugger {
 
     // Size doesn't work when pos is not defined
     public static void AddText(string text, uint size = 15, Point virtualPos = null, Point worldPos = null, Color color = null) {
-        if (!IsActive) {
+        if (!Program.DebugEnabled) {
             return;
         }
 
@@ -51,7 +49,7 @@ public static class GraphicalDebugger {
     }
 
     public static void AddTextGroup(IEnumerable<string> texts, uint size = 15, Point virtualPos = null, Point worldPos = null, Color color = null) {
-        if (!IsActive) {
+        if (!Program.DebugEnabled) {
             return;
         }
 
@@ -59,7 +57,7 @@ public static class GraphicalDebugger {
     }
 
     public static void AddSphere(Unit unit, Color color) {
-        if (!IsActive) {
+        if (!Program.DebugEnabled) {
             return;
         }
 
@@ -71,7 +69,7 @@ public static class GraphicalDebugger {
     }
 
     public static void AddSphere(Vector3 position, float radius, Color color) {
-        if (!IsActive) {
+        if (!Program.DebugEnabled) {
             return;
         }
 
@@ -86,7 +84,7 @@ public static class GraphicalDebugger {
     }
 
     public static void AddGridSquare(Vector3 centerPosition, Color color = null) {
-        if (!IsActive) {
+        if (!Program.DebugEnabled) {
             return;
         }
 
@@ -94,7 +92,7 @@ public static class GraphicalDebugger {
     }
 
     public static void AddGridSquaresInRadius(Vector3 centerPosition, int radius, Color color) {
-        if (!IsActive) {
+        if (!Program.DebugEnabled) {
             return;
         }
 
@@ -104,7 +102,7 @@ public static class GraphicalDebugger {
     }
 
     public static void AddSquare(Vector3 centerPosition, float width, Color color, bool padded = false) {
-        if (!IsActive) {
+        if (!Program.DebugEnabled) {
             return;
         }
 
@@ -112,7 +110,7 @@ public static class GraphicalDebugger {
     }
 
     public static void AddRectangle(Vector3 centerPosition, float width, float length, Color color, bool padded = false) {
-        if (!IsActive) {
+        if (!Program.DebugEnabled) {
             return;
         }
 
@@ -129,7 +127,7 @@ public static class GraphicalDebugger {
     }
 
     public static void AddLine(Vector3 start, Vector3 end, Color color) {
-        if (!IsActive) {
+        if (!Program.DebugEnabled) {
             return;
         }
 
@@ -147,7 +145,7 @@ public static class GraphicalDebugger {
     }
 
     public static void AddLink(Unit start, Unit end, Color color) {
-        if (!IsActive) {
+        if (!Program.DebugEnabled) {
             return;
         }
 
@@ -155,7 +153,7 @@ public static class GraphicalDebugger {
     }
 
     public static void AddLink(Vector3 start, Vector3 end, Color color) {
-        if (!IsActive) {
+        if (!Program.DebugEnabled) {
             return;
         }
 

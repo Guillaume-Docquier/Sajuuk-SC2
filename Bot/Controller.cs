@@ -135,7 +135,7 @@ public static class Controller {
     }
 
     public static IEnumerable<Action> GetActions() {
-        if (_frameDelayMs > 0) {
+        if (Program.DebugEnabled && _frameDelayMs > 0) {
             Thread.Sleep(_frameDelayMs);
         }
 
