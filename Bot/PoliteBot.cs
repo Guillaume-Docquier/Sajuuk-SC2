@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.MapKnowledge;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
@@ -30,8 +31,8 @@ public abstract class PoliteBot: IBot {
             Logger.Info(Name);
             Logger.Info("--------------------------------------");
             Logger.Info("Map: {0}", Controller.GameInfo.MapName);
-            Logger.Info("Version: {0}", _version);
-            // TODO GD Add the starting corner
+            Logger.Info("Starting Corner: {0}", MapAnalyzer.GetStartingCorner());
+            Logger.Info("Bot Version: {0}", _version);
             Logger.Info("--------------------------------------");
         }
 

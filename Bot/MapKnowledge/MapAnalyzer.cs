@@ -47,6 +47,18 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         IsInitialized = true;
     }
 
+    public static string GetStartingCorner() {
+        var corners = new List<(Vector3 Position, string Name)>
+        {
+            (new Vector3(0, 0, 0), "bottom left"),
+            (new Vector3(MaxX, 0, 0), "bottom right"),
+            (new Vector3(0, MaxY, 0), "top left"),
+            (new Vector3(MaxX, MaxY, 0), "top right"),
+        };
+
+        return corners.MinBy(corner => corner.Position.HorizontalDistanceTo(StartingLocation)).Name;
+    }
+
     public void ReportUnitDeath(Unit deadUnit) {
         RemoveObstacle(deadUnit);
     }

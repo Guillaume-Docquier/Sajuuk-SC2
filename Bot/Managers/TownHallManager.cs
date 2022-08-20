@@ -254,11 +254,14 @@ public class TownHallManager: IManager {
 
     private void FillExtractors() {
         foreach (var extractor in _extractors.Where(extractor => extractor.IsOperational)) {
-            // TODO GD Select from busiest minerals instead
             var workersToReassign = _workers
                 .Where(worker => UnitModule.Get<MiningModule>(worker).ResourceType == UnitUtils.ResourceType.Mineral)
-                .Take(UnitModule.Get<CapacityModule>(extractor).AvailableCapacity)
-                .ToList();
+                .OrderBy(worker => {
+                    var resource = UnitModule.Get<MiningModule>(worker).AssignedResource;
+
+                    return UnitModule.Get<CapacityModule>(resource).AvailableCapacity;
+                })
+                .Take(UnitModule.Get<CapacityModule>(extractor).AvailableCapacity);
 
             foreach (var worker in workersToReassign) {
                 UpdateWorkerAssignment(worker, extractor);

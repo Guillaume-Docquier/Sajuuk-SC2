@@ -64,11 +64,6 @@ public class Unit: ICanDie {
 
     public float Integrity => (RawUnitData.Health + RawUnitData.Shield) / (RawUnitData.HealthMax + RawUnitData.ShieldMax);
 
-    // TODO GD Find a better name
-    public float MineralPercent => (float)RawUnitData.MineralContents / InitialMineralCount;
-
-    public float VespenePercent => (float)RawUnitData.VespeneContents / InitialVespeneCount;
-
     public bool IsOperational => _buildProgress >= 1;
 
     // Units inside extractors are not available. We keep them in memory but they're not in the game for some time
@@ -121,7 +116,7 @@ public class Unit: ICanDie {
     }
 
     public void Move(Vector3 target, bool spam = false) {
-        if (!spam && IsTargeting(target)) {
+        if (!spam && IsTargeting(target, Abilities.Move)) {
             return;
         }
 
@@ -137,7 +132,7 @@ public class Unit: ICanDie {
     }
 
     public void AttackMove(Vector3 target) {
-        if (IsTargeting(target)) {
+        if (IsTargeting(target, Abilities.Attack)) {
             return;
         }
 
@@ -296,12 +291,14 @@ public class Unit: ICanDie {
         return Orders.All(order => order.AbilityId is Abilities.Move or Abilities.Attack);
     }
 
-    // TODO GD Check for move vs attack move, otherwise a move order could be canceled if an attack move order targets the same position
-    private bool IsTargeting(Vector3 target) {
+    private bool IsTargeting(Vector3 target, uint abilityId) {
         var targetAsPoint = target.ToPoint();
         targetAsPoint.Z = 0;
 
-        return Orders.Any(order => order.TargetWorldSpacePos != null && order.TargetWorldSpacePos.Equals(targetAsPoint));
+        return Orders
+            .Where(order => order.AbilityId == abilityId)
+            .Where(order => order.TargetWorldSpacePos != null)
+            .Any(order => order.TargetWorldSpacePos.Equals(targetAsPoint));
     }
 
     private bool IsAttacking(Unit unit) {

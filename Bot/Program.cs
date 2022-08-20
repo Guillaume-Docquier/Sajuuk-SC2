@@ -5,7 +5,7 @@ using SC2APIProtocol;
 namespace Bot;
 
 public class Program {
-    private static readonly IBot Bot = new SajuukBot("1_10_3");
+    private static readonly IBot Bot = new SajuukBot("1_10_4");
 
     public const string MapFileName = Maps.FileNames.TwoThousandAtmospheres;
     private const Race OpponentRace = Race.Terran;

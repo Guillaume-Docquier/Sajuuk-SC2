@@ -43,8 +43,7 @@ public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUn
             return false;
         }
 
-        // TODO GD Make RoachBurrowed equivalent to Roach and use Controller.GetUnits
-        var effectiveArmy = army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed).ToList();
+        var effectiveArmy = Controller.GetUnits(army, Units.Roach).ToList();
         if (effectiveArmy.Count <= 0) {
             return false;
         }
