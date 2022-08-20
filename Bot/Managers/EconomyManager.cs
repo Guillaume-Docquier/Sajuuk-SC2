@@ -53,6 +53,7 @@ public class EconomyManager: IManager {
         ManageTownHalls(Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.Hatchery));
 
         if (_townHallManagers.Count > 0) {
+            // TODO GD Some idle workers are not picked up, i.e when their building order failed. They were released and they won't be new units again
             var workersToDispatch = Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.Drone).ToList();
             workersToDispatch.AddRange(GetIdleWorkers());
             DispatchWorkers(workersToDispatch);
