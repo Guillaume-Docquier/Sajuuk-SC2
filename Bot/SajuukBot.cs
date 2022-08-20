@@ -13,10 +13,12 @@ using SC2APIProtocol;
 
 namespace Bot;
 
-using BuildOrder = LinkedList<BuildRequest>;
-
 public class SajuukBot: PoliteBot {
-    private readonly BuildOrder _buildOrder = BuildOrders.TwoBasesRoach();
+    private readonly List<BuildRequest> _buildOrder = BuildOrders.TwoBasesRoach();
+    private IEnumerable<BuildRequest> RemainingBuildOrder => _buildOrder
+        .ToList() // Make a copy in case we edit _buildOrder
+        .Where(buildRequest => buildRequest.Fulfillment.Remaining > 0);
+
     private readonly List<IManager> _managers = new List<IManager>();
 
     private const int PriorityChangePeriod = 100;
@@ -77,25 +79,23 @@ public class SajuukBot: PoliteBot {
     }
 
     private void FollowBuildOrder() {
-        if (_buildOrder.Count == 0) {
-            return;
-        }
+        foreach (var buildStep in RemainingBuildOrder) {
+            while (buildStep.Fulfillment.Remaining > 0) {
+                if (Controller.CurrentSupply < buildStep.AtSupply || Controller.ExecuteBuildStep(buildStep.Fulfillment) != Controller.RequestResult.Ok) {
+                    return;
+                }
 
-        while(_buildOrder.Count > 0) {
-            var buildStep = _buildOrder.First();
-            if (Controller.CurrentSupply < buildStep.AtSupply || Controller.ExecuteBuildStep(buildStep.Fulfillment) != Controller.RequestResult.Ok) {
-                break;
+                buildStep.Fulfillment.Fulfill(1);
             }
 
-            buildStep.Fulfillment.Fulfill(1);
-            if (_buildOrder.First().Fulfillment.Remaining == 0) {
-                _buildOrder.RemoveFirst();
+            if (buildStep.Fulfillment is QuantityFulfillment) {
+                _buildOrder.Remove(buildStep);
             }
         }
     }
 
     private void DebugBuildOrder() {
-        var nextBuildStepsData = _buildOrder
+        var nextBuildStepsData = RemainingBuildOrder
             .Take(3)
             .Select(nextBuildStep => nextBuildStep.ToString())
             .ToList();
@@ -172,10 +172,11 @@ public class SajuukBot: PoliteBot {
     }
 
     private bool IsBuildOrderBlocking() {
-        // TODO GD Replace this by a 'Controller.ReserveMinerals' and 'Controller.ReserveGas' method
-        return _buildOrder.Count > 0
-               && _buildOrder.First().AtSupply <= Controller.CurrentSupply
-               && Controller.IsUnlocked(_buildOrder.First().UnitOrUpgradeType);
+        var nextBuildStep = RemainingBuildOrder.FirstOrDefault();
+
+        return nextBuildStep != null
+               &&nextBuildStep.AtSupply <= Controller.CurrentSupply
+               && Controller.IsUnlocked(nextBuildStep.UnitOrUpgradeType);
     }
 
     private IEnumerable<BuildFulfillment> GetManagersBuildRequests() {
@@ -192,11 +193,11 @@ public class SajuukBot: PoliteBot {
 
     // TODO GD Handle overlords dying early game
     private void FixSupply() {
-        if (_buildOrder.Count <= 0
+        if (!RemainingBuildOrder.Any()
             && Controller.AvailableSupply <= 2
             && Controller.MaxSupply < KnowledgeBase.MaxSupplyAllowed
             && !Controller.GetProducersCarryingOrders(Units.Overlord).Any()) {
-            _buildOrder.AddFirst(new QuantityBuildRequest(BuildType.Train, Units.Overlord, quantity: 4));
+            _buildOrder.Add(new QuantityBuildRequest(BuildType.Train, Units.Overlord, quantity: 4));
         }
     }
 }
