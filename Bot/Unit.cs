@@ -321,7 +321,16 @@ public class Unit: ICanDie {
             return true;
         }
 
-        return producingOrder.TargetWorldSpacePos != null && producingOrder.TargetWorldSpacePos.Equals(atLocation.WithoutZ().ToPoint());
+        if (producingOrder.TargetWorldSpacePos != null) {
+            return producingOrder.TargetWorldSpacePos.Equals(atLocation.WithoutZ().ToPoint());
+        }
+
+        // Extractors are built on a gas, not at a location
+        if (UnitsTracker.UnitsByTag.TryGetValue(producingOrder.TargetUnitTag, out var targetUnit)) {
+            return targetUnit.Position.WithoutZ() == atLocation.WithoutZ();
+        }
+
+        return false;
     }
 
     public override string ToString() {
