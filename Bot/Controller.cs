@@ -370,6 +370,22 @@ public static class Controller {
             return RequestResult.NotSupported;
         }
 
+        var producer = GetAvailableProducer(buildingType);
+
+        return PlaceExpand(buildingType, producer);
+    }
+
+    public static RequestResult PlaceExpand(uint buildingType, Unit producer) {
+        if (!MapAnalyzer.IsInitialized) {
+            return RequestResult.NotSupported;
+        }
+
+        var buildingTypeData = KnowledgeBase.GetUnitTypeData(buildingType);
+        var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
+        if (requirementsValidationResult != RequestResult.Ok) {
+            return requirementsValidationResult;
+        }
+
         var expandLocation = GetFreeExpandLocations()
             .Where(expandLocation => Pathfinder.FindPath(MapAnalyzer.StartingLocation, expandLocation) != null)
             .OrderBy(expandLocation => Pathfinder.FindPath(MapAnalyzer.StartingLocation, expandLocation).Count)
@@ -379,7 +395,7 @@ public static class Controller {
             return RequestResult.NoSuitableLocation;
         }
 
-        return PlaceBuilding(buildingType, expandLocation);
+        return PlaceBuilding(buildingType, producer, expandLocation);
     }
 
     /**

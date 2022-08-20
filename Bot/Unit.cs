@@ -292,8 +292,7 @@ public class Unit: ICanDie {
     }
 
     private bool IsTargeting(Vector3 target, uint abilityId) {
-        var targetAsPoint = target.ToPoint();
-        targetAsPoint.Z = 0;
+        var targetAsPoint = target.WithoutZ().ToPoint();
 
         return Orders
             .Where(order => order.AbilityId == abilityId)
@@ -309,10 +308,20 @@ public class Unit: ICanDie {
         return unitTags.Contains(RawUnitData.EngagedTargetTag);
     }
 
-    public bool IsProducing(uint buildingOrUnitType) {
+    public bool IsProducing(uint buildingOrUnitType, Vector3 atLocation = default) {
         var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingOrUnitType).AbilityId;
 
-        return Orders.Any(order => order.AbilityId == buildingAbilityId);
+        var producingOrder = Orders.FirstOrDefault(order => order.AbilityId == buildingAbilityId);
+
+        if (producingOrder == null) {
+            return false;
+        }
+
+        if (atLocation == default) {
+            return true;
+        }
+
+        return producingOrder.TargetWorldSpacePos != null && producingOrder.TargetWorldSpacePos.Equals(atLocation.WithoutZ().ToPoint());
     }
 
     public override string ToString() {

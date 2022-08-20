@@ -13,13 +13,20 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
     public static readonly BuildingTracker Instance = new BuildingTracker();
 
     private readonly Dictionary<Vector3, Unit> _reservedBuildingCells = new Dictionary<Vector3, Unit>();
-    private readonly Dictionary<Unit, List<Vector3>> _ongoingBuildingOrders = new Dictionary<Unit, List<Vector3>>();
+    private readonly Dictionary<Unit, (uint buildingType, Vector3 position, List<Vector3> cells)> _ongoingBuildingOrders = new();
 
     private BuildingTracker() {}
 
     public void Update(ResponseObservation observation) {
         foreach (var reservedBuildingCell in _reservedBuildingCells.Keys) {
             GraphicalDebugger.AddGridSquare(reservedBuildingCell, Colors.Yellow);
+        }
+
+        foreach (var worker in _ongoingBuildingOrders.Keys) {
+            var buildingOrder = _ongoingBuildingOrders[worker];
+            if (!worker.IsProducing(buildingOrder.buildingType, atLocation: buildingOrder.position)) {
+                ClearBuildingOrder(worker);
+            }
         }
     }
 
@@ -63,14 +70,15 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
 
         var buildingCells = GetBuildingCells(buildingType, position).ToList();
         buildingCells.ForEach(buildingCell => Instance._reservedBuildingCells[buildingCell] = builder);
-        Instance._ongoingBuildingOrders[builder] = buildingCells;
+        Instance._ongoingBuildingOrders[builder] = (buildingType, position, buildingCells);
     }
 
     private void ClearBuildingOrder(Unit unit) {
-        _ongoingBuildingOrders[unit].ForEach(buildingCell => _reservedBuildingCells.Remove(buildingCell));
+        _ongoingBuildingOrders[unit].cells.ForEach(buildingCell => _reservedBuildingCells.Remove(buildingCell));
         _ongoingBuildingOrders.Remove(unit);
     }
 
+    // TODO GD Check with MapAnalyzer._currentWalkMap before checking with CanPlace
     // This is a blocking call! Use it sparingly, or you will slow down your execution significantly!
     public static bool CanPlace(uint buildingType, Vector3 position) {
         if (IsTooCloseToTownHall(buildingType, position)) {
