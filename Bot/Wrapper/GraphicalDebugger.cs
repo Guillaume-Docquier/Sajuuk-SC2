@@ -57,6 +57,14 @@ public static class GraphicalDebugger {
         AddText(string.Join("\n", texts), size, virtualPos, worldPos, color);
     }
 
+    public static void AddGridSphere(Vector3 centerPosition, Color color = null) {
+        if (!Program.DebugEnabled) {
+            return;
+        }
+
+        AddSphere(centerPosition, KnowledgeBase.GameGridCellWidth / 2 - Padding, color ?? Colors.White);
+    }
+
     public static void AddSphere(Unit unit, Color color) {
         if (!Program.DebugEnabled) {
             return;

@@ -13,7 +13,7 @@ public static class Clustering {
         CorePoint
     }
 
-    public static List<List<T>> DBSCAN<T>(List<T> items, float epsilon, int minPoints) where T: class, IHavePosition {
+    public static (List<List<T>> clusters, List<T> noise) DBSCAN<T>(List<T> items, float epsilon, int minPoints) where T: class, IHavePosition {
         var clusters = new List<List<T>>();
         var labels = new Dictionary<T, Labels>();
 
@@ -62,7 +62,14 @@ public static class Clustering {
 
         clusters.ForEach(DrawBoundingBox);
 
-        return clusters;
+        var noise = new List<T>();
+        foreach(var (item, label) in labels) {
+            if (label == Labels.Noise) {
+                noise.Add(item);
+            }
+        }
+
+        return (clusters, noise);
     }
 
     public static Vector3 GetCenter(List<Unit> cluster) {

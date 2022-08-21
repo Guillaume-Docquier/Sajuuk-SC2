@@ -45,7 +45,7 @@ public partial class SneakAttackTactic {
             }
             else {
                 var enemies = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military).ToList();
-                var closestEnemyCluster = Clustering.DBSCAN(enemies, 5, 2).MinBy(cluster => cluster.GetCenter().HorizontalDistanceTo(StateMachine._armyCenter));
+                var closestEnemyCluster = Clustering.DBSCAN(enemies, 5, 2).clusters.MinBy(cluster => cluster.GetCenter().HorizontalDistanceTo(StateMachine._armyCenter));
 
                 // TODO GD Tweak this to put most of our army in range of the cluster instead
                 if (closestEnemyCluster != null && StateMachine._armyCenter.HorizontalDistanceTo(closestEnemyCluster.GetCenter()) <= OperationRadius) {

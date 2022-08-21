@@ -74,7 +74,7 @@ public partial class ExpandAnalyzer: INeedUpdating {
         var gasses = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers);
         var resources = minerals.Concat(gasses).ToList();
 
-        return Clustering.DBSCAN(resources, epsilon: 7, minPoints: 4);
+        return Clustering.DBSCAN(resources, epsilon: 7, minPoints: 4).clusters;
     }
 
     private static IEnumerable<Vector3> FindExpandLocations() {

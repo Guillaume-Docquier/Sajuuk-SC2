@@ -365,6 +365,10 @@ public class TownHallManager: IManager {
     }
 
     private float GetMineralsPercent() {
+        if (_minerals.Count == 0) {
+            return 0;
+        }
+
         return (float)_minerals.Sum(mineral => mineral.RawUnitData.MineralContents) / _minerals.Sum(mineral => mineral.InitialMineralCount);
     }
 }

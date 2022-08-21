@@ -51,7 +51,7 @@ public partial class ArmyManager: StateMachine, IManager {
             return;
         }
 
-        _mainArmy = Clustering.DBSCAN(Army, 4, 2).MaxBy(army => army.GetForce());
+        _mainArmy = Clustering.DBSCAN(Army, 4, 2).clusters.MaxBy(army => army.GetForce());
         _mainArmy ??= Army;
 
         State.OnFrame();
