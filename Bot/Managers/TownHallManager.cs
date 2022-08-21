@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.Builds;
 using Bot.ExtensionMethods;
@@ -21,8 +20,6 @@ public class TownHallManager: IManager {
     private const int MaxPerMinerals = 3;
     private const int MaxDistanceToExpand = 10;
 
-    private bool _expandHasBeenRequested = false;
-
     public readonly Unit TownHall;
     public Unit Queen;
     private readonly Color _color;
@@ -31,6 +28,9 @@ public class TownHallManager: IManager {
     private readonly List<Unit> _extractors = new List<Unit>();
     private readonly List<Unit> _minerals;
     private readonly List<Unit> _gasses;
+
+    private bool _expandHasBeenRequested = false;
+    private readonly int _initialMineralsSum;
 
     private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, atSupply: 75, quantity: 0);
     private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>();
@@ -87,6 +87,9 @@ public class TownHallManager: IManager {
         if (_minerals.Count == 0) {
             _expandHasBeenRequested = true;
         }
+
+        // TODO GD Put this in Expand analyzer, and try to find max minerals based on patch type?
+        _initialMineralsSum = _minerals.Sum(mineral => mineral.InitialMineralCount);
     }
 
     public void AssignQueen(Unit queen) {
@@ -365,10 +368,10 @@ public class TownHallManager: IManager {
     }
 
     private float GetMineralsPercent() {
-        if (_minerals.Count == 0) {
+        if (_initialMineralsSum == 0) {
             return 0;
         }
 
-        return (float)_minerals.Sum(mineral => mineral.RawUnitData.MineralContents) / _minerals.Sum(mineral => mineral.InitialMineralCount);
+        return (float)_minerals.Sum(mineral => mineral.RawUnitData.MineralContents) / _initialMineralsSum;
     }
 }
