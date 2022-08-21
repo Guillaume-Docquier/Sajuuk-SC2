@@ -13,24 +13,24 @@ public static class Clustering {
         CorePoint
     }
 
-    public static List<List<Unit>> DBSCAN(List<Unit> units, float epsilon, int minPoints) {
-        var clusters = new List<List<Unit>>();
-        var labels = new Dictionary<Unit, Labels>();
+    public static List<List<T>> DBSCAN<T>(List<T> items, float epsilon, int minPoints) where T: class, IHavePosition {
+        var clusters = new List<List<T>>();
+        var labels = new Dictionary<T, Labels>();
 
-        var currentCluster = new List<Unit>();
-        foreach (var unit in units) {
-            if (labels.ContainsKey(unit)) {
+        var currentCluster = new List<T>();
+        foreach (var item in items) {
+            if (labels.ContainsKey(item)) {
                 continue;
             }
 
-            var neighbors = units.Where(otherUnit => unit != otherUnit && unit.DistanceTo(otherUnit) <= epsilon).ToList();
+            var neighbors = items.Where(otherItem => item != otherItem && item.Position.DistanceTo(otherItem.Position) <= epsilon).ToList();
             if (neighbors.Count < minPoints) {
-                labels[unit] = Labels.Noise;
+                labels[item] = Labels.Noise;
                 continue;
             }
 
-            labels[unit] = Labels.CorePoint;
-            currentCluster.Add(unit);
+            labels[item] = Labels.CorePoint;
+            currentCluster.Add(item);
 
             for (var i = 0; i < neighbors.Count; i++) {
                 var neighbor = neighbors[i];
@@ -46,7 +46,7 @@ public static class Clustering {
 
                 currentCluster.Add(neighbor);
 
-                var neighborsOfNeighbor = units.Where(otherUnit => neighbor != otherUnit && neighbor.DistanceTo(otherUnit) <= epsilon).ToList();
+                var neighborsOfNeighbor = items.Where(otherItem => neighbor != otherItem && neighbor.Position.DistanceTo(otherItem.Position) <= epsilon).ToList();
                 if (neighborsOfNeighbor.Count >= minPoints) {
                     labels[neighbor] = Labels.CorePoint;
                     neighbors.AddRange(neighborsOfNeighbor);
@@ -57,7 +57,7 @@ public static class Clustering {
             }
 
             clusters.Add(currentCluster);
-            currentCluster = new List<Unit>();
+            currentCluster = new List<T>();
         }
 
         clusters.ForEach(DrawBoundingBox);
@@ -90,7 +90,7 @@ public static class Clustering {
         return new Vector3(centerX, centerY, 0).WithWorldHeight();
     }
 
-    private static void DrawBoundingBox(IReadOnlyCollection<Unit> cluster) {
+    private static void DrawBoundingBox(IReadOnlyCollection<IHavePosition> cluster) {
         var minX = cluster.Select(unit => unit.Position.X).Min();
         var maxX = cluster.Select(unit => unit.Position.X).Max();
         var minY = cluster.Select(unit => unit.Position.Y).Min();

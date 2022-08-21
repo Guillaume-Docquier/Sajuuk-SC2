@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
@@ -183,6 +184,13 @@ public static class Colors {
         return gradient;
     }
 
+    private static Color BrightColor(int r, int g, int b, float brightness = 1f) {
+        var max = new [] { r, g, b }.Max();
+        var brightnessMultiplier = 255f / max * brightness;
+
+        return new Color { R = (uint)(r * brightnessMultiplier), G = (uint)(g * brightnessMultiplier), B = (uint)(b * brightnessMultiplier)};
+    }
+
     public static readonly Color White = new Color { R = 255, G = 255, B = 255 };
     public static readonly Color Black = new Color { R = 1, G = 1, B = 1 };
 
@@ -200,10 +208,16 @@ public static class Colors {
 
     public static readonly Color DarkGreen = new Color { R = 1, G = 100, B = 1 };
     public static readonly Color DarkBlue = new Color { R = 1, G = 1, B = 139 };
-    public static readonly Color Maroon3 = new Color { R = 176, G = 48, B = 96 };
-    public static readonly Color Burlywood = new Color { R = 222, G = 184, B = 135 };
-    public static readonly Color Cornflower = new Color { R = 100, G = 149, B = 237 };
-    public static readonly Color Lime = new Color { R = 175, G = 255, B = 1 };
+    public static readonly Color MaroonRed = new Color { R = 176, G = 48, B = 96 };
+    public static readonly Color BurlywoodBeige = new Color { R = 222, G = 184, B = 135 };
+    public static readonly Color CornflowerBlue = new Color { R = 100, G = 149, B = 237 };
+    public static readonly Color LimeGreen = new Color { R = 175, G = 255, B = 1 };
     public static readonly Color Orange = new Color { R = 226, G = 131, B = 36 };
     public static readonly Color Purple = new Color { R = 153, G = 51, B = 255 };
+
+    public static readonly Color MulberryRed = BrightColor(r: 127, g: 59, b: 95, brightness: 0.75f);
+    public static readonly Color MediumTurquoise = new Color { R = 72, G = 209, B = 204 };
+    public static readonly Color SunbrightOrange = new Color { R = 253, G = 184, B = 19 };
+    public static readonly Color PeachPink = new Color { R = 255, G = 209, B = 193 };
+
 }

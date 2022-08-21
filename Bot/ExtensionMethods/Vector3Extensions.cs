@@ -84,20 +84,20 @@ public static class Vector3Extensions {
         return vector with { Z = MapAnalyzer.HeightMap[(int)vector.X][(int)vector.Y] };
     }
 
-    public static Vector3 ClosestWalkable(this Vector3 vector) {
-        if (MapAnalyzer.IsWalkable(vector)) {
-            return vector;
+    public static Vector3 ClosestWalkable(this Vector3 position) {
+        if (MapAnalyzer.IsWalkable(position)) {
+            return position;
         }
 
-        var closestWalkableCell = MapAnalyzer.BuildSearchGrid(vector, 15)
-            .Where(MapAnalyzer.IsWalkable)
+        var closestWalkableCell = MapAnalyzer.BuildSearchGrid(position, 15)
+            .Where(cell => MapAnalyzer.IsWalkable(cell))
             .DefaultIfEmpty()
-            .MinBy(cell => cell.HorizontalDistanceTo(vector));
+            .MinBy(cell => cell.HorizontalDistanceTo(position));
 
-        // It's probably good to avoid returning default
+        // It's probably good to avoid returning default?
         if (closestWalkableCell == default) {
-            Logger.Error("Vector3.ClosestWalkable returned no elements in a 15 radius around {0}", vector);
-            return vector;
+            Logger.Error("Vector3.ClosestWalkable returned no elements in a 15 radius around {0}", position);
+            return position;
         }
 
         return closestWalkableCell;

@@ -13,7 +13,7 @@ using Action = SC2APIProtocol.Action;
 
 namespace Bot;
 
-public class Unit: ICanDie {
+public class Unit: ICanDie, IHavePosition {
     private readonly HashSet<IWatchUnitsDie> _deathWatchers = new HashSet<IWatchUnitsDie>();
     public UnitTypeData UnitTypeData;
 
@@ -24,7 +24,7 @@ public class Unit: ICanDie {
     public float Radius;
     public SC2APIProtocol.Unit RawUnitData;
     public Alliance Alliance;
-    public Vector3 Position;
+    public Vector3 Position { get; private set; }
     private float _buildProgress;
     public RepeatedField<UnitOrder> Orders;
     public bool IsVisible;

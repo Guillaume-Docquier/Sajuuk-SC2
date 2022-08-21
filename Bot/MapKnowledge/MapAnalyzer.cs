@@ -193,16 +193,16 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     }
 
     public static IEnumerable<Vector3> BuildSearchGrid(Vector3 centerPosition, int gridRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
-        var buildSpots = new List<Vector3>();
+        var grid = new List<Vector3>();
         for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x += stepSize) {
             for (var y = centerPosition.Y - gridRadius; y <= centerPosition.Y + gridRadius; y += stepSize) {
                 if (!IsInitialized || IsInBounds(x, y)) {
-                    buildSpots.Add(new Vector3(x, y, centerPosition.Z).WithWorldHeight());
+                    grid.Add(new Vector3(x, y, centerPosition.Z).WithWorldHeight());
                 }
             }
         }
 
-        return buildSpots.OrderBy(position => Vector3.Distance(centerPosition, position));
+        return grid.OrderBy(position => Vector3.Distance(centerPosition, position));
     }
 
     public static IEnumerable<Vector3> BuildSearchRadius(Vector3 centerPosition, int circleRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
@@ -217,12 +217,15 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         return x >= 0 && x < MaxX && y >= 0 && y < MaxY;
     }
 
-    public static bool IsWalkable(Vector3 position) {
+    public static bool IsWalkable(Vector3 position, bool includeObstacles = true) {
         if (!IsInBounds(position)) {
             Logger.Error("IsWalkable called on out of bounds position");
             return false;
         }
 
-        return _terrainWalkMap[(int)position.X][(int)position.Y] && !ObstructionMap.Contains(position.AsWorldGridCenter().WithoutZ());
+        var isWalkable = _terrainWalkMap[(int)position.X][(int)position.Y];
+        var isObstructed = includeObstacles && ObstructionMap.Contains(position.AsWorldGridCenter().WithoutZ());
+
+        return isWalkable && !isObstructed;
     }
 }

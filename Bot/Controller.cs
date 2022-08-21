@@ -59,6 +59,7 @@ public static class Controller {
         CreepTracker.Instance, // Depends on nothing
 
         MapAnalyzer.Instance, // Depends on UnitsTracker
+        //RegionAnalyzer.Instance, // Depends on MapAnalyzer, only needs to run once TODO GD Enable and cache the results (runs in ~2s)
 
         ExpandAnalyzer.Instance, // Depends on UnitsTracker and MapAnalyzer
         BuildingTracker.Instance, // Depends on UnitsTracker and MapAnalyzer

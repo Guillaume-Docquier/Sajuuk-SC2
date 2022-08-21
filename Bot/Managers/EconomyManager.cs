@@ -21,9 +21,9 @@ public class EconomyManager: IManager {
     private readonly Dictionary<Unit, TownHallManager> _workerDispatch = new Dictionary<Unit, TownHallManager>();
     private readonly List<Color> _expandColors = new List<Color>
     {
-        Colors.Maroon3,
-        Colors.Burlywood,
-        Colors.Cornflower,
+        Colors.MaroonRed,
+        Colors.BurlywoodBeige,
+        Colors.CornflowerBlue,
         Colors.DarkGreen,
         Colors.DarkBlue,
     };
