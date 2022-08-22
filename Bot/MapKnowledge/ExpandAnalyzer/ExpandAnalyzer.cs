@@ -12,7 +12,7 @@ namespace Bot.MapKnowledge;
 public partial class ExpandAnalyzer: INeedUpdating {
     public static readonly ExpandAnalyzer Instance = new ExpandAnalyzer();
 
-    private static bool _isInitialized = false;
+    public static bool IsInitialized = false;
 
     public static List<List<Unit>> ResourceClusters;
     public static List<Vector3> ExpandLocations;
@@ -23,7 +23,7 @@ public partial class ExpandAnalyzer: INeedUpdating {
     private ExpandAnalyzer() {}
 
     public void Update(ResponseObservation observation) {
-        if (_isInitialized) {
+        if (IsInitialized) {
             return;
         }
 
@@ -34,7 +34,7 @@ public partial class ExpandAnalyzer: INeedUpdating {
             // This isn't expensive
             ResourceClusters = FindResourceClusters().ToList();
 
-            _isInitialized = true;
+            IsInitialized = true;
             return;
         }
 
@@ -59,9 +59,9 @@ public partial class ExpandAnalyzer: INeedUpdating {
             Logger.Info("new Vector3({0}f, {1}f, {2}f),", expandLocation.X, expandLocation.Y, expandLocation.Z);
         }
 
-        _isInitialized = ExpandLocations.Count == ResourceClusters.Count;
+        IsInitialized = ExpandLocations.Count == ResourceClusters.Count;
 
-        Logger.Info("{0}", _isInitialized ? "Success!" : "Failed...");
+        Logger.Info("{0}", IsInitialized ? "Success!" : "Failed...");
     }
 
     // TODO GD Doesn't take into account the building dimensions, but good enough for creep spread since it's 1x1
