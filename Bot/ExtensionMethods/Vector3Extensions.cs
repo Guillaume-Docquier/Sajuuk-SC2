@@ -103,16 +103,13 @@ public static class Vector3Extensions {
         return closestWalkableCell;
     }
 
-    public static IEnumerable<Vector3> GetNeighbors(this Vector3 vector) {
-        yield return vector.Translate(xTranslation: -1, yTranslation: 1);
-        yield return vector.Translate(xTranslation: -1, yTranslation: 0);
-        yield return vector.Translate(xTranslation: -1, yTranslation: -1);
-
-        yield return vector.Translate(xTranslation: 0, yTranslation: 1);
-        yield return vector.Translate(xTranslation: 0, yTranslation: -1);
-
-        yield return vector.Translate(xTranslation: 1, yTranslation: 1);
-        yield return vector.Translate(xTranslation: 1, yTranslation: 0);
-        yield return vector.Translate(xTranslation: 1, yTranslation: -1);
+    public static IEnumerable<Vector3> GetNeighbors(this Vector3 vector, int distance = 1) {
+        for (var x = -distance; x <= distance; x++) {
+            for (var y = -distance; y <= distance; y++) {
+                if (x != 0 || y != 0) {
+                    yield return vector.Translate(xTranslation: x, yTranslation: y);
+                }
+            }
+        }
     }
 }

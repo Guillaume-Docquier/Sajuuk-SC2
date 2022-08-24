@@ -72,7 +72,7 @@ public static class Clustering {
         return (clusters, noise);
     }
 
-    public static Vector3 GetCenter(List<Unit> cluster) {
+    public static Vector3 GetCenter<T>(List<T> cluster) where T: class, IHavePosition {
         if (cluster.Count <= 0) {
             Logger.Error("Trying to GetCenter of an empty cluster");
 
@@ -85,7 +85,7 @@ public static class Clustering {
         return new Vector3(avgX, avgY, 0).WithWorldHeight();
     }
 
-    public static Vector3 GetBoundingBoxCenter(List<Unit> cluster) {
+    public static Vector3 GetBoundingBoxCenter<T>(List<T> cluster) where T: class, IHavePosition {
         var minX = cluster.Select(unit => unit.Position.X).Min();
         var maxX = cluster.Select(unit => unit.Position.X).Max();
         var minY = cluster.Select(unit => unit.Position.Y).Min();
@@ -97,7 +97,7 @@ public static class Clustering {
         return new Vector3(centerX, centerY, 0).WithWorldHeight();
     }
 
-    private static void DrawBoundingBox(IReadOnlyCollection<IHavePosition> cluster) {
+    private static void DrawBoundingBox<T>(IReadOnlyCollection<T> cluster) where T: class, IHavePosition {
         var minX = cluster.Select(unit => unit.Position.X).Min();
         var maxX = cluster.Select(unit => unit.Position.X).Max();
         var minY = cluster.Select(unit => unit.Position.Y).Min();

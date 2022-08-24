@@ -174,6 +174,22 @@ public static class GraphicalDebugger {
         AddText("to", worldPos: end.ToPoint(), color: color);
         AddSphere(end, 1, color);
     }
+
+    public static void AddPath(List<Vector3> path, Color startColor, Color endColor) {
+        if (!Program.DebugEnabled) {
+            return;
+        }
+
+        if (path.Count <= 0) {
+            return;
+        }
+
+        AddSphere(path[0], 1.5f, startColor);
+        AddSphere(path[^1], 1.5f, endColor);
+        for (var i = 0; i < path.Count; i++) {
+            AddGridSquare(path[i], Colors.Gradient(startColor, endColor, (float)i / path.Count));
+        }
+    }
 }
 
 public static class Colors {
@@ -214,8 +230,10 @@ public static class Colors {
     public static readonly Color Cyan = new Color { R = 1, G = 255, B = 255 };
     public static readonly Color Magenta = new Color { R = 255, G = 1, B = 255 };
 
-    public static readonly Color DarkGreen = new Color { R = 1, G = 100, B = 1 };
-    public static readonly Color DarkBlue = new Color { R = 1, G = 1, B = 139 };
+    public static readonly Color DarkRed = new Color { R = 175, G = 1, B = 1 };
+    public static readonly Color DarkGreen = new Color { R = 1, G = 175, B = 1 };
+    public static readonly Color DarkBlue = new Color { R = 1, G = 50, B = 200 };
+
     public static readonly Color MaroonRed = new Color { R = 176, G = 48, B = 96 };
     public static readonly Color BurlywoodBeige = new Color { R = 222, G = 184, B = 135 };
     public static readonly Color CornflowerBlue = new Color { R = 100, G = 149, B = 237 };

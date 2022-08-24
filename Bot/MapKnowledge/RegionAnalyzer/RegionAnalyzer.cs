@@ -13,16 +13,21 @@ namespace Bot.MapKnowledge;
 // Graph theory: https://en.wikipedia.org/wiki/Bridge_(graph_theory)#Tarjan's_bridge-finding_algorithm
 // Voronoi decomposition: https://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=F7CE5598E6DBFA934A8E159433181AF6?doi=10.1.1.728.5136&rep=rep1&type=pdf
 public class RegionAnalyzer: INeedUpdating {
-    private const bool DrawEnabled = false;
+    private const bool DrawEnabled = true;
 
     private const int MinRampSize = 5;
     private const int RegionMinPoints = 6;
     private const float RegionZMultiplier = 8;
     private static readonly float DiagonalDistance = (float)Math.Sqrt(2);
 
-    private class MapCell: IHavePosition {
-        public MapCell(float x, float y) {
-            Position = new Vector3(x, y, 0).AsWorldGridCenter().WithWorldHeight();
+    public class MapCell: IHavePosition {
+        public MapCell(float x, float y, bool withWorldHeight = true) {
+            var position = new Vector3(x, y, 0).AsWorldGridCenter().WithWorldHeight();
+            if (!withWorldHeight) {
+                position.Z = 0;
+            }
+
+            Position = position;
         }
 
         public Vector3 Position { get; set; }
@@ -59,9 +64,11 @@ public class RegionAnalyzer: INeedUpdating {
 
         if (_isInitialized) {
             if (Program.DebugEnabled && DrawEnabled) {
-                DrawRegions();
+                //DrawRegions();
                 DrawRamps();
-                DrawNoise();
+                //DrawNoise();
+
+                IdentifyChokePoints();
             }
 
             return;
@@ -237,5 +244,11 @@ public class RegionAnalyzer: INeedUpdating {
         }
 
         return rampClusteringResult.noise;
+    }
+
+    private static void IdentifyChokePoints() {
+        PathProximityChokeFinder.FindChokePoints();
+        // TODO Remove edges that do minimal separation in regions
+        // TODO Consider edge length
     }
 }
