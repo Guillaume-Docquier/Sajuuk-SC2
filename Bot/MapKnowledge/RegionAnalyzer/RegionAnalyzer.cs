@@ -9,9 +9,6 @@ using SC2APIProtocol;
 namespace Bot.MapKnowledge;
 
 // TODO GD Precompute (runs in ~5s)
-// TODO GD Find choke points
-// Graph theory: https://en.wikipedia.org/wiki/Bridge_(graph_theory)#Tarjan's_bridge-finding_algorithm
-// Voronoi decomposition: https://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=F7CE5598E6DBFA934A8E159433181AF6?doi=10.1.1.728.5136&rep=rep1&type=pdf
 public class RegionAnalyzer: INeedUpdating {
     private const bool DrawEnabled = true;
 
@@ -22,9 +19,9 @@ public class RegionAnalyzer: INeedUpdating {
 
     public static readonly RegionAnalyzer Instance = new RegionAnalyzer();
 
-    public static readonly List<HashSet<Vector3>> Regions = new List<HashSet<Vector3>>();
-    public static readonly List<HashSet<Vector3>> Ramps = new List<HashSet<Vector3>>();
-    public static readonly List<Vector3> Noise = new List<Vector3>();
+    public static readonly List<HashSet<Vector2>> Regions = new List<HashSet<Vector2>>();
+    public static readonly List<HashSet<Vector2>> Ramps = new List<HashSet<Vector2>>();
+    public static readonly List<Vector2> Noise = new List<Vector2>();
     public static readonly List<ChokePoint> ChokePoints = new List<ChokePoint>();
 
     private static bool _isInitialized = false;
@@ -67,7 +64,7 @@ public class RegionAnalyzer: INeedUpdating {
 
         var regionsNoise = InitRegions(map);
         var rampsNoise = InitRamps(regionsNoise);
-        Noise.AddRange(rampsNoise.Select(mapCell => mapCell.Position));
+        Noise.AddRange(rampsNoise.Select(mapCell => mapCell.Position.ToVector2()));
         InitChokePoints();
         InitSubregions();
 
@@ -86,8 +83,8 @@ public class RegionAnalyzer: INeedUpdating {
         var regionIndex = 0;
         foreach (var region in Regions) {
             foreach (var position in region) {
-                GraphicalDebugger.AddText($"E{regionIndex}", size: 12, worldPos: position.WithWorldHeight().ToPoint(), color: _regionColors[regionIndex % _regionColors.Count]);
-                GraphicalDebugger.AddGridSquare(position.WithWorldHeight(), _regionColors[regionIndex % _regionColors.Count]);
+                GraphicalDebugger.AddText($"E{regionIndex}", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: _regionColors[regionIndex % _regionColors.Count]);
+                GraphicalDebugger.AddGridSquare(position.ToVector3().WithWorldHeight(), _regionColors[regionIndex % _regionColors.Count]);
             }
 
             regionIndex++;
@@ -103,8 +100,8 @@ public class RegionAnalyzer: INeedUpdating {
         var rampIndex = 0;
         foreach (var ramp in Ramps) {
             foreach (var position in ramp) {
-                GraphicalDebugger.AddText($"R{rampIndex}", size: 12, worldPos: position.WithWorldHeight().ToPoint(), color: _regionColors[rampIndex % _regionColors.Count]);
-                GraphicalDebugger.AddGridSphere(position.WithWorldHeight(), _regionColors[rampIndex % _regionColors.Count]);
+                GraphicalDebugger.AddText($"R{rampIndex}", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: _regionColors[rampIndex % _regionColors.Count]);
+                GraphicalDebugger.AddGridSphere(position.ToVector3().WithWorldHeight(), _regionColors[rampIndex % _regionColors.Count]);
             }
 
             rampIndex++;
@@ -118,16 +115,16 @@ public class RegionAnalyzer: INeedUpdating {
     /// </summary>
     private static void DrawNoise() {
         foreach (var position in Noise) {
-            GraphicalDebugger.AddText("?", size: 12, worldPos: position.WithWorldHeight().ToPoint(), color: Colors.Red);
-            GraphicalDebugger.AddGridSphere(position.WithWorldHeight(), Colors.Red);
+            GraphicalDebugger.AddText("?", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: Colors.Red);
+            GraphicalDebugger.AddGridSphere(position.ToVector3().WithWorldHeight(), Colors.Red);
         }
     }
 
     private static void DrawChokePoints() {
         foreach (var chokePoint in ChokePoints) {
-            GraphicalDebugger.AddSphere(chokePoint.Start, radius: 3, Colors.LightRed);
-            GraphicalDebugger.AddSphere(chokePoint.End, radius: 3, Colors.LightRed);
-            GraphicalDebugger.AddPath(chokePoint.Edge.ToList(), Colors.LightRed, Colors.LightRed);
+            GraphicalDebugger.AddSphere(chokePoint.Start.ToVector3().WithWorldHeight(), radius: 1, Colors.LightRed);
+            GraphicalDebugger.AddSphere(chokePoint.End.ToVector3().WithWorldHeight(), radius: 1, Colors.LightRed);
+            GraphicalDebugger.AddPath(chokePoint.Edge.Select(edge => edge.ToVector3().WithWorldHeight()).ToList(), Colors.LightRed, Colors.LightRed);
         }
     }
 
@@ -165,7 +162,7 @@ public class RegionAnalyzer: INeedUpdating {
         });
 
         var regionClusteringResult = Clustering.DBSCAN(cells, epsilon: DiagonalDistance + 0.04f, minPoints: RegionMinPoints);
-        Regions.AddRange(regionClusteringResult.clusters.Select(cluster => cluster.Select(mapCell => mapCell.Position).ToHashSet()).ToList());
+        Regions.AddRange(regionClusteringResult.clusters.Select(cluster => cluster.Select(mapCell => mapCell.Position.ToVector2()).ToHashSet()).ToList());
 
         return regionClusteringResult.noise;
     }
@@ -181,7 +178,7 @@ public class RegionAnalyzer: INeedUpdating {
 
         var rampClusteringResult = Clustering.DBSCAN(cells, epsilon: DiagonalDistance * 2, minPoints: MinRampSize);
         foreach (var ramp in rampClusteringResult.clusters) {
-            Ramps.Add(ramp.Select(cell => cell.Position.WithoutZ()).ToHashSet());
+            Ramps.Add(ramp.Select(cell => cell.Position.ToVector2()).ToHashSet());
         }
 
         return rampClusteringResult.noise;
@@ -197,7 +194,7 @@ public class RegionAnalyzer: INeedUpdating {
         var regions = Regions.ToList();
         Regions.Clear();
         foreach (var region in regions) {
-            var subregions = BreakDownIntoSubregions(region.Select(cell => cell.WithoutZ()).ToList());
+            var subregions = BreakDownIntoSubregions(region.Select(cell => cell).ToHashSet());
             foreach (var subregion in subregions) {
                 Regions.Add(subregion.ToHashSet());
             }
@@ -214,44 +211,55 @@ public class RegionAnalyzer: INeedUpdating {
     /// <returns>
     /// A list of subregions.
     /// </returns>
-    private static List<List<Vector3>> BreakDownIntoSubregions(List<Vector3> region) {
-        var regionMap = region.ToHashSet();
-        var expandsInRegion = ExpandAnalyzer.ExpandLocations.Select(expand => expand.WithoutZ()).Where(expand => regionMap.Contains(expand)).ToList();
+    private static List<List<Vector2>> BreakDownIntoSubregions(HashSet<Vector2> region) {
+        // Get chokes in region
+        // Order by length ascending
+        var chokesInRegion = ChokePoints
+            .Where(chokePoint => chokePoint.Edge.Any(region.Contains))
+            .OrderBy(chokePoint => chokePoint.Length);
 
-        // Single or no expand, no subregion
-        if (expandsInRegion.Count <= 1) {
-            return new List<List<Vector3>> { region };
+        // Keep and split again if split separates into chunks bigger than choke width squared
+        foreach (var chokeInRegion in chokesInRegion) {
+            var (subregion1, subregion2) = SplitRegion(region, chokeInRegion);
+
+            // TODO GD Only keep chokes that produce valid splits
+            if (IsValidSplit(subregion1, chokeInRegion.Length) && IsValidSplit(subregion2, chokeInRegion.Length)) {
+                return BreakDownIntoSubregions(subregion1).Concat(BreakDownIntoSubregions(subregion2)).ToList();
+            }
         }
 
-        // Calculate the distance from each position to each expand in the region
+        return new List<List<Vector2>> { region.ToList() };
+    }
 
-        // distanceToExpands[position][expand] = distance;
-        var distanceToExpands = region.ToDictionary(positionInRegion => positionInRegion, _ => expandsInRegion.ToDictionary(expand => expand, _ => float.MaxValue));
-        foreach (var expand in expandsInRegion) {
-            var positionsToExplore = new Queue<(Vector3, float)>();
-            positionsToExplore.Enqueue((expand, 0));
-            distanceToExpands[expand][expand] = 0;
+    private static (HashSet<Vector2> subregion1, HashSet<Vector2> subregion2) SplitRegion(HashSet<Vector2> region, ChokePoint chokePoint) {
+        var startingPoint = region.First();
 
-            while (positionsToExplore.Any()) {
-                var (position, distance) = positionsToExplore.Dequeue();
-                foreach (var neighbor in position.GetNeighbors().Where(regionMap.Contains)) {
-                    var distanceToNeighbor = distance + neighbor.HorizontalDistanceTo(position);
-                    if (distanceToNeighbor < distanceToExpands[neighbor][expand]) {
-                        positionsToExplore.Enqueue((neighbor, distanceToNeighbor));
-                        distanceToExpands[neighbor][expand] = distanceToNeighbor;
-                    }
+        var subregion1 = new HashSet<Vector2>();
+
+        var pointsToExplore = new Queue<Vector2>();
+        pointsToExplore.Enqueue(startingPoint);
+
+        while (pointsToExplore.Any()) {
+            var point = pointsToExplore.Dequeue();
+            if (subregion1.Add(point)) {
+                var nextNeighbors = point.GetNeighbors()
+                    .Where(region.Contains)
+                    .Where(neighbor => !chokePoint.Edge.Contains(neighbor))
+                    .Where(neighbor => !subregion1.Contains(neighbor));
+
+                foreach (var neighbor in nextNeighbors) {
+                    pointsToExplore.Enqueue(neighbor);
                 }
             }
         }
 
-        // Find the closest expand to each position given the distances we just computed
-        // Each expand will have its own region
-        var subregions = expandsInRegion.ToDictionary(expand => expand, _ => new List<Vector3>());
-        foreach (var (position, distances) in distanceToExpands) {
-            var closestExpand = distances.MinBy(distanceToExpand => distanceToExpand.Value).Key;
-            subregions[closestExpand].Add(position);
-        }
+        var subregion2 = region.Except(subregion1).ToHashSet();
 
-        return subregions.Values.ToList();
+        return (subregion1, subregion2);
+    }
+
+    private static bool IsValidSplit(IReadOnlyCollection<Vector2> subregion, float minDiameter) {
+        // If the split region is smaller than the choke width^2, then the choke might not be one for real
+        return subregion.Count > minDiameter * minDiameter;
     }
 }

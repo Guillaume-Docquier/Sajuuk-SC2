@@ -22,6 +22,10 @@ public static class Vector3Extensions {
         return new Point2D { X = vector.X, Y = vector.Y };
     }
 
+    public static Vector2 ToVector2(this Vector3 vector) {
+        return new Vector2(vector.X, vector.Y);
+    }
+
     public static float DistanceTo(this Vector3 origin, Vector3 destination) {
         return Vector3.Distance(origin, destination);
     }
@@ -179,14 +183,15 @@ public static class Vector3Extensions {
         }
     }
 
+    // TODO GD
     public static HashSet<Vector3> GetPointsInBetween(this Vector3 origin, Vector3 destination) {
         var maxDistance = origin.HorizontalDistanceTo(destination);
         var currentDistance = 0f;
 
         var pointsInBetween = new HashSet<Vector3>();
         while (currentDistance < maxDistance) {
-            pointsInBetween.Add(origin.TranslateTowards(destination, currentDistance, ignoreZAxis: true).AsWorldGridCenter().WithWorldHeight());
-            currentDistance += 0.5f;
+            pointsInBetween.Add(origin.TranslateTowards(destination, currentDistance, ignoreZAxis: true).AsWorldGridCenter());
+            currentDistance += 0.01f;
         }
 
         return pointsInBetween;

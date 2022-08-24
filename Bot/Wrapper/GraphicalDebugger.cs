@@ -222,7 +222,7 @@ public static class Colors {
     public static readonly Color Green = new Color { R = 1, G = 255, B = 1 };
     public static readonly Color Blue = new Color { R = 1, G = 1, B = 255 };
 
-    public static readonly Color LightRed = new Color { R = 255, G = 204, B = 203 };
+    public static readonly Color LightRed = new Color { R = 255, G = 100, B = 100 };
     public static readonly Color LightGreen = new Color { R = 144, G = 238, B = 144 };
     public static readonly Color LightBlue = new Color { R = 173, G = 216, B = 230 };
 

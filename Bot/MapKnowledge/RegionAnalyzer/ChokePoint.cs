@@ -1,19 +1,25 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 
 namespace Bot.MapKnowledge;
 
 public class ChokePoint {
-    public Vector3 Start { get; }
-    public Vector3 End { get; }
+    public Vector2 Start { get; }
+    public Vector2 End { get; }
     public float Length { get; }
-    public HashSet<Vector3> Edge { get; }
+    public HashSet<Vector2> Edge { get; }
 
     public ChokePoint(Vector3 start, Vector3 end) {
-        Start = start;
-        End = end;
-        Length = start.HorizontalDistanceTo(end);
-        Edge = start.GetPointsInBetween(end);
+        Edge = start.WithoutZ()
+            .GetPointsInBetween(end.WithoutZ())
+            .Where(point => MapAnalyzer.IsWalkable(point, includeObstacles: false))
+            .Select(point => point.ToVector2())
+            .ToHashSet();
+
+        Start = Edge.MinBy(edgePoint => edgePoint.DistanceTo(start.ToVector2()));
+        End = Edge.MinBy(edgePoint => edgePoint.DistanceTo(end.ToVector2()));
+        Length = Start.DistanceTo(End);
     }
 }

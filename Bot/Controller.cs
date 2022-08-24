@@ -63,7 +63,7 @@ public static class Controller {
 
         ExpandAnalyzer.Instance, // Depends on UnitsTracker and MapAnalyzer
         BuildingTracker.Instance, // Depends on UnitsTracker and MapAnalyzer
-        RegionAnalyzer.Instance, // Depends on MapAnalyzer and ExpandAnalyzer
+        //RegionAnalyzer.Instance, // Depends on MapAnalyzer and ExpandAnalyzer
     };
 
     public static void Pause() {

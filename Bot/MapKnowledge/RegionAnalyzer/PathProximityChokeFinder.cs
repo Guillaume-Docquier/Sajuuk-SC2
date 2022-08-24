@@ -6,9 +6,8 @@ using Bot.Wrapper;
 
 namespace Bot.MapKnowledge;
 
+// TODO GD Compare with the Balvet & Al algorithm
 public static class PathProximityChokeFinder {
-
-
     public static List<ChokePoint> FindChokePoints() {
         var pathCells = GetPathsBetweenExpands();
         var chokeBorders = FindChokeBorders(pathCells);
@@ -49,7 +48,7 @@ public static class PathProximityChokeFinder {
         var chokeBorders = chokeCells.Select(chokeEdge => chokeEdge.WithWorldHeight()).ToHashSet();
 
         // Omit cells near ramps, we already know about them
-        var rampNeighbors = RegionAnalyzer.Ramps.SelectMany(ramp => ramp.SelectMany(rampCell => rampCell.GetNeighbors(distance: 3))).Select(rampNeighbor => rampNeighbor.WithWorldHeight());
+        var rampNeighbors = RegionAnalyzer.Ramps.SelectMany(ramp => ramp.SelectMany(rampCell => rampCell.GetNeighbors(distance: 3))).Select(rampNeighbor => rampNeighbor.ToVector3().WithWorldHeight());
         foreach (var rampNeighbor in rampNeighbors) {
             if (chokeBorders.Contains(rampNeighbor)) {
                 chokeBorders.Remove(rampNeighbor);
@@ -110,7 +109,7 @@ public static class PathProximityChokeFinder {
 
     private static float GetNonRampWalkableRatio(Vector3 origin, Vector3 destination) {
         var separation = origin.GetPointsInBetween(destination);
-        var validSeparationPointCount = separation.Count(point => MapAnalyzer.IsWalkable(point, includeObstacles: false) && !RegionAnalyzer.Ramps.Any(ramp => ramp.Contains(point)));
+        var validSeparationPointCount = separation.Count(point => MapAnalyzer.IsWalkable(point, includeObstacles: false) && !RegionAnalyzer.Ramps.Any(ramp => ramp.Contains(point.ToVector2())));
 
         return (float)validSeparationPointCount / separation.Count;
     }
