@@ -20,24 +20,12 @@ public class RegionAnalyzer: INeedUpdating {
     private const float RegionZMultiplier = 8;
     private static readonly float DiagonalDistance = (float)Math.Sqrt(2);
 
-    public class MapCell: IHavePosition {
-        public MapCell(float x, float y, bool withWorldHeight = true) {
-            var position = new Vector3(x, y, 0).AsWorldGridCenter().WithWorldHeight();
-            if (!withWorldHeight) {
-                position.Z = 0;
-            }
-
-            Position = position;
-        }
-
-        public Vector3 Position { get; set; }
-    }
-
     public static readonly RegionAnalyzer Instance = new RegionAnalyzer();
 
     public static readonly List<HashSet<Vector3>> Regions = new List<HashSet<Vector3>>();
     public static readonly List<HashSet<Vector3>> Ramps = new List<HashSet<Vector3>>();
     public static readonly List<Vector3> Noise = new List<Vector3>();
+    public static readonly List<ChokePoint> ChokePoints = new List<ChokePoint>();
 
     private static bool _isInitialized = false;
 
@@ -64,11 +52,10 @@ public class RegionAnalyzer: INeedUpdating {
 
         if (_isInitialized) {
             if (Program.DebugEnabled && DrawEnabled) {
-                //DrawRegions();
+                DrawRegions();
                 DrawRamps();
-                //DrawNoise();
-
-                IdentifyChokePoints();
+                DrawNoise();
+                DrawChokePoints();
             }
 
             return;
@@ -81,6 +68,8 @@ public class RegionAnalyzer: INeedUpdating {
         var regionsNoise = InitRegions(map);
         var rampsNoise = InitRamps(regionsNoise);
         Noise.AddRange(rampsNoise.Select(mapCell => mapCell.Position));
+        InitChokePoints();
+        InitSubregions();
 
         Logger.Info("Region analysis done");
         Logger.Info("{0} regions, {1} ramps and {2} unclassified cells", Regions.Count, Ramps.Count, Noise.Count);
@@ -134,6 +123,14 @@ public class RegionAnalyzer: INeedUpdating {
         }
     }
 
+    private static void DrawChokePoints() {
+        foreach (var chokePoint in ChokePoints) {
+            GraphicalDebugger.AddSphere(chokePoint.Start, radius: 3, Colors.LightRed);
+            GraphicalDebugger.AddSphere(chokePoint.End, radius: 3, Colors.LightRed);
+            GraphicalDebugger.AddPath(chokePoint.Edge.ToList(), Colors.LightRed, Colors.LightRed);
+        }
+    }
+
     /// <summary>
     /// Generates a list of MapCell representing each playable tile in the map.
     /// </summary>
@@ -168,14 +165,43 @@ public class RegionAnalyzer: INeedUpdating {
         });
 
         var regionClusteringResult = Clustering.DBSCAN(cells, epsilon: DiagonalDistance + 0.04f, minPoints: RegionMinPoints);
-        foreach (var region in regionClusteringResult.clusters) {
-            var subregions = BreakDownIntoSubregions(region.Select(cell => cell.Position.WithoutZ()).ToList());
+        Regions.AddRange(regionClusteringResult.clusters.Select(cluster => cluster.Select(mapCell => mapCell.Position).ToHashSet()).ToList());
+
+        return regionClusteringResult.noise;
+    }
+
+    /// <summary>
+    /// Identify ramps given cells that are not part of any regions using clustering.
+    /// </summary>
+    /// <returns>
+    /// Cells that are not part of any ramp.
+    /// </returns>
+    private static IEnumerable<MapCell> InitRamps(List<MapCell> cells) {
+        cells.ForEach(mapCell => mapCell.Position = mapCell.Position.WithWorldHeight()); // Reset the Z
+
+        var rampClusteringResult = Clustering.DBSCAN(cells, epsilon: DiagonalDistance * 2, minPoints: MinRampSize);
+        foreach (var ramp in rampClusteringResult.clusters) {
+            Ramps.Add(ramp.Select(cell => cell.Position.WithoutZ()).ToHashSet());
+        }
+
+        return rampClusteringResult.noise;
+    }
+
+    private static void InitChokePoints() {
+        ChokePoints.AddRange(PathProximityChokeFinder.FindChokePoints());
+        // TODO Remove edges that do minimal separation in regions
+        // TODO Consider edge length
+    }
+
+    private static void InitSubregions() {
+        var regions = Regions.ToList();
+        Regions.Clear();
+        foreach (var region in regions) {
+            var subregions = BreakDownIntoSubregions(region.Select(cell => cell.WithoutZ()).ToList());
             foreach (var subregion in subregions) {
                 Regions.Add(subregion.ToHashSet());
             }
         }
-
-        return regionClusteringResult.noise;
     }
 
     /// <summary>
@@ -227,28 +253,5 @@ public class RegionAnalyzer: INeedUpdating {
         }
 
         return subregions.Values.ToList();
-    }
-
-    /// <summary>
-    /// Identify ramps given cells that are not part of any regions using clustering.
-    /// </summary>
-    /// <returns>
-    /// Cells that are not part of any ramp.
-    /// </returns>
-    private static IEnumerable<MapCell> InitRamps(List<MapCell> cells) {
-        cells.ForEach(mapCell => mapCell.Position = mapCell.Position.WithWorldHeight()); // Reset the Z
-
-        var rampClusteringResult = Clustering.DBSCAN(cells, epsilon: DiagonalDistance * 2, minPoints: MinRampSize);
-        foreach (var ramp in rampClusteringResult.clusters) {
-            Ramps.Add(ramp.Select(cell => cell.Position.WithoutZ()).ToHashSet());
-        }
-
-        return rampClusteringResult.noise;
-    }
-
-    private static void IdentifyChokePoints() {
-        PathProximityChokeFinder.FindChokePoints();
-        // TODO Remove edges that do minimal separation in regions
-        // TODO Consider edge length
     }
 }

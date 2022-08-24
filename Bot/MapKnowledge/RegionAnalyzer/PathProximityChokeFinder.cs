@@ -7,17 +7,7 @@ using Bot.Wrapper;
 namespace Bot.MapKnowledge;
 
 public static class PathProximityChokeFinder {
-    public class ChokePoint {
-        public Vector3 Start { get; }
-        public Vector3 End { get; }
-        public HashSet<Vector3> Edge { get; }
 
-        public ChokePoint(Vector3 start, Vector3 end) {
-            Start = start;
-            End = end;
-            Edge = GetPointsInBetween(start, end);
-        }
-    }
 
     public static List<ChokePoint> FindChokePoints() {
         var pathCells = GetPathsBetweenExpands();
@@ -75,7 +65,7 @@ public static class PathProximityChokeFinder {
 
     private static List<Vector3> FindChokeNodes(HashSet<Vector3> chokeBorders) {
         // Cluster choke cells to find choke nodes
-        var chokeMapCells = chokeBorders.Select(chokeCell => new RegionAnalyzer.MapCell(chokeCell.X, chokeCell.Y, withWorldHeight: false)).ToList();
+        var chokeMapCells = chokeBorders.Select(chokeCell => new MapCell(chokeCell.X, chokeCell.Y, withWorldHeight: false)).ToList();
         var chokeClusters = Clustering.DBSCAN(chokeMapCells, epsilon: 2.02f, minPoints: 5).clusters;
 
         // Get center of clusters as choke nodes
@@ -95,7 +85,7 @@ public static class PathProximityChokeFinder {
         return chokeNodes;
     }
 
-    static List<ChokePoint> FindChokePoints(List<Vector3> chokeNodes) {
+    private static List<ChokePoint> FindChokePoints(List<Vector3> chokeNodes) {
         // Find choke edges by linking choke nodes
         var chokePoints = new List<ChokePoint>();
         foreach (var chokeNode in chokeNodes) {
@@ -103,12 +93,11 @@ public static class PathProximityChokeFinder {
                 .OrderBy(other => chokeNode.DistanceTo(other))
                 .Skip(1)
                 .Where(closestChokeNode => GetNonRampWalkableRatio(chokeNode, closestChokeNode) > 0.33) // Ignore nodes that link through unwalkable terrain
-                .Where(closestChokeNode => chokeNode.HorizontalDistanceTo(closestChokeNode) < 20)
-                .Take(2);
+                .Where(closestChokeNode => chokeNode.HorizontalDistanceTo(closestChokeNode) < 19);
 
             foreach (var closestChokeNode in closestChokeNodes) {
                 GraphicalDebugger.AddLine(chokeNode.Translate(zTranslation: 3), closestChokeNode.Translate(zTranslation: 3), Colors.LightRed);
-                foreach (var point in GetPointsInBetween(chokeNode, closestChokeNode)) {
+                foreach (var point in chokeNode.GetPointsInBetween(closestChokeNode)) {
                     GraphicalDebugger.AddGridSquare(point, Colors.LightRed);
                 }
 
@@ -120,22 +109,9 @@ public static class PathProximityChokeFinder {
     }
 
     private static float GetNonRampWalkableRatio(Vector3 origin, Vector3 destination) {
-        var separation = GetPointsInBetween(origin, destination);
+        var separation = origin.GetPointsInBetween(destination);
         var validSeparationPointCount = separation.Count(point => MapAnalyzer.IsWalkable(point, includeObstacles: false) && !RegionAnalyzer.Ramps.Any(ramp => ramp.Contains(point)));
 
         return (float)validSeparationPointCount / separation.Count;
-    }
-
-    private static HashSet<Vector3> GetPointsInBetween(Vector3 origin, Vector3 destination) {
-        var maxDistance = origin.HorizontalDistanceTo(destination);
-        var currentDistance = 0f;
-
-        var pointsInBetween = new HashSet<Vector3>();
-        while (currentDistance < maxDistance) {
-            pointsInBetween.Add(origin.TranslateTowards(destination, currentDistance, ignoreZAxis: true).AsWorldGridCenter().WithWorldHeight());
-            currentDistance += 0.5f;
-        }
-
-        return pointsInBetween;
     }
 }

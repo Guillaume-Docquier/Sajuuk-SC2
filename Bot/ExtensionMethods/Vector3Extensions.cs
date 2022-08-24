@@ -112,4 +112,83 @@ public static class Vector3Extensions {
             }
         }
     }
+
+    /// <summary>
+    /// <para>Gets up to 8 reachable neighbors around the position.</para>
+    /// <para>Top, left, down and right are given if they are walkable.</para>
+    /// <para>
+    /// Diagonal neighbors are returned only if at least one of their components if walkable.
+    /// For example, the top right diagonal is reachable of either the top or the right is walkable.
+    /// </para>
+    /// <para>This is a game detail.</para>
+    /// </summary>
+    /// <param name="position">The position to get the neighbors of</param>
+    /// <param name="includeObstacles">If you're wondering if you should be using this, you shouldn't.</param>
+    /// <returns>Up to 8 neighbors</returns>
+    public static IEnumerable<Vector3> GetReachableNeighbors(this Vector3 position, bool includeObstacles = true) {
+        var leftPos = position.Translate(xTranslation: -1);
+        var isLeftOk = MapAnalyzer.IsInBounds(leftPos) && MapAnalyzer.IsWalkable(leftPos, includeObstacles);
+        if (isLeftOk) {
+            yield return leftPos;
+        }
+
+        var rightPos = position.Translate(xTranslation: 1);
+        var isRightOk = MapAnalyzer.IsInBounds(rightPos) && MapAnalyzer.IsWalkable(rightPos, includeObstacles);
+        if (isRightOk) {
+            yield return rightPos;
+        }
+
+        var upPos = position.Translate(yTranslation: 1);
+        var isUpOk = MapAnalyzer.IsInBounds(upPos) && MapAnalyzer.IsWalkable(upPos, includeObstacles);
+        if (isUpOk) {
+            yield return upPos;
+        }
+
+        var downPos = position.Translate(yTranslation: -1);
+        var isDownOk = MapAnalyzer.IsInBounds(downPos) && MapAnalyzer.IsWalkable(downPos, includeObstacles);
+        if (isDownOk) {
+            yield return downPos;
+        }
+
+        if (isLeftOk || isUpOk) {
+            var leftUpPos = position.Translate(xTranslation: -1, yTranslation: 1);
+            if (MapAnalyzer.IsInBounds(leftUpPos) && MapAnalyzer.IsWalkable(leftUpPos, includeObstacles)) {
+                yield return leftUpPos;
+            }
+        }
+
+        if (isLeftOk || isDownOk) {
+            var leftDownPos = position.Translate(xTranslation: -1, yTranslation: -1);
+            if (MapAnalyzer.IsInBounds(leftDownPos) && MapAnalyzer.IsWalkable(leftDownPos, includeObstacles)) {
+                yield return leftDownPos;
+            }
+        }
+
+        if (isRightOk || isUpOk) {
+            var rightUpPos = position.Translate(xTranslation: 1, yTranslation: 1);
+            if (MapAnalyzer.IsInBounds(rightUpPos) && MapAnalyzer.IsWalkable(rightUpPos, includeObstacles)) {
+                yield return rightUpPos;
+            }
+        }
+
+        if (isRightOk || isDownOk) {
+            var rightDownPos = position.Translate(xTranslation: 1, yTranslation: -1);
+            if (MapAnalyzer.IsInBounds(rightDownPos) && MapAnalyzer.IsWalkable(rightDownPos, includeObstacles)) {
+                yield return rightDownPos;
+            }
+        }
+    }
+
+    public static HashSet<Vector3> GetPointsInBetween(this Vector3 origin, Vector3 destination) {
+        var maxDistance = origin.HorizontalDistanceTo(destination);
+        var currentDistance = 0f;
+
+        var pointsInBetween = new HashSet<Vector3>();
+        while (currentDistance < maxDistance) {
+            pointsInBetween.Add(origin.TranslateTowards(destination, currentDistance, ignoreZAxis: true).AsWorldGridCenter().WithWorldHeight());
+            currentDistance += 0.5f;
+        }
+
+        return pointsInBetween;
+    }
 }
