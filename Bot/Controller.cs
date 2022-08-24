@@ -40,14 +40,15 @@ public static class Controller {
 
     public static uint Frame { get; private set; } = uint.MaxValue;
 
-    public static uint CurrentSupply { get; set; }
-    public static uint MaxSupply;
+    public static uint CurrentSupply { get; private set; }
+    public static uint MaxSupply { get; private set; }
     public static int AvailableSupply => (int)(MaxSupply - CurrentSupply);
 
     public static bool IsSupplyCapped => AvailableSupply == 0;
 
-    public static int AvailableMinerals;
-    public static int AvailableVespene;
+    public static int AvailableMinerals { get; private set; }
+    public static int AvailableVespene { get; private set; }
+
     public static HashSet<uint> ResearchedUpgrades;
 
     public static readonly List<string> ChatLog = new List<string>();
