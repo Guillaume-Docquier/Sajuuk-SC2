@@ -282,6 +282,7 @@ public static class Controller {
         }
 
         if (buildingType == Units.Extractor) {
+            Logger.Debug("Trying to build {0}", buildingTypeData.Name);
             // TODO GD Get a nearby worker
             var availableGas = GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers)
                 .Where(gas => gas.Supervisor != null && !UnitUtils.IsGasExploited(gas))
@@ -296,6 +297,7 @@ public static class Controller {
             BuildingTracker.ConfirmPlacement(buildingType, availableGas.Position, producer);
         }
         else if (location != default) {
+            Logger.Debug("Trying to build {0} without location", buildingTypeData.Name);
             if (!BuildingTracker.CanPlace(buildingType, location)) {
                 return RequestResult.NoSuitableLocation;
             }
@@ -304,6 +306,8 @@ public static class Controller {
             BuildingTracker.ConfirmPlacement(buildingType, location, producer);
         }
         else {
+            Logger.Debug("Trying to build {0} with location {1}", buildingTypeData.Name, location);
+
             var constructionSpot = BuildingTracker.FindConstructionSpot(buildingType);
             if (constructionSpot == default) {
                 return RequestResult.NoSuitableLocation;
@@ -312,6 +316,8 @@ public static class Controller {
             producer.PlaceBuilding(buildingType, constructionSpot);
             BuildingTracker.ConfirmPlacement(buildingType, constructionSpot, producer);
         }
+
+        Logger.Debug("Done building {0}", buildingTypeData.Name);
 
         AvailableMinerals -= buildingTypeData.MineralCost;
         AvailableVespene -= buildingTypeData.VespeneCost;
