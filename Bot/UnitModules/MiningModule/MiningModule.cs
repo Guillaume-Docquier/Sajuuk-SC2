@@ -1,6 +1,4 @@
-﻿using Bot.Wrapper;
-
-namespace Bot.UnitModules;
+﻿namespace Bot.UnitModules;
 
 public class MiningModule: IUnitModule {
     public const string Tag = "MiningModule";

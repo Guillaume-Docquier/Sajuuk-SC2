@@ -8,7 +8,6 @@ using SC2APIProtocol;
 
 namespace Bot.MapKnowledge;
 
-// TODO GD Precompute (runs in ~5s)
 public class RegionAnalyzer: INeedUpdating {
     private const bool DrawEnabled = true;
 
@@ -19,10 +18,10 @@ public class RegionAnalyzer: INeedUpdating {
 
     public static readonly RegionAnalyzer Instance = new RegionAnalyzer();
 
-    public static readonly List<HashSet<Vector2>> Regions = new List<HashSet<Vector2>>();
-    public static readonly List<HashSet<Vector2>> Ramps = new List<HashSet<Vector2>>();
-    public static readonly List<Vector2> Noise = new List<Vector2>();
-    public static readonly List<ChokePoint> ChokePoints = new List<ChokePoint>();
+    public static List<HashSet<Vector2>> Regions = new List<HashSet<Vector2>>();
+    public static List<HashSet<Vector2>> Ramps = new List<HashSet<Vector2>>();
+    public static List<Vector2> Noise = new List<Vector2>();
+    public static List<ChokePoint> ChokePoints = new List<ChokePoint>();
 
     private static bool _isInitialized = false;
 
@@ -58,6 +57,21 @@ public class RegionAnalyzer: INeedUpdating {
             return;
         }
 
+        var regionsData = RegionDataStore.Load(Controller.GameInfo.MapName);
+        if (regionsData != null) {
+            Logger.Info("Initializing RegionAnalyzer from precomputed data for {0}", Controller.GameInfo.MapName);
+
+            Regions = regionsData.Regions;
+            Ramps = regionsData.Ramps;
+            Noise = regionsData.Noise;
+            ChokePoints = regionsData.ChokePoints;
+
+            Logger.Info("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", Regions.Count, Ramps.Count, Noise.Count, ChokePoints.Count);
+            _isInitialized = true;
+
+            return;
+        }
+
         var map = GenerateMap();
 
         Logger.Info("Starting region analysis on {0} cells ({1}x{2})", map.Count, MapAnalyzer.MaxX, MapAnalyzer.MaxY);
@@ -68,9 +82,11 @@ public class RegionAnalyzer: INeedUpdating {
         InitChokePoints();
         InitSubregions();
 
-        Logger.Info("Region analysis done");
-        Logger.Info("{0} regions, {1} ramps and {2} unclassified cells", Regions.Count, Ramps.Count, Noise.Count);
+        RegionDataStore.Save(Controller.GameInfo.MapName, new RegionData(Regions, Ramps, Noise, ChokePoints));
 
+        Logger.Info("Region analysis done and saved");
+
+        Logger.Info("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", Regions.Count, Ramps.Count, Noise.Count, ChokePoints.Count);
         _isInitialized = true;
     }
 

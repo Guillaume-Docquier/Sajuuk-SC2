@@ -32,7 +32,7 @@ public static class Pathfinder {
 
         var isPathKnown = TryGetPathFromMemory(origin, destination, out var knownPath);
         if (isPathKnown) {
-            //GraphicalDebugger.AddPath(knownPath, Colors.LightGreen, Colors.DarkGreen);
+            GraphicalDebugger.AddPath(knownPath, Colors.LightGreen, Colors.DarkGreen);
             return knownPath;
         }
 

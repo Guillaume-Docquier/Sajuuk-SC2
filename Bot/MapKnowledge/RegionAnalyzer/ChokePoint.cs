@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Text.Json.Serialization;
 using Bot.ExtensionMethods;
 
 namespace Bot.MapKnowledge;
@@ -21,5 +22,16 @@ public class ChokePoint {
         Start = Edge.MinBy(edgePoint => edgePoint.DistanceTo(start.ToVector2()));
         End = Edge.MinBy(edgePoint => edgePoint.DistanceTo(end.ToVector2()));
         Length = Start.DistanceTo(End);
+    }
+
+    /// <summary>
+    /// This constructor is only meant for deserialization, you should not use it.
+    /// </summary>
+    [JsonConstructor]
+    public ChokePoint(Vector2 start, Vector2 end, HashSet<Vector2> edge, float length) {
+        Start = start;
+        End = end;
+        Edge = edge;
+        Length = length;
     }
 }
