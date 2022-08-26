@@ -12,7 +12,7 @@ public class TumorCreepSpreadModule: UnitModule {
     public const string Tag = "TumorCreepSpreadModule";
 
     private const int CreepSpreadCooldown = 12;
-    private const double EnemyBaseConvergenceFactor = 0.5;
+    private const double EnemyBaseConvergenceFactor = 0.33;
 
     private readonly Unit _creepTumor;
     private ulong _spreadAt = default;
