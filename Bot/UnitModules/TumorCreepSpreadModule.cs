@@ -8,7 +8,7 @@ using Bot.Wrapper;
 
 namespace Bot.UnitModules;
 
-public class TumorCreepSpreadModule: IUnitModule {
+public class TumorCreepSpreadModule: UnitModule {
     public const string Tag = "TumorCreepSpreadModule";
 
     private const int CreepSpreadCooldown = 12;
@@ -18,7 +18,7 @@ public class TumorCreepSpreadModule: IUnitModule {
     private ulong _spreadAt = default;
 
     public static void Install(Unit unit) {
-        if (UnitModule.PreInstallCheck(Tag, unit)) {
+        if (PreInstallCheck(Tag, unit)) {
             unit.Modules.Add(Tag, new TumorCreepSpreadModule(unit));
         }
     }
@@ -27,7 +27,7 @@ public class TumorCreepSpreadModule: IUnitModule {
         _creepTumor = creepTumor;
     }
 
-    public void Execute() {
+    protected override void DoExecute() {
         if (_spreadAt == default) {
             if (_creepTumor.UnitType == Units.CreepTumorBurrowed) {
                 _spreadAt = Controller.Frame + Controller.SecsToFrames(CreepSpreadCooldown);
@@ -58,7 +58,7 @@ public class TumorCreepSpreadModule: IUnitModule {
             _creepTumor.UseAbility(Abilities.SpawnCreepTumor, position: bestPlaceLocation.ToPoint2D());
             GraphicalDebugger.AddSphere(bestPlaceLocation, 1, Colors.Yellow);
 
-            UnitModule.Uninstall<TumorCreepSpreadModule>(_creepTumor);
+            Uninstall<TumorCreepSpreadModule>(_creepTumor);
         }
     }
 }

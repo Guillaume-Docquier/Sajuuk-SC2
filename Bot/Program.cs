@@ -5,13 +5,13 @@ using SC2APIProtocol;
 namespace Bot;
 
 public class Program {
-    private static readonly IBot Bot = new SajuukBot("1_10_8");
+    private static readonly IBot Bot = new SajuukBot("1_10_9");
 
     private const string MapFileName = Maps.FileNames.TwoThousandAtmospheres;
     private const Race OpponentRace = Race.Terran;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
-    private const bool RealTime = true;
+    private const bool RealTime = false;
 
     public static GameConnection GameConnection;
     public static bool DebugEnabled = false;

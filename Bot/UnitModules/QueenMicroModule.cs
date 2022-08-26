@@ -6,14 +6,14 @@ using Bot.MapKnowledge;
 
 namespace Bot.UnitModules;
 
-public class QueenMicroModule: IUnitModule, IWatchUnitsDie {
+public class QueenMicroModule: UnitModule, IWatchUnitsDie {
     public const string Tag = "QueenMicroModule";
 
     private Unit _queen;
     private Unit _assignedTownHall;
 
     public static void Install(Unit queen, Unit assignedTownHall = null) {
-        if (UnitModule.PreInstallCheck(Tag, queen)) {
+        if (PreInstallCheck(Tag, queen)) {
             queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall));
         }
     }
@@ -26,7 +26,7 @@ public class QueenMicroModule: IUnitModule, IWatchUnitsDie {
         _assignedTownHall?.AddDeathWatcher(this);
     }
 
-    public void Execute() {
+    protected override void DoExecute() {
         if (_queen == null) {
             return;
         }

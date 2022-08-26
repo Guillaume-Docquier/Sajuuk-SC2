@@ -5,7 +5,7 @@ using Bot.GameSense;
 
 namespace Bot.UnitModules;
 
-public class AttackPriorityModule: IUnitModule {
+public class AttackPriorityModule: UnitModule {
     public const string Tag = "AttackPriorityModule";
 
     // TODO GD Get Unit specific priorities
@@ -20,7 +20,7 @@ public class AttackPriorityModule: IUnitModule {
     private readonly Unit _unit;
 
     public static void Install(Unit unit) {
-        if (UnitModule.PreInstallCheck(Tag, unit)) {
+        if (PreInstallCheck(Tag, unit)) {
             unit.Modules.Add(Tag, new AttackPriorityModule(unit));
         }
     }
@@ -29,7 +29,7 @@ public class AttackPriorityModule: IUnitModule {
         _unit = unit;
     }
 
-    public void Execute() {
+    protected override void DoExecute() {
         if (_unit.MaxRange == 0) {
             return;
         }

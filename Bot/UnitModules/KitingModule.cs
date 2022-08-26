@@ -1,12 +1,12 @@
 ﻿namespace Bot.UnitModules;
 
-public class KitingModule: IUnitModule {
+public class KitingModule: UnitModule {
     public const string Tag = "KitingModule";
 
     private readonly Unit _unit;
 
     public static void Install(Unit unit) {
-        if (UnitModule.PreInstallCheck(Tag, unit)) {
+        if (PreInstallCheck(Tag, unit)) {
             unit.Modules.Add(Tag, new KitingModule(unit));
         }
     }
@@ -15,7 +15,7 @@ public class KitingModule: IUnitModule {
         _unit = unit;
     }
 
-    public void Execute() {
+    protected override void DoExecute() {
         throw new System.NotImplementedException();
     }
 }

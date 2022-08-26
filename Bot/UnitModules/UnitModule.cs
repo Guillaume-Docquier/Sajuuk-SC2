@@ -3,7 +3,25 @@ using System.Collections.Generic;
 
 namespace Bot.UnitModules;
 
-public static class UnitModule {
+public abstract class UnitModule: IUnitModule {
+    private bool _isModuleEnabled = true;
+
+    public void Enable() {
+        _isModuleEnabled = true;
+    }
+
+    public void Disable() {
+        _isModuleEnabled = false;
+    }
+
+    public void Execute() {
+        if (_isModuleEnabled) {
+            DoExecute();
+        }
+    }
+
+    protected abstract void DoExecute();
+
     private static readonly Dictionary<Type, string> Tags = new Dictionary<Type, string>()
     {
         { typeof(AttackPriorityModule), AttackPriorityModule.Tag },

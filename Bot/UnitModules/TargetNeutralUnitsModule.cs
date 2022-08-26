@@ -4,13 +4,13 @@ using Bot.GameSense;
 
 namespace Bot.UnitModules;
 
-public class TargetNeutralUnitsModule: IUnitModule {
+public class TargetNeutralUnitsModule: UnitModule {
     public const string Tag = "TargetNeutralUnitsModule";
 
     private readonly Unit _unit;
 
     public static void Install(Unit unit) {
-        if (UnitModule.PreInstallCheck(Tag, unit)) {
+        if (PreInstallCheck(Tag, unit)) {
             unit.Modules.Add(Tag, new TargetNeutralUnitsModule(unit));
         }
     }
@@ -19,7 +19,7 @@ public class TargetNeutralUnitsModule: IUnitModule {
         _unit = unit;
     }
 
-    public void Execute() {
+    protected override void DoExecute() {
         var enemyUnitsInRange = UnitsTracker.EnemyUnits
             .Where(enemy => !enemy.RawUnitData.IsFlying)
             .Where(enemy => enemy.HorizontalDistanceTo(_unit.Position) <= _unit.UnitTypeData.SightRange);

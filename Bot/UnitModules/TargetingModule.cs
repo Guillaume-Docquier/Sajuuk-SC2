@@ -2,14 +2,14 @@
 
 namespace Bot.UnitModules;
 
-public class TargetingModule: IUnitModule {
+public class TargetingModule: UnitModule {
     public const string Tag = "TargetingModule";
 
     private readonly Unit _unit;
     private readonly Vector3 _target;
 
     public static void Install(Unit unit, Vector3 target) {
-        if (UnitModule.PreInstallCheck(Tag, unit)) {
+        if (PreInstallCheck(Tag, unit)) {
             unit.Modules.Add(Tag, new TargetingModule(unit, target));
         }
     }
@@ -19,7 +19,7 @@ public class TargetingModule: IUnitModule {
         _target = target;
     }
 
-    public void Execute() {
+    protected override void DoExecute() {
         throw new System.NotImplementedException();
     }
 }

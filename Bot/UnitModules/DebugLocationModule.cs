@@ -4,7 +4,7 @@ using SC2APIProtocol;
 
 namespace Bot.UnitModules;
 
-public class DebugLocationModule: IUnitModule {
+public class DebugLocationModule: UnitModule {
     public const string Tag = "DebugLocationModule";
 
     private readonly Unit _unit;
@@ -12,7 +12,7 @@ public class DebugLocationModule: IUnitModule {
     private readonly bool _showName;
 
     public static void Install(Unit unit, Color color = null, bool showName = false) {
-        if (UnitModule.PreInstallCheck(Tag, unit)) {
+        if (PreInstallCheck(Tag, unit)) {
             unit.Modules.Add(Tag, new DebugLocationModule(unit, color, showName));
         }
     }
@@ -23,7 +23,7 @@ public class DebugLocationModule: IUnitModule {
         _showName = showName;
     }
 
-    public void Execute() {
+    protected override void DoExecute() {
         GraphicalDebugger.AddSphere(_unit, _color);
         if (_showName) {
             GraphicalDebugger.AddText($"{_unit.Name} [{_unit.UnitType}]", worldPos: _unit.Position.ToPoint());

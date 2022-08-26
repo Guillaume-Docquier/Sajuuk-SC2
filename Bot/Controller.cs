@@ -31,7 +31,6 @@ public static class Controller {
     private static int _frameDelayMs = 0;
 
     private static readonly List<Action> Actions = new List<Action>();
-    private static readonly Random Random = new Random();
     public const double FramesPerSecond = 22.4;
     public const float ExpandIsTakenRadius = 4f;
 

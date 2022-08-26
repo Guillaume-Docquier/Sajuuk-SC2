@@ -155,8 +155,9 @@ public class EconomyManager: IManager {
             }
 
             var nbWorkersToRelease = Math.Min(-1 * managerWithExtraWorkers.IdealAvailableCapacity, requiredWorkers);
-            var freeWorkers = managerWithExtraWorkers.ReleaseWorkers(nbWorkersToRelease);
-            managerInNeed.AssignWorkers(freeWorkers.ToList());
+            foreach (var freeWorker in managerWithExtraWorkers.HandOutWorkers(nbWorkersToRelease)) {
+                managerInNeed.AssignWorker(freeWorker);
+            }
 
             managerInNeed = GetClosestManagerWithIdealCapacityNotMet(MapAnalyzer.StartingLocation);
         }

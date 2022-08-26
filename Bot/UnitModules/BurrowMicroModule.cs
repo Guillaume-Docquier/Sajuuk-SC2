@@ -6,7 +6,7 @@ using Bot.GameSense;
 namespace Bot.UnitModules;
 
 // TODO GD Only works on roaches for now
-public class BurrowMicroModule: IUnitModule {
+public class BurrowMicroModule: UnitModule {
     public const string Tag = "BurrowMicroModule";
 
     public const double BurrowDownThreshold = 0.5;
@@ -15,7 +15,7 @@ public class BurrowMicroModule: IUnitModule {
     private readonly Unit _unit;
 
     public static void Install(Unit unit) {
-        if (UnitModule.PreInstallCheck(Tag, unit)) {
+        if (PreInstallCheck(Tag, unit)) {
             unit.Modules.Add(Tag, new BurrowMicroModule(unit));
         }
     }
@@ -24,7 +24,7 @@ public class BurrowMicroModule: IUnitModule {
         _unit = unit;
     }
 
-    public void Execute() {
+    protected override void DoExecute() {
         if (!Controller.ResearchedUpgrades.Contains(Upgrades.Burrow)) {
             return;
         }

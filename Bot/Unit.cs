@@ -51,14 +51,29 @@ public class Unit: ICanDie, IHavePosition {
         get => _manager;
         set {
             if (_manager != value) {
-                _manager?.Release(this);
+                if (value != null) {
+                    _manager?.Release(this);
+                }
+
                 _manager = value;
             }
         }
     }
 
     // TODO GD Probably implement ISupervisor
-    public IManager Supervisor;
+    private IManager _supervisor;
+    public IManager Supervisor {
+        get => _supervisor;
+        set {
+            if (_supervisor != value) {
+                if (value != null) {
+                    _supervisor?.Release(this);
+                }
+
+                _supervisor = value;
+            }
+        }
+    }
 
     public readonly Dictionary<string, IUnitModule> Modules = new Dictionary<string, IUnitModule>();
 

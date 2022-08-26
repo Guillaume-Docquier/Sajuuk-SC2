@@ -4,7 +4,7 @@ using Bot.Wrapper;
 
 namespace Bot.UnitModules;
 
-public class CapacityModule: IUnitModule, IWatchUnitsDie {
+public class CapacityModule: UnitModule, IWatchUnitsDie {
     public const string Tag = "CapacityModule";
 
     private readonly Unit _unit;
@@ -14,7 +14,7 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
     public int AvailableCapacity => _maxCapacity - AssignedUnits.Count;
 
     public static void Install(Unit unit, int maxCapacity) {
-        if (UnitModule.PreInstallCheck(Tag, unit)) {
+        if (PreInstallCheck(Tag, unit)) {
             unit.Modules.Add(Tag, new CapacityModule(unit, maxCapacity));
         }
     }
@@ -22,6 +22,14 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
     private CapacityModule(Unit unit, int maxCapacity) {
         _unit = unit;
         _maxCapacity = maxCapacity;
+    }
+
+    protected override void DoExecute() {
+        GraphicalDebugger.AddText(AssignedUnits.Count.ToString(), worldPos: _unit.Position.ToPoint());
+    }
+
+    public void ReportUnitDeath(Unit deadUnit) {
+        AssignedUnits.Remove(deadUnit);
     }
 
     public void Assign(Unit unit) {
@@ -49,13 +57,5 @@ public class CapacityModule: IUnitModule, IWatchUnitsDie {
     public void Release(Unit unitToRelease) {
         unitToRelease.RemoveDeathWatcher(this);
         AssignedUnits.Remove(unitToRelease);
-    }
-
-    public void Execute() {
-        GraphicalDebugger.AddText(AssignedUnits.Count.ToString(), worldPos: _unit.Position.ToPoint());
-    }
-
-    public void ReportUnitDeath(Unit deadUnit) {
-        AssignedUnits.Remove(deadUnit);
     }
 }
