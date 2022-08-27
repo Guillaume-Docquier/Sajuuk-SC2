@@ -6,7 +6,7 @@ public class MiningModule: UnitModule {
     private readonly Unit _worker;
     private IStrategy _strategy;
 
-    public UnitUtils.ResourceType ResourceType;
+    public Resources.ResourceType ResourceType;
     public Unit AssignedResource;
 
     public static void Install(Unit worker, Unit assignedResource) {
@@ -36,13 +36,13 @@ public class MiningModule: UnitModule {
             return;
         }
 
-        ResourceType = UnitUtils.GetResourceType(assignedResource);
+        ResourceType = Resources.GetResourceType(assignedResource);
         AssignedResource = assignedResource;
 
         _strategy = ResourceType switch
         {
-            UnitUtils.ResourceType.Gas => new GasMiningStrategy(_worker, assignedResource),
-            UnitUtils.ResourceType.Mineral => new MineralMiningStrategy(_worker, assignedResource),
+            Resources.ResourceType.Gas => new GasMiningStrategy(_worker, assignedResource),
+            Resources.ResourceType.Mineral => new MineralMiningStrategy(_worker, assignedResource),
             _ => null
         };
 
@@ -50,7 +50,7 @@ public class MiningModule: UnitModule {
     }
 
     public void ReleaseResource() {
-        ResourceType = UnitUtils.ResourceType.None;
+        ResourceType = Resources.ResourceType.None;
         AssignedResource = null;
         _strategy = null;
 

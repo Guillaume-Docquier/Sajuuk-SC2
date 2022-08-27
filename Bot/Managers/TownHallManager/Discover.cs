@@ -6,6 +6,10 @@ using Bot.GameSense;
 namespace Bot.Managers;
 
 public partial class TownHallManager {
+    private const int MaxDistanceToExpand = 10;
+    private const int MaxGas = 2;
+    private const int MaxMinerals = 8;
+
     private List<Unit> DiscoverMinerals() {
         return Controller.GetUnits(UnitsTracker.NeutralUnits, Units.MineralFields)
             .Where(mineral => mineral.DistanceTo(TownHall) < MaxDistanceToExpand)

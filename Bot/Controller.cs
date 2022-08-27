@@ -4,11 +4,11 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using Bot.Builds;
+using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers;
 using Bot.MapKnowledge;
-using Bot.UnitModules;
 using Bot.Wrapper;
 using SC2APIProtocol;
 using Action = SC2APIProtocol.Action;
@@ -243,13 +243,13 @@ public static class Controller {
         return RequestResult.Ok;
     }
 
-    public static RequestResult TrainUnit(uint unitType) {
+    private static RequestResult TrainUnit(uint unitType) {
         var producer = GetAvailableProducer(unitType);
 
         return TrainUnit(unitType, producer);
     }
 
-    public static RequestResult TrainUnit(uint unitType, Unit producer) {
+    private static RequestResult TrainUnit(uint unitType, Unit producer) {
         var unitTypeData = KnowledgeBase.GetUnitTypeData(unitType);
 
         var requirementsValidationResult = ValidateRequirements(unitType, producer, unitTypeData);
@@ -266,13 +266,13 @@ public static class Controller {
         return RequestResult.Ok;
     }
 
-    public static RequestResult PlaceBuilding(uint buildingType, Vector3 location = default) {
+    private static RequestResult PlaceBuilding(uint buildingType, Vector3 location = default) {
         var producer = GetAvailableProducer(buildingType);
 
         return PlaceBuilding(buildingType, producer, location);
     }
 
-    public static RequestResult PlaceBuilding(uint buildingType, Unit producer, Vector3 location = default) {
+    private static RequestResult PlaceBuilding(uint buildingType, Unit producer, Vector3 location = default) {
         var buildingTypeData = KnowledgeBase.GetUnitTypeData(buildingType);
 
         var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
@@ -282,21 +282,26 @@ public static class Controller {
 
         if (buildingType == Units.Extractor) {
             Logger.Debug("Trying to build {0}", buildingTypeData.Name);
-            // TODO GD Get a nearby worker
+
+            var extractorPositions = GetUnits(UnitsTracker.OwnedUnits, Units.Extractors)
+                .Select(extractor => extractor.Position.WithoutZ())
+                .ToHashSet();
+
             var availableGas = GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers)
-                .Where(gas => gas.Supervisor != null && !UnitUtils.IsGasExploited(gas))
+                .Where(gas => gas.Supervisor != null && !extractorPositions.Contains(gas.Position.WithoutZ()))
                 .MaxBy(gas => (gas.Supervisor as TownHallManager)!.WorkerCount);
 
             if (availableGas == null) {
+                Logger.Warning("(Controller) No available gasses for extractor");
                 return RequestResult.NoSuitableLocation;
             }
 
+            // TODO GD Get a nearby worker
             producer.PlaceExtractor(buildingType, availableGas);
-            UnitModule.Get<CapacityModule>(availableGas).Assign(producer); // Assign the worker until extractor is spawned
             BuildingTracker.ConfirmPlacement(buildingType, availableGas.Position, producer);
         }
         else if (location != default) {
-            Logger.Debug("Trying to build {0} without location", buildingTypeData.Name);
+            Logger.Debug("Trying to build {0} with location {1}", buildingTypeData.Name, location);
             if (!BuildingTracker.CanPlace(buildingType, location)) {
                 return RequestResult.NoSuitableLocation;
             }
@@ -305,8 +310,7 @@ public static class Controller {
             BuildingTracker.ConfirmPlacement(buildingType, location, producer);
         }
         else {
-            Logger.Debug("Trying to build {0} with location {1}", buildingTypeData.Name, location);
-
+            Logger.Debug("Trying to build {0} without location", buildingTypeData.Name);
             var constructionSpot = BuildingTracker.FindConstructionSpot(buildingType);
             if (constructionSpot == default) {
                 return RequestResult.NoSuitableLocation;
@@ -324,17 +328,13 @@ public static class Controller {
         return RequestResult.Ok;
     }
 
-    public static bool CanPlace(uint unitType, Vector3 targetPos) {
-        return BuildingTracker.CanPlace(unitType, targetPos);
-    }
-
-    public static RequestResult ResearchUpgrade(uint upgradeType) {
+    private static RequestResult ResearchUpgrade(uint upgradeType) {
         var producer = GetAvailableProducer(upgradeType, allowQueue: true);
 
         return ResearchUpgrade(upgradeType, producer);
     }
 
-    public static RequestResult ResearchUpgrade(uint upgradeType, Unit producer) {
+    private static RequestResult ResearchUpgrade(uint upgradeType, Unit producer) {
         var researchTypeData = KnowledgeBase.GetUpgradeData(upgradeType);
 
         var requirementsValidationResult = ValidateRequirements(upgradeType, producer, researchTypeData);
@@ -350,13 +350,13 @@ public static class Controller {
         return RequestResult.Ok;
     }
 
-    public static RequestResult UpgradeInto(uint buildingType) {
+    private static RequestResult UpgradeInto(uint buildingType) {
         var producer = GetAvailableProducer(buildingType);
 
         return UpgradeInto(buildingType, producer);
     }
 
-    public static RequestResult UpgradeInto(uint buildingType, Unit producer) {
+    private static RequestResult UpgradeInto(uint buildingType, Unit producer) {
         var buildingTypeData = KnowledgeBase.GetUnitTypeData(buildingType);
 
         var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
@@ -372,7 +372,7 @@ public static class Controller {
         return RequestResult.Ok;
     }
 
-    public static RequestResult PlaceExpand(uint buildingType) {
+    private static RequestResult PlaceExpand(uint buildingType) {
         if (!MapAnalyzer.IsInitialized) {
             return RequestResult.NotSupported;
         }
@@ -382,7 +382,7 @@ public static class Controller {
         return PlaceExpand(buildingType, producer);
     }
 
-    public static RequestResult PlaceExpand(uint buildingType, Unit producer) {
+    private static RequestResult PlaceExpand(uint buildingType, Unit producer) {
         if (!MapAnalyzer.IsInitialized) {
             return RequestResult.NotSupported;
         }
@@ -447,7 +447,7 @@ public static class Controller {
         return Observation.Observation.RawData.Effects.Where(effect => effect.EffectId == effectId);
     }
 
-    public static RequestResult CanAfford(int mineralCost, int vespeneCost)
+    private static RequestResult CanAfford(int mineralCost, int vespeneCost)
     {
         if (AvailableMinerals < mineralCost) {
             return RequestResult.NotEnoughMinerals;
@@ -468,7 +468,7 @@ public static class Controller {
         return true;
     }
 
-    public static bool HasEnoughSupply(float foodCost) {
+    private static bool HasEnoughSupply(float foodCost) {
         return AvailableSupply >= foodCost;
     }
 

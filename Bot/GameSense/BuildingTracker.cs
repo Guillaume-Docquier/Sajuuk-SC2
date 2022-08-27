@@ -78,7 +78,6 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
         _ongoingBuildingOrders.Remove(unit);
     }
 
-    // TODO GD Check with MapAnalyzer._currentWalkMap before checking with CanPlace
     // This is a blocking call! Use it sparingly, or you will slow down your execution significantly!
     public static bool CanPlace(uint buildingType, Vector3 position) {
         if (IsTooCloseToTownHall(buildingType, position)) {
@@ -89,6 +88,12 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
             return false;
         }
 
+        if (Units.Extractors.Contains(buildingType)) {
+            // Extractors are placed on gas, let's not query the terrain
+            return true;
+        }
+
+        // TODO GD Check with MapAnalyzer._currentWalkMap before checking with the query
         var queryBuildingPlacementResponse = Program.GameConnection.SendRequest(RequestBuilder.RequestQueryBuildingPlacement(buildingType, position)).Result;
         if (queryBuildingPlacementResponse.Query.Placements.Count == 0) {
             return false;

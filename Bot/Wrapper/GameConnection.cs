@@ -98,20 +98,20 @@ public class GameConnection {
                 return;
             }
             catch (WebSocketException) {
-                Logger.Info("Failed. Retrying...");
+                Logger.Warning("Failed. Retrying...");
             }
 
             Thread.Sleep(500);
         }
 
-        Logger.Info("Unable to connect to SC2 after {0} seconds.", timeout);
+        Logger.Error("Unable to connect to SC2 after {0} seconds.", timeout);
         throw new Exception("Unable to make a connection.");
     }
 
     private async Task CreateGame(string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {;
         var mapPath = Path.Combine(_starcraftMapsDir, mapFileName);
         if (!File.Exists(mapPath)) {
-            Logger.Info($"Unable to locate map: {mapPath}");
+            Logger.Error($"Unable to locate map: {mapPath}");
             throw new Exception($"Unable to locate map: {mapPath}");
         }
 
@@ -130,7 +130,7 @@ public class GameConnection {
 
         if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.Unset) {
             Logger.Error("JoinGame error: {0}", joinGameResponse.JoinGame.Error.ToString());
-            if (!String.IsNullOrEmpty(joinGameResponse.JoinGame.ErrorDetails)) {
+            if (!string.IsNullOrEmpty(joinGameResponse.JoinGame.ErrorDetails)) {
                 Logger.Error(joinGameResponse.JoinGame.ErrorDetails);
             }
         }
@@ -257,14 +257,14 @@ public class GameConnection {
     private static void PrintMemoryInfo() {
         var memoryUsedMb = Process.GetCurrentProcess().WorkingSet64 * 1e-6;
         if (memoryUsedMb > 200) {
-            Logger.Info("==== Memory Debug Start ====");
-            Logger.Info("Memory used: {0} MB", memoryUsedMb.ToString("0.00"));
-            Logger.Info("Units: {0} owned, {1} neutral, {2} enemy", UnitsTracker.OwnedUnits.Count, UnitsTracker.NeutralUnits.Count, UnitsTracker.EnemyUnits.Count);
-            Logger.Info(
+            Logger.Performance("==== Memory Debug Start ====");
+            Logger.Performance("Memory used: {0} MB", memoryUsedMb.ToString("0.00"));
+            Logger.Performance("Units: {0} owned, {1} neutral, {2} enemy", UnitsTracker.OwnedUnits.Count, UnitsTracker.NeutralUnits.Count, UnitsTracker.EnemyUnits.Count);
+            Logger.Performance(
                 "Pathfinding cache: {0} paths, {1} tiles",
                 Pathfinder.Memory.Values.Sum(destinations => destinations.Keys.Count),
                 Pathfinder.Memory.Values.SelectMany(destinations => destinations.Values).Sum(path => path.Count));
-            Logger.Info("==== Memory Debug End ====");
+            Logger.Performance("==== Memory Debug End ====");
         }
     }
 

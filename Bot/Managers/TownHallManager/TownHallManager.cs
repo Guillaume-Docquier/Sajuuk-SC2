@@ -12,13 +12,9 @@ namespace Bot.Managers;
 
 // TODO GD This is a supervisor
 public partial class TownHallManager: IManager {
-    private const int MaxGas = 2;
-    private const int MaxExtractorsPerGas = 1;
     private const int MaxPerExtractor = 3;
-    private const int MaxMinerals = 8;
     private const int IdealPerMinerals = 2;
     private const int MaxPerMinerals = 3;
-    private const int MaxDistanceToExpand = 10;
 
     private readonly Color _color;
     public Unit TownHall { get; private set; }
@@ -166,7 +162,7 @@ public partial class TownHallManager: IManager {
 
         foreach (var extractor in extractorsToFill) {
             var workersToReassign = _workers
-                .Where(worker => UnitModule.Get<MiningModule>(worker).ResourceType == UnitUtils.ResourceType.Mineral)
+                .Where(worker => UnitModule.Get<MiningModule>(worker).ResourceType == Resources.ResourceType.Mineral)
                 .OrderBy(worker => {
                     var resource = UnitModule.Get<MiningModule>(worker).AssignedResource;
 
@@ -208,9 +204,19 @@ public partial class TownHallManager: IManager {
     /// We can only request an expand if the TownHall is operational and we request a maximum of 1 expand.
     /// </summary>
     private void RequestExpand() {
-        // TODO GD This doesn't count depleted minerals
+        if (!TownHall.IsOperational || _expandHasBeenRequested) {
+            return;
+        }
+
+        // We don't always instantly see the minerals and snapshot units have no contents
+        if (_minerals.Any(mineral => mineral.RawUnitData.DisplayType != DisplayType.Visible)) {
+            return;
+        }
+
+        // TODO GD This doesn't count minerals if they were depleted when we built the hatch
         // TODO GD Should probably put this in expand analyzer, but it's fine for now
-        if (TownHall.IsOperational && !_expandHasBeenRequested && (GetRemainingMineralsPercent() <= 0.6 || _minerals.Count <= 5)) {
+        if (GetRemainingMineralsPercent() <= 0.6 || _minerals.Count <= 5) {
+            Logger.Info("(TownHallManager) Running low on resources ({0:P2} / {1} minerals), requesting expand", GetRemainingMineralsPercent(), _minerals.Count);
             _expandBuildRequest.Requested += 1;
 
             _expandHasBeenRequested = true;

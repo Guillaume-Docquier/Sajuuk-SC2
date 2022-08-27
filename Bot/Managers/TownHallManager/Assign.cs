@@ -4,7 +4,16 @@ using Bot.UnitModules;
 namespace Bot.Managers;
 
 public partial class TownHallManager {
+    private const int MaxExtractorsPerGas = 1;
+
     public void AssignQueen(Unit queen) {
+        if (Queen != null) {
+            Logger.Error("(TownHallManager) Trying to assign queen, but we already have one");
+            return;
+        }
+
+        Logger.Debug("(TownHallManager) Assigned {0}", queen);
+
         queen.Supervisor = this;
         queen.AddDeathWatcher(this);
 
@@ -15,6 +24,8 @@ public partial class TownHallManager {
     }
 
     public void AssignWorker(Unit worker) {
+        Logger.Debug("(TownHallManager) Assigned {0}", worker);
+
         worker.Supervisor = this;
         worker.AddDeathWatcher(this);
 
@@ -28,6 +39,8 @@ public partial class TownHallManager {
     }
 
     private void AssignMineral(Unit mineral) {
+        Logger.Debug("(TownHallManager) Assigned {0}", mineral);
+
         mineral.Supervisor = this;
         mineral.AddDeathWatcher(this);
 
@@ -38,6 +51,8 @@ public partial class TownHallManager {
     }
 
     private void AssignGas(Unit gas) {
+        Logger.Debug("(TownHallManager) Assigned {0}", gas);
+
         gas.Supervisor = this;
 
         _gasses.Add(gas);
@@ -47,6 +62,8 @@ public partial class TownHallManager {
     }
 
     private void AssignExtractor(Unit extractor) {
+        Logger.Debug("(TownHallManager) Assigned {0}", extractor);
+
         extractor.Supervisor = this;
         extractor.AddDeathWatcher(this);
 
@@ -58,6 +75,8 @@ public partial class TownHallManager {
     }
 
     private void AssignTownHall(Unit townHall) {
+        Logger.Debug("(TownHallManager) Assigned {0}", townHall);
+
         townHall.Supervisor = this;
         townHall.AddDeathWatcher(this);
 

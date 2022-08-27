@@ -1,9 +1,8 @@
 ﻿using Bot.GameData;
-using Bot.UnitModules;
 
 namespace Bot;
 
-public static class UnitUtils {
+public static class Resources {
     public enum ResourceType {
         Mineral,
         Gas,
@@ -20,13 +19,5 @@ public static class UnitUtils {
         }
 
         return ResourceType.None;
-    }
-
-    public static bool IsGasExploited(Unit gas) {
-        return IsResourceManaged(gas) && UnitModule.Get<CapacityModule>(gas).AvailableCapacity == 0;
-    }
-
-    private static bool IsResourceManaged(Unit resource) {
-        return resource.Modules.ContainsKey(CapacityModule.Tag);
     }
 }

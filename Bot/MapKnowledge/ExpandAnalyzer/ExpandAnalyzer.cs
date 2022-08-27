@@ -84,7 +84,7 @@ public partial class ExpandAnalyzer: INeedUpdating {
             var centerPosition = Clustering.GetBoundingBoxCenter(resourceCluster).AsWorldGridCenter();
             var searchGrid = MapAnalyzer.BuildSearchGrid(centerPosition, gridRadius: ExpandSearchRadius);
 
-            var goodBuildSpot = searchGrid.FirstOrDefault(buildSpot => Controller.CanPlace(Units.Hatchery, buildSpot));
+            var goodBuildSpot = searchGrid.FirstOrDefault(buildSpot => BuildingTracker.CanPlace(Units.Hatchery, buildSpot));
             if (goodBuildSpot != default) {
                 expandLocations.Add(goodBuildSpot);
                 GraphicalDebugger.AddSphere(goodBuildSpot, KnowledgeBase.GameGridCellRadius, Colors.Green);

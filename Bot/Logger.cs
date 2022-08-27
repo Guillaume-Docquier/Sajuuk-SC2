@@ -35,6 +35,10 @@ public static class Logger {
         }
     }
 
+    public static void Performance(string line, params object[] parameters) {
+        WriteLine("PERF", line, parameters);
+    }
+
     public static void Debug(string line, params object[] parameters) {
         WriteLine("DEBUG", line, parameters);
     }

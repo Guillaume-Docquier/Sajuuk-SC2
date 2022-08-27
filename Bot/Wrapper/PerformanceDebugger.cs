@@ -25,7 +25,7 @@ public class PerformanceDebugger {
         var actionsTime = ActionsStopwatch.GetElapsedTimeMs();
         var debuggerTime = DebuggerStopwatch.GetElapsedTimeMs();
 
-        Logger.Debug(
+        Logger.Performance(
             "Actions {0,3} | Frame {1,5:F2} ms | Controller ({2,4:P0}) {3,5:F2} ms | Bot ({4,4:P0}) {5,5:F2} ms | Actions ({6,4:P0}) {7,5:F2} ms | Debugger ({8,4:P0}) {9,5:F2} ms",
             actionCount,
             frameTime,
@@ -52,7 +52,7 @@ public class PerformanceDebugger {
         var averageActionsTime = _actionsTotalTime / _dataPointsCount;
         var averageDebuggerTime = _debuggerTotalTime / _dataPointsCount;
 
-        Logger.Debug(
+        Logger.Performance(
             "Average performance: Frame {0,5:F2} ms | Controller ({1,4:P0}) {2,5:F2} ms | Bot ({3,4:P0}) {4,5:F2} ms | Actions ({5,4:P0}) {6,5:F2} ms | Debugger ({7,4:P0}) {8,5:F2} ms",
             averageFrameTime,
             averageControllerPercent,
@@ -79,7 +79,6 @@ public class PerformanceDebugger {
     }
 
     public void ResetTimers() {
-
         FrameStopwatch.Reset();
         ControllerStopwatch.Reset();
         BotStopwatch.Reset();

@@ -42,7 +42,7 @@ public class QueenMicroModule: UnitModule, IWatchUnitsDie {
             var tumorPosition = CreepTracker.GetCreepFrontier()
                 .Where(ExpandAnalyzer.IsNotBlockingExpand)
                 .OrderBy(creepNode => _queen.HorizontalDistanceTo(creepNode))
-                .FirstOrDefault(creepNode => Controller.CanPlace(Units.CreepTumor, creepNode) && Pathfinder.FindPath(_queen.Position, creepNode) != null);
+                .FirstOrDefault(creepNode => BuildingTracker.CanPlace(Units.CreepTumor, creepNode) && Pathfinder.FindPath(_queen.Position, creepNode) != null);
 
             if (tumorPosition != default) {
                 _queen.UseAbility(Abilities.SpawnCreepTumor, position: tumorPosition.ToPoint2D());
