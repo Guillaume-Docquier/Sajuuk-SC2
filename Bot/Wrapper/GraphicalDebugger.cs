@@ -128,8 +128,8 @@ public static class GraphicalDebugger {
         DebugBoxes.Add(
             new DebugBox
             {
-                Min = new Point { X = centerPosition.X - width / 2 + padding, Y = centerPosition.Y - length / 2 + padding, Z = centerPosition.Z + CreepHeight },
-                Max = new Point { X = centerPosition.X + width / 2 - padding, Y = centerPosition.Y + length / 2 - padding, Z = centerPosition.Z + CreepHeight },
+                Min = centerPosition.ToPoint(xOffset: -width / 2 + padding, yOffset: -length / 2 + padding, zOffset: CreepHeight),
+                Max = centerPosition.ToPoint(xOffset:  width / 2 - padding, yOffset:  length / 2 - padding, zOffset: CreepHeight),
                 Color = color,
             }
         );
