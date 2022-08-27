@@ -6,13 +6,17 @@ namespace Bot.Managers;
 public partial class TownHallManager {
     private const int MaxExtractorsPerGas = 1;
 
+    private void LogAssignment(Unit unit) {
+        Logger.Debug("({0}) Assigned {1}", this, unit);
+    }
+
     public void AssignQueen(Unit queen) {
         if (Queen != null) {
-            Logger.Error("(TownHallManager) Trying to assign queen, but we already have one");
+            Logger.Error("({0}) Trying to assign queen, but we already have one", this);
             return;
         }
 
-        Logger.Debug("(TownHallManager) Assigned {0}", queen);
+        LogAssignment(queen);
 
         queen.Supervisor = this;
         queen.AddDeathWatcher(this);
@@ -24,7 +28,7 @@ public partial class TownHallManager {
     }
 
     public void AssignWorker(Unit worker) {
-        Logger.Debug("(TownHallManager) Assigned {0}", worker);
+        LogAssignment(worker);
 
         worker.Supervisor = this;
         worker.AddDeathWatcher(this);
@@ -39,7 +43,7 @@ public partial class TownHallManager {
     }
 
     private void AssignMineral(Unit mineral) {
-        Logger.Debug("(TownHallManager) Assigned {0}", mineral);
+        LogAssignment(mineral);
 
         mineral.Supervisor = this;
         mineral.AddDeathWatcher(this);
@@ -51,7 +55,7 @@ public partial class TownHallManager {
     }
 
     private void AssignGas(Unit gas) {
-        Logger.Debug("(TownHallManager) Assigned {0}", gas);
+        LogAssignment(gas);
 
         gas.Supervisor = this;
 
@@ -62,7 +66,7 @@ public partial class TownHallManager {
     }
 
     private void AssignExtractor(Unit extractor) {
-        Logger.Debug("(TownHallManager) Assigned {0}", extractor);
+        LogAssignment(extractor);
 
         extractor.Supervisor = this;
         extractor.AddDeathWatcher(this);
@@ -75,7 +79,12 @@ public partial class TownHallManager {
     }
 
     private void AssignTownHall(Unit townHall) {
-        Logger.Debug("(TownHallManager) Assigned {0}", townHall);
+        if (TownHall != null) {
+            Logger.Error("({0}) Trying to assign town hall, but we already have one", this);
+            return;
+        }
+
+        LogAssignment(townHall);
 
         townHall.Supervisor = this;
         townHall.AddDeathWatcher(this);

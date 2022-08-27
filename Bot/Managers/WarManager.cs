@@ -13,7 +13,7 @@ using Bot.UnitModules;
 namespace Bot.Managers;
 
 public class WarManager: IManager {
-    private const int GuardDistance = 8;
+    private const int GuardDistance = 6;
     private const int GuardRadius = 8;
     private const int AttackRadius = 999; // Basically the whole map
     private const int ForceRequiredBeforeAttacking = 18;

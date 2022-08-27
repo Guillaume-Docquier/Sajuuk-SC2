@@ -16,6 +16,7 @@ public partial class TownHallManager: IManager {
     private const int IdealPerMinerals = 2;
     private const int MaxPerMinerals = 3;
 
+    private readonly ulong _id;
     private readonly Color _color;
     public Unit TownHall { get; private set; }
     public Unit Queen { get; private set; }
@@ -44,6 +45,7 @@ public partial class TownHallManager: IManager {
     public int WorkerCount => _workers.Count;
 
     public TownHallManager(Unit townHall, Color color) {
+        _id = townHall.Tag;
         _color = color;
 
         AssignTownHall(townHall);
@@ -284,5 +286,9 @@ public partial class TownHallManager: IManager {
                 }
             }
         }
+    }
+
+    public override string ToString() {
+        return $"TownHallManager[{_id}]";
     }
 }

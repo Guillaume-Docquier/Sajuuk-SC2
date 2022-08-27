@@ -206,7 +206,7 @@ public static class Controller {
 
     // TODO GD Should use an IBuildStep, probably. BuildFulfillment seems odd here
     public static RequestResult ExecuteBuildStep(BuildFulfillment buildStep) {
-        return buildStep.BuildType switch
+        var result = buildStep.BuildType switch
         {
             BuildType.Train => TrainUnit(buildStep.UnitOrUpgradeType),
             BuildType.Build => PlaceBuilding(buildStep.UnitOrUpgradeType),
@@ -215,6 +215,12 @@ public static class Controller {
             BuildType.Expand => PlaceExpand(buildStep.UnitOrUpgradeType),
             _ => RequestResult.NotSupported
         };
+
+        if (result == RequestResult.Ok) {
+            Logger.Info("(Controller) Completed build step {0}", buildStep);
+        }
+
+        return result;
     }
 
     private static RequestResult ValidateRequirements(uint unitType, Unit producer, UnitTypeData unitTypeData) {

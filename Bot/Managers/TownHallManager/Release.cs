@@ -4,6 +4,10 @@ using Bot.UnitModules;
 namespace Bot.Managers;
 
 public partial class TownHallManager {
+    private void LogRelease(Unit unit) {
+        Logger.Debug("({0}) Released {1}", this, unit);
+    }
+
     public void Release(Unit unit) {
         if (unit == null) {
             return;
@@ -21,16 +25,16 @@ public partial class TownHallManager {
 
     private void ReleaseQueen(Unit queen) {
         if (queen == null) {
-            Logger.Error("(TownHallManager) Trying to release a null queen");
+            Logger.Error("({0}) Trying to release a null queen", this);
             return;
         }
 
         if (Queen != queen) {
-            Logger.Error("(TownHallManager) Trying to release a queen that isn't ours");
+            Logger.Error("({0}) Trying to release a queen that isn't ours", this);
             return;
         }
 
-        Logger.Debug("(TownHallManager) released {0}", queen);
+        LogRelease(queen);
 
         queen.Supervisor = null;
         queen.RemoveDeathWatcher(this);
@@ -43,16 +47,16 @@ public partial class TownHallManager {
 
     private void ReleaseWorker(Unit worker) {
         if (worker == null) {
-            Logger.Error("(TownHallManager) Trying to release a null worker");
+            Logger.Error("({0}) Trying to release a null worker", this);
             return;
         }
 
         if (!_workers.Contains(worker)) {
-            Logger.Error("(TownHallManager) Trying to release a worker that isn't ours");
+            Logger.Error("({0}) Trying to release a worker that isn't ours", this);
             return;
         }
 
-        Logger.Debug("(TownHallManager) released {0}", worker);
+        LogRelease(worker);
 
         worker.Supervisor = null;
         worker.RemoveDeathWatcher(this);
@@ -65,16 +69,16 @@ public partial class TownHallManager {
 
     private void ReleaseMineral(Unit mineral) {
         if (mineral == null) {
-            Logger.Error("(TownHallManager) Trying to release a null mineral");
+            Logger.Error("({0}) Trying to release a null mineral", this);
             return;
         }
 
         if (!_minerals.Contains(mineral)) {
-            Logger.Error("(TownHallManager) Trying to release a mineral that isn't ours");
+            Logger.Error("({0}) Trying to release a mineral that isn't ours", this);
             return;
         }
 
-        Logger.Debug("(TownHallManager) released {0}", mineral);
+        LogRelease(mineral);
 
         mineral.Supervisor = null;
         mineral.RemoveDeathWatcher(this);
@@ -89,16 +93,16 @@ public partial class TownHallManager {
 
     private void ReleaseGas(Unit gas) {
         if (gas == null) {
-            Logger.Error("(TownHallManager) Trying to release a null gas");
+            Logger.Error("({0}) Trying to release a null gas", this);
             return;
         }
 
         if (!_gasses.Contains(gas)) {
-            Logger.Error("(TownHallManager) Trying to release a gas that isn't ours");
+            Logger.Error("({0}) Trying to release a gas that isn't ours", this);
             return;
         }
 
-        Logger.Debug("(TownHallManager) released {0}", gas);
+        LogRelease(gas);
 
         gas.Supervisor = null;
 
@@ -113,16 +117,16 @@ public partial class TownHallManager {
 
     private void ReleaseExtractor(Unit extractor) {
         if (extractor == null) {
-            Logger.Error("(TownHallManager) Trying to release a null extractor");
+            Logger.Error("({0}) Trying to release a null extractor", this);
             return;
         }
 
         if (!_extractors.Contains(extractor)) {
-            Logger.Error("(TownHallManager) Trying to release an extractor that isn't ours");
+            Logger.Error("({0}) Trying to release an extractor that isn't ours", this);
             return;
         }
 
-        Logger.Debug("(TownHallManager) released {0}", extractor);
+        LogRelease(extractor);
 
         extractor.Supervisor = null;
         extractor.RemoveDeathWatcher(this);
@@ -137,16 +141,16 @@ public partial class TownHallManager {
 
     private void ReleaseTownHall(Unit townHall) {
         if (townHall == null) {
-            Logger.Error("(TownHallManager) Trying to release a null townHall");
+            Logger.Error("({0}) Trying to release a null townHall", this);
             return;
         }
 
         if (TownHall != townHall) {
-            Logger.Error("(TownHallManager) Trying to release a townHall that isn't ours");
+            Logger.Error("({0}) Trying to release a townHall that isn't ours", this);
             return;
         }
 
-        Logger.Debug("(TownHallManager) released {0}", townHall);
+        LogRelease(townHall);
 
         townHall.Supervisor = null;
         townHall.RemoveDeathWatcher(this);
