@@ -8,6 +8,7 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers;
 using Bot.MapKnowledge;
+using Bot.Scenarios;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
@@ -30,7 +31,7 @@ public class SajuukBot: PoliteBot {
 
     public override Race Race => Race.Zerg;
 
-    public SajuukBot(string version) : base(version) {}
+    public SajuukBot(string version, List<IScenario> scenarios = null) : base(version, scenarios) {}
 
     protected override void DoOnFrame() {
         if (Controller.Frame == 0) {

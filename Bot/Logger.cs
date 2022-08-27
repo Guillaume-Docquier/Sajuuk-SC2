@@ -19,7 +19,7 @@ public static class Logger {
             Initialize();
         }
 
-        var msg = $"[{DateTime.UtcNow.ToString("HH:mm:ss")} | {GetGameTime()} @ {Controller.Frame,5}] {logLevel,7}: {string.Format(line, parameters)}";
+        var msg = $"[{DateTime.UtcNow.ToString("HH:mm:ss")} | {Controller.GetGameTimeString()} @ {Controller.Frame,5}] {logLevel,7}: {string.Format(line, parameters)}";
 
         var file = new StreamWriter(_logFile, true);
         file.WriteLine(msg);
@@ -53,13 +53,5 @@ public static class Logger {
 
     public static void Error(string line, params object[] parameters) {
         WriteLine("ERROR", line, parameters);
-    }
-
-    private static string GetGameTime() {
-        var totalSeconds = (int)(Controller.Frame / Controller.FramesPerSecond);
-        var minutes = totalSeconds / 60;
-        var seconds = totalSeconds % 60;
-
-        return $"{minutes:00}:{seconds:00}";
     }
 }

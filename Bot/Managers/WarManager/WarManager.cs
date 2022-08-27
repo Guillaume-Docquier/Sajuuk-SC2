@@ -17,6 +17,10 @@ public class WarManager: IManager {
     private const int GuardRadius = 8;
     private const int AttackRadius = 999; // Basically the whole map
     private const int ForceRequiredBeforeAttacking = 18;
+    private const int RushTimingInSeconds = (int)(4.5 * 60);
+
+    private bool _rushTagged = false;
+    private HashSet<Unit> _expandsInDanger = new HashSet<Unit>();
 
     private bool _hasAssaultStarted = false;
     private readonly HashSet<Unit> _soldiers = new HashSet<Unit>();
@@ -50,6 +54,23 @@ public class WarManager: IManager {
 
         _armyManager.Assign(newSoldiers);
 
+        // TODO GD Don't run this all the time
+        var expandsInDanger = DangerScanner.GetEndangeredExpands().ToHashSet();
+        foreach (var expandNewlyInDanger in expandsInDanger.Except(_expandsInDanger)) {
+            Logger.Info("(WarManager) An expand is newly in danger: {0}", expandNewlyInDanger);
+        }
+
+        foreach (var expandNoLongerInDanger in _expandsInDanger.Except(expandsInDanger)) {
+            Logger.Info("(WarManager) An expand is no longer in danger: {0}", expandNoLongerInDanger);
+        }
+
+        _expandsInDanger = expandsInDanger;
+
+        if (!_rushTagged && expandsInDanger.Count > 0 && Controller.Frame <= Controller.SecsToFrames(RushTimingInSeconds)) {
+            Controller.TagGame($"EarlyRush_{Controller.GetGameTimeString()}");
+            _rushTagged = true;
+        }
+
         var enemyPosition = MapAnalyzer.EnemyStartingLocation;
 
         if (!_hasAssaultStarted) {
@@ -64,7 +85,9 @@ public class WarManager: IManager {
     }
 
     public void Release(Unit unit) {
-        _armyManager.Release(unit);
+        if (_soldiers.Remove(unit)) {
+            _armyManager.Release(unit);
+        }
     }
 
     private void DefendNewTownHalls(Vector3 enemyPosition) {

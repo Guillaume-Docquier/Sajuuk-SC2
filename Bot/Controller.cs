@@ -80,6 +80,14 @@ public static class Controller {
         return (ulong)(FramesPerSecond * seconds);
     }
 
+    public static string GetGameTimeString() {
+        var totalSeconds = (int)(Controller.Frame / Controller.FramesPerSecond);
+        var minutes = totalSeconds / 60;
+        var seconds = totalSeconds % 60;
+
+        return $"{minutes:00}:{seconds:00}";
+    }
+
     public static void NewGameInfo(ResponseGameInfo gameInfo) {
         GameInfo = gameInfo;
     }
@@ -149,6 +157,17 @@ public static class Controller {
 
     public static void Chat(string message, bool toTeam = false) {
         AddAction(ActionBuilder.Chat(message, toTeam));
+    }
+
+    public static void TagGame(string tag) {
+        tag = tag
+            .Replace(" ", "")
+            .Replace(".", "_")
+            .Replace("-", "_")
+            .Replace(":", "_");
+
+        Logger.Info("Tagging game with {0}", tag);
+        AddAction(ActionBuilder.Chat($"Tag:{tag}", toTeam: true));
     }
 
     private static int GetTotalCount(uint unitType) {

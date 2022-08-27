@@ -85,9 +85,15 @@ public class EconomyManager: IManager {
 
     public void Release(Unit unit) {
         if (_workerDispatch.TryGetValue(unit, out var townHallManager)) {
-            townHallManager?.Release(unit);
-
             _workerDispatch.Remove(unit);
+        }
+        else if (_queenDispatch.TryGetValue(unit, out townHallManager)) {
+            _queenDispatch.Remove(unit);
+        }
+
+        if (townHallManager != null) {
+            unit.Manager = null; // TODO GD This might will not work because Release() can happen when another manager takes over?
+            townHallManager.Release(unit);
             unit.RemoveDeathWatcher(this);
         }
     }

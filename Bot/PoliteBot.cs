@@ -1,7 +1,9 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapKnowledge;
+using Bot.Scenarios;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
@@ -9,20 +11,23 @@ namespace Bot;
 
 public abstract class PoliteBot: IBot {
     private readonly string _version;
+    private readonly List<IScenario> _scenarios;
     private bool _greetDone = false;
 
     public abstract string Name { get; }
 
     public abstract Race Race { get; }
 
-    public PoliteBot(string version) {
+    public PoliteBot(string version, List<IScenario> scenarios = null) {
         _version = version;
+        _scenarios = scenarios;
     }
 
     public void OnFrame() {
         EnsureGreeting();
         EnsureGG();
 
+        PlayScenarios();
         DoOnFrame();
     }
 
@@ -39,7 +44,7 @@ public abstract class PoliteBot: IBot {
         if (!_greetDone && Controller.Frame >= Controller.SecsToFrames(1)) {
             Controller.Chat("Hi, my name is Sajuuk");
             Controller.Chat("I wish you good luck and good fun!");
-            Controller.Chat($"Tag:v{_version}");
+            Controller.TagGame($"v{_version}");
 
             _greetDone = true;
         }
@@ -51,6 +56,12 @@ public abstract class PoliteBot: IBot {
             if (!Controller.ChatLog.Contains("gg wp")) {
                 // Controller.Chat("gg wp");
             }
+        }
+    }
+
+    private void PlayScenarios() {
+        if (Program.DebugEnabled) {
+            _scenarios?.ForEach(scenario => scenario.OnFrame());
         }
     }
 

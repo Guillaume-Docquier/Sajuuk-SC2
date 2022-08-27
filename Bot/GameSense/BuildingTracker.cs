@@ -25,6 +25,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
         foreach (var worker in _ongoingBuildingOrders.Keys) {
             var buildingOrder = _ongoingBuildingOrders[worker];
             if (!worker.IsProducing(buildingOrder.buildingType, atLocation: buildingOrder.position)) {
+                Logger.Warning("Worker {0} stopped its building assignment", worker);
                 ClearBuildingOrder(worker);
             }
         }

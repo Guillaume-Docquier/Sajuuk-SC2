@@ -152,7 +152,7 @@ public static class RequestBuilder {
         };
     }
 
-    public static Request DebugCreateUnit(Owner owner, uint unitType, uint quantity, Point2D position) {
+    public static Request DebugCreateUnit(Owner owner, uint unitType, uint quantity, Vector3 position) {
         return new Request
         {
             Debug = new RequestDebug
@@ -166,7 +166,7 @@ public static class RequestBuilder {
                             Owner = (int)owner,
                             UnitType = unitType,
                             Quantity = quantity,
-                            Pos = position,
+                            Pos = position.ToPoint2D(),
                         }
                     }
                 }

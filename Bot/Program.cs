@@ -1,11 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
+using Bot.Scenarios;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot;
 
 public class Program {
-    private static readonly IBot Bot = new SajuukBot("1_10_10");
+    private static readonly List<IScenario> Scenarios = new List<IScenario>
+    {
+        new WorkerRushScenario(),
+    };
+
+    private static readonly IBot Bot = new SajuukBot("1_10_10", scenarios: Scenarios);
 
     private const string MapFileName = Maps.FileNames.Berlingrad;
     private const Race OpponentRace = Race.Terran;
