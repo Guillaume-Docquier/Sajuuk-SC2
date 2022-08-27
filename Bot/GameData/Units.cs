@@ -73,6 +73,7 @@ internal static class Units {
     public const uint FleetBeacon = 64;
     public const uint TwilightCounsel = 65;
     public const uint PhotonCannon = 66;
+    public const uint ShieldBattery = 1910;
     public const uint Stargate = 67;
     public const uint TemplarArchive = 68;
     public const uint DarkShrine = 69;
@@ -351,8 +352,8 @@ internal static class Units {
     public static readonly HashSet<uint> ZergMilitary = new HashSet<uint>
     {
         // Ground
-        // Queen,
-        // QueenBurrowed,
+        Queen,
+        QueenBurrowed,
         Zergling,
         ZerglingBurrowed,
         Baneling,
@@ -511,6 +512,24 @@ internal static class Units {
     };
 
     public static readonly HashSet<uint> Detectors = new HashSet<uint>(MobileDetectors.Concat(StaticDetectors));
+
+    public static readonly HashSet<uint> StaticDefenses = new HashSet<uint>
+    {
+        // Zerg
+        SporeCrawler,
+        SporeCrawlerUprooted,
+        SpineCrawler,
+        SpineCrawlerUprooted,
+
+        // Protoss
+        PhotonCannon,
+        ShieldBattery,
+
+        // Terran
+        MissileTurret,
+        Bunker,
+        PlanetaryFortress,
+    };
 
     public static readonly Dictionary<uint, HashSet<uint>> EquivalentTo = new Dictionary<uint, HashSet<uint>>
     {

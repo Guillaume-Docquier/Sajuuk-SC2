@@ -19,6 +19,9 @@ public class WarManager: IManager {
     private const int ForceRequiredBeforeAttacking = 18;
     private const int RushTimingInSeconds = (int)(4.5 * 60);
 
+    // TODO GD Use queens?
+    private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
+
     private bool _rushTagged = false;
     private HashSet<Unit> _expandsInDanger = new HashSet<Unit>();
 
@@ -39,10 +42,9 @@ public class WarManager: IManager {
         _townHallToDefend = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First(townHall => townHall.Position == MapAnalyzer.StartingLocation);
     }
 
-    // TODO GD Use queens?
     // TODO GD Use multiple managers, probably
     public void OnFrame() {
-        var newSoldiers = Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.ZergMilitary).ToList();
+        var newSoldiers = Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes).ToList();
 
         foreach (var soldier in newSoldiers) {
             soldier.Manager = this;
