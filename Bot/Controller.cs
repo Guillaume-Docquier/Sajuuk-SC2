@@ -183,22 +183,25 @@ public static class Controller {
         return counter;
     }
 
-    public static Unit GetAvailableProducer(uint unitOrAbilityType, bool allowQueue = false) {
+    public static Unit GetAvailableProducer(uint unitOrAbilityType, bool allowQueue = false, Vector3 closestTo = default) {
         if (!TechTree.Producer.ContainsKey(unitOrAbilityType)) {
             throw new NotImplementedException($"Producer for unit {KnowledgeBase.GetUnitTypeData(unitOrAbilityType).Name} not found");
         }
 
         var possibleProducers = TechTree.Producer[unitOrAbilityType];
 
-        var producers = GetUnits(UnitsTracker.OwnedUnits, possibleProducers)
-            .Where(unit => unit.IsOperational && unit.IsAvailable)
-            .OrderBy(unit => unit.OrdersExceptMining.Count());
+        var producers = GetUnits(UnitsTracker.OwnedUnits, possibleProducers).Where(unit => unit.IsOperational && unit.IsAvailable);
 
         if (!allowQueue) {
-            return producers.FirstOrDefault(unit => !unit.OrdersExceptMining.Any());
+            producers = producers.Where(unit => !unit.OrdersExceptMining.Any());
         }
 
-        return producers.FirstOrDefault();
+        if (closestTo == default) {
+            return producers.MinBy(unit => unit.OrdersExceptMining.Count());
+        }
+
+        // This can be tricked by impassable terrain, but looks good enough
+        return producers.MinBy(producer => producer.HorizontalDistanceTo(closestTo));
     }
 
     // TODO GD Should use an IBuildStep, probably. BuildFulfillment seems odd here
@@ -288,7 +291,9 @@ public static class Controller {
                 .ToHashSet();
 
             var availableGas = GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers)
-                .Where(gas => gas.Supervisor != null && !extractorPositions.Contains(gas.Position.WithoutZ()))
+                .Where(gas => gas.Supervisor != null)
+                .Where(gas => BuildingTracker.CanPlace(buildingType, gas.Position))
+                .Where(gas => !extractorPositions.Contains(gas.Position.WithoutZ()))
                 .MaxBy(gas => (gas.Supervisor as TownHallManager)!.WorkerCount);
 
             if (availableGas == null) {
@@ -296,7 +301,7 @@ public static class Controller {
                 return RequestResult.NoSuitableLocation;
             }
 
-            // TODO GD Get a nearby worker
+            producer = GetAvailableProducer(buildingType, closestTo: availableGas.Position);
             producer.PlaceExtractor(buildingType, availableGas);
             BuildingTracker.ConfirmPlacement(buildingType, availableGas.Position, producer);
         }
@@ -306,6 +311,7 @@ public static class Controller {
                 return RequestResult.NoSuitableLocation;
             }
 
+            producer = GetAvailableProducer(buildingType, closestTo: location);
             producer.PlaceBuilding(buildingType, location);
             BuildingTracker.ConfirmPlacement(buildingType, location, producer);
         }
@@ -316,6 +322,7 @@ public static class Controller {
                 return RequestResult.NoSuitableLocation;
             }
 
+            producer = GetAvailableProducer(buildingType, closestTo: constructionSpot);
             producer.PlaceBuilding(buildingType, constructionSpot);
             BuildingTracker.ConfirmPlacement(buildingType, constructionSpot, producer);
         }

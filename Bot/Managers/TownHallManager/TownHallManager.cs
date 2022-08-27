@@ -149,7 +149,7 @@ public partial class TownHallManager: IManager {
     }
 
     private bool ShouldFillExtractors() {
-        return _minerals.Sum(mineral => UnitModule.Get<CapacityModule>(mineral).AvailableCapacity) <= _minerals.Count;
+        return _minerals.Sum(mineral => UnitModule.Get<CapacityModule>(mineral).AssignedUnits.Count) >= 12;
     }
 
     /// <summary>

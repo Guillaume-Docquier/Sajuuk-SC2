@@ -84,7 +84,9 @@ public class Unit: ICanDie, IHavePosition {
     // Units inside extractors are not available. We keep them in memory but they're not in the game for some time
     public bool IsAvailable => LastSeen >= Controller.Frame;
 
-    public IEnumerable<UnitOrder> OrdersExceptMining => Orders.Where(order => !Abilities.Gather.Contains(order.AbilityId) && !Abilities.ReturnCargo.Contains(order.AbilityId));
+    public IEnumerable<UnitOrder> OrdersExceptMining => Orders.Where(order => order.AbilityId != Abilities.Move
+                                                                              && !Abilities.Gather.Contains(order.AbilityId)
+                                                                              && !Abilities.ReturnCargo.Contains(order.AbilityId));
 
     public Unit(SC2APIProtocol.Unit unit, ulong frame) {
         Update(unit, frame);

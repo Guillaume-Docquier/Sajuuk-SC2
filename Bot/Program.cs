@@ -11,10 +11,10 @@ public class Program {
     private const Race OpponentRace = Race.Terran;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
-    private const bool RealTime = false;
+    private const bool RealTime = true;
 
-    public static GameConnection GameConnection;
-    public static bool DebugEnabled = false;
+    public static GameConnection GameConnection { get; private set; }
+    public static bool DebugEnabled { get; private set; }
 
     public static void Main(string[] args) {
         try {
