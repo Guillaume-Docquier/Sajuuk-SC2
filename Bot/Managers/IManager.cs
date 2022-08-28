@@ -6,6 +6,8 @@ namespace Bot.Managers;
 public interface IManager: IWatchUnitsDie {
     IEnumerable<BuildFulfillment> BuildFulfillments { get; }
 
+    IEnumerable<Unit> ManagedUnits { get; }
+
     void OnFrame();
 
     void Release(Unit unit);

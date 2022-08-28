@@ -38,6 +38,10 @@ public class EconomyManager: IManager {
     public IEnumerable<BuildFulfillment> BuildFulfillments => _buildStepRequests.Select(buildRequest => buildRequest.Fulfillment)
         .Concat(_townHallManagers.SelectMany(manager => manager.BuildFulfillments));
 
+    public IEnumerable<Unit> ManagedUnits => _workerDispatch.Keys
+        .Concat(_queenDispatch.Keys)
+        .Concat(_townHallDispatch.Keys);
+
     public EconomyManager() {
         ManageTownHalls(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery));
         DispatchWorkers(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone).ToList());

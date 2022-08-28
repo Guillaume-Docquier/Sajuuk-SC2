@@ -34,6 +34,7 @@ public class WarManager: IManager {
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
 
     public IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
+    public IEnumerable<Unit> ManagedUnits => _soldiers;
 
     public WarManager() {
         var townHallDefensePosition = GetTownHallDefensePosition(MapAnalyzer.StartingLocation, MapAnalyzer.EnemyStartingLocation);
@@ -68,9 +69,10 @@ public class WarManager: IManager {
 
         _expandsInDanger = expandsInDanger;
 
-        if (!_rushTagged && expandsInDanger.Count > 0 && Controller.Frame <= Controller.SecsToFrames(RushTimingInSeconds)) {
+        if (!_rushTagged && _expandsInDanger.Count > 0 && Controller.Frame <= Controller.SecsToFrames(RushTimingInSeconds)) {
             Controller.TagGame($"EarlyRush_{Controller.GetGameTimeString()}");
             _rushTagged = true;
+            // TODO GD Draft units and fight!
         }
 
         var enemyPosition = MapAnalyzer.EnemyStartingLocation;

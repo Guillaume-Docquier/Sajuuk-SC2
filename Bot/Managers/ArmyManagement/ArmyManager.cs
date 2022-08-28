@@ -20,6 +20,7 @@ public partial class ArmyManager: StateMachine, IManager {
     private float _strongestForce;
 
     public IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
+    public IEnumerable<Unit> ManagedUnits => Army;
 
     public ArmyManager() : base(new AttackState()) {}
 

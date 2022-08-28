@@ -35,6 +35,12 @@ public partial class TownHallManager: IManager {
     private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>();
 
     public IEnumerable<BuildFulfillment> BuildFulfillments => _buildStepRequests.Select(buildRequest => buildRequest.Fulfillment);
+    public IEnumerable<Unit> ManagedUnits => _minerals
+        .Concat(_gasses)
+        .Concat(_extractors)
+        .Concat(_workers)
+        .Concat(new List<Unit> { Queen, TownHall })
+        .Where(unit => unit != null); // Queen might be null
 
     public int IdealCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor;
     public int IdealAvailableCapacity => IdealCapacity - _workers.Count;

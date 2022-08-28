@@ -36,9 +36,7 @@ public class MineralMiningStrategy: IStrategy {
 
     // TODO GD Speed mining only has to do with preventing drone deceleration. You can speed mine on the way back too
     private void ReturnCargo() {
-        // This is not cute, but it'll work
-        var manager = _worker.Supervisor as TownHallManager;
-        var townHall = manager!.TownHall;
+        var townHall = (_worker.Supervisor as TownHallManager)!.TownHall; // This is not cute nor clean, but it is efficient and we like that
         var distanceToTownHall = townHall.HorizontalDistanceTo(_worker);
 
         if (distanceToTownHall <= townHall.Radius + _worker.Radius + 0.01f) {

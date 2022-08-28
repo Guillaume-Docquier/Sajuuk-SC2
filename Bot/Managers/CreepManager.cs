@@ -9,6 +9,7 @@ namespace Bot.Managers;
 
 public class CreepManager: IManager {
     public IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
+    public IEnumerable<Unit> ManagedUnits => Enumerable.Empty<Unit>();
 
     public void OnFrame() {
         Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.CreepTumor)
