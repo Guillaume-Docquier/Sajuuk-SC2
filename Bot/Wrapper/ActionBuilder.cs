@@ -30,6 +30,10 @@ public static class ActionBuilder {
         return UnitCommand(upgradeAbilityId, producerTag, queueCommand: true);
     }
 
+    public static Action Stop(ulong unitTag) {
+        return UnitCommand(Abilities.Stop, unitTag);
+    }
+
     public static Action Move(ulong unitTag, Vector3 position) {
         return UnitCommand(Abilities.Move, unitTag, position: new Point2D { X = position.X, Y = position.Y });
     }

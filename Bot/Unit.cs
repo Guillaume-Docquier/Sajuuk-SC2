@@ -132,6 +132,10 @@ public class Unit: ICanDie, IHavePosition {
         return Position.HorizontalDistanceTo(location);
     }
 
+    public void Stop() {
+        ProcessAction(ActionBuilder.Stop(Tag));
+    }
+
     public void Move(Vector3 target, bool spam = false) {
         if (!spam && IsTargeting(target, Abilities.Move)) {
             return;

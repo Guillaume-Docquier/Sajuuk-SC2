@@ -20,6 +20,8 @@ public abstract class UnitModule: IUnitModule {
         }
     }
 
+    protected virtual void OnUninstall() {}
+
     protected abstract void DoExecute();
 
     private static readonly Dictionary<Type, string> Tags = new Dictionary<Type, string>()
@@ -51,16 +53,17 @@ public abstract class UnitModule: IUnitModule {
         return true;
     }
 
-    public static T Uninstall<T>(Unit unit) where T: class, IUnitModule {
+    public static T Uninstall<T>(Unit unit) where T: UnitModule {
         var module = Get<T>(unit);
         if (module != null) {
             unit.Modules.Remove(Tags[typeof(T)]);
+            module.OnUninstall();
         }
 
         return module;
     }
 
-    public static T Get<T>(Unit unit) where T: class, IUnitModule {
+    public static T Get<T>(Unit unit) where T: UnitModule {
         if (unit == null) {
             return null;
         }

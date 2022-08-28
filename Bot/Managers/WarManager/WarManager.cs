@@ -32,6 +32,7 @@ public class WarManager: IManager {
     private Unit _townHallToDefend;
 
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
+    private bool _rushInProgress;
 
     public IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
     public IEnumerable<Unit> ManagedUnits => _soldiers;
@@ -45,9 +46,42 @@ public class WarManager: IManager {
 
     // TODO GD Use multiple managers, probably
     public void OnFrame() {
-        var newSoldiers = Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes).ToList();
+        DispatchSoldiers(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes).ToList());
+        ScanForEndangeredExpands();
 
-        foreach (var soldier in newSoldiers) {
+        // TODO Probably use states
+        if (!HandleRushes()) {
+            var enemyPosition = MapAnalyzer.EnemyStartingLocation;
+
+            if (!_hasAssaultStarted) {
+                DefendNewTownHalls(enemyPosition);
+            }
+
+            if (!_hasAssaultStarted && _armyManager.Army.GetForce() >= ForceRequiredBeforeAttacking) {
+                StartTheAssault(enemyPosition);
+            }
+        }
+
+        _armyManager.OnFrame();
+    }
+
+    public void Release(Unit unit) {
+        if (_soldiers.Remove(unit)) {
+            unit.Stop(); // TODO GD Automate this on managers and supervisors
+
+            unit.Manager = null; // TODO GD Automate this on managers and supervisors
+            unit.RemoveDeathWatcher(this); // TODO GD Automate this on managers and supervisors
+
+            _armyManager.Release(unit);
+        }
+    }
+
+    private void DispatchSoldiers(List<Unit> soldiers) {
+        soldiers = soldiers.Where(soldier => !_soldiers.Contains(soldier)).ToList();
+
+        foreach (var soldier in soldiers) {
+            soldier.Stop();
+
             soldier.Manager = this;
             soldier.AddDeathWatcher(this);
             _soldiers.Add(soldier);
@@ -55,8 +89,10 @@ public class WarManager: IManager {
             ChangelingTargetingModule.Install(soldier);
         }
 
-        _armyManager.Assign(newSoldiers);
+        _armyManager.Assign(soldiers);
+    }
 
+    private void ScanForEndangeredExpands() {
         // TODO GD Don't run this all the time
         var expandsInDanger = DangerScanner.GetEndangeredExpands().ToHashSet();
         foreach (var expandNewlyInDanger in expandsInDanger.Except(_expandsInDanger)) {
@@ -68,30 +104,40 @@ public class WarManager: IManager {
         }
 
         _expandsInDanger = expandsInDanger;
-
-        if (!_rushTagged && _expandsInDanger.Count > 0 && Controller.Frame <= Controller.SecsToFrames(RushTimingInSeconds)) {
-            Controller.TagGame($"EarlyRush_{Controller.GetGameTimeString()}");
-            _rushTagged = true;
-            // TODO GD Draft units and fight!
-        }
-
-        var enemyPosition = MapAnalyzer.EnemyStartingLocation;
-
-        if (!_hasAssaultStarted) {
-            DefendNewTownHalls(enemyPosition);
-        }
-
-        if (!_hasAssaultStarted && _armyManager.Army.GetForce() >= ForceRequiredBeforeAttacking) {
-            StartTheAssault(enemyPosition);
-        }
-
-        _armyManager.OnFrame();
     }
 
-    public void Release(Unit unit) {
-        if (_soldiers.Remove(unit)) {
-            _armyManager.Release(unit);
+    private bool HandleRushes() {
+        if (_expandsInDanger.Count > 0 && Controller.Frame <= Controller.SecsToFrames(RushTimingInSeconds)) {
+            Controller.SetRealTime();
+
+            if (!_rushTagged) {
+                Controller.TagGame($"EarlyRush_{Controller.GetGameTimeString()}");
+                _rushTagged = true;
+            }
+
+            if (!_rushInProgress) {
+                _rushInProgress = true;
+                // TODO GD We should know which expand to defend and be able to switch
+                _armyManager.Assign(GetTownHallDefensePosition(_expandsInDanger.First().Position, MapAnalyzer.EnemyStartingLocation), GuardRadius, false);
+            }
+
+            // TODO GD We should be smarter about how many units we draft
+            var supervisedTownHalls = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).Where(unit => unit.Supervisor != null);
+            foreach (var expandToDefend in supervisedTownHalls) {
+                var draftedUnits = expandToDefend.Supervisor.ManagedUnits.Where(unit => Units.Workers.Contains(unit.UnitType) || unit.UnitType == Units.Queen).ToList();
+                DispatchSoldiers(draftedUnits);
+            }
         }
+        else if (_rushInProgress) {
+            var unitsToReturn = _soldiers.Where(soldier => Units.Workers.Contains(soldier.UnitType) || soldier.UnitType == Units.Queen);
+            foreach (var unitToReturn in unitsToReturn) {
+                Release(unitToReturn);
+            }
+
+            _rushInProgress = false;
+        }
+
+        return _rushInProgress;
     }
 
     private void DefendNewTownHalls(Vector3 enemyPosition) {

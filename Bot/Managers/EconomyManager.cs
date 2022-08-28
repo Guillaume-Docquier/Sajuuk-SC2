@@ -57,14 +57,20 @@ public class EconomyManager: IManager {
         ManageTownHalls(Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.Hatchery));
 
         if (_townHallManagers.Count > 0) {
-            // TODO GD Some idle workers are not picked up, i.e when their building order failed. They were released and they won't be new units again
-            var workersToDispatch = Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.Drone).ToList();
+            var workersToDispatch = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Workers)
+                .Where(unit => unit.Manager == null)
+                .Where(unit => !unit.OrdersExceptMining.Any())
+                .ToList();
+
             workersToDispatch.AddRange(GetIdleWorkers());
             DispatchWorkers(workersToDispatch);
 
             EqualizeWorkers();
 
-            var queensToDispatch = Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.Queen).ToList();
+            var queensToDispatch = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Queen)
+                .Where(unit => unit.Manager == null)
+                .ToList();
+
             queensToDispatch.AddRange(GetIdleQueens());
             DispatchQueens(queensToDispatch);
 
@@ -96,7 +102,7 @@ public class EconomyManager: IManager {
         }
 
         if (townHallManager != null) {
-            unit.Manager = null; // TODO GD This might will not work because Release() can happen when another manager takes over?
+            unit.Manager = null;
             townHallManager.Release(unit);
             unit.RemoveDeathWatcher(this);
         }

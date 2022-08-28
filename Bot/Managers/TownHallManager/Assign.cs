@@ -28,6 +28,11 @@ public partial class TownHallManager {
     }
 
     public void AssignWorker(Unit worker) {
+        if (_workers.Contains(worker)) {
+            Logger.Error("({0}) Trying to assign worker, but it is already assigned to us", this);
+            return;
+        }
+
         LogAssignment(worker);
 
         worker.Supervisor = this;

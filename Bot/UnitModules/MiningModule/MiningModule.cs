@@ -56,4 +56,8 @@ public class MiningModule: UnitModule {
 
         Disable();
     }
+
+    protected override void OnUninstall() {
+        Get<CapacityModule>(AssignedResource).Release(_worker);
+    }
 }
