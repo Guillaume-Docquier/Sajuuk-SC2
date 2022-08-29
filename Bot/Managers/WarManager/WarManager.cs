@@ -16,7 +16,7 @@ public partial class WarManager: Manager {
     private const int GuardRadius = 8;
     private const int AttackRadius = 999; // Basically the whole map
     private const int ForceRequiredBeforeAttacking = 18;
-    private const int RushTimingInSeconds = (int)(4.5 * 60);
+    private const int RushTimingInSeconds = (int)(5 * 60);
 
     // TODO GD Use queens?
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
@@ -125,7 +125,7 @@ public partial class WarManager: Manager {
                 Assign(draftedUnits);
             }
         }
-        else if (_rushInProgress) {
+        else if (_rushInProgress && _expandsInDanger.Count <= 0) {
             var unitsToReturn = _soldiers.Where(soldier => Units.Workers.Contains(soldier.UnitType) || soldier.UnitType == Units.Queen);
             Release(unitsToReturn);
 

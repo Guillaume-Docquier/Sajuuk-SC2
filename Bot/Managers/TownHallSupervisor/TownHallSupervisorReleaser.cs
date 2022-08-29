@@ -50,31 +50,33 @@ public partial class TownHallSupervisor {
         }
 
         private void ReleaseTownHall(Unit townHall) {
+            LogRelease(townHall);
+
             _supervisor.TownHall = null;
 
             UnitModule.Uninstall<DebugLocationModule>(townHall);
-
-            LogRelease(townHall);
         }
 
         private void ReleaseQueen(Unit queen) {
+            LogRelease(queen);
+
             _supervisor.Queen = null;
 
             UnitModule.Uninstall<DebugLocationModule>(queen);
-
-            LogRelease(queen);
         }
 
         private void ReleaseWorker(Unit worker) {
+            LogRelease(worker);
+
             _supervisor._workers.Remove(worker);
 
             UnitModule.Uninstall<DebugLocationModule>(worker);
             UnitModule.Uninstall<MiningModule>(worker);
-
-            LogRelease(worker);
         }
 
         private void ReleaseMineral(Unit mineral) {
+            LogRelease(mineral);
+
             mineral.RemoveDeathWatcher(_supervisor); // TODO GD Should have a mechanism to track deathwatch for safer/easier cleaning
 
             _supervisor._minerals.Remove(mineral);
@@ -83,11 +85,11 @@ public partial class TownHallSupervisor {
             var capacityModule = UnitModule.Uninstall<CapacityModule>(mineral);
 
             capacityModule.AssignedUnits.ForEach(worker => UnitModule.Get<MiningModule>(worker).ReleaseResource());
-
-            LogRelease(mineral);
         }
 
         private void ReleaseGas(Unit gas) {
+            LogRelease(gas);
+
             gas.RemoveDeathWatcher(_supervisor);
 
             _supervisor._gasses.Remove(gas);
@@ -97,19 +99,19 @@ public partial class TownHallSupervisor {
             if (uselessExtractor != null) {
                 ReleaseExtractor(uselessExtractor); // TODO GD Release or change capacity to 0?
             }
-
-            LogRelease(gas);
         }
 
         private void ReleaseExtractor(Unit extractor) {
+            LogRelease(extractor);
+
             _supervisor._extractors.Remove(extractor);
 
             UnitModule.Uninstall<DebugLocationModule>(extractor);
             var capacityModule = UnitModule.Uninstall<CapacityModule>(extractor);
 
-            capacityModule.AssignedUnits.ForEach(worker => UnitModule.Get<MiningModule>(worker).ReleaseResource());
-
-            LogRelease(extractor);
+            // TODO GD Something can be null here, that's odd
+            // TODO GD Understand why and fix it
+            capacityModule?.AssignedUnits.ForEach(worker => UnitModule.Get<MiningModule>(worker)?.ReleaseResource());
         }
     }
 }

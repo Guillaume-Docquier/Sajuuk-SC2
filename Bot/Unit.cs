@@ -186,7 +186,7 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     public void PlaceBuilding(uint buildingType, Vector3 target) {
-        Manager.Release(this);
+        Manager?.Release(this);
         ProcessAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
 
         var buildingName = KnowledgeBase.GetUnitTypeData(buildingType).Name;
@@ -194,7 +194,7 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     public void PlaceExtractor(uint buildingType, Unit gas) {
-        Manager.Release(this);
+        Manager?.Release(this);
         ProcessAction(ActionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
 
         var buildingName = KnowledgeBase.GetUnitTypeData(buildingType).Name;

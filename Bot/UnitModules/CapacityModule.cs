@@ -29,7 +29,7 @@ public class CapacityModule: UnitModule, IWatchUnitsDie {
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
-        AssignedUnits.Remove(deadUnit);
+        Release(deadUnit);
     }
 
     public void Assign(Unit unit) {

@@ -50,6 +50,7 @@ public class UnitsTracker: INeedUpdating {
                 var newUnit = new Unit(newRawUnit, frame);
 
                 if (newUnit.Alliance == Alliance.Self) {
+                    Logger.Info("{0} was born", newUnit);
                     NewOwnedUnits.Add(newUnit);
                 }
                 else if (newUnit.Alliance == Alliance.Neutral) {
