@@ -11,6 +11,8 @@ public partial class WarManager {
         }
 
         public void Assign(Unit unit) {
+            Logger.Debug("({0}) Assigned {1}", _manager, unit);
+
             _manager._soldiers.Add(unit);
             ChangelingTargetingModule.Install(unit);
         }

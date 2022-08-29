@@ -11,6 +11,8 @@ public partial class WarManager {
         }
 
         public void Release(Unit unit) {
+            Logger.Debug("({0}) Released {1}", _manager, unit);
+
             _manager._soldiers.Remove(unit);
             UnitModule.Uninstall<ChangelingTargetingModule>(unit);
         }
