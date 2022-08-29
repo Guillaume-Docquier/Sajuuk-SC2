@@ -46,8 +46,8 @@ public class Unit: ICanDie, IHavePosition {
 
     public ulong DeathDelay = 1;
 
-    private IManager _manager;
-    public IManager Manager {
+    private Manager _manager;
+    public Manager Manager {
         get => _manager;
         set {
             if (_manager != value) {
@@ -60,9 +60,8 @@ public class Unit: ICanDie, IHavePosition {
         }
     }
 
-    // TODO GD Probably implement ISupervisor
-    private IManager _supervisor;
-    public IManager Supervisor {
+    private Supervisor _supervisor;
+    public Supervisor Supervisor {
         get => _supervisor;
         set {
             if (_supervisor != value) {
@@ -187,7 +186,7 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     public void PlaceBuilding(uint buildingType, Vector3 target) {
-        Manager = null;
+        Manager.Release(this);
         ProcessAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
 
         var buildingName = KnowledgeBase.GetUnitTypeData(buildingType).Name;
@@ -195,7 +194,7 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     public void PlaceExtractor(uint buildingType, Unit gas) {
-        Manager = null;
+        Manager.Release(this);
         ProcessAction(ActionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
 
         var buildingName = KnowledgeBase.GetUnitTypeData(buildingType).Name;

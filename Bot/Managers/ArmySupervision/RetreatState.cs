@@ -8,23 +8,23 @@ using Bot.MapKnowledge;
 using Bot.StateManagement;
 using Bot.Wrapper;
 
-namespace Bot.Managers.ArmyManagement;
+namespace Bot.Managers.ArmySupervision;
 
-public partial class ArmyManager {
-    public class RetreatState: State<ArmyManager> {
+public partial class ArmySupervisor {
+    public class RetreatState: State<ArmySupervisor> {
         private const int RetreatDistanceFromBase = 8;
         private const float AcceptableDistanceToTarget = 3;
 
         private float _rallyAtForce;
 
         protected override void OnSetStateMachine() {
-            _rallyAtForce = StateMachine._strongestForce;
+            _rallyAtForce = StateMachine.Context._strongestForce;
         }
 
         protected override bool TryTransitioning() {
-            if (StateMachine.Army.GetForce() >= _rallyAtForce
+            if (StateMachine.Context.Army.GetForce() >= _rallyAtForce
                 || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed
-                || StateMachine._mainArmy.GetCenter().HorizontalDistanceTo(GetRetreatPosition()) <= AcceptableDistanceToTarget) {
+                || StateMachine.Context._mainArmy.GetCenter().HorizontalDistanceTo(GetRetreatPosition()) <= AcceptableDistanceToTarget) {
                 StateMachine.TransitionTo(new RallyState());
                 return true;
             }
@@ -35,18 +35,18 @@ public partial class ArmyManager {
         protected override void Execute() {
             DrawArmyData();
 
-            Retreat(GetRetreatPosition(), StateMachine.Army);
+            Retreat(GetRetreatPosition(), StateMachine.Context.Army);
         }
 
         private void DrawArmyData() {
             GraphicalDebugger.AddTextGroup(
                 new[]
                 {
-                    $"Force: {StateMachine._mainArmy.GetForce()}",
-                    $"Strongest: {StateMachine._strongestForce}",
+                    $"Force: {StateMachine.Context._mainArmy.GetForce()}",
+                    $"Strongest: {StateMachine.Context._strongestForce}",
                     $"Rally at: {_rallyAtForce}"
                 },
-                worldPos: StateMachine._mainArmy.GetCenter().Translate(1f, 1f).ToPoint());
+                worldPos: StateMachine.Context._mainArmy.GetCenter().Translate(1f, 1f).ToPoint());
         }
 
         private static void Retreat(Vector3 retreatPosition, IReadOnlyCollection<Unit> soldiers) {

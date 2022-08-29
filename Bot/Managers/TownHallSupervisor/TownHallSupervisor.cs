@@ -10,8 +10,7 @@ using SC2APIProtocol;
 
 namespace Bot.Managers;
 
-// TODO GD This is a supervisor
-public partial class TownHallManager: IManager {
+public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     private const int MaxPerExtractor = 3;
     private const int IdealPerMinerals = 2;
     private const int MaxPerMinerals = 3;
@@ -21,26 +20,18 @@ public partial class TownHallManager: IManager {
     public Unit TownHall { get; private set; }
     public Unit Queen { get; private set; }
 
-    private readonly List<Unit> _minerals = new List<Unit>();
-    private readonly List<Unit> _gasses = new List<Unit>();
-    private readonly List<Unit> _extractors = new List<Unit>();
-
-    // TODO GD Make this a hashset?
-    private readonly List<Unit> _workers = new List<Unit>();
+    private readonly HashSet<Unit> _minerals = new HashSet<Unit>();
+    private readonly HashSet<Unit> _gasses = new HashSet<Unit>();
+    private readonly HashSet<Unit> _extractors = new HashSet<Unit>();
+    private readonly HashSet<Unit> _workers = new HashSet<Unit>();
 
     private bool _expandHasBeenRequested = false;
-    private readonly int _initialMineralsSum;
+    private int _initialMineralsSum;
 
     private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, atSupply: 75, quantity: 0);
     private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>();
 
-    public IEnumerable<BuildFulfillment> BuildFulfillments => _buildStepRequests.Select(buildRequest => buildRequest.Fulfillment);
-    public IEnumerable<Unit> ManagedUnits => _minerals
-        .Concat(_gasses)
-        .Concat(_extractors)
-        .Concat(_workers)
-        .Concat(new List<Unit> { Queen, TownHall })
-        .Where(unit => unit != null); // Queen might be null
+    public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildStepRequests.Select(buildRequest => buildRequest.Fulfillment);
 
     public int IdealCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor;
     public int IdealAvailableCapacity => IdealCapacity - _workers.Count;
@@ -50,32 +41,46 @@ public partial class TownHallManager: IManager {
 
     public int WorkerCount => _workers.Count;
 
-    public TownHallManager(Unit townHall, Color color) {
-        _id = townHall.Tag;
-        _color = color;
+    public static TownHallSupervisor Create(Unit townHall, Color color) {
+        var supervisor = new TownHallSupervisor(townHall, color);
+        supervisor.Init();
 
-        AssignTownHall(townHall);
+        supervisor.Assign(townHall);
+        supervisor.Assign(supervisor.DiscoverMinerals());
+        supervisor.Assign(supervisor.DiscoverGasses());
+        supervisor.Assign(supervisor.DiscoverExtractors(UnitsTracker.OwnedUnits));
 
-        DiscoverMinerals().ForEach(AssignMineral);
-        DiscoverGasses().ForEach(AssignGas);
-        DiscoverExtractors(UnitsTracker.OwnedUnits).ForEach(AssignExtractor);
-
-        _buildStepRequests.Add(_expandBuildRequest);
+        supervisor._buildStepRequests.Add(supervisor._expandBuildRequest);
 
         // You're a macro hatch
-        if (_minerals.Count == 0) {
-            _expandHasBeenRequested = true;
+        if (supervisor._minerals.Count == 0) {
+            supervisor._expandHasBeenRequested = true;
         }
 
         // TODO GD Put this in Expand analyzer, and try to find max minerals based on patch type?
-        _initialMineralsSum = _minerals.Sum(mineral => mineral.InitialMineralCount);
+        supervisor._initialMineralsSum = supervisor._minerals.Sum(mineral => mineral.InitialMineralCount);
+
+        return supervisor;
     }
 
-    public void OnFrame() {
+    private TownHallSupervisor(Unit townHall, Color color) {
+        _id = townHall.Tag;
+        _color = color;
+    }
+
+    protected override IAssigner CreateAssigner() {
+        return new TownHallSupervisorAssigner(this);
+    }
+
+    protected override IReleaser CreateReleaser() {
+        return new TownHallSupervisorReleaser(this);
+    }
+
+    protected override void Supervise() {
         DrawTownHallInfo();
 
         HandleDepletedGasses();
-        DiscoverExtractors(UnitsTracker.NewOwnedUnits).ForEach(AssignExtractor);
+        Assign(DiscoverExtractors(UnitsTracker.NewOwnedUnits));
 
         DispatchWorkers(GetAssignedIdleWorkers());
 
@@ -86,33 +91,33 @@ public partial class TownHallManager: IManager {
         RequestExpand();
     }
 
-    public void Retire() {
-        ReleaseTownHall(TownHall);
-
-        _minerals.ToList().ForEach(ReleaseMineral);
-        _gasses.ToList().ForEach(ReleaseGas);
-        _extractors.ToList().ForEach(ReleaseExtractor);
-        _workers.ToList().ForEach(ReleaseWorker);
+    public override void Retire() {
+        if (TownHall != null) {
+            Release(TownHall);
+        }
 
         if (Queen != null) {
-            ReleaseQueen(Queen);
+            Release(Queen);
         }
+
+        foreach (var worker in _workers) Release(worker);
+        foreach (var extractor in _extractors) Release(extractor);
+
+        foreach (var mineral in _minerals) Release(mineral);
+        foreach (var gas in _gasses) Release(gas);
+
+        Logger.Debug("({0}) Retired", this);
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
-        if (deadUnit.UnitType == Units.Drone) {
-            _workers.Remove(deadUnit);
-        }
-        else if (Units.MineralFields.Contains(deadUnit.UnitType)) {
-            _minerals.Remove(deadUnit);
-            UnitModule.Get<CapacityModule>(deadUnit).AssignedUnits.ForEach(worker => UnitModule.Get<MiningModule>(worker).ReleaseResource());
+        if (Units.MineralFields.Contains(deadUnit.UnitType)) {
+            Release(deadUnit);
         }
         else if (deadUnit.UnitType == Units.Extractor) {
-            _extractors.Remove(deadUnit);
-            UnitModule.Get<CapacityModule>(deadUnit).AssignedUnits.ForEach(worker => UnitModule.Get<MiningModule>(worker).ReleaseResource());
+            Release(deadUnit);
         }
-        else if (deadUnit.UnitType == Units.Queen) {
-            Queen = null;
+        else {
+            Logger.Error("({0}) Reported death of {1}, but we don't death watch this unit type", this, deadUnit);
         }
     }
 
@@ -204,7 +209,7 @@ public partial class TownHallManager: IManager {
     }
 
     private void HandleDepletedGasses() {
-        _gasses.Where(IsGasDepleted).ToList().ForEach(ReleaseGas);
+        foreach (var depletedGas in _gasses.Where(IsGasDepleted)) Release(depletedGas);
     }
 
     /// <summary>
@@ -262,8 +267,8 @@ public partial class TownHallManager: IManager {
     /// <param name="count">The number of workers to free</param>
     /// <returns>The list of freed workers</returns>
     public IEnumerable<Unit> HandOutWorkers(int count) {
-        foreach (var idleWorker in GetAssignedIdleWorkers().Take(count).ToList()) {
-            ReleaseWorker(idleWorker);
+        foreach (var idleWorker in GetAssignedIdleWorkers().Take(count)) {
+            Release(idleWorker);
             yield return idleWorker;
             count -= 1;
         }
@@ -286,7 +291,7 @@ public partial class TownHallManager: IManager {
             foreach (var capacityModuleToPickFrom in capacityModulesToPickFrom) {
                 var workerToRelease = capacityModuleToPickFrom.ReleaseOne();
                 if (workerToRelease != null) {
-                    ReleaseWorker(workerToRelease);
+                    Release(workerToRelease);
                     yield return workerToRelease;
                     count--;
                 }
@@ -295,6 +300,6 @@ public partial class TownHallManager: IManager {
     }
 
     public override string ToString() {
-        return $"TownHallManager[{_id}]";
+        return $"TownHallSupervisor[{_id}]";
     }
 }

@@ -6,14 +6,14 @@ using Bot.GameSense;
 using Bot.StateManagement;
 using Bot.Wrapper;
 
-namespace Bot.Managers.ArmyManagement;
+namespace Bot.Managers.ArmySupervision;
 
-public partial class ArmyManager {
-    public class DefenseState: State<ArmyManager> {
+public partial class ArmySupervisor {
+    public class DefenseState: State<ArmySupervisor> {
         private const float AcceptableDistanceToTarget = 3;
 
         protected override bool TryTransitioning() {
-            if (StateMachine._canHuntTheEnemy && UnitsTracker.EnemyUnits.All(enemy => enemy.RawUnitData.IsFlying)) { // TODO GD Handle air units
+            if (StateMachine.Context._canHuntTheEnemy && UnitsTracker.EnemyUnits.All(enemy => enemy.RawUnitData.IsFlying)) { // TODO GD Handle air units
                 StateMachine.TransitionTo(new HuntState());
                 return true;
             }
@@ -22,10 +22,10 @@ public partial class ArmyManager {
         }
 
         protected override void Execute() {
-            DrawArmyData(StateMachine._mainArmy);
+            DrawArmyData(StateMachine.Context._mainArmy);
 
-            Defend(StateMachine._target, StateMachine._mainArmy, StateMachine._blastRadius);
-            Rally(StateMachine._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
+            Defend(StateMachine.Context._target, StateMachine.Context._mainArmy, StateMachine.Context._blastRadius);
+            Rally(StateMachine.Context._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
         }
 
         private static void DrawArmyData(IReadOnlyCollection<Unit> soldiers) {
@@ -94,7 +94,7 @@ public partial class ArmyManager {
         }
 
         private IEnumerable<Unit> GetSoldiersNotInMainArmy() {
-            return StateMachine.Army.Where(soldier => !StateMachine._mainArmy.Contains(soldier));
+            return StateMachine.Context.Army.Where(soldier => !StateMachine.Context._mainArmy.Contains(soldier));
         }
     }
 }

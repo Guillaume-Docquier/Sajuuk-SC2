@@ -5,16 +5,16 @@ using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.Managers.ArmyManagement.Tactics;
-using Bot.Managers.ArmyManagement.Tactics.SneakAttack;
+using Bot.Managers.ArmySupervision.Tactics;
 using Bot.MapKnowledge;
 using Bot.StateManagement;
 using Bot.Wrapper;
+using SneakAttackTactic = Bot.Managers.ArmySupervision.Tactics.SneakAttack.SneakAttackTactic;
 
-namespace Bot.Managers.ArmyManagement;
+namespace Bot.Managers.ArmySupervision;
 
-public partial class ArmyManager {
-    public class AttackState: State<ArmyManager> {
+public partial class ArmySupervisor {
+    public class AttackState: State<ArmySupervisor> {
         private const float RocksDestructionRange = 9f;
         private const float AcceptableDistanceToTarget = 3;
         private const float MaxDistanceForPathfinding = 25;
@@ -33,7 +33,7 @@ public partial class ArmyManager {
         private readonly ITactic _sneakAttackTactic = new SneakAttackTactic();
 
         protected override void OnSetStateMachine() {
-            _initialForce = StateMachine.Army.GetForce();
+            _initialForce = StateMachine.Context.Army.GetForce();
             _retreatAtForce = _initialForce * 0.5f;
         }
 
@@ -46,12 +46,12 @@ public partial class ArmyManager {
                 return false;
             }
 
-            if (StateMachine._mainArmy.GetCenter().HorizontalDistanceTo(StateMachine._target) < AcceptableDistanceToTarget) {
+            if (StateMachine.Context._mainArmy.GetCenter().HorizontalDistanceTo(StateMachine.Context._target) < AcceptableDistanceToTarget) {
                 StateMachine.TransitionTo(new DefenseState());
                 return true;
             }
 
-            if (StateMachine._mainArmy.GetForce() <= _retreatAtForce) {
+            if (StateMachine.Context._mainArmy.GetForce() <= _retreatAtForce) {
                 StateMachine.TransitionTo(new RetreatState());
                 return true;
             }
@@ -60,19 +60,19 @@ public partial class ArmyManager {
         }
 
         protected override void Execute() {
-            StateMachine._strongestForce = Math.Max(StateMachine._strongestForce, StateMachine._mainArmy.GetForce());
+            StateMachine.Context._strongestForce = Math.Max(StateMachine.Context._strongestForce, StateMachine.Context._mainArmy.GetForce());
 
-            DrawArmyData(StateMachine._mainArmy);
+            DrawArmyData(StateMachine.Context._mainArmy);
 
-            if (_sneakAttackTactic.IsViable(StateMachine._mainArmy)) {
-                _sneakAttackTactic.Execute(StateMachine._mainArmy);
+            if (_sneakAttackTactic.IsViable(StateMachine.Context._mainArmy)) {
+                _sneakAttackTactic.Execute(StateMachine.Context._mainArmy);
             }
             else {
-                _sneakAttackTactic.Reset(StateMachine._mainArmy);
-                Attack(StateMachine._target, StateMachine._mainArmy);
+                _sneakAttackTactic.Reset(StateMachine.Context._mainArmy);
+                Attack(StateMachine.Context._target, StateMachine.Context._mainArmy);
             }
 
-            Rally(StateMachine._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
+            Rally(StateMachine.Context._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
         }
 
         private void DrawArmyData(IReadOnlyCollection<Unit> soldiers) {
@@ -198,7 +198,7 @@ public partial class ArmyManager {
         }
 
         private IEnumerable<Unit> GetSoldiersNotInMainArmy() {
-            return StateMachine.Army.Where(soldier => !StateMachine._mainArmy.Contains(soldier));
+            return StateMachine.Context.Army.Where(soldier => !StateMachine.Context._mainArmy.Contains(soldier));
         }
     }
 }

@@ -12,7 +12,7 @@ public class Program {
         new WorkerRushScenario(),
     };
 
-    private static readonly IBot Bot = new SajuukBot("1_10_10", scenarios: Scenarios);
+    private static readonly IBot Bot = new SajuukBot("2_0_0", scenarios: Scenarios);
 
     private const string MapFileName = Maps.FileNames.Berlingrad;
     private const Race OpponentRace = Race.Terran;

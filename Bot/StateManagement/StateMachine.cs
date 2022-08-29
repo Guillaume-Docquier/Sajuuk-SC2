@@ -1,24 +1,34 @@
 ﻿namespace Bot.StateManagement;
 
-public abstract class StateMachine {
-    protected State State { get; private set; }
+public class StateMachine<TContext> where TContext : class {
+    public State<TContext> State;
 
-    protected StateMachine(State state) {
-        Logger.Info("{0} initialized with state {1}", GetType().Name, state.GetType().Name);
+    public TContext Context { get; } // TODO GD Public or not?
+
+    public StateMachine(TContext context, State<TContext> state) {
+        Context = context;
+
         State = state;
         State.SetStateMachine(this);
+        Logger.Info("{0} state machine initialized with state {1}", Context.GetType().Name, state.GetType().Name);
     }
 
-    public void TransitionTo(State state)
+    public void OnFrame() {
+        State.OnFrame();
+    }
+
+    public void TransitionTo(State<TContext> state)
     {
-        Logger.Info("{0} transitioning from {1} to {2}", GetType().Name, State.GetType().Name, state.GetType().Name);
+        Logger.Info("{0} state machine transitioning from {1} to {2}", Context.GetType().Name, State.GetType().Name, state.GetType().Name);
         State = state;
         State.SetStateMachine(this);
     }
 }
 
-public abstract class StateMachine<TState> : StateMachine where TState : State {
-    protected new TState State => base.State as TState;
+public class StateMachine<TContext, TState>: StateMachine<TContext>
+    where TContext: class
+    where TState: State<TContext>  {
+    public new TState State => base.State as TState;
 
-    protected StateMachine(TState state) : base(state) {}
+    public StateMachine(TContext context, TState state) : base(context, state) {}
 }

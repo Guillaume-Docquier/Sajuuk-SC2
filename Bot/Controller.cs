@@ -319,7 +319,7 @@ public static class Controller {
                 .Where(gas => gas.Supervisor != null)
                 .Where(gas => BuildingTracker.CanPlace(buildingType, gas.Position))
                 .Where(gas => !extractorPositions.Contains(gas.Position.WithoutZ()))
-                .MaxBy(gas => (gas.Supervisor as TownHallManager)!.WorkerCount); // This is not cute nor clean, but it is efficient and we like that
+                .MaxBy(gas => (gas.Supervisor as TownHallSupervisor)!.WorkerCount); // This is not cute nor clean, but it is efficient and we like that
 
             if (availableGas == null) {
                 Logger.Warning("(Controller) No available gasses for extractor");

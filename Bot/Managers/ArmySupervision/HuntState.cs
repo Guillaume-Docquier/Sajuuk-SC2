@@ -6,10 +6,10 @@ using Bot.GameSense;
 using Bot.MapKnowledge;
 using Bot.StateManagement;
 
-namespace Bot.Managers.ArmyManagement;
+namespace Bot.Managers.ArmySupervision;
 
-public partial class ArmyManager {
-    public class HuntState: State<ArmyManager> {
+public partial class ArmySupervisor {
+    public class HuntState: State<ArmySupervisor> {
         private static Dictionary<Vector3, bool> _checkedLocations;
 
         private bool _isNextTargetSet = false;
@@ -58,7 +58,7 @@ public partial class ArmyManager {
             // TODO GD The module and the manager are giving orders to the unit, freezing it
             // _armyManager.Army.ForEach(TargetNeutralUnitsModule.Install);
 
-            var armyCenter = StateMachine._mainArmy.GetCenter().ClosestWalkable();
+            var armyCenter = StateMachine.Context._mainArmy.GetCenter().ClosestWalkable();
             var nextUncheckedLocations = ExpandAnalyzer.ExpandLocations
                 .Where(expandLocation => !_checkedLocations[expandLocation])
                 .Where(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation) != null)
@@ -71,7 +71,7 @@ public partial class ArmyManager {
             else {
                 var nextTarget = nextUncheckedLocations.MinBy(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation).Count);
                 Logger.Info("<HuntStrategy> next target is: {0}", nextTarget);
-                StateMachine._target = nextTarget;
+                StateMachine.Context._target = nextTarget;
                 _isNextTargetSet = true;
             }
         }

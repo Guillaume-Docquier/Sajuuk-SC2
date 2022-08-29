@@ -58,6 +58,20 @@ public class MiningModule: UnitModule {
     }
 
     protected override void OnUninstall() {
-        Get<CapacityModule>(AssignedResource).Release(_worker);
+        if (AssignedResource == null) {
+            return;
+        }
+
+        var resourceCapacityModule = Get<CapacityModule>(AssignedResource);
+        if (resourceCapacityModule != null) {
+            resourceCapacityModule.Release(_worker);
+        }
+        else {
+            Logger.Error("({0}) Assigned resource {1} had no capacity module during uninstallation", this, AssignedResource);
+        }
+    }
+
+    public override string ToString() {
+        return $"{_worker}_{Tag}";
     }
 }

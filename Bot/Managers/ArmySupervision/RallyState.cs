@@ -6,20 +6,20 @@ using Bot.GameData;
 using Bot.StateManagement;
 using Bot.Wrapper;
 
-namespace Bot.Managers.ArmyManagement;
+namespace Bot.Managers.ArmySupervision;
 
-public partial class ArmyManager {
-    public class RallyState: State<ArmyManager> {
+public partial class ArmySupervisor {
+    public class RallyState: State<ArmySupervisor> {
         private const float AcceptableDistanceToTarget = 3;
 
         private float _attackAtForce;
 
         protected override void OnSetStateMachine() {
-            _attackAtForce = StateMachine._strongestForce * 1.2f;
+            _attackAtForce = StateMachine.Context._strongestForce * 1.2f;
         }
 
         protected override bool TryTransitioning() {
-            if (StateMachine._mainArmy.GetForce() >= _attackAtForce || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed) {
+            if (StateMachine.Context._mainArmy.GetForce() >= _attackAtForce || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed) {
                 StateMachine.TransitionTo(new AttackState());
                 return true;
             }
@@ -30,18 +30,18 @@ public partial class ArmyManager {
         protected override void Execute() {
             DrawArmyData();
 
-            Grow(StateMachine.Army.GetCenter(), StateMachine.Army);
+            Grow(StateMachine.Context.Army.GetCenter(), StateMachine.Context.Army);
         }
 
         private void DrawArmyData() {
             GraphicalDebugger.AddTextGroup(
                 new[]
                 {
-                    $"Force: {StateMachine._mainArmy.GetForce()}",
-                    $"Strongest: {StateMachine._strongestForce}",
+                    $"Force: {StateMachine.Context._mainArmy.GetForce()}",
+                    $"Strongest: {StateMachine.Context._strongestForce}",
                     $"Attack at: {_attackAtForce}"
                 },
-                worldPos: StateMachine._mainArmy.GetCenter().Translate(1f, 1f).ToPoint());
+                worldPos: StateMachine.Context._mainArmy.GetCenter().Translate(1f, 1f).ToPoint());
         }
 
         private static void Grow(Vector3 growPosition, IReadOnlyCollection<Unit> soldiers) {

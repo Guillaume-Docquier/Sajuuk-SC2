@@ -3,12 +3,12 @@ using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 
-namespace Bot.Managers.ArmyManagement.Tactics.SneakAttack;
+namespace Bot.Managers.ArmySupervision.Tactics.SneakAttack;
 
 public partial class SneakAttackTactic {
     public class InactiveState: SneakAttackState {
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
-            if (StateMachine._coolDownUntil > Controller.Frame) {
+            if (StateMachine.Context._coolDownUntil > Controller.Frame) {
                 return false;
             }
 
@@ -30,21 +30,21 @@ public partial class SneakAttackTactic {
         }
 
         protected override void Execute() {
-            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(StateMachine._armyCenter).MinBy(enemy => enemy.HorizontalDistanceTo(StateMachine._armyCenter));
+            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(StateMachine.Context._armyCenter).MinBy(enemy => enemy.HorizontalDistanceTo(StateMachine.Context._armyCenter));
             if (closestPriorityTarget != null) {
-                StateMachine._targetPosition = closestPriorityTarget.Position;
-                StateMachine._isTargetPriority = true;
+                StateMachine.Context._targetPosition = closestPriorityTarget.Position;
+                StateMachine.Context._isTargetPriority = true;
             }
             else {
-                var closestTarget = GetGroundEnemiesInSight(StateMachine._army).MinBy(enemy => enemy.HorizontalDistanceTo(StateMachine._armyCenter));
+                var closestTarget = GetGroundEnemiesInSight(StateMachine.Context._army).MinBy(enemy => enemy.HorizontalDistanceTo(StateMachine.Context._armyCenter));
                 if (closestTarget == null) {
                     Logger.Error("BurrowSurprise: Went from None -> Fight because no enemies nearby");
                     NextState = new TerminalState();
                     return;
                 }
 
-                StateMachine._targetPosition = closestTarget.Position;
-                StateMachine._isTargetPriority = false;
+                StateMachine.Context._targetPosition = closestTarget.Position;
+                StateMachine.Context._isTargetPriority = false;
             }
 
             NextState = new ApproachState();

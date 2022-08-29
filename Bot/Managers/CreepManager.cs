@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using Bot.Builds;
 using Bot.GameData;
@@ -7,19 +8,41 @@ using Bot.UnitModules;
 
 namespace Bot.Managers;
 
-public class CreepManager: IManager {
-    public IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
-    public IEnumerable<Unit> ManagedUnits => Enumerable.Empty<Unit>();
+public class CreepManager: Manager {
+    public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
-    public void OnFrame() {
-        Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.CreepTumor)
-            .ToList()
-            .ForEach(TumorCreepSpreadModule.Install);
+    public static CreepManager Create() {
+        var manager = new CreepManager();
+        manager.Init();
+
+        return manager;
     }
 
-    public void Release(Unit unit) {}
+    private CreepManager() {}
 
-    public void Retire() {}
+    protected override IAssigner CreateAssigner() {
+        return null;
+    }
 
-    public void ReportUnitDeath(Unit deadUnit) {}
+    protected override IDispatcher CreateDispatcher() {
+        return null;
+    }
+
+    protected override IReleaser CreateReleaser() {
+        return null;
+    }
+
+    protected override void AssignUnits() {}
+
+    protected override void DispatchUnits() {}
+
+    protected override void Manage() {
+        foreach (var creepTumor in Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.CreepTumor)) {
+            TumorCreepSpreadModule.Install(creepTumor);
+        }
+    }
+
+    public override string ToString() {
+        return "CreepManager";
+    }
 }

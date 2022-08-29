@@ -1,6 +1,6 @@
 ﻿namespace Bot.StateManagement;
 
-public abstract class State {
+public abstract class State<TContext> where TContext: class {
     protected string Name {
         get {
             if (StateMachine == null) {
@@ -11,9 +11,9 @@ public abstract class State {
         }
     }
 
-    protected StateMachine StateMachine { get; private set; }
+    protected StateMachine<TContext> StateMachine { get; private set; }
 
-    public void SetStateMachine(StateMachine stateMachine)
+    public void SetStateMachine(StateMachine<TContext> stateMachine)
     {
         StateMachine = stateMachine;
 
@@ -37,6 +37,8 @@ public abstract class State {
     protected abstract void Execute();
 }
 
-public abstract class State<TStateMachine>: State where TStateMachine : StateMachine {
+public abstract class State<TContext, TStateMachine>: State<TContext>
+    where TContext: class
+    where TStateMachine: StateMachine<TContext> {
     protected new TStateMachine StateMachine => base.StateMachine as TStateMachine;
 }

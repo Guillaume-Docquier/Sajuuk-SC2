@@ -9,12 +9,13 @@ using Bot.StateManagement;
 using Bot.UnitModules;
 using Bot.Wrapper;
 
-namespace Bot.Managers.ArmyManagement.Tactics.SneakAttack;
+namespace Bot.Managers.ArmySupervision.Tactics.SneakAttack;
 
-public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUnitsDie, ITactic {
+public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
     private const float TankRange = 13;
     private const float OperationRadius = TankRange + 2;
 
+    private StateMachine<SneakAttackTactic, SneakAttackState> _stateMachine;
     private readonly HashSet<Unit> _unitsWithUninstalledModule = new HashSet<Unit>();
     private Vector3 _targetPosition;
     private bool _isTargetPriority = false;
@@ -32,7 +33,9 @@ public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUn
         Units.Immortal,
     };
 
-    public SneakAttackTactic() : base(new InactiveState()) {}
+    public SneakAttackTactic() {
+        _stateMachine = new StateMachine<SneakAttackTactic, SneakAttackState>(this, new InactiveState());
+    }
 
     public bool IsViable(IReadOnlyCollection<Unit> army) {
         if (!DetectionTracker.IsStealthEffective()) {
@@ -48,11 +51,11 @@ public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUn
             return false;
         }
 
-        return State.IsViable(effectiveArmy);
+        return _stateMachine.State.IsViable(effectiveArmy);
     }
 
     public bool IsExecuting() {
-        return State is not InactiveState;
+        return _stateMachine.State is not InactiveState;
     }
 
     public void Execute(IReadOnlyCollection<Unit> army) {
@@ -72,7 +75,7 @@ public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUn
             UnitModule.Uninstall<BurrowMicroModule>(roach);
         }
 
-        State.OnFrame();
+        _stateMachine.OnFrame();
 
         if (_targetPosition != default) {
             GraphicalDebugger.AddLink(_armyCenter, _targetPosition, Colors.Magenta);
@@ -85,7 +88,7 @@ public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUn
     }
 
     public void Reset(IReadOnlyCollection<Unit> army) {
-        if (State is InactiveState) {
+        if (_stateMachine.State is InactiveState) {
             return;
         }
 
@@ -97,7 +100,7 @@ public partial class SneakAttackTactic: StateMachine<SneakAttackState>, IWatchUn
         _targetPosition = default;
         _unitsWithUninstalledModule.Clear();
 
-        TransitionTo(new InactiveState());
+        _stateMachine.TransitionTo(new InactiveState());
     }
 
     public void ReportUnitDeath(Unit deadUnit) {

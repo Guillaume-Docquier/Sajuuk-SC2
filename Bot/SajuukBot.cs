@@ -20,7 +20,7 @@ public class SajuukBot: PoliteBot {
         .ToList() // Make a copy in case we edit _buildOrder
         .Where(buildRequest => buildRequest.Fulfillment.Remaining > 0);
 
-    private readonly List<IManager> _managers = new List<IManager>();
+    private readonly List<Manager> _managers = new List<Manager>();
 
     private const int PriorityChangePeriod = 100;
     private int _managerPriorityIndex = 0;
@@ -64,9 +64,9 @@ public class SajuukBot: PoliteBot {
     }
 
     private void InitManagers() {
-        _managers.Add(new EconomyManager());
-        _managers.Add(new WarManager());
-        _managers.Add(new CreepManager());
+        _managers.Add(EconomyManager.Create());
+        _managers.Add(WarManager.Create());
+        _managers.Add(CreepManager.Create());
     }
 
     private void DebugIncomeRate() {

@@ -2,7 +2,7 @@
 using System.Linq;
 using Bot.GameData;
 
-namespace Bot.Managers.ArmyManagement.Tactics.SneakAttack;
+namespace Bot.Managers.ArmySupervision.Tactics.SneakAttack;
 
 public partial class SneakAttackTactic {
     public class EngageState : SneakAttackState {
@@ -11,7 +11,7 @@ public partial class SneakAttackTactic {
         }
 
         protected override void Execute() {
-            UnburrowUnderlings(StateMachine._army);
+            UnburrowUnderlings(StateMachine.Context._army);
 
             NextState = new TerminalState();
         }

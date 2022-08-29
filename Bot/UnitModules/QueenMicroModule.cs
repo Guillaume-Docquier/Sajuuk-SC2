@@ -22,7 +22,11 @@ public class QueenMicroModule: UnitModule, IWatchUnitsDie {
         _queen = queen;
         _queen.AddDeathWatcher(this);
 
-        _assignedTownHall = assignedTownHall;
+        AssignTownHall(assignedTownHall);
+    }
+
+    public void AssignTownHall(Unit townHall) {
+        _assignedTownHall = townHall;
         _assignedTownHall?.AddDeathWatcher(this);
     }
 
