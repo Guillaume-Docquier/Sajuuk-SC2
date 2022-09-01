@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Bot.GameData;
 
-internal static class Units {
+public static class Units {
     public const uint Colossus = 4;
     public const uint Techlab = 5;
     public const uint Reactor = 6;

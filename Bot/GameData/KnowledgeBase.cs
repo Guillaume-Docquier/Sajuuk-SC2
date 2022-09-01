@@ -12,6 +12,11 @@ public static class KnowledgeBase {
     public static ResponseData Data {
         get => _data;
         set {
+            if (Program.DebugEnabled) {
+                // We save the ResponseData to load it during tests
+                KnowledgeBaseDataStore.Save(value);
+            }
+
             foreach (var unit in value.Units) {
                 // The unit cost returned by the API represents the unit value.
                 unit.MineralValue = unit.MineralCost;

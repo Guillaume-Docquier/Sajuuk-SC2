@@ -44,7 +44,7 @@ public class Unit: ICanDie, IHavePosition {
         }
     }
 
-    public ulong DeathDelay = 1;
+    public ulong DeathDelay = 0;
 
     private Manager _manager;
     public Manager Manager {

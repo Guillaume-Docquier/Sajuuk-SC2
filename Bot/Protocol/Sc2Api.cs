@@ -7209,7 +7209,6 @@ namespace SC2APIProtocol {
         }
       }
     }
-
   }
 
   public sealed partial class ResponseData : pb::IMessage<ResponseData> {

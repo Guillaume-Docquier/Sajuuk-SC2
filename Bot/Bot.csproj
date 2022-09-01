@@ -24,5 +24,26 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="BugLogs" />
+    <Folder Include="Data" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Data\Regions_2000AtmospheresAIE.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\Regions_BerlingradAIE.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\Regions_BlackburnAIE.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\Regions_CuriousMindsAIE.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\Regions_GlitteringAshesAIE.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\Regions_HardwireAIE.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
