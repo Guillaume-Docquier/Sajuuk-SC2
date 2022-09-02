@@ -87,8 +87,8 @@ public partial class ExpandAnalyzer: INeedUpdating {
             var goodBuildSpot = searchGrid.FirstOrDefault(buildSpot => BuildingTracker.CanPlace(Units.Hatchery, buildSpot));
             if (goodBuildSpot != default) {
                 expandLocations.Add(goodBuildSpot);
-                GraphicalDebugger.AddSphere(goodBuildSpot, KnowledgeBase.GameGridCellRadius, Colors.Green);
-                GraphicalDebugger.AddSphere(centerPosition, KnowledgeBase.GameGridCellRadius, Colors.Yellow);
+                Program.GraphicalDebugger.AddSphere(goodBuildSpot, KnowledgeBase.GameGridCellRadius, Colors.Green);
+                Program.GraphicalDebugger.AddSphere(centerPosition, KnowledgeBase.GameGridCellRadius, Colors.Yellow);
             }
         }
 

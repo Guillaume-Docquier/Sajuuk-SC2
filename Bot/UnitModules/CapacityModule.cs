@@ -25,7 +25,7 @@ public class CapacityModule: UnitModule, IWatchUnitsDie {
     }
 
     protected override void DoExecute() {
-        GraphicalDebugger.AddText(AssignedUnits.Count.ToString(), worldPos: _unit.Position.ToPoint());
+        Program.GraphicalDebugger.AddText(AssignedUnits.Count.ToString(), worldPos: _unit.Position.ToPoint());
     }
 
     public void ReportUnitDeath(Unit deadUnit) {

@@ -25,6 +25,6 @@ public class GasMiningStrategy: IStrategy {
             _worker.Gather(_resource);
         }
 
-        GraphicalDebugger.AddLine(_worker.Position, _resource.Position, Colors.LimeGreen);
+        Program.GraphicalDebugger.AddLine(_worker.Position, _resource.Position, Colors.LimeGreen);
     }
 }

@@ -56,7 +56,7 @@ public class TumorCreepSpreadModule: UnitModule {
             }
 
             _creepTumor.UseAbility(Abilities.SpawnCreepTumor, position: bestPlaceLocation.ToPoint2D());
-            GraphicalDebugger.AddSphere(bestPlaceLocation, 1, Colors.Yellow);
+            Program.GraphicalDebugger.AddSphere(bestPlaceLocation, 1, Colors.Yellow);
 
             Uninstall<TumorCreepSpreadModule>(_creepTumor);
         }

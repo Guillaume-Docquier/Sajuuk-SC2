@@ -32,7 +32,7 @@ public static class Pathfinder {
 
         var isPathKnown = TryGetPathFromMemory(origin, destination, out var knownPath);
         if (isPathKnown) {
-            GraphicalDebugger.AddPath(knownPath, Colors.LightGreen, Colors.DarkGreen);
+            Program.GraphicalDebugger.AddPath(knownPath, Colors.LightGreen, Colors.DarkGreen);
             return knownPath;
         }
 
@@ -44,7 +44,7 @@ public static class Pathfinder {
         }
 
         var path = maybeNullPath.Select(step => step.AsWorldGridCenter()).ToList();
-        GraphicalDebugger.AddPath(path, Colors.LightBlue, Colors.DarkBlue);
+        Program.GraphicalDebugger.AddPath(path, Colors.LightBlue, Colors.DarkBlue);
 
         SavePathToMemory(origin, destination, path);
 

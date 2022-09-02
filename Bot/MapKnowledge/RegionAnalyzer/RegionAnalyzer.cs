@@ -99,8 +99,8 @@ public class RegionAnalyzer: INeedUpdating {
         var regionIndex = 0;
         foreach (var region in Regions) {
             foreach (var position in region) {
-                GraphicalDebugger.AddText($"E{regionIndex}", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: _regionColors[regionIndex % _regionColors.Count]);
-                GraphicalDebugger.AddGridSquare(position.ToVector3().WithWorldHeight(), _regionColors[regionIndex % _regionColors.Count]);
+                Program.GraphicalDebugger.AddText($"E{regionIndex}", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: _regionColors[regionIndex % _regionColors.Count]);
+                Program.GraphicalDebugger.AddGridSquare(position.ToVector3().WithWorldHeight(), _regionColors[regionIndex % _regionColors.Count]);
             }
 
             regionIndex++;
@@ -116,8 +116,8 @@ public class RegionAnalyzer: INeedUpdating {
         var rampIndex = 0;
         foreach (var ramp in Ramps) {
             foreach (var position in ramp) {
-                GraphicalDebugger.AddText($"R{rampIndex}", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: _regionColors[rampIndex % _regionColors.Count]);
-                GraphicalDebugger.AddGridSphere(position.ToVector3().WithWorldHeight(), _regionColors[rampIndex % _regionColors.Count]);
+                Program.GraphicalDebugger.AddText($"R{rampIndex}", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: _regionColors[rampIndex % _regionColors.Count]);
+                Program.GraphicalDebugger.AddGridSphere(position.ToVector3().WithWorldHeight(), _regionColors[rampIndex % _regionColors.Count]);
             }
 
             rampIndex++;
@@ -131,16 +131,16 @@ public class RegionAnalyzer: INeedUpdating {
     /// </summary>
     private static void DrawNoise() {
         foreach (var position in Noise) {
-            GraphicalDebugger.AddText("?", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: Colors.Red);
-            GraphicalDebugger.AddGridSphere(position.ToVector3().WithWorldHeight(), Colors.Red);
+            Program.GraphicalDebugger.AddText("?", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: Colors.Red);
+            Program.GraphicalDebugger.AddGridSphere(position.ToVector3().WithWorldHeight(), Colors.Red);
         }
     }
 
     private static void DrawChokePoints() {
         foreach (var chokePoint in ChokePoints) {
-            GraphicalDebugger.AddSphere(chokePoint.Start.ToVector3().WithWorldHeight(), radius: 1, Colors.LightRed);
-            GraphicalDebugger.AddSphere(chokePoint.End.ToVector3().WithWorldHeight(), radius: 1, Colors.LightRed);
-            GraphicalDebugger.AddPath(chokePoint.Edge.Select(edge => edge.ToVector3().WithWorldHeight()).ToList(), Colors.LightRed, Colors.LightRed);
+            Program.GraphicalDebugger.AddSphere(chokePoint.Start.ToVector3().WithWorldHeight(), radius: 1, Colors.LightRed);
+            Program.GraphicalDebugger.AddSphere(chokePoint.End.ToVector3().WithWorldHeight(), radius: 1, Colors.LightRed);
+            Program.GraphicalDebugger.AddPath(chokePoint.Edge.Select(edge => edge.ToVector3().WithWorldHeight()).ToList(), Colors.LightRed, Colors.LightRed);
         }
     }
 

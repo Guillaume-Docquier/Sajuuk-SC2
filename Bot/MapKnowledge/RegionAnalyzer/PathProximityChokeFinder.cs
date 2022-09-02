@@ -32,7 +32,7 @@ public static class PathProximityChokeFinder {
         }
 
         foreach (var pathCell in pathCells) {
-            // GraphicalDebugger.AddGridSquare(pathCell, Colors.LightGreen);
+            // Program.GraphicalDebugger.AddGridSquare(pathCell, Colors.LightGreen);
         }
 
         return pathCells;
@@ -56,7 +56,7 @@ public static class PathProximityChokeFinder {
         }
 
         foreach (var chokeCell in chokeBorders) {
-            GraphicalDebugger.AddGridSquare(chokeCell, Colors.Red);
+            Program.GraphicalDebugger.AddGridSquare(chokeCell, Colors.Red);
         }
 
         return chokeBorders;
@@ -74,11 +74,11 @@ public static class PathProximityChokeFinder {
             chokeNode.Z = chokeCluster.Max(chokeEdge => chokeEdge.Position.WithWorldHeight().Z);
 
             foreach (var chokeCell in chokeCluster) {
-                GraphicalDebugger.AddGridSquare(new Vector3(chokeCell.Position.X, chokeCell.Position.Y, chokeNode.Z), Colors.MulberryRed);
+                Program.GraphicalDebugger.AddGridSquare(new Vector3(chokeCell.Position.X, chokeCell.Position.Y, chokeNode.Z), Colors.MulberryRed);
             }
 
             chokeNodes.Add(chokeNode);
-            GraphicalDebugger.AddSphere(chokeNode, radius: 3, Colors.LightRed);
+            Program.GraphicalDebugger.AddSphere(chokeNode, radius: 3, Colors.LightRed);
         }
 
         return chokeNodes;
@@ -95,9 +95,9 @@ public static class PathProximityChokeFinder {
                 .Where(closestChokeNode => chokeNode.HorizontalDistanceTo(closestChokeNode) < 19);
 
             foreach (var closestChokeNode in closestChokeNodes) {
-                GraphicalDebugger.AddLine(chokeNode.Translate(zTranslation: 3), closestChokeNode.Translate(zTranslation: 3), Colors.LightRed);
+                Program.GraphicalDebugger.AddLine(chokeNode.Translate(zTranslation: 3), closestChokeNode.Translate(zTranslation: 3), Colors.LightRed);
                 foreach (var point in chokeNode.GetPointsInBetween(closestChokeNode)) {
-                    GraphicalDebugger.AddGridSquare(point, Colors.LightRed);
+                    Program.GraphicalDebugger.AddGridSquare(point, Colors.LightRed);
                 }
 
                 chokePoints.Add(new ChokePoint(chokeNode, closestChokeNode));

@@ -33,7 +33,10 @@ public class WorkerRushScenario: IScenario {
             Logger.Debug("Spawning 12 zerglings {0} units away from natural", pathFromNatural[SpawnDistance].HorizontalDistanceTo(natural));
 
             // We don't await, not ideal but we don't need to
+            // Making all the code async just for us would be a chore
+#pragma warning disable CS4014
             Program.GameConnection.SendRequest(RequestBuilder.DebugCreateUnit(Owner.Enemy, Units.Zergling, 12, pathFromNatural[SpawnDistance]));
+#pragma warning restore CS4014
 
             _isScenarioDone = true;
         }

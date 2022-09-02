@@ -23,7 +23,7 @@ public class MineralMiningStrategy: IStrategy {
             Gather();
         }
 
-        GraphicalDebugger.AddLine(_worker.Position, _resource.Position, Colors.Cyan);
+        Program.GraphicalDebugger.AddLine(_worker.Position, _resource.Position, Colors.Cyan);
     }
 
     private bool ShouldDoSpeedMining() {

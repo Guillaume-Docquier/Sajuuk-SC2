@@ -80,7 +80,7 @@ public partial class ArmySupervisor {
                 return;
             }
 
-            GraphicalDebugger.AddTextGroup(
+            Program.GraphicalDebugger.AddTextGroup(
                 new[]
                 {
                     $"Force: {soldiers.GetForce()}",
@@ -147,10 +147,10 @@ public partial class ArmySupervisor {
         }
 
         private static void DrawAttackData(Vector3 targetToAttack, IEnumerable<Unit> soldiers) {
-            GraphicalDebugger.AddSphere(targetToAttack, AcceptableDistanceToTarget, Colors.Red);
-            GraphicalDebugger.AddText("Attack", worldPos: targetToAttack.ToPoint());
+            Program.GraphicalDebugger.AddSphere(targetToAttack, AcceptableDistanceToTarget, Colors.Red);
+            Program.GraphicalDebugger.AddText("Attack", worldPos: targetToAttack.ToPoint());
             foreach (var soldier in soldiers) {
-                GraphicalDebugger.AddLine(soldier.Position, targetToAttack, Colors.Red);
+                Program.GraphicalDebugger.AddLine(soldier.Position, targetToAttack, Colors.Red);
             }
         }
 
@@ -190,10 +190,10 @@ public partial class ArmySupervisor {
         }
 
         private static void DrawRallyData(Vector3 rallyPoint, IEnumerable<Unit> soldiers) {
-            GraphicalDebugger.AddSphere(rallyPoint, AcceptableDistanceToTarget, Colors.Blue);
-            GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToPoint());
+            Program.GraphicalDebugger.AddSphere(rallyPoint, AcceptableDistanceToTarget, Colors.Blue);
+            Program.GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToPoint());
             foreach (var soldier in soldiers) {
-                GraphicalDebugger.AddLine(soldier.Position, rallyPoint, Colors.Blue);
+                Program.GraphicalDebugger.AddLine(soldier.Position, rallyPoint, Colors.Blue);
             }
         }
 

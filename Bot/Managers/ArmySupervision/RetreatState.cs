@@ -39,7 +39,7 @@ public partial class ArmySupervisor {
         }
 
         private void DrawArmyData() {
-            GraphicalDebugger.AddTextGroup(
+            Program.GraphicalDebugger.AddTextGroup(
                 new[]
                 {
                     $"Force: {StateMachine.Context._mainArmy.GetForce()}",
@@ -54,15 +54,15 @@ public partial class ArmySupervisor {
                 return;
             }
 
-            GraphicalDebugger.AddSphere(retreatPosition, AcceptableDistanceToTarget, Colors.Yellow);
-            GraphicalDebugger.AddText("Retreat", worldPos: retreatPosition.ToPoint());
+            Program.GraphicalDebugger.AddSphere(retreatPosition, AcceptableDistanceToTarget, Colors.Yellow);
+            Program.GraphicalDebugger.AddText("Retreat", worldPos: retreatPosition.ToPoint());
 
             soldiers.Where(unit => unit.HorizontalDistanceTo(retreatPosition) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.Move(retreatPosition));
 
             foreach (var soldier in soldiers) {
-                GraphicalDebugger.AddLine(soldier.Position, retreatPosition, Colors.Yellow);
+                Program.GraphicalDebugger.AddLine(soldier.Position, retreatPosition, Colors.Yellow);
             }
         }
 

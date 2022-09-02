@@ -33,7 +33,7 @@ public partial class ArmySupervisor {
                 return;
             }
 
-            GraphicalDebugger.AddTextGroup(
+            Program.GraphicalDebugger.AddTextGroup(
                 new[]
                 {
                     $"Force: {soldiers.GetForce()}",
@@ -48,8 +48,8 @@ public partial class ArmySupervisor {
 
             targetToDefend = targetToDefend.ClosestWalkable();
 
-            GraphicalDebugger.AddSphere(targetToDefend, AcceptableDistanceToTarget, Colors.Green);
-            GraphicalDebugger.AddTextGroup(new[] { "Defend", $"Radius: {defenseRadius}" }, worldPos: targetToDefend.ToPoint());
+            Program.GraphicalDebugger.AddSphere(targetToDefend, AcceptableDistanceToTarget, Colors.Green);
+            Program.GraphicalDebugger.AddTextGroup(new[] { "Defend", $"Radius: {defenseRadius}" }, worldPos: targetToDefend.ToPoint());
 
             var targetList = UnitsTracker.EnemyUnits
                 .Where(enemy => !enemy.RawUnitData.IsFlying) // TODO GD Some units should hit these
@@ -65,8 +65,8 @@ public partial class ArmySupervisor {
                         var closestEnemy = targetList.Take(5).OrderBy(enemy => enemy.HorizontalDistanceTo(soldier)).First();
 
                         soldier.AttackMove(closestEnemy.Position);
-                        GraphicalDebugger.AddLine(soldier.Position, closestEnemy.Position, Colors.Red);
-                        GraphicalDebugger.AddLine(soldier.Position, targetToDefend, Colors.Green);
+                        Program.GraphicalDebugger.AddLine(soldier.Position, closestEnemy.Position, Colors.Red);
+                        Program.GraphicalDebugger.AddLine(soldier.Position, targetToDefend, Colors.Green);
                     });
             }
             else {
@@ -81,15 +81,15 @@ public partial class ArmySupervisor {
 
             rallyPoint = rallyPoint.ClosestWalkable();
 
-            GraphicalDebugger.AddSphere(rallyPoint, AcceptableDistanceToTarget, Colors.Blue);
-            GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToPoint());
+            Program.GraphicalDebugger.AddSphere(rallyPoint, AcceptableDistanceToTarget, Colors.Blue);
+            Program.GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToPoint());
 
             soldiers.Where(unit => unit.HorizontalDistanceTo(rallyPoint) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.AttackMove(rallyPoint));
 
             foreach (var soldier in soldiers) {
-                GraphicalDebugger.AddLine(soldier.Position, rallyPoint, Colors.Blue);
+                Program.GraphicalDebugger.AddLine(soldier.Position, rallyPoint, Colors.Blue);
             }
         }
 

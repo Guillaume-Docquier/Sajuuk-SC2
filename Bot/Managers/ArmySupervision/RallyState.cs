@@ -34,7 +34,7 @@ public partial class ArmySupervisor {
         }
 
         private void DrawArmyData() {
-            GraphicalDebugger.AddTextGroup(
+            Program.GraphicalDebugger.AddTextGroup(
                 new[]
                 {
                     $"Force: {StateMachine.Context._mainArmy.GetForce()}",
@@ -51,15 +51,15 @@ public partial class ArmySupervisor {
 
             growPosition = growPosition.ClosestWalkable();
 
-            GraphicalDebugger.AddSphere(growPosition, AcceptableDistanceToTarget, Colors.Yellow);
-            GraphicalDebugger.AddText("Grow", worldPos: growPosition.ToPoint());
+            Program.GraphicalDebugger.AddSphere(growPosition, AcceptableDistanceToTarget, Colors.Yellow);
+            Program.GraphicalDebugger.AddText("Grow", worldPos: growPosition.ToPoint());
 
             soldiers.Where(unit => unit.HorizontalDistanceTo(growPosition) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.AttackMove(growPosition));
 
             foreach (var soldier in soldiers) {
-                GraphicalDebugger.AddLine(soldier.Position, growPosition, Colors.Yellow);
+                Program.GraphicalDebugger.AddLine(soldier.Position, growPosition, Colors.Yellow);
             }
         }
     }

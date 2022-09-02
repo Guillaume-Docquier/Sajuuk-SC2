@@ -54,7 +54,7 @@ public class GameConnection {
         }
     }
 
-    public async Task RunSinglePlayer(IBot bot, string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {
+    public async Task RunLocal(IBot bot, string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {
         const int port = 5678;
 
         Logger.Info("Finding the SC2 executable info");
@@ -207,6 +207,7 @@ public class GameConnection {
                 var gameInfoResponse = await SendRequest(RequestBuilder.RequestGameInfo());
 
                 _performanceDebugger.FrameStopwatch.Start();
+
                 _performanceDebugger.ControllerStopwatch.Start();
                 Controller.NewGameInfo(gameInfoResponse.GameInfo);
                 Controller.NewObservation(observation);
@@ -235,8 +236,12 @@ public class GameConnection {
                 _performanceDebugger.ActionsStopwatch.Stop();
 
                 _performanceDebugger.DebuggerStopwatch.Start();
-                GraphicalDebugger.SendDebugRequest();
+                var request = Program.GraphicalDebugger.GetDebugRequest();
+                if (request != null) {
+                    await SendRequest(request);
+                }
                 _performanceDebugger.DebuggerStopwatch.Stop();
+
                 _performanceDebugger.FrameStopwatch.Stop();
 
                 if (_performanceDebugger.FrameStopwatch.ElapsedMilliseconds > 10) {

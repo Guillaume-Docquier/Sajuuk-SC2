@@ -19,7 +19,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
 
     public void Update(ResponseObservation observation) {
         foreach (var reservedBuildingCell in _reservedBuildingCells.Keys) {
-            GraphicalDebugger.AddGridSquare(reservedBuildingCell, Colors.Yellow);
+            Program.GraphicalDebugger.AddGridSquare(reservedBuildingCell, Colors.Yellow);
         }
 
         foreach (var worker in _ongoingBuildingOrders.Keys) {
@@ -128,20 +128,20 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
 
     private static void DebugBuildingPlacementResult(ActionResult actionResult, Vector3 targetPos) {
         if (actionResult == ActionResult.NotSupported) {
-            GraphicalDebugger.AddGridSquare(targetPos, Colors.Black);
+            Program.GraphicalDebugger.AddGridSquare(targetPos, Colors.Black);
         }
         else if (actionResult == ActionResult.CantBuildLocationInvalid) {
-            GraphicalDebugger.AddGridSquare(targetPos, Colors.Red);
+            Program.GraphicalDebugger.AddGridSquare(targetPos, Colors.Red);
         }
         else if (actionResult == ActionResult.CantBuildTooCloseToResources) {
-            GraphicalDebugger.AddGridSquare(targetPos, Colors.Cyan);
+            Program.GraphicalDebugger.AddGridSquare(targetPos, Colors.Cyan);
         }
         else if (actionResult == ActionResult.Success) {
-            GraphicalDebugger.AddGridSquare(targetPos, Colors.Green);
+            Program.GraphicalDebugger.AddGridSquare(targetPos, Colors.Green);
         }
         else {
             Logger.Warning("[CanPlace] Unexpected placement result: {0}", actionResult);
-            GraphicalDebugger.AddGridSquare(targetPos, Colors.Magenta);
+            Program.GraphicalDebugger.AddGridSquare(targetPos, Colors.Magenta);
         }
     }
 

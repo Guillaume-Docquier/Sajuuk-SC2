@@ -107,6 +107,6 @@ public static class Clustering {
         var centerY = minY + (maxY - minY) / 2;
         var boundingBoxCenter = new Vector3(centerX, centerY, 0).WithWorldHeight();
 
-        GraphicalDebugger.AddRectangle(boundingBoxCenter, maxX - minX, maxY - minY, Colors.Orange);
+        Program.GraphicalDebugger.AddRectangle(boundingBoxCenter, maxX - minX, maxY - minY, Colors.Orange);
     }
 }

@@ -78,11 +78,11 @@ public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
         _stateMachine.OnFrame();
 
         if (_targetPosition != default) {
-            GraphicalDebugger.AddLink(_armyCenter, _targetPosition, Colors.Magenta);
-            GraphicalDebugger.AddSphere(_targetPosition, 1, Colors.Magenta);
+            Program.GraphicalDebugger.AddLink(_armyCenter, _targetPosition, Colors.Magenta);
+            Program.GraphicalDebugger.AddSphere(_targetPosition, 1, Colors.Magenta);
 
             if (_isTargetPriority) {
-                GraphicalDebugger.AddText("!", size: 20, worldPos: _targetPosition.ToPoint());
+                Program.GraphicalDebugger.AddText("!", size: 20, worldPos: _targetPosition.ToPoint());
             }
         }
     }

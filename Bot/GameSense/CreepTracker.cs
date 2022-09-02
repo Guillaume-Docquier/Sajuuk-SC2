@@ -31,7 +31,7 @@ public class CreepTracker: INeedUpdating {
 
         _rawCreepMap = observation.Observation.RawData.MapState.Creep;
 
-        _creepFrontier.ForEach(creepFrontierNode => GraphicalDebugger.AddGridSquare(creepFrontierNode, Colors.Orange));
+        _creepFrontier.ForEach(creepFrontierNode => Program.GraphicalDebugger.AddGridSquare(creepFrontierNode, Colors.Orange));
     }
 
     public static bool HasCreep(Vector3 position) {

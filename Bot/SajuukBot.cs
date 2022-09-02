@@ -72,7 +72,7 @@ public class SajuukBot: PoliteBot {
     private void DebugIncomeRate() {
         var scoreDetails = Controller.Observation.Observation.Score.ScoreDetails;
         _maxMineralRate = Math.Max(_maxMineralRate, scoreDetails.CollectionRateMinerals);
-        GraphicalDebugger.AddTextGroup(new[]
+        Program.GraphicalDebugger.AddTextGroup(new[]
         {
             $"Max minerals rate: {_maxMineralRate}",
             $"Minerals rate: {scoreDetails.CollectionRateMinerals}",
@@ -114,14 +114,14 @@ public class SajuukBot: PoliteBot {
         }
         nextBuildStepsData.AddRange(managersBuildStepsData);
 
-        GraphicalDebugger.AddTextGroup(nextBuildStepsData, virtualPos: new Point { X = 0.02f, Y = 0.02f });
+        Program.GraphicalDebugger.AddTextGroup(nextBuildStepsData, virtualPos: new Point { X = 0.02f, Y = 0.02f });
     }
 
     private static void DebugEnemyDetectors() {
         var detectors = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Detectors);
         foreach (var detector in detectors) {
-            GraphicalDebugger.AddText("!", size: 20, worldPos: detector.Position.ToPoint(), color: Colors.Purple);
-            GraphicalDebugger.AddGridSquaresInRadius(detector.Position, (int)detector.UnitTypeData.SightRange, Colors.Purple);
+            Program.GraphicalDebugger.AddText("!", size: 20, worldPos: detector.Position.ToPoint(), color: Colors.Purple);
+            Program.GraphicalDebugger.AddGridSquaresInRadius(detector.Position, (int)detector.UnitTypeData.SightRange, Colors.Purple);
         }
     }
 
@@ -130,7 +130,7 @@ public class SajuukBot: PoliteBot {
             for (var y = 0; y < MapAnalyzer.MaxY; y++) {
                 var position = new Vector3(x, y, 0).AsWorldGridCenter().WithWorldHeight();
                 if (!MapAnalyzer.IsWalkable(position)) {
-                    GraphicalDebugger.AddGridSquare(position, Colors.LightRed);
+                    Program.GraphicalDebugger.AddGridSquare(position, Colors.LightRed);
                 }
             }
         }
@@ -138,7 +138,7 @@ public class SajuukBot: PoliteBot {
 
     private static void DebugDestructibles() {
         foreach (var unit in Controller.GetUnits(UnitsTracker.NeutralUnits, Units.Destructibles).ToList()) {
-            GraphicalDebugger.AddText(unit.Name, worldPos: unit.Position.ToPoint());
+            Program.GraphicalDebugger.AddText(unit.Name, worldPos: unit.Position.ToPoint());
         }
     }
 

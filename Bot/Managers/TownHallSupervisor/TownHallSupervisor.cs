@@ -244,7 +244,7 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
             return;
         }
 
-        GraphicalDebugger.AddTextGroup(new[]
+        Program.GraphicalDebugger.AddTextGroup(new[]
             {
                 $"IdealAvailableCapacity: {IdealAvailableCapacity}",
                 $"SaturatedAvailableCapacity: {SaturatedAvailableCapacity}",
