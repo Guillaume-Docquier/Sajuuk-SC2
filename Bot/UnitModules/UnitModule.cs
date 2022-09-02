@@ -14,10 +14,14 @@ public abstract class UnitModule: IUnitModule {
         _isModuleEnabled = false;
     }
 
-    public void Execute() {
+    public bool Execute() {
         if (_isModuleEnabled) {
             DoExecute();
+
+            return true;
         }
+
+        return false;
     }
 
     protected virtual void OnUninstall() {}

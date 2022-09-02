@@ -5,7 +5,7 @@ using Bot.Managers;
 
 namespace Bot.Tests;
 
-public class Unit: IClassFixture<KnowledgeBaseFixture> {
+public class UnitTests: IClassFixture<KnowledgeBaseFixture> {
     [Theory]
     [InlineData(0, false)]
     [InlineData(1, true)]

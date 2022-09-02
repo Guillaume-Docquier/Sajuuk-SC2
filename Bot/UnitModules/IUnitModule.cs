@@ -5,5 +5,5 @@ public interface IUnitModule {
 
     void Disable();
 
-    void Execute();
+    bool Execute();
 }

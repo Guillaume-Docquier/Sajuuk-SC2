@@ -4,9 +4,9 @@ namespace Bot;
 
 public static class Resources {
     public enum ResourceType {
+        None,
         Mineral,
         Gas,
-        None,
     }
 
     public static ResourceType GetResourceType(Unit resource) {
