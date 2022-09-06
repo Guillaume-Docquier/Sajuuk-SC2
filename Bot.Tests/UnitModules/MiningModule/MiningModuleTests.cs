@@ -61,7 +61,7 @@ public class MiningModuleTests: IClassFixture<KnowledgeBaseFixture>, IClassFixtu
     }
 
     [Fact]
-    public void GivenNullResource_WhenExecuting_DoesNotExecute() {
+    public void GivenNullResource_WhenInstalling_DisablesModule() {
         // Arrange
         var unit = TestUtils.CreateUnit(Units.Drone);
         Bot.UnitModules.MiningModule.Install(unit, null);
@@ -77,7 +77,7 @@ public class MiningModuleTests: IClassFixture<KnowledgeBaseFixture>, IClassFixtu
     [Theory]
     [MemberData(nameof(MineralsTestData))]
     [MemberData(nameof(GasGeysersTestData))]
-    public void GivenResource_WhenExecuting_DoesExecutes(uint resourceType) {
+    public void GivenResource_WhenInstalling_EnablesModule(uint resourceType) {
         // Arrange
         var resource = TestUtils.CreateUnit(resourceType);
         Bot.UnitModules.CapacityModule.Install(resource, 1);
@@ -92,5 +92,119 @@ public class MiningModuleTests: IClassFixture<KnowledgeBaseFixture>, IClassFixtu
 
         // Assert
         Assert.True(executed);
+    }
+
+    [Theory]
+    [MemberData(nameof(MineralsTestData))]
+    [MemberData(nameof(GasGeysersTestData))]
+    public void GivenResource_WhenAssigningResource_DoesNothing(uint resourceType) {
+        // Arrange
+        var initialResource = TestUtils.CreateUnit(resourceType);
+        Bot.UnitModules.CapacityModule.Install(initialResource, 1);
+
+        var newResource = TestUtils.CreateUnit(resourceType);
+
+        var unit = TestUtils.CreateUnit(Units.Drone);
+        Bot.UnitModules.MiningModule.Install(unit, initialResource);
+
+        var module = Bot.UnitModules.UnitModule.Get<Bot.UnitModules.MiningModule>(unit);
+
+        // Act
+        module.AssignResource(newResource);
+
+        // Assert
+        Assert.Equal(initialResource, module.AssignedResource);
+    }
+
+    [Theory]
+    [MemberData(nameof(MineralsTestData))]
+    [MemberData(nameof(GasGeysersTestData))]
+    public void GivenResource_WhenReleasingResource_UnsetsAssignedResource(uint resourceType) {
+        // Arrange
+        var initialResource = TestUtils.CreateUnit(resourceType);
+        Bot.UnitModules.CapacityModule.Install(initialResource, 1);
+
+        var unit = TestUtils.CreateUnit(Units.Drone);
+        Bot.UnitModules.MiningModule.Install(unit, initialResource);
+
+        var module = Bot.UnitModules.UnitModule.Get<Bot.UnitModules.MiningModule>(unit);
+
+        // Act
+        module.ReleaseResource();
+
+        // Assert
+        Assert.Null(module.AssignedResource);
+        Assert.Equal(Resources.ResourceType.None, module.ResourceType);
+    }
+
+    [Theory]
+    [MemberData(nameof(MineralsTestData))]
+    [MemberData(nameof(GasGeysersTestData))]
+    public void GivenResource_WhenReleasingResource_DisablesModule(uint resourceType) {
+        // Arrange
+        var resource = TestUtils.CreateUnit(resourceType);
+        Bot.UnitModules.CapacityModule.Install(resource, 1);
+
+        var unit = TestUtils.CreateUnit(Units.Drone);
+        Bot.UnitModules.MiningModule.Install(unit, resource);
+
+        var module = Bot.UnitModules.UnitModule.Get<Bot.UnitModules.MiningModule>(unit);
+
+        // Act
+        module.ReleaseResource();
+        var executed = module.Execute();
+
+        // Assert
+        Assert.False(executed);
+    }
+
+    [Theory]
+    [MemberData(nameof(MineralsTestData))]
+    [MemberData(nameof(GasGeysersTestData))]
+    public void GivenResource_WhenUninstalling_ReleasesWorkerFromResourceCapacityModule(uint resourceType) {
+        // Arrange
+        var resource = TestUtils.CreateUnit(resourceType);
+        Bot.UnitModules.CapacityModule.Install(resource, 1);
+
+        var capacityModule = Bot.UnitModules.UnitModule.Get<Bot.UnitModules.CapacityModule>(resource);
+
+        var unit = TestUtils.CreateUnit(Units.Drone);
+        Bot.UnitModules.MiningModule.Install(unit, resource);
+
+        // Act
+        Bot.UnitModules.UnitModule.Uninstall<Bot.UnitModules.MiningModule>(unit);
+
+        // Assert
+        Assert.Empty(capacityModule.AssignedUnits);
+    }
+
+    [Fact]
+    public void GivenNullResource_WhenUninstalling_DoesNothing() {
+        // Arrange
+        var unit = TestUtils.CreateUnit(Units.Drone);
+        Bot.UnitModules.MiningModule.Install(unit, null);
+
+        // Act
+        var exception = Record.Exception(() => Bot.UnitModules.UnitModule.Uninstall<Bot.UnitModules.MiningModule>(unit));
+
+        // Assert
+        Assert.Null(exception);
+    }
+
+    [Theory]
+    [MemberData(nameof(MineralsTestData))]
+    [MemberData(nameof(GasGeysersTestData))]
+    public void GivenResourceWithoutCapacityModule_WhenUninstalling_DoesNothing(uint resourceType) {
+        // Arrange
+        var resource = TestUtils.CreateUnit(resourceType);
+
+        var unit = TestUtils.CreateUnit(Units.Drone);
+        Bot.UnitModules.MiningModule.Install(unit, resource);
+
+        // Act
+        var exception = Record.Exception(() => Bot.UnitModules.UnitModule.Uninstall<Bot.UnitModules.MiningModule>(unit));
+
+        // Assert
+        Assert.Null(exception);
     }
 }
