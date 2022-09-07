@@ -5,7 +5,7 @@ using Bot.Managers;
 
 namespace Bot.Tests;
 
-public class UnitTests: IClassFixture<KnowledgeBaseFixture> {
+public class UnitTests: BaseTestClass {
     [Theory]
     [InlineData(0, false)]
     [InlineData(1, true)]
@@ -103,7 +103,7 @@ public class UnitTests: IClassFixture<KnowledgeBaseFixture> {
     private class DeathWatcherThatRemovesItself: IWatchUnitsDie {
         public bool ReportedDeath = false;
 
-        public void ReportUnitDeath(Bot.Unit deadUnit) {
+        public void ReportUnitDeath(Unit deadUnit) {
             deadUnit.RemoveDeathWatcher(this);
             ReportedDeath = true;
         }
@@ -113,15 +113,15 @@ public class UnitTests: IClassFixture<KnowledgeBaseFixture> {
         public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
         protected override IAssigner CreateAssigner() {
-            return null;
+            return null!;
         }
 
         protected override IDispatcher CreateDispatcher() {
-            return null;
+            return null!;
         }
 
         protected override IReleaser CreateReleaser() {
-            return null;
+            return null!;
         }
 
         protected override void AssignUnits() {}

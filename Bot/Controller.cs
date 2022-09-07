@@ -81,7 +81,7 @@ public static class Controller {
     }
 
     public static string GetGameTimeString() {
-        var totalSeconds = (int)(Controller.Frame / Controller.FramesPerSecond);
+        var totalSeconds = (int)(Frame / FramesPerSecond);
         var minutes = totalSeconds / 60;
         var seconds = totalSeconds % 60;
 

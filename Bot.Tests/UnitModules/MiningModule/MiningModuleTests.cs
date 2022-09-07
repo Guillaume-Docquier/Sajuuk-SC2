@@ -2,7 +2,7 @@
 
 namespace Bot.Tests.UnitModules.MiningModule;
 
-public class MiningModuleTests: IClassFixture<KnowledgeBaseFixture>, IClassFixture<GraphicalDebuggerFixture> {
+public class MiningModuleTests: BaseTestClass {
     [Fact]
     public void GivenNullResource_WhenInstalling_DoesNotAssignResource() {
         // Arrange

@@ -6,31 +6,48 @@ using System.IO;
 namespace Bot;
 
 public static class Logger {
-    private static string _logFile;
-    private static bool _stdoutClosed;
+    private static bool _isDisabled = false;
+    private static StreamWriter _fileStream;
+    private static bool _stdoutOpen = true;
 
+    // Mostly used for tests
+    public static void Disable() {
+        _isDisabled = true;
+    }
+
+    /// <summary>
+    /// Open a logging file stream
+    /// For performance reasons, the file stream is kept open
+    /// For safety reasons, the file stream is set to auto flush
+    /// </summary>
     private static void Initialize() {
-        _logFile = "Logs/" + DateTime.UtcNow.ToString("yyyy-MM-dd HH.mm.ss") + ".log";
-        Directory.CreateDirectory(Path.GetDirectoryName(_logFile));
+        var logFile = "Logs/" + DateTime.UtcNow.ToString("yyyy-MM-dd HH.mm.ss") + ".log";
+        Directory.CreateDirectory(Path.GetDirectoryName(logFile));
+
+        _fileStream = new StreamWriter(logFile, append: true);
+        _fileStream.AutoFlush = true;
     }
 
     private static void WriteLine(string logLevel, string line, params object[] parameters) {
-        if (_logFile == null) {
+        if (_isDisabled) {
+            return;
+        }
+
+        if (_fileStream == null) {
             Initialize();
         }
 
         var msg = $"[{DateTime.UtcNow.ToString("HH:mm:ss")} | {Controller.GetGameTimeString()} @ {Controller.Frame,5}] {logLevel,7}: {string.Format(line, parameters)}";
 
-        var file = new StreamWriter(_logFile, true);
-        file.WriteLine(msg);
-        file.Close();
-        // do not write to stdout if it is closed (LadderServer on linux)
-        if (!_stdoutClosed) {
+        _fileStream!.WriteLine(msg);
+
+        // Only write to stdout if it is open (typically in dev)
+        if (_stdoutOpen) {
             try {
                 Console.WriteLine(msg, parameters);
             }
             catch {
-                _stdoutClosed = true;
+                _stdoutOpen = false;
             }
         }
     }

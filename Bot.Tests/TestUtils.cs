@@ -5,7 +5,7 @@ namespace Bot.Tests;
 public static class TestUtils {
     private static ulong _currentTag = 0;
 
-    public static Bot.Unit CreateUnit(uint unitType, uint frame = 0, Alliance alliance = Alliance.Self, Point? position = null) {
+    public static Unit CreateUnit(uint unitType, uint frame = 0, Alliance alliance = Alliance.Self, Point? position = null) {
         var rawUnit = new SC2APIProtocol.Unit
         {
             Tag = _currentTag,
@@ -17,6 +17,6 @@ public static class TestUtils {
         // Just make sure to never collide
         _currentTag++;
 
-        return new Bot.Unit(rawUnit, frame);
+        return new Unit(rawUnit, frame);
     }
 }
