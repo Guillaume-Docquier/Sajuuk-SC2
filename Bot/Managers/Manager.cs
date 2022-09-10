@@ -9,6 +9,7 @@ public abstract class Manager: IWatchUnitsDie {
 
     public HashSet<Unit> ManagedUnits { get; } = new HashSet<Unit>();
 
+    // TODO GD Make these protected abstract get only and remove Init
     private bool _isInitialized = false;
     private IAssigner _assigner;
     private IDispatcher _dispatcher;

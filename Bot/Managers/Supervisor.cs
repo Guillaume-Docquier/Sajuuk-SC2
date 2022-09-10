@@ -9,6 +9,7 @@ public abstract class Supervisor {
 
     public HashSet<Unit> SupervisedUnits { get; } = new HashSet<Unit>();
 
+    // TODO GD Make these protected abstract get only and remove Init
     private bool _isInitialized = false;
     private IAssigner _assigner;
     private IReleaser _releaser;
