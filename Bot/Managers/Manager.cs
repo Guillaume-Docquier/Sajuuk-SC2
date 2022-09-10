@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Bot.Builds;
 
 namespace Bot.Managers;
@@ -9,33 +8,15 @@ public abstract class Manager: IWatchUnitsDie {
 
     public HashSet<Unit> ManagedUnits { get; } = new HashSet<Unit>();
 
-    // TODO GD Make these protected abstract get only and remove Init
-    private bool _isInitialized = false;
-    private IAssigner _assigner;
-    private IDispatcher _dispatcher;
-    private IReleaser _releaser;
-
-    protected void Init() {
-        _assigner = CreateAssigner();
-        _dispatcher = CreateDispatcher();
-        _releaser = CreateReleaser();
-
-        _isInitialized = true;
-    }
+    protected abstract IAssigner Assigner { get; }
+    protected abstract IDispatcher Dispatcher { get; }
+    protected abstract IReleaser Releaser { get; }
 
     public void OnFrame() {
-        if (!_isInitialized) {
-            throw new InvalidOperationException($"({this}) was not initialized before use");
-        }
-
         AssignUnits();
         DispatchUnits();
         Manage();
     }
-
-    protected abstract IAssigner CreateAssigner();
-    protected abstract IDispatcher CreateDispatcher();
-    protected abstract IReleaser CreateReleaser();
 
     protected abstract void AssignUnits();
     protected abstract void DispatchUnits();
@@ -53,7 +34,7 @@ public abstract class Manager: IWatchUnitsDie {
             unit.Manager = this;
             unit.AddDeathWatcher(this);
 
-            _assigner?.Assign(unit);
+            Assigner.Assign(unit);
         }
         else {
             Logger.Error("({0}) Trying to assign {1} that's already assigned to us", this, unit);
@@ -68,7 +49,7 @@ public abstract class Manager: IWatchUnitsDie {
 
     public void Dispatch(Unit unit) {
         if (ManagedUnits.Contains(unit)) {
-            _dispatcher?.Dispatch(unit);
+            Dispatcher.Dispatch(unit);
         }
         else {
             Logger.Error("({0}) Trying to dispatch {1} that's not ours", this, unit);
@@ -88,7 +69,7 @@ public abstract class Manager: IWatchUnitsDie {
 
             unit.Stop();
 
-            _releaser?.Release(unit);
+            Releaser.Release(unit);
             unit.Supervisor?.Release(unit);
         }
         else {

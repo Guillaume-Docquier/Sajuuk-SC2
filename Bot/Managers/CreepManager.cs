@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using Bot.Builds;
 using Bot.GameData;
@@ -11,26 +10,9 @@ namespace Bot.Managers;
 public class CreepManager: Manager {
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
-    public static CreepManager Create() {
-        var manager = new CreepManager();
-        manager.Init();
-
-        return manager;
-    }
-
-    private CreepManager() {}
-
-    protected override IAssigner CreateAssigner() {
-        return null;
-    }
-
-    protected override IDispatcher CreateDispatcher() {
-        return null;
-    }
-
-    protected override IReleaser CreateReleaser() {
-        return null;
-    }
+    protected override IAssigner Assigner { get; } = new DummyAssigner();
+    protected override IDispatcher Dispatcher { get; } = new DummyDispatcher();
+    protected override IReleaser Releaser { get; } = new DummyReleaser();
 
     protected override void AssignUnits() {}
 
@@ -44,5 +26,17 @@ public class CreepManager: Manager {
 
     public override string ToString() {
         return "CreepManager";
+    }
+
+    private class DummyAssigner : IAssigner {
+        public void Assign(Unit unit) {}
+    }
+
+    private class DummyDispatcher : IDispatcher {
+        public void Dispatch(Unit unit) {}
+    }
+
+    private class DummyReleaser : IReleaser {
+        public void Release(Unit unit) {}
     }
 }

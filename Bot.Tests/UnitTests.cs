@@ -1,7 +1,5 @@
 using System.Numerics;
-using Bot.Builds;
 using Bot.GameData;
-using Bot.Managers;
 
 namespace Bot.Tests;
 
@@ -43,7 +41,7 @@ public class UnitTests: BaseTestClass {
         // Arrange
         var unit = TestUtils.CreateUnit(Units.Drone);
 
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         manager.Assign(unit);
 
         // Act
@@ -61,7 +59,7 @@ public class UnitTests: BaseTestClass {
         var unit = TestUtils.CreateUnit(Units.Drone);
         var geyser = TestUtils.CreateUnit(Units.VespeneGeyser);
 
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         manager.Assign(unit);
 
         // Act
@@ -107,27 +105,5 @@ public class UnitTests: BaseTestClass {
             deadUnit.RemoveDeathWatcher(this);
             ReportedDeath = true;
         }
-    }
-
-    private class DummyManager: Manager {
-        public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
-
-        protected override IAssigner CreateAssigner() {
-            return null!;
-        }
-
-        protected override IDispatcher CreateDispatcher() {
-            return null!;
-        }
-
-        protected override IReleaser CreateReleaser() {
-            return null!;
-        }
-
-        protected override void AssignUnits() {}
-
-        protected override void DispatchUnits() {}
-
-        protected override void Manage() {}
     }
 }

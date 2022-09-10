@@ -21,23 +21,14 @@ public partial class ArmySupervisor: Supervisor {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
-    public static ArmySupervisor Create() {
-        var supervisor = new ArmySupervisor();
-        supervisor.Init();
+    protected override IAssigner Assigner { get; }
+    protected override IReleaser Releaser { get; }
 
-        return supervisor;
-    }
+    public ArmySupervisor() {
+        Assigner = new ArmySupervisorAssigner(this);
+        Releaser = new ArmySupervisorReleaser(this);
 
-    private ArmySupervisor() {
         _stateMachine = new StateMachine<ArmySupervisor>(this, new AttackState());
-    }
-
-    protected override IAssigner CreateAssigner() {
-        return new ArmySupervisorAssigner(this);
-    }
-
-    protected override IReleaser CreateReleaser() {
-        return new ArmySupervisorReleaser(this);
     }
 
     protected override void Supervise() {

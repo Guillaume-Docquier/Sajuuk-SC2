@@ -35,32 +35,21 @@ public partial class WarManager: Manager {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
-    public static WarManager Create() {
-        var manager = new WarManager();
-        manager.Init();
+    protected override IAssigner Assigner { get; }
+    protected override IDispatcher Dispatcher { get; }
+    protected override IReleaser Releaser { get; }
 
-        return manager;
-    }
+    public WarManager() {
+        Assigner = new WarManagerAssigner(this);
+        Dispatcher = new WarManagerDispatcher(this);
+        Releaser = new WarManagerReleaser(this);
 
-    private WarManager() {
-        _armySupervisor = ArmySupervisor.Create();
+        _armySupervisor = new ArmySupervisor();
 
         _townHallToDefend = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First(townHall => townHall.Position == MapAnalyzer.StartingLocation);
 
         var townHallDefensePosition = GetTownHallDefensePosition(_townHallToDefend.Position, MapAnalyzer.EnemyStartingLocation);
         _armySupervisor.AssignTarget(townHallDefensePosition, GuardRadius, false);
-    }
-
-    protected override IAssigner CreateAssigner() {
-        return new WarManagerAssigner(this);
-    }
-
-    protected override IDispatcher CreateDispatcher() {
-        return new WarManagerDispatcher(this);
-    }
-
-    protected override IReleaser CreateReleaser() {
-        return new WarManagerReleaser(this);
     }
 
     protected override void AssignUnits() {

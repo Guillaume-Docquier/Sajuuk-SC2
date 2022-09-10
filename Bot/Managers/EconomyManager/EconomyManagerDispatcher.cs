@@ -53,7 +53,7 @@ public sealed partial class EconomyManager {
             // TODO GD Assign a color to each region/expand instead?
             var newExpandColor = SupervisorColors[_manager._townHalls.Count % SupervisorColors.Count];
 
-            var townHallSupervisor = TownHallSupervisor.Create(townHall, newExpandColor);
+            var townHallSupervisor = new TownHallSupervisor(townHall, newExpandColor);
             _manager._townHallSupervisors.Add(townHallSupervisor);
 
             return true;

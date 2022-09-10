@@ -4,7 +4,7 @@ using Bot.UnitModules;
 namespace Bot.Managers.ArmySupervision;
 
 public partial class ArmySupervisor {
-    public class ArmySupervisorAssigner: IAssigner {
+    private class ArmySupervisorAssigner: IAssigner {
         private readonly ArmySupervisor _supervisor;
 
         public ArmySupervisorAssigner(ArmySupervisor supervisor) {

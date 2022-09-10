@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Numerics;
-using System.Threading.Tasks;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.MapKnowledge;

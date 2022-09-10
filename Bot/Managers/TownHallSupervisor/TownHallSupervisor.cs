@@ -5,7 +5,6 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.UnitModules;
-using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot.Managers;
@@ -26,12 +25,15 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     private readonly HashSet<Unit> _workers = new HashSet<Unit>();
 
     private bool _expandHasBeenRequested = false;
-    private int _initialMineralsSum;
+    private readonly int _initialMineralsSum;
 
     private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, atSupply: 75, quantity: 0);
     private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>();
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildStepRequests.Select(buildRequest => buildRequest.Fulfillment);
+
+    protected override IAssigner Assigner { get; }
+    protected override IReleaser Releaser { get; }
 
     public int IdealCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor;
     public int IdealAvailableCapacity => IdealCapacity - _workers.Count;
@@ -41,39 +43,27 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
 
     public int WorkerCount => _workers.Count;
 
-    public static TownHallSupervisor Create(Unit townHall, Color color) {
-        var supervisor = new TownHallSupervisor(townHall, color);
-        supervisor.Init();
+    public TownHallSupervisor(Unit townHall, Color color) {
+        _id = townHall.Tag;
+        _color = color;
 
-        supervisor.Assign(townHall);
-        supervisor.Assign(supervisor.DiscoverMinerals());
-        supervisor.Assign(supervisor.DiscoverGasses());
-        supervisor.Assign(supervisor.DiscoverExtractors(UnitsTracker.OwnedUnits));
+        Assigner = new TownHallSupervisorAssigner(this);
+        Releaser = new TownHallSupervisorReleaser(this);
 
-        supervisor._buildStepRequests.Add(supervisor._expandBuildRequest);
+        Assign(townHall);
+        Assign(DiscoverMinerals());
+        Assign(DiscoverGasses());
+        Assign(DiscoverExtractors(UnitsTracker.OwnedUnits));
+
+        _buildStepRequests.Add(_expandBuildRequest);
 
         // You're a macro hatch
-        if (supervisor._minerals.Count == 0) {
-            supervisor._expandHasBeenRequested = true;
+        if (_minerals.Count == 0) {
+            _expandHasBeenRequested = true;
         }
 
         // TODO GD Put this in Expand analyzer, and try to find max minerals based on patch type?
-        supervisor._initialMineralsSum = supervisor._minerals.Sum(mineral => mineral.InitialMineralCount);
-
-        return supervisor;
-    }
-
-    private TownHallSupervisor(Unit townHall, Color color) {
-        _id = townHall.Tag;
-        _color = color;
-    }
-
-    protected override IAssigner CreateAssigner() {
-        return new TownHallSupervisorAssigner(this);
-    }
-
-    protected override IReleaser CreateReleaser() {
-        return new TownHallSupervisorReleaser(this);
+        _initialMineralsSum = _minerals.Sum(mineral => mineral.InitialMineralCount);
     }
 
     protected override void Supervise() {

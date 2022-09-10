@@ -1,5 +1,4 @@
-﻿using Bot.Builds;
-using Bot.GameData;
+﻿using Bot.GameData;
 using Bot.Managers;
 
 namespace Bot.Tests.Managers;
@@ -8,7 +7,7 @@ public class ManagerTests: BaseTestClass {
     [Fact]
     public void GivenNothing_WhenAssigningMultipleUnits_AssignsEachUnit() {
         // Arrange
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         var units = new List<Unit>
         {
             TestUtils.CreateUnit(Units.Zergling),
@@ -26,7 +25,7 @@ public class ManagerTests: BaseTestClass {
     [Fact]
     public void GivenNothing_WhenAssigningUnit_SetsManagerOnUnit() {
         // Arrange
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         var unit = TestUtils.CreateUnit(Units.Zergling);
 
         // Act
@@ -39,7 +38,7 @@ public class ManagerTests: BaseTestClass {
     [Fact]
     public void GivenNothing_WhenAssigningUnit_AddsDeathWatcher() {
         // Arrange
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         var unit = TestUtils.CreateUnit(Units.Zergling);
 
         // Act
@@ -52,7 +51,7 @@ public class ManagerTests: BaseTestClass {
     [Fact]
     public void GivenNothing_WhenAssigningUnit_AddsToManagedUnits() {
         // Arrange
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         var unit = TestUtils.CreateUnit(Units.Zergling);
 
         // Act
@@ -66,7 +65,7 @@ public class ManagerTests: BaseTestClass {
     public void GivenNothing_WhenAssigningUnit_CallsAssigner() {
         // Arrange
         var assigner = new DummyAssigner();
-        var manager = new DummyManager(assigner: assigner);
+        var manager = new TestUtils.DummyManager(assigner: assigner);
         var unit = TestUtils.CreateUnit(Units.Zergling);
 
         // Act
@@ -79,7 +78,7 @@ public class ManagerTests: BaseTestClass {
     [Fact]
     public void GivenManagedUnit_WhenAssigningOtherUnit_SetsManagerOnUnit() {
         // Arrange
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         var unit = TestUtils.CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
@@ -95,7 +94,7 @@ public class ManagerTests: BaseTestClass {
     [Fact]
     public void GivenManagedUnit_WhenAssigningOtherUnit_AddsDeathWatcher() {
         // Arrange
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         var unit = TestUtils.CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
@@ -111,7 +110,7 @@ public class ManagerTests: BaseTestClass {
     [Fact]
     public void GivenManagedUnit_WhenAssigningOtherUnit_AddsToManagedUnits() {
         // Arrange
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         var unit = TestUtils.CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
@@ -128,7 +127,7 @@ public class ManagerTests: BaseTestClass {
     public void GivenManagedUnit_WhenAssigningOtherUnit_CallsAssigner() {
         // Arrange
         var assigner = new DummyAssigner();
-        var manager = new DummyManager(assigner: assigner);
+        var manager = new TestUtils.DummyManager(assigner: assigner);
         var unit = TestUtils.CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
@@ -145,7 +144,7 @@ public class ManagerTests: BaseTestClass {
     public void GivenManagedUnit_WhenAssigningSameUnit_DoesNothing() {
         // Arrange
         var assigner = new DummyAssigner();
-        var manager = new DummyManager(assigner: assigner);
+        var manager = new TestUtils.DummyManager(assigner: assigner);
         var unit = TestUtils.CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
@@ -166,7 +165,7 @@ public class ManagerTests: BaseTestClass {
     [Fact]
     public void GivenNothing_WhenReleasingMultipleUnits_ReleasesEachUnit() {
         // Arrange
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         var units = new List<Unit>
         {
             TestUtils.CreateUnit(Units.Zergling),
@@ -186,7 +185,7 @@ public class ManagerTests: BaseTestClass {
     [Fact]
     public void GivenManagedUnit_WhenReleasingUnit_UnsetsManagerFromUnit() {
         // Arrange
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         var unit = TestUtils.CreateUnit(Units.Zergling);
 
         manager.Assign(unit);
@@ -201,7 +200,7 @@ public class ManagerTests: BaseTestClass {
     [Fact]
     public void GivenManagedUnit_WhenReleasingUnit_RemovesDeathWatcher() {
         // Arrange
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         var unit = TestUtils.CreateUnit(Units.Zergling);
 
         manager.Assign(unit);
@@ -216,7 +215,7 @@ public class ManagerTests: BaseTestClass {
     [Fact]
     public void GivenManagedUnit_WhenReleasingUnit_RemovesFromManagedUnits() {
         // Arrange
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         var unit = TestUtils.CreateUnit(Units.Zergling);
 
         manager.Assign(unit);
@@ -231,8 +230,8 @@ public class ManagerTests: BaseTestClass {
     [Fact]
     public void GivenManagedUnit_WhenReleasingUnit_ReleasesSupervisor() {
         // Arrange
-        var manager = new DummyManager();
-        var supervisor = new DummySupervisor();
+        var manager = new TestUtils.DummyManager();
+        var supervisor = new TestUtils.DummySupervisor();
         var unit = TestUtils.CreateUnit(Units.Zergling);
 
         manager.Assign(unit);
@@ -250,7 +249,7 @@ public class ManagerTests: BaseTestClass {
     public void GivenManagedUnit_WhenReleasingUnit_CallsReleaser() {
         // Arrange
         var releaser = new DummyReleaser();
-        var manager = new DummyManager(releaser: releaser);
+        var manager = new TestUtils.DummyManager(releaser: releaser);
         var unit = TestUtils.CreateUnit(Units.Zergling);
 
         manager.Assign(unit);
@@ -265,7 +264,7 @@ public class ManagerTests: BaseTestClass {
     [Fact]
     public void GivenNothing_WhenReleasingUnit_DoesNothing() {
         // Arrange
-        var manager = new DummyManager();
+        var manager = new TestUtils.DummyManager();
         var unit = TestUtils.CreateUnit(Units.Zergling);
 
         // Act
@@ -279,8 +278,8 @@ public class ManagerTests: BaseTestClass {
     public void GivenManagedUnit_WhenReleasingUnmanagedUnit_DoesNothing() {
         // Arrange
         var releaser = new DummyReleaser();
-        var manager = new DummyManager(releaser: releaser);
-        var supervisor = new DummySupervisor();
+        var manager = new TestUtils.DummyManager(releaser: releaser);
+        var supervisor = new TestUtils.DummySupervisor();
 
         var unit = TestUtils.CreateUnit(Units.Zergling);
         var otherUnit = TestUtils.CreateUnit(Units.Zergling);
@@ -300,41 +299,6 @@ public class ManagerTests: BaseTestClass {
         Assert.Contains(manager, unit.DeathWatchers);
     }
 
-    // TODO GD Implement IDispatcher
-    private class DummyManager: Manager {
-        private readonly IAssigner? _assigner;
-        private readonly IDispatcher? _dispatcher;
-        private readonly IReleaser? _releaser;
-
-        public override IEnumerable<BuildFulfillment> BuildFulfillments { get; } = Enumerable.Empty<BuildFulfillment>();
-
-        public DummyManager(IAssigner? assigner = null, IDispatcher? dispatcher = null, IReleaser? releaser = null) {
-            _assigner = assigner;
-            _dispatcher = dispatcher;
-            _releaser = releaser;
-
-            Init();
-        }
-
-        protected override IAssigner CreateAssigner() {
-            return _assigner!;
-        }
-
-        protected override IDispatcher CreateDispatcher() {
-            return _dispatcher!;
-        }
-
-        protected override IReleaser CreateReleaser() {
-            return _releaser!;
-        }
-
-        protected override void AssignUnits() {}
-
-        protected override void DispatchUnits() {}
-
-        protected override void Manage() {}
-    }
-
     private class DummyAssigner: IAssigner {
         public List<Unit> AssignedUnits { get; } = new List<Unit>();
 
@@ -343,38 +307,19 @@ public class ManagerTests: BaseTestClass {
         }
     }
 
+    private class DummyDispatcher: IDispatcher {
+        public List<Unit> AssignedUnits { get; } = new List<Unit>();
+
+        public void Dispatch(Unit unit) {
+            throw new NotImplementedException();
+        }
+    }
+
     private class DummyReleaser: IReleaser {
         public List<Unit> ReleasedUnits { get; } = new List<Unit>();
 
         public void Release(Unit unit) {
             ReleasedUnits.Add(unit);
-        }
-    }
-
-    private class DummySupervisor : Supervisor {
-        private readonly IAssigner _assigner = new DummyAssigner();
-        private readonly IReleaser _releaser = new DummyReleaser();
-
-        public override IEnumerable<BuildFulfillment> BuildFulfillments { get; } = Enumerable.Empty<BuildFulfillment>();
-
-        public DummySupervisor() {
-            Init();
-        }
-
-        protected override IAssigner CreateAssigner() {
-            return _assigner;
-        }
-
-        protected override IReleaser CreateReleaser() {
-            return _releaser;
-        }
-
-        protected override void Supervise() {
-            throw new NotImplementedException();
-        }
-
-        public override void Retire() {
-            throw new NotImplementedException();
         }
     }
 }

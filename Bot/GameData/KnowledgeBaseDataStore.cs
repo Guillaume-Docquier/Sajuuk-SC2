@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Google.Protobuf;
 using SC2APIProtocol;
 using CodedOutputStream = Google.Protobuf.CodedOutputStream;

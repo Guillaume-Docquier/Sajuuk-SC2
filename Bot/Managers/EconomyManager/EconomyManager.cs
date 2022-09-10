@@ -18,42 +18,30 @@ public sealed partial class EconomyManager: Manager {
     private readonly HashSet<Unit> _queens = new HashSet<Unit>();
     private readonly HashSet<Unit> _workers = new HashSet<Unit>();
 
+    private int _creepQueensCount = 1;
+
     private readonly BuildRequest _macroHatchBuildRequest = new TargetBuildRequest(BuildType.Build, Units.Hatchery, targetQuantity: 0);
     private readonly BuildRequest _queenBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Queen, targetQuantity: 0);
     private readonly BuildRequest _dronesBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Drone, targetQuantity: 0);
     private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>();
 
-    private int _creepQueensCount = 1;
-
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildStepRequests.Select(buildRequest => buildRequest.Fulfillment)
         .Concat(_townHallSupervisors.SelectMany(supervisor => supervisor.BuildFulfillments));
 
+    protected override IAssigner Assigner { get; }
+    protected override IDispatcher Dispatcher { get; }
+    protected override IReleaser Releaser { get; }
 
-    public static EconomyManager Create() {
-        var manager = new EconomyManager();
-        manager.Init();
+    public EconomyManager() {
+        Assigner = new EconomyManagerAssigner(this);
+        Dispatcher = new EconomyManagerDispatcher(this);
+        Releaser = new EconomyManagerReleaser(this);
 
-        return manager;
-    }
-
-    private EconomyManager() {
         _macroHatchBuildRequest.Requested = _townHalls.Count; // TODO GD Need to differentiate macro and mining bases
 
         _buildStepRequests.Add(_macroHatchBuildRequest);
         _buildStepRequests.Add(_queenBuildRequest);
         _buildStepRequests.Add(_dronesBuildRequest);
-    }
-
-    protected override IAssigner CreateAssigner() {
-        return new EconomyManagerAssigner(this);
-    }
-
-    protected override IDispatcher CreateDispatcher() {
-        return new EconomyManagerDispatcher(this);
-    }
-
-    protected override IReleaser CreateReleaser() {
-        return new EconomyManagerReleaser(this);
     }
 
     protected override void AssignUnits() {

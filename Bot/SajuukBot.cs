@@ -64,9 +64,9 @@ public class SajuukBot: PoliteBot {
     }
 
     private void InitManagers() {
-        _managers.Add(EconomyManager.Create());
-        _managers.Add(WarManager.Create());
-        _managers.Add(CreepManager.Create());
+        _managers.Add(new EconomyManager());
+        _managers.Add(new WarManager());
+        _managers.Add(new CreepManager());
     }
 
     private void DebugIncomeRate() {

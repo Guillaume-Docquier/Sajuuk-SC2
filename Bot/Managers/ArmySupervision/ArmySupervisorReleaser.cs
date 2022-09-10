@@ -3,7 +3,7 @@
 namespace Bot.Managers.ArmySupervision;
 
 public partial class ArmySupervisor {
-    public class ArmySupervisorReleaser: IReleaser {
+    private class ArmySupervisorReleaser: IReleaser {
         private readonly ArmySupervisor _supervisor;
 
         public ArmySupervisorReleaser(ArmySupervisor supervisor) {
