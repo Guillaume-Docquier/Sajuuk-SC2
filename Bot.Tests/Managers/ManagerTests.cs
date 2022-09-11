@@ -299,6 +299,92 @@ public class ManagerTests: BaseTestClass {
         Assert.Contains(manager, unit.DeathWatchers);
     }
 
+    [Fact]
+    public void GivenNothing_WhenOnFrame_CallsAssignDispatchManage() {
+        // Arrange
+        var manager = new OnFrameManager();
+        var expected = new List<OnFrameManager.Call>
+        {
+            OnFrameManager.Call.Assign,
+            OnFrameManager.Call.Dispatch,
+            OnFrameManager.Call.Manage,
+        };
+
+        // Act
+        manager.OnFrame();
+
+        // Assert
+        Assert.Equal(expected, manager.CallStack);
+    }
+
+    [Fact]
+    public void GivenManagedUnits_WhenDispatching_DispatchesAllUnits() {
+        // Arrange
+        var dispatcher = new DummyDispatcher();
+        var manager = new TestUtils.DummyManager(dispatcher: dispatcher);
+        var units = new List<Unit>
+        {
+            TestUtils.CreateUnit(Units.Zergling),
+            TestUtils.CreateUnit(Units.Zergling),
+            TestUtils.CreateUnit(Units.Zergling),
+        };
+
+        manager.Assign(units);
+
+        // Act
+        manager.Dispatch(units);
+
+        // Assert
+        Assert.Equal(units, dispatcher.DispatchedUnits);
+    }
+
+    [Fact]
+    public void GivenNothing_WhenDispatching_DoesNothing() {
+        // Arrange
+        var dispatcher = new DummyDispatcher();
+        var manager = new TestUtils.DummyManager(dispatcher: dispatcher);
+        var unit = TestUtils.CreateUnit(Units.Zergling);
+
+        // Act
+        manager.Dispatch(unit);
+
+        // Assert
+        Assert.Empty(dispatcher.DispatchedUnits);
+    }
+
+    [Fact]
+    public void GivenManagedUnit_WhenDispatching_CallsDispatcher() {
+        // Arrange
+        var dispatcher = new DummyDispatcher();
+        var manager = new TestUtils.DummyManager(dispatcher: dispatcher);
+        var unit = TestUtils.CreateUnit(Units.Zergling);
+        manager.Assign(unit);
+
+        // Act
+        manager.Dispatch(unit);
+
+        // Assert
+        Assert.Single(dispatcher.DispatchedUnits);
+        Assert.Contains(unit, dispatcher.DispatchedUnits);
+    }
+
+    [Fact]
+    public void GivenManagedUnit_WhenDispatchingUnmanagedUnit_DoesNothing() {
+        // Arrange
+        var dispatcher = new DummyDispatcher();
+        var manager = new TestUtils.DummyManager(dispatcher: dispatcher);
+        var unit = TestUtils.CreateUnit(Units.Zergling);
+        manager.Assign(unit);
+
+        var unmanagedUnit = TestUtils.CreateUnit(Units.Zergling);
+
+        // Act
+        manager.Dispatch(unmanagedUnit);
+
+        // Assert
+        Assert.Empty(dispatcher.DispatchedUnits);
+    }
+
     private class DummyAssigner: IAssigner {
         public List<Unit> AssignedUnits { get; } = new List<Unit>();
 
@@ -308,10 +394,10 @@ public class ManagerTests: BaseTestClass {
     }
 
     private class DummyDispatcher: IDispatcher {
-        public List<Unit> AssignedUnits { get; } = new List<Unit>();
+        public List<Unit> DispatchedUnits { get; } = new List<Unit>();
 
         public void Dispatch(Unit unit) {
-            throw new NotImplementedException();
+            DispatchedUnits.Add(unit);
         }
     }
 
@@ -320,6 +406,28 @@ public class ManagerTests: BaseTestClass {
 
         public void Release(Unit unit) {
             ReleasedUnits.Add(unit);
+        }
+    }
+
+    private class OnFrameManager : TestUtils.DummyManager {
+        public enum Call {
+            Assign,
+            Dispatch,
+            Manage,
+        }
+
+        public readonly List<Call> CallStack = new List<Call>();
+
+        protected override void AssignUnits() {
+            CallStack.Add(Call.Assign);
+        }
+
+        protected override void DispatchUnits() {
+            CallStack.Add(Call.Dispatch);
+        }
+
+        protected override void Manage() {
+            CallStack.Add(Call.Manage);
         }
     }
 }
