@@ -385,6 +385,60 @@ public class ManagerTests: BaseTestClass {
         Assert.Empty(dispatcher.DispatchedUnits);
     }
 
+    [Fact]
+    public void GivenManagedUnit_WhenUnitDies_ReleasesUnit() {
+        // Arrange
+        var releaser = new DummyReleaser();
+        var manager = new TestUtils.DummyManager(releaser: releaser);
+        var unit = TestUtils.CreateUnit(Units.Zergling);
+        manager.Assign(unit);
+
+        // Act
+        unit.Died();
+
+        // Assert
+        Assert.Single(releaser.ReleasedUnits);
+        Assert.Contains(unit, releaser.ReleasedUnits);
+
+        Assert.Empty(manager.ManagedUnits);
+    }
+
+    [Fact]
+    public void GivenNothing_WhenUnitDies_DoesNothing() {
+        // Arrange
+        var releaser = new DummyReleaser();
+        var manager = new TestUtils.DummyManager(releaser: releaser);
+        var unmanagedUnit = TestUtils.CreateUnit(Units.Zergling);
+
+        // Act
+        unmanagedUnit.Died();
+
+        // Assert
+        Assert.Empty(releaser.ReleasedUnits);
+
+        Assert.Empty(manager.ManagedUnits);
+    }
+
+    [Fact]
+    public void GivenManagedUnit_WhenUnmanagedUnitDies_DoesNothing() {
+        // Arrange
+        var releaser = new DummyReleaser();
+        var manager = new TestUtils.DummyManager(releaser: releaser);
+        var unit = TestUtils.CreateUnit(Units.Zergling);
+        manager.Assign(unit);
+
+        var unmanagedUnit = TestUtils.CreateUnit(Units.Zergling);
+
+        // Act
+        unmanagedUnit.Died();
+
+        // Assert
+        Assert.Empty(releaser.ReleasedUnits);
+
+        Assert.Single(manager.ManagedUnits);
+        Assert.Contains(unit, manager.ManagedUnits);
+    }
+
     private class DummyAssigner: IAssigner {
         public List<Unit> AssignedUnits { get; } = new List<Unit>();
 
