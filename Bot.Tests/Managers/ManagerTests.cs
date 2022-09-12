@@ -404,7 +404,7 @@ public class ManagerTests: BaseTestClass {
     }
 
     [Fact]
-    public void GivenNothing_WhenUnitDies_DoesNothing() {
+    public void GivenNothing_WhenUnmanagedUnitDies_DoesNothing() {
         // Arrange
         var releaser = new DummyReleaser();
         var manager = new TestUtils.DummyManager(releaser: releaser);
@@ -428,6 +428,27 @@ public class ManagerTests: BaseTestClass {
         manager.Assign(unit);
 
         var unmanagedUnit = TestUtils.CreateUnit(Units.Zergling);
+
+        // Act
+        unmanagedUnit.Died();
+
+        // Assert
+        Assert.Empty(releaser.ReleasedUnits);
+
+        Assert.Single(manager.ManagedUnits);
+        Assert.Contains(unit, manager.ManagedUnits);
+    }
+
+    [Fact]
+    public void GivenManagedUnit_WhenHandlingDeathOfUnmanagedUnit_DoesNothing() {
+        // Arrange
+        var releaser = new DummyReleaser();
+        var manager = new TestUtils.DummyManager(releaser: releaser);
+        var unit = TestUtils.CreateUnit(Units.Zergling);
+        manager.Assign(unit);
+
+        var unmanagedUnit = TestUtils.CreateUnit(Units.Zergling);
+        unmanagedUnit.AddDeathWatcher(manager);
 
         // Act
         unmanagedUnit.Died();
