@@ -3,7 +3,7 @@ using Bot.Managers;
 
 namespace Bot.Tests.Managers;
 
-public class ManagerTests: BaseTestClass {
+public class ManagerTests : BaseTestClass {
     [Fact]
     public void GivenNothing_WhenAssigningMultipleUnits_AssignsEachUnit() {
         // Arrange
@@ -152,7 +152,7 @@ public class ManagerTests: BaseTestClass {
         manager.Assign(unit);
 
         // Assert
-        var assignedUnits = assigner.AssignedUnits.Where(managed => managed == unit).ToList();
+        var assignedUnits = assigner.AssignedUnits.Where(assigned => assigned == unit).ToList();
         Assert.Single(assignedUnits);
 
         var managedUnits = manager.ManagedUnits.Where(managed => managed == unit).ToList();
@@ -160,6 +160,8 @@ public class ManagerTests: BaseTestClass {
 
         var deathWatchers = unit.DeathWatchers.Where(deathWatcher => deathWatcher == manager).ToList();
         Assert.Single(deathWatchers);
+
+        Assert.Equal(manager, unit.Manager);
     }
 
     [Fact]

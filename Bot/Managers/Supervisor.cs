@@ -39,6 +39,7 @@ public abstract class Supervisor {
         if (SupervisedUnits.Remove(unit)) {
             unit.Supervisor = null;
 
+            // TODO GD Test that stop is called
             unit.Stop();
 
             Releaser.Release(unit);

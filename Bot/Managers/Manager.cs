@@ -67,6 +67,7 @@ public abstract class Manager: IWatchUnitsDie {
             unit.Manager = null;
             unit.RemoveDeathWatcher(this);
 
+            // TODO GD Test that stop is called
             unit.Stop();
 
             Releaser.Release(unit);
