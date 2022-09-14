@@ -35,4 +35,10 @@
       </None>
     </ItemGroup>
 
+    <ItemGroup>
+      <Reference Include="Google.Protobuf">
+        <HintPath>..\References\Google.Protobuf.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>

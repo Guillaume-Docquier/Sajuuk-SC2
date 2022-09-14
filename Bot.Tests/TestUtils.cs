@@ -1,5 +1,9 @@
-﻿using Bot.Builds;
+﻿using System.Numerics;
+using Bot.Builds;
+using Bot.ExtensionMethods;
 using Bot.Managers;
+using Google.Protobuf;
+using Google.Protobuf.Collections;
 using SC2APIProtocol;
 
 namespace Bot.Tests;
@@ -7,13 +11,13 @@ namespace Bot.Tests;
 public static class TestUtils {
     private static ulong _currentTag = 0;
 
-    public static Unit CreateUnit(uint unitType, uint frame = 0, Alliance alliance = Alliance.Self, Point? position = null) {
+    public static Unit CreateUnit(uint unitType, uint frame = 0, Alliance alliance = Alliance.Self, Vector3 position = default) {
         var rawUnit = new SC2APIProtocol.Unit
         {
             Tag = _currentTag,
             UnitType = unitType,
             Alliance = alliance,
-            Pos = position ?? new Point { X = 0, Y = 0, Z = 0 },
+            Pos = position.ToPoint(),
         };
 
         // Just make sure to never collide

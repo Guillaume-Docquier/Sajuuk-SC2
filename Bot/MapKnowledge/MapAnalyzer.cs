@@ -118,7 +118,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
 
         var heightVector = Controller.GameInfo.StartRaw.TerrainHeight.Data
             .ToByteArray()
-            .Select(ByteToFloat)
+            .Select(ImageDataUtils.ByteToFloat)
             .ToList();
 
         for (var x = 0; x < MaxX; x++) {
@@ -126,12 +126,6 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
                 HeightMap[x][y] = heightVector[y * MaxX + x]; // heightVector[4] is (4, 0)
             }
         }
-    }
-
-    private static float ByteToFloat(byte byteValue) {
-        // Computed from 3 unit positions and 3 height map bytes
-        // Seems to work fine
-        return 0.125f * byteValue - 15.888f;
     }
 
     private static void InitTerrainWalkMap() {
@@ -156,7 +150,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
 
         var walkVector = Controller.GameInfo.StartRaw.PathingGrid.Data
             .ToByteArray()
-            .SelectMany(ByteToBoolArray)
+            .SelectMany(ImageDataUtils.ByteToBoolArray)
             .ToList();
 
         for (var x = 0; x < MaxX; x++) {
@@ -173,23 +167,6 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         }
 
         return walkMap;
-    }
-
-    private static bool[] ByteToBoolArray(byte byteValue)
-    {
-        // Each byte represents 8 grid cells
-        var values = new bool[8];
-
-        values[7] = (byteValue & 1) != 0;
-        values[6] = (byteValue & 2) != 0;
-        values[5] = (byteValue & 4) != 0;
-        values[4] = (byteValue & 8) != 0;
-        values[3] = (byteValue & 16) != 0;
-        values[2] = (byteValue & 32) != 0;
-        values[1] = (byteValue & 64) != 0;
-        values[0] = (byteValue & 128) != 0;
-
-        return values;
     }
 
     public static IEnumerable<Vector3> BuildSearchGrid(Vector3 centerPosition, int gridRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
