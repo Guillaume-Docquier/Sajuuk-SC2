@@ -1,5 +1,6 @@
-[![Unit Tests](https://github.com/Guillaume-Docquier/Sajuuk-SC2/actions/workflows/dotnet.yml/badge.svg)](https://github.com/Guillaume-Docquier/Sajuuk-SC2/actions/workflows/dotnet.yml)
+![GitHub](https://img.shields.io/github/license/guillaume-docquier/Sajuuk-SC2?color=blue&label=License)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/Guillaume-Docquier/Sajuuk-SC2?label=Latest)
+[![Unit Tests](https://github.com/Guillaume-Docquier/Sajuuk-SC2/actions/workflows/dotnet.yml/badge.svg)](https://github.com/Guillaume-Docquier/Sajuuk-SC2/actions/workflows/dotnet.yml)
 
 # Sajuuk-SC2
 Sajuuk is a homemade StarCraft 2 Zerg bot playing a 2 bases Roach all in.  
