@@ -4,10 +4,11 @@ using System.Numerics;
 namespace Bot.MapKnowledge;
 
 public partial class ExpandAnalyzer {
+    // TODO GD Put this in a file
     private readonly Dictionary<string, List<Vector3>> _precomputedExpandLocations = new Dictionary<string, List<Vector3>>
     {
         {
-            Maps.Names.Berlingrad,
+            Maps.Season_2022_3.Names.Berlingrad,
             new List<Vector3>
             {
                 new Vector3(25.5f, 47.5f, 9.987f),
@@ -27,7 +28,7 @@ public partial class ExpandAnalyzer {
             }
         },
         {
-            Maps.Names.Blackburn,
+            Maps.Season_2022_3.Names.Blackburn,
             new List<Vector3>
             {
                 new Vector3(144.5f, 80.5f, 3.9870005f),
@@ -47,7 +48,7 @@ public partial class ExpandAnalyzer {
             }
         },
         {
-            Maps.Names.Hardwire,
+            Maps.Season_2022_3.Names.Hardwire,
             new List<Vector3>
             {
                 new Vector3(140.5f, 134.5f, 7.9870005f),
@@ -69,7 +70,7 @@ public partial class ExpandAnalyzer {
             }
         },
         {
-            Maps.Names.CuriousMinds,
+            Maps.Season_2022_3.Names.CuriousMinds,
             new List<Vector3>
             {
                 new Vector3(50.5f, 91.5f, 5.9870005f),
@@ -87,7 +88,7 @@ public partial class ExpandAnalyzer {
             }
         },
         {
-            Maps.Names.GlitteringAshes,
+            Maps.Season_2022_3.Names.GlitteringAshes,
             new List<Vector3>
             {
                 new Vector3(92.5f, 81.5f, 5.9870005f),
@@ -111,7 +112,7 @@ public partial class ExpandAnalyzer {
             }
         },
         {
-            Maps.Names.TwoThousandAtmospheres,
+            Maps.Season_2022_3.Names.TwoThousandAtmospheres,
             new List<Vector3>
             {
                 new Vector3(157.5f, 72.5f, 7.9870005f),
