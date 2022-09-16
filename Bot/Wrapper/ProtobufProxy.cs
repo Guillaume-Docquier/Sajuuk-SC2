@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net.WebSockets;
 using System.Threading;
@@ -8,6 +9,7 @@ using SC2APIProtocol;
 
 namespace Bot.Wrapper;
 
+[ExcludeFromCodeCoverage]
 public class ProtobufProxy {
     private ClientWebSocket _clientSocket;
     private const int ConnectTimeout = 20000;

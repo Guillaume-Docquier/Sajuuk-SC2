@@ -1,8 +1,10 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Bot.ExtensionMethods;
 
 namespace Bot.Wrapper;
 
+[ExcludeFromCodeCoverage]
 public class PerformanceDebugger {
     private double _dataPointsCount = 0;
 

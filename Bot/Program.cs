@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Bot.Scenarios;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot;
 
+[ExcludeFromCodeCoverage]
 public class Program {
     private static readonly List<IScenario> Scenarios = new List<IScenario>
     {
