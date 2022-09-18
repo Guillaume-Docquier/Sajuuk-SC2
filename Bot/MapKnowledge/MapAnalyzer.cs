@@ -89,7 +89,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         Pathfinder.Memory.Clear();
     }
 
-    private static IEnumerable<Vector3> GetObstacleFootprint(Unit obstacle) {
+    public static IEnumerable<Vector3> GetObstacleFootprint(Unit obstacle) {
         if (Units.MineralFields.Contains(obstacle.UnitType)) {
             // Mineral fields are 1x2
             return new List<Vector3>
@@ -182,8 +182,8 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         return grid.OrderBy(position => Vector3.Distance(centerPosition, position));
     }
 
-    public static IEnumerable<Vector3> BuildSearchRadius(Vector3 centerPosition, int circleRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
-        return BuildSearchGrid(centerPosition, circleRadius, stepSize).Where(cell => cell.HorizontalDistanceTo(centerPosition) <= circleRadius);
+    public static IEnumerable<Vector3> BuildSearchRadius(Vector3 centerPosition, float circleRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
+        return BuildSearchGrid(centerPosition, (int)circleRadius + 1, stepSize).Where(cell => cell.HorizontalDistanceTo(centerPosition) <= circleRadius);
     }
 
     public static bool IsInBounds(Vector3 position) {

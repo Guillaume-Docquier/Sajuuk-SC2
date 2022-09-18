@@ -79,25 +79,29 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
         _ongoingBuildingOrders.Remove(unit);
     }
 
-    // This is a blocking call! Use it sparingly, or you will slow down your execution significantly!
     public static bool CanPlace(uint buildingType, Vector3 position) {
+        return QueryPlacement(buildingType, position) == ActionResult.Success;
+    }
+
+    // This is a blocking call! Use it sparingly, or you will slow down your execution significantly!
+    public static ActionResult QueryPlacement(uint buildingType, Vector3 position) {
         if (IsTooCloseToTownHall(buildingType, position)) {
-            return false;
+            return ActionResult.CantBuildLocationInvalid;
         }
 
         if (GetBuildingCells(buildingType, position).Any(buildingCell => Instance._reservedBuildingCells.ContainsKey(buildingCell))) {
-            return false;
+            return ActionResult.CantBuildLocationInvalid;
         }
 
         if (Units.Extractors.Contains(buildingType)) {
             // Extractors are placed on gas, let's not query the terrain
-            return true;
+            return ActionResult.Success;
         }
 
         // TODO GD Check with MapAnalyzer._currentWalkMap before checking with the query
         var queryBuildingPlacementResponse = Program.GameConnection.SendRequest(RequestBuilder.RequestQueryBuildingPlacement(buildingType, position)).Result;
         if (queryBuildingPlacementResponse.Query.Placements.Count == 0) {
-            return false;
+            return ActionResult.NotSupported;
         }
 
         if (queryBuildingPlacementResponse.Query.Placements.Count > 1) {
@@ -107,7 +111,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
         var actionResult = queryBuildingPlacementResponse.Query.Placements[0].Result;
         DebugBuildingPlacementResult(actionResult, position);
 
-        return actionResult == ActionResult.Success;
+        return actionResult;
     }
 
     private static bool IsInRange(Vector3 targetPosition, List<Unit> units, float maxDistance) {

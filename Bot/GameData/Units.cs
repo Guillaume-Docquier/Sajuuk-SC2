@@ -171,7 +171,13 @@ public static class Units {
     public const uint PurifierMineralField750 = 885;
     public const uint BattleStationMineralField = 886;
     public const uint BattleStationMineralField750 = 887;
+
+    /// <summary>
+    /// Represents tiny mineral patches (10 or so minerals) that can be cleared to gain access to expand locations or ramps.
+    /// They are not used as mineral patches to mine.
+    /// </summary>
     public const uint MineralField450  = 1996;
+
     public const uint SwarmHost = 494; // SwarmHostMP?
     public const uint SwarmHostBurrowed = 493; // SwarmHostBurrowedMP?
     public const uint Viper = 499;
@@ -412,7 +418,7 @@ public static class Units {
         PurifierMineralField750,
         BattleStationMineralField,
         BattleStationMineralField750,
-        MineralField450,
+        MineralField450, // Should we exclude this one? See note
     };
 
     public static readonly HashSet<uint> Extractors = new HashSet<uint>
