@@ -16,11 +16,11 @@ public class Program {
 
     private static readonly IBot Bot = new SajuukBot("2_2_0", scenarios: Scenarios);
 
-    private const string MapFileName = Maps.Season_2022_4.FileNames.Stargazers;
+    private const string MapFileName = Maps.Season_2022_4.FileNames.InsideAndOut;
     private const Race OpponentRace = Race.Terran;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
-    private const bool RealTime = false;
+    private const bool RealTime = true;
 
     public static GameConnection GameConnection { get; private set; }
     public static bool DebugEnabled { get; private set; }
