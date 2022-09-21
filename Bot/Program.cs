@@ -14,13 +14,13 @@ public class Program {
         //new WorkerRushScenario(),
     };
 
-    private static readonly IBot Bot = new SajuukBot("2_1_0", scenarios: Scenarios);
+    private static readonly IBot Bot = new SajuukBot("2_2_0", scenarios: Scenarios);
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.Stargazers;
     private const Race OpponentRace = Race.Terran;
-    private const Difficulty OpponentDifficulty = Difficulty.VeryEasy;
+    private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
-    private const bool RealTime = true;
+    private const bool RealTime = false;
 
     public static GameConnection GameConnection { get; private set; }
     public static bool DebugEnabled { get; private set; }

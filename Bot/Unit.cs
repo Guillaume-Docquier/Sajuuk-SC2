@@ -135,8 +135,16 @@ public class Unit: ICanDie, IHavePosition {
         ProcessAction(ActionBuilder.Stop(Tag));
     }
 
-    public void Move(Vector3 target, bool spam = false) {
-        if (!spam && IsTargeting(target, Abilities.Move)) {
+    /// <summary>
+    /// Send the order to move to a target position.
+    /// If the unit already has a move order to that target, given the precision, no order will be sent.
+    /// You can override this check with allowSpam = true.
+    /// </summary>
+    /// <param name="target">The target position to move to</param>
+    /// <param name="precision">The allowed precision on the move order</param>
+    /// <param name="allowSpam">Enables spamming orders. Not recommended because it might generate a lot of actions</param>
+    public void Move(Vector3 target, float precision = 0.5f, bool allowSpam = false) {
+        if (!allowSpam && IsTargeting(target, Abilities.Move, precision)) {
             return;
         }
 
@@ -151,8 +159,16 @@ public class Unit: ICanDie, IHavePosition {
         ProcessAction(ActionBuilder.Attack(Tag, target.Tag));
     }
 
-    public void AttackMove(Vector3 target) {
-        if (IsTargeting(target, Abilities.Attack)) {
+    /// <summary>
+    /// Send the order to attack move to a target position.
+    /// If the unit already has an attack move order to that target, given the precision, no order will be sent.
+    /// You can override this check with allowSpam = true.
+    /// </summary>
+    /// <param name="target">The target position to attack move to</param>
+    /// <param name="precision">The allowed precision on the attack move order</param>
+    /// <param name="allowSpam">Enables spamming orders. Not recommended because it might generate a lot of actions</param>
+    public void AttackMove(Vector3 target, float precision = 0.5f, bool allowSpam = false) {
+        if (!allowSpam && IsTargeting(target, Abilities.Attack, precision)) {
             return;
         }
 
@@ -311,13 +327,18 @@ public class Unit: ICanDie, IHavePosition {
         return Orders.All(order => order.AbilityId is Abilities.Move or Abilities.Attack);
     }
 
-    private bool IsTargeting(Vector3 target, uint abilityId) {
-        var targetAsPoint = target.WithoutZ().ToPoint();
-
+    /// <summary>
+    /// Checks if an ability already targets a target position given a certain level of precision.
+    /// </summary>
+    /// <param name="target">The target to check.</param>
+    /// <param name="abilityId">The ability to check.</param>
+    /// <param name="precision">The maximum distance allowed between target and order.TargetWorldSpacePos. Should be positive.</param>
+    /// <returns>True if there is an order with abilityId where the TargetWorldSpacePos is within precision of the target.</returns>
+    private bool IsTargeting(Vector3 target, uint abilityId, float precision) {
         return Orders
             .Where(order => order.AbilityId == abilityId)
             .Where(order => order.TargetWorldSpacePos != null)
-            .Any(order => order.TargetWorldSpacePos.Equals(targetAsPoint));
+            .Any(order => order.TargetWorldSpacePos.ToVector3().HorizontalDistanceTo(target) <= precision);
     }
 
     private bool IsAttacking(Unit unit) {

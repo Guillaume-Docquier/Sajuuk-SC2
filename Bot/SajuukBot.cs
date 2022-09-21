@@ -37,6 +37,9 @@ public class SajuukBot: PoliteBot {
         if (Controller.Frame == 0) {
             InitManagers();
         }
+        else if (Controller.Frame == 2016) {
+            Logger.Debug("Collected Minerals: {0}", Controller.Observation.Observation.Score.ScoreDetails.CollectedMinerals);
+        }
 
         FollowBuildOrder();
 
@@ -44,7 +47,7 @@ public class SajuukBot: PoliteBot {
 
         // TODO GD Most likely we will consume all the larvae in one shot
         // TODO GD A larvae round robin might be more interesting?
-        // Make sure every one gets a turn
+        // Make sure everyone gets a turn
         if (Controller.Frame % PriorityChangePeriod == 0) {
             _managerPriorityIndex = (_managerPriorityIndex + 1) % _managers.Count;
         }

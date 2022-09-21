@@ -282,7 +282,7 @@ public class GameConnection {
         }
     }
 
-    private Task RequestLeaveGame() {
+    public Task RequestLeaveGame() {
         return SendRequest(new Request
         {
             LeaveGame = new RequestLeaveGame()

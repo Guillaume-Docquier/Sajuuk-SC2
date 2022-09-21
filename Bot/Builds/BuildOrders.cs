@@ -69,11 +69,11 @@ public static class BuildOrders {
     }
 
     public static BuildOrder TestSpeedMining() {
-        return new BuildOrder(new[]
+        return new BuildOrder(new BuildRequest[]
         {
+            new QuantityBuildRequest(BuildType.Train, Units.Drone,    atSupply: 12),
             new QuantityBuildRequest(BuildType.Train, Units.Overlord, atSupply: 13),
-            // This will block the build
-            new QuantityBuildRequest(BuildType.Train, Units.Queen, atSupply: 16),
+            new TargetBuildRequest  (BuildType.Train, Units.Drone,    atSupply: 13, targetQuantity: 16),
         });
     }
 }

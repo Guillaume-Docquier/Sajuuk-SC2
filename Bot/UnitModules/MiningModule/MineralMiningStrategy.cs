@@ -6,32 +6,69 @@ using Bot.Wrapper;
 
 namespace Bot.UnitModules;
 
+/// <summary>
+/// A strategy to mine minerals.
+/// It implements speed mining on patches with 2 or less workers.
+///
+/// Speed mining benchmarking method:
+/// - We train 1 overlord @13 and train drones until we have 16. (BuildOrders.TestSpeedMining)
+/// - We disable manager requests
+/// - We let the game run until frame 2016 (1:30 game time)
+/// - We read Controller.Observation.Observation.Score.ScoreDetails.CollectedMinerals
+///
+/// Benchmark
+/// - Normal mining: 1235 minerals
+/// - Speed mining: 1305 minerals (+5.66%)
+/// </summary>
 public class MineralMiningStrategy: IStrategy {
-    private readonly Unit _worker;
-    private readonly Unit _resource;
+    private const float SpeedMiningDistanceThreshold = 0.4f; // Empirically tested, do not go lower
 
-    public MineralMiningStrategy(Unit worker, Unit resource) {
+    private readonly Unit _worker;
+    private readonly Unit _mineral;
+
+    public MineralMiningStrategy(Unit worker, Unit mineral) {
         _worker = worker;
-        _resource = resource;
+        _mineral = mineral;
     }
 
     public void Execute() {
-        if (ShouldDoSpeedMining() && IsWorkerCarryingMinerals()) {
+        if (CanDoSpeedMining() && ShouldDoSpeedMining()) {
             ReturnCargo();
         }
         else {
             Gather();
         }
 
-        Program.GraphicalDebugger.AddLine(_worker.Position, _resource.Position, Colors.Cyan);
+        Program.GraphicalDebugger.AddLine(_worker.Position, _mineral.Position, Colors.Cyan);
     }
 
+    private bool CanDoSpeedMining() {
+        return UnitModule.Get<CapacityModule>(_mineral).AssignedUnits.Count <= 2;
+    }
+
+    // TODO GD Handle speed mining on the way back?
     private bool ShouldDoSpeedMining() {
-        return UnitModule.Get<CapacityModule>(_resource).AssignedUnits.Count <= 2;
+        return IsWorkerCarryingMinerals() && IsCloseEnoughToTownHall();
     }
 
     private bool IsWorkerCarryingMinerals() {
         return _worker.Buffs.Any(Buffs.CarryMinerals.Contains);
+    }
+
+    /// <summary>
+    /// We only start speed mining when close to the townHall to benefit from the mineral walk as much as possible.
+    /// Also, since we spam orders (see note below), checking this will reduce the amount of orders that we send, which is good for performance.
+    /// </summary>
+    /// <returns>True if the worker has SpeedMiningDistanceThreshold % or less of the distance to go.</returns>
+    private bool IsCloseEnoughToTownHall() {
+        var townHall = (_worker.Supervisor as TownHallSupervisor)!.TownHall; // This is not cute nor clean, but it is efficient and we like that
+
+        var distanceBetweenMineralAndTownHall = _mineral.HorizontalDistanceTo(townHall) - townHall.Radius;
+        var distanceToTownHall = _worker.HorizontalDistanceTo(townHall) - townHall.Radius;
+
+        var percentageOfDistanceRemaining = distanceToTownHall / distanceBetweenMineralAndTownHall;
+
+        return percentageOfDistanceRemaining <= SpeedMiningDistanceThreshold;
     }
 
     // TODO GD Speed mining only has to do with preventing drone deceleration. You can speed mine on the way back too
@@ -45,13 +82,17 @@ public class MineralMiningStrategy: IStrategy {
         else {
             var targetPosition = townHall.Position.TranslateTowards(_worker.Position, townHall.Radius);
 
-            _worker.Move(targetPosition, spam: true);
+            // Precision 0f is important.
+            // It drastically reduces the spamming of orders.
+            // If we set the precision any higher, however, we will negate any speed mining bonuses.
+            // I don't really know why, we used to just spam instead.
+            _worker.Move(targetPosition, precision: 0f);
         }
     }
 
     private void Gather() {
-        if (!_worker.Orders.Any() || _worker.Orders.Any(order => Abilities.Gather.Contains(order.AbilityId) && order.TargetUnitTag != _resource.Tag)) {
-            _worker.Gather(_resource);
+        if (!_worker.Orders.Any() || _worker.Orders.Any(order => Abilities.Gather.Contains(order.AbilityId) && order.TargetUnitTag != _mineral.Tag)) {
+            _worker.Gather(_mineral);
         }
     }
 }
