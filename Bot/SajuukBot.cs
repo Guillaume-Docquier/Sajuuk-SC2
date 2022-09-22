@@ -15,7 +15,7 @@ using SC2APIProtocol;
 namespace Bot;
 
 public class SajuukBot: PoliteBot {
-    private readonly List<BuildRequest> _buildOrder = BuildOrders.TestSpeedMining();
+    private readonly List<BuildRequest> _buildOrder = BuildOrders.TwoBasesRoach();
     private IEnumerable<BuildRequest> RemainingBuildOrder => _buildOrder
         .ToList() // Make a copy in case we edit _buildOrder
         .Where(buildRequest => buildRequest.Fulfillment.Remaining > 0);

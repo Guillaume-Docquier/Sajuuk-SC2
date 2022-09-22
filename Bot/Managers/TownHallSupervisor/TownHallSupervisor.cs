@@ -165,8 +165,8 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     private void DispatchWorker(Unit worker) {
         var assignedResource = GetClosestExtractorWithAvailableCapacity(worker);
         assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: 1);
-        assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: 0); // TODO GD Oversaturate far patches first
-        assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: -999); // TODO GD Oversaturate far patches first
+        assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: 0);
+        assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: -999);
 
         if (assignedResource != null) {
             UpdateWorkerMiningAssignment(worker, assignedResource);

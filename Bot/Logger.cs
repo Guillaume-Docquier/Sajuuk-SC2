@@ -52,28 +52,39 @@ public static class Logger {
         }
     }
 
-    // TODO GD Use colors https://stackoverflow.com/a/2743268
     public static void Performance(string line, params object[] parameters) {
+        Console.ForegroundColor = ConsoleColor.Magenta;
         WriteLine("PERF", line, parameters);
+        Console.ResetColor();
     }
 
     public static void Metric(string line, params object[] parameters) {
+        Console.ForegroundColor = ConsoleColor.Cyan;
         WriteLine("METRIC", line, parameters);
+        Console.ResetColor();
     }
 
     public static void Debug(string line, params object[] parameters) {
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         WriteLine("DEBUG", line, parameters);
+        Console.ResetColor();
     }
 
     public static void Info(string line, params object[] parameters) {
+        Console.ForegroundColor = ConsoleColor.White;
         WriteLine("INFO", line, parameters);
+        Console.ResetColor();
     }
 
     public static void Warning(string line, params object[] parameters) {
+        Console.ForegroundColor = ConsoleColor.Yellow;
         WriteLine("WARNING", line, parameters);
+        Console.ResetColor();
     }
 
     public static void Error(string line, params object[] parameters) {
+        Console.ForegroundColor = ConsoleColor.Red;
         WriteLine("ERROR", line, parameters);
+        Console.ResetColor();
     }
 }
