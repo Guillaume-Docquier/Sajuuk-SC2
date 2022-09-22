@@ -12,6 +12,7 @@ It features:
 - Army burrow sneak attack
 - Creep spreading
 - Macro hatcheries and expansions
+- Worker split
 - Speed mining
 - Replace destroyed buildings (but not expands)
 - Simple rush countermeasures
