@@ -29,11 +29,11 @@ public class UnitsTracker: INeedUpdating {
             Init(newRawUnits, frame);
 
             var unknownNeutralUnits = NeutralUnits.DistinctBy(unit => unit.UnitType)
-                .Where(unit => !Units.Destructibles.Contains(unit.UnitType) && !Units.MineralFields.Contains(unit.UnitType) && !Units.GasGeysers.Contains(unit.UnitType))
+                .Where(unit => !Units.Destructibles.Contains(unit.UnitType) && !Units.MineralFields.Contains(unit.UnitType) && !Units.GasGeysers.Contains(unit.UnitType) && unit.UnitType != Units.XelNagaTower)
                 .Select(unit => (unit.Name, unit.UnitType))
                 .ToList();
 
-            Logger.Info("{0} unknown neutral units: {1}", unknownNeutralUnits.Count, string.Join(", ", unknownNeutralUnits));
+            Logger.Metric("Unknown Neutral Units: [{0}]", string.Join(", ", unknownNeutralUnits));
 
             return;
         }
