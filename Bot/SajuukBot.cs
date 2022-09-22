@@ -15,7 +15,7 @@ using SC2APIProtocol;
 namespace Bot;
 
 public class SajuukBot: PoliteBot {
-    private readonly List<BuildRequest> _buildOrder = BuildOrders.TwoBasesRoach();
+    private readonly List<BuildRequest> _buildOrder = BuildOrders.TestSpeedMining();
     private IEnumerable<BuildRequest> RemainingBuildOrder => _buildOrder
         .ToList() // Make a copy in case we edit _buildOrder
         .Where(buildRequest => buildRequest.Fulfillment.Remaining > 0);
@@ -27,7 +27,7 @@ public class SajuukBot: PoliteBot {
 
     private float _maxMineralRate = 0;
 
-    public override string Name => "SajuukBot";
+    public override string Name => "Sajuuk";
 
     public override Race Race => Race.Zerg;
 
@@ -38,7 +38,7 @@ public class SajuukBot: PoliteBot {
             InitManagers();
         }
         else if (Controller.Frame == 2016) {
-            Logger.Debug("Collected Minerals: {0}", Controller.Observation.Observation.Score.ScoreDetails.CollectedMinerals);
+            Logger.Metric("Collected Minerals: {0}", Controller.Observation.Observation.Score.ScoreDetails.CollectedMinerals);
         }
 
         FollowBuildOrder();

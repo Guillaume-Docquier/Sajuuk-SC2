@@ -72,7 +72,12 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
         HandleDepletedGasses();
         Assign(DiscoverExtractors(UnitsTracker.NewOwnedUnits));
 
-        DispatchWorkers(GetAssignedIdleWorkers());
+        if (Controller.Frame == 0) {
+            SplitInitialWorkers();
+        }
+        else {
+            DispatchWorkers(GetAssignedIdleWorkers());
+        }
 
         if (ShouldFillExtractors()) {
             FillExtractors();
@@ -116,6 +121,36 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     }
 
     /// <summary>
+    /// <para>
+    /// Splits the workers at the start of the game.<br/>
+    /// We allow a maximum of two workers per patch.
+    /// </para>
+    ///
+    /// <para>
+    /// The idea is to assign the worker that's the farthest from any mineral first, to its closest mineral.<br/>
+    /// This way, outside workers are not stuck with terrible minerals choices.<br/>
+    /// Workers in the center have many close minerals so we can afford to choose one that's slightly farther.
+    /// </para>
+    ///
+    /// <para>
+    /// This code is not optimal, but reuses existing code.<br/>
+    /// On frame 1 we have nothing else to do anyways.
+    /// </para>
+    /// </summary>
+    private void SplitInitialWorkers() {
+        var workers = GetAssignedIdleWorkers().ToHashSet();
+        while (workers.Count > 0) {
+            var farthestWorker = workers.MaxBy(
+                worker => GetClosestMineralWithAvailableCapacity(worker, 1).HorizontalDistanceTo(worker)
+            );
+            var closestMineral = GetClosestMineralWithAvailableCapacity(farthestWorker, 1);
+
+            UpdateWorkerMiningAssignment(farthestWorker, closestMineral);
+            workers.Remove(farthestWorker);
+        }
+    }
+
+    /// <summary>
     /// Give a mining assignment to each provided worker.
     /// </summary>
     /// <param name="workers">The workers to give a mining assignment to.</param>
@@ -130,8 +165,8 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     private void DispatchWorker(Unit worker) {
         var assignedResource = GetClosestExtractorWithAvailableCapacity(worker);
         assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: 1);
-        assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: 0);
-        assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: -999);
+        assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: 0); // TODO GD Oversaturate far patches first
+        assignedResource ??= GetClosestMineralWithAvailableCapacity(worker, minAvailableCapacity: -999); // TODO GD Oversaturate far patches first
 
         if (assignedResource != null) {
             UpdateWorkerMiningAssignment(worker, assignedResource);

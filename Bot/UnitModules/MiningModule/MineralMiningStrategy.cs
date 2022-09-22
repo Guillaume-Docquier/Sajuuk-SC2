@@ -16,9 +16,9 @@ namespace Bot.UnitModules;
 /// - We let the game run until frame 2016 (1:30 game time)
 /// - We read Controller.Observation.Observation.Score.ScoreDetails.CollectedMinerals
 ///
-/// Benchmark
-/// - Normal mining: 1235 minerals
-/// - Speed mining: 1305 minerals (+5.66%)
+/// Benchmark on Stargazers top left
+/// - Normal mining: 1240 minerals
+/// - Speed mining: 1305 minerals (+5.24%)
 /// </summary>
 public class MineralMiningStrategy: IStrategy {
     private const float SpeedMiningDistanceThreshold = 0.4f; // Empirically tested, do not go lower

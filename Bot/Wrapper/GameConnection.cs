@@ -77,6 +77,9 @@ public class GameConnection {
     private void StartSc2Instance(int port) {
         var processStartInfo = new ProcessStartInfo(_starcraftExe)
         {
+            // TODO GD Make and enum for this
+            // DisplayMode 0: Windowed
+            // DisplayMode 1: Full screen
             Arguments = $"-listen {Address} -port {port} -displayMode 1",
             WorkingDirectory = Path.Combine(_starcraftDir, "Support64")
         };
@@ -282,7 +285,7 @@ public class GameConnection {
         }
     }
 
-    public Task RequestLeaveGame() {
+    public Task Quit() {
         return SendRequest(new Request
         {
             LeaveGame = new RequestLeaveGame()

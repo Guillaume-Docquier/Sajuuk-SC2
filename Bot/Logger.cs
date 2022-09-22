@@ -52,8 +52,13 @@ public static class Logger {
         }
     }
 
+    // TODO GD Use colors https://stackoverflow.com/a/2743268
     public static void Performance(string line, params object[] parameters) {
         WriteLine("PERF", line, parameters);
+    }
+
+    public static void Metric(string line, params object[] parameters) {
+        WriteLine("METRIC", line, parameters);
     }
 
     public static void Debug(string line, params object[] parameters) {

@@ -35,14 +35,14 @@ public abstract class PoliteBot: IBot {
         if (Controller.Frame == 0) {
             Logger.Info(Name);
             Logger.Info("--------------------------------------");
-            Logger.Info("Map: {0}", Controller.GameInfo.MapName);
-            Logger.Info("Starting Corner: {0}", MapAnalyzer.GetStartingCorner());
-            Logger.Info("Bot Version: {0}", _version);
+            Logger.Metric("Map: {0}", Controller.GameInfo.MapName);
+            Logger.Metric("Starting Corner: {0}", MapAnalyzer.GetStartingCorner());
+            Logger.Metric("Bot Version: {0}", _version);
             Logger.Info("--------------------------------------");
         }
 
         if (!_greetDone && Controller.Frame >= Controller.SecsToFrames(1)) {
-            Controller.Chat("Hi, my name is Sajuuk");
+            Controller.Chat($"Hi, my name is {Name}");
             Controller.Chat("I wish you good luck and good fun!");
             Controller.TagGame($"v{_version}");
 
