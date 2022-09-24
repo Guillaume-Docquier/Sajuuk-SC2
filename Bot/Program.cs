@@ -25,7 +25,6 @@ public class Program {
     public static GameConnection GameConnection { get; private set; }
     public static bool DebugEnabled { get; private set; }
 
-    // TODO Setter made public for tests. Should we make an execution path that sets it instead?
     public static IGraphicalDebugger GraphicalDebugger { get; set; }
 
     public static void Main(string[] args) {
@@ -48,7 +47,7 @@ public class Program {
             }
         }
         catch (Exception ex) {
-            Logger.Info(ex.ToString());
+            Logger.Error(ex.ToString());
         }
 
         Logger.Info("Terminated.");
