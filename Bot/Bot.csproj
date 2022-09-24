@@ -23,7 +23,6 @@
     <Compile Remove="Units\Zerg.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="BugLogs" />
     <Folder Include="Data" />
   </ItemGroup>
   <ItemGroup>
