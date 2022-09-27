@@ -107,9 +107,9 @@ public static class Vector3Extensions {
         return closestWalkableCell;
     }
 
-    public static IEnumerable<Vector3> GetNeighbors(this Vector3 vector, int distance = 1) {
-        for (var x = -distance; x <= distance; x++) {
-            for (var y = -distance; y <= distance; y++) {
+    public static IEnumerable<Vector3> GetNeighbors(this Vector3 vector, int radius = 1) {
+        for (var x = -radius; x <= radius; x++) {
+            for (var y = -radius; y <= radius; y++) {
                 if (x != 0 || y != 0) {
                     yield return vector.Translate(xTranslation: x, yTranslation: y);
                 }
