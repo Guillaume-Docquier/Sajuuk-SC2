@@ -196,7 +196,6 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
 
     public static bool IsWalkable(Vector3 position, bool includeObstacles = true) {
         if (!IsInBounds(position)) {
-            Logger.Error("IsWalkable called on out of bounds position");
             return false;
         }
 

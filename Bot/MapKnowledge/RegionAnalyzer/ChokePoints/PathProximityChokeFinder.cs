@@ -41,7 +41,7 @@ public static class PathProximityChokeFinder {
     private static HashSet<Vector3> FindChokeBorders(HashSet<Vector3> pathCells) {
         // Find cells bordering chokes
         var chokeCells = pathCells.SelectMany(cell => cell
-                .GetNeighbors(distance: 2)
+                .GetNeighbors(radius: 2)
                 .Where(neighbor => !MapAnalyzer.IsWalkable(neighbor, includeObstacles: false)) // Unwalkable cells near paths should be part of choke points
         );
 
