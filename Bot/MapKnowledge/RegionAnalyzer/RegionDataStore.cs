@@ -27,6 +27,8 @@ public static class RegionDataStore {
     }
 
     public static RegionData Load(string mapName) {
+        return null;
+
         var loadFilePath = $"Data/{GetFileName(mapName)}";
         if (!File.Exists(loadFilePath)) {
             return null;

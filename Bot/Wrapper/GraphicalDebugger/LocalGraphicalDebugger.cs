@@ -110,18 +110,19 @@ public class LocalGraphicalDebugger: IGraphicalDebugger {
         );
     }
 
-    public void AddLink(Unit start, Unit end, Color color) {
-        AddLink(start.Position, end.Position, color);
+    public void AddLink(Unit start, Unit end, Color color, bool withText = true) {
+        AddLink(start.Position, end.Position, color, withText);
     }
 
-    public void AddLink(Vector3 start, Vector3 end, Color color) {
-        AddText("from", worldPos: start.ToPoint(), color: color);
-        AddSphere(start, 1, color);
+    public void AddLink(Vector3 start, Vector3 end, Color color, bool withText = true) {
+        if (withText) {
+            AddText("from", worldPos: start.ToPoint(), color: color);
+            AddText("to", worldPos: end.ToPoint(), color: color);
+        }
 
+        AddGridSphere(start, color);
         AddLine(start, end, color);
-
-        AddText("to", worldPos: end.ToPoint(), color: color);
-        AddSphere(end, 1, color);
+        AddGridSphere(end, color);
     }
 
     public void AddPath(List<Vector3> path, Color startColor, Color endColor) {
