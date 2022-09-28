@@ -1,0 +1,40 @@
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+
+namespace Bot.MapKnowledge;
+
+public static partial class GridScanChokeFinder {
+    private static class VisionLinesDataStore {
+        private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
+        {
+            Converters =
+            {
+                new JsonSerializers.Vector3JsonConverter(),
+            },
+        };
+
+        private static string GetFileName(string mapName) {
+            return $"VisionLines_{mapName.Replace(" ", "")}.json";
+        }
+
+        public static void Save(string mapName, List<VisionLine> visionLines) {
+            // Will output to bin/Debug/net6.0 or bin/Release/net6.0
+            // Make sure to copy to the Data/ folder and set properties to 'Copy if newer'
+            var saveFilePath = GetFileName(mapName);
+
+            var jsonString = JsonSerializer.Serialize(visionLines, JsonSerializerOptions);
+            File.WriteAllText(saveFilePath, jsonString);
+        }
+
+        public static List<VisionLine> Load(string mapName) {
+            var loadFilePath = $"Data/{GetFileName(mapName)}";
+            if (!File.Exists(loadFilePath)) {
+                return null;
+            }
+
+            var jsonString = File.ReadAllText(loadFilePath);
+            return JsonSerializer.Deserialize<List<VisionLine>>(jsonString, JsonSerializerOptions)!;
+        }
+    }
+}

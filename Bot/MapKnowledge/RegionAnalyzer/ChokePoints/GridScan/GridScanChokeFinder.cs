@@ -74,6 +74,12 @@ public static partial class GridScanChokeFinder {
     }
 
     private static List<VisionLine> CreateVisionLines(int nodeCount) {
+        var savedVisionLines = VisionLinesDataStore.Load(Controller.GameInfo.MapName);
+        if (savedVisionLines != null) {
+            Logger.Info("Vision lines loaded from file!");
+            return savedVisionLines;
+        }
+
         var allLines = new List<VisionLine>();
         for (var angle = StartingAngle; angle <= MaxAngle; angle += AngleIncrement) {
             var lines = CreateLinesAtAnAngle(angle);
@@ -84,6 +90,9 @@ public static partial class GridScanChokeFinder {
 
             allLines.AddRange(lines);
         }
+
+        VisionLinesDataStore.Save(Controller.GameInfo.MapName, allLines);
+        Logger.Info("Vision lines saved!");
 
         return allLines;
     }
