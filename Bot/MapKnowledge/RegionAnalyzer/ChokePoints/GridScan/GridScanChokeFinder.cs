@@ -25,36 +25,7 @@ public static partial class GridScanChokeFinder {
 
         MarkTraversedNodes(nodes, lines);
 
-        // Determine chokes
-        foreach (var node in nodes.Values) {
-            node.UpdateShortestLine();
-        }
-
-        var uniqueShortestLines = nodes.Values
-            .Select(node => node.ShortestVisionLine)
-            .ToHashSet()
-            .ToList();
-
-        Logger.Info("Found {0} uniqueShortestLines", uniqueShortestLines.Count);
-
-        foreach (var node in nodes.Values) {
-            node.UpdateBestChokeLine();
-        }
-
-        var uniqueBestChokeLines = nodes.Values
-            .Where(node => node.ChokeScore >= 1.4f)
-            .Select(node => node.BestChokeVisionLine)
-            .GroupBy(line => line)
-            .Where(group => group.Count() > 2)
-            .Select(group => group.Key)
-            .ToHashSet()
-            .ToList();
-
-        Logger.Info("Found {0} uniqueBestChokeLines", uniqueBestChokeLines.Count);
-
-        //DebugLineLengths(nodes.Values.ToList());
-        DebugChokeScores(nodes.Values.ToList());
-        DebugLines(uniqueBestChokeLines);
+        ComputeChokeScores(nodes);
 
         return new List<ChokePoint>();
     }
@@ -201,23 +172,26 @@ public static partial class GridScanChokeFinder {
         }
     }
 
-    private static void DebugLineLengths(List<Node> nodes) {
-        var minLength = nodes.Min(node => node.ShortestVisionLine.Length);
-        var maxLength = nodes.Max(node => node.ShortestVisionLine.Length);
-
-        foreach (var node in nodes) {
-            var textColor = Colors.Gradient(Colors.DarkRed, Colors.White, LinScale(node.ShortestVisionLine.Length, minLength, maxLength));
-            Program.GraphicalDebugger.AddText($"{node.ShortestVisionLine.Length:F0}", worldPos: node.Position.WithWorldHeight().ToPoint(), color: textColor, size: 13);
+    private static void ComputeChokeScores(Dictionary<Vector3, Node> nodes) {
+        foreach (var node in nodes.Values) {
+            node.UpdateChokeScore();
         }
+
+        foreach (var node in nodes.Values) {
+            var neighbors = node.Position.GetReachableNeighbors(includeObstacles: false).Select(position => nodes[position]);
+            node.UpdateChokeScoreDeltas(neighbors);
+        }
+
+        DebugScores(nodes.Values.Select(node => (node.Position, node.ChokeScore)).ToList());
     }
 
-    private static void DebugChokeScores(List<Node> nodes) {
-        var minScore = nodes.Min(node => node.ChokeScore);
-        var maxScore = nodes.Max(node => node.ChokeScore);
+    private static void DebugScores(List<(Vector3 Position, float Score)> nodes) {
+        var minScore = nodes.Min(node => node.Score);
+        var maxScore = nodes.Max(node => node.Score);
 
         foreach (var node in nodes) {
-            var textColor = Colors.Gradient(Colors.White, Colors.DarkRed, LogScale(node.ChokeScore, minScore, maxScore));
-            Program.GraphicalDebugger.AddText($"{node.ChokeScore:F1}", worldPos: node.Position.WithWorldHeight().ToPoint(), color: textColor, size: 13);
+            var textColor = Colors.Gradient(Colors.DarkGrey, Colors.DarkRed, LogScale(node.Score, minScore, maxScore));
+            Program.GraphicalDebugger.AddText($"{node.Score:F1}", worldPos: node.Position.WithWorldHeight().ToPoint(), color: textColor, size: 13);
         }
     }
 
