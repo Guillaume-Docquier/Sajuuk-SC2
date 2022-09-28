@@ -203,10 +203,10 @@ public static class Vector3Extensions {
         var translatedX = vector.X - origin.X;
         var translatedY = vector.Y - origin.Y;
 
-        return new Vector3(
-            (float)(translatedX * cosTheta - translatedY * sinTheta + origin.X),
-            (float)(translatedX * sinTheta - translatedY * cosTheta + origin.X),
-            0
-        );
+        return new Vector3
+        {
+            X = (float)(translatedX * cosTheta - translatedY * sinTheta + origin.X),
+            Y = (float)(translatedX * sinTheta + translatedY * cosTheta + origin.X),
+        };
     }
 }

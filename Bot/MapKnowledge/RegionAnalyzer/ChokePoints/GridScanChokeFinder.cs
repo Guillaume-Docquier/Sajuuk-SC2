@@ -9,8 +9,9 @@ namespace Bot.MapKnowledge;
 
 // TODO GD Considering the obstacles (resources, rocks) might be interesting at some point
 public static class GridScanChokeFinder {
+    private const int StartingAngle = 0;
+    private const int MaxAngle = 175;
     private const int AngleIncrement = 5;
-    private const int AngleSweep = 175;
 
     private static int MaxX => Controller.GameInfo.StartRaw.MapSize.X;
     private static int MaxY => Controller.GameInfo.StartRaw.MapSize.Y;
@@ -61,7 +62,7 @@ public static class GridScanChokeFinder {
         var nodes = ComputeWalkableNodesInMap();
         Logger.Info("Computed {0} nodes", nodes.Count);
 
-        for (var angle = 0; angle <= AngleSweep; angle += AngleIncrement) {
+        for (var angle = StartingAngle; angle <= MaxAngle; angle += AngleIncrement) {
             var lines = CreateLines(angle);
             lines = BreakDown(lines);
 
@@ -104,7 +105,7 @@ public static class GridScanChokeFinder {
 
     private static List<Line> CreateLines(int angleInDegrees) {
         var lineLength = (int)Math.Ceiling(Math.Sqrt(MaxX * MaxX + MaxY * MaxY));
-        var origin = new Vector3(MaxX / 2f, MaxY / 2f, 0);
+        var origin = new Vector3 { X = MaxX / 2f, Y = MaxY / 2f };
         var paddingX = (int)(lineLength / 2f - origin.X);
         var paddingY = (int)(lineLength / 2f - origin.Y);
         var angleInRadians = DegToRad(angleInDegrees);
