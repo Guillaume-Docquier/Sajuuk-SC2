@@ -201,7 +201,7 @@ public class RegionAnalyzer: INeedUpdating {
     }
 
     private static void InitChokePoints() {
-        ChokePoints.AddRange(MapFrontierChokeFinder.FindChokePoints());
+        ChokePoints.AddRange(GridScanChokeFinder.FindChokePoints());
         // TODO Remove edges that do minimal separation in regions
         // TODO Consider edge length
     }

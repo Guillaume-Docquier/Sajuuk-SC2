@@ -80,12 +80,12 @@ public static class Vector3Extensions {
         return vector with { Z = 0 };
     }
 
-    public static Vector3 WithWorldHeight(this Vector3 vector) {
+    public static Vector3 WithWorldHeight(this Vector3 vector, float zOffset = 0) {
         if (!MapAnalyzer.IsInitialized) {
             return vector;
         }
 
-        return vector with { Z = MapAnalyzer.HeightMap[(int)vector.X][(int)vector.Y] };
+        return vector with { Z = MapAnalyzer.HeightMap[(int)vector.X][(int)vector.Y] + zOffset };
     }
 
     public static Vector3 ClosestWalkable(this Vector3 position) {
@@ -183,7 +183,6 @@ public static class Vector3Extensions {
         }
     }
 
-    // TODO GD
     public static HashSet<Vector3> GetPointsInBetween(this Vector3 origin, Vector3 destination) {
         var maxDistance = origin.HorizontalDistanceTo(destination);
         var currentDistance = 0f;
@@ -195,5 +194,19 @@ public static class Vector3Extensions {
         }
 
         return pointsInBetween;
+    }
+
+    public static Vector3 Rotate2D(this Vector3 vector, double angleInRadians, Vector3 origin = default) {
+        var sinTheta = Math.Sin(angleInRadians);
+        var cosTheta = Math.Cos(angleInRadians);
+
+        var translatedX = vector.X - origin.X;
+        var translatedY = vector.Y - origin.Y;
+
+        return new Vector3(
+            (float)(translatedX * cosTheta - translatedY * sinTheta + origin.X),
+            (float)(translatedX * sinTheta - translatedY * cosTheta + origin.X),
+            0
+        );
     }
 }
