@@ -28,6 +28,8 @@ public static class Colors {
     }
 
     public static readonly Color White = new Color { R = 255, G = 255, B = 255 };
+    public static readonly Color Grey = new Color { R = 128, G = 128, B = 128 };
+    public static readonly Color DarkGrey = new Color { R = 96, G = 96, B = 96 };
     public static readonly Color Black = new Color { R = 1, G = 1, B = 1 };
 
     public static readonly Color Red = new Color { R = 255, G = 1, B = 1 };
