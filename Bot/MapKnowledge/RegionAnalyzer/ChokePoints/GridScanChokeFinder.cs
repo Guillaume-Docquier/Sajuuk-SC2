@@ -53,8 +53,14 @@ public static class GridScanChokeFinder {
         public Vector3 Position { get; }
         public List<Line> Lines { get; } = new List<Line>();
 
+        public Line ShortestLine { get; private set; }
+
         public Node(Vector3 position) {
             Position = position;
+        }
+
+        public void UpdateShortestLine() {
+            ShortestLine = Lines.MinBy(line => line.Length);
         }
     }
 
@@ -77,11 +83,16 @@ public static class GridScanChokeFinder {
             Logger.Info("Created {0,4} lines at {1,3} degrees affecting {2,5} nodes ({3,3:P0})", lines.Count, angle, nbNodesAffected, (float)nbNodesAffected / nodes.Count);
         }
 
+        foreach (var node in nodes.Values) {
+            node.UpdateShortestLine();
+        }
+
         var uniqueShortestLines = nodes.Values
-            .Select(node => node.Lines.MinBy(line => line.Length))
+            .Select(node => node.ShortestLine)
             .ToHashSet()
             .ToList();
 
+        DebugLineLengths(nodes.Values.ToList());
         DebugLines(uniqueShortestLines);
 
         // Determine if choke
@@ -197,6 +208,28 @@ public static class GridScanChokeFinder {
         }
 
         return currentCellIndex - 1;
+    }
+
+    private static void DebugLineLengths(List<Node> nodes) {
+        var minLength = nodes.Min(node => node.ShortestLine.Length);
+        var maxLength = nodes.Max(node => node.ShortestLine.Length);
+
+        foreach (var node in nodes) {
+            var textColor = Colors.Gradient(Colors.DarkRed, Colors.White, LinScale(node.ShortestLine.Length, minLength, maxLength));
+            Program.GraphicalDebugger.AddText($"{node.ShortestLine.Length:F0}", worldPos: node.Position.WithWorldHeight().ToPoint(), color: textColor, size: 13);
+        }
+    }
+
+    private static float LogScale(float number, float min, float max) {
+        var logNum = (float)Math.Log2(number + 1);
+        var logMin = (float)Math.Log2(min + 1);
+        var logMax = (float)Math.Log2(max + 1);
+
+        return (logNum - logMin) / (logMax - logMin);
+    }
+
+    private static float LinScale(float number, float min, float max) {
+        return (number - min) / (max - min);
     }
 
     private static void DebugLines(List<Line> lines) {
