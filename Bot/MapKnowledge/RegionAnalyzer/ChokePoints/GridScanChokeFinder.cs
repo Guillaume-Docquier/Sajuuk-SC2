@@ -18,13 +18,13 @@ public static class GridScanChokeFinder {
 
     private class Line {
         public List<Vector3> OrderedTraversedCells { get; }
-        public float Angle { get; }
+        public int Angle { get; }
 
         public Vector3 Start { get; }
         public Vector3 End { get; }
         public float Length { get; }
 
-        public Line(Vector3 start, Vector3 end, float angle) {
+        public Line(Vector3 start, Vector3 end, int angle) {
             var centerOfStart = start.AsWorldGridCenter();
 
             OrderedTraversedCells = start.GetPointsInBetween(end)
@@ -38,7 +38,7 @@ public static class GridScanChokeFinder {
             Angle = angle;
         }
 
-        public Line(List<Vector3> orderedTraversedCells, float angle) {
+        public Line(List<Vector3> orderedTraversedCells, int angle) {
             OrderedTraversedCells = orderedTraversedCells;
 
             Start = OrderedTraversedCells[0];
@@ -50,10 +50,14 @@ public static class GridScanChokeFinder {
     }
 
     private class Node : IHavePosition {
+        private const float MaxVisionDistance = 15f;
+
         public Vector3 Position { get; }
         public List<Line> Lines { get; } = new List<Line>();
 
         public Line ShortestLine { get; private set; }
+        public Line BestChokeLine { get; private set; }
+        public float ChokeScore { get; private set; }
 
         public Node(Vector3 position) {
             Position = position;
@@ -61,6 +65,31 @@ public static class GridScanChokeFinder {
 
         public void UpdateShortestLine() {
             ShortestLine = Lines.MinBy(line => line.Length);
+        }
+
+        public void UpdateBestChokeLine() {
+            Line bestChokeLine = null;
+            float bestChokeScore = 0f;
+
+            foreach (var line in Lines) {
+                var perpendicularLineAngle = (line.Angle + 90) % (MaxAngle + AngleIncrement);
+                var perpendicularLine = Lines.Find(otherLine => otherLine.Angle == perpendicularLineAngle)!;
+
+                var startDistance = Math.Min(MaxVisionDistance, perpendicularLine.Start.HorizontalDistanceTo(Position));
+                var endDistance = Math.Min(MaxVisionDistance, perpendicularLine.End.HorizontalDistanceTo(Position));
+
+                var startChokeScore = (startDistance + 1) / (line.Length + 1);
+                var endChokeScore = (endDistance + 1) / (line.Length + 1);
+
+                var chokeScore = Math.Min(startChokeScore, endChokeScore);
+                if (chokeScore > bestChokeScore) {
+                    bestChokeLine = line;
+                    bestChokeScore = chokeScore;
+                }
+            }
+
+            BestChokeLine = bestChokeLine;
+            ChokeScore = bestChokeScore;
         }
     }
 
@@ -73,16 +102,17 @@ public static class GridScanChokeFinder {
             lines = BreakDown(lines);
 
             foreach (var line in lines) {
-                // TODO GD Store cell index with the line for faster lookup later on
+                // TODO GD Store cell index with the line for faster lookup later on?
                 for (var cellIndex = 0; cellIndex < line.OrderedTraversedCells.Count; cellIndex++) {
                     nodes[line.OrderedTraversedCells[cellIndex]].Lines.Add(line);
                 }
             }
 
-            var nbNodesAffected = lines.SelectMany(line => line.OrderedTraversedCells).ToHashSet().Count;
-            Logger.Info("Created {0,4} lines at {1,3} degrees affecting {2,5} nodes ({3,3:P0})", lines.Count, angle, nbNodesAffected, (float)nbNodesAffected / nodes.Count);
+            var nbNodesCovered = lines.SelectMany(line => line.OrderedTraversedCells).ToHashSet().Count;
+            Logger.Info("Created {0,4} lines at {1,3} degrees covering {2,5} nodes ({3,3:P0})", lines.Count, angle, nbNodesCovered, (float)nbNodesCovered / nodes.Count);
         }
 
+        // Determine chokes
         foreach (var node in nodes.Values) {
             node.UpdateShortestLine();
         }
@@ -92,10 +122,26 @@ public static class GridScanChokeFinder {
             .ToHashSet()
             .ToList();
 
-        DebugLineLengths(nodes.Values.ToList());
-        DebugLines(uniqueShortestLines);
+        Logger.Info("Found {0} uniqueShortestLines", uniqueShortestLines.Count);
 
-        // Determine if choke
+        foreach (var node in nodes.Values) {
+            node.UpdateBestChokeLine();
+        }
+
+        var uniqueBestChokeLines = nodes.Values
+            .Where(node => node.ChokeScore >= 1.4f)
+            .Select(node => node.BestChokeLine)
+            .GroupBy(line => line)
+            .Where(group => group.Count() > 2)
+            .Select(group => group.Key)
+            .ToHashSet()
+            .ToList();
+
+        Logger.Info("Found {0} uniqueBestChokeLines", uniqueBestChokeLines.Count);
+
+        //DebugLineLengths(nodes.Values.ToList());
+        DebugChokeScores(nodes.Values.ToList());
+        DebugLines(uniqueBestChokeLines);
 
         return new List<ChokePoint>();
     }
@@ -217,6 +263,16 @@ public static class GridScanChokeFinder {
         foreach (var node in nodes) {
             var textColor = Colors.Gradient(Colors.DarkRed, Colors.White, LinScale(node.ShortestLine.Length, minLength, maxLength));
             Program.GraphicalDebugger.AddText($"{node.ShortestLine.Length:F0}", worldPos: node.Position.WithWorldHeight().ToPoint(), color: textColor, size: 13);
+        }
+    }
+
+    private static void DebugChokeScores(List<Node> nodes) {
+        var minScore = nodes.Min(node => node.ChokeScore);
+        var maxScore = nodes.Max(node => node.ChokeScore);
+
+        foreach (var node in nodes) {
+            var textColor = Colors.Gradient(Colors.White, Colors.DarkRed, LogScale(node.ChokeScore, minScore, maxScore));
+            Program.GraphicalDebugger.AddText($"{node.ChokeScore:F1}", worldPos: node.Position.WithWorldHeight().ToPoint(), color: textColor, size: 13);
         }
     }
 
