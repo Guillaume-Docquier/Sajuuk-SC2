@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Text.Json.Serialization;
 using Bot.ExtensionMethods;
 
 namespace Bot.MapKnowledge;
@@ -13,6 +14,16 @@ public static partial class GridScanChokeFinder {
         public Vector3 Start { get; }
         public Vector3 End { get; }
         public float Length { get; }
+
+        [JsonConstructor]
+        public VisionLine(List<Vector3> orderedTraversedCells, int angle, Vector3 start, Vector3 end, float length) {
+            OrderedTraversedCells = orderedTraversedCells;
+            Angle = angle;
+
+            Start = start;
+            End = end;
+            Length = length;
+        }
 
         public VisionLine(Vector3 start, Vector3 end, int angle) {
             var centerOfStart = start.AsWorldGridCenter();
