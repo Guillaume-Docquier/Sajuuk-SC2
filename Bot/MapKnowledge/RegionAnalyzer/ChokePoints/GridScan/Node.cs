@@ -14,6 +14,7 @@ public static partial class GridScanChokeFinder {
         public VisionLine ShortestVisionLine { get; private set; }
         public VisionLine BestChokeVisionLine { get; private set; }
         public float ChokeScore { get; private set; }
+        public List<VisionLine> MostLikelyChokeLines { get; private set; }
         public float ChokeScoreDelta { get; private set; }
 
         public Node(Vector3 position) {
@@ -25,12 +26,15 @@ public static partial class GridScanChokeFinder {
         }
 
         public void UpdateChokeScore() {
-            var chokeScores = VisionLines
-                .Select(line => Scorers.MinOfBothHalvesSquaredLineScore(this, line))
-                .OrderByDescending(score => score)
-                .Take(VisionLines.Count / 4);
+            var chokeLinesWithScores = VisionLines
+                .Select(line => (Line: line, Score: Scorers.MinOfBothHalvesSquaredLineScore(this, line)))
+                .OrderByDescending(group => group.Score)
+                .Take(VisionLines.Count / 4)
+                .ToList();
 
-            ChokeScore = chokeScores.Average();
+            MostLikelyChokeLines = chokeLinesWithScores.Select(group => group.Line).ToList();
+
+            ChokeScore = chokeLinesWithScores.Average(group => group.Score);
         }
 
         public void UpdateChokeScoreDeltas(IEnumerable<Node> neighbors) {
