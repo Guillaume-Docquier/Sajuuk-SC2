@@ -223,6 +223,7 @@ public class RegionAnalyzer: INeedUpdating {
         var selectedChokes = new List<ChokePoint>();
         foreach (var chokePoint in chokePoints) {
             var allNeighbors = chokePoint.Edge.SelectMany(edge => edge.GetNeighbors()).ToHashSet();
+            // TODO GD Sometimes a region can be touched once or twice by a cell. Make sure it touches enough times
             var nbTouchedRegions = regions.Count(region => allNeighbors.Any(region.Contains));
             if (nbTouchedRegions > 1) {
                 selectedChokes.Add(chokePoint);
