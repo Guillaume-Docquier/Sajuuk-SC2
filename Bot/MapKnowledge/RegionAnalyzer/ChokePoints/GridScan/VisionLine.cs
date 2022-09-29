@@ -13,6 +13,7 @@ public static partial class GridScanChokeFinder {
 
         public Vector3 Start { get; }
         public Vector3 End { get; }
+        public Vector3 Center => Vector3.Lerp(Start, End, 0.5f);
         public float Length { get; }
 
         [JsonConstructor]

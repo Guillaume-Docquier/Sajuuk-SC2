@@ -55,7 +55,7 @@ public static partial class GridScanChokeFinder {
             var startChokeScore = (startDistance + 1) / (visionLine.Length + 1);
             var endChokeScore = (endDistance + 1) / (visionLine.Length + 1);
 
-            return Math.Min(startChokeScore, endChokeScore);
+            return Math.Min(startChokeScore, endChokeScore) * 2;
         }
 
         public static float MinOfBothHalvesSquaredLineScore(Node node, VisionLine visionLine) {
