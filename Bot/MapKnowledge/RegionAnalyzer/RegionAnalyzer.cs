@@ -204,8 +204,6 @@ public class RegionAnalyzer: INeedUpdating {
 
     private static void InitChokePoints() {
         ChokePoints.AddRange(GridScanChokeFinder.FindChokePoints());
-        // TODO Remove edges that do minimal separation in regions
-        // TODO Consider edge length
     }
 
     private static void InitSubregions() {
@@ -220,11 +218,9 @@ public class RegionAnalyzer: INeedUpdating {
     }
 
     /// <summary>
-    /// <para>Break down a given region into subregions based on expand locations.</para>
-    /// <para>If a regions contains a single expand location or none, it is not broken down.</para>
-    /// <para>We will calculate the distance from each position in the region to each expand in that region.</para>
-    /// <para>Using dynamic programming, we will be able to do a single pass over the region for each expand.</para>
-    /// <para>We'll resolve the closest expand with an extra pass on the region.</para>
+    /// <para>Break down a given region into subregions based on choke points</para>
+    /// <para>We might use more than one choke point to break down a single region</para>
+    /// <para>Regions that are broken down must be big enough to be considered a valid split</para>
     /// </summary>
     /// <returns>
     /// A list of subregions.
@@ -234,24 +230,33 @@ public class RegionAnalyzer: INeedUpdating {
         // Order by length ascending
         var chokesInRegion = ChokePoints
             .Where(chokePoint => chokePoint.Edge.Any(region.Contains))
-            .OrderBy(chokePoint => chokePoint.Length);
+            .OrderBy(chokePoint => chokePoint.Length)
+            .ToList();
 
         // Keep and split again if split separates into chunks bigger than choke width squared
-        foreach (var chokeInRegion in chokesInRegion) {
-            var (subregion1, subregion2) = SplitRegion(region, chokeInRegion);
+        var nbChokesToConsider = 1;
+        while (nbChokesToConsider <= chokesInRegion.Count) {
+            // Sometimes we will need more than 1 choke to split a region
+            var chokePointCombinations = Combinations(chokesInRegion, nbChokesToConsider).Select(setOfChokes => setOfChokes.ToList());
 
-            // TODO GD Only keep chokes that produce valid splits
-            // TODO GD Handle cases where you need 2+ chokes to break down the region
-            if (IsValidSplit(subregion1, chokeInRegion.Length) && IsValidSplit(subregion2, chokeInRegion.Length)) {
-                return BreakDownIntoSubregions(subregion1).Concat(BreakDownIntoSubregions(subregion2)).ToList();
+            foreach (var chokePoints in chokePointCombinations) {
+                var (subregion1, subregion2) = SplitRegion(region, chokePoints.SelectMany(choke => choke.Edge).ToList());
+
+                // TODO GD Only keep chokes that produce valid splits
+                var maxChokeLength = chokePoints.Max(choke => choke.Edge.Count);
+                if (IsValidSplit(subregion1, maxChokeLength) && IsValidSplit(subregion2, maxChokeLength)) {
+                    return BreakDownIntoSubregions(subregion1).Concat(BreakDownIntoSubregions(subregion2)).ToList();
+                }
             }
+
+            nbChokesToConsider++;
         }
 
         return new List<List<Vector2>> { region.ToList() };
     }
 
-    private static (HashSet<Vector2> subregion1, HashSet<Vector2> subregion2) SplitRegion(HashSet<Vector2> region, ChokePoint chokePoint) {
-        var startingPoint = region.First();
+    private static (HashSet<Vector2> subregion1, HashSet<Vector2> subregion2) SplitRegion(IReadOnlySet<Vector2> region, IReadOnlyCollection<Vector2> separations) {
+        var startingPoint = region.First(point => !separations.Contains(point));
 
         var subregion1 = new HashSet<Vector2>();
 
@@ -264,7 +269,7 @@ public class RegionAnalyzer: INeedUpdating {
                 var nextNeighbors = point.GetNeighbors()
                     .Where(neighbor => neighbor.DistanceTo(point) <= 1) // Disallow diagonals
                     .Where(region.Contains)
-                    .Where(neighbor => !chokePoint.Edge.Contains(neighbor))
+                    .Where(neighbor => !separations.Contains(neighbor))
                     .Where(neighbor => !subregion1.Contains(neighbor));
 
                 foreach (var neighbor in nextNeighbors) {
@@ -281,5 +286,15 @@ public class RegionAnalyzer: INeedUpdating {
     private static bool IsValidSplit(IReadOnlyCollection<Vector2> subregion, float minDiameter) {
         // If the split region is smaller than the choke width^2, then the choke might not be one for real
         return subregion.Count > minDiameter * minDiameter;
+    }
+
+    // TODO GD Code this yourself :rofl: this looks... questionable
+    public static IEnumerable<IEnumerable<T>> Combinations<T>(IEnumerable<T> elements, int k)
+    {
+        if (k == 0) {
+            return new[] { Array.Empty<T>() };
+        }
+
+        return elements.SelectMany((e, i) => Combinations(elements.Skip(i + 1), k - 1).Select(c => new[] { e }.Concat(c)));
     }
 }
