@@ -107,6 +107,8 @@ public static class Vector3Extensions {
         return closestWalkableCell;
     }
 
+    // TODO GD Write proper documentation
+    // Distance means the radius of the square (it returns diagonal neighbors that are 1.41 units away)
     public static IEnumerable<Vector3> GetNeighbors(this Vector3 vector, int radius = 1) {
         for (var x = -radius; x <= radius; x++) {
             for (var y = -radius; y <= radius; y++) {

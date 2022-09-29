@@ -48,10 +48,10 @@ public class RegionAnalyzer: INeedUpdating {
 
         if (_isInitialized) {
             if (Program.DebugEnabled && DrawEnabled) {
-                //DrawRegions();
-                //DrawRamps();
-                //DrawNoise();
-                //DrawChokePoints();
+                DrawRegions();
+                DrawRamps();
+                DrawNoise();
+                DrawChokePoints();
             }
 
             return;
@@ -138,10 +138,12 @@ public class RegionAnalyzer: INeedUpdating {
 
     private static void DrawChokePoints() {
         foreach (var chokePoint in ChokePoints) {
-            Program.GraphicalDebugger.AddSphere(chokePoint.Start.ToVector3().WithWorldHeight(), radius: 1, Colors.LightRed);
-            Program.GraphicalDebugger.AddSphere(chokePoint.End.ToVector3().WithWorldHeight(), radius: 1, Colors.LightRed);
-            Program.GraphicalDebugger.AddPath(chokePoint.Edge.Select(edge => edge.ToVector3().WithWorldHeight()).ToList(), Colors.LightRed, Colors.LightRed);
+            DrawChokePoint(chokePoint);
         }
+    }
+
+    private static void DrawChokePoint(ChokePoint chokePoint, Color color = null) {
+        Program.GraphicalDebugger.AddPath(chokePoint.Edge.Select(edge => edge.ToVector3().WithWorldHeight()).ToList(), color ?? Colors.LightRed, color ?? Colors.LightRed);
     }
 
     /// <summary>
@@ -239,6 +241,7 @@ public class RegionAnalyzer: INeedUpdating {
             var (subregion1, subregion2) = SplitRegion(region, chokeInRegion);
 
             // TODO GD Only keep chokes that produce valid splits
+            // TODO GD Handle cases where you need 2+ chokes to break down the region
             if (IsValidSplit(subregion1, chokeInRegion.Length) && IsValidSplit(subregion2, chokeInRegion.Length)) {
                 return BreakDownIntoSubregions(subregion1).Concat(BreakDownIntoSubregions(subregion2)).ToList();
             }
@@ -259,6 +262,7 @@ public class RegionAnalyzer: INeedUpdating {
             var point = pointsToExplore.Dequeue();
             if (subregion1.Add(point)) {
                 var nextNeighbors = point.GetNeighbors()
+                    .Where(neighbor => neighbor.DistanceTo(point) <= 1) // Disallow diagonals
                     .Where(region.Contains)
                     .Where(neighbor => !chokePoint.Edge.Contains(neighbor))
                     .Where(neighbor => !subregion1.Contains(neighbor));

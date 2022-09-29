@@ -12,6 +12,8 @@ public static class Vector2Extensions {
         return Vector2.Distance(origin, destination);
     }
 
+    // TODO GD Write proper documentation
+    // Distance means the radius of the square (it returns diagonal neighbors that are 1.41 units away)
     public static IEnumerable<Vector2> GetNeighbors(this Vector2 vector, int distance = 1) {
         for (var x = -distance; x <= distance; x++) {
             for (var y = -distance; y <= distance; y++) {
