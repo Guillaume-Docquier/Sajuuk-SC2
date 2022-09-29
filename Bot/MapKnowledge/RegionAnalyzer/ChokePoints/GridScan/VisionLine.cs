@@ -7,13 +7,13 @@ using Bot.ExtensionMethods;
 namespace Bot.MapKnowledge;
 
 public static partial class GridScanChokeFinder {
-    private class VisionLine {
+    private class VisionLine: IHavePosition {
         public List<Vector3> OrderedTraversedCells { get; }
         public int Angle { get; }
 
         public Vector3 Start { get; }
         public Vector3 End { get; }
-        public Vector3 Center => Vector3.Lerp(Start, End, 0.5f);
+        public Vector3 Position => Vector3.Lerp(Start, End, 0.5f);
         public float Length { get; }
 
         [JsonConstructor]

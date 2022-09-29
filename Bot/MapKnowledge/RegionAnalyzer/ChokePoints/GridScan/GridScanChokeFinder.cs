@@ -10,6 +10,8 @@ namespace Bot.MapKnowledge;
 
 // TODO GD Considering the obstacles (resources, rocks) might be interesting at some point
 public static partial class GridScanChokeFinder {
+    private static bool DrawEnabled = false;
+
     private const int StartingAngle = 0;
     private const int MaxAngle = 175;
     private const int AngleIncrement = 5;
@@ -26,9 +28,7 @@ public static partial class GridScanChokeFinder {
 
         MarkTraversedNodes(nodes, lines);
 
-        ComputeChokeScores(nodes);
-
-        return new List<ChokePoint>();
+        return ComputeChokePoints(nodes);
     }
 
     private static Dictionary<Vector3, Node> ComputeWalkableNodesInMap() {
@@ -173,59 +173,44 @@ public static partial class GridScanChokeFinder {
         }
     }
 
-    private static void ComputeChokeScores(Dictionary<Vector3, Node> nodes) {
+    private static List<ChokePoint> ComputeChokePoints(Dictionary<Vector3, Node> nodes) {
         foreach (var node in nodes.Values) {
             node.UpdateChokeScore();
         }
 
-        foreach (var node in nodes.Values) {
-            var neighbors = node.Position.GetReachableNeighbors(includeObstacles: false).Select(position => nodes[position]);
-            node.UpdateChokeScoreDeltas(neighbors);
-        }
-
         LogDistribution(nodes.Values.Select(node => node.ChokeScore).ToList());
+
         var chokeNodes = nodes.Values.Where(node => node.ChokeScore > 5f).ToList();
-        DebugScores(chokeNodes.Select(node => (node.Position.Translate(yTranslation: 0.3f), node.ChokeScore)).ToList());
+        DebugScores(chokeNodes.Select(node => (node.Position, node.ChokeScore)).ToList());
 
-        var (chokesClusters, noise) = Clustering.DBSCAN(chokeNodes, 3f, 3);
-        for (var clusterIndex = 0; clusterIndex < chokesClusters.Count; clusterIndex++) {
-            var chokesCluster = chokesClusters[clusterIndex];
-            var chokeLines = chokesCluster
-                .SelectMany(node => node.MostLikelyChokeLines)
-                .GroupBy(line => line)
-                .Where(group => group.Count() >= 3)
-                .Where(group => group.Count() >= group.Key.Length * 0.5)
-                .Select(group => group.Key)
-                .ToList();
+        var chokeLines = chokeNodes
+            .SelectMany(node => node.MostLikelyChokeLines)
+            .GroupBy(line => line)
+            .Where(group => group.Count() >= 3) // Some lines are length 0, some touch the same wall. This discards them but might also discard too many.
+            .Where(group => group.Count() >= group.Key.Length * 0.5)
+            .Select(group => group.Key)
+            .ToList();
 
-            DebugLines(chokeLines);
+        DebugLines(chokeLines);
 
-            foreach (var position in chokeLines.SelectMany(visionLine => visionLine.OrderedTraversedCells).ToHashSet().ToList()) {
-                //Program.GraphicalDebugger.AddText($"{clusterIndex}", size: 13, worldPos: position.WithWorldHeight().Translate(yTranslation: -0.1f).ToPoint());
-                //Program.GraphicalDebugger.AddGridSquare(position.WithWorldHeight(), Colors.LightRed);
-            }
+        var (lineCentersClusters, _) = Clustering.DBSCAN(chokeLines, 1.5f, 2);
+        var chokePoints = new List<ChokePoint>();
+        foreach (var lineCentersCluster in lineCentersClusters) {
+            var clusterCenter = Clustering.GetCenter(lineCentersCluster);
 
-            // TODO GD Cluster the choke lines, get the start and end closest to the center of each cluster to form a new line
-            var lineEnds = chokeLines.SelectMany(line => new List<MapCell> { new MapCell(line.Start), new MapCell(line.End) }).ToList();
-            var (lineEndsClusters, _) = Clustering.DBSCAN(lineEnds, 1.5f, 2);
-            if (lineEndsClusters.Count >= 2) {
-                var startCentroid = Clustering.GetCenter(lineEndsClusters[0]);
-                var endCentroid = Clustering.GetCenter(lineEndsClusters[1]);
-                var bestLine = new VisionLine(
-                    lineEndsClusters[0].MinBy(mapCell => mapCell.Position.HorizontalDistanceTo(startCentroid))!.Position,
-                    lineEndsClusters[1].MinBy(mapCell => mapCell.Position.HorizontalDistanceTo(endCentroid))!.Position,
-                    0
-                );
-
-                DebugLines(new List<VisionLine> { bestLine }, color: Colors.DarkRed);
-            }
-            else {
-                Logger.Warning("Choke #{0} has {1} line end clusters", clusterIndex, lineEndsClusters.Count);
-            }
+            var shortestCenterLine = lineCentersCluster.MinBy(line => line.Length + line.Position.HorizontalDistanceTo(clusterCenter) * 0.5)!;
+            DebugLines(new List<VisionLine> { shortestCenterLine }, color: Colors.LimeGreen);
+            chokePoints.Add(new ChokePoint(shortestCenterLine.Start, shortestCenterLine.End));
         }
+
+        return chokePoints;
     }
 
     private static void DebugScores(List<(Vector3 Position, float Score)> nodes) {
+        if (!DrawEnabled) {
+            return;
+        }
+
         var minScore = nodes.Min(node => node.Score);
         var maxScore = nodes.Max(node => node.Score);
 
@@ -248,8 +233,12 @@ public static partial class GridScanChokeFinder {
     }
 
     private static void DebugLines(List<VisionLine> lines, Color color = null) {
+        if (!DrawEnabled) {
+            return;
+        }
+
         foreach (var line in lines) {
-            Program.GraphicalDebugger.AddLink(line.Start.WithWorldHeight(), line.End.WithWorldHeight(), color ?? Colors.Orange, withText: false);
+            Program.GraphicalDebugger.AddLink(line.Start.WithWorldHeight(zOffset: 0.5f), line.End.WithWorldHeight(zOffset: 0.5f), color ?? Colors.Orange, withText: false);
         }
     }
 
