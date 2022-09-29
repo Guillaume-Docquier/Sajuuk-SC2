@@ -207,7 +207,7 @@ public static partial class GridScanChokeFinder {
     }
 
     private static void DebugScores(List<(Vector3 Position, float Score)> nodes) {
-        if (!DrawEnabled) {
+        if (!Program.DebugEnabled || !DrawEnabled) {
             return;
         }
 
@@ -233,7 +233,7 @@ public static partial class GridScanChokeFinder {
     }
 
     private static void DebugLines(List<VisionLine> lines, Color color = null) {
-        if (!DrawEnabled) {
+        if (!Program.DebugEnabled || !DrawEnabled) {
             return;
         }
 
