@@ -182,7 +182,7 @@ public static partial class GridScanChokeFinder {
             node.UpdateChokeScoreDeltas(neighbors);
         }
 
-        DebugScores(nodes.Values.Select(node => (node.Position, node.ChokeScore)).ToList());
+        DebugScores(nodes.Values.Where(node => node.ChokeScore > 1.2f).Select(node => (node.Position, node.ChokeScore)).ToList());
     }
 
     private static void DebugScores(List<(Vector3 Position, float Score)> nodes) {

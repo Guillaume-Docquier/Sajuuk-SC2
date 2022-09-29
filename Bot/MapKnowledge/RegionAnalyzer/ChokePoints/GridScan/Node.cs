@@ -25,19 +25,12 @@ public static partial class GridScanChokeFinder {
         }
 
         public void UpdateChokeScore() {
-            VisionLine bestChokeVisionLine = null;
-            var bestChokeScore = 0f;
+            var chokeScores = VisionLines
+                .Select(line => Scorers.MinOfBothHalvesSquaredLineScore(this, line))
+                .OrderByDescending(score => score)
+                .Take(VisionLines.Count / 4);
 
-            foreach (var line in VisionLines) {
-                var chokeScore = Scorers.MinOfBothHalvesSquaredLineScore(this, line);
-                if (chokeScore > bestChokeScore) {
-                    bestChokeVisionLine = line;
-                    bestChokeScore = chokeScore;
-                }
-            }
-
-            BestChokeVisionLine = bestChokeVisionLine;
-            ChokeScore = bestChokeScore;
+            ChokeScore = chokeScores.Average();
         }
 
         public void UpdateChokeScoreDeltas(IEnumerable<Node> neighbors) {
@@ -63,6 +56,40 @@ public static partial class GridScanChokeFinder {
 
         public static float MinOfBothHalvesSquaredLineScore(Node node, VisionLine visionLine) {
             return (float)Math.Pow(MinOfBothHalvesLineScore(node, visionLine), 2);
+        }
+
+        public static float FullLineScore(Node node, VisionLine visionLine) {
+            const float maxVisionDistance = 20f;
+
+            var perpendicularLineAngle = (visionLine.Angle + 90) % (MaxAngle + AngleIncrement);
+            var perpendicularLine = node.VisionLines.Find(otherLine => otherLine.Angle == perpendicularLineAngle)!;
+
+            var distance = Math.Min(maxVisionDistance, perpendicularLine.Length);
+
+            return (distance + 1) / (visionLine.Length + 1);
+        }
+
+        public static float FullSquaredLineScore(Node node, VisionLine visionLine) {
+            return (float)Math.Pow(FullLineScore(node, visionLine), 2);
+        }
+
+        public static float AverageOfBothHalvesLineScore(Node node, VisionLine visionLine) {
+            const float maxVisionDistance = 20f;
+
+            var perpendicularLineAngle = (visionLine.Angle + 90) % (MaxAngle + AngleIncrement);
+            var perpendicularLine = node.VisionLines.Find(otherLine => otherLine.Angle == perpendicularLineAngle)!;
+
+            var startDistance = Math.Min(maxVisionDistance, perpendicularLine.Start.HorizontalDistanceTo(node.Position));
+            var endDistance = Math.Min(maxVisionDistance, perpendicularLine.End.HorizontalDistanceTo(node.Position));
+
+            var startChokeScore = (startDistance + 1) / (visionLine.Length + 1);
+            var endChokeScore = (endDistance + 1) / (visionLine.Length + 1);
+
+            return (startChokeScore + endChokeScore) / 2;
+        }
+
+        public static float AverageOfBothHalvesSquaredLineScore(Node node, VisionLine visionLine) {
+            return (float)Math.Pow(AverageOfBothHalvesLineScore(node, visionLine), 2);
         }
     }
 }
