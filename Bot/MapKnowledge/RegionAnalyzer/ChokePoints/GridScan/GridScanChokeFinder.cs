@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.Wrapper;
+using SC2APIProtocol;
 
 namespace Bot.MapKnowledge;
 
@@ -182,16 +183,46 @@ public static partial class GridScanChokeFinder {
             node.UpdateChokeScoreDeltas(neighbors);
         }
 
-        var chokeNodes = nodes.Values.Where(node => node.ChokeScore > 1.2f).ToList();
-        var chokeLines = chokeNodes
-            .SelectMany(node => node.MostLikelyChokeLines)
-            .GroupBy(line => line)
-            .Where(group => group.Count() > 2)
-            .Select(group => group.Key)
-            .ToList();
+        LogDistribution(nodes.Values.Select(node => node.ChokeScore).ToList());
+        var chokeNodes = nodes.Values.Where(node => node.ChokeScore > 5f).ToList();
+        DebugScores(chokeNodes.Select(node => (node.Position.Translate(yTranslation: 0.3f), node.ChokeScore)).ToList());
 
-        DebugLines(chokeLines);
-        DebugScores(chokeNodes.Select(node => (node.Position, node.ChokeScore)).ToList());
+        var (chokesClusters, noise) = Clustering.DBSCAN(chokeNodes, 3f, 3);
+        for (var clusterIndex = 0; clusterIndex < chokesClusters.Count; clusterIndex++) {
+            var chokesCluster = chokesClusters[clusterIndex];
+            var chokeLines = chokesCluster
+                .SelectMany(node => node.MostLikelyChokeLines)
+                .GroupBy(line => line)
+                .Where(group => group.Count() >= 3)
+                .Where(group => group.Count() >= group.Key.Length * 0.5)
+                .Select(group => group.Key)
+                .ToList();
+
+            DebugLines(chokeLines);
+
+            foreach (var position in chokeLines.SelectMany(visionLine => visionLine.OrderedTraversedCells).ToHashSet().ToList()) {
+                //Program.GraphicalDebugger.AddText($"{clusterIndex}", size: 13, worldPos: position.WithWorldHeight().Translate(yTranslation: -0.1f).ToPoint());
+                //Program.GraphicalDebugger.AddGridSquare(position.WithWorldHeight(), Colors.LightRed);
+            }
+
+            // TODO GD Cluster the choke lines, get the start and end closest to the center of each cluster to form a new line
+            var lineEnds = chokeLines.SelectMany(line => new List<MapCell> { new MapCell(line.Start), new MapCell(line.End) }).ToList();
+            var (lineEndsClusters, _) = Clustering.DBSCAN(lineEnds, 1.5f, 2);
+            if (lineEndsClusters.Count >= 2) {
+                var startCentroid = Clustering.GetCenter(lineEndsClusters[0]);
+                var endCentroid = Clustering.GetCenter(lineEndsClusters[1]);
+                var bestLine = new VisionLine(
+                    lineEndsClusters[0].MinBy(mapCell => mapCell.Position.HorizontalDistanceTo(startCentroid))!.Position,
+                    lineEndsClusters[1].MinBy(mapCell => mapCell.Position.HorizontalDistanceTo(endCentroid))!.Position,
+                    0
+                );
+
+                DebugLines(new List<VisionLine> { bestLine }, color: Colors.DarkRed);
+            }
+            else {
+                Logger.Warning("Choke #{0} has {1} line end clusters", clusterIndex, lineEndsClusters.Count);
+            }
+        }
     }
 
     private static void DebugScores(List<(Vector3 Position, float Score)> nodes) {
@@ -216,9 +247,33 @@ public static partial class GridScanChokeFinder {
         return (number - min) / (max - min);
     }
 
-    private static void DebugLines(List<VisionLine> lines) {
+    private static void DebugLines(List<VisionLine> lines, Color color = null) {
         foreach (var line in lines) {
-            Program.GraphicalDebugger.AddLink(line.Start.WithWorldHeight(), line.End.WithWorldHeight(), Colors.Orange, withText: false);
+            Program.GraphicalDebugger.AddLink(line.Start.WithWorldHeight(), line.End.WithWorldHeight(), color ?? Colors.Orange, withText: false);
+        }
+    }
+
+    private static void LogDistribution(List<float> scores) {
+        var min = (int)scores.Min();
+        var max = (int)scores.Max();
+
+        var distribution = new Dictionary<int, int>();
+        for (var bucketIndex = min; bucketIndex <= max; bucketIndex++) {
+            distribution[bucketIndex] = 0;
+        }
+
+        foreach (var score in scores) {
+            distribution[(int)score] += 1;
+        }
+
+        Logger.Info("Choke score distribution");
+        var cumul = 0;
+        for (var bucketIndex = min; bucketIndex <= max; bucketIndex++) {
+            if (distribution[bucketIndex] > 0) {
+                var count = distribution[bucketIndex];
+                cumul += count;
+                Logger.Info("{0,3}: {1,4} ({2,4:P2}) [{3,4:P2}]", bucketIndex, count, (float)count / scores.Count, (float)cumul / scores.Count);
+            }
         }
     }
 }
