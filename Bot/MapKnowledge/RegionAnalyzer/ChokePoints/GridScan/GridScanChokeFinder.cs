@@ -10,7 +10,7 @@ namespace Bot.MapKnowledge;
 
 // TODO GD Considering the obstacles (resources, rocks) might be interesting at some point
 public static partial class GridScanChokeFinder {
-    private static bool DrawEnabled = false;
+    private const bool DrawEnabled = true;
 
     private const int StartingAngle = 0;
     private const int MaxAngle = 175;
