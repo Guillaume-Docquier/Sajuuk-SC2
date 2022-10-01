@@ -12,7 +12,6 @@ namespace Bot.MapKnowledge;
 
 public class ExpandAnalyzer: INeedUpdating {
     public static readonly ExpandAnalyzer Instance = new ExpandAnalyzer();
-
     public static bool IsInitialized { get; private set; }
 
     public static List<List<Unit>> ResourceClusters { get; private set; }

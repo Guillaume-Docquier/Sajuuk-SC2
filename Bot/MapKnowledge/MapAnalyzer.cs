@@ -10,6 +10,7 @@ namespace Bot.MapKnowledge;
 
 public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     public static readonly MapAnalyzer Instance = new MapAnalyzer();
+    public static bool IsInitialized = false;
 
     public static Vector3 StartingLocation;
     public static Vector3 EnemyStartingLocation;
@@ -23,8 +24,6 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
 
     public static int MaxX;
     public static int MaxY;
-
-    public static bool IsInitialized = false;
 
     private MapAnalyzer() {}
 
