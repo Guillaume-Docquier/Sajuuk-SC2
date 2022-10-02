@@ -47,10 +47,10 @@ public class RegionAnalyzer: INeedUpdating {
 
         if (_isInitialized) {
             if (Program.DebugEnabled && DrawEnabled) {
-                DrawRegions();
-                DrawNoise();
-                //DrawRamps();
-                //DrawChokePoints();
+                //DrawRegionsFull();
+                //DrawNoise();
+
+                DrawRegionsSummary();
             }
 
             return;
@@ -115,7 +115,7 @@ public class RegionAnalyzer: INeedUpdating {
     /// <para>Each region gets a different color using the color pool.</para>
     /// <para>Each cell also gets a text 'EX', where E stands for 'Expand' and X is the region index.</para>
     /// </summary>
-    private static void DrawRegions() {
+    private static void DrawRegionsFull() {
         var regionIndex = 0;
         foreach (var region in _regionData.Regions) {
             var regionColor = RegionColors[regionIndex % RegionColors.Count];
@@ -127,6 +127,30 @@ public class RegionAnalyzer: INeedUpdating {
             foreach (var position in region.Frontier) {
                 Program.GraphicalDebugger.AddText($"F{regionIndex}", size: 12, worldPos: position.ToPoint(), color: regionColor);
                 Program.GraphicalDebugger.AddGridSphere(position, regionColor);
+            }
+
+            regionIndex++;
+        }
+    }
+
+    /// <summary>
+    /// <para>Draws a marker over each region and links with neighbors</para>
+    /// <para>Each region gets a different color using the color pool.</para>
+    /// </summary>
+    private static void DrawRegionsSummary() {
+        const int zOffset = 5;
+
+        var regionIndex = 0;
+        foreach (var region in _regionData.Regions) {
+            var regionColor = RegionColors[regionIndex % RegionColors.Count];
+            var offsetRegionCenter = region.Center.Translate(zTranslation: zOffset);
+            Program.GraphicalDebugger.AddText($"R{regionIndex}", size: 12, worldPos: offsetRegionCenter.ToPoint(), color: regionColor);
+            Program.GraphicalDebugger.AddLink(region.Center, offsetRegionCenter, color: regionColor, withText: false);
+
+            foreach (var neighbor in region.Neighbors) {
+                var neighborOffsetCenter = neighbor.Center.Translate(zTranslation: zOffset);
+                var lineEnd = Vector3.Lerp(offsetRegionCenter, neighborOffsetCenter, 0.5f);
+                Program.GraphicalDebugger.AddLine(offsetRegionCenter, lineEnd, color: regionColor);
             }
 
             regionIndex++;
