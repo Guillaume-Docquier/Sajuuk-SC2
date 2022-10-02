@@ -63,7 +63,7 @@ public class RegionAnalyzer: INeedUpdating {
             _regionData = regionsData;
 
             _regionsMap = BuildRegionsMap(_regionData.Regions);
-            _regionData.Regions.ForEach(region => region.SetFrontiersAndNeighbors());
+            _regionData.Regions.ForEach(region => region.SetNeighboringRegions());
 
             Logger.Info("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", _regionData.Regions.Count, _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
             _isInitialized = true;
@@ -83,7 +83,7 @@ public class RegionAnalyzer: INeedUpdating {
         _regionData = new RegionData(regions, ramps, noise, chokePoints);
 
         _regionsMap = BuildRegionsMap(regions);
-        regions.ForEach(region => region.SetFrontiersAndNeighbors());
+        regions.ForEach(region => region.SetNeighboringRegions());
 
         RegionDataStore.Save(Controller.GameInfo.MapName, _regionData);
 
@@ -119,12 +119,14 @@ public class RegionAnalyzer: INeedUpdating {
         var regionIndex = 0;
         foreach (var region in _regionData.Regions) {
             var regionColor = RegionColors[regionIndex % RegionColors.Count];
-            foreach (var position in region.Cells.Except(region.Frontier)) {
+            var frontier = region.Neighbors.SelectMany(neighboringRegion => neighboringRegion.Frontier).ToList();
+
+            foreach (var position in region.Cells.Except(frontier)) {
                 Program.GraphicalDebugger.AddText($"{regionIndex}", size: 12, worldPos: position.ToPoint(), color: regionColor);
                 Program.GraphicalDebugger.AddGridSquare(position, regionColor);
             }
 
-            foreach (var position in region.Frontier) {
+            foreach (var position in frontier) {
                 Program.GraphicalDebugger.AddText($"F{regionIndex}", size: 12, worldPos: position.ToPoint(), color: regionColor);
                 Program.GraphicalDebugger.AddGridSphere(position, regionColor);
             }
@@ -148,7 +150,7 @@ public class RegionAnalyzer: INeedUpdating {
             Program.GraphicalDebugger.AddLink(region.Center, offsetRegionCenter, color: regionColor, withText: false);
 
             foreach (var neighbor in region.Neighbors) {
-                var neighborOffsetCenter = neighbor.Center.Translate(zTranslation: zOffset);
+                var neighborOffsetCenter = neighbor.Region.Center.Translate(zTranslation: zOffset);
                 var lineEnd = Vector3.Lerp(offsetRegionCenter, neighborOffsetCenter, 0.5f);
                 Program.GraphicalDebugger.AddLine(offsetRegionCenter, lineEnd, color: regionColor);
             }

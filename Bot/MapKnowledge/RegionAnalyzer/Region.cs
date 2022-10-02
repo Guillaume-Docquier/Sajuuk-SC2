@@ -11,10 +11,7 @@ public class Region {
     public Vector3 Center { get; }
 
     [JsonIgnore]
-    public HashSet<Vector3> Frontier { get; private set; }
-
-    [JsonIgnore]
-    public HashSet<Region> Neighbors { get; private set; }
+    public HashSet<NeighboringRegion> Neighbors { get; private set; }
 
     [JsonConstructor]
     public Region(HashSet<Vector3> cells, Vector3 center) {
@@ -29,23 +26,28 @@ public class Region {
         Center = Cells.MinBy(cell => cell.HorizontalDistanceTo(regionCenter));
     }
 
-    public void SetFrontiersAndNeighbors() {
-        var frontierCells = Cells.Where(
-            cell => cell
+    public void SetNeighboringRegions() {
+        var neighbors = new Dictionary<Region, List<Vector3>>();
+        foreach (var cell in Cells) {
+            var neighboringRegions = cell
                 .GetNeighbors()
                 .Where(neighbor => neighbor.HorizontalDistanceTo(cell) <= 1) // Disallow diagonals
-                .Any(neighbor => {
-                    var region = RegionAnalyzer.GetRegion(neighbor);
-                    return region != null && region != this;
-                })
-        );
+                .Select(RegionAnalyzer.GetRegion)
+                .Where(region => region != null && region != this);
 
-        Frontier = frontierCells.ToHashSet();
+            foreach (var neighboringRegion in neighboringRegions) {
+                if (!neighbors.ContainsKey(neighboringRegion)) {
+                    neighbors[neighboringRegion] = new List<Vector3> { cell };
+                }
+                else {
+                    neighbors[neighboringRegion].Add(cell);
+                }
+            }
+        }
 
-        Neighbors = Frontier.SelectMany(cell => cell
-            .GetNeighbors()
-            .Select(RegionAnalyzer.GetRegion)
-            .Where(region => region != null && region != this)
-        ).ToHashSet();
+        Neighbors = new HashSet<NeighboringRegion>();
+        foreach (var (region, frontier) in neighbors) {
+            Neighbors.Add(new NeighboringRegion(region, frontier.ToHashSet()));
+        }
     }
 }
