@@ -72,6 +72,19 @@ public static class Clustering {
         return (clusters, noise);
     }
 
+    public static Vector3 GetCenter(List<Vector3> cluster) {
+        if (cluster.Count <= 0) {
+            Logger.Error("Trying to GetCenter of an empty cluster");
+
+            return default;
+        }
+
+        var avgX = cluster.Average(position => position.X);
+        var avgY = cluster.Average(position => position.Y);
+
+        return new Vector3(avgX, avgY, 0).WithWorldHeight();
+    }
+
     public static Vector3 GetCenter<T>(List<T> cluster) where T: class, IHavePosition {
         if (cluster.Count <= 0) {
             Logger.Error("Trying to GetCenter of an empty cluster");
@@ -79,17 +92,17 @@ public static class Clustering {
             return default;
         }
 
-        var avgX = cluster.Average(soldier => soldier.Position.X);
-        var avgY = cluster.Average(soldier => soldier.Position.Y);
+        var avgX = cluster.Average(element => element.Position.X);
+        var avgY = cluster.Average(element => element.Position.Y);
 
         return new Vector3(avgX, avgY, 0).WithWorldHeight();
     }
 
     public static Vector3 GetBoundingBoxCenter<T>(List<T> cluster) where T: class, IHavePosition {
-        var minX = cluster.Select(unit => unit.Position.X).Min();
-        var maxX = cluster.Select(unit => unit.Position.X).Max();
-        var minY = cluster.Select(unit => unit.Position.Y).Min();
-        var maxY = cluster.Select(unit => unit.Position.Y).Max();
+        var minX = cluster.Select(element => element.Position.X).Min();
+        var maxX = cluster.Select(element => element.Position.X).Max();
+        var minY = cluster.Select(element => element.Position.Y).Min();
+        var maxY = cluster.Select(element => element.Position.Y).Max();
 
         var centerX = minX + (maxX - minX) / 2;
         var centerY = minY + (maxY - minY) / 2;

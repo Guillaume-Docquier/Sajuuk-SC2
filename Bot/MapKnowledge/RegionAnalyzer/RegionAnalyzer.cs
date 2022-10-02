@@ -19,10 +19,8 @@ public class RegionAnalyzer: INeedUpdating {
     private const float RegionZMultiplier = 8;
     private static readonly float DiagonalDistance = (float)Math.Sqrt(2);
 
-    public static List<HashSet<Vector2>> Regions = new List<HashSet<Vector2>>();
-    public static List<HashSet<Vector2>> Ramps = new List<HashSet<Vector2>>();
-    public static List<Vector2> Noise = new List<Vector2>();
-    public static List<ChokePoint> ChokePoints = new List<ChokePoint>();
+    private static Dictionary<Vector2, Region> _regionsMap;
+    private static RegionData _regionData;
 
     private static readonly List<Color> RegionColors = new List<Color>
     {
@@ -39,8 +37,8 @@ public class RegionAnalyzer: INeedUpdating {
     private RegionAnalyzer() {}
 
     /// <summary>
-    /// <para>Analyzes the map to find ramps and do region decomposition using clustering techniques.</para>
-    /// <para>There should be at least 1 region per expand location and ramps always separate two regions.</para>
+    /// <para>Analyzes the map to find ramps and do region decomposition</para>
+    /// <para>There should be at least 1 region per expand location and regions are always separated by ramps or choke points.</para>
     /// </summary>
     public void Update(ResponseObservation observation) {
         if (!ExpandAnalyzer.IsInitialized) {
@@ -50,9 +48,9 @@ public class RegionAnalyzer: INeedUpdating {
         if (_isInitialized) {
             if (Program.DebugEnabled && DrawEnabled) {
                 DrawRegions();
-                DrawRamps();
                 DrawNoise();
-                DrawChokePoints();
+                //DrawRamps();
+                //DrawChokePoints();
             }
 
             return;
@@ -62,12 +60,12 @@ public class RegionAnalyzer: INeedUpdating {
         if (regionsData != null) {
             Logger.Info("Initializing RegionAnalyzer from precomputed data for {0}", Controller.GameInfo.MapName);
 
-            Regions = regionsData.Regions;
-            Ramps = regionsData.Ramps;
-            Noise = regionsData.Noise;
-            ChokePoints = regionsData.ChokePoints;
+            _regionData = regionsData;
 
-            Logger.Info("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", Regions.Count, Ramps.Count, Noise.Count, ChokePoints.Count);
+            _regionsMap = BuildRegionsMap(_regionData.Regions);
+            _regionData.Regions.ForEach(region => region.SetFrontiersAndNeighbors());
+
+            Logger.Info("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", _regionData.Regions.Count, _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
             _isInitialized = true;
 
             return;
@@ -78,16 +76,38 @@ public class RegionAnalyzer: INeedUpdating {
 
         var (potentialRegions, regionsNoise) = ComputePotentialRegions(map);
         var (ramps, rampsNoise) = ComputeRamps(regionsNoise);
-        Noise.AddRange(rampsNoise.Select(mapCell => mapCell.Position.ToVector2())); // TODO GD Noise should be added to any region that it touches
+        var noise = rampsNoise.Select(mapCell => mapCell.Position.ToVector2()).ToList(); // TODO GD Noise should be added to any region that it touches
         var chokePoints = ComputePotentialChokePoints();
-        InitSubregions(potentialRegions, ramps, chokePoints);
 
-        RegionDataStore.Save(Controller.GameInfo.MapName, new RegionData(Regions, Ramps, Noise, ChokePoints));
+        var regions = BuildRegions(potentialRegions, ramps, chokePoints);
+        _regionData = new RegionData(regions, ramps, noise, chokePoints);
+
+        _regionsMap = BuildRegionsMap(regions);
+        regions.ForEach(region => region.SetFrontiersAndNeighbors());
+
+        RegionDataStore.Save(Controller.GameInfo.MapName, _regionData);
 
         Logger.Info("Region analysis done and saved");
-        Logger.Info("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", Regions.Count, Ramps.Count, Noise.Count, ChokePoints.Count);
+        Logger.Info("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", _regionData.Regions.Count, _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
 
         _isInitialized = true;
+    }
+
+    /// <summary>
+    /// Gets the Region of a given position
+    /// </summary>
+    /// <param name="position">The position to get the Region of</param>
+    /// <returns>The Region of the given position</returns>
+    public static Region GetRegion(Vector3 position) {
+        if (_regionsMap.TryGetValue(position.AsWorldGridCenter().ToVector2(), out var region)) {
+            return region;
+        }
+
+        if (MapAnalyzer.IsWalkable(position) && !_regionData.Noise.Contains(position.ToVector2())) {
+            Logger.Warning("Region not found for walkable position {0}", position);
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -97,10 +117,16 @@ public class RegionAnalyzer: INeedUpdating {
     /// </summary>
     private static void DrawRegions() {
         var regionIndex = 0;
-        foreach (var region in Regions) {
-            foreach (var position in region) {
-                Program.GraphicalDebugger.AddText($"E{regionIndex}", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: RegionColors[regionIndex % RegionColors.Count]);
-                Program.GraphicalDebugger.AddGridSquare(position.ToVector3().WithWorldHeight(), RegionColors[regionIndex % RegionColors.Count]);
+        foreach (var region in _regionData.Regions) {
+            var regionColor = RegionColors[regionIndex % RegionColors.Count];
+            foreach (var position in region.Cells.Except(region.Frontier)) {
+                Program.GraphicalDebugger.AddText($"{regionIndex}", size: 12, worldPos: position.ToPoint(), color: regionColor);
+                Program.GraphicalDebugger.AddGridSquare(position, regionColor);
+            }
+
+            foreach (var position in region.Frontier) {
+                Program.GraphicalDebugger.AddText($"F{regionIndex}", size: 12, worldPos: position.ToPoint(), color: regionColor);
+                Program.GraphicalDebugger.AddGridSphere(position, regionColor);
             }
 
             regionIndex++;
@@ -114,7 +140,7 @@ public class RegionAnalyzer: INeedUpdating {
     /// </summary>
     private static void DrawRamps() {
         var rampIndex = 0;
-        foreach (var ramp in Ramps) {
+        foreach (var ramp in _regionData.Ramps) {
             foreach (var position in ramp) {
                 Program.GraphicalDebugger.AddText($"R{rampIndex}", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: RegionColors[rampIndex % RegionColors.Count]);
                 Program.GraphicalDebugger.AddGridSphere(position.ToVector3().WithWorldHeight(), RegionColors[rampIndex % RegionColors.Count]);
@@ -130,14 +156,14 @@ public class RegionAnalyzer: INeedUpdating {
     /// <para>Each cell also gets a text '?'.</para>
     /// </summary>
     private static void DrawNoise() {
-        foreach (var position in Noise) {
+        foreach (var position in _regionData.Noise) {
             Program.GraphicalDebugger.AddText("?", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: Colors.Red);
             Program.GraphicalDebugger.AddGridSphere(position.ToVector3().WithWorldHeight(), Colors.Red);
         }
     }
 
     private static void DrawChokePoints() {
-        foreach (var chokePoint in ChokePoints) {
+        foreach (var chokePoint in _regionData.ChokePoints) {
             DrawChokePoint(chokePoint);
         }
     }
@@ -204,32 +230,16 @@ public class RegionAnalyzer: INeedUpdating {
         return GridScanChokeFinder.FindChokePoints();
     }
 
-    // TODO GD Make sense of this. I'd like it to return stuff instead of side effects, but maybe it would return too much stuff?
-    // TODO GD Or invent the new data structure and return from here?
-    private static void InitSubregions(List<HashSet<Vector2>> potentialRegions, List<HashSet<Vector2>> ramps, List<ChokePoint> potentialChokePoints) {
+    private static List<Region> BuildRegions(List<HashSet<Vector2>> potentialRegions, List<HashSet<Vector2>> ramps, List<ChokePoint> potentialChokePoints) {
+        var regions = new List<Region>();
         foreach (var region in potentialRegions) {
             var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints);
-            foreach (var subregion in subregions) {
-                Regions.Add(subregion.ToHashSet());
-            }
+            regions.AddRange(subregions.Select(subregion => new Region(subregion)));
         }
 
-        ChokePoints = GetChokePointsSplittingRegions(potentialChokePoints, Regions);
-        Ramps = ramps;
-    }
+        regions.AddRange(ramps.Select(ramp => new Region(ramp)));
 
-    private static List<ChokePoint> GetChokePointsSplittingRegions(IEnumerable<ChokePoint> chokePoints, IList<HashSet<Vector2>> regions) {
-        var selectedChokes = new List<ChokePoint>();
-        foreach (var chokePoint in chokePoints) {
-            var allNeighbors = chokePoint.Edge.SelectMany(edge => edge.GetNeighbors()).ToHashSet();
-            // TODO GD Sometimes a region can be touched once or twice by a cell. Make sure it touches enough times
-            var nbTouchedRegions = regions.Count(region => allNeighbors.Any(region.Contains));
-            if (nbTouchedRegions > 1) {
-                selectedChokes.Add(chokePoint);
-            }
-        }
-
-        return selectedChokes;
+        return regions;
     }
 
     /// <summary>
@@ -302,12 +312,23 @@ public class RegionAnalyzer: INeedUpdating {
     }
 
     // TODO GD Code this yourself :rofl: this looks... questionable
-    public static IEnumerable<IEnumerable<T>> Combinations<T>(IEnumerable<T> elements, int k)
+    private static IEnumerable<IEnumerable<T>> Combinations<T>(IEnumerable<T> elements, int k)
     {
         if (k == 0) {
             return new[] { Array.Empty<T>() };
         }
 
         return elements.SelectMany((e, i) => Combinations(elements.Skip(i + 1), k - 1).Select(c => new[] { e }.Concat(c)));
+    }
+
+    private static Dictionary<Vector2, Region> BuildRegionsMap(List<Region> regions) {
+        var regionsMap = new Dictionary<Vector2, Region>();
+        foreach (var region in regions) {
+            foreach (var cell in region.Cells) {
+                regionsMap[cell.ToVector2()] = region;
+            }
+        }
+
+        return regionsMap;
     }
 }

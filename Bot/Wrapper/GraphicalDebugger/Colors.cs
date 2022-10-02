@@ -20,7 +20,11 @@ public static class Colors {
         return gradient;
     }
 
-    private static Color BrightColor(int r, int g, int b, float brightness = 1f) {
+    public static Color WithBrightness(Color color, float brightness) {
+        return WithBrightness(color.R, color.G, color.B, brightness);
+    }
+
+    public static Color WithBrightness(uint r, uint g, uint b, float brightness = 1f) {
         var max = new [] { r, g, b }.Max();
         var brightnessMultiplier = 255f / max * brightness;
 
@@ -55,7 +59,7 @@ public static class Colors {
     public static readonly Color Orange = new Color { R = 226, G = 131, B = 36 };
     public static readonly Color Purple = new Color { R = 153, G = 51, B = 255 };
 
-    public static readonly Color MulberryRed = BrightColor(r: 127, g: 59, b: 95, brightness: 0.75f);
+    public static readonly Color MulberryRed = WithBrightness(r: 127, g: 59, b: 95, brightness: 0.75f);
     public static readonly Color MediumTurquoise = new Color { R = 72, G = 209, B = 204 };
     public static readonly Color SunbrightOrange = new Color { R = 253, G = 184, B = 19 };
     public static readonly Color PeachPink = new Color { R = 255, G = 209, B = 193 };

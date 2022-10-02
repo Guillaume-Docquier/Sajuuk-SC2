@@ -198,17 +198,33 @@ public static class Vector3Extensions {
         return pointsInBetween;
     }
 
-    public static Vector3 Rotate2D(this Vector3 vector, double angleInRadians, Vector3 origin = default) {
+    /// <summary>
+    /// Rotates the given position by a certain angle in radians with respect to a given origin, or (0, 0, 0)
+    /// </summary>
+    /// <param name="position">The position to rotate</param>
+    /// <param name="angleInRadians">The angle in radians to rotate by</param>
+    /// <param name="origin">The origin to rotate around</param>
+    /// <returns>The resulting position</returns>
+    public static Vector3 Rotate2D(this Vector3 position, double angleInRadians, Vector3 origin = default) {
         var sinTheta = Math.Sin(angleInRadians);
         var cosTheta = Math.Cos(angleInRadians);
 
-        var translatedX = vector.X - origin.X;
-        var translatedY = vector.Y - origin.Y;
+        var translatedX = position.X - origin.X;
+        var translatedY = position.Y - origin.Y;
 
         return new Vector3
         {
             X = (float)(translatedX * cosTheta - translatedY * sinTheta + origin.X),
             Y = (float)(translatedX * sinTheta + translatedY * cosTheta + origin.X),
         };
+    }
+
+    /// <summary>
+    /// Gets the Region of a given position
+    /// </summary>
+    /// <param name="position">The position to get the Region of</param>
+    /// <returns>The Region of the given position</returns>
+    public static Region GetRegion(this Vector3 position) {
+        return RegionAnalyzer.GetRegion(position);
     }
 }
