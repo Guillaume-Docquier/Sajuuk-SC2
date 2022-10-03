@@ -115,6 +115,7 @@ public static class Units {
     public const uint Drone = 104;
     public const uint Zergling = 105;
     public const uint Overlord = 106;
+    public const uint OverlordTransport = 893;
     public const uint Hydralisk = 107;
     public const uint Mutalisk = 108;
     public const uint Ultralisk = 109;
@@ -393,17 +394,17 @@ public static class Units {
 
     public static readonly HashSet<uint> Military = new HashSet<uint>(TerranMilitary.Concat(ProtossMilitary).Concat(ZergMilitary));
 
-    public static readonly HashSet<uint> ResourceCenters = new HashSet<uint>
+    public static readonly HashSet<uint> TownHalls = new HashSet<uint>
     {
-        CommandCenter,
-        CommandCenterFlying,
         Hatchery,
         Lair,
         Hive,
-        Nexus,
+        CommandCenter,
+        CommandCenterFlying,
         OrbitalCommand,
         OrbitalCommandFlying,
         PlanetaryFortress,
+        Nexus,
     };
 
     // Mineral field types seem to differ from map to map
@@ -424,13 +425,6 @@ public static class Units {
         MineralField450, // Should we exclude this one? See note
     };
 
-    public static readonly HashSet<uint> Extractors = new HashSet<uint>
-    {
-        Extractor,
-        Refinery,
-        Assimilator,
-    };
-
     // Gas geyser types seem to differ from map to map
     public static readonly HashSet<uint> GasGeysers = new HashSet<uint>
     {
@@ -440,6 +434,13 @@ public static class Units {
         ProtossVespeneGeyser,
         PurifierVespeneGeyser,
         ShakurasVespeneGeyser,
+    };
+
+    public static readonly HashSet<uint> Extractors = new HashSet<uint>
+    {
+        Extractor,
+        Refinery,
+        Assimilator,
     };
 
     public static readonly HashSet<uint> Workers = new HashSet<uint>
@@ -498,17 +499,6 @@ public static class Units {
 
     public static readonly HashSet<uint> Destructibles = new HashSet<uint>(BuildBlockers.Concat(Obstacles));
 
-    public static readonly HashSet<uint> TownHalls = new HashSet<uint>
-    {
-        Hatchery,
-        Lair,
-        Hive,
-        CommandCenter,
-        OrbitalCommand,
-        PlanetaryFortress,
-        Nexus,
-    };
-
     public static readonly HashSet<uint> MobileDetectors = new HashSet<uint>
     {
         Overseer,
@@ -541,6 +531,14 @@ public static class Units {
         MissileTurret,
         Bunker,
         PlanetaryFortress,
+    };
+
+    public static readonly HashSet<uint> DropShips = new HashSet<uint>
+    {
+        Medivac,
+        WarpPrism,
+        WarpPrismPhasing,
+        OverlordTransport,
     };
 
     public static readonly Dictionary<uint, HashSet<uint>> EquivalentTo = new Dictionary<uint, HashSet<uint>>

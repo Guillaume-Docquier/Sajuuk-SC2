@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using Bot.MapKnowledge;
 using Bot.Scenarios;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -33,12 +34,14 @@ public class Program {
                 Logger.Info("Game launched in data generation mode");
                 foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
                     Logger.Info("Generating data for {0}", mapFileName);
+                    ExpandDataStore.IsEnabled = false;
+                    RegionDataStore.IsEnabled = false;
 
                     DebugEnabled = true;
                     GraphicalDebugger = new LadderGraphicalDebugger();
 
                     GameConnection = new GameConnection(runEvery: 2);
-                    GameConnection.RunLocal(new SajuukBot("2_3_0", scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runSingleFrame: true).Wait();
+                    GameConnection.RunLocal(new SajuukBot("2_3_0", scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
                 }
             }
             else if (args.Length == 0) {

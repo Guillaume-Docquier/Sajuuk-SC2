@@ -22,7 +22,7 @@ public class Region {
     }
 
     public Region(IEnumerable<Vector2> cells, RegionType type) {
-        Cells = cells.Select(vector2 => vector2.ToVector3().WithWorldHeight()).ToHashSet();
+        Cells = cells.Select(vector2 => vector2.ToVector3()).ToHashSet();
 
         Type = type;
         if (Type == RegionType.Unknown) {

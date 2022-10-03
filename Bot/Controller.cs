@@ -63,6 +63,8 @@ public static class Controller {
         ExpandAnalyzer.Instance, // Depends on UnitsTracker and MapAnalyzer
         BuildingTracker.Instance, // Depends on UnitsTracker and MapAnalyzer
         RegionAnalyzer.Instance, // Depends on ExpandAnalyzer and MapAnalyzer
+
+        RegionTracker.Instance, // Depends on UnitsTracker, VisibilityTracker, RegionAnalyzer and MapAnalyzer
     };
 
     public static void Reset() {

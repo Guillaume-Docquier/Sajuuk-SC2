@@ -7,6 +7,8 @@ namespace Bot.MapKnowledge;
 
 // TODO GD We could most likely make this not static and a bit more generic
 public static class ExpandDataStore {
+    public static bool IsEnabled = true;
+
     private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
     {
         Converters =
@@ -29,6 +31,10 @@ public static class ExpandDataStore {
     }
 
     public static List<Vector3> Load(string mapName) {
+        if (!IsEnabled) {
+            return null;
+        }
+
         var loadFilePath = $"Data/{GetFileName(mapName)}";
         if (!File.Exists(loadFilePath)) {
             return null;

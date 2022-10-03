@@ -11,11 +11,13 @@ namespace Bot.MapKnowledge;
 public class RegionAnalyzer: INeedUpdating {
     public static readonly RegionAnalyzer Instance = new RegionAnalyzer();
 
-    private static bool _isInitialized = false;
+    public static bool IsInitialized { get; private set; }  = false;
     private static Dictionary<Vector2, Region> _regionsMap;
     private static RegionData _regionData;
 
-    private const bool DrawEnabled = true;
+    public static List<Region> Regions => _regionData.Regions;
+
+    private const bool DrawEnabled = false;
 
     private const int MinRampSize = 5;
     private const int RegionMinPoints = 6;
@@ -37,7 +39,7 @@ public class RegionAnalyzer: INeedUpdating {
     private RegionAnalyzer() {}
 
     public void Reset() {
-        _isInitialized = false;
+        IsInitialized = false;
         _regionsMap = null;
         _regionData = null;
     }
@@ -51,12 +53,10 @@ public class RegionAnalyzer: INeedUpdating {
             return;
         }
 
-        if (_isInitialized) {
+        if (IsInitialized) {
             if (Program.DebugEnabled && DrawEnabled) {
-                //DrawRegionsFull();
-                //DrawNoise();
-
-                DrawRegionsSummary();
+                DrawRegionsFull();
+                DrawNoise();
             }
 
             return;
@@ -72,7 +72,7 @@ public class RegionAnalyzer: INeedUpdating {
             _regionData.Regions.ForEach(region => region.SetNeighboringRegions());
 
             Logger.Info("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", _regionData.Regions.Count, _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
-            _isInitialized = true;
+            IsInitialized = true;
 
             return;
         }
@@ -96,7 +96,7 @@ public class RegionAnalyzer: INeedUpdating {
         Logger.Info("Region analysis done and saved");
         Logger.Info("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", _regionData.Regions.Count, _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
 
-        _isInitialized = true;
+        IsInitialized = true;
     }
 
     /// <summary>
@@ -105,11 +105,20 @@ public class RegionAnalyzer: INeedUpdating {
     /// <param name="position">The position to get the Region of</param>
     /// <returns>The Region of the given position</returns>
     public static Region GetRegion(Vector3 position) {
-        if (_regionsMap.TryGetValue(position.AsWorldGridCenter().ToVector2(), out var region)) {
+        return GetRegion(position.ToVector2());
+    }
+
+    /// <summary>
+    /// Gets the Region of a given position
+    /// </summary>
+    /// <param name="position">The position to get the Region of</param>
+    /// <returns>The Region of the given position</returns>
+    public static Region GetRegion(Vector2 position) {
+        if (_regionsMap.TryGetValue(position.AsWorldGridCenter(), out var region)) {
             return region;
         }
 
-        if (MapAnalyzer.IsWalkable(position) && !_regionData.Noise.Contains(position.ToVector2())) {
+        if (MapAnalyzer.IsWalkable(position) && !_regionData.Noise.Contains(position)) {
             Logger.Warning("Region not found for walkable position {0}", position);
         }
 
@@ -142,30 +151,6 @@ public class RegionAnalyzer: INeedUpdating {
     }
 
     /// <summary>
-    /// <para>Draws a marker over each region and links with neighbors</para>
-    /// <para>Each region gets a different color using the color pool.</para>
-    /// </summary>
-    private static void DrawRegionsSummary() {
-        const int zOffset = 5;
-
-        var regionIndex = 0;
-        foreach (var region in _regionData.Regions) {
-            var regionColor = RegionColors[regionIndex % RegionColors.Count];
-            var offsetRegionCenter = region.Center.Translate(zTranslation: zOffset);
-            Program.GraphicalDebugger.AddText($"R{regionIndex} ({region.Type})", size: 14, worldPos: offsetRegionCenter.ToPoint(), color: regionColor);
-            Program.GraphicalDebugger.AddLink(region.Center, offsetRegionCenter, color: regionColor, withText: false);
-
-            foreach (var neighbor in region.Neighbors) {
-                var neighborOffsetCenter = neighbor.Region.Center.Translate(zTranslation: zOffset);
-                var lineEnd = Vector3.Lerp(offsetRegionCenter, neighborOffsetCenter, 0.5f);
-                Program.GraphicalDebugger.AddLine(offsetRegionCenter, lineEnd, color: regionColor);
-            }
-
-            regionIndex++;
-        }
-    }
-
-    /// <summary>
     /// <para>Draws a sphere on each ramp's cells.</para>
     /// <para>Each ramp gets a different color using the color pool.</para>
     /// <para>Each cell also gets a text 'RX', where E stands for 'Ramp' and X is the ramp index.</para>
@@ -174,8 +159,8 @@ public class RegionAnalyzer: INeedUpdating {
         var rampIndex = 0;
         foreach (var ramp in _regionData.Ramps) {
             foreach (var position in ramp) {
-                Program.GraphicalDebugger.AddText($"R{rampIndex}", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: RegionColors[rampIndex % RegionColors.Count]);
-                Program.GraphicalDebugger.AddGridSphere(position.ToVector3().WithWorldHeight(), RegionColors[rampIndex % RegionColors.Count]);
+                Program.GraphicalDebugger.AddText($"R{rampIndex}", size: 12, worldPos: position.ToVector3().ToPoint(), color: RegionColors[rampIndex % RegionColors.Count]);
+                Program.GraphicalDebugger.AddGridSphere(position.ToVector3(), RegionColors[rampIndex % RegionColors.Count]);
             }
 
             rampIndex++;
@@ -189,8 +174,8 @@ public class RegionAnalyzer: INeedUpdating {
     /// </summary>
     private static void DrawNoise() {
         foreach (var position in _regionData.Noise) {
-            Program.GraphicalDebugger.AddText("?", size: 12, worldPos: position.ToVector3().WithWorldHeight().ToPoint(), color: Colors.Red);
-            Program.GraphicalDebugger.AddGridSphere(position.ToVector3().WithWorldHeight(), Colors.Red);
+            Program.GraphicalDebugger.AddText("?", size: 12, worldPos: position.ToVector3().ToPoint(), color: Colors.Red);
+            Program.GraphicalDebugger.AddGridSphere(position.ToVector3(), Colors.Red);
         }
     }
 
@@ -201,7 +186,7 @@ public class RegionAnalyzer: INeedUpdating {
     }
 
     private static void DrawChokePoint(ChokePoint chokePoint, Color color = null) {
-        Program.GraphicalDebugger.AddPath(chokePoint.Edge.Select(edge => edge.ToVector3().WithWorldHeight()).ToList(), color ?? Colors.LightRed, color ?? Colors.LightRed);
+        Program.GraphicalDebugger.AddPath(chokePoint.Edge.Select(edge => edge.ToVector3()).ToList(), color ?? Colors.LightRed, color ?? Colors.LightRed);
     }
 
     /// <summary>

@@ -18,7 +18,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     public static List<List<float>> HeightMap { get; private set; }
 
     private static List<Unit> _obstacles;
-    private static readonly HashSet<Vector3> ObstructionMap = new HashSet<Vector3>();
+    private static readonly HashSet<Vector2> ObstructionMap = new HashSet<Vector2>();
     private static List<List<bool>> _terrainWalkMap;
     private static List<List<bool>> _currentWalkMap;
 
@@ -101,22 +101,22 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         Pathfinder.Memory.Clear();
     }
 
-    public static IEnumerable<Vector3> GetObstacleFootprint(Unit obstacle) {
+    public static IEnumerable<Vector2> GetObstacleFootprint(Unit obstacle) {
         if (Units.MineralFields.Contains(obstacle.UnitType)) {
             // Mineral fields are 1x2
-            return new List<Vector3>
+            return new List<Vector2>
             {
-                obstacle.Position.Translate(xTranslation: -0.5f).AsWorldGridCenter().WithoutZ(),
-                obstacle.Position.Translate(xTranslation: 0.5f).AsWorldGridCenter().WithoutZ(),
+                obstacle.Position.Translate(xTranslation: -0.5f).AsWorldGridCenter().ToVector2(),
+                obstacle.Position.Translate(xTranslation: 0.5f).AsWorldGridCenter().ToVector2(),
             };
         }
 
         // TODO GD Some debris are rectangular at an angle, so the grid is way bigger than it should be
-        return BuildSearchGrid(obstacle.Position, (int)obstacle.Radius).Select(cell => cell.AsWorldGridCenter().WithoutZ());
+        return BuildSearchGrid(obstacle.Position, (int)obstacle.Radius).Select(cell => cell.AsWorldGridCenter().ToVector2());
     }
 
     private static void InitSpawnLocations() {
-        StartingLocation = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.ResourceCenters).First().Position;
+        StartingLocation = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).First().Position;
         EnemyStartingLocation = Controller.GameInfo.StartRaw.StartLocations
             .Select(startLocation => new Vector3(startLocation.X, startLocation.Y, 0))
             .MaxBy(enemyLocation => StartingLocation.HorizontalDistanceTo(enemyLocation));
@@ -172,7 +172,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
                 // TODO GD This is problematic for _currentWalkMap
                 // On some maps, some tiles under destructibles are not walkable
                 // We'll consider them walkable, but they won't be until the obstacle is cleared
-                if (ObstructionMap.Contains(new Vector3(x, y, 0).AsWorldGridCenter())) {
+                if (ObstructionMap.Contains(new Vector2(x, y).AsWorldGridCenter())) {
                     walkMap[x][y] = true;
                 }
             }
@@ -194,8 +194,20 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         return grid.OrderBy(position => Vector3.Distance(centerPosition, position));
     }
 
+    /// <summary>
+    /// Builds a search area composed of all the 1x1 game cells around a center position.
+    /// The height is properly set on the returned cells.
+    /// </summary>
+    /// <param name="centerPosition">The position to search around</param>
+    /// <param name="circleRadius">The radius of the search area</param>
+    /// <param name="stepSize">The cells gap</param>
+    /// <returns>The search area composed of all the 1x1 game cells around a center position with a stepSize sized gap and with proper heights set</returns>
     public static IEnumerable<Vector3> BuildSearchRadius(Vector3 centerPosition, float circleRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
         return BuildSearchGrid(centerPosition, (int)circleRadius + 1, stepSize).Where(cell => cell.HorizontalDistanceTo(centerPosition) <= circleRadius);
+    }
+
+    public static bool IsInBounds(Vector2 position) {
+        return IsInBounds(position.X, position.Y);
     }
 
     public static bool IsInBounds(Vector3 position) {
@@ -207,12 +219,16 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     }
 
     public static bool IsWalkable(Vector3 position, bool includeObstacles = true) {
+        return IsWalkable(position.ToVector2(), includeObstacles);
+    }
+
+    public static bool IsWalkable(Vector2 position, bool includeObstacles = true) {
         if (!IsInBounds(position)) {
             return false;
         }
 
         var isWalkable = _terrainWalkMap[(int)position.X][(int)position.Y];
-        var isObstructed = includeObstacles && ObstructionMap.Contains(position.AsWorldGridCenter().WithoutZ());
+        var isObstructed = includeObstacles && ObstructionMap.Contains(position.AsWorldGridCenter());
 
         return isWalkable && !isObstructed;
     }

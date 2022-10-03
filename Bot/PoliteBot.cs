@@ -33,8 +33,8 @@ public abstract class PoliteBot: IBot {
 
     private void EnsureGreeting() {
         if (Controller.Frame == 0) {
-            Logger.Info(Name);
             Logger.Info("--------------------------------------");
+            Logger.Metric("Bot: {0}", Name);
             Logger.Metric("Map: {0}", Controller.GameInfo.MapName);
             Logger.Metric("Starting Corner: {0}", MapAnalyzer.GetStartingCorner());
             Logger.Metric("Bot Version: {0}", _version);

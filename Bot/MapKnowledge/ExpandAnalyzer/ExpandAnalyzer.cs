@@ -47,10 +47,8 @@ public class ExpandAnalyzer: INeedUpdating {
 
             // This isn't expensive, but I guess we could still save it?
             ResourceClusters = FindResourceClusters().ToList();
-            Logger.Info("Found {0} resource clusters", ResourceClusters.Count);
-
             ExpandLocations = expandsData;
-            Logger.Info("Found {0} expand locations", ExpandLocations.Count);
+            Logger.Info("{0} expands, {1} resource clusters", ExpandLocations.Count, ResourceClusters.Count);
 
             IsInitialized = true;
             return;
@@ -124,7 +122,7 @@ public class ExpandAnalyzer: INeedUpdating {
 
         var cellsTooCloseToResource = ResourceClusters.SelectMany(cluster => cluster)
             .SelectMany(MapAnalyzer.GetObstacleFootprint)
-            .SelectMany(position => MapAnalyzer.BuildSearchRadius(position, TooCloseToResourceDistance))
+            .SelectMany(position => MapAnalyzer.BuildSearchRadius(position.ToVector3(), TooCloseToResourceDistance))
             .Select(position => position.AsWorldGridCorner());
 
         foreach (var cell in cellsTooCloseToResource) {

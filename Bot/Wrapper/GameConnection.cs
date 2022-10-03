@@ -54,7 +54,7 @@ public class GameConnection {
         }
     }
 
-    public async Task RunLocal(IBot bot, string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime, bool runSingleFrame = false) {
+    public async Task RunLocal(IBot bot, string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime, bool runDataAnalyzersOnly = false) {
         const int port = 5678;
 
         Logger.Info("Finding the SC2 executable info");
@@ -71,7 +71,7 @@ public class GameConnection {
 
         Logger.Info("Joining game");
         var playerId = await JoinGame(bot.Race);
-        await Run(bot, playerId, runSingleFrame);
+        await Run(bot, playerId, runDataAnalyzersOnly);
     }
 
     private void StartSc2Instance(int port) {
@@ -170,10 +170,10 @@ public class GameConnection {
         return joinGameResponse.JoinGame.PlayerId;
     }
 
-    private async Task Run(IBot bot, uint playerId, bool runSingleFrame = false) {
+    private async Task Run(IBot bot, uint playerId, bool runDataAnalyzersOnly = false) {
         // We use this to generate data for all maps by running a single frame on each of them
         // We need to reset because everything is global static
-        if (runSingleFrame) {
+        if (runDataAnalyzersOnly) {
             Controller.Reset();
         }
 
@@ -268,7 +268,7 @@ public class GameConnection {
                 PrintMemoryInfo();
             }
 
-            if (runSingleFrame) {
+            if (runDataAnalyzersOnly && ExpandAnalyzer.IsInitialized && RegionAnalyzer.IsInitialized) {
                 await Quit();
             }
             else {

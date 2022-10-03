@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.ExtensionMethods;
 using SC2APIProtocol;
 
 namespace Bot.GameSense;
@@ -10,6 +11,28 @@ public class VisibilityTracker: INeedUpdating {
 
     private static ulong _lastGeneratedAt = ulong.MaxValue;
     private static List<List<Visibility>> _visibilityMap;
+    private static List<Vector2> _visibleCells;
+    private static List<Vector2> _exploredCells;
+
+    public static List<Vector2> VisibleCells {
+        get {
+            if (_lastGeneratedAt != Controller.Frame) {
+                GenerateVisibilityMap();
+            }
+
+            return _visibleCells;
+        }
+    }
+
+    public static List<Vector2> ExploredCells {
+        get {
+            if (_lastGeneratedAt != Controller.Frame) {
+                GenerateVisibilityMap();
+            }
+
+            return _exploredCells;
+        }
+    }
 
     private static ImageData _rawVisibilityMap;
 
@@ -24,6 +47,8 @@ public class VisibilityTracker: INeedUpdating {
         _lastGeneratedAt = ulong.MaxValue;
         _visibilityMap = null;
         _rawVisibilityMap = null;
+        _visibleCells = null;
+        _exploredCells = null;
     }
 
     public void Update(ResponseObservation observation) {
@@ -43,6 +68,8 @@ public class VisibilityTracker: INeedUpdating {
         var maxY = Controller.GameInfo.StartRaw.MapSize.Y;
 
         _visibilityMap = new List<List<Visibility>>();
+        _visibleCells = new List<Vector2>();
+        _exploredCells = new List<Vector2>();
         for (var x = 0; x < maxX; x++) {
             _visibilityMap.Add(new List<Visibility>(new Visibility[maxY]));
         }
@@ -53,7 +80,16 @@ public class VisibilityTracker: INeedUpdating {
 
         for (var x = 0; x < maxX; x++) {
             for (var y = 0; y < maxY; y++) {
-                _visibilityMap[x][y] = (Visibility)visibilityVector[y * maxX + x]; // visibilityVector[4] is (4, 0)
+                var visibility = (Visibility)visibilityVector[y * maxX + x]; // visibilityVector[4] is (4, 0);
+                _visibilityMap[x][y] = visibility;
+
+                if (visibility == Visibility.Visible) {
+                    _visibleCells.Add(new Vector2(x, y).AsWorldGridCenter());
+                    _exploredCells.Add(new Vector2(x, y).AsWorldGridCenter());
+                }
+                else if (visibility == Visibility.Explored) {
+                    _exploredCells.Add(new Vector2(x, y).AsWorldGridCenter());
+                }
             }
         }
 

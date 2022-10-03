@@ -4,6 +4,8 @@ using System.Text.Json;
 namespace Bot.MapKnowledge;
 
 public static class RegionDataStore {
+    public static bool IsEnabled = true;
+
     private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
     {
         Converters =
@@ -27,6 +29,10 @@ public static class RegionDataStore {
     }
 
     public static RegionData Load(string mapName) {
+        if (!IsEnabled) {
+            return null;
+        }
+
         var loadFilePath = $"Data/{GetFileName(mapName)}";
         if (!File.Exists(loadFilePath)) {
             return null;
