@@ -17,6 +17,11 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
 
     private BuildingTracker() {}
 
+    public void Reset() {
+        _reservedBuildingCells.Clear();
+        _ongoingBuildingOrders.Clear();
+    }
+
     public void Update(ResponseObservation observation) {
         foreach (var reservedBuildingCell in _reservedBuildingCells.Keys) {
             Program.GraphicalDebugger.AddGridSquare(reservedBuildingCell, Colors.Yellow);

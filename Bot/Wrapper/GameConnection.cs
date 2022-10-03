@@ -54,7 +54,7 @@ public class GameConnection {
         }
     }
 
-    public async Task RunLocal(IBot bot, string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {
+    public async Task RunLocal(IBot bot, string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime, bool runSingleFrame = false) {
         const int port = 5678;
 
         Logger.Info("Finding the SC2 executable info");
@@ -71,7 +71,7 @@ public class GameConnection {
 
         Logger.Info("Joining game");
         var playerId = await JoinGame(bot.Race);
-        await Run(bot, playerId);
+        await Run(bot, playerId, runSingleFrame);
     }
 
     private void StartSc2Instance(int port) {
@@ -170,7 +170,13 @@ public class GameConnection {
         return joinGameResponse.JoinGame.PlayerId;
     }
 
-    private async Task Run(IBot bot, uint playerId) {
+    private async Task Run(IBot bot, uint playerId, bool runSingleFrame = false) {
+        // We use this to generate data for all maps by running a single frame on each of them
+        // We need to reset because everything is global static
+        if (runSingleFrame) {
+            Controller.Reset();
+        }
+
         var dataRequest = new Request
         {
             Data = new RequestData
@@ -187,9 +193,13 @@ public class GameConnection {
 
         while (true) {
             var observationResponse = await SendRequest(RequestBuilder.RequestObservation());
+            if (observationResponse.Status is Status.Quit) {
+                Logger.Info("Game was terminated.");
+                break;
+            }
 
             var observation = observationResponse.Observation;
-            if (observationResponse.Status is Status.Ended or Status.Quit) {
+            if (observationResponse.Status is Status.Ended) {
                 _performanceDebugger.LogAveragePerformance();
 
                 foreach (var result in observation.PlayerResult) {
@@ -258,7 +268,12 @@ public class GameConnection {
                 PrintMemoryInfo();
             }
 
-            await SendRequest(RequestBuilder.RequestStep(StepSize));
+            if (runSingleFrame) {
+                await Quit();
+            }
+            else {
+                await SendRequest(RequestBuilder.RequestStep(StepSize));
+            }
         }
     }
 
@@ -286,9 +301,10 @@ public class GameConnection {
     }
 
     public Task Quit() {
+        Logger.Info("Quitting game...");
         return SendRequest(new Request
         {
-            LeaveGame = new RequestLeaveGame()
+            Quit = new RequestQuit()
         });
     }
 

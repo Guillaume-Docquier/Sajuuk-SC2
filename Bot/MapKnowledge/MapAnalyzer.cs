@@ -10,32 +10,45 @@ namespace Bot.MapKnowledge;
 
 public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     public static readonly MapAnalyzer Instance = new MapAnalyzer();
-    public static bool IsInitialized = false;
 
-    public static Vector3 StartingLocation;
-    public static Vector3 EnemyStartingLocation;
+    public static bool IsInitialized { get; private set; } = false;
+    public static Vector3 StartingLocation { get; private set; }
+    public static Vector3 EnemyStartingLocation { get; private set; }
 
-    public static List<List<float>> HeightMap;
+    public static List<List<float>> HeightMap { get; private set; }
 
     private static List<Unit> _obstacles;
     private static readonly HashSet<Vector3> ObstructionMap = new HashSet<Vector3>();
     private static List<List<bool>> _terrainWalkMap;
     private static List<List<bool>> _currentWalkMap;
 
-    public static int MaxX;
-    public static int MaxY;
+    public static int MaxX { get; private set; }
+    public static int MaxY { get; private set; }
 
     private MapAnalyzer() {}
 
+    public void Reset() {
+        IsInitialized = false;
+        StartingLocation = default;
+        EnemyStartingLocation = default;
+
+        HeightMap = null;
+
+        _obstacles = null;
+        ObstructionMap.Clear();
+        _terrainWalkMap = null;
+        _currentWalkMap = null;
+    }
+
     public void Update(ResponseObservation observation) {
+        MaxX = Controller.GameInfo.StartRaw.MapSize.X;
+        MaxY = Controller.GameInfo.StartRaw.MapSize.Y;
+
         _currentWalkMap = ParseWalkMap();
 
         if (IsInitialized) {
             return;
         }
-
-        MaxX = Controller.GameInfo.StartRaw.MapSize.X;
-        MaxY = Controller.GameInfo.StartRaw.MapSize.Y;
 
         InitSpawnLocations();
         InitObstacles();

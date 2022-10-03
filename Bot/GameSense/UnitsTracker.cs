@@ -8,6 +8,7 @@ namespace Bot.GameSense;
 public class UnitsTracker: INeedUpdating {
     public static readonly UnitsTracker Instance = new UnitsTracker();
 
+    private bool _isInitialized = false;
     public static Dictionary<ulong, Unit> UnitsByTag;
 
     public static readonly List<Unit> NewOwnedUnits = new List<Unit>();
@@ -17,9 +18,20 @@ public class UnitsTracker: INeedUpdating {
     public static List<Unit> OwnedUnits;
     public static List<Unit> EnemyUnits;
 
-    private bool _isInitialized = false;
-
     private UnitsTracker() {}
+
+    public void Reset() {
+        _isInitialized = false;
+
+        UnitsByTag = null;
+
+        NewOwnedUnits.Clear();
+        DeadOwnedUnits.Clear();
+
+        NeutralUnits = null;
+        OwnedUnits = null;
+        EnemyUnits = null;
+    }
 
     public void Update(ResponseObservation observation) {
         var newRawUnits = observation.Observation.RawData.Units.ToList();

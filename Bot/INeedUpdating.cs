@@ -3,5 +3,7 @@
 namespace Bot;
 
 public interface INeedUpdating {
+    void Reset();
+
     void Update(ResponseObservation observation);
 }

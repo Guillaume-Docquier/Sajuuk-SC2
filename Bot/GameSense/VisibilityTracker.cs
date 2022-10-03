@@ -8,18 +8,23 @@ namespace Bot.GameSense;
 public class VisibilityTracker: INeedUpdating {
     public static readonly VisibilityTracker Instance = new VisibilityTracker();
 
-    private enum Visibility {
-        NotExplored = 0,
-        Explored = 1,
-        Visible = 2,
-    }
-
     private static ulong _lastGeneratedAt = ulong.MaxValue;
     private static List<List<Visibility>> _visibilityMap;
 
     private static ImageData _rawVisibilityMap;
 
+    private enum Visibility {
+        NotExplored = 0,
+        Explored = 1,
+        Visible = 2,
+    }
     private VisibilityTracker() {}
+
+    public void Reset() {
+        _lastGeneratedAt = ulong.MaxValue;
+        _visibilityMap = null;
+        _rawVisibilityMap = null;
+    }
 
     public void Update(ResponseObservation observation) {
         _rawVisibilityMap = observation.Observation.RawData.MapState.Visibility;

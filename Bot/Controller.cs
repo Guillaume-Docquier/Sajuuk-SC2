@@ -48,7 +48,7 @@ public static class Controller {
     public static int AvailableMinerals { get; private set; }
     public static int AvailableVespene { get; private set; }
 
-    public static HashSet<uint> ResearchedUpgrades;
+    public static HashSet<uint> ResearchedUpgrades { get; private set; }
 
     public static readonly List<string> ChatLog = new List<string>();
 
@@ -62,8 +62,17 @@ public static class Controller {
 
         ExpandAnalyzer.Instance, // Depends on UnitsTracker and MapAnalyzer
         BuildingTracker.Instance, // Depends on UnitsTracker and MapAnalyzer
-        RegionAnalyzer.Instance, // Depends on MapAnalyzer and ExpandAnalyzer
+        RegionAnalyzer.Instance, // Depends on ExpandAnalyzer and MapAnalyzer
     };
+
+    public static void Reset() {
+        Frame = uint.MaxValue;
+        Actions.Clear();
+        ChatLog.Clear();
+
+        _frameDelayMs = 0;
+        ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Reset());
+    }
 
     public static void Pause() {
         Console.WriteLine("Press any key to continue...");

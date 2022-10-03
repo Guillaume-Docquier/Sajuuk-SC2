@@ -10,7 +10,10 @@ namespace Bot.MapKnowledge;
 
 public class RegionAnalyzer: INeedUpdating {
     public static readonly RegionAnalyzer Instance = new RegionAnalyzer();
+
     private static bool _isInitialized = false;
+    private static Dictionary<Vector2, Region> _regionsMap;
+    private static RegionData _regionData;
 
     private const bool DrawEnabled = true;
 
@@ -18,9 +21,6 @@ public class RegionAnalyzer: INeedUpdating {
     private const int RegionMinPoints = 6;
     private const float RegionZMultiplier = 8;
     private static readonly float DiagonalDistance = (float)Math.Sqrt(2);
-
-    private static Dictionary<Vector2, Region> _regionsMap;
-    private static RegionData _regionData;
 
     private static readonly List<Color> RegionColors = new List<Color>
     {
@@ -35,6 +35,12 @@ public class RegionAnalyzer: INeedUpdating {
     };
 
     private RegionAnalyzer() {}
+
+    public void Reset() {
+        _isInitialized = false;
+        _regionsMap = null;
+        _regionData = null;
+    }
 
     /// <summary>
     /// <para>Analyzes the map to find ramps and do region decomposition</para>
@@ -146,7 +152,7 @@ public class RegionAnalyzer: INeedUpdating {
         foreach (var region in _regionData.Regions) {
             var regionColor = RegionColors[regionIndex % RegionColors.Count];
             var offsetRegionCenter = region.Center.Translate(zTranslation: zOffset);
-            Program.GraphicalDebugger.AddText($"R{regionIndex}", size: 12, worldPos: offsetRegionCenter.ToPoint(), color: regionColor);
+            Program.GraphicalDebugger.AddText($"R{regionIndex} ({region.Type})", size: 14, worldPos: offsetRegionCenter.ToPoint(), color: regionColor);
             Program.GraphicalDebugger.AddLink(region.Center, offsetRegionCenter, color: regionColor, withText: false);
 
             foreach (var neighbor in region.Neighbors) {
@@ -260,10 +266,10 @@ public class RegionAnalyzer: INeedUpdating {
         var regions = new List<Region>();
         foreach (var region in potentialRegions) {
             var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints);
-            regions.AddRange(subregions.Select(subregion => new Region(subregion)));
+            regions.AddRange(subregions.Select(subregion => new Region(subregion, RegionType.Unknown)));
         }
 
-        regions.AddRange(ramps.Select(ramp => new Region(ramp)));
+        regions.AddRange(ramps.Select(ramp => new Region(ramp, RegionType.Ramp)));
 
         return regions;
     }

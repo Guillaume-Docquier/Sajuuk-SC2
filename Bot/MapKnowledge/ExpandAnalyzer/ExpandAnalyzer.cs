@@ -12,18 +12,25 @@ namespace Bot.MapKnowledge;
 
 public class ExpandAnalyzer: INeedUpdating {
     public static readonly ExpandAnalyzer Instance = new ExpandAnalyzer();
-    public static bool IsInitialized { get; private set; }
 
+    public static bool IsInitialized { get; private set; }
     public static List<List<Unit>> ResourceClusters { get; private set; }
     public static List<Vector3> ExpandLocations { get; private set; }
+
+    private static List<List<bool>> _tooCloseToResourceGrid;
 
     private const int ExpandSearchRadius = 5;
     private const int ExpandRadius = 3; // It's 2.5, we put 3 to be safe
     private static readonly float TooCloseToResourceDistance = (float)Math.Sqrt(1*1 + 3*3);
 
-    private static List<List<bool>> _tooCloseToResourceGrid;
-
     private ExpandAnalyzer() {}
+
+    public void Reset() {
+        IsInitialized = false;
+        ResourceClusters = null;
+        ExpandLocations = null;
+        _tooCloseToResourceGrid = null;
+    }
 
     public void Update(ResponseObservation observation) {
         if (IsInitialized) {

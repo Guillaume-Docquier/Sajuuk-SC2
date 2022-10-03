@@ -1,4 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace Bot;
 
@@ -32,6 +34,10 @@ public static class Maps {
             public const string Moondance = "MoondanceAIE.SC2Map";
             public const string Stargazers = "StargazersAIE.SC2Map";
             public const string Waterfall = "WaterfallAIE.SC2Map";
+
+            public static IEnumerable<string> GetAll() {
+                return typeof(Maps.Season_2022_4.FileNames).GetFields().Select(x => x.GetValue(null)).Cast<string>();
+            }
         }
 
         public static class Names {

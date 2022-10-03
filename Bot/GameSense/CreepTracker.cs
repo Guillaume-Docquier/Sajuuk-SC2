@@ -25,6 +25,8 @@ public class CreepTracker: INeedUpdating {
 
     private CreepTracker() {}
 
+    public void Reset() {}
+
     public void Update(ResponseObservation observation) {
         _maxX = Controller.GameInfo.StartRaw.MapSize.X;
         _maxY = Controller.GameInfo.StartRaw.MapSize.Y;

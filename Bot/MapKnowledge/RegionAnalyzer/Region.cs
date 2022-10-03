@@ -9,18 +9,26 @@ namespace Bot.MapKnowledge;
 public class Region {
     public HashSet<Vector3> Cells { get; }
     public Vector3 Center { get; }
+    public RegionType Type { get; }
 
     [JsonIgnore]
     public HashSet<NeighboringRegion> Neighbors { get; private set; }
 
     [JsonConstructor]
-    public Region(HashSet<Vector3> cells, Vector3 center) {
+    public Region(HashSet<Vector3> cells, Vector3 center, RegionType type) {
         Cells = cells;
         Center = center;
+        Type = type;
     }
 
-    public Region(IEnumerable<Vector2> cells) {
+    public Region(IEnumerable<Vector2> cells, RegionType type) {
         Cells = cells.Select(vector2 => vector2.ToVector3().WithWorldHeight()).ToHashSet();
+
+        Type = type;
+        if (Type == RegionType.Unknown) {
+            var regionContainsExpand = ExpandAnalyzer.ExpandLocations.Any(expandLocation => Cells.Contains(expandLocation));
+            Type = regionContainsExpand ? RegionType.Expand : RegionType.OpenArea;
+        }
 
         var regionCenter = Clustering.GetCenter(Cells.ToList());
         Center = Cells.MinBy(cell => cell.HorizontalDistanceTo(regionCenter));

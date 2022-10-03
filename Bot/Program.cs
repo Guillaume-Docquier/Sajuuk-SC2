@@ -29,7 +29,19 @@ public class Program {
 
     public static void Main(string[] args) {
         try {
-            if (args.Length == 0) {
+            if (args.Length == 1 && args[0] == "--generateData") {
+                Logger.Info("Game launched in data generation mode");
+                foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
+                    Logger.Info("Generating data for {0}", mapFileName);
+
+                    DebugEnabled = true;
+                    GraphicalDebugger = new LadderGraphicalDebugger();
+
+                    GameConnection = new GameConnection(runEvery: 2);
+                    GameConnection.RunLocal(new SajuukBot("2_3_0", scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runSingleFrame: true).Wait();
+                }
+            }
+            else if (args.Length == 0) {
                 DebugEnabled = true;
                 GraphicalDebugger = new LocalGraphicalDebugger();
 
