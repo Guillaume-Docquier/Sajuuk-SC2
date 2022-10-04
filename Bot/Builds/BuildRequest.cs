@@ -16,17 +16,20 @@ public abstract class BuildRequest {
 
     public int Requested;
 
-    public BuildRequest(BuildType buildType, uint unitOrUpgradeType, int quantity, uint atSupply) {
+    public readonly bool Queue;
+
+    public BuildRequest(BuildType buildType, uint unitOrUpgradeType, int quantity, uint atSupply, bool queue) {
         BuildType = buildType;
         UnitOrUpgradeType = unitOrUpgradeType;
         AtSupply = atSupply;
         Requested = quantity;
+        Queue = queue;
     }
 }
 
 public class QuantityBuildRequest: BuildRequest {
-    public QuantityBuildRequest(BuildType buildType, uint unitOrUpgradeType, int quantity = 1, uint atSupply = 0)
-        : base(buildType, unitOrUpgradeType, quantity, atSupply) {
+    public QuantityBuildRequest(BuildType buildType, uint unitOrUpgradeType, int quantity = 1, uint atSupply = 0, bool queue = false)
+        : base(buildType, unitOrUpgradeType, quantity, atSupply, queue) {
     }
 
     protected override BuildFulfillment GenerateBuildFulfillment() {
@@ -45,8 +48,8 @@ public class QuantityBuildRequest: BuildRequest {
 }
 
 public class TargetBuildRequest: BuildRequest {
-    public TargetBuildRequest(BuildType buildType, uint unitOrUpgradeType, int targetQuantity, uint atSupply = 0)
-        : base(buildType, unitOrUpgradeType, targetQuantity, atSupply) {
+    public TargetBuildRequest(BuildType buildType, uint unitOrUpgradeType, int targetQuantity, uint atSupply = 0, bool queue = false)
+        : base(buildType, unitOrUpgradeType, targetQuantity, atSupply, queue) {
     }
 
     protected override BuildFulfillment GenerateBuildFulfillment() {

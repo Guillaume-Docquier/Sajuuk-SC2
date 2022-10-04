@@ -17,6 +17,8 @@ public abstract class BuildFulfillment {
 
     public uint UnitOrUpgradeType => BuildRequest.UnitOrUpgradeType;
 
+    public bool Queue => BuildRequest.Queue;
+
     public virtual int Remaining => Math.Max(0, BuildRequest.Requested - Fulfilled);
     public abstract int Fulfilled { get; }
 

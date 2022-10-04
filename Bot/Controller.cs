@@ -240,7 +240,7 @@ public static class Controller {
         {
             BuildType.Train => TrainUnit(buildStep.UnitOrUpgradeType),
             BuildType.Build => PlaceBuilding(buildStep.UnitOrUpgradeType),
-            BuildType.Research => ResearchUpgrade(buildStep.UnitOrUpgradeType),
+            BuildType.Research => ResearchUpgrade(buildStep.UnitOrUpgradeType, buildStep.Queue),
             BuildType.UpgradeInto => UpgradeInto(buildStep.UnitOrUpgradeType),
             BuildType.Expand => PlaceExpand(buildStep.UnitOrUpgradeType),
             _ => RequestResult.NotSupported
@@ -371,8 +371,8 @@ public static class Controller {
         return RequestResult.Ok;
     }
 
-    private static RequestResult ResearchUpgrade(uint upgradeType) {
-        var producer = GetAvailableProducer(upgradeType, allowQueue: true);
+    private static RequestResult ResearchUpgrade(uint upgradeType, bool allowQueue) {
+        var producer = GetAvailableProducer(upgradeType, allowQueue);
 
         return ResearchUpgrade(upgradeType, producer);
     }
@@ -448,6 +448,27 @@ public static class Controller {
         return PlaceBuilding(buildingType, producer, expandLocation);
     }
 
+    public static float GetResearchProgress(uint upgradeId) {
+        var upgradeAbilityId = KnowledgeBase.GetUpgradeData(upgradeId).AbilityId;
+
+        var upgradeOrder = GetUnits(UnitsTracker.OwnedUnits, TechTree.Producer[upgradeId])
+            .SelectMany(producer => producer.Orders)
+            .FirstOrDefault(order => order.AbilityId == upgradeAbilityId);
+
+        if (upgradeOrder == null) {
+            return -1;
+        }
+
+        return upgradeOrder.Progress;
+    }
+
+    public static bool IsResearchInProgress(uint upgradeId) {
+        var upgradeAbilityId = KnowledgeBase.GetUpgradeData(upgradeId).AbilityId;
+
+        return GetUnits(UnitsTracker.OwnedUnits, TechTree.Producer[upgradeId])
+            .Any(producer => producer.Orders.Any(order => order.AbilityId == upgradeAbilityId));
+    }
+
     /**
      * Returns all producers currently carrying production orders.
      * This includes eggs hatching, units morphing and workers going to build.
@@ -504,8 +525,8 @@ public static class Controller {
     }
 
     public static bool IsUnlocked(uint unitType) {
-        if (TechTree.Prerequisite.TryGetValue(unitType, out var prerequisiteUnitType)) {
-            return GetUnits(UnitsTracker.OwnedUnits, prerequisiteUnitType).Any(unit => unit.IsOperational);
+        if (TechTree.Prerequisite.TryGetValue(unitType, out var prerequisites)) {
+            return prerequisites.All(prerequisite => prerequisite.IsMet());
         }
 
         return true;

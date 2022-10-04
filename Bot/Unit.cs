@@ -349,6 +349,7 @@ public class Unit: ICanDie, IHavePosition {
         return unitTags.Contains(RawUnitData.EngagedTargetTag);
     }
 
+    // TODO GD This doesn't work with upgrades
     public bool IsProducing(uint buildingOrUnitType, Vector3 atLocation = default) {
         var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingOrUnitType).AbilityId;
 
