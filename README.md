@@ -16,3 +16,4 @@ It features:
 - Speed mining
 - Replace destroyed buildings (but not expands)
 - Simple rush countermeasures
+- Automatic upgrades
