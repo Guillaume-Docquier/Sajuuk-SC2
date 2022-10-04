@@ -130,8 +130,8 @@ public static class Controller {
 
         MaxSupply = Observation.Observation.PlayerCommon.FoodCap;
 
-        AvailableMinerals = Observation.Observation.PlayerCommon.Minerals;
-        AvailableVespene = Observation.Observation.PlayerCommon.Vespene;
+        AvailableMinerals = (int)Observation.Observation.PlayerCommon.Minerals;
+        AvailableVespene = (int)Observation.Observation.PlayerCommon.Vespene;
         ResearchedUpgrades = new HashSet<uint>(Observation.Observation.RawData.Player.UpgradeIds);
     }
 
@@ -254,11 +254,11 @@ public static class Controller {
     }
 
     private static RequestResult ValidateRequirements(uint unitType, Unit producer, UnitTypeData unitTypeData) {
-        return ValidateRequirements(unitType, producer, unitTypeData.MineralCost, unitTypeData.VespeneCost, unitTypeData.FoodRequired);
+        return ValidateRequirements(unitType, producer, (int)unitTypeData.MineralCost, (int)unitTypeData.VespeneCost, unitTypeData.FoodRequired);
     }
 
     private static RequestResult ValidateRequirements(uint upgradeType, Unit producer, UpgradeData upgradeData) {
-        return ValidateRequirements(upgradeType, producer, upgradeData.MineralCost, upgradeData.VespeneCost);
+        return ValidateRequirements(upgradeType, producer, (int)upgradeData.MineralCost, (int)upgradeData.VespeneCost);
     }
 
     private static RequestResult ValidateRequirements(uint unitType, Unit producer, int mineralCost, int vespeneCost, float foodCost = 0) {
@@ -298,8 +298,8 @@ public static class Controller {
 
         producer.TrainUnit(unitType);
 
-        AvailableMinerals -= unitTypeData.MineralCost;
-        AvailableVespene -= unitTypeData.VespeneCost;
+        AvailableMinerals -= (int)unitTypeData.MineralCost;
+        AvailableVespene -= (int)unitTypeData.VespeneCost;
         CurrentSupply += Convert.ToUInt32(Math.Ceiling(unitTypeData.FoodRequired)); // Round up zerglings food, will be corrected on next frame
 
         return RequestResult.Ok;
@@ -365,8 +365,8 @@ public static class Controller {
 
         Logger.Debug("Done building {0}", buildingTypeData.Name);
 
-        AvailableMinerals -= buildingTypeData.MineralCost;
-        AvailableVespene -= buildingTypeData.VespeneCost;
+        AvailableMinerals -= (int)buildingTypeData.MineralCost;
+        AvailableVespene -= (int)buildingTypeData.VespeneCost;
 
         return RequestResult.Ok;
     }
@@ -387,8 +387,8 @@ public static class Controller {
 
         producer.ResearchUpgrade(upgradeType);
 
-        AvailableMinerals -= researchTypeData.MineralCost;
-        AvailableVespene -= researchTypeData.VespeneCost;
+        AvailableMinerals -= (int)researchTypeData.MineralCost;
+        AvailableVespene -= (int)researchTypeData.VespeneCost;
 
         return RequestResult.Ok;
     }
@@ -409,8 +409,8 @@ public static class Controller {
 
         producer.UpgradeInto(buildingType);
 
-        AvailableMinerals -= buildingTypeData.MineralCost;
-        AvailableVespene -= buildingTypeData.VespeneCost;
+        AvailableMinerals -= (int)buildingTypeData.MineralCost;
+        AvailableVespene -= (int)buildingTypeData.VespeneCost;
 
         return RequestResult.Ok;
     }

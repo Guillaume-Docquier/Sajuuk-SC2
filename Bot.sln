@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetRunner", "DotNetRunne
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bot.Tests", "Bot.Tests\Bot.Tests.csproj", "{D904D33D-48C9-416F-8524-7D487BA5B3AA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "S2ClientProtocol", "S2ClientProtocol\S2ClientProtocol.csproj", "{FCC1604F-C1E1-4754-AA7A-4CAAB27DF9BF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{D904D33D-48C9-416F-8524-7D487BA5B3AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D904D33D-48C9-416F-8524-7D487BA5B3AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D904D33D-48C9-416F-8524-7D487BA5B3AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCC1604F-C1E1-4754-AA7A-4CAAB27DF9BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCC1604F-C1E1-4754-AA7A-4CAAB27DF9BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCC1604F-C1E1-4754-AA7A-4CAAB27DF9BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCC1604F-C1E1-4754-AA7A-4CAAB27DF9BF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

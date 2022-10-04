@@ -120,7 +120,8 @@ public class GameConnection {
 
         var createGameResponse = await SendRequest(RequestBuilder.RequestCreateComputerGame(realTime, mapPath, opponentRace, opponentDifficulty), logErrors: true);
 
-        if (createGameResponse.CreateGame.Error != ResponseCreateGame.Types.Error.Unset) {
+        // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
+        if (createGameResponse.CreateGame.Error != ResponseCreateGame.Types.Error.MissingMap) {
             Logger.Error("CreateGame error: {0}", createGameResponse.CreateGame.Error.ToString());
             if (!string.IsNullOrEmpty(createGameResponse.CreateGame.ErrorDetails)) {
                 Logger.Error(createGameResponse.CreateGame.ErrorDetails);
@@ -131,7 +132,8 @@ public class GameConnection {
     private async Task<uint> JoinGame(Race race) {
         var joinGameResponse = await SendRequest(RequestBuilder.RequestJoinLocalGame(race), logErrors: true);
 
-        if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.Unset) {
+        // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
+        if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.MissingParticipation) {
             Logger.Error("JoinGame error: {0}", joinGameResponse.JoinGame.Error.ToString());
             if (!string.IsNullOrEmpty(joinGameResponse.JoinGame.ErrorDetails)) {
                 Logger.Error(joinGameResponse.JoinGame.ErrorDetails);
@@ -160,7 +162,8 @@ public class GameConnection {
     private async Task<uint> JoinGameLadder(Race race, int startPort) {
         var joinGameResponse = await SendRequest(RequestBuilder.RequestJoinLadderGame(race, startPort), logErrors: true);
 
-        if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.Unset) {
+        // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
+        if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.MissingParticipation) {
             Logger.Error("JoinGame error: {0}", joinGameResponse.JoinGame.Error.ToString());
             if (!string.IsNullOrEmpty(joinGameResponse.JoinGame.ErrorDetails)) {
                 Logger.Error(joinGameResponse.JoinGame.ErrorDetails);

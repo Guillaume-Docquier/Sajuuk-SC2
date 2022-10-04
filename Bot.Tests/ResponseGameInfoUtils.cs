@@ -1,5 +1,4 @@
-﻿using Google.Protobuf;
-using SC2APIProtocol;
+﻿using SC2APIProtocol;
 
 namespace Bot.Tests;
 

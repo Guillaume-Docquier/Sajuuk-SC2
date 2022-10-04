@@ -81,4 +81,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\S2ClientProtocol\S2ClientProtocol.csproj" />
+  </ItemGroup>
 </Project>

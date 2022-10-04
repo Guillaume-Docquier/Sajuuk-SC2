@@ -17,7 +17,8 @@ internal class CommandLineArguments {
             }
             else if (args[i] == "-c" || args[i] == "--ComputerOpponent") {
                 if (ComputerRace == Race.NoRace) ComputerRace = Race.Random;
-                if (ComputerDifficulty == Difficulty.Unset) ComputerDifficulty = Difficulty.VeryHard;
+                // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
+                if (ComputerDifficulty == 0) ComputerDifficulty = Difficulty.VeryHard;
                 i--;
             }
             else if (args[i] == "-a" || args[i] == "--ComputerRace") {
@@ -49,5 +50,5 @@ internal class CommandLineArguments {
 
     public Race ComputerRace { get; set; } = Race.NoRace;
 
-    public Difficulty ComputerDifficulty { get; set; } = Difficulty.Unset;
+    public Difficulty ComputerDifficulty { get; set; } = 0;
 }
