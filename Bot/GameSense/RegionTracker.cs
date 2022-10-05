@@ -159,6 +159,10 @@ public class RegionTracker : INeedUpdating {
             return DangerLevel.VeryDangerous;
         }
 
+        if (Units.CreepTumors.Contains(unit.UnitType)) {
+            return DangerLevel.Dangerous / 16;
+        }
+
         if (Units.Military.Contains(unit.UnitType)) {
             return DangerLevel.Dangerous / 2;
         }

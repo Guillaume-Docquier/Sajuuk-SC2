@@ -79,26 +79,42 @@ public class BurrowMicroModule: UnitModule {
     }
 
     private void DigToSafety() {
+        if (!MoveOutOfEnemyRange() && !PrepareForUnburrowing()) {
+            // TODO GD This prevents anyone from controlling this burrowed unit, which is good and bad
+            _unit.Stop();
+        }
+    }
+
+    private bool MoveOutOfEnemyRange() {
         var enemiesCanHitUs = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military).Any(enemy => enemy.IsInRangeOf(_unit));
-        if (enemiesCanHitUs) {
-            // Run to safety
-            var safestRegion = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
-                .Select(townHall => townHall.GetRegion())
-                .MinBy(RegionTracker.GetDangerLevel);
-
-            if (safestRegion == null) {
-                safestRegion = RegionAnalyzer.Regions.MinBy(RegionTracker.GetDangerLevel);
-            }
-
-            _unit.Move(safestRegion!.Center);
+        if (!enemiesCanHitUs) {
+            return false;
         }
-        else {
-            // Pre-emptively ensure not colliding
-            var collidingUnits = GetCollidingUnits(checkUnderground: false);
-            if (collidingUnits.Count > 0) {
-                MoveAwayFrom(collidingUnits.GetCenter()); // We might want to consider enemy units as to not wiggle between colliding units and enemies?
-            }
+
+        // Run to safety
+        var safestRegion = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
+            .Select(townHall => townHall.GetRegion())
+            .MinBy(RegionTracker.GetDangerLevel);
+
+        if (safestRegion == null) {
+            safestRegion = RegionAnalyzer.Regions.MinBy(RegionTracker.GetDangerLevel);
         }
+
+        _unit.Move(safestRegion!.Center);
+
+        return true;
+    }
+
+    private bool PrepareForUnburrowing() {
+        // Pre-emptively ensure not colliding
+        var collidingUnits = GetCollidingUnits(checkUnderground: false);
+        if (collidingUnits.Count <= 0) {
+            return false;
+        }
+
+        MoveAwayFrom(collidingUnits.GetCenter()); // We might want to consider enemy units as to not wiggle between colliding units and enemies?
+
+        return true;
     }
 
     private void MoveAwayFrom(Vector3 position) {

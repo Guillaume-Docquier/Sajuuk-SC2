@@ -599,4 +599,11 @@ public static class Units {
         { CreepTumor,    new HashSet<uint> { CreepTumorQueen, CreepTumorBurrowed } },
         { Roach,         new HashSet<uint> { RoachBurrowed } }, // TODO GD Do all the burrowed units, or something nicer
     };
+
+    public static readonly HashSet<uint> CreepTumors = new HashSet<uint>
+    {
+        CreepTumor,
+        CreepTumorBurrowed,
+        CreepTumorQueen,
+    };
 }
