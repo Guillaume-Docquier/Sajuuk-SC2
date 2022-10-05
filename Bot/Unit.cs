@@ -17,6 +17,11 @@ public class Unit: ICanDie, IHavePosition {
     public readonly HashSet<IWatchUnitsDie> DeathWatchers = new HashSet<IWatchUnitsDie>();
     public UnitTypeData UnitTypeData;
 
+    // An alias unit type happens when the same unit has different modes.
+    // For example, burrowed units alias is the un-burrowed version of the unit.
+    // This is also probably true with flying terran structures and siege tanks.
+    public UnitTypeData AliasUnitTypeData;
+
     public string Name;
     public ulong Tag;
     public uint UnitType;
@@ -33,16 +38,7 @@ public class Unit: ICanDie, IHavePosition {
     public int InitialMineralCount = int.MaxValue;
     public int InitialVespeneCount = int.MaxValue;
 
-    public float MaxRange {
-        get {
-            var weapons = UnitTypeData.Weapons;
-            if (weapons.Count <= 0) {
-                return 0;
-            }
-
-            return UnitTypeData.Weapons.Max(weapon => weapon.Range);
-        }
-    }
+    public float MaxRange { get; private set; }
 
     public ulong DeathDelay = 0;
 
@@ -50,13 +46,15 @@ public class Unit: ICanDie, IHavePosition {
     public Manager Manager {
         get => _manager;
         set {
-            if (_manager != value) {
-                if (value != null) {
-                    _manager?.Release(this);
-                }
-
-                _manager = value;
+            if (_manager == value) {
+                return;
             }
+
+            if (value != null) {
+                _manager?.Release(this);
+            }
+
+            _manager = value;
         }
     }
 
@@ -64,13 +62,15 @@ public class Unit: ICanDie, IHavePosition {
     public Supervisor Supervisor {
         get => _supervisor;
         set {
-            if (_supervisor != value) {
-                if (value != null) {
-                    _supervisor?.Release(this);
-                }
-
-                _supervisor = value;
+            if (_supervisor == value) {
+                return;
             }
+
+            if (value != null) {
+                _supervisor?.Release(this);
+            }
+
+            _supervisor = value;
         }
     }
 
@@ -92,8 +92,17 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     public void Update(SC2APIProtocol.Unit unit, ulong frame) {
-        UnitTypeData = KnowledgeBase.GetUnitTypeData(unit.UnitType); // Not sure if it can change over time
+        var unitTypeChanged = unit.UnitType != UnitType;
+
         RawUnitData = unit;
+
+        if (unitTypeChanged) {
+            UnitTypeData = KnowledgeBase.GetUnitTypeData(unit.UnitType);
+            AliasUnitTypeData = UnitTypeData.HasUnitAlias ? KnowledgeBase.GetUnitTypeData(UnitTypeData.UnitAlias) : null;
+
+            var weapons = UnitTypeData.Weapons.Concat(AliasUnitTypeData?.Weapons ?? Enumerable.Empty<Weapon>()).ToList();
+            MaxRange = weapons.Count <= 0 ? 0 : weapons.Max(weapon => weapon.Range);
+        }
 
         Name = UnitTypeData.Name;
         Tag = unit.Tag;
@@ -373,6 +382,10 @@ public class Unit: ICanDie, IHavePosition {
         }
 
         return false;
+    }
+
+    public bool IsInRangeOf(Unit enemy) {
+        return HorizontalDistanceTo(enemy) <= MaxRange;
     }
 
     public override string ToString() {

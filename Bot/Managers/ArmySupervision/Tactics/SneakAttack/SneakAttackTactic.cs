@@ -38,11 +38,11 @@ public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
     }
 
     public bool IsViable(IReadOnlyCollection<Unit> army) {
-        if (!DetectionTracker.IsStealthEffective()) {
+        if (!HasProperTech()) {
             return false;
         }
 
-        if (!HasProperTech()) {
+        if (!DetectionTracker.IsStealthEffective()) {
             return false;
         }
 
@@ -69,22 +69,11 @@ public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
 
         _armyCenter = army.GetCenter();
 
-        foreach (var roach in _army.Where(roach => !_unitsWithUninstalledModule.Contains(roach))) {
-            roach.AddDeathWatcher(this);
-            _unitsWithUninstalledModule.Add(roach);
-            UnitModule.Uninstall<BurrowMicroModule>(roach);
-        }
+        UninstallBurrowMicroModules();
 
         _stateMachine.OnFrame();
 
-        if (_targetPosition != default) {
-            Program.GraphicalDebugger.AddLink(_armyCenter, _targetPosition, Colors.Magenta);
-            Program.GraphicalDebugger.AddSphere(_targetPosition, 1, Colors.Magenta);
-
-            if (_isTargetPriority) {
-                Program.GraphicalDebugger.AddText("!", size: 20, worldPos: _targetPosition.ToPoint());
-            }
-        }
+        DebugTarget();
     }
 
     public void Reset(IReadOnlyCollection<Unit> army) {
@@ -131,5 +120,26 @@ public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
 
     private static IEnumerable<Unit> GetPriorityTargetsInOperationRadius(Vector3 armyCenter) {
         return Controller.GetUnits(UnitsTracker.EnemyUnits, PriorityTargets).Where(enemy => enemy.HorizontalDistanceTo(armyCenter) <= OperationRadius);
+    }
+
+    private void DebugTarget() {
+        if (_targetPosition == default) {
+            return;
+        }
+
+        Program.GraphicalDebugger.AddLink(_armyCenter, _targetPosition, Colors.Magenta);
+        Program.GraphicalDebugger.AddSphere(_targetPosition, 1, Colors.Magenta);
+
+        if (_isTargetPriority) {
+            Program.GraphicalDebugger.AddText("!", size: 20, worldPos: _targetPosition.ToPoint());
+        }
+    }
+
+    private void UninstallBurrowMicroModules() {
+        foreach (var roach in _army.Where(roach => !_unitsWithUninstalledModule.Contains(roach))) {
+            roach.AddDeathWatcher(this);
+            _unitsWithUninstalledModule.Add(roach);
+            UnitModule.Uninstall<BurrowMicroModule>(roach);
+        }
     }
 }

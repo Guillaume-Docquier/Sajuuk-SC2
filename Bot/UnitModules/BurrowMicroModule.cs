@@ -5,7 +5,7 @@ using Bot.GameSense;
 
 namespace Bot.UnitModules;
 
-// TODO GD Only works on roaches for now
+// TODO GD Add a Flee method on Unit, and make it so Roaches can flee by foot or by burrowing?
 public class BurrowMicroModule: UnitModule {
     public const string Tag = "BurrowMicroModule";
 
