@@ -3,7 +3,7 @@
 public class StateMachine<TContext> where TContext : class {
     public State<TContext> State;
 
-    public TContext Context { get; } // TODO GD Public or not?
+    public TContext Context { get; }
 
     public StateMachine(TContext context, State<TContext> state) {
         Context = context;

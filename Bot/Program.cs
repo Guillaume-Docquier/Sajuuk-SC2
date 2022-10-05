@@ -15,7 +15,7 @@ public class Program {
         //new WorkerRushScenario(),
     };
 
-    private static readonly IBot Bot = new SajuukBot("2_4_0", scenarios: Scenarios);
+    private static readonly IBot Bot = new SajuukBot("2_5_0", scenarios: Scenarios);
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.InsideAndOut;
     private const Race OpponentRace = Race.Terran;
