@@ -9,7 +9,7 @@ namespace Bot.Managers.ArmySupervision.Tactics.SneakAttack;
 public partial class SneakAttackTactic {
     public class InactiveState: SneakAttackState {
         private const float MinimumEngagementArmyThreshold = 0.75f;
-        private const float OverwhelmingForceRatio = 2f;
+        private const float OverwhelmingForceRatio = 4f;
 
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
             if (StateMachine.Context._coolDownUntil > Controller.Frame) {

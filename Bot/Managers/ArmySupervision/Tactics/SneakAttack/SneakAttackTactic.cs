@@ -15,7 +15,7 @@ public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
     private const float TankRange = 13;
     private const float OperationRadius = TankRange + 2;
 
-    private StateMachine<SneakAttackTactic, SneakAttackState> _stateMachine;
+    private readonly StateMachine<SneakAttackTactic, SneakAttackState> _stateMachine;
     private readonly HashSet<Unit> _unitsWithUninstalledModule = new HashSet<Unit>();
     private Vector3 _targetPosition;
     private bool _isTargetPriority = false;

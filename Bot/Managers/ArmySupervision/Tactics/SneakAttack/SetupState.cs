@@ -10,7 +10,8 @@ namespace Bot.Managers.ArmySupervision.Tactics.SneakAttack;
 public partial class SneakAttackTactic {
     public class SetupState : SneakAttackState {
         private const float EngageDistance = 1f;
-        private const float MinimumEngagementArmyThreshold = 0.75f;
+        private const float MinimumArmyThresholdToEngage = 0.80f;
+        private const double MinimumIntegrityToEngage = BurrowMicroModule.BurrowDownThreshold + 0.1;
 
         private readonly StuckDetector _stuckDetector = new StuckDetector();
 
@@ -46,8 +47,6 @@ public partial class SneakAttackTactic {
 
                 return;
             }
-
-            BurrowOverlings(StateMachine.Context._army);
 
             if (IsReadyToEngage()) {
                 NextState = new EngageState();
@@ -87,31 +86,35 @@ public partial class SneakAttackTactic {
                 return true;
             }
 
-            // TODO GD We should know what the priority target is and check if we're in range of it
+            int nbSoldiersInRange;
             if (StateMachine.Context._isTargetPriority) {
-                return false;
+                nbSoldiersInRange = StateMachine.Context._army.Count(soldier => soldier.IsInRangeOf(StateMachine.Context._targetPosition));
+            }
+            else {
+                var enemyMilitaryUnits = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military)
+                    .OrderBy(enemy => enemy.HorizontalDistanceTo(StateMachine.Context._armyCenter))
+                    .ToList();
+
+                nbSoldiersInRange = StateMachine.Context._army.Count(soldier => enemyMilitaryUnits.Any(soldier.IsInRangeOf));
             }
 
-            var enemyMilitaryUnits = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military)
-                .OrderBy(enemy => enemy.HorizontalDistanceTo(StateMachine.Context._armyCenter))
-                .ToList();
-
-            var nbSoldiersInRange = StateMachine.Context._army.Count(soldier => enemyMilitaryUnits.Any(soldier.IsInRangeOf));
-
-            return nbSoldiersInRange >= StateMachine.Context._army.Count * MinimumEngagementArmyThreshold;
+            return nbSoldiersInRange >= StateMachine.Context._army.Count * MinimumArmyThresholdToEngage;
         }
 
         private bool IsArmyHealthyEnough() {
-            var armyWithEnoughHealth = StateMachine.Context._army.Where(soldier => soldier.Integrity > BurrowMicroModule.BurrowDownThreshold);
+            var armyWithEnoughHealth = StateMachine.Context._army.Where(soldier => soldier.Integrity > MinimumIntegrityToEngage);
 
-            return armyWithEnoughHealth.Count() >= StateMachine.Context._army.Count * MinimumEngagementArmyThreshold;
+            return armyWithEnoughHealth.Count() >= StateMachine.Context._army.Count * MinimumArmyThresholdToEngage;
         }
 
         private void MoveArmyIntoPosition() {
-            // TODO GD Have the unit decide if it can receive move/attack orders instead of manually checking
-            // The use case here is to not prevent burrow/unburrow
-            foreach (var soldier in StateMachine.Context._army.Where(soldier => soldier.IsIdleOrMovingOrAttacking())) {
-                soldier.Move(StateMachine.Context._targetPosition);
+            foreach (var soldier in StateMachine.Context._army) {
+                if (!soldier.RawUnitData.IsBurrowed) {
+                    soldier.UseAbility(Abilities.BurrowRoachDown);
+                }
+                else {
+                    soldier.Move(StateMachine.Context._targetPosition);
+                }
             }
         }
     }

@@ -385,7 +385,11 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     public bool IsInRangeOf(Unit enemy) {
-        return HorizontalDistanceTo(enemy) <= MaxRange;
+        return IsInRangeOf(enemy.Position);
+    }
+
+    public bool IsInRangeOf(Vector3 position) {
+        return HorizontalDistanceTo(position) <= MaxRange;
     }
 
     public override string ToString() {
