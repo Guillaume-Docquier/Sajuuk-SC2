@@ -146,7 +146,9 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     public void Stop() {
-        ProcessAction(ActionBuilder.Stop(Tag));
+        if (Orders.Any()) {
+            ProcessAction(ActionBuilder.Stop(Tag));
+        }
     }
 
     /// <summary>
