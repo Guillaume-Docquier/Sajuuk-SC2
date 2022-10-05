@@ -46,7 +46,7 @@ public class UpgradesManager : Manager {
     private void AttemptResearchTier1(int roachCount) {
         if (roachCount >= 12 && !_requestedUpgrades.Contains(Upgrades.ZergGroundArmorsLevel1)) {
             _evolutionChamberBuildRequest.Requested = 1;
-            _buildRequests.Add(new QuantityBuildRequest(BuildType.Research, Upgrades.ZergGroundArmorsLevel1));
+            _buildRequests.Add(new TargetBuildRequest(BuildType.Research, Upgrades.ZergGroundArmorsLevel1, targetQuantity: 1));
             _requestedUpgrades.Add(Upgrades.ZergGroundArmorsLevel1);
         }
 
@@ -61,9 +61,9 @@ public class UpgradesManager : Manager {
 
     private void AttemptResearchTier2(int roachCount) {
         if (roachCount >= 27 && !_requestedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel2)) {
-            _buildRequests.Add(new TargetBuildRequest  (BuildType.Build,    Units.Extractor, targetQuantity: 4));
-            _buildRequests.Add(new QuantityBuildRequest(BuildType.Research, Upgrades.ZergMissileWeaponsLevel2));
-            _buildRequests.Add(new QuantityBuildRequest(BuildType.Research, Upgrades.ZergGroundArmorsLevel2));
+            _buildRequests.Add(new TargetBuildRequest(BuildType.Build,    Units.Extractor,                   targetQuantity: 4));
+            _buildRequests.Add(new TargetBuildRequest(BuildType.Research, Upgrades.ZergMissileWeaponsLevel2, targetQuantity: 1));
+            _buildRequests.Add(new TargetBuildRequest(BuildType.Research, Upgrades.ZergGroundArmorsLevel2,   targetQuantity: 1));
             _requestedUpgrades.Add(Upgrades.ZergMissileWeaponsLevel2);
             _requestedUpgrades.Add(Upgrades.ZergGroundArmorsLevel2);
         }
@@ -71,10 +71,10 @@ public class UpgradesManager : Manager {
 
     private void AttemptResearchTier3(int roachCount) {
         if (roachCount >= 40 && !_requestedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel3)) {
-            _buildRequests.Add(new TargetBuildRequest  (BuildType.Build,       Units.InfestationPit, targetQuantity: 1));
+            _buildRequests.Add(new TargetBuildRequest  (BuildType.Build,       Units.InfestationPit,              targetQuantity: 1));
             _buildRequests.Add(new QuantityBuildRequest(BuildType.UpgradeInto, Units.Hive));
-            _buildRequests.Add(new QuantityBuildRequest(BuildType.Research,    Upgrades.ZergMissileWeaponsLevel3));
-            _buildRequests.Add(new QuantityBuildRequest(BuildType.Research,    Upgrades.ZergGroundArmorsLevel3));
+            _buildRequests.Add(new TargetBuildRequest  (BuildType.Research,    Upgrades.ZergMissileWeaponsLevel3, targetQuantity: 1));
+            _buildRequests.Add(new TargetBuildRequest  (BuildType.Research,    Upgrades.ZergGroundArmorsLevel3,   targetQuantity: 1));
             _requestedUpgrades.Add(Upgrades.ZergMissileWeaponsLevel3);
             _requestedUpgrades.Add(Upgrades.ZergGroundArmorsLevel3);
         }

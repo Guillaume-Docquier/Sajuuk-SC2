@@ -43,9 +43,16 @@ public class QuantityFulfillment: BuildFulfillment {
 public class TargetFulfillment: BuildFulfillment {
     public TargetFulfillment(BuildRequest buildRequest) : base(buildRequest) {}
 
-    // TODO GD Handle research?
-    public override int Fulfilled => Controller.GetUnits(UnitsTracker.OwnedUnits, BuildRequest.UnitOrUpgradeType).Count()
-                                     + Controller.GetProducersCarryingOrders(BuildRequest.UnitOrUpgradeType).Count();
+    public override int Fulfilled {
+        get {
+            if (BuildRequest.BuildType == BuildType.Research) {
+                return Controller.ResearchedUpgrades.Contains(BuildRequest.UnitOrUpgradeType) || Controller.IsResearchInProgress(BuildRequest.UnitOrUpgradeType) ? 1 : 0;
+            }
+
+            return Controller.GetUnits(UnitsTracker.OwnedUnits, BuildRequest.UnitOrUpgradeType).Count()
+                   + Controller.GetProducersCarryingOrders(BuildRequest.UnitOrUpgradeType).Count();
+        }
+    }
 
     public override void Fulfill(int quantity) {
         // Do nothing
