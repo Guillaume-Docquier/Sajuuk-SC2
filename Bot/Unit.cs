@@ -5,6 +5,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers;
+using Bot.MapKnowledge;
 using Bot.UnitModules;
 using Bot.Wrapper;
 using Google.Protobuf.Collections;
@@ -138,6 +139,10 @@ public class Unit: ICanDie, IHavePosition {
 
     public double HorizontalDistanceTo(Vector3 location) {
         return Position.HorizontalDistanceTo(location);
+    }
+
+    public Region GetRegion() {
+        return Position.GetRegion();
     }
 
     public void Stop() {

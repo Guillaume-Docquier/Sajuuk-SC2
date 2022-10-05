@@ -51,7 +51,7 @@ public abstract class PoliteBot: IBot {
     }
 
     private void EnsureGG() {
-        var structures = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Structures).ToList();
+        var structures = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Buildings).ToList();
         if (structures.Count == 1 && structures.First().Integrity < 0.4) {
             if (!Controller.ChatLog.Contains("gg wp")) {
                 // Controller.Chat("gg wp");

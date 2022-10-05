@@ -59,7 +59,10 @@ public class RegionTracker : INeedUpdating {
     }
 
     public static float GetDangerLevel(Vector3 position) {
-        var region = position.GetRegion();
+        return GetDangerLevel(position.GetRegion());
+    }
+
+    public static float GetDangerLevel(Region region) {
         if (region == null || !Instance._regionDangerLevels.ContainsKey(region)) {
             return (int)DangerLevel.Unknown;
         }
@@ -151,6 +154,11 @@ public class RegionTracker : INeedUpdating {
 
     // TODO GD Make this more sophisticated (based on unit cost, probably)
     private static float GetUnitDanger(Unit unit) {
+        // TODO GD This should be more nuanced, a lone dropship is more dangerous than a dropship with a visible army
+        if (Units.DropShips.Contains(unit.UnitType)) {
+            return DangerLevel.VeryDangerous;
+        }
+
         if (Units.Military.Contains(unit.UnitType)) {
             return DangerLevel.Dangerous / 2;
         }
@@ -165,11 +173,6 @@ public class RegionTracker : INeedUpdating {
 
         if (unit.UnitType == Units.Pylon) {
             return DangerLevel.Dangerous;
-        }
-
-        // TODO GD A lone dropship is more dangerous than a dropship with a visible army
-        if (Units.DropShips.Contains(unit.UnitType)) {
-            return DangerLevel.VeryDangerous;
         }
 
         // The rest are buildings

@@ -1,7 +1,10 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.MapKnowledge;
 
 namespace Bot.UnitModules;
 
@@ -38,48 +41,68 @@ public class BurrowMicroModule: UnitModule {
             return;
         }
 
-        // Try to burrow down
-        if (_unit.Integrity <= BurrowDownThreshold && !_unit.RawUnitData.IsBurrowed) {
-            if (!ThereIsAUnitAtYourLocation(checkUnderground: true)) {
+        if (!_unit.RawUnitData.IsBurrowed && _unit.Integrity <= BurrowDownThreshold) {
+            // Try to burrow down
+            if (!GetCollidingUnits(checkUnderground: true).Any()) {
                 _unit.UseAbility(Abilities.BurrowRoachDown);
             }
         }
-
-        // Try to burrow up / flee while healing
-        if (_unit.RawUnitData.IsBurrowed) {
-            var thereIsAUnitOverMe = ThereIsAUnitAtYourLocation(checkUnderground: false);
-
-            if (!thereIsAUnitOverMe && _unit.Integrity >= BurrowUpThreshold) {
-                _unit.UseAbility(Abilities.BurrowRoachUp);
+        else if (_unit.RawUnitData.IsBurrowed) {
+            // Try to burrow up / flee while healing
+            if (_unit.Integrity >= BurrowUpThreshold) {
+                HandleBurrowUp();
             }
             else if (Controller.ResearchedUpgrades.Contains(Upgrades.TunnelingClaws)) {
-                var closestEnemyUnit = GetClosestEnemyUnit();
-
-                if (thereIsAUnitOverMe) {
-                    MoveAwayFromTheEnemy(closestEnemyUnit);
-                }
-                else if (closestEnemyUnit != null && _unit.DistanceTo(closestEnemyUnit) <= 5) {
-                    MoveAwayFromTheEnemy(closestEnemyUnit);
-                }
+                DigToSafety();
             }
         }
     }
 
-    private bool ThereIsAUnitAtYourLocation(bool checkUnderground) {
-       return UnitsTracker.UnitsByTag.Values // TODO GD Ignore buildings
-            .Where(otherUnit => otherUnit != _unit)
-            .Where(otherUnit => otherUnit.RawUnitData.IsBurrowed == checkUnderground)
-            .Any(otherUnit => otherUnit.DistanceTo(_unit) < (otherUnit.Radius + _unit.Radius) * 0.95); // Some terrain causes collisions
-    }
-
-    private void MoveAwayFromTheEnemy(Unit closestEnemyUnit) {
-        // TODO Check if you're creating a bottleneck
-        if (closestEnemyUnit != null) {
-            _unit.Move(_unit.Position.TranslateAwayFrom(closestEnemyUnit.Position, 1f));
+    private void HandleBurrowUp() {
+        var collidingUnits = GetCollidingUnits(checkUnderground: false);
+        if (collidingUnits.Count > 0) {
+            MoveAwayFrom(collidingUnits.GetCenter());
+        }
+        else {
+            _unit.UseAbility(Abilities.BurrowRoachUp);
         }
     }
 
-    private Unit GetClosestEnemyUnit() {
-        return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military).MinBy(enemyUnit => _unit.DistanceTo(enemyUnit));
+    private List<Unit> GetCollidingUnits(bool checkUnderground) {
+        return UnitsTracker.UnitsByTag.Values
+            .Where(otherUnit => !Units.Buildings.Contains(otherUnit.UnitType)) // We don't care about the buildings
+            .Where(otherUnit => !otherUnit.RawUnitData.IsFlying) // Flying units can't collide with ground units
+            .Where(otherUnit => otherUnit.RawUnitData.IsBurrowed == checkUnderground)
+            .Where(otherUnit => otherUnit != _unit)
+            .Where(otherUnit => otherUnit.DistanceTo(_unit) < (otherUnit.Radius + _unit.Radius) * 0.90) // Some overlap is possible
+            .ToList();
+    }
+
+    private void DigToSafety() {
+        var enemiesCanHitUs = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military).Any(enemy => enemy.IsInRangeOf(_unit));
+        if (enemiesCanHitUs) {
+            // Run to safety
+            var safestRegion = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
+                .Select(townHall => townHall.GetRegion())
+                .MinBy(RegionTracker.GetDangerLevel);
+
+            if (safestRegion == null) {
+                safestRegion = RegionAnalyzer.Regions.MinBy(RegionTracker.GetDangerLevel);
+            }
+
+            _unit.Move(safestRegion!.Center);
+        }
+        else {
+            // Pre-emptively ensure not colliding
+            var collidingUnits = GetCollidingUnits(checkUnderground: false);
+            if (collidingUnits.Count > 0) {
+                MoveAwayFrom(collidingUnits.GetCenter()); // We might want to consider enemy units as to not wiggle between colliding units and enemies?
+            }
+        }
+    }
+
+    private void MoveAwayFrom(Vector3 position) {
+        // TODO Check if you're creating a bottleneck
+        _unit.Move(_unit.Position.TranslateAwayFrom(position, 1f), precision: 0.25f);
     }
 }

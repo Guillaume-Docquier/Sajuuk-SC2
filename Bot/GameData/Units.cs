@@ -71,7 +71,7 @@ public static class Units {
     public const uint Gateway = 62;
     public const uint Forge = 63;
     public const uint FleetBeacon = 64;
-    public const uint TwilightCounsel = 65;
+    public const uint TwilightCouncil = 65;
     public const uint PhotonCannon = 66;
     public const uint ShieldBattery = 1910;
     public const uint Stargate = 67;
@@ -243,71 +243,119 @@ public static class Units {
         ChangelingZergling,
     };
 
-    public static readonly HashSet<uint> Structures = new HashSet<uint>
+    public static readonly HashSet<uint> TerranBuildings = new HashSet<uint>
     {
-        Armory,
-        Assimilator,
-        BanelingNest,
-        Barracks,
-        BarracksFlying,
-        BarracksReactor,
-        BarracksTechlab,
-        Bunker,
+        // Townhalls
         CommandCenter,
         CommandCenterFlying,
-        CyberneticsCore,
-        DarkShrine,
-        EngineeringBay,
-        EvolutionChamber,
-        Extractor,
-        Factory,
-        FactoryFlying,
-        FactoryReactor,
-        FactoryTechlab,
-        FleetBeacon,
-        Forge,
-        FusionCore,
-        Gateway,
-        GhostAcademy,
-        GreaterSpire,
-        Hatchery,
-        Hive,
-        HydraliskDen,
-        InfestationPit,
-        Lair,
-        MissileTurret,
-        Nexus,
-        NydusNetwork,
         OrbitalCommand,
         OrbitalCommandFlying,
-        PhotonCannon,
         PlanetaryFortress,
-        Pylon,
-        Reactor,
+
+        // Eco
         Refinery,
-        RoachWarren,
-        RoboticsBay,
-        RoboticsFacility,
-        SensorTower,
-        SpawningPool,
-        SpineCrawler,
-        SpineCrawlerUprooted,
-        Spire,
-        SporeCrawler,
-        SporeCrawlerUprooted,
-        Starport,
-        Stargate,
-        StarportFlying,
-        StarportReactor,
-        StarportTechlab,
+
+        // Supply
         SupplyDepot,
         SupplyDepotLowered,
-        Techlab,
-        TemplarArchive,
-        TwilightCounsel,
-        UltraliskCavern,
-        WarpGate,
+
+        // Tech
+        EngineeringBay,
+        Armory,
+        FusionCore,
+
+        // Defense
+        MissileTurret,
+        Bunker,
+        SensorTower,
+
+        // Production
+        Barracks,
+        BarracksFlying,
+        Factory,
+        FactoryFlying,
+        Starport,
+        StarportFlying,
+        GhostAcademy,
+
+        // Add-ons
+        BarracksReactor,
+        BarracksTechlab,
+        FactoryReactor,
+        FactoryTechlab,
+        StarportReactor,
+        StarportTechlab,
     };
+
+    public static readonly HashSet<uint> ProtossBuildings = new HashSet<uint>
+    {
+        // Townhalls
+        Nexus,
+
+        // Eco
+        Assimilator,
+
+        // Supply
+        Pylon,
+
+        // Tech
+        Forge,
+        CyberneticsCore,
+        TwilightCouncil,
+        TemplarArchive,
+        DarkShrine,
+        FleetBeacon,
+
+        // Defense
+        PhotonCannon,
+        ShieldBattery,
+
+        // Production
+        Gateway,
+        WarpGate,
+        Stargate,
+        RoboticsFacility,
+        RoboticsBay,
+    };
+
+
+    public static readonly HashSet<uint> ZergBuildings = new HashSet<uint>
+    {
+        // Townhalls
+        Hatchery,
+        Lair,
+        Hive,
+
+        // Eco
+        Extractor,
+
+        // Tech
+        EvolutionChamber,
+
+        // Defense
+        SpineCrawler,
+        SpineCrawlerUprooted,
+        SporeCrawler,
+        SporeCrawlerUprooted,
+
+        // Production
+        SpawningPool,
+        RoachWarren,
+        BanelingNest,
+        HydraliskDen,
+        LurkerDen,
+        InfestationPit,
+        Spire,
+        GreaterSpire,
+        UltraliskCavern,
+
+        // Other
+        NydusNetwork,
+        NydusWorm,
+    };
+
+    public static readonly HashSet<uint> Buildings = new HashSet<uint>(TerranBuildings.Concat(ProtossBuildings).Concat(ZergBuildings));
+
 
     public static readonly HashSet<uint> TerranMilitary = new HashSet<uint>
     {
@@ -541,6 +589,7 @@ public static class Units {
         OverlordTransport,
     };
 
+    // TODO GD Might be able to use the unitTypeData.alias for this?
     public static readonly Dictionary<uint, HashSet<uint>> EquivalentTo = new Dictionary<uint, HashSet<uint>>
     {
         { Hatchery,      new HashSet<uint> { Lair, Hive } },
