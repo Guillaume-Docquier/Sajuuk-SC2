@@ -28,7 +28,6 @@ public static class BuildOrders {
             new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 50, targetQuantity: 3), // TODO GD Doesn't build on snapshot units?
             new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 50, quantity: 2),
             new QuantityBuildRequest(BuildType.Research,    Upgrades.TunnelingClaws,           atSupply: 50),
-            new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 50, targetQuantity: 4),
             new QuantityBuildRequest(BuildType.Train,       Units.Roach,                       atSupply: 50, quantity: 8),
             // All in
             new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    quantity: 2),

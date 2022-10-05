@@ -61,6 +61,7 @@ public class UpgradesManager : Manager {
 
     private void AttemptResearchTier2(int roachCount) {
         if (roachCount >= 27 && !_requestedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel2)) {
+            _buildRequests.Add(new TargetBuildRequest  (BuildType.Build,    Units.Extractor, targetQuantity: 4));
             _buildRequests.Add(new QuantityBuildRequest(BuildType.Research, Upgrades.ZergMissileWeaponsLevel2));
             _buildRequests.Add(new QuantityBuildRequest(BuildType.Research, Upgrades.ZergGroundArmorsLevel2));
             _requestedUpgrades.Add(Upgrades.ZergMissileWeaponsLevel2);
@@ -70,10 +71,10 @@ public class UpgradesManager : Manager {
 
     private void AttemptResearchTier3(int roachCount) {
         if (roachCount >= 40 && !_requestedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel3)) {
-            _buildRequests.Add(new TargetBuildRequest(BuildType.Build, Units.InfestationPit, targetQuantity: 1));
+            _buildRequests.Add(new TargetBuildRequest  (BuildType.Build,       Units.InfestationPit, targetQuantity: 1));
             _buildRequests.Add(new QuantityBuildRequest(BuildType.UpgradeInto, Units.Hive));
-            _buildRequests.Add(new QuantityBuildRequest(BuildType.Research, Upgrades.ZergMissileWeaponsLevel3));
-            _buildRequests.Add(new QuantityBuildRequest(BuildType.Research, Upgrades.ZergGroundArmorsLevel3));
+            _buildRequests.Add(new QuantityBuildRequest(BuildType.Research,    Upgrades.ZergMissileWeaponsLevel3));
+            _buildRequests.Add(new QuantityBuildRequest(BuildType.Research,    Upgrades.ZergGroundArmorsLevel3));
             _requestedUpgrades.Add(Upgrades.ZergMissileWeaponsLevel3);
             _requestedUpgrades.Add(Upgrades.ZergGroundArmorsLevel3);
         }
