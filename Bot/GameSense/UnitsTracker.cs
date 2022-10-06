@@ -107,12 +107,12 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
             Logger.Info("{0} was born", newUnit);
             NewOwnedUnits.Add(newUnit);
         }
-        else if (newUnit.Alliance == Alliance.Neutral) {
+        else {
             var equivalentUnit = UnitsByTag
                 .Select(kv => kv.Value)
                 .FirstOrDefault(unit => unit.Position == newUnit.Position);
 
-            // Resources have 2 units representing them: the snapshot version and the real version
+            // Buildings can have 2 units representing them: the snapshot version and the real version
             // The real version is only available when visible
             // The snapshot is only available when not visible
             if (equivalentUnit != default) {
@@ -120,11 +120,11 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
                 equivalentUnit.Update(newRawUnit, currentFrame);
                 newUnit = equivalentUnit;
             }
-        }
-        else if (newUnit.Alliance == Alliance.Enemy) {
-            newUnit.DeathDelay = Controller.SecsToFrames(EnemyDeathDelaySeconds);
-            EnemyGhostUnits.Remove(newUnit.Tag);
-            EnemyMemorizedUnits.Remove(newUnit.Tag);
+            else if (newUnit.Alliance == Alliance.Enemy) {
+                newUnit.DeathDelay = Controller.SecsToFrames(EnemyDeathDelaySeconds);
+                EnemyGhostUnits.Remove(newUnit.Tag);
+                EnemyMemorizedUnits.Remove(newUnit.Tag);
+            }
         }
 
         UnitsByTag[newUnit.Tag] = newUnit;
@@ -143,19 +143,19 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
             }
         }
 
-        // TODO GD For reason there are some dead buildings that the API doesn't tell us about
-        // We don't miss any frames
-        // The 'ghost' buildings do not appear in any _accumulatedDeadUnitIds
+        // Terran buildings can move, we'll consider them dead if we don't know where they are
+        // We should add them to the memorized units, probably
         var visibleUnitTags = currentlyVisibleUnits.Select(unit => unit.Tag).ToHashSet();
-        var presumedDeadEnemyBuildings = UnitsByTag.Values
+        var buildingsThatProbablyMoved = UnitsByTag.Values
             .Where(unit => unit.Alliance == Alliance.Enemy)
             .Where(enemy => Units.Buildings.Contains(enemy.UnitType))
-            .Where(enemyBuilding => !visibleUnitTags.Contains(enemyBuilding.Tag));
+            .Where(enemyBuilding => !visibleUnitTags.Contains(enemyBuilding.Tag))
+            .Where(VisibilityTracker.IsVisible);
 
-        foreach (var presumedDeadEnemyBuilding in presumedDeadEnemyBuildings) {
-            presumedDeadEnemyBuilding.Died();
+        foreach (var buildingThatProbablyMoved in buildingsThatProbablyMoved) {
+            buildingThatProbablyMoved.Died();
 
-            UnitsByTag.Remove(presumedDeadEnemyBuilding.Tag);
+            UnitsByTag.Remove(buildingThatProbablyMoved.Tag);
         }
 
         _accumulatedDeadUnitIds.Clear();
@@ -173,7 +173,7 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
         foreach (var enemyUnit in enemyUnitsNotInVision) {
             UnitsByTag.Remove(enemyUnit.Tag);
 
-            if (!VisibilityTracker.IsVisible(enemyUnit.Position)) {
+            if (!VisibilityTracker.IsVisible(enemyUnit)) {
                 if (EnemyGhostUnits.ContainsKey(enemyUnit.Tag)) {
                     Logger.Warning("Trying to add an enemy {0} to the ghosts, but it is already present", enemyUnit);
                 }
@@ -191,7 +191,7 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
 
     private static void EraseGhosts() {
         foreach (var (ghostEnemyUnitId, ghostEnemyUnit) in EnemyGhostUnits) {
-            if (VisibilityTracker.IsVisible(ghostEnemyUnit.Position)) {
+            if (VisibilityTracker.IsVisible(ghostEnemyUnit)) {
                 EnemyGhostUnits.Remove(ghostEnemyUnitId);
             }
         }

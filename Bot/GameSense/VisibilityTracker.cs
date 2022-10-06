@@ -55,6 +55,11 @@ public class VisibilityTracker: INeedUpdating {
         _rawVisibilityMap = observation.Observation.RawData.MapState.Visibility;
     }
 
+    // TODO GD We could be smarter and check for the building footprint!
+    public static bool IsVisible(Unit unit) {
+        return IsVisible(unit.Position);
+    }
+
     public static bool IsVisible(Vector3 location) {
         if (_lastGeneratedAt != Controller.Frame) {
             GenerateVisibilityMap();
