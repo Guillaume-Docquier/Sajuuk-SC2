@@ -87,4 +87,10 @@ public static class Logger {
         WriteLine("ERROR", line, parameters);
         Console.ResetColor();
     }
+
+    public static void Success(string line, params object[] parameters) {
+        Console.ForegroundColor = ConsoleColor.Green;
+        WriteLine("SUCCESS", line, parameters);
+        Console.ResetColor();
+    }
 }

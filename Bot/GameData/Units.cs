@@ -243,6 +243,7 @@ public static class Units {
         ChangelingZergling,
     };
 
+    // TODO GD Terran flying building should probably be a Unit instead of a Building
     public static readonly HashSet<uint> TerranBuildings = new HashSet<uint>
     {
         // Townhalls

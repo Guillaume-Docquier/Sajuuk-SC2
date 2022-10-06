@@ -12,11 +12,15 @@ public class UnitsTracker: INeedUpdating {
     public static Dictionary<ulong, Unit> UnitsByTag;
 
     public static readonly List<Unit> NewOwnedUnits = new List<Unit>();
-    public static readonly List<Unit> DeadOwnedUnits = new List<Unit>();
 
-    public static List<Unit> NeutralUnits;
-    public static List<Unit> OwnedUnits;
-    public static List<Unit> EnemyUnits;
+    public static List<Unit> NeutralUnits { get; private set; }
+    public static List<Unit> OwnedUnits { get; private set; }
+    public static List<Unit> EnemyUnits { get; private set; }
+
+    public static HashSet<Unit> GhostEnemyUnits { get; } = new HashSet<Unit>();
+    public static HashSet<Unit> MemoryEnemyUnits { get; } = new HashSet<Unit>();
+
+    private const int EnemyDeathDelaySeconds = 5 * 60;
 
     private UnitsTracker() {}
 
@@ -26,7 +30,6 @@ public class UnitsTracker: INeedUpdating {
         UnitsByTag = null;
 
         NewOwnedUnits.Clear();
-        DeadOwnedUnits.Clear();
 
         NeutralUnits = null;
         OwnedUnits = null;
@@ -34,75 +37,35 @@ public class UnitsTracker: INeedUpdating {
     }
 
     public void Update(ResponseObservation observation) {
-        var newRawUnits = observation.Observation.RawData.Units.ToList();
-        var frame = observation.Observation.GameLoop;
+        var unitsAsReportedByTheApi = observation.Observation.RawData.Units.ToList();
+        var currentFrame = observation.Observation.GameLoop;
 
         if (!_isInitialized) {
-            Init(newRawUnits, frame);
-
-            var unknownNeutralUnits = NeutralUnits.DistinctBy(unit => unit.UnitType)
-                .Where(unit => !Units.Destructibles.Contains(unit.UnitType) && !Units.MineralFields.Contains(unit.UnitType) && !Units.GasGeysers.Contains(unit.UnitType) && unit.UnitType != Units.XelNagaTower)
-                .Select(unit => (unit.Name, unit.UnitType))
-                .ToList();
-
-            Logger.Metric("Unknown Neutral Units: [{0}]", string.Join(", ", unknownNeutralUnits));
+            Init(unitsAsReportedByTheApi, currentFrame);
+            LogUnknownNeutralUnits();
 
             return;
         }
 
         NewOwnedUnits.Clear();
-        DeadOwnedUnits.Clear();
 
         // Find new units and update existing ones
-        newRawUnits.ForEach(newRawUnit => {
+        unitsAsReportedByTheApi.ForEach(newRawUnit => {
             if (UnitsByTag.ContainsKey(newRawUnit.Tag)) {
-                UnitsByTag[newRawUnit.Tag].Update(newRawUnit, frame);
+                UnitsByTag[newRawUnit.Tag].Update(newRawUnit, currentFrame);
             }
             else {
-                var newUnit = new Unit(newRawUnit, frame);
-
-                if (newUnit.Alliance == Alliance.Self) {
-                    Logger.Info("{0} was born", newUnit);
-                    NewOwnedUnits.Add(newUnit);
-                }
-                else if (newUnit.Alliance == Alliance.Neutral) {
-                    var equivalentUnit = UnitsByTag
-                        .Select(kv => kv.Value)
-                        .FirstOrDefault(unit => unit.Position == newUnit.Position);
-
-                    // Resources have 2 units representing them: the snapshot version and the real version
-                    // The real version is only available when visible
-                    // The snapshot is only available when not visible
-                    if (equivalentUnit != default) {
-                        UnitsByTag.Remove(equivalentUnit.Tag);
-                        equivalentUnit.Update(newRawUnit, frame);
-                        newUnit = equivalentUnit;
-                    }
-                }
-
-                UnitsByTag[newUnit.Tag] = newUnit;
+                HandleNewUnit(newRawUnit, currentFrame);
             }
         });
 
         // Handle dead units
-        foreach (var unit in UnitsByTag.Select(unit => unit.Value).ToList()) {
-            if (unit.IsDead(frame)) {
-                if (unit.Alliance == Alliance.Self) {
-                    DeadOwnedUnits.Add(unit);
-                    unit.Died();
-                }
-                else if (unit.Alliance == Alliance.Neutral) {
-                    unit.Died();
-                }
+        var deadUnitIds = observation.Observation.RawData.Event?.DeadUnits?.ToHashSet() ?? new HashSet<ulong>();
+        HandleDeadUnits(deadUnitIds, currentFrame);
+        RememberEnemyUnitsOutOfSight(unitsAsReportedByTheApi);
+        EraseGhosts();
 
-                UnitsByTag.Remove(unit.Tag);
-            }
-        }
-
-        // Update unit lists
-        OwnedUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Self).Select(unit => unit.Value).ToList();
-        NeutralUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Neutral).Select(unit => unit.Value).ToList();
-        EnemyUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Enemy).Select(unit => unit.Value).ToList();
+        UpdateUnitLists();
     }
 
     private void Init(IEnumerable<SC2APIProtocol.Unit> rawUnits, ulong frame) {
@@ -115,5 +78,90 @@ public class UnitsTracker: INeedUpdating {
         EnemyUnits = units.Where(unit => unit.Alliance == Alliance.Enemy).ToList();
 
         _isInitialized = true;
+    }
+
+    private static void LogUnknownNeutralUnits() {
+        var unknownNeutralUnits = NeutralUnits.DistinctBy(unit => unit.UnitType)
+            .Where(unit => !Units.Destructibles.Contains(unit.UnitType) && !Units.MineralFields.Contains(unit.UnitType) && !Units.GasGeysers.Contains(unit.UnitType) && unit.UnitType != Units.XelNagaTower)
+            .Select(unit => (unit.Name, unit.UnitType))
+            .ToList();
+
+        Logger.Metric("Unknown Neutral Units: [{0}]", string.Join(", ", unknownNeutralUnits));
+    }
+
+    private static void HandleNewUnit(SC2APIProtocol.Unit newRawUnit, ulong currentFrame) {
+        var newUnit = new Unit(newRawUnit, currentFrame);
+
+        if (newUnit.Alliance == Alliance.Self) {
+            Logger.Info("{0} was born", newUnit);
+            NewOwnedUnits.Add(newUnit);
+        }
+        else if (newUnit.Alliance == Alliance.Neutral) {
+            var equivalentUnit = UnitsByTag
+                .Select(kv => kv.Value)
+                .FirstOrDefault(unit => unit.Position == newUnit.Position);
+
+            // Resources have 2 units representing them: the snapshot version and the real version
+            // The real version is only available when visible
+            // The snapshot is only available when not visible
+            if (equivalentUnit != default) {
+                UnitsByTag.Remove(equivalentUnit.Tag);
+                equivalentUnit.Update(newRawUnit, currentFrame);
+                newUnit = equivalentUnit;
+            }
+        }
+        else if (newUnit.Alliance == Alliance.Enemy) {
+            newUnit.DeathDelay = Controller.SecsToFrames(EnemyDeathDelaySeconds);
+        }
+
+        UnitsByTag[newUnit.Tag] = newUnit;
+    }
+
+    private static void HandleDeadUnits(IReadOnlySet<ulong> deadUnitIds, uint currentFrame) {
+        foreach (var unit in UnitsByTag.Select(unit => unit.Value).ToList()) {
+            // We use unit.IsDead(currentFrame) as a fallback for cases where we missed a frame
+            // Also, drones that morph into buildings are not considered 'killed' and won't be present in deadUnitIds
+            if (deadUnitIds.Contains(unit.Tag) || unit.IsDead(currentFrame)) {
+                unit.Died();
+
+                UnitsByTag.Remove(unit.Tag);
+                GhostEnemyUnits.Remove(unit);
+                MemoryEnemyUnits.Remove(unit);
+            }
+        }
+    }
+
+    private static void RememberEnemyUnitsOutOfSight(List<SC2APIProtocol.Unit> currentlyVisibleUnits) {
+        var enemyUnitIdsNotInVision = UnitsByTag.Values
+            .Where(unit => unit.Alliance == Alliance.Enemy)
+            .Where(enemyUnit => !Units.Buildings.Contains(enemyUnit.UnitType))
+            .Select(enemyUnit => enemyUnit.Tag)
+            .Except(currentlyVisibleUnits.Select(unit => unit.Tag))
+            .ToHashSet();
+
+        var enemyUnitsNotInVision = UnitsByTag.Values.Where(unit => enemyUnitIdsNotInVision.Contains(unit.Tag)).ToList();
+        foreach (var enemyUnit in enemyUnitsNotInVision) {
+            UnitsByTag.Remove(enemyUnit.Tag);
+
+            if (!VisibilityTracker.IsVisible(enemyUnit.Position)) {
+                GhostEnemyUnits.Add(enemyUnit);
+            }
+
+            MemoryEnemyUnits.Add(enemyUnit);
+        }
+    }
+
+    private static void EraseGhosts() {
+        foreach (var ghostEnemyUnit in GhostEnemyUnits) {
+            if (VisibilityTracker.IsVisible(ghostEnemyUnit.Position)) {
+                GhostEnemyUnits.Remove(ghostEnemyUnit);
+            }
+        }
+    }
+
+    private static void UpdateUnitLists() {
+        OwnedUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Self).Select(unit => unit.Value).ToList();
+        NeutralUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Neutral).Select(unit => unit.Value).ToList();
+        EnemyUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Enemy).Select(unit => unit.Value).ToList();
     }
 }
