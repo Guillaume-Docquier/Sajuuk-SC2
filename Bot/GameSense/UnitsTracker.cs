@@ -22,7 +22,7 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
     public static Dictionary<ulong, Unit> EnemyGhostUnits { get; } = new Dictionary<ulong, Unit>();
     public static Dictionary<ulong, Unit> EnemyMemorizedUnits { get; } = new Dictionary<ulong, Unit>();
 
-    private const int EnemyDeathDelaySeconds = 5 * 60;
+    private const int EnemyDeathDelaySeconds = 4 * 60;
 
     private UnitsTracker() {}
 
@@ -72,7 +72,7 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
         });
 
         // Handle dead units
-        HandleDeadUnits(currentFrame);
+        HandleDeadUnits(unitsAsReportedByTheApi, currentFrame);
         RememberEnemyUnitsOutOfSight(unitsAsReportedByTheApi);
         EraseGhosts();
 
@@ -130,7 +130,7 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
         UnitsByTag[newUnit.Tag] = newUnit;
     }
 
-    private void HandleDeadUnits(uint currentFrame) {
+    private void HandleDeadUnits(List<SC2APIProtocol.Unit> currentlyVisibleUnits, uint currentFrame) {
         foreach (var unit in UnitsByTag.Select(unit => unit.Value).ToList()) {
             // We use unit.IsDead(currentFrame) as a fallback for cases where we missed a frame
             // Also, drones that morph into buildings are not considered 'killed' and won't be present in deadUnitIds
@@ -141,6 +141,21 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
                 EnemyGhostUnits.Remove(unit.Tag);
                 EnemyMemorizedUnits.Remove(unit.Tag);
             }
+        }
+
+        // TODO GD For reason there are some dead buildings that the API doesn't tell us about
+        // We don't miss any frames
+        // The 'ghost' buildings do not appear in any _accumulatedDeadUnitIds
+        var visibleUnitTags = currentlyVisibleUnits.Select(unit => unit.Tag).ToHashSet();
+        var presumedDeadEnemyBuildings = UnitsByTag.Values
+            .Where(unit => unit.Alliance == Alliance.Enemy)
+            .Where(enemy => Units.Buildings.Contains(enemy.UnitType))
+            .Where(enemyBuilding => !visibleUnitTags.Contains(enemyBuilding.Tag));
+
+        foreach (var presumedDeadEnemyBuilding in presumedDeadEnemyBuildings) {
+            presumedDeadEnemyBuilding.Died();
+
+            UnitsByTag.Remove(presumedDeadEnemyBuilding.Tag);
         }
 
         _accumulatedDeadUnitIds.Clear();
