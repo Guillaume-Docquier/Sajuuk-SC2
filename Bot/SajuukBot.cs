@@ -55,11 +55,15 @@ public class SajuukBot: PoliteBot {
         AddressManagerRequests();
         FixSupply();
 
-        DebugBuildOrder();
-        DebugEnemyDetectors();
-        // DebugWalkableAreas();
-        // DebugDestructibles();
-        DebugIncomeRate();
+        if (Program.DebugEnabled) {
+            DebugBuildOrder();
+            DebugEnemyDetectors();
+            // DebugWalkableAreas();
+            // DebugDestructibles();
+            DebugIncomeRate();
+            DebugEnemyGhostUnits();
+            DebugEnemyMemorizedUnits();
+        }
 
         foreach (var unit in UnitsTracker.UnitsByTag.Values) {
             unit.ExecuteModules();
@@ -81,6 +85,29 @@ public class SajuukBot: PoliteBot {
             $"Max minerals rate: {_maxMineralRate}",
             $"Minerals rate: {scoreDetails.CollectionRateMinerals}",
         }, virtualPos: new Point { X = 0.315f, Y = 0.765f });
+    }
+
+    private void DebugEnemyGhostUnits() {
+        foreach (var enemyGhostUnit in UnitsTracker.EnemyGhostUnits.Values) {
+            Program.GraphicalDebugger.AddSphere(enemyGhostUnit, Colors.Red);
+            Program.GraphicalDebugger.AddText(
+                $"{enemyGhostUnit.UnitTypeData.Name}",
+                size: 13,
+                worldPos: enemyGhostUnit.Position.Translate(zTranslation: enemyGhostUnit.Radius * 1.25f).ToPoint()
+            );
+        }
+    }
+
+    private void DebugEnemyMemorizedUnits() {
+        var textGroup = UnitsTracker.EnemyMemorizedUnits.Values
+            .Concat(UnitsTracker.EnemyUnits.Where(enemy => !Units.Buildings.Contains(enemy.UnitType)))
+            .GroupBy(unit => unit.UnitTypeData.Name)
+            .Select(group => $"{group.Count()}x {group.Key}")
+            .ToList();
+
+        textGroup.Insert(0, "Estimated enemy forces\n");
+
+        Program.GraphicalDebugger.AddTextGroup(textGroup, virtualPos: new Point { X = 0.85f, Y = 0.05f });
     }
 
     private void FollowBuildOrder() {

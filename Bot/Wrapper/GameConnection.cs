@@ -219,52 +219,9 @@ public class GameConnection {
                 continue;
             }
 
+            Controller.AccumulateObservation(observation);
             if (observation.Observation.GameLoop % _runEvery == 0) {
-                var gameInfoResponse = await SendRequest(RequestBuilder.RequestGameInfo());
-
-                _performanceDebugger.FrameStopwatch.Start();
-
-                _performanceDebugger.ControllerStopwatch.Start();
-                Controller.NewGameInfo(gameInfoResponse.GameInfo);
-                Controller.NewObservation(observation);
-                _performanceDebugger.ControllerStopwatch.Stop();
-
-                _performanceDebugger.BotStopwatch.Start();
-                bot.OnFrame();
-                _performanceDebugger.BotStopwatch.Stop();
-
-                _performanceDebugger.ActionsStopwatch.Start();
-                var actions = Controller.GetActions().ToList();
-
-                if (actions.Count > 0) {
-                    var response = await SendRequest(RequestBuilder.RequestAction(actions));
-
-                    var unsuccessfulActions = actions
-                        .Zip(response.Action.Result, (action, result) => (action, result))
-                        .Where(action => action.result != ActionResult.Success)
-                        .Select(action => $"({KnowledgeBase.GetAbilityData(action.action.ActionRaw.UnitCommand.AbilityId).FriendlyName}, {action.result})")
-                        .ToList();
-
-                    if (unsuccessfulActions.Count > 0) {
-                        Logger.Warning("Unsuccessful actions: [{0}]", string.Join("; ", unsuccessfulActions));
-                    }
-                }
-                _performanceDebugger.ActionsStopwatch.Stop();
-
-                _performanceDebugger.DebuggerStopwatch.Start();
-                var request = Program.GraphicalDebugger.GetDebugRequest();
-                if (request != null) {
-                    await SendRequest(request);
-                }
-                _performanceDebugger.DebuggerStopwatch.Stop();
-
-                _performanceDebugger.FrameStopwatch.Stop();
-
-                if (_performanceDebugger.FrameStopwatch.ElapsedMilliseconds > 10) {
-                    _performanceDebugger.LogTimers(actions.Count);
-                }
-
-                _performanceDebugger.CompileData();
+                await RunBot(bot, observation);
             }
 
             if (observation.Observation.GameLoop % DebugMemoryEvery == 0) {
@@ -278,6 +235,54 @@ public class GameConnection {
                 await SendRequest(RequestBuilder.RequestStep(StepSize));
             }
         }
+    }
+
+    private async Task RunBot(IBot bot, ResponseObservation observation) {
+        var gameInfoResponse = await SendRequest(RequestBuilder.RequestGameInfo());
+
+        _performanceDebugger.FrameStopwatch.Start();
+
+        _performanceDebugger.ControllerStopwatch.Start();
+        Controller.NewGameInfo(gameInfoResponse.GameInfo);
+        Controller.NewObservation(observation);
+        _performanceDebugger.ControllerStopwatch.Stop();
+
+        _performanceDebugger.BotStopwatch.Start();
+        bot.OnFrame();
+        _performanceDebugger.BotStopwatch.Stop();
+
+        _performanceDebugger.ActionsStopwatch.Start();
+        var actions = Controller.GetActions().ToList();
+
+        if (actions.Count > 0) {
+            var response = await SendRequest(RequestBuilder.RequestAction(actions));
+
+            var unsuccessfulActions = actions
+                .Zip(response.Action.Result, (action, result) => (action, result))
+                .Where(action => action.result != ActionResult.Success)
+                .Select(action => $"({KnowledgeBase.GetAbilityData(action.action.ActionRaw.UnitCommand.AbilityId).FriendlyName}, {action.result})")
+                .ToList();
+
+            if (unsuccessfulActions.Count > 0) {
+                Logger.Warning("Unsuccessful actions: [{0}]", string.Join("; ", unsuccessfulActions));
+            }
+        }
+        _performanceDebugger.ActionsStopwatch.Stop();
+
+        _performanceDebugger.DebuggerStopwatch.Start();
+        var request = Program.GraphicalDebugger.GetDebugRequest();
+        if (request != null) {
+            await SendRequest(request);
+        }
+        _performanceDebugger.DebuggerStopwatch.Stop();
+
+        _performanceDebugger.FrameStopwatch.Stop();
+
+        if (_performanceDebugger.FrameStopwatch.ElapsedMilliseconds > 10) {
+            _performanceDebugger.LogTimers(actions.Count);
+        }
+
+        _performanceDebugger.CompileData();
     }
 
     private static void PrintMemoryInfo() {

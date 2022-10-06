@@ -5,11 +5,13 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
-public class UnitsTracker: INeedUpdating {
+public class UnitsTracker: INeedUpdating, INeedAccumulating {
     public static readonly UnitsTracker Instance = new UnitsTracker();
 
     private bool _isInitialized = false;
-    public static Dictionary<ulong, Unit> UnitsByTag;
+    private readonly HashSet<ulong> _accumulatedDeadUnitIds = new HashSet<ulong>();
+
+    public static Dictionary<ulong, Unit> UnitsByTag { get; private set; }
 
     public static readonly List<Unit> NewOwnedUnits = new List<Unit>();
 
@@ -17,8 +19,8 @@ public class UnitsTracker: INeedUpdating {
     public static List<Unit> OwnedUnits { get; private set; }
     public static List<Unit> EnemyUnits { get; private set; }
 
-    public static HashSet<Unit> GhostEnemyUnits { get; } = new HashSet<Unit>();
-    public static HashSet<Unit> MemoryEnemyUnits { get; } = new HashSet<Unit>();
+    public static Dictionary<ulong, Unit> EnemyGhostUnits { get; } = new Dictionary<ulong, Unit>();
+    public static Dictionary<ulong, Unit> EnemyMemorizedUnits { get; } = new Dictionary<ulong, Unit>();
 
     private const int EnemyDeathDelaySeconds = 5 * 60;
 
@@ -34,6 +36,16 @@ public class UnitsTracker: INeedUpdating {
         NeutralUnits = null;
         OwnedUnits = null;
         EnemyUnits = null;
+    }
+
+    public void Accumulate(ResponseObservation observation) {
+        if (observation.Observation.RawData.Event?.DeadUnits == null) {
+            return;
+        }
+
+        foreach (var deadUnitId in observation.Observation.RawData.Event.DeadUnits) {
+            _accumulatedDeadUnitIds.Add(deadUnitId);
+        }
     }
 
     public void Update(ResponseObservation observation) {
@@ -60,8 +72,7 @@ public class UnitsTracker: INeedUpdating {
         });
 
         // Handle dead units
-        var deadUnitIds = observation.Observation.RawData.Event?.DeadUnits?.ToHashSet() ?? new HashSet<ulong>();
-        HandleDeadUnits(deadUnitIds, currentFrame);
+        HandleDeadUnits(currentFrame);
         RememberEnemyUnitsOutOfSight(unitsAsReportedByTheApi);
         EraseGhosts();
 
@@ -112,23 +123,27 @@ public class UnitsTracker: INeedUpdating {
         }
         else if (newUnit.Alliance == Alliance.Enemy) {
             newUnit.DeathDelay = Controller.SecsToFrames(EnemyDeathDelaySeconds);
+            EnemyGhostUnits.Remove(newUnit.Tag);
+            EnemyMemorizedUnits.Remove(newUnit.Tag);
         }
 
         UnitsByTag[newUnit.Tag] = newUnit;
     }
 
-    private static void HandleDeadUnits(IReadOnlySet<ulong> deadUnitIds, uint currentFrame) {
+    private void HandleDeadUnits(uint currentFrame) {
         foreach (var unit in UnitsByTag.Select(unit => unit.Value).ToList()) {
             // We use unit.IsDead(currentFrame) as a fallback for cases where we missed a frame
             // Also, drones that morph into buildings are not considered 'killed' and won't be present in deadUnitIds
-            if (deadUnitIds.Contains(unit.Tag) || unit.IsDead(currentFrame)) {
+            if (_accumulatedDeadUnitIds.Contains(unit.Tag) || unit.IsDead(currentFrame)) {
                 unit.Died();
 
                 UnitsByTag.Remove(unit.Tag);
-                GhostEnemyUnits.Remove(unit);
-                MemoryEnemyUnits.Remove(unit);
+                EnemyGhostUnits.Remove(unit.Tag);
+                EnemyMemorizedUnits.Remove(unit.Tag);
             }
         }
+
+        _accumulatedDeadUnitIds.Clear();
     }
 
     private static void RememberEnemyUnitsOutOfSight(List<SC2APIProtocol.Unit> currentlyVisibleUnits) {
@@ -144,17 +159,25 @@ public class UnitsTracker: INeedUpdating {
             UnitsByTag.Remove(enemyUnit.Tag);
 
             if (!VisibilityTracker.IsVisible(enemyUnit.Position)) {
-                GhostEnemyUnits.Add(enemyUnit);
+                if (EnemyGhostUnits.ContainsKey(enemyUnit.Tag)) {
+                    Logger.Warning("Trying to add an enemy {0} to the ghosts, but it is already present", enemyUnit);
+                }
+
+                EnemyGhostUnits[enemyUnit.Tag] = enemyUnit;
             }
 
-            MemoryEnemyUnits.Add(enemyUnit);
+            if (EnemyMemorizedUnits.ContainsKey(enemyUnit.Tag)) {
+                Logger.Warning("Trying to add an enemy {0} to the memorized units, but it is already present", enemyUnit);
+            }
+
+            EnemyMemorizedUnits[enemyUnit.Tag] = enemyUnit;
         }
     }
 
     private static void EraseGhosts() {
-        foreach (var ghostEnemyUnit in GhostEnemyUnits) {
+        foreach (var (ghostEnemyUnitId, ghostEnemyUnit) in EnemyGhostUnits) {
             if (VisibilityTracker.IsVisible(ghostEnemyUnit.Position)) {
-                GhostEnemyUnits.Remove(ghostEnemyUnit);
+                EnemyGhostUnits.Remove(ghostEnemyUnitId);
             }
         }
     }

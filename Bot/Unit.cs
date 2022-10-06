@@ -400,6 +400,10 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     public override string ToString() {
-        return $"{Name}[{Tag}]";
+        if (Alliance == Alliance.Self) {
+            return $"{Name}[{Tag}]";
+        }
+
+        return $"{Alliance} {Name}[{Tag}]";
     }
 }

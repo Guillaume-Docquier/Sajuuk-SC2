@@ -20,6 +20,7 @@ public static class Units {
     public const uint ChangelingZergling = 17;
     public const uint CommandCenter = 18;
     public const uint SupplyDepot = 19;
+    public const uint SupplyDepotLowered = 47;
     public const uint Refinery = 20;
     public const uint Barracks = 21;
     public const uint EngineeringBay = 22;
@@ -47,7 +48,6 @@ public static class Units {
     public const uint StarportFlying = 44;
     public const uint Scv = 45;
     public const uint BarracksFlying = 46;
-    public const uint SupplyDepotLowered = 47;
     public const uint Marine = 48;
     public const uint Reaper = 49;
     public const uint WidowMine = 498;

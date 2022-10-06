@@ -52,12 +52,17 @@ public static class Controller {
 
     public static readonly List<string> ChatLog = new List<string>();
 
+    private static readonly List<INeedAccumulating> ThoseWhoNeedAccumulating = new List<INeedAccumulating>
+    {
+        UnitsTracker.Instance,
+    };
+
     private static readonly List<INeedUpdating> ThoseWhoNeedUpdating = new List<INeedUpdating>
     {
-        UnitsTracker.Instance, // Depends on nothing
         VisibilityTracker.Instance, // Depends on nothing
         CreepTracker.Instance, // Depends on nothing
 
+        UnitsTracker.Instance, // Depends on VisibilityTracker
         MapAnalyzer.Instance, // Depends on UnitsTracker
 
         ExpandAnalyzer.Instance, // Depends on UnitsTracker and MapAnalyzer
@@ -101,6 +106,10 @@ public static class Controller {
 
     public static void NewGameInfo(ResponseGameInfo gameInfo) {
         GameInfo = gameInfo;
+    }
+
+    public static void AccumulateObservation(ResponseObservation observation) {
+        ThoseWhoNeedAccumulating.ForEach(needAccumulating => needAccumulating.Accumulate(observation));
     }
 
     public static void NewObservation(ResponseObservation observation) {
