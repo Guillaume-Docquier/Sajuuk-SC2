@@ -55,7 +55,7 @@ public class RegionAnalyzer: INeedUpdating {
 
         if (IsInitialized) {
             if (Program.DebugEnabled && DrawEnabled) {
-                DrawRegionsFull();
+                DrawRegions();
                 DrawNoise();
             }
 
@@ -130,7 +130,7 @@ public class RegionAnalyzer: INeedUpdating {
     /// <para>Each region gets a different color using the color pool.</para>
     /// <para>Each cell also gets a text 'EX', where E stands for 'Expand' and X is the region index.</para>
     /// </summary>
-    private static void DrawRegionsFull() {
+    private static void DrawRegions() {
         var regionIndex = 0;
         foreach (var region in _regionData.Regions) {
             var regionColor = RegionColors[regionIndex % RegionColors.Count];

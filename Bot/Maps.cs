@@ -15,15 +15,6 @@ public static class Maps {
             public const string GlitteringAshes = "GlitteringAshesAIE.SC2Map";
             public const string Hardwire = "HardwireAIE.SC2Map";
         }
-
-        public static class Names {
-            public const string TwoThousandAtmospheres = "2000 Atmospheres AIE";
-            public const string Berlingrad = "Berlingrad AIE";
-            public const string Blackburn = "Blackburn AIE";
-            public const string CuriousMinds = "Curious Minds AIE";
-            public const string GlitteringAshes = "Glittering Ashes AIE";
-            public const string Hardwire = "Hardwire AIE";
-        }
     }
 
     public static class Season_2022_4 {
@@ -34,19 +25,11 @@ public static class Maps {
             public const string Moondance = "MoondanceAIE.SC2Map";
             public const string Stargazers = "StargazersAIE.SC2Map";
             public const string Waterfall = "WaterfallAIE.SC2Map";
+            public const string CosmicSapphire = "CosmicSapphireAIE.SC2Map";
 
             public static IEnumerable<string> GetAll() {
-                return typeof(Maps.Season_2022_4.FileNames).GetFields().Select(x => x.GetValue(null)).Cast<string>();
+                return typeof(FileNames).GetFields().Select(x => x.GetValue(null)).Cast<string>();
             }
-        }
-
-        public static class Names {
-            public const string Berlingrad = "Berlingrad AIE";
-            public const string Hardwire = "Hardwire AIE";
-            public const string InsideAndOut = "Inside And Out AIE";
-            public const string Moondance = "Moondance AIE";
-            public const string Stargazers = "Stargazers AIE";
-            public const string Waterfall = "Waterfall AIE";
         }
     }
 }

@@ -229,6 +229,7 @@ public static class Units {
     public const uint DestructibleRockEx14x4 = 638;
     public const uint DestructibleRockEx1HorizontalHuge = 643;
     public const uint DestructibleCityDebris6x6 = 629;
+    public const uint DestructibleCityDebrisHugeDiagonalBLUR = 630;
 
     public const uint UnbuildablePlatesDestructible = 474;
     public const uint UnbuildableRocksDestructible = 472;
@@ -544,6 +545,7 @@ public static class Units {
         DestructibleRockEx14x4,
         DestructibleRockEx1HorizontalHuge,
         DestructibleCityDebris6x6,
+        DestructibleCityDebrisHugeDiagonalBLUR,
     };
 
     public static readonly HashSet<uint> Destructibles = new HashSet<uint>(BuildBlockers.Concat(Obstacles));
