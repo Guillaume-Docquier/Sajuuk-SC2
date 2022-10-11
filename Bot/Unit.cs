@@ -111,7 +111,7 @@ public class Unit: ICanDie, IHavePosition {
         FoodRequired = UnitTypeData.FoodRequired;
         Radius = unit.Radius;
         Alliance = unit.Alliance;
-        Position = new Vector3(unit.Pos.X, unit.Pos.Y, unit.Pos.Z);
+        Position = unit.Pos.ToVector3();
         _buildProgress = unit.BuildProgress;
         Orders = unit.Orders;
         IsVisible = unit.DisplayType == DisplayType.Visible;

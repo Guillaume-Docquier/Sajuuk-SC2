@@ -13,6 +13,7 @@ public class Program {
     private static readonly List<IScenario> Scenarios = new List<IScenario>
     {
         //new WorkerRushScenario(),
+        //new SpawnObserverScenario(),
     };
 
     private static readonly IBot Bot = new SajuukBot("2_6_1", scenarios: Scenarios);

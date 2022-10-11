@@ -89,12 +89,7 @@ public class SajuukBot: PoliteBot {
 
     private void DebugEnemyGhostUnits() {
         foreach (var enemyGhostUnit in UnitsTracker.EnemyGhostUnits.Values) {
-            Program.GraphicalDebugger.AddSphere(enemyGhostUnit, Colors.Red);
-            Program.GraphicalDebugger.AddText(
-                $"{enemyGhostUnit.UnitTypeData.Name}",
-                size: 13,
-                worldPos: enemyGhostUnit.Position.Translate(zTranslation: enemyGhostUnit.Radius * 1.25f).ToPoint()
-            );
+            Program.GraphicalDebugger.AddUnit(enemyGhostUnit, Colors.Red);
         }
     }
 

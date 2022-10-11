@@ -136,4 +136,13 @@ public class LocalGraphicalDebugger: IGraphicalDebugger {
             AddGridSquare(path[i], Colors.Gradient(startColor, endColor, (float)i / path.Count));
         }
     }
+
+    public void AddUnit(Unit unit, Color color = null) {
+        Program.GraphicalDebugger.AddSphere(unit.Position, unit.Radius * 1.25f, color ?? Colors.White);
+        Program.GraphicalDebugger.AddText(
+            $"{unit.UnitTypeData.Name}",
+            size: 13,
+            worldPos: unit.Position.Translate(zTranslation: unit.Radius * 1.25f).ToPoint()
+        );
+    }
 }
