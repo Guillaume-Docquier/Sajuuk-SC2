@@ -26,10 +26,12 @@ public class UpgradesManager : Manager {
     protected override void DispatchUnits() {}
 
     protected override void Manage() {
+        // We assume the build order takes care of ZergMissileWeaponsLevel1
         if (!Controller.ResearchedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel1)) {
             return;
         }
 
+        // We're done
         if (_requestedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel3) && _requestedUpgrades.Contains(Upgrades.ZergGroundArmorsLevel3)) {
             _evolutionChamberBuildRequest.Requested = 0;
 
@@ -38,19 +40,31 @@ public class UpgradesManager : Manager {
 
         var roachCount = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Roach).Count();
 
+        // TODO GD We could probably use a state machine, these are always done sequentially
         AttemptResearchTier1(roachCount);
+        ImproveResearchInfrastructure();
         AttemptResearchTier2(roachCount);
         AttemptResearchTier3(roachCount);
     }
 
     private void AttemptResearchTier1(int roachCount) {
-        if (roachCount >= 12 && !_requestedUpgrades.Contains(Upgrades.ZergGroundArmorsLevel1)) {
+        if (_requestedUpgrades.Contains(Upgrades.ZergGroundArmorsLevel1)) {
+            return;
+        }
+
+        if (roachCount >= 12) {
             _evolutionChamberBuildRequest.Requested = 1;
             _buildRequests.Add(new TargetBuildRequest(BuildType.Research, Upgrades.ZergGroundArmorsLevel1, targetQuantity: 1));
             _requestedUpgrades.Add(Upgrades.ZergGroundArmorsLevel1);
         }
+    }
 
-        if (_evolutionChamberBuildRequest.Requested <= 2 && _requestedUpgrades.Contains(Upgrades.ZergGroundArmorsLevel1) && Controller.IsResearchInProgress(Upgrades.ZergGroundArmorsLevel1)) {
+    private void ImproveResearchInfrastructure() {
+        if (_evolutionChamberBuildRequest.Requested == 2) {
+            return;
+        }
+
+        if (AreResearchedOrInProgress(new [] { Upgrades.ZergGroundArmorsLevel1 })) {
             var remainingResearchTime = GetRemainingResearchTime(Upgrades.ZergGroundArmorsLevel1);
             var evoChamberBuildTime = GetBuildTime(Units.EvolutionChamber);
             if (remainingResearchTime <= evoChamberBuildTime + 5) {
@@ -60,7 +74,15 @@ public class UpgradesManager : Manager {
     }
 
     private void AttemptResearchTier2(int roachCount) {
-        if (roachCount >= 27 && !_requestedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel2)) {
+        if (_requestedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel2)) {
+            return;
+        }
+
+        if (!AreResearchedOrInProgress(new []{ Upgrades.ZergGroundArmorsLevel1, Upgrades.ZergMissileWeaponsLevel1 })) {
+            return;
+        }
+
+        if (roachCount >= 27) {
             _buildRequests.Add(new TargetBuildRequest(BuildType.Build,    Units.Extractor,                   targetQuantity: 4));
             _buildRequests.Add(new TargetBuildRequest(BuildType.Research, Upgrades.ZergMissileWeaponsLevel2, targetQuantity: 1));
             _buildRequests.Add(new TargetBuildRequest(BuildType.Research, Upgrades.ZergGroundArmorsLevel2,   targetQuantity: 1));
@@ -70,7 +92,15 @@ public class UpgradesManager : Manager {
     }
 
     private void AttemptResearchTier3(int roachCount) {
-        if (roachCount >= 40 && !_requestedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel3)) {
+        if (_requestedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel3)) {
+            return;
+        }
+
+        if (!AreResearchedOrInProgress(new []{ Upgrades.ZergGroundArmorsLevel2, Upgrades.ZergMissileWeaponsLevel2 })) {
+            return;
+        }
+
+        if (roachCount >= 40) {
             _buildRequests.Add(new TargetBuildRequest  (BuildType.Build,       Units.InfestationPit,              targetQuantity: 1));
             _buildRequests.Add(new TargetBuildRequest  (BuildType.UpgradeInto, Units.Hive,                        targetQuantity: 1));
             _buildRequests.Add(new TargetBuildRequest  (BuildType.Research,    Upgrades.ZergMissileWeaponsLevel3, targetQuantity: 1));
@@ -87,10 +117,18 @@ public class UpgradesManager : Manager {
     }
 
     private static uint GetRemainingResearchTime(uint upgradeId) {
+        if (Controller.ResearchedUpgrades.Contains(upgradeId)) {
+            return 0;
+        }
+
         var remainingPercent = 1 - Controller.GetResearchProgress(upgradeId);
         var upgradeData = KnowledgeBase.GetUpgradeData(upgradeId);
 
         return (uint)(upgradeData.ResearchTime / Controller.FramesPerSecond * remainingPercent);
+    }
+
+    private static bool AreResearchedOrInProgress(IEnumerable<uint> upgradeIds) {
+        return upgradeIds.All(upgradeId => Controller.ResearchedUpgrades.Contains(upgradeId) || Controller.IsResearchInProgress(upgradeId));
     }
 
     private class DummyAssigner : IAssigner {
