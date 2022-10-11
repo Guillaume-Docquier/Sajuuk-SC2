@@ -501,18 +501,24 @@ public static class Controller {
      * Returns all units that match a certain set of types from the provided unitPool, including units of equivalent types.
      * Units that are in production are included.
      */
-    public static IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, HashSet<uint> unitsToGet) {
-        var equivalentUnits = unitsToGet
-            .Where(unitToGet => Units.EquivalentTo.ContainsKey(unitToGet))
-            .SelectMany(unitToGet => Units.EquivalentTo[unitToGet])
+    public static IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, HashSet<uint> unitTypesToGet, bool includeCloaked = false) {
+        var equivalentUnitTypes = unitTypesToGet
+            .Where(unitTypeToGet => Units.EquivalentTo.ContainsKey(unitTypeToGet))
+            .SelectMany(unitTypeToGet => Units.EquivalentTo[unitTypeToGet])
             .ToList();
 
-        unitsToGet.UnionWith(equivalentUnits);
+        unitTypesToGet.UnionWith(equivalentUnitTypes);
 
         foreach (var unit in unitPool) {
-            if (unitsToGet.Contains(unit.UnitType)) {
-                yield return unit;
+            if (!unitTypesToGet.Contains(unit.UnitType)) {
+                continue;
             }
+
+            if (unit.RawUnitData.Cloak == CloakState.Cloaked && !includeCloaked) {
+                continue;
+            }
+
+            yield return unit;
         }
     }
 

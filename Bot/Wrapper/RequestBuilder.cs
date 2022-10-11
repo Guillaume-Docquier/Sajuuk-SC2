@@ -88,11 +88,7 @@ public static class RequestBuilder {
                 GamePort = startPort + 2,
                 BasePort = startPort + 3,
             },
-            Options = new InterfaceOptions
-            {
-                Raw = true,
-                Score = true,
-            }
+            Options = GetInterfaceOptions(),
         };
 
         requestJoinGame.ClientPorts.Add(new PortSet
@@ -113,12 +109,19 @@ public static class RequestBuilder {
             JoinGame = new RequestJoinGame
             {
                 Race = race,
-                Options = new InterfaceOptions
-                {
-                    Raw = true,
-                    Score = true,
-                }
+                Options = GetInterfaceOptions(),
             }
+        };
+    }
+
+    private static InterfaceOptions GetInterfaceOptions() {
+        return new InterfaceOptions
+        {
+            Raw = true,
+            Score = true,
+            ShowCloaked = true,
+            ShowBurrowedShadows = true,
+            // ShowPlaceholders = true, // TODO GD Consider enabling this to simplify the BuildingsTracker?
         };
     }
 

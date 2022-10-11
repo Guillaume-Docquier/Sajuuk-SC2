@@ -16,7 +16,7 @@ public class Program {
         //new SpawnObserverScenario(),
     };
 
-    private static readonly IBot Bot = new SajuukBot("2_6_1", scenarios: Scenarios);
+    private static readonly IBot Bot = new SajuukBot("2_6_2", scenarios: Scenarios);
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.CosmicSapphire;
     private const Race OpponentRace = Race.Terran;
