@@ -62,7 +62,7 @@ public class SajuukBot: PoliteBot {
             // DebugDestructibles();
             DebugIncomeRate();
             DebugEnemyGhostUnits();
-            DebugEnemyMemorizedUnits();
+            DebugKnownEnemyUnits();
         }
 
         foreach (var unit in UnitsTracker.UnitsByTag.Values) {
@@ -98,16 +98,27 @@ public class SajuukBot: PoliteBot {
         }
     }
 
-    private void DebugEnemyMemorizedUnits() {
-        var textGroup = UnitsTracker.EnemyMemorizedUnits.Values
-            .Concat(UnitsTracker.EnemyUnits.Where(enemy => !Units.Buildings.Contains(enemy.UnitType)))
-            .GroupBy(unit => unit.UnitTypeData.Name)
-            .Select(group => $"{group.Count()}x {group.Key}")
-            .ToList();
+    private void DebugKnownEnemyUnits() {
+        var textGroup = new List<string>();
 
-        textGroup.Insert(0, "Estimated enemy forces\n");
+        textGroup.Add("Known enemy units\n");
+        textGroup.AddRange(
+            UnitsTracker.EnemyMemorizedUnits.Values
+                .Concat(UnitsTracker.EnemyUnits.Where(enemy => !Units.Buildings.Contains(enemy.UnitType)))
+                .GroupBy(unit => unit.UnitTypeData.Name)
+                .OrderBy(group => group.Key)
+                .Select(group => $"{group.Count()}x {group.Key}")
+        );
 
-        Program.GraphicalDebugger.AddTextGroup(textGroup, virtualPos: new Point { X = 0.85f, Y = 0.05f });
+        textGroup.Add("\nKnown enemy buildings\n");
+        textGroup.AddRange(
+            UnitsTracker.EnemyUnits.Where(enemy => Units.Buildings.Contains(enemy.UnitType))
+                .GroupBy(unit => $"{unit.UnitTypeData.Name} {(unit.RawUnitData.DisplayType == DisplayType.Snapshot ? "(S)" : "")}")
+                .OrderBy(group => group.Key)
+                .Select(group => $"{group.Count()}x {group.Key}")
+        );
+
+        Program.GraphicalDebugger.AddTextGroup(textGroup, virtualPos: new Point { X = 0.83f, Y = 0.20f });
     }
 
     private void FollowBuildOrder() {

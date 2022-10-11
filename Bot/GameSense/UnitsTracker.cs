@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.ExtensionMethods;
 using Bot.GameData;
 using SC2APIProtocol;
 
@@ -110,7 +111,9 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
         else {
             var equivalentUnit = UnitsByTag
                 .Select(kv => kv.Value)
-                .FirstOrDefault(unit => unit.Position == newUnit.Position);
+                .Where(unit => unit.UnitType == newUnit.UnitType)
+                .Where(unit => unit.Alliance == newUnit.Alliance)
+                .FirstOrDefault(unit => unit.Position.DistanceTo(newUnit.Position) <= 0.0001f); // Refinery snapshot can have a slightly different Z value
 
             // Buildings can have 2 units representing them: the snapshot version and the real version
             // The real version is only available when visible
