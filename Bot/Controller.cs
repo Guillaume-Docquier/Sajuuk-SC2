@@ -35,6 +35,7 @@ public static class Controller {
     public const float ExpandIsTakenRadius = 4f;
 
     public static ResponseGameInfo GameInfo { get; private set; }
+    public static Race EnemyRace { get; private set; }
     public static ResponseObservation Observation { get; private set; }
 
     public static uint Frame { get; private set; } = uint.MaxValue;
@@ -106,6 +107,30 @@ public static class Controller {
 
     public static void NewGameInfo(ResponseGameInfo gameInfo) {
         GameInfo = gameInfo;
+
+        if (EnemyRace == default) {
+            var races = GameInfo.PlayerInfo
+                .Where(playerInfo => playerInfo.Type != PlayerType.Observer)
+                .GroupBy(playerInfo => playerInfo.RaceRequested)
+                .ToDictionary(group => group.Key, group => group.Count());
+
+            races[Program.Bot.Race] -= 1;
+
+            EnemyRace = races.First(kv => kv.Value > 0).Key;
+        }
+
+        if (EnemyRace == Race.Random) {
+            var enemyWorkers = GetUnits(UnitsTracker.EnemyUnits, Units.Workers).ToList();
+            if (enemyWorkers.Any(worker => worker.UnitType == Units.Scv)) {
+                EnemyRace = Race.Terran;
+            }
+            else if (enemyWorkers.Any(worker => worker.UnitType == Units.Probe)) {
+                EnemyRace = Race.Protoss;
+            }
+            else if (enemyWorkers.Any(worker => worker.UnitType == Units.Drone)) {
+                EnemyRace = Race.Zerg;
+            }
+        }
     }
 
     public static void AccumulateObservation(ResponseObservation observation) {

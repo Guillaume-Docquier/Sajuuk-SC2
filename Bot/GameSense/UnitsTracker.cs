@@ -16,9 +16,9 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
 
     public static readonly List<Unit> NewOwnedUnits = new List<Unit>();
 
-    public static List<Unit> NeutralUnits { get; private set; }
-    public static List<Unit> OwnedUnits { get; private set; }
-    public static List<Unit> EnemyUnits { get; private set; }
+    public static List<Unit> NeutralUnits { get; private set; } = new List<Unit>();
+    public static List<Unit> OwnedUnits { get; private set; } = new List<Unit>();
+    public static List<Unit> EnemyUnits { get; private set; } = new List<Unit>();
 
     public static Dictionary<ulong, Unit> EnemyGhostUnits { get; } = new Dictionary<ulong, Unit>();
     public static Dictionary<ulong, Unit> EnemyMemorizedUnits { get; } = new Dictionary<ulong, Unit>();

@@ -8,6 +8,7 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.ArmySupervision;
 using Bot.MapKnowledge;
+using SC2APIProtocol;
 
 namespace Bot.Managers;
 
@@ -74,6 +75,10 @@ public partial class WarManager: Manager {
 
             if (!_hasAssaultStarted && _armySupervisor.Army.GetForce() >= ForceRequiredBeforeAttacking) {
                 StartTheAssault(enemyPosition);
+            }
+
+            if (_hasAssaultStarted && ShouldFinishOffTerran()) {
+                FinishOffTerran();
             }
         }
 
@@ -157,6 +162,19 @@ public partial class WarManager: Manager {
         var guardDistance = Math.Min(pathToThreat.Count, GuardDistance);
 
         return pathToThreat[guardDistance];
+    }
+
+    private static bool ShouldFinishOffTerran() {
+        if (Controller.EnemyRace != Race.Terran) {
+            return false;
+        }
+
+        // TODO GD check if no more buildings on the ground and all expands visible
+        return true;
+    }
+
+    private void FinishOffTerran() {
+        // TODO GD Stop making roaches, kill off roaches for supply, queue a spire and produce corruptors
     }
 
     public override string ToString() {
