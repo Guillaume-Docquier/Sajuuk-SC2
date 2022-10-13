@@ -64,7 +64,7 @@ public static class Controller {
         CreepTracker.Instance, // Depends on nothing
 
         UnitsTracker.Instance, // Depends on VisibilityTracker
-        MapAnalyzer.Instance, // Depends on UnitsTracker
+        MapAnalyzer.Instance, // Depends on UnitsTracker and VisibilityTracker
 
         ExpandAnalyzer.Instance, // Depends on UnitsTracker and MapAnalyzer
         BuildingTracker.Instance, // Depends on UnitsTracker and MapAnalyzer

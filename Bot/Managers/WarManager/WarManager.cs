@@ -194,12 +194,15 @@ public partial class WarManager: Manager {
             return false;
         }
 
-        // We only check once in a while
+        if (Controller.Frame < Controller.SecsToFrames(12 * 60)) {
+            return false;
+        }
+
         if (Controller.Frame % Controller.SecsToFrames(60) != 0) {
             return false;
         }
 
-        if (!ExpandAnalyzer.ExpandLocations.All(VisibilityTracker.IsVisible)) {
+        if (MapAnalyzer.ExplorationRatio < 0.80 || !ExpandAnalyzer.ExpandLocations.All(VisibilityTracker.IsExplored)) {
             return false;
         }
 

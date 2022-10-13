@@ -27,7 +27,7 @@ public class BotDebugger {
         DebugIncomeRate();
         DebugEnemyGhostUnits();
         DebugKnownEnemyUnits();
-        DebugEnemyRace();
+        DebugMatchupData();
     }
 
     private static void DebugBuildOrder(IEnumerable<BuildRequest> buildOrder, IEnumerable<BuildFulfillment> managerBuildRequests) {
@@ -116,7 +116,9 @@ public class BotDebugger {
         Program.GraphicalDebugger.AddTextGroup(textGroup, virtualPos: new Point { X = 0.83f, Y = 0.20f });
     }
 
-    private static void DebugEnemyRace() {
-        Program.GraphicalDebugger.AddText($"Enemy race: {Controller.EnemyRace}", virtualPos: new Point { X = 0.83f, Y = 0.18f });
+    private static void DebugMatchupData() {
+        // TODO GD Doesn't go over 94% visible/explored, not sure why
+        var matchupText = $"Enemy: {Controller.EnemyRace} / Visible: {MapAnalyzer.VisibilityRatio,3:P0} / Explored: {MapAnalyzer.ExplorationRatio,3:P0}";
+        Program.GraphicalDebugger.AddText(matchupText, virtualPos: new Point { X = 0.50f, Y = 0.02f });
     }
 }

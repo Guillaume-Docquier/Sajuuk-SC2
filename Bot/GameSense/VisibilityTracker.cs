@@ -9,25 +9,36 @@ namespace Bot.GameSense;
 public class VisibilityTracker: INeedUpdating {
     public static readonly VisibilityTracker Instance = new VisibilityTracker();
 
+    // TODO GD Put these in a class to hide the backing fields?
     private static ulong _lastGeneratedAt = ulong.MaxValue;
-    private static List<List<Visibility>> _visibilityMap;
-    private static List<Vector2> _visibleCells;
-    private static List<Vector2> _exploredCells;
 
+    private static List<List<Visibility>> _visibilityMap;
+    private static List<List<Visibility>> VisibilityMap {
+        get {
+            if (_lastGeneratedAt != Controller.Frame) {
+                GenerateVisibilityData();
+            }
+
+            return _visibilityMap;
+        }
+    }
+
+    private static List<Vector2> _visibleCells;
     public static List<Vector2> VisibleCells {
         get {
             if (_lastGeneratedAt != Controller.Frame) {
-                GenerateVisibilityMap();
+                GenerateVisibilityData();
             }
 
             return _visibleCells;
         }
     }
 
+    private static List<Vector2> _exploredCells;
     public static List<Vector2> ExploredCells {
         get {
             if (_lastGeneratedAt != Controller.Frame) {
-                GenerateVisibilityMap();
+                GenerateVisibilityData();
             }
 
             return _exploredCells;
@@ -65,14 +76,23 @@ public class VisibilityTracker: INeedUpdating {
     }
 
     public static bool IsVisible(Vector2 location) {
-        if (_lastGeneratedAt != Controller.Frame) {
-            GenerateVisibilityMap();
-        }
-
         return _visibilityMap[(int)location.X][(int)location.Y] == Visibility.Visible;
     }
 
-    private static void GenerateVisibilityMap() {
+    // TODO GD We could be smarter and check for the building footprint!
+    public static bool IsExplored(Unit unit) {
+        return IsExplored(unit.Position.ToVector2());
+    }
+
+    public static bool IsExplored(Vector3 location) {
+        return IsExplored(location.ToVector2());
+    }
+
+    public static bool IsExplored(Vector2 location) {
+        return VisibilityMap[(int)location.X][(int)location.Y] is Visibility.Explored or Visibility.Visible;
+    }
+
+    private static void GenerateVisibilityData() {
         var maxX = Controller.GameInfo.StartRaw.MapSize.X;
         var maxY = Controller.GameInfo.StartRaw.MapSize.Y;
 
