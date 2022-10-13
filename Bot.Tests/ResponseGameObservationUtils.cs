@@ -20,6 +20,7 @@ public static class ResponseGameObservationUtils {
                     Vespene = 0,
                     FoodUsed = 0,
                     FoodCap = 200,
+                    PlayerId = 1,
                 },
                 RawData = new ObservationRaw
                 {

@@ -78,6 +78,10 @@ public static class Controller {
         Actions.Clear();
         ChatLog.Clear();
 
+        GameInfo = null;
+        Observation = null;
+        EnemyRace = default;
+
         _frameDelayMs = 0;
         ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Reset());
     }
@@ -108,15 +112,15 @@ public static class Controller {
     public static void NewGameInfo(ResponseGameInfo gameInfo) {
         GameInfo = gameInfo;
 
+        if (Observation == null) {
+            return;
+        }
+
         if (EnemyRace == default) {
-            var races = GameInfo.PlayerInfo
+            EnemyRace = GameInfo.PlayerInfo
                 .Where(playerInfo => playerInfo.Type != PlayerType.Observer)
-                .GroupBy(playerInfo => playerInfo.RaceRequested)
-                .ToDictionary(group => group.Key, group => group.Count());
-
-            races[Program.Bot.Race] -= 1;
-
-            EnemyRace = races.First(kv => kv.Value > 0).Key;
+                .First(playerInfo => playerInfo.PlayerId != Observation.Observation.PlayerCommon.PlayerId)
+                .RaceRequested;
         }
 
         if (EnemyRace == Race.Random) {
