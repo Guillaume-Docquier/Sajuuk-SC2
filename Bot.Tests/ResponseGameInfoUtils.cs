@@ -26,6 +26,17 @@ public static class ResponseGameInfoUtils {
                     Data = ImageDataUtils.CreateByeString(pathingGrid),
                 },
             },
+            PlayerInfo =
+            {
+                new PlayerInfo
+                {
+                    RaceRequested = Race.Zerg,
+                },
+                new PlayerInfo
+                {
+                    RaceRequested = Race.Terran,
+                },
+            }
         };
 
         var enemySpawn = new Point2D { X = 50, Y = 0 };
