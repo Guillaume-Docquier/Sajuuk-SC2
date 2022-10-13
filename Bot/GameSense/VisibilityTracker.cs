@@ -57,10 +57,14 @@ public class VisibilityTracker: INeedUpdating {
 
     // TODO GD We could be smarter and check for the building footprint!
     public static bool IsVisible(Unit unit) {
-        return IsVisible(unit.Position);
+        return IsVisible(unit.Position.ToVector2());
     }
 
     public static bool IsVisible(Vector3 location) {
+        return IsVisible(location.ToVector2());
+    }
+
+    public static bool IsVisible(Vector2 location) {
         if (_lastGeneratedAt != Controller.Frame) {
             GenerateVisibilityMap();
         }

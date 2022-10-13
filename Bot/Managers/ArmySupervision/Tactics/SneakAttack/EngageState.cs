@@ -17,7 +17,7 @@ public partial class SneakAttackTactic {
         }
 
         private static void UnburrowUnderlings(IEnumerable<Unit> army) {
-            foreach (var soldier in army.Where(soldier => soldier.RawUnitData.IsBurrowed)) {
+            foreach (var soldier in army.Where(soldier => soldier.IsBurrowed)) {
                 soldier.UseAbility(Abilities.BurrowRoachUp);
             }
         }

@@ -10,7 +10,8 @@ namespace Bot.Managers.ArmySupervision;
 
 public partial class ArmySupervisor {
     public class HuntState: State<ArmySupervisor> {
-        private static Dictionary<Vector3, bool> _checkedLocations;
+        private static Dictionary<Vector3, bool> _checkedExpandLocations;
+        private static readonly Dictionary<Vector2, bool> CheckedPositions = new Dictionary<Vector2, bool>();
 
         private bool _isNextTargetSet = false;
 
@@ -24,31 +25,100 @@ public partial class ArmySupervisor {
         }
 
         protected override void Execute() {
-            if (MapAnalyzer.IsInitialized && _checkedLocations == null) {
-                InitCheckedLocations();
+            if (MapAnalyzer.IsInitialized && _checkedExpandLocations == null) {
+                ResetCheckedExpandLocations();
             }
 
-            if (_checkedLocations == null) {
+            if (_checkedExpandLocations == null) {
                 return;
             }
 
-            foreach (var locationToCheck in _checkedLocations.Keys) {
-                _checkedLocations[locationToCheck] |= VisibilityTracker.IsVisible(locationToCheck);
+            foreach (var locationToCheck in _checkedExpandLocations.Keys) {
+                _checkedExpandLocations[locationToCheck] |= VisibilityTracker.IsVisible(locationToCheck);
             }
 
-            if (AllLocationsHaveBeenChecked()) {
-                InitCheckedLocations();
+            if (AllLocationsHaveBeenChecked(_checkedExpandLocations)) {
+                ResetCheckedExpandLocations();
+                if (AllLocationsHaveBeenChecked(_checkedExpandLocations)) {
+                    var enemiesToAttack = UnitsTracker.EnemyUnits
+                        .Where(unit => !unit.IsCloaked)
+                        .Where(unit => StateMachine.Context._canHitAirUnits || !unit.IsFlying)
+                        .ToList();
+
+                    if (enemiesToAttack.Count > 0) {
+                        StateMachine.Context._target = enemiesToAttack[0].Position;
+                        _isNextTargetSet = true;
+                    }
+                    else {
+                        FindEnemies();
+                    }
+
+                    return;
+                }
             }
 
             AssignNewTarget();
         }
 
-        private static bool AllLocationsHaveBeenChecked() {
-            return _checkedLocations.Values.All(isChecked => isChecked);
+        private static bool AllLocationsHaveBeenChecked(Dictionary<Vector3, bool> locations) {
+            return locations.Values.All(isChecked => isChecked);
         }
 
-        private static void InitCheckedLocations() {
-            _checkedLocations = ExpandAnalyzer.ExpandLocations.ToDictionary(expand => expand, VisibilityTracker.IsVisible);
+        private static bool AllLocationsHaveBeenChecked(Dictionary<Vector2, bool> locations) {
+            return locations.Values.All(isChecked => isChecked);
+        }
+
+        private static void ResetCheckedExpandLocations() {
+            _checkedExpandLocations = ExpandAnalyzer.ExpandLocations.ToDictionary(expand => expand, VisibilityTracker.IsVisible);
+        }
+
+        private void ResetCheckedPositions() {
+            CheckedPositions.Clear();
+            for (var x = 0; x < MapAnalyzer.MaxX; x++) {
+                for (var y = 0; y < MapAnalyzer.MaxY; y++) {
+                    var position = new Vector2(x, y).AsWorldGridCenter();
+                    if (!StateMachine.Context._canFly && !MapAnalyzer.IsWalkable(position)) {
+                        continue;
+                    }
+
+                    CheckedPositions[position] = VisibilityTracker.IsVisible(position);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check every corner of the map in search of enemies
+        /// </summary>
+        private void FindEnemies() {
+            foreach (var positionToCheck in CheckedPositions.Where(kv => !kv.Value).Select(kv => kv.Key)) {
+                CheckedPositions[positionToCheck] = VisibilityTracker.IsVisible(positionToCheck);
+            }
+
+            if (AllLocationsHaveBeenChecked(CheckedPositions)) {
+                ResetCheckedPositions();
+            }
+
+            var armyCenter = StateMachine.Context._mainArmy.GetCenter();
+            if (!StateMachine.Context._canFly) {
+                armyCenter = armyCenter.ClosestWalkable();
+            }
+
+            var notVisiblePositions = CheckedPositions
+                .Where(kv => !kv.Value)
+                .Select(kv => kv.Key)
+                .ToList();
+
+            if (!notVisiblePositions.Any()) {
+                return;
+            }
+
+            var closestNotVisiblePosition = notVisiblePositions
+                .MinBy(position => position.DistanceTo(armyCenter.ToVector2()))
+                .ToVector3();
+
+            foreach (var unit in StateMachine.Context.Army) {
+                unit.Move(closestNotVisiblePosition);
+            }
         }
 
         private void AssignNewTarget() {
@@ -59,18 +129,18 @@ public partial class ArmySupervisor {
             // _armyManager.Army.ForEach(TargetNeutralUnitsModule.Install);
 
             var armyCenter = StateMachine.Context._mainArmy.GetCenter().ClosestWalkable();
-            var nextUncheckedLocations = ExpandAnalyzer.ExpandLocations
-                .Where(expandLocation => !_checkedLocations[expandLocation])
+            var nextReachableUncheckedLocations = ExpandAnalyzer.ExpandLocations
+                .Where(expandLocation => !_checkedExpandLocations[expandLocation])
                 .Where(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation) != null)
                 .ToList();
 
-            if (nextUncheckedLocations.Count == 0) {
-                Logger.Info("<HuntStrategy> could not find a next target, resetting search");
-                InitCheckedLocations();
+            if (nextReachableUncheckedLocations.Count == 0) {
+                Logger.Info("<HuntState> All reachable expands have been checked, resetting search");
+                ResetCheckedExpandLocations();
             }
             else {
-                var nextTarget = nextUncheckedLocations.MinBy(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation).Count);
-                Logger.Info("<HuntStrategy> next target is: {0}", nextTarget);
+                var nextTarget = nextReachableUncheckedLocations.MinBy(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation).Count);
+                Logger.Info("<HuntState> next target is: {0}", nextTarget);
                 StateMachine.Context._target = nextTarget;
                 _isNextTargetSet = true;
             }

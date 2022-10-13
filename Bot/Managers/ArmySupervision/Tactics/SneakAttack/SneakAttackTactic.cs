@@ -108,12 +108,12 @@ public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
     private static IEnumerable<Unit> GetGroundEnemiesInSight(IReadOnlyCollection<Unit> army) {
         return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military)
             .Where(enemy => enemy.IsVisible)
-            .Where(enemy => !enemy.RawUnitData.IsFlying)
+            .Where(enemy => !enemy.IsFlying)
             .Where(enemy => army.Any(soldier => enemy.HorizontalDistanceTo(soldier) <= Math.Max(enemy.UnitTypeData.SightRange, soldier.UnitTypeData.SightRange)));
     }
 
     private static void BurrowOverlings(IEnumerable<Unit> army) {
-        foreach (var soldier in army.Where(soldier => !soldier.RawUnitData.IsBurrowed)) {
+        foreach (var soldier in army.Where(soldier => !soldier.IsBurrowed)) {
             soldier.UseAbility(Abilities.BurrowRoachDown);
         }
     }

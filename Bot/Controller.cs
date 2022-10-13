@@ -539,7 +539,7 @@ public static class Controller {
                 continue;
             }
 
-            if (unit.RawUnitData.Cloak == CloakState.Cloaked && !includeCloaked) {
+            if (unit.IsCloaked && !includeCloaked) {
                 continue;
             }
 

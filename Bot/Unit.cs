@@ -39,6 +39,12 @@ public class Unit: ICanDie, IHavePosition {
     public int InitialMineralCount = int.MaxValue;
     public int InitialVespeneCount = int.MaxValue;
 
+    public bool CanHitAir => UnitTypeData.Weapons.Any(weapon => weapon.Type is Weapon.Types.TargetType.Any or Weapon.Types.TargetType.Air);
+    public bool CanHitGround => UnitTypeData.Weapons.Any(weapon => weapon.Type is Weapon.Types.TargetType.Any or Weapon.Types.TargetType.Ground);
+    public bool IsFlying => RawUnitData.IsFlying;
+    public bool IsBurrowed => RawUnitData.IsBurrowed;
+    public bool IsCloaked => RawUnitData.Cloak == CloakState.Cloaked;
+
     public float MaxRange { get; private set; }
 
     public ulong DeathDelay = 0;
@@ -114,7 +120,7 @@ public class Unit: ICanDie, IHavePosition {
         Position = unit.Pos.ToVector3();
         _buildProgress = unit.BuildProgress;
         Orders = unit.Orders;
-        IsVisible = unit.DisplayType == DisplayType.Visible;
+        IsVisible = unit.DisplayType == DisplayType.Visible; // TODO GD This is not actually visible as in cloaked
         LastSeen = frame;
         Buffs = new HashSet<uint>(unit.BuffIds);
 
@@ -199,7 +205,10 @@ public class Unit: ICanDie, IHavePosition {
     public void TrainUnit(uint unitType, bool queue = false) {
         // TODO GD This should be handled when choosing a producer
         if (!queue && Orders.Count > 0) {
-            Logger.Error("A unit is trying to train another unit, but it already has another order and queue is false");
+            var nameOfUnitToTrain = KnowledgeBase.GetUnitTypeData(unitType).Name;
+            var orders = string.Join(",", Orders.Select(order => order.AbilityId));
+            Logger.Error("A {0} is trying to train {1}, but it already has the orders {2} and queue is false", this, nameOfUnitToTrain, orders);
+
             return;
         }
 

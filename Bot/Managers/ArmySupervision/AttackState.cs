@@ -98,7 +98,7 @@ public partial class ArmySupervisor {
             DrawAttackData(targetToAttack, army);
 
             var unitsToAttackWith = army.Where(unit => unit.IsIdleOrMovingOrAttacking())
-                .Where(unit => !unit.RawUnitData.IsBurrowed)
+                .Where(unit => !unit.IsBurrowed)
                 .Where(unit => unit.HorizontalDistanceTo(targetToAttack) > AcceptableDistanceToTarget)
                 .ToList();
 

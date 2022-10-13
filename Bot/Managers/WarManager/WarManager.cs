@@ -29,10 +29,12 @@ public partial class WarManager: Manager {
     private bool _hasAssaultStarted = false;
     private readonly HashSet<Unit> _soldiers = new HashSet<Unit>();
 
-    private readonly ArmySupervisor _armySupervisor;
+    private readonly ArmySupervisor _groundArmySupervisor = new ArmySupervisor();
+    private readonly ArmySupervisor _airArmySupervisor = new ArmySupervisor();
     private Unit _townHallToDefend;
 
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
+    private bool _terranFinisherInitiated = false;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
@@ -45,12 +47,11 @@ public partial class WarManager: Manager {
         Dispatcher = new WarManagerDispatcher(this);
         Releaser = new WarManagerReleaser(this);
 
-        _armySupervisor = new ArmySupervisor();
-
         _townHallToDefend = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First(townHall => townHall.Position == MapAnalyzer.StartingLocation);
 
         var townHallDefensePosition = GetTownHallDefensePosition(_townHallToDefend.Position, MapAnalyzer.EnemyStartingLocation);
-        _armySupervisor.AssignTarget(townHallDefensePosition, GuardRadius, false);
+        _groundArmySupervisor.AssignTarget(townHallDefensePosition, GuardRadius, false);
+        _airArmySupervisor.AssignTarget(townHallDefensePosition, AttackRadius);
     }
 
     protected override void AssignUnits() {
@@ -73,7 +74,7 @@ public partial class WarManager: Manager {
                 DefendNewTownHalls(enemyPosition);
             }
 
-            if (!_hasAssaultStarted && _armySupervisor.Army.GetForce() >= ForceRequiredBeforeAttacking) {
+            if (!_hasAssaultStarted && _groundArmySupervisor.Army.GetForce() >= ForceRequiredBeforeAttacking) {
                 StartTheAssault(enemyPosition);
             }
 
@@ -82,7 +83,25 @@ public partial class WarManager: Manager {
             }
         }
 
-        _armySupervisor.OnFrame();
+        // TODO GD Send this task to the supervisor instead
+        if (_terranFinisherInitiated && Controller.AvailableSupply < 2) {
+            foreach (var supervisedUnit in _groundArmySupervisor.SupervisedUnits.Where(unit => unit.IsBurrowed)) {
+                supervisedUnit.UseAbility(Abilities.BurrowRoachUp);
+            }
+
+            var unburrowedUnits = _groundArmySupervisor.SupervisedUnits.Where(unit => !unit.IsBurrowed).ToList();
+            if (unburrowedUnits.Count > 0) {
+                var unitToSacrifice = unburrowedUnits[0];
+                foreach (var unburrowedUnit in unburrowedUnits) {
+                    unburrowedUnit.Attack(unitToSacrifice);
+                }
+            }
+        }
+        else {
+            _groundArmySupervisor.OnFrame();
+        }
+
+        _airArmySupervisor.OnFrame();
     }
 
     private void ScanForEndangeredExpands() {
@@ -109,7 +128,7 @@ public partial class WarManager: Manager {
             if (!_rushInProgress) {
                 _rushInProgress = true;
                 // TODO GD We should know which expand to defend and be able to switch
-                _armySupervisor.AssignTarget(GetTownHallDefensePosition(_expandsInDanger.First().Position, MapAnalyzer.EnemyStartingLocation), GuardRadius, false);
+                _groundArmySupervisor.AssignTarget(GetTownHallDefensePosition(_expandsInDanger.First().Position, MapAnalyzer.EnemyStartingLocation), GuardRadius, false);
             }
 
             // TODO GD We should be smarter about how many units we draft
@@ -142,14 +161,14 @@ public partial class WarManager: Manager {
 
         // TODO GD Fallback on other townhalls when destroyed
         if (newTownHallToDefend != default) {
-            _armySupervisor.AssignTarget(GetTownHallDefensePosition(newTownHallToDefend.Position, MapAnalyzer.EnemyStartingLocation), GuardRadius, false);
+            _groundArmySupervisor.AssignTarget(GetTownHallDefensePosition(newTownHallToDefend.Position, MapAnalyzer.EnemyStartingLocation), GuardRadius, false);
             _townHallToDefend = newTownHallToDefend;
         }
     }
 
     private void StartTheAssault(Vector3 enemyPosition) {
         _hasAssaultStarted = true;
-        _armySupervisor.AssignTarget(enemyPosition, AttackRadius);
+        _groundArmySupervisor.AssignTarget(enemyPosition, AttackRadius);
 
         // TODO GD Handle this better
         if (_buildRequests.Count == 0) {
@@ -164,17 +183,41 @@ public partial class WarManager: Manager {
         return pathToThreat[guardDistance];
     }
 
+    // TODO GD Probably need a class for this
+    /// <summary>
+    /// Some Terran will fly their buildings.
+    /// Check if they are basically dead and we should start dealing with the flying buildings.
+    /// </summary>
+    /// <returns>True if we should start handling flying terran buildings</returns>
     private static bool ShouldFinishOffTerran() {
         if (Controller.EnemyRace != Race.Terran) {
             return false;
         }
 
-        // TODO GD check if no more buildings on the ground and all expands visible
-        return true;
+        // We only check once in a while
+        if (Controller.Frame % Controller.SecsToFrames(60) != 0) {
+            return false;
+        }
+
+        if (!ExpandAnalyzer.ExpandLocations.All(VisibilityTracker.IsVisible)) {
+            return false;
+        }
+
+        return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Buildings).All(building => building.IsFlying);
     }
 
+    /// <summary>
+    /// Create anti-air units to deal with terran flying buildings.
+    /// </summary>
     private void FinishOffTerran() {
-        // TODO GD Stop making roaches, kill off roaches for supply, queue a spire and produce corruptors
+        if (_terranFinisherInitiated) {
+            return;
+        }
+
+        _buildRequests.Clear();
+        _buildRequests.Add(new TargetBuildRequest(BuildType.Build, Units.Spire, targetQuantity: 1));
+        _buildRequests.Add(new TargetBuildRequest(BuildType.Train, Units.Corruptor, targetQuantity: 10));
+        _terranFinisherInitiated = true;
     }
 
     public override string ToString() {

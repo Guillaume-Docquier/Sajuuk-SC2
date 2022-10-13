@@ -12,11 +12,10 @@ namespace Bot;
 public class Program {
     private static readonly List<IScenario> Scenarios = new List<IScenario>
     {
-        //new WorkerRushScenario(),
-        //new SpawnObserverScenario(),
+        new FlyingTerranScumScenario(),
     };
 
-    public static readonly IBot Bot = new SajuukBot("2_6_2", scenarios: Scenarios);
+    public static readonly IBot Bot = new SajuukBot("2_7_0", scenarios: Scenarios);
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.CosmicSapphire;
     private const Race OpponentRace = Race.Terran;

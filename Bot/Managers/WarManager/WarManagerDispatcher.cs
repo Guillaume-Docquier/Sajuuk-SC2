@@ -11,7 +11,12 @@ public partial class WarManager {
         public void Dispatch(Unit unit) {
             Logger.Debug("({0}) Dispatched {1}", _manager, unit);
 
-            _manager._armySupervisor.Assign(unit);
+            if (unit.IsFlying) {
+                _manager._airArmySupervisor.Assign(unit);
+            }
+            else {
+                _manager._groundArmySupervisor.Assign(unit);
+            }
         }
     }
 }

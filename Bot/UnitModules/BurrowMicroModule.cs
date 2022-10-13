@@ -34,20 +34,20 @@ public class BurrowMicroModule: UnitModule {
 
         // Detection, abort
         if (DetectionTracker.IsDetected(_unit)) {
-            if (_unit.RawUnitData.IsBurrowed) {
+            if (_unit.IsBurrowed) {
                 _unit.UseAbility(Abilities.BurrowRoachUp);
             }
 
             return;
         }
 
-        if (!_unit.RawUnitData.IsBurrowed && _unit.Integrity <= BurrowDownThreshold) {
+        if (!_unit.IsBurrowed && _unit.Integrity <= BurrowDownThreshold) {
             // Try to burrow down
             if (!GetCollidingUnits(checkUnderground: true).Any()) {
                 _unit.UseAbility(Abilities.BurrowRoachDown);
             }
         }
-        else if (_unit.RawUnitData.IsBurrowed) {
+        else if (_unit.IsBurrowed) {
             // Try to burrow up / flee while healing
             if (_unit.Integrity >= BurrowUpThreshold) {
                 HandleBurrowUp();
@@ -71,8 +71,8 @@ public class BurrowMicroModule: UnitModule {
     private List<Unit> GetCollidingUnits(bool checkUnderground) {
         return UnitsTracker.UnitsByTag.Values
             .Where(otherUnit => !Units.Buildings.Contains(otherUnit.UnitType)) // We don't care about the buildings
-            .Where(otherUnit => !otherUnit.RawUnitData.IsFlying) // Flying units can't collide with ground units
-            .Where(otherUnit => otherUnit.RawUnitData.IsBurrowed == checkUnderground)
+            .Where(otherUnit => !otherUnit.IsFlying) // Flying units can't collide with ground units
+            .Where(otherUnit => otherUnit.IsBurrowed == checkUnderground)
             .Where(otherUnit => otherUnit != _unit)
             .Where(otherUnit => otherUnit.DistanceTo(_unit) < (otherUnit.Radius + _unit.Radius) * 0.90) // Some overlap is possible
             .ToList();

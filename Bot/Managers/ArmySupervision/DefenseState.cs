@@ -13,9 +13,15 @@ public partial class ArmySupervisor {
         private const float AcceptableDistanceToTarget = 3;
 
         protected override bool TryTransitioning() {
-            if (StateMachine.Context._canHuntTheEnemy && UnitsTracker.EnemyUnits.All(enemy => enemy.RawUnitData.IsFlying)) { // TODO GD Handle air units
-                StateMachine.TransitionTo(new HuntState());
-                return true;
+            if (StateMachine.Context._canHuntTheEnemy) {
+                var remainingUnits = UnitsTracker.EnemyUnits
+                    .Where(unit => !unit.IsCloaked)
+                    .Where(unit => StateMachine.Context._canHitAirUnits || !unit.IsFlying);
+
+                if (!remainingUnits.Any()) {
+                    StateMachine.TransitionTo(new HuntState());
+                    return true;
+                }
             }
 
             return false;
@@ -24,7 +30,7 @@ public partial class ArmySupervisor {
         protected override void Execute() {
             DrawArmyData(StateMachine.Context._mainArmy);
 
-            Defend(StateMachine.Context._target, StateMachine.Context._mainArmy, StateMachine.Context._blastRadius);
+            Defend(StateMachine.Context._target, StateMachine.Context._mainArmy, StateMachine.Context._blastRadius, StateMachine.Context._canHitAirUnits);
             Rally(StateMachine.Context._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
         }
 
@@ -41,7 +47,7 @@ public partial class ArmySupervisor {
                 worldPos: soldiers.GetCenter().Translate(1f, 1f).ToPoint());
         }
 
-        private static void Defend(Vector3 targetToDefend, IReadOnlyCollection<Unit> soldiers, float defenseRadius) {
+        private static void Defend(Vector3 targetToDefend, IReadOnlyCollection<Unit> soldiers, float defenseRadius, bool canHitAirUnits) {
             if (soldiers.Count <= 0) {
                 return;
             }
@@ -52,14 +58,15 @@ public partial class ArmySupervisor {
             Program.GraphicalDebugger.AddTextGroup(new[] { "Defend", $"Radius: {defenseRadius}" }, worldPos: targetToDefend.ToPoint());
 
             var targetList = UnitsTracker.EnemyUnits
-                .Where(enemy => !enemy.RawUnitData.IsFlying) // TODO GD Some units should hit these
+                .Where(unit => !unit.IsCloaked)
+                .Where(unit => canHitAirUnits || !unit.IsFlying)
                 .Where(enemy => enemy.HorizontalDistanceTo(targetToDefend) < defenseRadius)
                 .OrderBy(enemy => enemy.HorizontalDistanceTo(targetToDefend))
                 .ToList();
 
             if (targetList.Any()) {
                 soldiers.Where(unit => unit.IsIdleOrMovingOrAttacking())
-                    .Where(unit => !unit.RawUnitData.IsBurrowed)
+                    .Where(unit => !unit.IsBurrowed)
                     .ToList()
                     .ForEach(soldier => {
                         var closestEnemy = targetList.Take(5).OrderBy(enemy => enemy.HorizontalDistanceTo(soldier)).First();

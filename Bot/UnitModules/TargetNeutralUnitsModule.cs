@@ -21,7 +21,7 @@ public class TargetNeutralUnitsModule: UnitModule {
 
     protected override void DoExecute() {
         var enemyUnitsInRange = UnitsTracker.EnemyUnits
-            .Where(enemy => !enemy.RawUnitData.IsFlying)
+            .Where(enemy => !enemy.IsFlying)
             .Where(enemy => enemy.HorizontalDistanceTo(_unit.Position) <= _unit.UnitTypeData.SightRange);
 
         if (enemyUnitsInRange.Any()) {
@@ -29,7 +29,7 @@ public class TargetNeutralUnitsModule: UnitModule {
         }
 
         var neutralUnitInRange = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.Destructibles)
-            .Where(neutralUnit => !neutralUnit.RawUnitData.IsFlying)
+            .Where(neutralUnit => !neutralUnit.IsFlying)
             .FirstOrDefault(neutralUnit => neutralUnit.HorizontalDistanceTo(_unit.Position) <= _unit.UnitTypeData.SightRange);
 
         if (neutralUnitInRange != null) {

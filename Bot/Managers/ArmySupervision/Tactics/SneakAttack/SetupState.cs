@@ -109,7 +109,7 @@ public partial class SneakAttackTactic {
 
         private void MoveArmyIntoPosition() {
             foreach (var soldier in StateMachine.Context._army) {
-                if (!soldier.RawUnitData.IsBurrowed) {
+                if (!soldier.IsBurrowed) {
                     soldier.UseAbility(Abilities.BurrowRoachDown);
                 }
                 else {

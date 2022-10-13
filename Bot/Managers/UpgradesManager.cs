@@ -47,6 +47,10 @@ public class UpgradesManager : Manager {
         AttemptResearchTier3(roachCount);
     }
 
+    public override string ToString() {
+        return "UpgradesManager";
+    }
+
     private void AttemptResearchTier1(int roachCount) {
         if (_requestedUpgrades.Contains(Upgrades.ZergGroundArmorsLevel1)) {
             return;
