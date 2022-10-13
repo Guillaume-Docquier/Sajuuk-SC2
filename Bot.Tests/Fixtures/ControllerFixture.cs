@@ -4,7 +4,7 @@ using Bot.GameData;
 namespace Bot.Tests.Fixtures;
 
 // ReSharper disable once ClassNeverInstantiated.Global
-public class ControllerFixture {
+public class ControllerFixture : IDisposable {
     public ControllerFixture() {
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo();
         Controller.NewGameInfo(gameInfo);
@@ -12,5 +12,9 @@ public class ControllerFixture {
         var startingTownHall = TestUtils.CreateUnit(Units.Hatchery, position: new Vector3(0, 0, 0));
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: new List<Unit> { startingTownHall });
         Controller.NewObservation(observation);
+    }
+
+    public void Dispose() {
+        Controller.Reset();
     }
 }

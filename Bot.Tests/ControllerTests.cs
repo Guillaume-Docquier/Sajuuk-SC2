@@ -6,11 +6,18 @@ using SC2APIProtocol;
 namespace Bot.Tests;
 
 [Collection("Sequential")]
-public class ControllerTests : IClassFixture<KnowledgeBaseFixture> {
+public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IDisposable {
+    public ControllerTests() {
+        Controller.Reset();
+    }
+
+    public void Dispose() {
+        Controller.Reset();
+    }
+
     [Fact]
     public void GivenNullObservation_WhenNewGameInfo_DoesNotSetEnemyRace() {
         // Arrange
-        Controller.Reset();
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo();
 
         // Act
@@ -26,8 +33,6 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture> {
     [InlineData(Race.Protoss, Race.Zerg)]
     public void GivenPlayersWithDistinctRaces_WhenNewGameInfo_SetsEnemyRace(Race playerRace, Race enemyRace) {
         // Arrange
-        Controller.Reset();
-
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
         Controller.NewGameInfo(gameInfo);
 
@@ -48,8 +53,6 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture> {
     [InlineData(Race.Zerg, Race.Zerg)]
     public void GivenPlayersWithSameRaces_WhenNewGameInfo_SetsEnemyRace(Race playerRace, Race enemyRace) {
         // Arrange
-        Controller.Reset();
-
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
         Controller.NewGameInfo(gameInfo);
 
@@ -67,8 +70,6 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture> {
     [Fact]
     public void GivenEnemyRandomRaceAndNoVisibleUnits_WhenNewGameInfo_ThenSetsRaceToRandom() {
         // Arrange
-        Controller.Reset();
-
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
         Controller.NewGameInfo(gameInfo);
 
@@ -95,8 +96,6 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture> {
     [MemberData(nameof(EnemyRandomRaceAndVisibleUnitsTestData))]
     public void GivenEnemyRandomRaceAndVisibleUnits_WhenNewGameInfo_ThenResolvesEnemyRace(IEnumerable<Unit> units, Race expectedRace) {
         // Arrange
-        Controller.Reset();
-
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
         Controller.NewGameInfo(gameInfo);
 
