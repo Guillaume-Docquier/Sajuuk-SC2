@@ -1,12 +1,15 @@
 ![GitHub](https://img.shields.io/github/license/guillaume-docquier/Sajuuk-SC2?color=blue&label=License)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/Guillaume-Docquier/Sajuuk-SC2?label=Latest)
 [![Unit Tests](https://github.com/Guillaume-Docquier/Sajuuk-SC2/actions/workflows/dotnet.yml/badge.svg)](https://github.com/Guillaume-Docquier/Sajuuk-SC2/actions/workflows/dotnet.yml)
+[![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UC_KAanPGVoL4Ppz2FORKoqA?style=social)](https://www.youtube.com/channel/UC_KAanPGVoL4Ppz2FORKoqA)
 
 # Sajuuk-SC2
 Sajuuk is a homemade StarCraft 2 Zerg bot playing a 2 bases Roach all in.  
 Kickstarted using [NikEyX/SC2-CSharpe-Starterkit](https://github.com/NikEyX/SC2-CSharpe-Starterkit)
 
-It features:
+Want to see it in action or learn more about Sajuuk? Check out [Artificially Intelligent](https://www.youtube.com/channel/UC_KAanPGVoL4Ppz2FORKoqA), my YouTube channel!
+
+## Features
 
 - Roach low life burrow and flee
 - Army burrow sneak attack
@@ -19,4 +22,4 @@ It features:
 - Automatic upgrades
 - Hunting Terran flying buildings
 - Region analysis including expand locations, ramps and choke points
-- Enemy unit position memory
+- Remembering enemy units in the fog of war
