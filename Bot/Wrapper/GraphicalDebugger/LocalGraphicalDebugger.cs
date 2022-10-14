@@ -144,5 +144,11 @@ public class LocalGraphicalDebugger: IGraphicalDebugger {
             size: 13,
             worldPos: unit.Position.Translate(zTranslation: unit.Radius * 1.25f).ToPoint()
         );
+
+        if (unit.IsFlying) {
+            var groundPosition = unit.Position.WithWorldHeight();
+            Program.GraphicalDebugger.AddLine(unit.Position, groundPosition, color ?? Colors.White);
+            Program.GraphicalDebugger.AddGridSphere(groundPosition, color ?? Colors.White);
+        }
     }
 }

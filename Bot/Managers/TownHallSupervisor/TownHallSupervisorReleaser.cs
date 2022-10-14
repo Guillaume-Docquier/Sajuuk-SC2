@@ -96,9 +96,7 @@ public partial class TownHallSupervisor {
 
             UnitModule.Uninstall<DebugLocationModule>(gas);
             var uselessExtractor = UnitModule.Uninstall<CapacityModule>(gas).AssignedUnits.FirstOrDefault();
-            if (uselessExtractor != null) {
-                ReleaseExtractor(uselessExtractor); // TODO GD Release or change capacity to 0?
-            }
+            uselessExtractor?.Supervisor.Release(uselessExtractor);
         }
 
         private void ReleaseExtractor(Unit extractor) {

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -74,9 +75,9 @@ public sealed partial class EconomyManager {
         private bool DispatchWorker(Unit worker) {
             var supervisor = _manager.GetClosestSupervisorWithIdealCapacityNotMet(worker.Position);
             supervisor ??= _manager.GetClosestSupervisorWithSaturatedCapacityNotMet(worker.Position);
-            supervisor ??= _manager.GetSupervisorWithHighestAvailableCapacity();
 
             if (supervisor == null) {
+                Program.GraphicalDebugger.AddText("!", color: Colors.Red, worldPos: worker.Position.ToPoint(yOffset: worker.Radius));
                 return false;
             }
 

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Bot.ExtensionMethods;
+using Bot.Wrapper;
 
 namespace Bot.UnitModules;
 
@@ -24,7 +25,14 @@ public class CapacityModule: UnitModule, IWatchUnitsDie {
     }
 
     protected override void DoExecute() {
-        Program.GraphicalDebugger.AddText(AssignedUnits.Count.ToString(), worldPos: _unit.Position.ToPoint());
+        var color = AvailableCapacity switch
+        {
+            > 0 => Colors.Green,
+              0 => Colors.Yellow,
+            < 0 => Colors.Red,
+        };
+
+        Program.GraphicalDebugger.AddText($"{AssignedUnits.Count}/{_maxCapacity}", color: color, worldPos: _unit.Position.ToPoint(xOffset: -0.2f));
     }
 
     public void ReportUnitDeath(Unit deadUnit) {

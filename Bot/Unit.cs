@@ -151,6 +151,7 @@ public class Unit: ICanDie, IHavePosition {
         return Position.GetRegion();
     }
 
+    // TODO GD Make sure to cancel any other order and prevent orders to be added for this frame
     public void Stop() {
         if (Orders.Any()) {
             ProcessAction(ActionBuilder.Stop(Tag));

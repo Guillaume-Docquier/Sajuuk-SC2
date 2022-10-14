@@ -20,12 +20,13 @@ public sealed partial class EconomyManager: Manager {
 
     private int _creepQueensCount = 1;
 
+    private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, quantity: 0);
     private readonly BuildRequest _macroHatchBuildRequest = new TargetBuildRequest(BuildType.Build, Units.Hatchery, targetQuantity: 0);
     private readonly BuildRequest _queenBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Queen, targetQuantity: 0);
     private readonly BuildRequest _dronesBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Drone, targetQuantity: 0);
-    private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>();
+    private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
 
-    public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildStepRequests.Select(buildRequest => buildRequest.Fulfillment)
+    public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment)
         .Concat(_townHallSupervisors.SelectMany(supervisor => supervisor.BuildFulfillments));
 
     protected override IAssigner Assigner { get; }
@@ -39,9 +40,10 @@ public sealed partial class EconomyManager: Manager {
 
         _macroHatchBuildRequest.Requested = _townHalls.Count; // TODO GD Need to differentiate macro and mining bases
 
-        _buildStepRequests.Add(_macroHatchBuildRequest);
-        _buildStepRequests.Add(_queenBuildRequest);
-        _buildStepRequests.Add(_dronesBuildRequest);
+        _buildRequests.Add(_expandBuildRequest);
+        _buildRequests.Add(_macroHatchBuildRequest);
+        _buildRequests.Add(_queenBuildRequest);
+        _buildRequests.Add(_dronesBuildRequest);
     }
 
     protected override void AssignUnits() {
@@ -69,6 +71,10 @@ public sealed partial class EconomyManager: Manager {
     protected override void Manage() {
         foreach (var townHallSupervisor in _townHallSupervisors) {
             townHallSupervisor.OnFrame();
+        }
+
+        if (ShouldExpand()) {
+            _expandBuildRequest.Requested += 1;
         }
 
         if (ShouldBuildExtraMacroHatch()) {
@@ -117,10 +123,6 @@ public sealed partial class EconomyManager: Manager {
             .MinBy(manager => manager.TownHall.DistanceTo(position));
     }
 
-    private TownHallSupervisor GetSupervisorWithHighestAvailableCapacity() {
-        return GetAvailableSupervisors().MaxBy(manager => manager.SaturatedAvailableCapacity);
-    }
-
     private TownHallSupervisor GetClosestSupervisorWithNoQueen(Unit queen) {
         return GetAvailableSupervisors()
             .OrderBy(manager => manager.TownHall.DistanceTo(queen))
@@ -129,6 +131,29 @@ public sealed partial class EconomyManager: Manager {
 
     private IEnumerable<TownHallSupervisor> GetAvailableSupervisors() {
         return _townHallSupervisors.Where(manager => manager.TownHall.IsOperational);
+    }
+
+    /// <summary>
+    /// Determines if an expand should be requested.
+    /// Will return true if there are idle workers and no other expansion has been requested or is in progress
+    /// </summary>
+    /// <returns>True if an expand should be requested</returns>
+    private bool ShouldExpand() {
+        if (_workers.All(worker => worker.Supervisor != null)) {
+            return false;
+        }
+
+        // TODO GD We could request 2 if we have a lot of idle workers
+        if (_expandBuildRequest.Fulfillment.Remaining > 0) {
+            return false;
+        }
+
+        // TODO GD Don't consider only macro hatches
+        if (GetTownHallsInConstruction().Any()) {
+            return false;
+        }
+
+        return true;
     }
 
     ////////////////////////////////

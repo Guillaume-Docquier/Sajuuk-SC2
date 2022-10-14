@@ -15,7 +15,7 @@ public class Program {
         new FlyingTerranScumScenario(),
     };
 
-    private static readonly IBot Bot = new SajuukBot("2_7_0", scenarios: Scenarios);
+    private static readonly IBot Bot = new SajuukBot("2_8_0", scenarios: Scenarios);
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.CosmicSapphire;
     private const Race OpponentRace = Race.Terran;

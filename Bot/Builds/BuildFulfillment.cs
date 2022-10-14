@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Bot.GameData;
 using Bot.GameSense;
 
 namespace Bot.Builds;
@@ -49,8 +50,13 @@ public class TargetFulfillment: BuildFulfillment {
                 return Controller.ResearchedUpgrades.Contains(BuildRequest.UnitOrUpgradeType) || Controller.IsResearchInProgress(BuildRequest.UnitOrUpgradeType) ? 1 : 0;
             }
 
-            return Controller.GetUnits(UnitsTracker.OwnedUnits, BuildRequest.UnitOrUpgradeType).Count()
-                   + Controller.GetProducersCarryingOrders(BuildRequest.UnitOrUpgradeType).Count();
+            var existingUnitsOrBuildings = Controller.GetUnits(UnitsTracker.OwnedUnits, BuildRequest.UnitOrUpgradeType);
+            if (Units.Extractors.Contains(BuildRequest.UnitOrUpgradeType)) {
+                // Ignore extractors that are not assigned to a townhall. This way we can target X working extractors
+                existingUnitsOrBuildings = existingUnitsOrBuildings.Where(extractor => extractor.Supervisor != null);
+            }
+
+            return existingUnitsOrBuildings.Count() + Controller.GetProducersCarryingOrders(BuildRequest.UnitOrUpgradeType).Count();
         }
     }
 
