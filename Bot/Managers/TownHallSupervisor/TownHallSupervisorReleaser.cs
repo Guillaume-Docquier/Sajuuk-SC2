@@ -96,7 +96,10 @@ public partial class TownHallSupervisor {
 
             UnitModule.Uninstall<DebugLocationModule>(gas);
             var uselessExtractor = UnitModule.Uninstall<CapacityModule>(gas).AssignedUnits.FirstOrDefault();
-            uselessExtractor?.Supervisor.Release(uselessExtractor);
+
+            // TODO GD When the TH dies, the extractor is released, then the gas so here the Supervisor is null
+            // Should this be the way?
+            uselessExtractor?.Supervisor?.Release(uselessExtractor);
         }
 
         private void ReleaseExtractor(Unit extractor) {
