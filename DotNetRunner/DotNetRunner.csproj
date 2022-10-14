@@ -5,8 +5,8 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AssemblyName>Sajuuk-debug-performance-timings</AssemblyName>
-        <RootNamespace>Sajuuk-debug-performance-timings</RootNamespace>
+        <AssemblyName>Sajuuk</AssemblyName>
+        <RootNamespace>Sajuuk</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
