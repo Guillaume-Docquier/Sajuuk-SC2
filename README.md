@@ -12,8 +12,11 @@ It features:
 - Army burrow sneak attack
 - Creep spreading
 - Macro hatcheries and expansions
-- Worker split
+- Perfect worker split
 - Speed mining
-- Replace destroyed buildings (but not expands)
+- Replace destroyed buildings
 - Simple rush countermeasures
 - Automatic upgrades
+- Hunting Terran flying buildings
+- Region analysis including expand locations, ramps and choke points
+- Enemy unit position memory
