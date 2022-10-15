@@ -138,6 +138,10 @@ public static class Controller {
     }
 
     public static void AccumulateObservation(ResponseObservation observation) {
+        foreach (var chat in observation.Chat) {
+            ChatLog.Add(chat.Message);
+        }
+
         ThoseWhoNeedAccumulating.ForEach(needAccumulating => needAccumulating.Accumulate(observation));
     }
 
@@ -153,11 +157,6 @@ public static class Controller {
         ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Update(Observation));
 
         Actions.Clear();
-
-        // This doesn't work? I don't really care but it would be nice if it did
-        foreach (var chat in Observation.Chat) {
-            ChatLog.Add(chat.Message);
-        }
 
         CurrentSupply = Observation.Observation.PlayerCommon.FoodUsed;
         var hasOddAmountOfZerglings = UnitsTracker.OwnedUnits.Count(unit => unit.UnitType == Units.Zergling) % 2 == 1;

@@ -13,6 +13,7 @@ public abstract class PoliteBot: IBot {
     private readonly string _version;
     private readonly List<IScenario> _scenarios;
     private bool _greetDone = false;
+    private bool _admittedDefeat = false;
 
     public abstract string Name { get; }
 
@@ -52,10 +53,9 @@ public abstract class PoliteBot: IBot {
 
     private void EnsureGG() {
         var structures = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Buildings).ToList();
-        if (structures.Count == 1 && structures.First().Integrity < 0.4) {
-            if (!Controller.ChatLog.Contains("gg wp")) {
-                // Controller.Chat("gg wp");
-            }
+        if (!_admittedDefeat && structures.Count == 1 && structures.First().Integrity < 0.4) {
+            Controller.Chat("gg wp");
+            _admittedDefeat = true;
         }
     }
 

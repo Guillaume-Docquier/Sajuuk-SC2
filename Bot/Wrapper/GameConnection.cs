@@ -188,7 +188,7 @@ public class GameConnection {
                 AbilityId = true,
                 BuffId = true,
                 EffectId = true,
-                UpgradeId = true
+                UpgradeId = true,
             }
         };
         var dataResponse = await SendRequest(dataRequest);
