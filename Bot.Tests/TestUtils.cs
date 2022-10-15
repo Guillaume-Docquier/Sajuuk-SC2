@@ -1,9 +1,8 @@
 ﻿using System.Numerics;
 using Bot.Builds;
 using Bot.ExtensionMethods;
+using Bot.GameData;
 using Bot.Managers;
-using Google.Protobuf;
-using Google.Protobuf.Collections;
 using SC2APIProtocol;
 
 namespace Bot.Tests;
@@ -11,17 +10,42 @@ namespace Bot.Tests;
 public static class TestUtils {
     private static ulong _currentTag = 0;
 
-    public static Unit CreateUnit(uint unitType, uint frame = 0, Alliance alliance = Alliance.Self, Vector3 position = default) {
+    public static SC2APIProtocol.Unit CreateUnitRaw(
+        uint unitType,
+        Alliance alliance = Alliance.Self,
+        Vector3 position = default,
+        int vespeneContents = 0,
+        float buildProgress = 1f
+    ) {
+        if (Units.MineralFields.Contains(unitType) || Units.GasGeysers.Contains(unitType)) {
+            alliance = Alliance.Neutral;
+        }
+
         var rawUnit = new SC2APIProtocol.Unit
         {
             Tag = _currentTag,
             UnitType = unitType,
             Alliance = alliance,
             Pos = position.ToPoint(),
+            VespeneContents = vespeneContents,
+            BuildProgress = buildProgress,
         };
 
         // Just make sure to never collide
         _currentTag++;
+
+        return rawUnit;
+    }
+
+    public static Unit CreateUnit(
+        uint unitType,
+        uint frame = 0,
+        Alliance alliance = Alliance.Self,
+        Vector3 position = default,
+        int vespeneContents = 0,
+        float buildProgress = 1f
+    ) {
+        var rawUnit = CreateUnitRaw(unitType, alliance, position, vespeneContents, buildProgress);
 
         return new Unit(rawUnit, frame);
     }

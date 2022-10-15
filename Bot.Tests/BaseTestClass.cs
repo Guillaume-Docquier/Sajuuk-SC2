@@ -1,4 +1,6 @@
-﻿using Bot.Tests.Fixtures;
+﻿using System.Numerics;
+using Bot.GameData;
+using Bot.Tests.Fixtures;
 
 namespace Bot.Tests;
 
@@ -11,4 +13,27 @@ public class BaseTestClass :
     IClassFixture<LoggerFixture>,
     IClassFixture<KnowledgeBaseFixture>,
     IClassFixture<GraphicalDebuggerFixture>,
-    IClassFixture<ControllerFixture> {}
+    IDisposable {
+    protected BaseTestClass() {
+        ControllerSetup();
+    }
+
+    public void Dispose() {
+        ControllerTearDown();
+    }
+
+    private static void ControllerSetup() {
+        Controller.Reset();
+
+        var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo();
+        Controller.NewGameInfo(gameInfo);
+
+        var startingTownHall = TestUtils.CreateUnit(Units.Hatchery, position: new Vector3(0, 0, 0));
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: new List<Unit> { startingTownHall });
+        Controller.NewObservation(observation);
+    }
+
+    private static void ControllerTearDown() {
+        Controller.Reset();
+    }
+}

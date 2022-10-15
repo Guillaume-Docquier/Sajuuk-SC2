@@ -27,6 +27,7 @@
 
     <ItemGroup>
       <Folder Include="Data" />
+      <Folder Include="Managers\EconomyManager" />
     </ItemGroup>
 
     <ItemGroup>

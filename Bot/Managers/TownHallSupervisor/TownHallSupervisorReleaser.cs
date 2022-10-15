@@ -77,7 +77,7 @@ public partial class TownHallSupervisor {
         private void ReleaseMineral(Unit mineral) {
             LogRelease(mineral);
 
-            mineral.RemoveDeathWatcher(_supervisor); // TODO GD Should have a mechanism to track deathwatch for safer/easier cleaning
+            mineral.RemoveDeathWatcher(_supervisor);
 
             _supervisor._minerals.Remove(mineral);
 
@@ -95,11 +95,9 @@ public partial class TownHallSupervisor {
             _supervisor._gasses.Remove(gas);
 
             UnitModule.Uninstall<DebugLocationModule>(gas);
-            var uselessExtractor = UnitModule.Uninstall<CapacityModule>(gas).AssignedUnits.FirstOrDefault();
 
-            // TODO GD When the TH dies, the extractor is released, then the gas so here the Supervisor is null
-            // Should this be the way?
-            uselessExtractor?.Supervisor?.Release(uselessExtractor);
+            var uselessExtractor = UnitModule.Uninstall<CapacityModule>(gas).AssignedUnits.FirstOrDefault();
+            uselessExtractor?.Supervisor.Release(uselessExtractor);
         }
 
         private void ReleaseExtractor(Unit extractor) {

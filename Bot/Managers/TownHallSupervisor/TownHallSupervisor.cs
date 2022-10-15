@@ -95,11 +95,11 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
             Release(Queen);
         }
 
-        foreach (var worker in _workers) Release(worker);
-        foreach (var extractor in _extractors) Release(extractor);
-
         foreach (var mineral in _minerals) Release(mineral);
         foreach (var gas in _gasses) Release(gas);
+
+        foreach (var worker in _workers) Release(worker);
+        foreach (var extractor in _extractors) Release(extractor);
 
         Logger.Debug("({0}) Retired", this);
     }

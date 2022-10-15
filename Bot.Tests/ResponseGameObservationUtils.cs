@@ -1,12 +1,14 @@
-﻿using Bot.ExtensionMethods;
-using Bot.MapKnowledge;
-using Google.Protobuf;
+﻿using Bot.MapKnowledge;
 using SC2APIProtocol;
 
 namespace Bot.Tests;
 
 public static class ResponseGameObservationUtils {
     public static ResponseObservation CreateResponseObservation(IEnumerable<Unit>? units = null, uint frame = 0) {
+        return CreateResponseObservation(units?.Select(unit => unit.RawUnitData), frame);
+    }
+
+    public static ResponseObservation CreateResponseObservation(IEnumerable<SC2APIProtocol.Unit>? units = null, uint frame = 0) {
         var visibility = Enumerable.Repeat(true, MapAnalyzer.MaxX * MapAnalyzer.MaxY).ToList();
 
         var responseObservation = new ResponseObservation
@@ -37,19 +39,9 @@ public static class ResponseGameObservationUtils {
         };
 
         if (units != null) {
-            responseObservation.Observation.RawData.Units.AddRange(units.Select(ToSc2ApiProtocolUnit));
+            responseObservation.Observation.RawData.Units.AddRange(units);
         }
 
         return responseObservation;
-    }
-
-    private static SC2APIProtocol.Unit ToSc2ApiProtocolUnit(Unit unit) {
-        return new SC2APIProtocol.Unit
-        {
-            Tag = unit.Tag,
-            UnitType = unit.UnitType,
-            Alliance = unit.Alliance,
-            Pos = unit.Position.ToPoint(),
-        };
     }
 }
