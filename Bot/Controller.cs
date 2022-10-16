@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using Bot.Builds;
+using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -56,15 +57,18 @@ public static class Controller {
 
     private static readonly List<INeedAccumulating> ThoseWhoNeedAccumulating = new List<INeedAccumulating>
     {
+        ChatTracker.Instance,
         UnitsTracker.Instance,
     };
 
     private static readonly List<INeedUpdating> ThoseWhoNeedUpdating = new List<INeedUpdating>
     {
+        ChatTracker.Instance,           // Depends on nothing
         CreepTracker.Instance,          // Depends on nothing
         VisibilityTracker.Instance,     // Depends on nothing
 
         UnitsTracker.Instance,          // Depends on VisibilityTracker
+        DebuggingFlagsTracker.Instance, // Depends on ChatTracker
 
         EnemyStrategyTracker.Instance,  // Depends on UnitsTracker
         MapAnalyzer.Instance,           // Depends on UnitsTracker and VisibilityTracker
@@ -141,11 +145,6 @@ public static class Controller {
     }
 
     public static void AccumulateObservation(ResponseObservation observation) {
-        // TODO GD Split to know who said what when
-        foreach (var chat in observation.Chat) {
-            ChatLog.Add(chat.Message);
-        }
-
         ThoseWhoNeedAccumulating.ForEach(needAccumulating => needAccumulating.Accumulate(observation));
     }
 
