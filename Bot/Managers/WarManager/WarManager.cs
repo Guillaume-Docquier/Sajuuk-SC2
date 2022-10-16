@@ -62,7 +62,6 @@ public partial class WarManager: Manager {
         Dispatch(_soldiers.Where(soldier => soldier.Supervisor == null));
     }
 
-    // TODO GD Use multiple supervisors, probably
     protected override void Manage() {
         ScanForEndangeredExpands();
 

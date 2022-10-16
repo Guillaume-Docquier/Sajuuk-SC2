@@ -7,6 +7,7 @@ using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.GameSense.EnemyStrategyTracking;
 using Bot.Managers;
 using Bot.MapKnowledge;
 using Bot.Wrapper;
@@ -60,17 +61,19 @@ public static class Controller {
 
     private static readonly List<INeedUpdating> ThoseWhoNeedUpdating = new List<INeedUpdating>
     {
-        VisibilityTracker.Instance, // Depends on nothing
-        CreepTracker.Instance, // Depends on nothing
+        CreepTracker.Instance,          // Depends on nothing
+        VisibilityTracker.Instance,     // Depends on nothing
 
-        UnitsTracker.Instance, // Depends on VisibilityTracker
-        MapAnalyzer.Instance, // Depends on UnitsTracker and VisibilityTracker
+        UnitsTracker.Instance,          // Depends on VisibilityTracker
 
-        ExpandAnalyzer.Instance, // Depends on UnitsTracker and MapAnalyzer
-        BuildingTracker.Instance, // Depends on UnitsTracker and MapAnalyzer
-        RegionAnalyzer.Instance, // Depends on ExpandAnalyzer and MapAnalyzer
+        EnemyStrategyTracker.Instance,  // Depends on UnitsTracker
+        MapAnalyzer.Instance,           // Depends on UnitsTracker and VisibilityTracker
 
-        RegionTracker.Instance, // Depends on UnitsTracker, VisibilityTracker, RegionAnalyzer and MapAnalyzer
+        BuildingTracker.Instance,       // Depends on UnitsTracker and MapAnalyzer
+        ExpandAnalyzer.Instance,        // Depends on UnitsTracker and MapAnalyzer
+        RegionAnalyzer.Instance,        // Depends on ExpandAnalyzer and MapAnalyzer
+
+        RegionTracker.Instance,         // Depends on VisibilityTracker, UnitsTracker, MapAnalyzer and RegionAnalyzer
     };
 
     public static void Reset() {
@@ -138,6 +141,7 @@ public static class Controller {
     }
 
     public static void AccumulateObservation(ResponseObservation observation) {
+        // TODO GD Split to know who said what when
         foreach (var chat in observation.Chat) {
             ChatLog.Add(chat.Message);
         }

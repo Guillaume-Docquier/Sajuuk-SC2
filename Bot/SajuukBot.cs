@@ -4,6 +4,7 @@ using Bot.Builds;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers;
+using Bot.Managers.ScoutManagement;
 using Bot.Scenarios;
 using SC2APIProtocol;
 
@@ -58,13 +59,12 @@ public class SajuukBot: PoliteBot {
     }
 
     private void InitManagers() {
+        _managers.Add(new ScoutManager());
         _managers.Add(new EconomyManager());
         _managers.Add(new WarManager());
         _managers.Add(new CreepManager());
         _managers.Add(new UpgradesManager());
     }
-
-
 
     private void FollowBuildOrder() {
         foreach (var buildStep in RemainingBuildOrder) {

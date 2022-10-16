@@ -3,17 +3,13 @@
 namespace Bot.Managers;
 
 public partial class WarManager {
-    private class WarManagerAssigner: IAssigner {
-        private readonly WarManager _manager;
+    private class WarManagerAssigner: Assigner<WarManager> {
+        public WarManagerAssigner(WarManager client) : base(client) {}
 
-        public WarManagerAssigner(WarManager manager) {
-            _manager = manager;
-        }
+        public override void Assign(Unit unit) {
+            Logger.Debug("({0}) Assigned {1}", Client, unit);
 
-        public void Assign(Unit unit) {
-            Logger.Debug("({0}) Assigned {1}", _manager, unit);
-
-            _manager._soldiers.Add(unit);
+            Client._soldiers.Add(unit);
             ChangelingTargetingModule.Install(unit);
         }
     }
