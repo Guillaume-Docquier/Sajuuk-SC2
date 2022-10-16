@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.ArmySupervision.Tactics;
 using Bot.MapKnowledge;
 using Bot.StateManagement;
-using Bot.Wrapper;
 using SneakAttackTactic = Bot.Managers.ArmySupervision.Tactics.SneakAttack.SneakAttackTactic;
 
 namespace Bot.Managers.ArmySupervision;

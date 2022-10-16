@@ -1,5 +1,5 @@
-﻿using Bot.ExtensionMethods;
-using Bot.Wrapper;
+﻿using Bot.Debugging.GraphicalDebugging;
+using Bot.ExtensionMethods;
 using SC2APIProtocol;
 
 namespace Bot.UnitModules;

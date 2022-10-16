@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using Bot.ExtensionMethods;
 
 namespace Bot.Managers.ScoutManagement;
 

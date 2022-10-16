@@ -2,7 +2,7 @@
 using System.Numerics;
 using SC2APIProtocol;
 
-namespace Bot.Wrapper;
+namespace Bot.Debugging.GraphicalDebugging;
 
 /// <summary>
 /// The LadderGraphicalDebugger is essentially a void GraphicalDebugger because on the ladder, we cannot see the screen.

@@ -1,8 +1,8 @@
 ﻿using System.Linq;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.Managers;
-using Bot.Wrapper;
 
 namespace Bot.UnitModules;
 

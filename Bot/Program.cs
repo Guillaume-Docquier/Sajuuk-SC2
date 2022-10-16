@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.MapKnowledge;
 using Bot.Scenarios;
 using Bot.Wrapper;

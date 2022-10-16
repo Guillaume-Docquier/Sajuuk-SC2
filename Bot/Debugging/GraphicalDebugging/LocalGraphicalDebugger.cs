@@ -3,9 +3,10 @@ using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.MapKnowledge;
+using Bot.Wrapper;
 using SC2APIProtocol;
 
-namespace Bot.Wrapper;
+namespace Bot.Debugging.GraphicalDebugging;
 
 /// <summary>
 /// Implements all sorts of graphical shapes to help in local debugging.

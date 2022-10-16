@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
-using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot.Managers;

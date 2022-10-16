@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
-using Bot.Wrapper;
 
 namespace Bot.UnitModules;
 

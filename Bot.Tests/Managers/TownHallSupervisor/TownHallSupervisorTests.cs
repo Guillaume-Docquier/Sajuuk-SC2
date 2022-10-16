@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.Wrapper;
 
 namespace Bot.Tests.Managers.TownHallSupervisor;
 

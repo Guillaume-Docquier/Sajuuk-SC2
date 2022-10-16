@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.MapKnowledge;
 using Bot.Wrapper;

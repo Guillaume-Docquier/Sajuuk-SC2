@@ -2,7 +2,7 @@
 using System.Linq;
 using SC2APIProtocol;
 
-namespace Bot.Wrapper;
+namespace Bot.Debugging.GraphicalDebugging;
 
 public static class Colors {
     public static Color Gradient(Color start, Color end, float percent) {

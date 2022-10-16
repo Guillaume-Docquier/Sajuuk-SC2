@@ -2,7 +2,7 @@
 using System.Numerics;
 using SC2APIProtocol;
 
-namespace Bot.Wrapper;
+namespace Bot.Debugging.GraphicalDebugging;
 
 public interface IGraphicalDebugger {
     Request GetDebugRequest();

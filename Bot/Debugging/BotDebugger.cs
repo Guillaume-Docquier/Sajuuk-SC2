@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.Builds;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapKnowledge;
-using Bot.Wrapper;
 using SC2APIProtocol;
 
-namespace Bot;
+namespace Bot.Debugging;
 
 public class BotDebugger {
     private float _maxMineralRate = 0;

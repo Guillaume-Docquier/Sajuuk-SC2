@@ -1,4 +1,4 @@
-﻿using Bot.Wrapper;
+﻿using Bot.Debugging.GraphicalDebugging;
 
 namespace Bot.Tests;
 

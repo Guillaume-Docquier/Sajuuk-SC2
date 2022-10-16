@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
-using Bot.Wrapper;
 
 namespace Bot.UnitModules;
 
