@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Bot.ExtensionMethods;
 
 namespace Bot.Managers.ScoutManagement;
 
@@ -11,7 +12,13 @@ public partial class ScoutManager {
                 return;
             }
 
-            var scoutingSupervisor = Client._scoutSupervisors.MinBy(supervisor => supervisor.SupervisedUnits.Count)!;
+            var scoutingSupervisor = Client._scoutSupervisors.MinBy(supervisor => {
+                var crowdMultiplier = 1 + supervisor.SupervisedUnits.Count;
+                var distanceToTask = supervisor.ScoutingTask.ScoutLocation.HorizontalDistanceTo(unit);
+
+                return crowdMultiplier * distanceToTask;
+            })!;
+
             scoutingSupervisor.Assign(unit);
         }
     }

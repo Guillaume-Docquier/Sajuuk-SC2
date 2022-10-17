@@ -57,6 +57,10 @@ public partial class ScoutManager : Manager {
         // Zerg expand first = ~1:00
         // Terran Protoss expand first = ~2:00
         if (_scoutSupervisors.Count <= 0) {
+            foreach (var managedUnit in ManagedUnits) {
+                Release(managedUnit);
+            }
+
             return;
         }
 
