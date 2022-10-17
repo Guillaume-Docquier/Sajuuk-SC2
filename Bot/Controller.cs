@@ -58,7 +58,6 @@ public static class Controller {
     private static readonly List<INeedUpdating> ThoseWhoNeedUpdating = new List<INeedUpdating>
     {
         ChatTracker.Instance,           // Depends on nothing
-        CreepTracker.Instance,          // Depends on nothing
         VisibilityTracker.Instance,     // Depends on nothing
 
         UnitsTracker.Instance,          // Depends on VisibilityTracker
@@ -67,6 +66,7 @@ public static class Controller {
         EnemyStrategyTracker.Instance,  // Depends on UnitsTracker
         MapAnalyzer.Instance,           // Depends on UnitsTracker and VisibilityTracker
 
+        CreepTracker.Instance,          // Depends on VisibilityTracker and MapAnalyzer
         BuildingTracker.Instance,       // Depends on UnitsTracker and MapAnalyzer
         ExpandAnalyzer.Instance,        // Depends on UnitsTracker and MapAnalyzer
         RegionAnalyzer.Instance,        // Depends on ExpandAnalyzer and MapAnalyzer

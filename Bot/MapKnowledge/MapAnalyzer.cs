@@ -270,7 +270,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     private static void InitWalkableCells() {
         for (var x = 0; x < MaxX; x++) {
             for (var y = 0; y < MaxY; y++) {
-                var cell = new Vector2(x, y);
+                var cell = new Vector2(x, y).AsWorldGridCenter();
                 if (IsWalkable(cell)) {
                     _walkableCells.Add(cell);
                 }

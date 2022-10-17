@@ -27,6 +27,7 @@ public class TumorCreepSpreadModule: UnitModule {
         _creepTumor = creepTumor;
     }
 
+    // TODO GD Move this code in CreepManager
     protected override void DoExecute() {
         if (_spreadAt == default) {
             if (_creepTumor.UnitType == Units.CreepTumorBurrowed) {

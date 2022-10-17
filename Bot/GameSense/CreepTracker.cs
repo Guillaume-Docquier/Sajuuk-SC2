@@ -37,6 +37,10 @@ public class CreepTracker: INeedUpdating {
     }
 
     public static bool HasCreep(Vector3 position) {
+        return HasCreep(position.ToVector2());
+    }
+
+    public static bool HasCreep(Vector2 position) {
         if (!MapAnalyzer.IsInBounds(position)) {
             Logger.Error("HasCreep called on out of bounds position");
             return false;
@@ -58,34 +62,40 @@ public class CreepTracker: INeedUpdating {
     }
 
     private static void GenerateCreepFrontier() {
-        _creepFrontier = new List<Vector3>();
+        // TODO GD At this point, we don't need to calculate the frontier until a hatch or creep tumor dies
+        if (MapAnalyzer.WalkableCells.All(HasCreep)) {
+            _creepFrontier = new List<Vector3>();
+            _creepFrontierLastGeneratedAt = Controller.Frame;
+
+            return;
+        }
 
         var creepTumors = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.CreepTumor).ToList();
-        for (var x = 0; x < _maxX; x++) {
-            for (var y = 0; y < _maxY; y++) {
-                var position = new Vector3(x, y, 0).AsWorldGridCenter().WithWorldHeight();
-                // We spread towards non visible creep because if it is not visible, it is receding (tumor died) or it is not our creep and we want the vision
-                if (HasCreep(position) && (TouchesNonCreep(position) || TouchesNonVisibleCreep(position))) {
-                    // On GlitteringAshes and 2000 Atmospheres there are spots that are walkable but cannot have creep
-                    // If we have a tumor close to these, consider that they have creep
-                    if (creepTumors.Count > 0 && creepTumors.Min(tumor => tumor.HorizontalDistanceTo(position)) < 3) {
-                        continue;
-                    }
-
-                    _creepFrontier.Add(position);
-                }
-            }
-        }
+        _creepFrontier = MapAnalyzer.WalkableCells
+            .Where(VisibilityTracker.IsVisible)
+            .Where(HasCreep)
+            .Where(IsFrontier)
+            .Where(frontierCell => !IsTooCrowded(frontierCell, creepTumors))
+            .Select(vector2 => vector2.ToVector3())
+            .ToList();
 
         _creepFrontierLastGeneratedAt = Controller.Frame;
     }
 
-    private static bool TouchesNonCreep(Vector3 position) {
-        return position.GetNeighbors().Any(neighbor => !HasCreep(neighbor) && MapAnalyzer.IsWalkable(neighbor));
+    private static bool IsFrontier(Vector2 position) {
+        return position.GetNeighbors()
+            .Where(neighbor => MapAnalyzer.IsWalkable(neighbor))
+            // We spread towards non visible creep because if it is not visible, it is receding (creep source died) or it is not our creep and we want the vision
+            .Any(neighbor => !HasCreep(neighbor) || !VisibilityTracker.IsVisible(neighbor));
     }
 
-    private static bool TouchesNonVisibleCreep(Vector3 position) {
-        return position.GetNeighbors().Any(neighbor => HasCreep(neighbor) && MapAnalyzer.IsWalkable(neighbor) && !VisibilityTracker.IsVisible(neighbor));
+    private static bool IsTooCrowded(Vector2 frontierCell, IReadOnlyCollection<Unit> creepTumors) {
+        if (creepTumors.Count <= 0) {
+            return false;
+        }
+
+        // Prevent clumps around fresh tumors. Creep will spread soon.
+        return creepTumors.Min(tumor => tumor.HorizontalDistanceTo(frontierCell)) < 7;
     }
 
     private static void GenerateCreepMap() {

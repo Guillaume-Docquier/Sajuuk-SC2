@@ -147,6 +147,10 @@ public class Unit: ICanDie, IHavePosition {
         return Position.HorizontalDistanceTo(location);
     }
 
+    public double HorizontalDistanceTo(Vector2 location) {
+        return Position.ToVector2().DistanceTo(location);
+    }
+
     public Region GetRegion() {
         return Position.GetRegion();
     }
