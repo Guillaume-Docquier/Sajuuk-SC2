@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
@@ -41,9 +42,12 @@ public class RegionScoutingTask : ScoutingTask {
             var cellToExplore = _cellsToExplore.MinBy(cell => {
                 var cellDistances = distanceToScouts[cell];
                 var myDistance = cellDistances[scout];
-                var otherDistancesAverage = cellDistances.Average(kv => kv.Value);
+                var minDistance = cellDistances.Min(kv => kv.Value);
+                var maxDistance = cellDistances.Max(kv => kv.Value);
 
-                return myDistance + otherDistancesAverage;
+                var penalty = (myDistance - minDistance) / (maxDistance - minDistance);
+
+                return myDistance + myDistance * penalty;
             });
 
             scout.Move(cellToExplore);

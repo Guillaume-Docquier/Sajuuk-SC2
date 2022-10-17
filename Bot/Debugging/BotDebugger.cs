@@ -43,7 +43,7 @@ public class BotDebugger {
 
         help.Insert(0, "Debug flags");
 
-        Program.GraphicalDebugger.AddTextGroup(help, virtualPos: new Point { X = 0.02f, Y = 0.45f });
+        Program.GraphicalDebugger.AddTextGroup(help, virtualPos: new Point { X = 0.02f, Y = 0.46f });
     }
 
     private static void DebugBuildOrder(IEnumerable<BuildRequest> buildOrder, IEnumerable<BuildFulfillment> managerBuildRequests) {
