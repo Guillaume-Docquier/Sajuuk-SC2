@@ -29,6 +29,7 @@ public class BotDebugger {
         DebugEnemyGhostUnits();
         DebugKnownEnemyUnits();
         DebugMatchupData();
+        DebugExploration();
     }
 
     private static void DebugHelp() {
@@ -37,12 +38,12 @@ public class BotDebugger {
         }
 
         var help = DebuggingFlagsTracker.AllDebuggingFlags
-            .Select(flag => $"{flag,10} {(DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(flag) ? "ON" : "OFF")}")
+            .Select(flag => $"{flag,-11} {(DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(flag) ? "ON" : "OFF")}")
             .ToList();
 
         help.Insert(0, "Debug flags");
 
-        Program.GraphicalDebugger.AddTextGroup(help, virtualPos: new Point { X = 0.02f, Y = 0.50f });
+        Program.GraphicalDebugger.AddTextGroup(help, virtualPos: new Point { X = 0.02f, Y = 0.45f });
     }
 
     private static void DebugBuildOrder(IEnumerable<BuildRequest> buildOrder, IEnumerable<BuildFulfillment> managerBuildRequests) {
@@ -164,8 +165,19 @@ public class BotDebugger {
             return;
         }
 
-        // TODO GD Doesn't go over 94% visible/explored, not sure why
         var matchupText = $"Enemy: {Controller.EnemyRace} / Visible: {MapAnalyzer.VisibilityRatio,3:P0} / Explored: {MapAnalyzer.ExplorationRatio,3:P0}";
         Program.GraphicalDebugger.AddText(matchupText, virtualPos: new Point { X = 0.50f, Y = 0.02f });
+    }
+
+    private static void DebugExploration() {
+        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Exploration)) {
+            return;
+        }
+
+        foreach (var notExploredCell in MapAnalyzer.WalkableCells.Where(cell => !VisibilityTracker.IsExplored(cell))) {
+            var color = Colors.PeachPink;
+            Program.GraphicalDebugger.AddText("?", color: color, worldPos: notExploredCell.ToVector3().ToPoint());
+            Program.GraphicalDebugger.AddGridSquare(notExploredCell.ToVector3(), color: color);
+        }
     }
 }

@@ -57,4 +57,24 @@ public static class DebuggingFlags {
     /// Enables displaying matchup data, like enemy race, % of map visible/explored
     /// </summary>
     public const string MatchupData = ".matchup";
+
+    /// <summary>
+    /// Enables displaying region data
+    /// </summary>
+    public const string Regions = ".regions";
+
+    /// <summary>
+    /// Enables displaying each cell's region
+    /// </summary>
+    public const string CellRegions = ".cellRegion";
+
+    /// <summary>
+    /// Enables displaying the choke points
+    /// </summary>
+    public const string ChokePoints = ".choke";
+
+    /// <summary>
+    /// Enables displaying the unexplored tiles
+    /// </summary>
+    public const string Exploration = ".explored";
 }

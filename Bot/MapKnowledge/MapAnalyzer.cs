@@ -21,22 +21,24 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     private static readonly HashSet<Vector2> ObstructionMap = new HashSet<Vector2>();
     private static List<List<bool>> _terrainWalkMap;
     private static List<List<bool>> _currentWalkMap;
-    private static int _walkableCellsCount = 0;
 
     public static int MaxX { get; private set; }
     public static int MaxY { get; private set; }
+
+    private static readonly HashSet<Vector2> _walkableCells = new HashSet<Vector2>();
+    public static IReadOnlySet<Vector2> WalkableCells => _walkableCells;
 
     /// <summary>
     /// Returns the proportion from 0 to 1 of the walkable tiles that have been explored
     /// </summary>
     public static float ExplorationRatio {
         get {
-            if (_walkableCellsCount == 0) {
+            if (_walkableCells.Count == 0) {
                 return 0;
             }
 
             var exploredCellsCount = VisibilityTracker.ExploredCells.Count(cell => IsWalkable(cell));
-            return (float)exploredCellsCount / _walkableCellsCount;
+            return (float)exploredCellsCount / _walkableCells.Count;
         }
     }
 
@@ -45,12 +47,12 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     /// </summary>
     public static float VisibilityRatio {
         get {
-            if (_walkableCellsCount == 0) {
+            if (_walkableCells.Count == 0) {
                 return 0;
             }
 
             var visibleCellsCount = VisibilityTracker.VisibleCells.Count(cell => IsWalkable(cell));
-            return (float)visibleCellsCount / _walkableCellsCount;
+            return (float)visibleCellsCount / _walkableCells.Count;
         }
     }
 
@@ -67,7 +69,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         ObstructionMap.Clear();
         _terrainWalkMap = null;
         _currentWalkMap = null;
-        _walkableCellsCount = 0;
+        _walkableCells.Clear();
     }
 
     public void Update(ResponseObservation observation) {
@@ -86,7 +88,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         InitHeightMap();
         InitTerrainWalkMap();
 
-        _walkableCellsCount = _terrainWalkMap.SelectMany(row => row).Count(isWalkable => isWalkable);
+        InitWalkableCells();
 
         IsInitialized = true;
     }
@@ -263,5 +265,16 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         var isObstructed = includeObstacles && ObstructionMap.Contains(position.AsWorldGridCenter());
 
         return isWalkable && !isObstructed;
+    }
+
+    private static void InitWalkableCells() {
+        for (var x = 0; x < MaxX; x++) {
+            for (var y = 0; y < MaxY; y++) {
+                var cell = new Vector2(x, y);
+                if (IsWalkable(cell)) {
+                    _walkableCells.Add(cell);
+                }
+            }
+        }
     }
 }

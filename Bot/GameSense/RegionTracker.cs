@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
@@ -41,23 +42,6 @@ public class RegionTracker : INeedUpdating {
 
     private RegionTracker() {}
 
-    public void Reset() {
-        Instance = new RegionTracker();
-    }
-
-    public void Update(ResponseObservation observation) {
-        if (!RegionAnalyzer.IsInitialized) {
-            return;
-        }
-
-        if (!Instance._isInitialized) {
-            Instance.Init();
-        }
-
-        Instance.UpdateDangerLevels();
-        Instance.DrawRegionsSummary();
-    }
-
     public static float GetDangerLevel(Vector3 position) {
         return GetDangerLevel(position.GetRegion());
     }
@@ -68,6 +52,23 @@ public class RegionTracker : INeedUpdating {
         }
 
         return Instance._regionDangerLevels[region];
+    }
+
+    public void Reset() {
+        Instance = new RegionTracker();
+    }
+
+    public void Update(ResponseObservation observation) {
+        if (!RegionAnalyzer.IsInitialized) {
+            return;
+        }
+
+        if (!_isInitialized) {
+            Init();
+        }
+
+        UpdateDangerLevels();
+        DrawRegionsSummary();
     }
 
     private void Init() {
@@ -214,6 +215,10 @@ public class RegionTracker : INeedUpdating {
     /// <para>Each region gets a different color using the color pool.</para>
     /// </summary>
     private void DrawRegionsSummary() {
+        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Regions)) {
+            return;
+        }
+
         const int zOffset = 5;
 
         var regionIndex = 0;

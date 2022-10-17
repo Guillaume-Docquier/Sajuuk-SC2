@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using SC2APIProtocol;
@@ -16,8 +17,6 @@ public class RegionAnalyzer: INeedUpdating {
     private static RegionData _regionData;
 
     public static List<Region> Regions => _regionData.Regions;
-
-    private const bool DrawEnabled = false;
 
     private const int MinRampSize = 5;
     private const int RegionMinPoints = 6;
@@ -54,10 +53,7 @@ public class RegionAnalyzer: INeedUpdating {
         }
 
         if (IsInitialized) {
-            if (Program.DebugEnabled && DrawEnabled) {
-                DrawRegions();
-                DrawNoise();
-            }
+            Debug();
 
             return;
         }
@@ -126,6 +122,20 @@ public class RegionAnalyzer: INeedUpdating {
     }
 
     /// <summary>
+    /// Enables graphical debugging of the RegionAnalyzer's data based on debug flags
+    /// </summary>
+    private static void Debug() {
+        if (DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.CellRegions)) {
+            DrawRegions();
+            DrawNoise();
+        }
+
+        if (DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.ChokePoints)) {
+            DrawChokePoints();
+        }
+    }
+
+    /// <summary>
     /// <para>Draws a square on each region's cells.</para>
     /// <para>Each region gets a different color using the color pool.</para>
     /// <para>Each cell also gets a text 'EX', where E stands for 'Expand' and X is the region index.</para>
@@ -151,23 +161,6 @@ public class RegionAnalyzer: INeedUpdating {
     }
 
     /// <summary>
-    /// <para>Draws a sphere on each ramp's cells.</para>
-    /// <para>Each ramp gets a different color using the color pool.</para>
-    /// <para>Each cell also gets a text 'RX', where E stands for 'Ramp' and X is the ramp index.</para>
-    /// </summary>
-    private static void DrawRamps() {
-        var rampIndex = 0;
-        foreach (var ramp in _regionData.Ramps) {
-            foreach (var position in ramp) {
-                Program.GraphicalDebugger.AddText($"R{rampIndex}", size: 12, worldPos: position.ToVector3().ToPoint(), color: RegionColors[rampIndex % RegionColors.Count]);
-                Program.GraphicalDebugger.AddGridSphere(position.ToVector3(), RegionColors[rampIndex % RegionColors.Count]);
-            }
-
-            rampIndex++;
-        }
-    }
-
-    /// <summary>
     /// <para>Draws a red square on each noise cell.</para>
     /// <para>A noise cell is a cell that isn't part of a region or ramp.</para>
     /// <para>Each cell also gets a text '?'.</para>
@@ -179,12 +172,18 @@ public class RegionAnalyzer: INeedUpdating {
         }
     }
 
+    /// <summary>
+    /// Draws all the choke points
+    /// </summary>
     private static void DrawChokePoints() {
         foreach (var chokePoint in _regionData.ChokePoints) {
             DrawChokePoint(chokePoint);
         }
     }
 
+    /// <summary>
+    /// Draws a choke point
+    /// </summary>
     private static void DrawChokePoint(ChokePoint chokePoint, Color color = null) {
         Program.GraphicalDebugger.AddPath(chokePoint.Edge.Select(edge => edge.ToVector3()).ToList(), color ?? Colors.LightRed, color ?? Colors.LightRed);
     }
