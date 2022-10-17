@@ -14,20 +14,19 @@ namespace Bot.Wrapper;
 
 public class GameConnection {
     private const string Address = "127.0.0.1";
-    private const int StepSize = 1;
     private readonly ProtobufProxy _proxy = new ProtobufProxy();
 
     private string _starcraftExe;
     private string _starcraftDir;
     private string _starcraftMapsDir;
 
-    private readonly ulong _runEvery;
+    private readonly uint _stepSize;
     private static readonly ulong DebugMemoryEvery = Controller.SecsToFrames(5);
 
     private readonly PerformanceDebugger _performanceDebugger = new PerformanceDebugger();
 
-    public GameConnection(ulong runEvery) {
-        _runEvery = runEvery;
+    public GameConnection(uint stepSize) {
+        _stepSize = stepSize;
     }
 
     private void FindExecutableInfo() {
@@ -195,7 +194,10 @@ public class GameConnection {
         KnowledgeBase.Data = dataResponse.Data;
 
         while (true) {
-            var observationResponse = await SendRequest(RequestBuilder.RequestObservation());
+            // Controller.Frame is uint.MaxValue until we request frame 0
+            var nextFrame = Controller.Frame == uint.MaxValue ? 0 : Controller.Frame + _stepSize;
+            var observationResponse = await SendRequest(RequestBuilder.RequestObservation(nextFrame));
+
             if (observationResponse.Status is Status.Quit) {
                 Logger.Info("Game was terminated.");
                 break;
@@ -214,15 +216,7 @@ public class GameConnection {
                 break;
             }
 
-            // Can happen when realTime == true
-            if (Controller.Frame == observation.Observation.GameLoop) {
-                continue;
-            }
-
-            Controller.AccumulateObservation(observation);
-            if (observation.Observation.GameLoop % _runEvery == 0) {
-                await RunBot(bot, observation);
-            }
+            await RunBot(bot, observation);
 
             if (observation.Observation.GameLoop % DebugMemoryEvery == 0) {
                 PrintMemoryInfo();
@@ -232,7 +226,7 @@ public class GameConnection {
                 await Quit();
             }
             else {
-                await SendRequest(RequestBuilder.RequestStep(StepSize));
+                await SendRequest(RequestBuilder.RequestStep(_stepSize));
             }
         }
     }

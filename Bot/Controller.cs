@@ -55,12 +55,6 @@ public static class Controller {
 
     public static readonly List<string> ChatLog = new List<string>();
 
-    private static readonly List<INeedAccumulating> ThoseWhoNeedAccumulating = new List<INeedAccumulating>
-    {
-        ChatTracker.Instance,
-        UnitsTracker.Instance,
-    };
-
     private static readonly List<INeedUpdating> ThoseWhoNeedUpdating = new List<INeedUpdating>
     {
         ChatTracker.Instance,           // Depends on nothing
@@ -142,10 +136,6 @@ public static class Controller {
                 EnemyRace = Race.Zerg;
             }
         }
-    }
-
-    public static void AccumulateObservation(ResponseObservation observation) {
-        ThoseWhoNeedAccumulating.ForEach(needAccumulating => needAccumulating.Accumulate(observation));
     }
 
     public static void NewObservation(ResponseObservation observation) {

@@ -141,10 +141,13 @@ public static class RequestBuilder {
         };
     }
 
-    public static Request RequestObservation() {
+    public static Request RequestObservation(uint waitUntilFrame) {
         return new Request
         {
-            Observation = new RequestObservation(),
+            Observation = new RequestObservation
+            {
+                GameLoop = waitUntilFrame,
+            },
         };
     }
 

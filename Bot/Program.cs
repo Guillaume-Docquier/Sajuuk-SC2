@@ -22,7 +22,7 @@ public class Program {
     private const Race OpponentRace = Race.Terran;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
-    private const bool RealTime = true;
+    private const bool RealTime = false;
 
     public static GameConnection GameConnection { get; private set; }
     public static bool DebugEnabled { get; private set; }
@@ -41,7 +41,7 @@ public class Program {
                     DebugEnabled = true;
                     GraphicalDebugger = new LadderGraphicalDebugger();
 
-                    GameConnection = new GameConnection(runEvery: 2);
+                    GameConnection = new GameConnection(stepSize: 2);
                     GameConnection.RunLocal(new SajuukBot("2_3_0", scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
                 }
             }
@@ -49,7 +49,7 @@ public class Program {
                 DebugEnabled = true;
                 GraphicalDebugger = new LocalGraphicalDebugger();
 
-                GameConnection = new GameConnection(runEvery: 2);
+                GameConnection = new GameConnection(stepSize: 2);
                 GameConnection.RunLocal(Bot, MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
             }
             else {
@@ -58,7 +58,7 @@ public class Program {
 
                 // On the ladder, for some reason, actions have a 1 frame delay before being received and applied
                 // We will run every 2 frames, this way we won't notice the delay
-                GameConnection = new GameConnection(runEvery: 2);
+                GameConnection = new GameConnection(stepSize: 2);
                 GameConnection.RunLadder(Bot, args).Wait();
             }
         }

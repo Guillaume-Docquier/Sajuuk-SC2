@@ -6,11 +6,10 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
-public class UnitsTracker: INeedUpdating, INeedAccumulating {
+public class UnitsTracker: INeedUpdating {
     public static readonly UnitsTracker Instance = new UnitsTracker();
 
     private bool _isInitialized = false;
-    private readonly HashSet<ulong> _accumulatedDeadUnitIds = new HashSet<ulong>();
 
     public static Dictionary<ulong, Unit> UnitsByTag { get; private set; }
 
@@ -39,16 +38,6 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
         EnemyUnits = null;
     }
 
-    public void Accumulate(ResponseObservation observation) {
-        if (observation.Observation.RawData.Event?.DeadUnits == null) {
-            return;
-        }
-
-        foreach (var deadUnitId in observation.Observation.RawData.Event.DeadUnits) {
-            _accumulatedDeadUnitIds.Add(deadUnitId);
-        }
-    }
-
     public void Update(ResponseObservation observation) {
         var unitsAsReportedByTheApi = observation.Observation.RawData.Units.ToList();
         var currentFrame = observation.Observation.GameLoop;
@@ -73,7 +62,8 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
         });
 
         // Handle dead units
-        HandleDeadUnits(unitsAsReportedByTheApi, currentFrame);
+        var deadUnitTags = observation.Observation.RawData.Event?.DeadUnits?.ToHashSet() ?? new HashSet<ulong>();
+        HandleDeadUnits(deadUnitTags, unitsAsReportedByTheApi, currentFrame);
         RememberEnemyUnitsOutOfSight(unitsAsReportedByTheApi);
         EraseGhosts();
 
@@ -133,11 +123,15 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
         UnitsByTag[newUnit.Tag] = newUnit;
     }
 
-    private void HandleDeadUnits(List<SC2APIProtocol.Unit> currentlyVisibleUnits, uint currentFrame) {
+    private void HandleDeadUnits(IReadOnlySet<ulong> deadUnitTags, List<SC2APIProtocol.Unit> currentlyVisibleUnits, uint currentFrame) {
+        if (deadUnitTags == null) {
+            return;
+        }
+
         foreach (var unit in UnitsByTag.Select(unit => unit.Value).ToList()) {
             // We use unit.IsDead(currentFrame) as a fallback for cases where we missed a frame
             // Also, drones that morph into buildings are not considered 'killed' and won't be present in deadUnitIds
-            if (_accumulatedDeadUnitIds.Contains(unit.Tag) || unit.IsDead(currentFrame)) {
+            if (deadUnitTags.Contains(unit.Tag) || unit.IsDead(currentFrame)) {
                 unit.Died();
 
                 UnitsByTag.Remove(unit.Tag);
@@ -160,8 +154,6 @@ public class UnitsTracker: INeedUpdating, INeedAccumulating {
 
             UnitsByTag.Remove(buildingThatProbablyMoved.Tag);
         }
-
-        _accumulatedDeadUnitIds.Clear();
     }
 
     private static void RememberEnemyUnitsOutOfSight(List<SC2APIProtocol.Unit> currentlyVisibleUnits) {
