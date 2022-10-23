@@ -12,6 +12,9 @@ public class Region {
     public RegionType Type { get; }
 
     [JsonIgnore]
+    public ExpandLocation ExpandLocation { get; private set; }
+
+    [JsonIgnore]
     public HashSet<NeighboringRegion> Neighbors { get; private set; }
 
     [JsonConstructor]
@@ -26,15 +29,23 @@ public class Region {
 
         Type = type;
         if (Type == RegionType.Unknown) {
-            var regionContainsExpand = ExpandAnalyzer.ExpandLocations.Any(expandLocation => Cells.Contains(expandLocation));
-            Type = regionContainsExpand ? RegionType.Expand : RegionType.OpenArea;
+            var expandInRegion = ExpandAnalyzer.ExpandLocations.FirstOrDefault(expandLocation => Cells.Contains(expandLocation.Position));
+            if (expandInRegion != default) {
+                Type = RegionType.Expand;
+                Center = expandInRegion.Position;
+            }
+            else {
+                Type = RegionType.OpenArea;
+            }
         }
 
-        var regionCenter = Clustering.GetCenter(Cells.ToList());
-        Center = Cells.MinBy(cell => cell.HorizontalDistanceTo(regionCenter));
+        if (Center == default) {
+            var regionCenter = Clustering.GetCenter(Cells.ToList());
+            Center = Cells.MinBy(cell => cell.HorizontalDistanceTo(regionCenter));
+        }
     }
 
-    public void SetNeighboringRegions() {
+    public void Init() {
         var neighbors = new Dictionary<Region, List<Vector3>>();
         foreach (var cell in Cells) {
             var neighboringRegions = cell
@@ -57,5 +68,8 @@ public class Region {
         foreach (var (region, frontier) in neighbors) {
             Neighbors.Add(new NeighboringRegion(region, frontier.ToHashSet()));
         }
+
+        var expandInRegion = ExpandAnalyzer.ExpandLocations.FirstOrDefault(expandLocation => Cells.Contains(expandLocation.Position));
+        ExpandLocation = expandInRegion;
     }
 }

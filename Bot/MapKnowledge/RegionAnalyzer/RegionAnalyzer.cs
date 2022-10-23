@@ -65,9 +65,10 @@ public class RegionAnalyzer: INeedUpdating {
             _regionData = regionsData;
 
             _regionsMap = BuildRegionsMap(_regionData.Regions);
-            _regionData.Regions.ForEach(region => region.SetNeighboringRegions());
+            _regionData.Regions.ForEach(region => region.Init());
 
-            Logger.Info("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", _regionData.Regions.Count, _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
+            Logger.Metric("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", _regionData.Regions.Count, _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
+            Logger.Success("Regions loaded from file");
             IsInitialized = true;
 
             return;
@@ -85,13 +86,12 @@ public class RegionAnalyzer: INeedUpdating {
         _regionData = new RegionData(regions, ramps, noise, chokePoints);
 
         _regionsMap = BuildRegionsMap(regions);
-        regions.ForEach(region => region.SetNeighboringRegions());
+        regions.ForEach(region => region.Init());
 
         RegionDataStore.Save(Controller.GameInfo.MapName, _regionData);
 
-        Logger.Info("Region analysis done and saved");
-        Logger.Info("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", _regionData.Regions.Count, _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
-
+        Logger.Metric("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", _regionData.Regions.Count, _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
+        Logger.Success("Region analysis done and saved");
         IsInitialized = true;
     }
 

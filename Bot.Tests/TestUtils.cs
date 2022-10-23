@@ -50,6 +50,10 @@ public static class TestUtils {
         return new Unit(rawUnit, frame);
     }
 
+    public static void NewFrame(ResponseObservation observation) {
+        Controller.NewFrame(ResponseGameInfoUtils.CreateResponseGameInfo(), observation);
+    }
+
     public class DummyManager: Manager {
         public override IEnumerable<BuildFulfillment> BuildFulfillments { get; } = Enumerable.Empty<BuildFulfillment>();
 

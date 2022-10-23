@@ -69,7 +69,9 @@ public partial class ArmySupervisor {
         }
 
         private static void ResetCheckedExpandLocations() {
-            _checkedExpandLocations = ExpandAnalyzer.ExpandLocations.ToDictionary(expand => expand, VisibilityTracker.IsVisible);
+            _checkedExpandLocations = ExpandAnalyzer.ExpandLocations
+                .Select(expandLocation => expandLocation.Position)
+                .ToDictionary(expand => expand, VisibilityTracker.IsVisible);
         }
 
         private void ResetCheckedPositions() {
@@ -130,6 +132,7 @@ public partial class ArmySupervisor {
 
             var armyCenter = StateMachine.Context._mainArmy.GetCenter().ClosestWalkable();
             var nextReachableUncheckedLocations = ExpandAnalyzer.ExpandLocations
+                .Select(expandLocation => expandLocation.Position)
                 .Where(expandLocation => !_checkedExpandLocations[expandLocation])
                 .Where(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation) != null)
                 .ToList();

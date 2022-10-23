@@ -458,16 +458,12 @@ public static class Units {
     };
 
     // Mineral field types seem to differ from map to map
-    public static readonly HashSet<uint> MineralFields = new HashSet<uint>
+    public static readonly HashSet<uint> NormalMineralFields = new HashSet<uint>
     {
-        RichMineralField,
-        RichMineralField750,
         MineralField,
         MineralField750,
         LabMineralField,
         LabMineralField750,
-        PurifierRichMineralField,
-        PurifierRichMineralField750,
         PurifierMineralField,
         PurifierMineralField750,
         BattleStationMineralField,
@@ -475,8 +471,18 @@ public static class Units {
         MineralField450, // Should we exclude this one? See note
     };
 
+    public static readonly HashSet<uint> GoldMineralFields = new HashSet<uint>
+    {
+        RichMineralField,
+        RichMineralField750,
+        PurifierRichMineralField,
+        PurifierRichMineralField750,
+    };
+
+    public static readonly HashSet<uint> MineralFields = new HashSet<uint>(NormalMineralFields.Concat(GoldMineralFields));
+
     // Gas geyser types seem to differ from map to map
-    public static readonly HashSet<uint> GasGeysers = new HashSet<uint>
+    public static readonly HashSet<uint> NormalGasGeysers = new HashSet<uint>
     {
         VespeneGeyser,
         SpacePlatformGeyser,
@@ -485,6 +491,13 @@ public static class Units {
         PurifierVespeneGeyser,
         ShakurasVespeneGeyser,
     };
+
+    public static readonly HashSet<uint> GoldGasGeysers = new HashSet<uint>
+    {
+        RichVespeneGeyser,
+    };
+
+    public static readonly HashSet<uint> GasGeysers = new HashSet<uint>(NormalGasGeysers.Concat(GoldGasGeysers));
 
     public static readonly HashSet<uint> Extractors = new HashSet<uint>
     {

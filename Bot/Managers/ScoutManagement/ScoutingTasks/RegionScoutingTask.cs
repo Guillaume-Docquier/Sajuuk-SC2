@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
@@ -11,6 +10,7 @@ namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 public class RegionScoutingTask : ScoutingTask {
     private readonly Region _region;
     private readonly HashSet<Vector3> _cellsToExplore;
+    private bool _isCancelled = false;
 
     public RegionScoutingTask(Vector3 scoutLocation) : base(scoutLocation) {
         _region = scoutLocation.GetRegion();
@@ -18,8 +18,17 @@ public class RegionScoutingTask : ScoutingTask {
     }
 
     public override bool IsComplete() {
+        if (_isCancelled) {
+            return true;
+        }
+
         // Allow 7% unexplored to speed up, don't need to scout every single cell
         return (float)_cellsToExplore.Count / _region.Cells.Count <= 0.07;
+    }
+
+    public override void Cancel() {
+        // Potentially do some cleanup / cancel sequence
+        _isCancelled = true;
     }
 
     public override void Execute(HashSet<Unit> scouts) {

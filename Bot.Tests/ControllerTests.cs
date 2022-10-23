@@ -15,18 +15,6 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IDisposable 
         Controller.Reset();
     }
 
-    [Fact]
-    public void GivenNullObservation_WhenNewGameInfo_DoesNotSetEnemyRace() {
-        // Arrange
-        var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo();
-
-        // Act
-        Controller.NewGameInfo(gameInfo);
-
-        // Assert
-        Assert.Equal(Race.NoRace, Controller.EnemyRace);
-    }
-
     [Theory]
     [InlineData(Race.Zerg, Race.Terran)]
     [InlineData(Race.Terran, Race.Protoss)]
@@ -34,14 +22,11 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IDisposable 
     public void GivenPlayersWithDistinctRaces_WhenNewGameInfo_SetsEnemyRace(Race playerRace, Race enemyRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
-        Controller.NewGameInfo(gameInfo);
-
         var startingTownHall = TestUtils.CreateUnit(Units.Hatchery, position: new Vector3(0, 0, 0));
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: new List<Unit> { startingTownHall });
-        Controller.NewObservation(observation);
 
         // Act
-        Controller.NewGameInfo(gameInfo);
+        Controller.NewFrame(gameInfo, observation);
 
         // Assert
         Assert.Equal(enemyRace, Controller.EnemyRace);
@@ -54,14 +39,11 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IDisposable 
     public void GivenPlayersWithSameRaces_WhenNewGameInfo_SetsEnemyRace(Race playerRace, Race enemyRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
-        Controller.NewGameInfo(gameInfo);
-
         var startingTownHall = TestUtils.CreateUnit(Units.Hatchery, position: new Vector3(0, 0, 0));
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: new List<Unit> { startingTownHall });
-        Controller.NewObservation(observation);
 
         // Act
-        Controller.NewGameInfo(gameInfo);
+        Controller.NewFrame(gameInfo, observation);
 
         // Assert
         Assert.Equal(enemyRace, Controller.EnemyRace);
@@ -71,14 +53,11 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IDisposable 
     public void GivenEnemyRandomRaceAndNoVisibleUnits_WhenNewGameInfo_ThenSetsRaceToRandom() {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
-        Controller.NewGameInfo(gameInfo);
-
         var startingTownHall = TestUtils.CreateUnit(Units.Hatchery, position: new Vector3(0, 0, 0));
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: new List<Unit> { startingTownHall });
-        Controller.NewObservation(observation);
 
         // Act
-        Controller.NewGameInfo(gameInfo);
+        Controller.NewFrame(gameInfo, observation);
 
         // Assert
         Assert.Equal(Race.Random, Controller.EnemyRace);
@@ -97,13 +76,14 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IDisposable 
     public void GivenEnemyRandomRaceAndVisibleUnits_WhenNewGameInfo_ThenResolvesEnemyRace(IEnumerable<Unit> units, Race expectedRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
-        Controller.NewGameInfo(gameInfo);
-
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: units);
-        Controller.NewObservation(observation);
+
+        // Because of dependencies issues, the random race resolver only works after the initial update
+        // TODO GD Make the race resolver a Tracker instead of being in the controller
+        Controller.NewFrame(gameInfo, observation);
 
         // Act
-        Controller.NewGameInfo(gameInfo);
+        Controller.NewFrame(gameInfo, observation);
 
         // Assert
         Assert.Equal(expectedRace, Controller.EnemyRace);

@@ -12,5 +12,7 @@ public abstract class ScoutingTask {
 
     public abstract bool IsComplete();
 
+    public abstract void Cancel();
+
     public abstract void Execute(HashSet<Unit> scouts);
 }

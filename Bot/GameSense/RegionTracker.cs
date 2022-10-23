@@ -226,11 +226,16 @@ public class RegionTracker : INeedUpdating {
             var regionColor = RegionColors[regionIndex % RegionColors.Count];
             var offsetRegionCenter = region.Center.Translate(zTranslation: zOffset);
 
+            var regionTypeText = region.Type.ToString();
+            if (region.Type == RegionType.Expand) {
+                regionTypeText += $" - {region.ExpandLocation.ExpandType}";
+            }
+
             Program.GraphicalDebugger.AddLink(region.Center, offsetRegionCenter, color: regionColor, withText: false);
             Program.GraphicalDebugger.AddTextGroup(
                 new[]
                 {
-                    $"R{regionIndex} ({region.Type})",
+                    $"R{regionIndex} ({regionTypeText})",
                     $"{GetDangerLevelLabel(region)} ({_regionDangerLevels[region]:F2})",
                 },
                 size: 14, worldPos: offsetRegionCenter.ToPoint(), color: regionColor);

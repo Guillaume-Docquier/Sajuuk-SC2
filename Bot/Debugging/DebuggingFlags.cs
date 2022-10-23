@@ -36,7 +36,7 @@ public static class DebuggingFlags {
     /// <summary>
     /// Enables displaying information on neutral destructible objects
     /// </summary>
-    public const string Destructibles = ".rocks";
+    public const string NeutralUnits = ".neutral";
 
     /// <summary>
     /// Enables displaying income information on screen

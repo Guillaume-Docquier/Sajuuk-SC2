@@ -53,9 +53,7 @@ public static class Controller {
 
     public static HashSet<uint> ResearchedUpgrades { get; private set; }
 
-    public static readonly List<string> ChatLog = new List<string>();
-
-    private static readonly List<INeedUpdating> ThoseWhoNeedUpdating = new List<INeedUpdating>
+    private static List<INeedUpdating> ThoseWhoNeedUpdating => new List<INeedUpdating>
     {
         ChatTracker.Instance,           // Depends on nothing
         VisibilityTracker.Instance,     // Depends on nothing
@@ -77,7 +75,6 @@ public static class Controller {
     public static void Reset() {
         Frame = uint.MaxValue;
         Actions.Clear();
-        ChatLog.Clear();
 
         GameInfo = null;
         Observation = null;
@@ -110,13 +107,7 @@ public static class Controller {
         return $"{minutes:00}:{seconds:00}";
     }
 
-    public static void NewGameInfo(ResponseGameInfo gameInfo) {
-        GameInfo = gameInfo;
-
-        if (Observation == null) {
-            return;
-        }
-
+    private static void UpdateEnemyRace() {
         if (EnemyRace == default) {
             EnemyRace = GameInfo.PlayerInfo
                 .Where(playerInfo => playerInfo.Type != PlayerType.Observer)
@@ -138,7 +129,8 @@ public static class Controller {
         }
     }
 
-    public static void NewObservation(ResponseObservation observation) {
+    public static void NewFrame(ResponseGameInfo gameInfo, ResponseObservation observation) {
+        GameInfo = gameInfo;
         Observation = observation;
         Frame = Observation.Observation.GameLoop;
 
@@ -146,6 +138,8 @@ public static class Controller {
             Pause();
             Environment.Exit(0);
         }
+
+        UpdateEnemyRace();
 
         ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Update(Observation));
 
@@ -574,12 +568,13 @@ public static class Controller {
 
     public static IEnumerable<Unit> GetMiningTownHalls() {
         return GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery)
-            .Where(townHall => ExpandAnalyzer.ExpandLocations.Any(expandLocation => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius));
+            .Where(townHall => ExpandAnalyzer.ExpandLocations.Any(expandLocation => townHall.DistanceTo(expandLocation.Position) < ExpandIsTakenRadius));
     }
 
     // TODO GD Implement a more robust check
     public static IEnumerable<Vector3> GetFreeExpandLocations() {
         return ExpandAnalyzer.ExpandLocations
+            .Select(expandLocation => expandLocation.Position)
             .Where(expandLocation => !GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
             .Where(expandLocation => !GetUnits(UnitsTracker.EnemyUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
             .Where(expandLocation => !GetUnits(UnitsTracker.NeutralUnits, Units.Destructibles).Any(destructible => destructible.DistanceTo(expandLocation) < ExpandIsTakenRadius));

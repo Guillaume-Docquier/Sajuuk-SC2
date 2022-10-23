@@ -201,7 +201,7 @@ public partial class WarManager: Manager {
             return false;
         }
 
-        if (MapAnalyzer.ExplorationRatio < 0.80 || !ExpandAnalyzer.ExpandLocations.All(VisibilityTracker.IsExplored)) {
+        if (MapAnalyzer.ExplorationRatio < 0.80 || !ExpandAnalyzer.ExpandLocations.All(expandLocation => VisibilityTracker.IsExplored(expandLocation.Position))) {
             return false;
         }
 

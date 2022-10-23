@@ -273,9 +273,10 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
 
         Program.GraphicalDebugger.AddTextGroup(new[]
             {
-                $"IdealAvailableCapacity: {IdealAvailableCapacity}",
-                $"SaturatedAvailableCapacity: {SaturatedAvailableCapacity}",
-                $"RemainingMineralsPercent: {GetRemainingMineralsPercent():P}",
+                $"IdealAvailCapacity: {IdealAvailableCapacity}",
+                $"SaturAvailCapacity: {SaturatedAvailableCapacity}",
+                $"Minerals: {GetRemainingMineralsPercent():P}",
+                $"Gas: TODO",
             },
             worldPos: TownHall.Position.Translate(xTranslation: -2.5f, yTranslation: 1f).ToPoint());
     }

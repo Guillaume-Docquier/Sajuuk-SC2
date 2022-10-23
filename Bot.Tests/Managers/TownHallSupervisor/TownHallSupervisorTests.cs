@@ -13,7 +13,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var units = new List<SC2APIProtocol.Unit> { farMineralRaw };
 
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units);
-        Controller.NewObservation(observation);
+        TestUtils.NewFrame(observation);
 
         // Act
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
@@ -32,7 +32,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var units = new List<SC2APIProtocol.Unit> { closeMineralRaw };
 
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units);
-        Controller.NewObservation(observation);
+        TestUtils.NewFrame(observation);
 
         // Act
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
@@ -51,7 +51,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var units = new List<SC2APIProtocol.Unit> { mineralRaw };
 
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units);
-        Controller.NewObservation(observation);
+        TestUtils.NewFrame(observation);
 
         // Act
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
@@ -69,7 +69,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var units = new List<SC2APIProtocol.Unit> { farGasRaw };
 
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units);
-        Controller.NewObservation(observation);
+        TestUtils.NewFrame(observation);
 
         // Act
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
@@ -88,7 +88,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var units = new List<SC2APIProtocol.Unit> { closeGasRaw };
 
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units);
-        Controller.NewObservation(observation);
+        TestUtils.NewFrame(observation);
 
         // Act
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
@@ -108,7 +108,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var units = new List<SC2APIProtocol.Unit> { gasRaw, extractorRaw };
 
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units);
-        Controller.NewObservation(observation);
+        TestUtils.NewFrame(observation);
 
         // Act
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
@@ -128,7 +128,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var units = new List<SC2APIProtocol.Unit> { gasRaw, extractorRaw };
 
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units);
-        Controller.NewObservation(observation);
+        TestUtils.NewFrame(observation);
 
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
         var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);
@@ -136,7 +136,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         // Act
         gasRaw.VespeneContents = 0;
         observation = ResponseGameObservationUtils.CreateResponseObservation(units);
-        Controller.NewObservation(observation);
+        TestUtils.NewFrame(observation);
         townHallSupervisor.OnFrame();
 
         // Assert
@@ -154,7 +154,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var units = new List<SC2APIProtocol.Unit> { mineralRaw };
 
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units);
-        Controller.NewObservation(observation);
+        TestUtils.NewFrame(observation);
 
         var worker = TestUtils.CreateUnit(Units.Drone);
 
@@ -176,7 +176,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var units = new List<SC2APIProtocol.Unit> { mineralRaw };
 
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units);
-        Controller.NewObservation(observation);
+        TestUtils.NewFrame(observation);
 
         var worker = TestUtils.CreateUnit(Units.Drone);
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
@@ -200,7 +200,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var units = new List<SC2APIProtocol.Unit> { mineralRaw, townHall.RawUnitData };
 
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units, frame: 1);
-        Controller.NewObservation(observation);
+        TestUtils.NewFrame(observation);
 
         var worker = TestUtils.CreateUnit(Units.Drone);
         var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);
@@ -225,7 +225,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var units = new List<SC2APIProtocol.Unit> { mineralRaw, gasRaw, extractorRaw };
 
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units);
-        Controller.NewObservation(observation);
+        TestUtils.NewFrame(observation);
 
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
         var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);

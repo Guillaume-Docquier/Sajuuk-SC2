@@ -237,8 +237,7 @@ public class GameConnection {
         _performanceDebugger.FrameStopwatch.Start();
 
         _performanceDebugger.ControllerStopwatch.Start();
-        Controller.NewGameInfo(gameInfoResponse.GameInfo);
-        Controller.NewObservation(observation);
+        Controller.NewFrame(gameInfoResponse.GameInfo, observation);
         _performanceDebugger.ControllerStopwatch.Stop();
 
         _performanceDebugger.BotStopwatch.Start();

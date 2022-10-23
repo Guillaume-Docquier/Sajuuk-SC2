@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Numerics;
 using System.Text.Json;
 
 namespace Bot.MapKnowledge;
 
 // TODO GD We could most likely make this not static and a bit more generic
-public static class ExpandDataStore {
+public static class ExpandLocationDataStore {
     public static bool IsEnabled = true;
 
     private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
@@ -21,16 +20,16 @@ public static class ExpandDataStore {
         return $"Expands_{mapName.Replace(" ", "")}.json";
     }
 
-    public static void Save(string mapName, List<Vector3> expandData) {
+    public static void Save(string mapName, List<ExpandLocation> expandLocations) {
         // Will output to bin/Debug/net6.0 or bin/Release/net6.0
         // Make sure to copy to the Data/ folder and set properties to 'Copy if newer'
         var saveFilePath = GetFileName(mapName);
 
-        var jsonString = JsonSerializer.Serialize(expandData, JsonSerializerOptions);
+        var jsonString = JsonSerializer.Serialize(expandLocations, JsonSerializerOptions);
         File.WriteAllText(saveFilePath, jsonString);
     }
 
-    public static List<Vector3> Load(string mapName) {
+    public static List<ExpandLocation> Load(string mapName) {
         if (!IsEnabled) {
             return null;
         }
@@ -41,6 +40,6 @@ public static class ExpandDataStore {
         }
 
         var jsonString = File.ReadAllText(loadFilePath);
-        return JsonSerializer.Deserialize<List<Vector3>>(jsonString, JsonSerializerOptions)!;
+        return JsonSerializer.Deserialize<List<ExpandLocation>>(jsonString, JsonSerializerOptions)!;
     }
 }

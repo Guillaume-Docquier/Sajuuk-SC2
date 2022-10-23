@@ -16,13 +16,13 @@ public class Program {
         new FlyingTerranScumScenario(),
     };
 
-    private static readonly IBot Bot = new SajuukBot("2_9_0", scenarios: Scenarios);
+    private static readonly IBot Bot = new SajuukBot("3_0_0", scenarios: Scenarios);
 
-    private const string MapFileName = Maps.Season_2022_4.FileNames.CosmicSapphire;
-    private const Race OpponentRace = Race.Terran;
+    private const string MapFileName = Maps.Season_2022_4.FileNames.Waterfall;
+    private const Race OpponentRace = Race.Zerg;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
-    private const bool RealTime = true;
+    private const bool RealTime = false;
 
     public static GameConnection GameConnection { get; private set; }
     public static bool DebugEnabled { get; private set; }
@@ -31,11 +31,12 @@ public class Program {
 
     public static void Main(string[] args) {
         try {
+            // Data generation
             if (args.Length == 1 && args[0] == "--generateData") {
                 Logger.Info("Game launched in data generation mode");
                 foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
                     Logger.Info("Generating data for {0}", mapFileName);
-                    ExpandDataStore.IsEnabled = false;
+                    ExpandLocationDataStore.IsEnabled = false;
                     RegionDataStore.IsEnabled = false;
 
                     DebugEnabled = true;
@@ -45,6 +46,7 @@ public class Program {
                     GameConnection.RunLocal(new SajuukBot("2_3_0", scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
                 }
             }
+            // Local
             else if (args.Length == 0) {
                 DebugEnabled = true;
                 GraphicalDebugger = new LocalGraphicalDebugger();
@@ -52,6 +54,7 @@ public class Program {
                 GameConnection = new GameConnection(stepSize: 2);
                 GameConnection.RunLocal(Bot, MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
             }
+            // Ladder
             else {
                 DebugEnabled = false;
                 GraphicalDebugger = new LadderGraphicalDebugger();

@@ -11,7 +11,7 @@ public class UnitsTracker: INeedUpdating {
 
     private bool _isInitialized = false;
 
-    public static Dictionary<ulong, Unit> UnitsByTag { get; private set; }
+    public static Dictionary<ulong, Unit> UnitsByTag { get; private set; } = new Dictionary<ulong, Unit>();
 
     public static readonly List<Unit> NewOwnedUnits = new List<Unit>();
 
@@ -29,13 +29,13 @@ public class UnitsTracker: INeedUpdating {
     public void Reset() {
         _isInitialized = false;
 
-        UnitsByTag = null;
+        UnitsByTag.Clear();
 
         NewOwnedUnits.Clear();
 
-        NeutralUnits = null;
-        OwnedUnits = null;
-        EnemyUnits = null;
+        NeutralUnits.Clear();
+        OwnedUnits.Clear();
+        EnemyUnits.Clear();
     }
 
     public void Update(ResponseObservation observation) {

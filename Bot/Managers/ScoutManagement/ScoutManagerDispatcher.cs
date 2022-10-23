@@ -12,6 +12,7 @@ public partial class ScoutManager {
                 return;
             }
 
+            // TODO GD Bucket by priority?
             var scoutingSupervisor = Client._scoutSupervisors.MinBy(supervisor => {
                 var crowdMultiplier = 1 + supervisor.SupervisedUnits.Count;
                 var distanceToTask = supervisor.ScoutingTask.ScoutLocation.HorizontalDistanceTo(unit);

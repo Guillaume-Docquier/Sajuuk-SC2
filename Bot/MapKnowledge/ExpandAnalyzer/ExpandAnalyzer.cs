@@ -11,46 +11,49 @@ using SC2APIProtocol;
 namespace Bot.MapKnowledge;
 
 public class ExpandAnalyzer: INeedUpdating {
-    public static readonly ExpandAnalyzer Instance = new ExpandAnalyzer();
+    public static ExpandAnalyzer Instance { get; private set; } = new ExpandAnalyzer();
 
-    public static bool IsInitialized { get; private set; }
-    public static List<List<Unit>> ResourceClusters { get; private set; }
-    public static List<Vector3> ExpandLocations { get; private set; }
+    private bool _isInitialized = false;
+    public static bool IsInitialized => Instance._isInitialized;
 
-    private static List<List<bool>> _tooCloseToResourceGrid;
+    private List<ExpandLocation> _expandLocations;
+    public static IReadOnlyCollection<ExpandLocation> ExpandLocations => Instance._expandLocations;
 
+    private List<List<bool>> _tooCloseToResourceGrid;
+
+    private const int TypicalResourceCount = 10;
     private const int ExpandSearchRadius = 5;
     private const int ExpandRadius = 3; // It's 2.5, we put 3 to be safe
-    private static readonly float TooCloseToResourceDistance = (float)Math.Sqrt(1*1 + 3*3);
+    private static readonly float TooCloseToResourceDistance = (float)Math.Sqrt(1*1 + 3*3); // Empirical, 1x3 diagonal
 
     private ExpandAnalyzer() {}
 
     public void Reset() {
-        IsInitialized = false;
-        ResourceClusters = null;
-        ExpandLocations = null;
-        _tooCloseToResourceGrid = null;
+        Instance = new ExpandAnalyzer();
     }
 
     public void Update(ResponseObservation observation) {
-        if (IsInitialized) {
-            foreach (var expandLocation in ExpandLocations) {
-                Program.GraphicalDebugger.AddSphere(expandLocation, KnowledgeBase.GameGridCellRadius, Colors.Green);
-            }
-
+        if (_isInitialized) {
             return;
         }
 
-        var expandsData = ExpandDataStore.Load(Controller.GameInfo.MapName);
-        if (expandsData != null) {
+        var loadedExpandLocations = ExpandLocationDataStore.Load(Controller.GameInfo.MapName);
+        if (loadedExpandLocations != null) {
             Logger.Info("Initializing ExpandAnalyzer from precomputed data for {0}", Controller.GameInfo.MapName);
 
-            // This isn't expensive, but I guess we could still save it?
-            ResourceClusters = FindResourceClusters().ToList();
-            ExpandLocations = expandsData;
-            Logger.Info("{0} expands, {1} resource clusters", ExpandLocations.Count, ResourceClusters.Count);
+            _expandLocations = loadedExpandLocations;
 
-            IsInitialized = true;
+            var loadedResourceClusters = FindResourceClusters().ToList();
+            foreach (var expandLocation in _expandLocations) {
+                var resourceCluster = GetExpandResourceCluster(expandLocation.Position, loadedResourceClusters);
+                var blockers = FindExpandBlockers(expandLocation.Position);
+                expandLocation.Init(resourceCluster, blockers);
+            }
+
+            Logger.Metric("{0} expand locations", _expandLocations.Count);
+            Logger.Success("Expand locations loaded from file");
+
+            _isInitialized = true;
             return;
         }
 
@@ -61,25 +64,31 @@ public class ExpandAnalyzer: INeedUpdating {
 
         Logger.Info("Analyzing expand locations, this can take some time...");
 
-        ResourceClusters = FindResourceClusters().ToList();
-        Logger.Info("Found {0} resource clusters", ResourceClusters.Count);
+        var resourceClusters = FindResourceClusters().ToList();
+        Logger.Metric("Found {0} resource clusters", resourceClusters.Count);
 
-        ExpandLocations = FindExpandLocations().ToList();
-        Logger.Info("Found {0} expand locations", ExpandLocations.Count);
+        var expandPositions = FindExpandLocations(resourceClusters).ToList();
+        Logger.Metric("Found {0} expand locations", expandPositions.Count);
 
-        IsInitialized = ExpandLocations.Count == ResourceClusters.Count;
-        if (IsInitialized) {
-            ExpandDataStore.Save(Controller.GameInfo.MapName, ExpandLocations);
-            Logger.Info("Expand analysis done and saved");
+        _isInitialized = expandPositions.Count == resourceClusters.Count;
+        if (_isInitialized) {
+            _expandLocations = GenerateExpandLocations(expandPositions, resourceClusters);
+            ExpandLocationDataStore.Save(Controller.GameInfo.MapName, _expandLocations);
+            Logger.Success("Expand analysis done and saved");
         }
         else {
-            Logger.Info("Expand analysis failed, the number of resource clusters found does not match the number of expands found");
+            Logger.Error("Expand analysis failed, the number of resource clusters found does not match the number of expands found");
         }
     }
 
     // TODO GD Doesn't take into account the building dimensions, but good enough for creep spread since it's 1x1
     public static bool IsNotBlockingExpand(Vector3 position) {
-        return ExpandLocations.MinBy(expandLocation => expandLocation.HorizontalDistanceTo(position)).HorizontalDistanceTo(position) > ExpandRadius + 1;
+        // We could use Regions here, but I'd rather not because of dependencies
+        var closestExpandLocation = Instance._expandLocations
+            .Select(expandLocation => expandLocation.Position)
+            .MinBy(expandPosition => expandPosition.HorizontalDistanceTo(position));
+
+        return closestExpandLocation.HorizontalDistanceTo(position) > ExpandRadius + 1;
     }
 
     private static IEnumerable<List<Unit>> FindResourceClusters() {
@@ -88,14 +97,14 @@ public class ExpandAnalyzer: INeedUpdating {
         var gasses = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers);
         var resources = minerals.Concat(gasses).ToList();
 
-        return Clustering.DBSCAN(resources, epsilon: 7, minPoints: 4).clusters;
+        return Clustering.DBSCAN(resources, epsilon: 8, minPoints: 4).clusters;
     }
 
-    private static IEnumerable<Vector3> FindExpandLocations() {
-        InitTooCloseToResourceGrid();
+    private IEnumerable<Vector3> FindExpandLocations(List<List<Unit>> resourceClusters) {
+        InitTooCloseToResourceGrid(resourceClusters);
 
         var expandLocations = new List<Vector3>();
-        foreach (var resourceCluster in ResourceClusters) {
+        foreach (var resourceCluster in resourceClusters) {
             var centerPosition = Clustering.GetBoundingBoxCenter(resourceCluster).AsWorldGridCenter();
             var searchGrid = MapAnalyzer.BuildSearchGrid(centerPosition, gridRadius: ExpandSearchRadius);
 
@@ -110,7 +119,7 @@ public class ExpandAnalyzer: INeedUpdating {
         return expandLocations;
     }
 
-    private static void InitTooCloseToResourceGrid() {
+    private void InitTooCloseToResourceGrid(List<List<Unit>> resourceClusters) {
         if (_tooCloseToResourceGrid != null) {
             return;
         }
@@ -120,7 +129,7 @@ public class ExpandAnalyzer: INeedUpdating {
             _tooCloseToResourceGrid.Add(new List<bool>(new bool[Controller.GameInfo.StartRaw.MapSize.Y]));
         }
 
-        var cellsTooCloseToResource = ResourceClusters.SelectMany(cluster => cluster)
+        var cellsTooCloseToResource = resourceClusters.SelectMany(cluster => cluster)
             .SelectMany(MapAnalyzer.GetObstacleFootprint)
             .SelectMany(position => MapAnalyzer.BuildSearchRadius(position.ToVector3(), TooCloseToResourceDistance))
             .Select(position => position.AsWorldGridCorner());
@@ -131,8 +140,8 @@ public class ExpandAnalyzer: INeedUpdating {
         }
     }
 
-    private static bool IsValidExpandPlacement(Vector3 buildSpot) {
-        var footprint = MapAnalyzer.BuildSearchGrid(buildSpot, Buildings.Dimensions[Units.Hatchery].Height / 2);
+    private bool IsValidExpandPlacement(Vector3 buildSpot) {
+        var footprint = MapAnalyzer.GetBuildingFootprint(buildSpot, Units.Hatchery);
         var footprintIsClear = footprint.All(cell => !_tooCloseToResourceGrid[(int)cell.X][(int)cell.Y]);
 
         // We'll query just to be sure
@@ -141,5 +150,141 @@ public class ExpandAnalyzer: INeedUpdating {
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Generates the ExpandLocations by associating locations and resource cluster, finding blockers and tagging the expand type properly.
+    /// </summary>
+    /// <param name="expandPositions"></param>
+    /// <param name="resourceClusters"></param>
+    /// <returns>The ExpandLocations</returns>
+    private List<ExpandLocation> GenerateExpandLocations(IReadOnlyList<Vector3> expandPositions, IReadOnlyList<List<Unit>> resourceClusters) {
+        // Clusters
+        var resourceClustersByExpand = new Dictionary<Vector3, HashSet<Unit>>();
+        foreach (var expandPosition in expandPositions) {
+            resourceClustersByExpand[expandPosition] = GetExpandResourceCluster(expandPosition, resourceClusters);
+        }
+
+        // Blockers
+        var blockersByExpand = new Dictionary<Vector3, HashSet<Unit>>();
+        foreach (var expandPosition in expandPositions) {
+            blockersByExpand[expandPosition] = FindExpandBlockers(expandPosition);
+        }
+
+        var expandTypes = new Dictionary<Vector3, ExpandType>();
+
+        // ExpandType based on distance to own base
+        var rank = 0;
+        foreach (var expandPosition in expandPositions.OrderBy(expandPosition => Pathfinder.FindPath(expandPosition, MapAnalyzer.StartingLocation).Count)) {
+            var (expandType, newRank) = CalculateExpandType(resourceClustersByExpand[expandPosition], blockersByExpand[expandPosition], rank);
+            expandTypes[expandPosition] = expandType;
+            rank = newRank;
+        }
+
+        // ExpandType based on distance to enemy base
+        rank = 0;
+        foreach (var expandPosition in expandPositions.OrderBy(expandPosition => Pathfinder.FindPath(expandPosition, MapAnalyzer.EnemyStartingLocation).Count)) {
+            // Already set, skip
+            if (expandTypes.ContainsKey(expandPosition) && expandTypes[expandPosition] != ExpandType.Far) {
+                continue;
+            }
+
+            var (expandType, newRank) = CalculateExpandType(resourceClustersByExpand[expandPosition], blockersByExpand[expandPosition], rank);
+            expandTypes[expandPosition] = expandType;
+            rank = newRank;
+        }
+
+        // ExpandLocations
+        var expandLocations = new List<ExpandLocation>();
+        foreach (var expandPosition in expandPositions) {
+            var resourceCluster = resourceClustersByExpand[expandPosition];
+            var blockers = blockersByExpand[expandPosition];
+            var expandType = expandTypes[expandPosition];
+
+            var expandLocation = new ExpandLocation(expandPosition, expandType);
+            expandLocation.Init(resourceCluster, blockers);
+
+            expandLocations.Add(expandLocation);
+        }
+
+        return expandLocations;
+    }
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="blockers"></param>
+    /// <param name="resourceCluster"></param>
+    /// <param name="rank"></param>
+    /// <returns></returns>
+    private static (ExpandType expandType, int newRank) CalculateExpandType(IReadOnlyCollection<Unit> resourceCluster, IEnumerable<Unit> blockers, int rank) {
+        if (IsGoldExpand(resourceCluster)) {
+            return (ExpandType.Gold, rank);
+        }
+
+        if (IsPocketExpand(resourceCluster, blockers)) {
+            return (ExpandType.Pocket, rank);
+        }
+
+        return (GetExpandTypeByRank(rank), rank + 1);
+    }
+
+    /// <summary>
+    /// Returns the resource cluster that is the most likely associated with the provided expand position.
+    /// </summary>
+    /// <param name="expandPosition"></param>
+    /// <param name="resourceClusters"></param>
+    /// <returns>The resource cluster of that expand position</returns>
+    private static HashSet<Unit> GetExpandResourceCluster(Vector3 expandPosition, IEnumerable<List<Unit>> resourceClusters) {
+        return resourceClusters.MinBy(cluster => cluster.GetCenter().HorizontalDistanceTo(expandPosition))!.ToHashSet();
+    }
+
+    /// <summary>
+    /// Finds all units that need to be cleared to take the expand, typically mineral fields or rocks
+    /// </summary>
+    /// <param name="expandLocation"></param>
+    /// <returns>All units that need to be cleared to take the expand</returns>
+    private static HashSet<Unit> FindExpandBlockers(Vector3 expandLocation) {
+        var hatcheryRadius = KnowledgeBase.GetBuildingRadius(Units.Hatchery);
+
+        return UnitsTracker.NeutralUnits
+            .Where(neutralUnit => neutralUnit.HorizontalDistanceTo(expandLocation) <= neutralUnit.Radius + hatcheryRadius)
+            .ToHashSet();
+    }
+
+    /// <summary>
+    /// A gold expand has gold minerals and/or purple gas
+    /// </summary>
+    /// <param name="resourceCluster">The resource cluster associated with the expand</param>
+    /// <returns>True if the resource cluster associated with the expand contains rich resources</returns>
+    private static bool IsGoldExpand(IEnumerable<Unit> resourceCluster) {
+        return resourceCluster.Any(resource => Units.GoldMineralFields.Contains(resource.UnitType) || Units.GoldGasGeysers.Contains(resource.UnitType));
+    }
+
+    /// <summary>
+    /// A pocket expand has less mineral patches or is blocked
+    /// Gold expands also have less mineral patches, but they are not pocket expands
+    /// </summary>
+    /// <param name="resourceCluster">The resource cluster associated with the expand</param>
+    /// <param name="blockers">The units blocking the expand</param>
+    /// <returns>True if the expand is a pocket expand</returns>
+    private static bool IsPocketExpand(IReadOnlyCollection<Unit> resourceCluster, IEnumerable<Unit> blockers) {
+        if (IsGoldExpand(resourceCluster)) {
+            return false;
+        }
+
+        return blockers.Any() || resourceCluster.Count < TypicalResourceCount;
+    }
+
+    private static ExpandType GetExpandTypeByRank(int rank) {
+        return rank switch
+        {
+            0 => ExpandType.Main,
+            1 => ExpandType.Natural,
+            2 => ExpandType.Third,
+            3 => ExpandType.Fourth,
+            4 => ExpandType.Fifth,
+            _ => ExpandType.Far,
+        };
     }
 }

@@ -26,11 +26,9 @@ public class BaseTestClass :
         Controller.Reset();
 
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo();
-        Controller.NewGameInfo(gameInfo);
-
         var startingTownHall = TestUtils.CreateUnit(Units.Hatchery, position: new Vector3(0, 0, 0));
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: new List<Unit> { startingTownHall });
-        Controller.NewObservation(observation);
+        Controller.NewFrame(gameInfo, observation);
     }
 
     private static void ControllerTearDown() {

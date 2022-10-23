@@ -68,4 +68,8 @@ public static class KnowledgeBase {
     public static BuffData GetBuffData(int buffId) {
         return Data.Buffs[buffId];
     }
+
+    public static float GetBuildingRadius(uint buildingType) {
+        return GetAbilityData(GetUnitTypeData(buildingType).AbilityId).FootprintRadius;
+    }
 }

@@ -16,7 +16,7 @@ public class WarManagerTests : BaseTestClass {
 
         var setupUnits = UnitsTracker.UnitsByTag.Values;
 
-        Controller.NewObservation(ResponseGameObservationUtils.CreateResponseObservation(
+        TestUtils.NewFrame(ResponseGameObservationUtils.CreateResponseObservation(
             units: militaryUnits.Concat(setupUnits),
             frame: 1
         ));

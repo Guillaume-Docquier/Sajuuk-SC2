@@ -24,7 +24,7 @@ public class BotDebugger {
         DebugBuildOrder(buildOrder, managerBuildRequests);
         DebugEnemyDetectors();
         DebugWalkableAreas();
-        DebugDestructibles();
+        DebugNeutralUnits();
         DebugIncomeRate();
         DebugEnemyGhostUnits();
         DebugKnownEnemyUnits();
@@ -99,12 +99,12 @@ public class BotDebugger {
         }
     }
 
-    private static void DebugDestructibles() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Destructibles)) {
+    private static void DebugNeutralUnits() {
+        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.NeutralUnits)) {
             return;
         }
 
-        foreach (var unit in Controller.GetUnits(UnitsTracker.NeutralUnits, Units.Destructibles).ToList()) {
+        foreach (var unit in UnitsTracker.NeutralUnits) {
             Program.GraphicalDebugger.AddText(unit.Name, worldPos: unit.Position.ToPoint());
         }
     }

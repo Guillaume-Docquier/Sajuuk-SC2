@@ -228,6 +228,11 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         return grid.OrderBy(position => Vector3.Distance(centerPosition, position));
     }
 
+    // TODO GD Might not work with 2x2 buildings
+    public static IEnumerable<Vector3> GetBuildingFootprint(Vector3 buildingCenter, uint buildingType) {
+        return BuildSearchGrid(buildingCenter, (int)KnowledgeBase.GetBuildingRadius(buildingType));
+    }
+
     /// <summary>
     /// Builds a search area composed of all the 1x1 game cells around a center position.
     /// The height is properly set on the returned cells.
