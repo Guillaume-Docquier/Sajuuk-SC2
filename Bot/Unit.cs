@@ -171,6 +171,10 @@ public class Unit: ICanDie, IHavePosition {
     /// <param name="precision">The allowed precision on the move order</param>
     /// <param name="allowSpam">Enables spamming orders. Not recommended because it might generate a lot of actions</param>
     public void Move(Vector3 target, float precision = 0.5f, bool allowSpam = false) {
+        if (Position.HorizontalDistanceTo(target) <= 0.01) {
+            return;
+        }
+
         if (!allowSpam && IsTargeting(target, Abilities.Move, precision)) {
             return;
         }

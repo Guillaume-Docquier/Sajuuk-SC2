@@ -12,7 +12,8 @@ public class RegionScoutingTask : ScoutingTask {
     private readonly HashSet<Vector3> _cellsToExplore;
     private bool _isCancelled = false;
 
-    public RegionScoutingTask(Vector3 scoutLocation) : base(scoutLocation) {
+    public RegionScoutingTask(Vector3 scoutLocation, int priority, int maxScouts)
+        : base(scoutLocation, priority, maxScouts) {
         _region = scoutLocation.GetRegion();
         _cellsToExplore = new HashSet<Vector3>(_region.Cells);
     }

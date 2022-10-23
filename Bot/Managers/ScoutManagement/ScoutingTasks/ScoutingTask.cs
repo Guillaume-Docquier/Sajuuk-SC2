@@ -6,8 +6,14 @@ namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 public abstract class ScoutingTask {
     public Vector3 ScoutLocation { get; }
 
-    public ScoutingTask(Vector3 scoutLocation) {
+    public int Priority { get; }
+
+    public int MaxScouts { get; }
+
+    public ScoutingTask(Vector3 scoutLocation, int priority, int maxScouts) {
         ScoutLocation = scoutLocation;
+        Priority = priority;
+        MaxScouts = maxScouts;
     }
 
     public abstract bool IsComplete();

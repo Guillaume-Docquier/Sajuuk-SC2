@@ -9,7 +9,8 @@ namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 public class ExpandScoutingTask : ScoutingTask {
     private bool _isCancelled = false;
 
-    public ExpandScoutingTask(Vector3 scoutLocation) : base(scoutLocation) {
+    public ExpandScoutingTask(Vector3 scoutLocation, int priority, int maxScouts)
+        : base(scoutLocation, priority, maxScouts) {
     }
 
     public override bool IsComplete() {
