@@ -5,7 +5,7 @@ namespace Bot.GameSense;
 
 using Army = List<Unit>;
 
-// TODO GD
+// TODO GD Do it
 public static class ArmyPlacement {
     public static Dictionary<Unit, Vector3> ComputeConcave(Army ownArmy, Army enemyArmy, bool ignoreEnemyUnitsCollisions = false) {
         var placements = new Dictionary<Unit, Vector3>();

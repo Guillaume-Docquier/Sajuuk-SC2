@@ -85,13 +85,9 @@ public static class TestUtils {
             Releaser = releaser ?? new DummyReleaser();
         }
 
-        protected override void Supervise() {
-            throw new NotImplementedException();
-        }
+        protected override void Supervise() {}
 
-        public override void Retire() {
-            throw new NotImplementedException();
-        }
+        public override void Retire() {}
     }
 
     private class DummyAssigner: IAssigner {

@@ -1,13 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.Builds;
-using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingStrategies;
-using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.Managers.ScoutManagement.ScoutSupervision;
-using Bot.MapKnowledge;
 
 namespace Bot.Managers.ScoutManagement;
 
