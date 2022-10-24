@@ -35,8 +35,8 @@ public class TumorCreepSpreadModule: UnitModule {
             }
         }
         else if (_spreadAt <= Controller.Frame) {
-            var creepFrontier = CreepTracker.GetCreepFrontier().ToList();
-            if (creepFrontier.Count <= 0) {
+            var creepFrontier = CreepTracker.GetCreepFrontier();
+            if (creepFrontier.Count == 0) {
                 return;
             }
 

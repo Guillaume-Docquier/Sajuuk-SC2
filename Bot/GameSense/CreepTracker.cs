@@ -53,7 +53,7 @@ public class CreepTracker: INeedUpdating {
         return _creepMap[(int)position.X][(int)position.Y];
     }
 
-    public static IEnumerable<Vector3> GetCreepFrontier() {
+    public static List<Vector3> GetCreepFrontier() {
         if (_creepFrontierLastGeneratedAt != Controller.Frame) {
             GenerateCreepFrontier();
         }
