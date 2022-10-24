@@ -1,7 +1,9 @@
-﻿using System;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
@@ -10,14 +12,19 @@ namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 
 public class MaintainVisibilityScoutingTask : ScoutingTask {
     private const bool DrawEnabled = true;
+
+    private const int ResolutionReductionFactor = 2;
+    private static readonly double ExecuteEvery = Controller.SecsToFrames(1);
+
     private bool _isCanceled = false;
 
     private readonly HashSet<Vector3> _areaToScout;
 
     public MaintainVisibilityScoutingTask(IReadOnlyCollection<Vector3> area, int priority, int maxScouts)
         : base(GetCenter(area), priority, maxScouts) {
-        _areaToScout = area.ToHashSet();
-        // TODO GD Pre-Compute or cache solo coverage
+        // Lower the resolution for better time performance on large areas
+        // The algorithm results are virtually unaffected by this
+        _areaToScout = area.Where(cell => (cell.X + cell.Y) % ResolutionReductionFactor == 0).ToHashSet();
     }
 
     public override bool IsComplete() {
@@ -40,6 +47,11 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
         }
 
         if (IsCoverageGoodEnough()) {
+            return;
+        }
+
+        // For performance reasons, execute scarcely
+        if (Controller.Frame % ExecuteEvery != 0) {
             return;
         }
 
@@ -138,13 +150,15 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
     /// </summary>
     /// <param name="scouts">The scouts</param>
     /// <returns>The vision coverage of each scout for each cell</returns>
-    private Dictionary<Unit, Dictionary<Vector3, float>> ComputeCoverageScores(List<Unit> scouts) {
+    private Dictionary<Unit, IDictionary<Vector3, float>> ComputeCoverageScores(List<Unit> scouts) {
+        var timer = new Stopwatch();
+        timer.Start();
         var scoutsVision = new Dictionary<Unit, List<Vector3>>();
         foreach (var scout in scouts) {
             scoutsVision[scout] = _areaToScout.Where(cell => scout.IsInSightRangeOf(cell)).ToList();
         }
 
-        var coverageScores = new Dictionary<Unit, Dictionary<Vector3, float>>();
+        var coverageScores = new Dictionary<Unit, IDictionary<Vector3, float>>();
         foreach (var scout in scouts) {
             var otherScoutsCoverage = scoutsVision
                 .Where(kv => kv.Key != scout)
@@ -153,22 +167,25 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
 
             var uncoveredArea = _areaToScout
                 .Where(cell => !otherScoutsCoverage.Contains(cell))
-                .ToList();
+                .ToHashSet();
 
-            var coverageScore = new Dictionary<Vector3, float>();
-            foreach (var cell in _areaToScout) {
+            // This loop is 99% of the computation time of the task
+            // Without the Parallel.ForEach, this takes ~10ms for 600 cells
+            // With it, it goes down to ~3ms
+            var coverageScore = new ConcurrentDictionary<Vector3, float>();
+            Parallel.ForEach(_areaToScout, cell => {
                 coverageScore[cell] = uncoveredArea.Count(cellToCover => cellToCover.HorizontalDistanceTo(cell) <= scout.UnitTypeData.SightRange);
-            }
+            });
 
             coverageScores[scout] = coverageScore;
         }
+        timer.Stop();
+        Logger.Metric("CoverageScores {0,5:F2} ms for {1} cells", timer.GetElapsedTimeMs(), _areaToScout.Count);
 
         return coverageScores;
     }
 
     private bool IsCoverageGoodEnough() {
-        var visibilityPercent = (float)_areaToScout.Count(VisibilityTracker.IsVisible) / _areaToScout.Count;
-
-        return visibilityPercent > 0.95f;
+        return _areaToScout.All(VisibilityTracker.IsVisible);
     }
 }
