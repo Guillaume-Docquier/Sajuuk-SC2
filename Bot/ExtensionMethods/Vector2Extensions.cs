@@ -13,6 +13,10 @@ public static class Vector2Extensions {
         return withWorldHeight ? vector3.WithWorldHeight() : vector3;
     }
 
+    public static float DistanceTo(this Vector2 origin, Unit unit) {
+        return Vector2.Distance(origin, unit.Position.ToVector2());
+    }
+
     public static float DistanceTo(this Vector2 origin, Vector2 destination) {
         return Vector2.Distance(origin, destination);
     }

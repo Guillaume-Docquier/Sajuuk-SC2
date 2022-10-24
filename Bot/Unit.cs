@@ -179,6 +179,18 @@ public class Unit: ICanDie, IHavePosition {
     /// <param name="target">The target position to move to</param>
     /// <param name="precision">The allowed precision on the move order</param>
     /// <param name="allowSpam">Enables spamming orders. Not recommended because it might generate a lot of actions</param>
+    public void Move(Vector2 target, float precision = 0.5f, bool allowSpam = false) {
+        Move(target.ToVector3(withWorldHeight: false), precision, allowSpam);
+    }
+
+    /// <summary>
+    /// Send the order to move to a target position.
+    /// If the unit already has a move order to that target, given the precision, no order will be sent.
+    /// You can override this check with allowSpam = true.
+    /// </summary>
+    /// <param name="target">The target position to move to</param>
+    /// <param name="precision">The allowed precision on the move order</param>
+    /// <param name="allowSpam">Enables spamming orders. Not recommended because it might generate a lot of actions</param>
     public void Move(Vector3 target, float precision = 0.5f, bool allowSpam = false) {
         if (Position.HorizontalDistanceTo(target) <= 0.01) {
             return;
@@ -431,6 +443,10 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     public bool IsInSightRangeOf(Vector3 position) {
+        return IsInSightRangeOf(position.ToVector2());
+    }
+
+    public bool IsInSightRangeOf(Vector2 position) {
         return HorizontalDistanceTo(position) <= UnitTypeData.SightRange;
     }
 
