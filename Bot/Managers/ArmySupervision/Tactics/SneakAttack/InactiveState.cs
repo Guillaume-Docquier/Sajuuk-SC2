@@ -42,7 +42,7 @@ public partial class SneakAttackTactic {
                 .OrderBy(enemy => enemy.HorizontalDistanceTo(army.GetCenter()))
                 .ToList();
 
-            var nbSoldiersInRange = army.Count(soldier => enemyMilitaryUnits.Any(soldier.IsInRangeOf));
+            var nbSoldiersInRange = army.Count(soldier => enemyMilitaryUnits.Any(soldier.IsInAttackRangeOf));
 
             if (nbSoldiersInRange >= army.Count * MinimumEngagementArmyThreshold) {
                 // We have a pretty good engagement already

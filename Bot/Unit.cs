@@ -163,6 +163,15 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     /// <summary>
+    /// Send the order to move towards a target position by a certain distance
+    /// </summary>
+    /// <param name="target">The target position to move towards</param>
+    /// <param name="distance">The step distance</param>
+    public void MoveTowards(Vector3 target, float distance = 0.5f) {
+        Move(Position.TranslateTowards(target, distance), distance / 2);
+    }
+
+    /// <summary>
     /// Send the order to move to a target position.
     /// If the unit already has a move order to that target, given the precision, no order will be sent.
     /// You can override this check with allowSpam = true.
@@ -409,12 +418,20 @@ public class Unit: ICanDie, IHavePosition {
         return false;
     }
 
-    public bool IsInRangeOf(Unit enemy) {
-        return IsInRangeOf(enemy.Position);
+    public bool IsInAttackRangeOf(Unit enemy) {
+        return IsInAttackRangeOf(enemy.Position);
     }
 
-    public bool IsInRangeOf(Vector3 position) {
+    public bool IsInAttackRangeOf(Vector3 position) {
         return HorizontalDistanceTo(position) <= MaxRange;
+    }
+
+    public bool IsInSightRangeOf(Unit enemy) {
+        return IsInAttackRangeOf(enemy.Position);
+    }
+
+    public bool IsInSightRangeOf(Vector3 position) {
+        return HorizontalDistanceTo(position) <= UnitTypeData.SightRange;
     }
 
     public override string ToString() {

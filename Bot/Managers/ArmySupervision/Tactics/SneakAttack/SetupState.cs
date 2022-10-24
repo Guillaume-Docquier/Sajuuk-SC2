@@ -88,14 +88,14 @@ public partial class SneakAttackTactic {
 
             int nbSoldiersInRange;
             if (StateMachine.Context._isTargetPriority) {
-                nbSoldiersInRange = StateMachine.Context._army.Count(soldier => soldier.IsInRangeOf(StateMachine.Context._targetPosition));
+                nbSoldiersInRange = StateMachine.Context._army.Count(soldier => soldier.IsInAttackRangeOf(StateMachine.Context._targetPosition));
             }
             else {
                 var enemyMilitaryUnits = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military)
                     .OrderBy(enemy => enemy.HorizontalDistanceTo(StateMachine.Context._armyCenter))
                     .ToList();
 
-                nbSoldiersInRange = StateMachine.Context._army.Count(soldier => enemyMilitaryUnits.Any(soldier.IsInRangeOf));
+                nbSoldiersInRange = StateMachine.Context._army.Count(soldier => enemyMilitaryUnits.Any(soldier.IsInAttackRangeOf));
             }
 
             return nbSoldiersInRange >= StateMachine.Context._army.Count * MinimumArmyThresholdToEngage;

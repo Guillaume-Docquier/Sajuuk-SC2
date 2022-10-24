@@ -86,7 +86,7 @@ public class BurrowMicroModule: UnitModule {
     }
 
     private bool MoveOutOfEnemyRange() {
-        var enemiesCanHitUs = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military).Any(enemy => enemy.IsInRangeOf(_unit));
+        var enemiesCanHitUs = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military).Any(enemy => enemy.IsInAttackRangeOf(_unit));
         if (!enemiesCanHitUs) {
             return false;
         }
