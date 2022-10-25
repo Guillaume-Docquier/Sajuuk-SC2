@@ -17,7 +17,7 @@ public class ZergScoutingStrategy : IScoutingStrategy {
             .Where(expandLocation => expandLocation.ExpandType == ExpandType.Natural)
             .MinBy(expandLocation => expandLocation.Position.HorizontalDistanceTo(MapAnalyzer.EnemyStartingLocation))!;
 
-        _naturalScoutingTask = new ExpandScoutingTask(enemyNaturalExpandLocation.Position, TopPriority, maxScouts: 1);
+        _naturalScoutingTask = new ExpandScoutingTask(enemyNaturalExpandLocation.Position, TopPriority, maxScouts: 1, waitForExpand: true);
 
         var enemyNaturalExitRegion = RegionAnalyzer.Regions
             .Where(region => region.Type == RegionType.OpenArea)

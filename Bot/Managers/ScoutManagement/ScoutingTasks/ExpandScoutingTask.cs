@@ -1,16 +1,20 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 
 namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 
 public class ExpandScoutingTask : ScoutingTask {
+    private readonly bool _waitForExpand;
+
     private bool _isCancelled = false;
 
-    public ExpandScoutingTask(Vector3 scoutLocation, int priority, int maxScouts)
+    public ExpandScoutingTask(Vector3 scoutLocation, int priority, int maxScouts, bool waitForExpand = false)
         : base(scoutLocation, priority, maxScouts) {
+        _waitForExpand = waitForExpand;
     }
 
     public override bool IsComplete() {
@@ -18,14 +22,13 @@ public class ExpandScoutingTask : ScoutingTask {
             return true;
         }
 
-        if (VisibilityTracker.IsVisible(ScoutLocation)) {
+        if (!_waitForExpand && VisibilityTracker.IsVisible(ScoutLocation)) {
             return true;
         }
 
-        // TODO GD Maybe add a target frame to wait for? Or do we handle it via a follow up?
         return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.TownHalls)
-            .Where(unit => unit.IsVisible)
-            .Any(unit => unit.HorizontalDistanceTo(ScoutLocation) <= unit.Radius);
+            .Where(enemyTownHall => enemyTownHall.IsVisible)
+            .Any(enemyTownHall => enemyTownHall.HorizontalDistanceTo(ScoutLocation) <= enemyTownHall.Radius);
     }
 
     public override void Cancel() {
@@ -34,7 +37,12 @@ public class ExpandScoutingTask : ScoutingTask {
 
     public override void Execute(HashSet<Unit> scouts) {
         foreach (var scout in scouts) {
-            scout.Move(ScoutLocation);
+            var positionInSight = ScoutLocation.TranslateTowards(scout.Position, scout.UnitTypeData.SightRange);
+            if (!scout.IsFlying) {
+                positionInSight = positionInSight.ClosestWalkable();
+            }
+
+            scout.Move(positionInSight);
         }
     }
 }
