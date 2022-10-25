@@ -163,6 +163,15 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     /// <summary>
+    /// Move in the direction of the provided vector
+    /// If you want to move by a certain distance, provide a direction vector of that length
+    /// </summary>
+    /// <param name="direction"></param>
+    public void MoveInDirection(Vector2 direction) {
+        Move(Vector2.Add(Position.ToVector2(), direction));
+    }
+
+    /// <summary>
     /// Send the order to move towards a target position by a certain distance
     /// </summary>
     /// <param name="target">The target position to move towards</param>
@@ -434,12 +443,16 @@ public class Unit: ICanDie, IHavePosition {
         return IsInAttackRangeOf(enemy.Position);
     }
 
-    public bool IsInAttackRangeOf(Vector3 position) {
-        return HorizontalDistanceTo(position) <= MaxRange;
+    public bool IsInAttackRangeOf(Unit enemy, int extraRange) {
+        return IsInAttackRangeOf(enemy.Position, extraRange);
+    }
+
+    public bool IsInAttackRangeOf(Vector3 position, int extraRange = 0) {
+        return HorizontalDistanceTo(position) <= MaxRange + extraRange;
     }
 
     public bool IsInSightRangeOf(Unit enemy) {
-        return IsInAttackRangeOf(enemy.Position);
+        return IsInSightRangeOf(enemy.Position);
     }
 
     public bool IsInSightRangeOf(Vector3 position) {
