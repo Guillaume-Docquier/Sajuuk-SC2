@@ -24,12 +24,12 @@ public class BotDebugger {
         DebugBuildOrder(buildOrder, managerBuildRequests);
         DebugEnemyDetectors();
         DebugWalkableAreas();
-        DebugNeutralUnits();
         DebugIncomeRate();
         DebugEnemyGhostUnits();
         DebugKnownEnemyUnits();
         DebugMatchupData();
         DebugExploration();
+        DebugUnitNames();
     }
 
     private static void DebugHelp() {
@@ -96,16 +96,6 @@ public class BotDebugger {
                     Program.GraphicalDebugger.AddGridSquare(position, Colors.LightRed);
                 }
             }
-        }
-    }
-
-    private static void DebugNeutralUnits() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.NeutralUnits)) {
-            return;
-        }
-
-        foreach (var unit in UnitsTracker.NeutralUnits) {
-            Program.GraphicalDebugger.AddText(unit.Name, worldPos: unit.Position.ToPoint());
         }
     }
 
@@ -178,6 +168,16 @@ public class BotDebugger {
             var color = Colors.PeachPink;
             Program.GraphicalDebugger.AddText("?", color: color, worldPos: notExploredCell.ToVector3().ToPoint());
             Program.GraphicalDebugger.AddGridSquare(notExploredCell.ToVector3(), color: color);
+        }
+    }
+
+    private static void DebugUnitNames() {
+        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Names)) {
+            return;
+        }
+
+        foreach (var unit in UnitsTracker.UnitsByTag.Values) {
+            Program.GraphicalDebugger.AddText($"{unit.Name} ({unit.UnitType})", worldPos: unit.Position.ToPoint(xOffset: -0.4f));
         }
     }
 }

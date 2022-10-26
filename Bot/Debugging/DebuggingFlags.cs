@@ -34,11 +34,6 @@ public static class DebuggingFlags {
     public const string WalkableAreas = ".walkable";
 
     /// <summary>
-    /// Enables displaying information on neutral destructible objects
-    /// </summary>
-    public const string NeutralUnits = ".neutral";
-
-    /// <summary>
     /// Enables displaying income information on screen
     /// </summary>
     public const string IncomeRate = ".income";
@@ -77,4 +72,9 @@ public static class DebuggingFlags {
     /// Enables displaying the unexplored tiles
     /// </summary>
     public const string Exploration = ".explored";
+
+    /// <summary>
+    /// Enables displaying the name of every unit
+    /// </summary>
+    public const string Names = ".names";
 }
