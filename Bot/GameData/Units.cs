@@ -234,6 +234,8 @@ public static class Units {
     public const uint UnbuildablePlatesDestructible = 474;
     public const uint UnbuildableRocksDestructible = 472;
 
+    public const uint ReaperMine = 831; // KD8Charge
+
     public static readonly HashSet<uint> Changelings = new HashSet<uint>
     {
         Changeling,

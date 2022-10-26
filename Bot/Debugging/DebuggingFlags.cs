@@ -74,7 +74,7 @@ public static class DebuggingFlags {
     public const string Exploration = ".explored";
 
     /// <summary>
-    /// Enables displaying the name of every unit
+    /// Enables displaying the name of every unit and effects
     /// </summary>
     public const string Names = ".names";
 }

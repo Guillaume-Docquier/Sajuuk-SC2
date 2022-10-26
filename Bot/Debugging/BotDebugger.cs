@@ -29,7 +29,7 @@ public class BotDebugger {
         DebugKnownEnemyUnits();
         DebugMatchupData();
         DebugExploration();
-        DebugUnitNames();
+        DebugUnitAndEffectNames();
     }
 
     private static void DebugHelp() {
@@ -79,8 +79,8 @@ public class BotDebugger {
 
         var detectors = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Detectors);
         foreach (var detector in detectors) {
-            Program.GraphicalDebugger.AddText("!", size: 20, worldPos: detector.Position.ToPoint(), color: Colors.Purple);
-            Program.GraphicalDebugger.AddGridSquaresInRadius(detector.Position, (int)detector.UnitTypeData.SightRange, Colors.Purple);
+            Program.GraphicalDebugger.AddText("!", size: 20, worldPos: detector.Position.AsWorldGridCenter().ToPoint(), color: Colors.Purple);
+            Program.GraphicalDebugger.AddGridSquaresInRadius(detector.Position.AsWorldGridCenter(), (int)detector.UnitTypeData.SightRange, Colors.Purple);
         }
     }
 
@@ -171,13 +171,22 @@ public class BotDebugger {
         }
     }
 
-    private static void DebugUnitNames() {
+    private static void DebugUnitAndEffectNames() {
         if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Names)) {
             return;
         }
 
         foreach (var unit in UnitsTracker.UnitsByTag.Values) {
-            Program.GraphicalDebugger.AddText($"{unit.Name} ({unit.UnitType})", worldPos: unit.Position.ToPoint(xOffset: -0.4f));
+            var unitText = $"{unit.Name} ({unit.UnitType})";
+            Program.GraphicalDebugger.AddText(unitText, size: 11, worldPos: unit.Position.ToPoint(xOffset: -0.4f));
+        }
+
+        foreach (var effect in Controller.Observation.Observation.RawData.Effects) {
+            foreach (var effectPosition in effect.Pos.Select(effectPosition => new Vector3(effectPosition.X, effectPosition.Y, 0).WithWorldHeight())) {
+                var effectText = $"{KnowledgeBase.GetEffectData(effect.EffectId).FriendlyName} ({effect.EffectId})";
+                Program.GraphicalDebugger.AddText(effectText, size: 11, worldPos: effectPosition.ToPoint(xOffset: -0.4f));
+                Program.GraphicalDebugger.AddSphere(effectPosition, effect.Radius, Colors.Cyan);
+            }
         }
     }
 }

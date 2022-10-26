@@ -61,6 +61,10 @@ public static class KnowledgeBase {
         return Data.Abilities[abilityId];
     }
 
+    public static EffectData GetEffectData(uint effectId) {
+        return GetEffectData((int)effectId);
+    }
+
     public static EffectData GetEffectData(int effectId) {
         return Data.Effects[effectId];
     }

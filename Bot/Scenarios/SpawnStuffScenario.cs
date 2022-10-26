@@ -6,7 +6,7 @@ using Bot.Wrapper;
 
 namespace Bot.Scenarios;
 
-public class SpawnObserverScenario : IScenario {
+public class SpawnStuffScenario : IScenario {
     private bool _isScenarioDone = false;
 
     public void OnFrame() {
@@ -23,8 +23,7 @@ public class SpawnObserverScenario : IScenario {
             // We don't await, not ideal but we don't need to
             // Making all the code async just for us would be a chore
 #pragma warning disable CS4014
-            Program.GameConnection.SendRequest(RequestBuilder.DebugCreateUnit(Owner.Enemy, Units.Observer, 1, main!.Position));
-            Program.GameConnection.SendRequest(RequestBuilder.DebugCreateUnit(Owner.Enemy, Units.DarkTemplar, 1, main!.Position));
+            Program.GameConnection.SendRequest(RequestBuilder.DebugCreateUnit(Owner.Enemy, Units.Ravager, 10, main!.Position));
 #pragma warning restore CS4014
 
             _isScenarioDone = true;

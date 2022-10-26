@@ -37,7 +37,7 @@ public class ExpandScoutingTask : ScoutingTask {
 
     public override void Execute(HashSet<Unit> scouts) {
         foreach (var scout in scouts) {
-            var positionInSight = ScoutLocation.TranslateTowards(scout.Position, scout.UnitTypeData.SightRange);
+            var positionInSight = ScoutLocation.TranslateTowards(scout.Position, scout.UnitTypeData.SightRange + KnowledgeBase.GetBuildingRadius(Units.Hatchery));
             if (!scout.IsFlying) {
                 positionInSight = positionInSight.ClosestWalkable();
             }
