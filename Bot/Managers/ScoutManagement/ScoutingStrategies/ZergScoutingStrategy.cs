@@ -11,6 +11,8 @@ public class ZergScoutingStrategy : IScoutingStrategy {
 
     private readonly ScoutingTask _naturalScoutingTask;
     private readonly ScoutingTask _naturalExitVisibilityTask;
+    private readonly ScoutingTask _thirdScoutingTask;
+    private readonly ScoutingTask _fourthScoutingTask;
 
     public ZergScoutingStrategy() {
         var enemyNaturalExpandLocation = ExpandAnalyzer.ExpandLocations
@@ -33,12 +35,27 @@ public class ZergScoutingStrategy : IScoutingStrategy {
             .ToList();
 
         _naturalExitVisibilityTask = new MaintainVisibilityScoutingTask(cellsToMaintainVisible, priority: TopPriority - 1, enemyNaturalExitRegionRamps.Count);
+
+        // TODO GD Make ExpandAnalyzer.GetExpand(Alliance, ExpandType)
+        var enemyThirdExpandLocation = ExpandAnalyzer.ExpandLocations
+            .Where(expandLocation => expandLocation.ExpandType == ExpandType.Third)
+            .MinBy(expandLocation => expandLocation.Position.HorizontalDistanceTo(MapAnalyzer.EnemyStartingLocation))!;
+
+        _thirdScoutingTask = new ExpandScoutingTask(enemyThirdExpandLocation.Position, TopPriority - 2, maxScouts: 1, waitForExpand: true);
+
+        var enemyFourthExpandLocation = ExpandAnalyzer.ExpandLocations
+            .Where(expandLocation => expandLocation.ExpandType == ExpandType.Fourth)
+            .MinBy(expandLocation => expandLocation.Position.HorizontalDistanceTo(MapAnalyzer.EnemyStartingLocation))!;
+
+        _fourthScoutingTask = new ExpandScoutingTask(enemyFourthExpandLocation.Position, TopPriority - 2, maxScouts: 1, waitForExpand: true);
     }
 
     public IEnumerable<ScoutingTask> Execute() {
         if (Controller.Frame == 0) {
             yield return _naturalScoutingTask;
             yield return _naturalExitVisibilityTask;
+            yield return _thirdScoutingTask;
+            yield return _fourthScoutingTask;
         }
     }
 }
