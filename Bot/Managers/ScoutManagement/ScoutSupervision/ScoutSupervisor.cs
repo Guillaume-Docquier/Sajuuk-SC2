@@ -29,8 +29,8 @@ public partial class ScoutSupervisor : Supervisor {
         var enemyAntiAir = enemyUnits.Where(enemyUnit => enemyUnit.CanHitAir).ToList();
         foreach (var supervisedUnit in SupervisedUnits) {
             var enemiesInVicinity = supervisedUnit.IsFlying
-                ? enemyAntiAir.Where(enemy => enemy.IsInAttackRangeOf(supervisedUnit, extraRange: 4)).ToList()
-                : enemyUnits.Where(enemy => enemy.IsInAttackRangeOf(supervisedUnit, extraRange: 4)).ToList();
+                ? enemyAntiAir.Where(enemy => supervisedUnit.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList()
+                : enemyUnits.Where(enemy => supervisedUnit.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList();
 
             if (enemiesInVicinity.Count > 0) {
                 Controller.SetRealTime();

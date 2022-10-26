@@ -443,23 +443,23 @@ public class Unit: ICanDie, IHavePosition {
         return IsInAttackRangeOf(enemy.Position);
     }
 
-    public bool IsInAttackRangeOf(Unit enemy, int extraRange) {
+    public bool IsInAttackRangeOf(Unit enemy, float extraRange) {
         return IsInAttackRangeOf(enemy.Position, extraRange);
     }
 
-    public bool IsInAttackRangeOf(Vector3 position, int extraRange = 0) {
+    public bool IsInAttackRangeOf(Vector3 position, float extraRange = 0) {
         return HorizontalDistanceTo(position) <= MaxRange + extraRange;
     }
 
-    public bool IsInSightRangeOf(Unit enemy) {
-        return IsInSightRangeOf(enemy.Position);
+    public bool IsInSightRangeOf(Unit enemy, float extraRange) {
+        return IsInSightRangeOf(enemy.Position, extraRange);
     }
 
-    public bool IsInSightRangeOf(Vector3 position) {
-        return IsInSightRangeOf(position.ToVector2());
+    public bool IsInSightRangeOf(Vector3 position, float extraRange) {
+        return IsInSightRangeOf(position.ToVector2(), extraRange);
     }
 
-    public bool IsInSightRangeOf(Vector2 position) {
+    public bool IsInSightRangeOf(Vector2 position, float extraRange = 0) {
         return HorizontalDistanceTo(position) <= UnitTypeData.SightRange;
     }
 
