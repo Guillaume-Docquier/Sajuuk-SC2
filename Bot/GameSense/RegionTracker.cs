@@ -17,7 +17,14 @@ public class RegionTracker : INeedUpdating {
     private bool _isInitialized = false;
     private Dictionary<Region, float> _regionDangerLevels;
 
-    private static readonly float DecayRate = 1f - 1f / Controller.SecsToFrames(10);
+    // It would be cool to use the exponential decay everywhere
+    // But that would require tracking the last danger update of each region
+    // And we would be doing some fancy (expensive?) exponent operations
+    // But in the end, a good ol' factor works perfectly well, so... maybe some other day
+    private static readonly float RegionDecayRate = 1f - 1f / Controller.SecsToFrames(10);
+
+    private static readonly ulong HalfLife = Controller.SecsToFrames(10);
+    private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
     private static class DangerLevel {
         public const float Safe = 0f;
@@ -42,10 +49,20 @@ public class RegionTracker : INeedUpdating {
 
     private RegionTracker() {}
 
+    /// <summary>
+    /// Gets the danger level associated with the region of a given position
+    /// </summary>
+    /// <param name="position">The position to get the danger level of</param>
+    /// <returns>The danger of the position's region</returns>
     public static float GetDangerLevel(Vector3 position) {
         return GetDangerLevel(position.GetRegion());
     }
 
+    /// <summary>
+    /// Gets the danger level of a region
+    /// </summary>
+    /// <param name="region">The region to get the danger level of</param>
+    /// <returns>The danger level of the region</returns>
     public static float GetDangerLevel(Region region) {
         if (region == null || !Instance._regionDangerLevels.ContainsKey(region)) {
             return (int)DangerLevel.Unknown;
@@ -80,6 +97,10 @@ public class RegionTracker : INeedUpdating {
         _isInitialized = true;
     }
 
+    /// <summary>
+    /// Update the danger level of each region based on the units and fog of war
+    /// The danger decays as the information grows older
+    /// </summary>
     private void UpdateDangerLevels() {
         // Update based on enemy units
         var newDangerLevels = ComputeUnitsDanger();
@@ -107,6 +128,7 @@ public class RegionTracker : INeedUpdating {
             }
         }
 
+        // TODO Visibility should be factored in here. If mostly visible, high danger should be going down
         // Update the danger levels
         foreach (var (region, newDangerLevel) in newDangerLevels) {
             // Let dangerous danger decay over time
@@ -122,7 +144,7 @@ public class RegionTracker : INeedUpdating {
         // Decay towards neutral over time
         foreach (var region in _regionDangerLevels.Keys) {
             var normalizedTowardsNeutralDangerLevel = _regionDangerLevels[region] - DangerLevel.Neutral;
-            var decayedDanger = normalizedTowardsNeutralDangerLevel * DecayRate + DangerLevel.Neutral;
+            var decayedDanger = normalizedTowardsNeutralDangerLevel * RegionDecayRate + DangerLevel.Neutral;
             if (Math.Abs(DangerLevel.Neutral - decayedDanger) < 0.05) {
                 decayedDanger = DangerLevel.Neutral;
             }
@@ -131,17 +153,19 @@ public class RegionTracker : INeedUpdating {
         }
     }
 
-    // TODO GD Implement ghost (last seen) units to have lingering danger
+    /// <summary>
+    /// For each region, compute the danger of the units within
+    /// </summary>
+    /// <returns>A danger score for each region</returns>
     private static Dictionary<Region, float> ComputeUnitsDanger() {
         var unitsDanger = new Dictionary<Region, float>();
-        foreach (var enemyUnit in UnitsTracker.EnemyUnits) {
+        foreach (var enemyUnit in UnitsTracker.EnemyUnits.Concat(UnitsTracker.EnemyGhostUnits.Values)) {
             var region = enemyUnit.Position.GetRegion();
             if (region == null) {
                 continue;
             }
 
-            var danger = GetUnitDanger(enemyUnit);
-
+            var danger = GetUnitDanger(enemyUnit) * GetUnitUncertaintyPenalty(enemyUnit);
             if (!unitsDanger.ContainsKey(region)) {
                 unitsDanger[region] = danger;
             }
@@ -153,7 +177,12 @@ public class RegionTracker : INeedUpdating {
         return unitsDanger;
     }
 
-    // TODO GD Make this more sophisticated (based on unit cost, probably)
+    /// <summary>
+    /// Get the danger level of a unit
+    /// TODO GD Make this more sophisticated (based on unit cost, probably)
+    /// </summary>
+    /// <param name="unit">The dangerous unit</param>
+    /// <returns>The danger level of the unit</returns>
     private static float GetUnitDanger(Unit unit) {
         // TODO GD This should be more nuanced, a lone dropship is more dangerous than a dropship with a visible army
         if (Units.DropShips.Contains(unit.UnitType)) {
@@ -184,6 +213,28 @@ public class RegionTracker : INeedUpdating {
         return DangerLevel.Dangerous / 2;
     }
 
+    /// <summary>
+    /// Penalize the danger level of units (like ghost units) that have not been seen in a while.
+    /// </summary>
+    /// <param name="enemy"></param>
+    /// <returns>The danger level penalty, within ]0, 1]</returns>
+    private static float GetUnitUncertaintyPenalty(Unit enemy) {
+        // TODO GD Maybe make terran building that can fly uncertain, but not so much
+        if (Units.Buildings.Contains(enemy.UnitType)) {
+            return 1;
+        }
+
+        if (Controller.Frame == enemy.LastSeen) {
+            return 1;
+        }
+
+        return ExponentialDecayFactor(Controller.Frame - enemy.LastSeen);
+    }
+
+    /// <summary>
+    /// For each region, return some danger based on the non-visible portion of the region.
+    /// </summary>
+    /// <returns>The danger level of each region based on the visible percentage of the region</returns>
     private Dictionary<Region, float> ComputeFogOfWarDanger() {
         var regionVisibility = new Dictionary<Region, int>();
         foreach (var visibleCell in VisibilityTracker.VisibleCells) {
@@ -251,6 +302,11 @@ public class RegionTracker : INeedUpdating {
         }
     }
 
+    /// <summary>
+    /// Returns a string label associated with the region danger level
+    /// </summary>
+    /// <param name="region">The region to fet the label for</param>
+    /// <returns>A string that describes the danger level of the region</returns>
     private string GetDangerLevelLabel(Region region) {
         var dangerLevel = _regionDangerLevels[region];
 
@@ -262,5 +318,14 @@ public class RegionTracker : INeedUpdating {
             >= DangerLevel.Neutral => "Neutral",
             _ => "Safe"
         };
+    }
+
+    /// <summary>
+    /// Returns the exponential decay factor of a value after some time
+    /// </summary>
+    /// <param name="time">The time since decay started</param>
+    /// <returns>The decay factor</returns>
+    private static float ExponentialDecayFactor(ulong time) {
+        return (float)Math.Exp(-ExponentialDecayConstant * time);
     }
 }

@@ -167,7 +167,7 @@ public partial class WarManager: Manager {
 
     private void StartTheAssault(Vector3 enemyPosition) {
         _hasAssaultStarted = true;
-        _groundArmySupervisor.AssignTarget(enemyPosition, AttackRadius);
+        //_groundArmySupervisor.AssignTarget(enemyPosition, AttackRadius);
 
         // TODO GD Handle this better
         if (_buildRequests.Count == 0) {
