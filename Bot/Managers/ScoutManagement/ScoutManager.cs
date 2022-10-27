@@ -1,14 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using Bot.Builds;
+using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingStrategies;
 using Bot.Managers.ScoutManagement.ScoutSupervision;
+using Bot.MapKnowledge;
 
 namespace Bot.Managers.ScoutManagement;
 
-// TODO GD Do this for real. Supervisor and Scouting Tasks work.
 public partial class ScoutManager : Manager {
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
@@ -34,12 +36,6 @@ public partial class ScoutManager : Manager {
     }
 
     protected override void DispatchUnits() {
-        // Create supervisors (scouting objectives)
-        // Natural scouting with overlords
-        // Drone scout enemy base
-        // Proxy scout (with what?)
-        // Over time scout for expands / army location
-
         foreach (var scoutingTask in _scoutingStrategy.Execute()) {
             _scoutSupervisors.Add(new ScoutSupervisor(scoutingTask));
         }
@@ -52,10 +48,58 @@ public partial class ScoutManager : Manager {
         ClearCompletedTasks();
 
         // TODO GD Consider releasing units
-
         foreach (var scoutSupervisor in _scoutSupervisors) {
             scoutSupervisor.OnFrame();
         }
+
+        var unitsToRecall = ManagedUnits.Where(unit => unit.Supervisor == null).ToHashSet();
+        foreach (var unitThatIsAvoidingDanger in AvoidDanger(unitsToRecall)) {
+            unitsToRecall.Remove(unitThatIsAvoidingDanger);
+        }
+
+        // TODO GD Change to most defended?
+        var safestRegion = RegionAnalyzer.Regions
+            .OrderBy(RegionTracker.GetDangerLevel)
+            .ThenBy(region => region.Center.HorizontalDistanceTo(MapAnalyzer.StartingLocation))
+            .First();
+
+        foreach (var unitToRecall in unitsToRecall) {
+            unitToRecall.Move(safestRegion.Center);
+        }
+    }
+
+    // TODO GD Make this reusable
+    private static IEnumerable<Unit> AvoidDanger(HashSet<Unit> unitsToPreserve) {
+        var unitsThatAreAvoidingDanger = new List<Unit>();
+
+        var enemyUnits = UnitsTracker.EnemyUnits.Concat(UnitsTracker.EnemyGhostUnits.Values).ToList();
+        var enemyAntiAir = enemyUnits.Where(enemyUnit => enemyUnit.CanHitAir).ToList();
+        foreach (var unitToPreserve in unitsToPreserve) {
+            var enemiesInVicinity = unitToPreserve.IsFlying
+                ? enemyAntiAir.Where(enemy => unitToPreserve.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList()
+                : enemyUnits.Where(enemy => unitToPreserve.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList();
+
+            if (enemiesInVicinity.Count > 0) {
+                var fleeVector = ComputeFleeUnitVector(unitToPreserve, enemiesInVicinity);
+                unitToPreserve.MoveInDirection(3 * fleeVector);
+                unitsThatAreAvoidingDanger.Add(unitToPreserve);
+            }
+        }
+
+        return unitsThatAreAvoidingDanger;
+    }
+
+    private static Vector2 ComputeFleeUnitVector(Unit unitToPreserve, IEnumerable<Unit> enemyUnitsToAvoid) {
+        var avoidanceVectors = enemyUnitsToAvoid.Select(enemy => Vector2.Divide(enemy.Position.DirectionTo(unitToPreserve.Position).ToVector2(), (float)enemy.HorizontalDistanceTo(unitToPreserve)));
+
+        var fleeX = 0f;
+        var fleeY = 0f;
+        foreach (var avoidanceVector in avoidanceVectors) {
+            fleeX += avoidanceVector.X;
+            fleeY += avoidanceVector.Y;
+        }
+
+        return Vector2.Normalize(new Vector2(fleeX, fleeY));
     }
 
     private void ClearCompletedTasks() {
