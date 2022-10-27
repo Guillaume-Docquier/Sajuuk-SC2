@@ -3,6 +3,7 @@ using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.MapKnowledge;
+using SC2APIProtocol;
 
 namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 
@@ -15,10 +16,7 @@ public class ZergScoutingStrategy : IScoutingStrategy {
     private readonly ScoutingTask _fourthScoutingTask;
 
     public ZergScoutingStrategy() {
-        var enemyNaturalExpandLocation = ExpandAnalyzer.ExpandLocations
-            .Where(expandLocation => expandLocation.ExpandType == ExpandType.Natural)
-            .MinBy(expandLocation => expandLocation.Position.HorizontalDistanceTo(MapAnalyzer.EnemyStartingLocation))!;
-
+        var enemyNaturalExpandLocation = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
         _naturalScoutingTask = new ExpandScoutingTask(enemyNaturalExpandLocation.Position, TopPriority, maxScouts: 1, waitForExpand: true);
 
         var enemyNaturalExitRegion = RegionAnalyzer.Regions
@@ -36,17 +34,10 @@ public class ZergScoutingStrategy : IScoutingStrategy {
 
         _naturalExitVisibilityTask = new MaintainVisibilityScoutingTask(cellsToMaintainVisible, priority: TopPriority - 1, enemyNaturalExitRegionRamps.Count);
 
-        // TODO GD Make ExpandAnalyzer.GetExpand(Alliance, ExpandType)
-        var enemyThirdExpandLocation = ExpandAnalyzer.ExpandLocations
-            .Where(expandLocation => expandLocation.ExpandType == ExpandType.Third)
-            .MinBy(expandLocation => expandLocation.Position.HorizontalDistanceTo(MapAnalyzer.EnemyStartingLocation))!;
-
+        var enemyThirdExpandLocation = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Third);
         _thirdScoutingTask = new ExpandScoutingTask(enemyThirdExpandLocation.Position, TopPriority - 2, maxScouts: 1, waitForExpand: true);
 
-        var enemyFourthExpandLocation = ExpandAnalyzer.ExpandLocations
-            .Where(expandLocation => expandLocation.ExpandType == ExpandType.Fourth)
-            .MinBy(expandLocation => expandLocation.Position.HorizontalDistanceTo(MapAnalyzer.EnemyStartingLocation))!;
-
+        var enemyFourthExpandLocation = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Fourth);
         _fourthScoutingTask = new ExpandScoutingTask(enemyFourthExpandLocation.Position, TopPriority - 2, maxScouts: 1, waitForExpand: true);
     }
 

@@ -91,6 +91,14 @@ public class ExpandAnalyzer: INeedUpdating {
         return closestExpandLocation.HorizontalDistanceTo(position) > ExpandRadius + 1;
     }
 
+    public static ExpandLocation GetExpand(Alliance alliance, ExpandType expandType) {
+        var expands = ExpandLocations.Where(expandLocation => expandLocation.ExpandType == expandType);
+
+        return alliance == Alliance.Enemy
+            ? expands.MinBy(expandLocation => expandLocation.Position.HorizontalDistanceTo(MapAnalyzer.EnemyStartingLocation))!
+            : expands.MinBy(expandLocation => expandLocation.Position.HorizontalDistanceTo(MapAnalyzer.StartingLocation))!;
+    }
+
     private static IEnumerable<List<Unit>> FindResourceClusters() {
         // See note on MineralField450
         var minerals = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.MineralFields.Except(new[] { Units.MineralField450 }).ToHashSet());
