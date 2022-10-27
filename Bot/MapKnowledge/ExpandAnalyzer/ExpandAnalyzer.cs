@@ -91,6 +91,12 @@ public class ExpandAnalyzer: INeedUpdating {
         return closestExpandLocation.HorizontalDistanceTo(position) > ExpandRadius + 1;
     }
 
+    /// <summary>
+    /// Gets an expand location of yourself or the enemy
+    /// </summary>
+    /// <param name="alliance">Yourself or the enemy</param>
+    /// <param name="expandType">The expand type</param>
+    /// <returns>The requested expand location</returns>
     public static ExpandLocation GetExpand(Alliance alliance, ExpandType expandType) {
         var expands = ExpandLocations.Where(expandLocation => expandLocation.ExpandType == expandType);
 

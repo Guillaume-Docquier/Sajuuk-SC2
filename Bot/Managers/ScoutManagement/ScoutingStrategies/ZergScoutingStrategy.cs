@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
@@ -28,10 +27,7 @@ public class ZergScoutingStrategy : IScoutingStrategy {
         var enemyNaturalExpandLocation = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
         _naturalScoutingTask = new ExpandScoutingTask(enemyNaturalExpandLocation.Position, TopPriority, maxScouts: 1, waitForExpand: true);
 
-        var enemyNaturalExitRegion = RegionAnalyzer.Regions
-            .Where(region => region.Type == RegionType.OpenArea)
-            .MinBy(region => region.Center.HorizontalDistanceTo(enemyNaturalExpandLocation.Position))!;
-
+        var enemyNaturalExitRegion = RegionAnalyzer.GetNaturalExitRegion(Alliance.Enemy);
         var enemyNaturalExitRegionRamps = enemyNaturalExitRegion.Neighbors
             .Select(neighbor => neighbor.Region)
             .Where(region => region.Type == RegionType.Ramp)

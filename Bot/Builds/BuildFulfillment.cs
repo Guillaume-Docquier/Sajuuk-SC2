@@ -52,6 +52,7 @@ public class TargetFulfillment: BuildFulfillment {
 
             var existingUnitsOrBuildings = Controller.GetUnits(UnitsTracker.OwnedUnits, BuildRequest.UnitOrUpgradeType);
             if (Units.Extractors.Contains(BuildRequest.UnitOrUpgradeType)) {
+                // TODO GD When losing the natural, this causes the build to be stuck because it will try to replace gasses that are already taken
                 // Ignore extractors that are not assigned to a townhall. This way we can target X working extractors
                 existingUnitsOrBuildings = existingUnitsOrBuildings.Where(extractor => extractor.Supervisor != null);
             }

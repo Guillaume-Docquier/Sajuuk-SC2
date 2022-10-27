@@ -61,7 +61,6 @@ public static class Controller {
         UnitsTracker.Instance,          // Depends on VisibilityTracker
         DebuggingFlagsTracker.Instance, // Depends on ChatTracker
 
-        EnemyStrategyTracker.Instance,  // Depends on UnitsTracker
         MapAnalyzer.Instance,           // Depends on UnitsTracker and VisibilityTracker
 
         CreepTracker.Instance,          // Depends on VisibilityTracker and MapAnalyzer
@@ -69,6 +68,7 @@ public static class Controller {
         ExpandAnalyzer.Instance,        // Depends on UnitsTracker and MapAnalyzer
         RegionAnalyzer.Instance,        // Depends on ExpandAnalyzer and MapAnalyzer
 
+        EnemyStrategyTracker.Instance,  // Depends on UnitsTracker, ExpandAnalyzer and RegionAnalyzer
         RegionTracker.Instance,         // Depends on VisibilityTracker, UnitsTracker, MapAnalyzer and RegionAnalyzer
     };
 
@@ -194,6 +194,7 @@ public static class Controller {
         AddAction(ActionBuilder.Chat(message, toTeam));
     }
 
+    // TODO GD Make a class out of this
     public static void TagGame(string tag) {
         tag = tag
             .Replace(" ", "")
@@ -201,7 +202,7 @@ public static class Controller {
             .Replace("-", "_")
             .Replace(":", "_");
 
-        Logger.Info("Tagging game with {0}", tag);
+        Logger.Tag("Tagging game with {0}", tag);
         AddAction(ActionBuilder.Chat($"Tag:{tag}", toTeam: true));
     }
 

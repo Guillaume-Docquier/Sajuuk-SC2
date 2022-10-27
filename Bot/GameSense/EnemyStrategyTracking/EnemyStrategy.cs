@@ -3,8 +3,14 @@
 public enum EnemyStrategy {
     Unknown,
 
+    // All races
+    OneBase,
+
     // Zerg
     TwelvePool,
+    SixteenHatch,
+    ZerglingRush,
+    AggressivePool,
 
     // Terran
     FourRax,

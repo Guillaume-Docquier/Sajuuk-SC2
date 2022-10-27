@@ -7,6 +7,7 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.GameSense.EnemyStrategyTracking;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
 
@@ -155,8 +156,14 @@ public class BotDebugger {
             return;
         }
 
-        var matchupText = $"Enemy: {Controller.EnemyRace} / Visible: {MapAnalyzer.VisibilityRatio,3:P0} / Explored: {MapAnalyzer.ExplorationRatio,3:P0}";
-        Program.GraphicalDebugger.AddText(matchupText, virtualPos: new Point { X = 0.50f, Y = 0.02f });
+        // TODO GD Add creep coverage
+        var matchupTexts = new List<string>
+        {
+            $"Enemy: {Controller.EnemyRace} / Visible: {MapAnalyzer.VisibilityRatio,3:P0} / Explored: {MapAnalyzer.ExplorationRatio,3:P0}",
+            $"Strategy: {EnemyStrategyTracker.EnemyStrategy}"
+        };
+
+        Program.GraphicalDebugger.AddTextGroup(matchupTexts, virtualPos: new Point { X = 0.50f, Y = 0.02f });
     }
 
     private static void DebugExploration() {

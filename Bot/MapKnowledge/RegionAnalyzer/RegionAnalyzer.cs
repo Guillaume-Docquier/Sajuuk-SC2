@@ -96,6 +96,19 @@ public class RegionAnalyzer: INeedUpdating {
     }
 
     /// <summary>
+    /// Get the region outside of the natural for yourself or the enemy.
+    /// </summary>
+    /// <param name="alliance">Yourself or the enemy</param>
+    /// <returns>The region outside of the natural</returns>
+    public static Region GetNaturalExitRegion(Alliance alliance) {
+        var natural = ExpandAnalyzer.GetExpand(alliance, ExpandType.Natural);
+
+        return Regions
+            .Where(region => region.Type == RegionType.OpenArea)
+            .MinBy(region => region.Center.HorizontalDistanceTo(natural.Position))!;
+    }
+
+    /// <summary>
     /// Gets the Region of a given position
     /// </summary>
     /// <param name="position">The position to get the Region of</param>

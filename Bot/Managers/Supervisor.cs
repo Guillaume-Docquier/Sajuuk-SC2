@@ -45,6 +45,7 @@ public abstract class Supervisor {
             Releaser.Release(unit);
         }
         else {
+            // TODO GD This happens with extractors when shit hits the fan
             Logger.Error("({0}) Trying to release {1} that's not ours", this, unit);
         }
     }

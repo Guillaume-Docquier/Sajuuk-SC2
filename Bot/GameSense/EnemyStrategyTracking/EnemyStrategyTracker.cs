@@ -4,16 +4,17 @@ using SC2APIProtocol;
 namespace Bot.GameSense.EnemyStrategyTracking;
 
 public class EnemyStrategyTracker : INeedUpdating {
-    public static readonly EnemyStrategyTracker Instance = new EnemyStrategyTracker();
+    public static EnemyStrategyTracker Instance { get; private set; } = new EnemyStrategyTracker();
 
-    public EnemyStrategy EnemyStrategy { get; private set; }
+    private EnemyStrategy _enemyStrategy = EnemyStrategy.Unknown;
     private IStrategyInterpreter _strategyInterpreter;
+
+    public static EnemyStrategy EnemyStrategy => Instance._enemyStrategy;
 
     private EnemyStrategyTracker() {}
 
     public void Reset() {
-        _strategyInterpreter = null;
-        EnemyStrategy = default;
+        Instance = new EnemyStrategyTracker();
     }
 
     public void Update(ResponseObservation observation) {
@@ -27,7 +28,11 @@ public class EnemyStrategyTracker : INeedUpdating {
 
         if (_strategyInterpreter != null) {
             var knownEnemyUnits = UnitsTracker.EnemyUnits.Concat(UnitsTracker.EnemyMemorizedUnits.Values).ToList();
-            EnemyStrategy = _strategyInterpreter.Interpret(knownEnemyUnits);
+            var newEnemyStrategy = _strategyInterpreter.Interpret(knownEnemyUnits);
+            if (_enemyStrategy != newEnemyStrategy) {
+                _enemyStrategy = newEnemyStrategy;
+                Controller.TagGame($"Strategy_{_enemyStrategy}_{Controller.GetGameTimeString()}");
+            }
         }
     }
 }

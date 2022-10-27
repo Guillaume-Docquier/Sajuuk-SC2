@@ -93,4 +93,10 @@ public static class Logger {
         WriteLine("SUCCESS", line, parameters);
         Console.ResetColor();
     }
+
+    public static void Tag(string line, params object[] parameters) {
+        Console.ForegroundColor = ConsoleColor.Blue;
+        WriteLine("TAG", line, parameters);
+        Console.ResetColor();
+    }
 }
