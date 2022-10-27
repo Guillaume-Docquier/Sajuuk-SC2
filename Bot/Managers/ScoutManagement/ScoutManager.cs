@@ -63,7 +63,7 @@ public partial class ScoutManager : Manager {
             .ThenBy(region => region.Center.HorizontalDistanceTo(MapAnalyzer.StartingLocation))
             .First();
 
-        foreach (var unitToRecall in unitsToRecall) {
+        foreach (var unitToRecall in unitsToRecall.Where(unit => unit.HorizontalDistanceTo(safestRegion.Center) > 5)) {
             unitToRecall.Move(safestRegion.Center);
         }
     }

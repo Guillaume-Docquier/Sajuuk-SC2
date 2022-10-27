@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.ExtensionMethods;
+using Bot.GameData;
+using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
@@ -9,6 +11,13 @@ namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 
 public class ZergScoutingStrategy : IScoutingStrategy {
     private const int TopPriority = 100;
+    private static HashSet<uint> _threateningUnitTypes = new HashSet<uint>
+    {
+        Units.Mutalisk,
+        Units.Corruptor,
+        Units.Ravager, // TODO Avoid biles instead
+        Units.Hydralisk,
+    };
 
     private readonly ScoutingTask _naturalScoutingTask;
     private readonly ScoutingTask _naturalExitVisibilityTask;
@@ -47,6 +56,14 @@ public class ZergScoutingStrategy : IScoutingStrategy {
             yield return _naturalExitVisibilityTask;
             yield return _thirdScoutingTask;
             yield return _fourthScoutingTask;
+        }
+
+        // TODO GD Decide based on amount of dead units instead?
+        if (UnitsTracker.EnemyUnits.Any(unit => _threateningUnitTypes.Contains(unit.UnitType))) {
+            _naturalScoutingTask.Cancel();
+            _naturalExitVisibilityTask.Cancel();
+            _thirdScoutingTask.Cancel();
+            _fourthScoutingTask.Cancel();
         }
     }
 }
