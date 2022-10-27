@@ -256,7 +256,7 @@ public class RegionAnalyzer: INeedUpdating {
     }
 
     private static List<ChokePoint> ComputePotentialChokePoints() {
-        return GridScanChokeFinder.FindChokePoints();
+        return RayCastingChokeFinder.FindChokePoints();
     }
 
     private static List<Region> BuildRegions(List<HashSet<Vector2>> potentialRegions, List<HashSet<Vector2>> ramps, List<ChokePoint> potentialChokePoints) {

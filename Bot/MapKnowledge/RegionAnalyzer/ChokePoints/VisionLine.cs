@@ -6,7 +6,7 @@ using Bot.ExtensionMethods;
 
 namespace Bot.MapKnowledge;
 
-public static partial class GridScanChokeFinder {
+public static partial class RayCastingChokeFinder {
     private class VisionLine: IHavePosition {
         public List<Vector3> OrderedTraversedCells { get; }
         public int Angle { get; }

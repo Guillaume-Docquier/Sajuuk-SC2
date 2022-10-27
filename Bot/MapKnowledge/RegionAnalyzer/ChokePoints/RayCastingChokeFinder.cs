@@ -9,7 +9,7 @@ using SC2APIProtocol;
 namespace Bot.MapKnowledge;
 
 // TODO GD Considering the obstacles (resources, rocks) might be interesting at some point
-public static partial class GridScanChokeFinder {
+public static partial class RayCastingChokeFinder {
     private const bool DrawEnabled = false; // TODO GD Flag this
 
     private const int StartingAngle = 0;

@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Bot.MapKnowledge;
 
-public static partial class GridScanChokeFinder {
+public static partial class RayCastingChokeFinder {
     private static class VisionLinesDataStore {
         private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
         {
