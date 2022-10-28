@@ -26,12 +26,17 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Data" />
       <Folder Include="Managers\EconomyManager" />
     </ItemGroup>
 
     <ItemGroup>
       <None Update="data\KnowledgeBaseData.proto">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Data\Expands_UnitTestsMap.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Data\Regions_UnitTestsMap.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>

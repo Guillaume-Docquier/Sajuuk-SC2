@@ -21,6 +21,10 @@ public static class ImageDataUtils {
         return ByteString.CopyFrom(byteList.ToArray());
     }
 
+    public static ByteString CreateByeString(IReadOnlyCollection<byte> bytes) {
+        return ByteString.CopyFrom(bytes.ToArray());
+    }
+
     public static bool[] ByteToBoolArray(byte byteValue)
     {
         // Each byte represents 8 grid cells

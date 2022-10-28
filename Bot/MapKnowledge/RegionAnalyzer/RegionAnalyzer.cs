@@ -58,6 +58,92 @@ public class RegionAnalyzer: INeedUpdating {
             return;
         }
 
+        var myMainRegionCells = new HashSet<Vector3>();
+        for (var x = 0; x < 20; x++) {
+            for (var y = 0; y < 50; y++) {
+                myMainRegionCells.Add(new Vector3(x, y, 0).AsWorldGridCenter());
+            }
+        }
+
+        var myNatRegionCells = new HashSet<Vector3>();
+        for (var x = 20; x < 40; x++) {
+            for (var y = 0; y < 50; y++) {
+                myNatRegionCells.Add(new Vector3(x, y, 0).AsWorldGridCenter());
+            }
+        }
+
+        var myThirdRegionCells = new HashSet<Vector3>();
+        for (var x = 40; x < 60; x++) {
+            for (var y = 0; y < 50; y++) {
+                myThirdRegionCells.Add(new Vector3(x, y, 0).AsWorldGridCenter());
+            }
+        }
+
+        var myFourthRegionCells = new HashSet<Vector3>();
+        for (var x = 60; x < 80; x++) {
+            for (var y = 0; y < 50; y++) {
+                myFourthRegionCells.Add(new Vector3(x, y, 0).AsWorldGridCenter());
+            }
+        }
+
+        var myFifthRegionCells = new HashSet<Vector3>();
+        for (var x = 80; x < 100; x++) {
+            for (var y = 0; y < 50; y++) {
+                myFifthRegionCells.Add(new Vector3(x, y, 0).AsWorldGridCenter());
+            }
+        }
+
+        var enemyMainRegionCells = new HashSet<Vector3>();
+        for (var x = 0; x < 20; x++) {
+            for (var y = 50; y < 100; y++) {
+                enemyMainRegionCells.Add(new Vector3(x, y, 0).AsWorldGridCenter());
+            }
+        }
+
+        var enemyNatRegionCells = new HashSet<Vector3>();
+        for (var x = 20; x < 40; x++) {
+            for (var y = 50; y < 100; y++) {
+                enemyNatRegionCells.Add(new Vector3(x, y, 0).AsWorldGridCenter());
+            }
+        }
+
+        var enemyThirdRegionCells = new HashSet<Vector3>();
+        for (var x = 40; x < 60; x++) {
+            for (var y = 50; y < 100; y++) {
+                enemyThirdRegionCells.Add(new Vector3(x, y, 0).AsWorldGridCenter());
+            }
+        }
+
+        var enemyFourthRegionCells = new HashSet<Vector3>();
+        for (var x = 60; x < 80; x++) {
+            for (var y = 50; y < 100; y++) {
+                enemyFourthRegionCells.Add(new Vector3(x, y, 0).AsWorldGridCenter());
+            }
+        }
+
+        var enemyFifthRegionCells = new HashSet<Vector3>();
+        for (var x = 80; x < 100; x++) {
+            for (var y = 50; y < 100; y++) {
+                enemyFifthRegionCells.Add(new Vector3(x, y, 0).AsWorldGridCenter());
+            }
+        }
+
+        var testRegions = new List<Region>
+        {
+            new Region(myMainRegionCells,      new Vector3(10.5f, 10.5f, 0), RegionType.Expand),
+            new Region(myNatRegionCells,       new Vector3(30.5f, 10.5f, 0), RegionType.Expand),
+            new Region(myThirdRegionCells,     new Vector3(50.5f, 10.5f, 0), RegionType.Expand),
+            new Region(myFourthRegionCells,    new Vector3(70.5f, 10.5f, 0), RegionType.Expand),
+            new Region(myFifthRegionCells,     new Vector3(90.5f, 10.5f, 0), RegionType.Expand),
+            new Region(enemyMainRegionCells,   new Vector3(90.5f, 80.5f, 0), RegionType.Expand),
+            new Region(enemyNatRegionCells,    new Vector3(70.5f, 80.5f, 0), RegionType.Expand),
+            new Region(enemyThirdRegionCells,  new Vector3(50.5f, 80.5f, 0), RegionType.Expand),
+            new Region(enemyFourthRegionCells, new Vector3(30.5f, 80.5f, 0), RegionType.Expand),
+            new Region(enemyFifthRegionCells,  new Vector3(10.5f, 80.5f, 0), RegionType.Expand),
+        };
+        var testRegionData = new RegionData(testRegions, new List<HashSet<Vector2>>(), new List<Vector2>(), new List<ChokePoint>());
+        RegionDataStore.Save("UnitTestsMap", testRegionData);
+
         var regionsData = RegionDataStore.Load(Controller.GameInfo.MapName);
         if (regionsData != null) {
             Logger.Info("Initializing RegionAnalyzer from precomputed data for {0}", Controller.GameInfo.MapName);

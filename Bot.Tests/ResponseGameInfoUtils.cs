@@ -44,7 +44,7 @@ public static class ResponseGameInfoUtils {
             }
         };
 
-        var enemySpawn = new Point2D { X = 50, Y = 0 };
+        var enemySpawn = new Point2D { X = 90.5f, Y = 80.5f };
         responseGameInfo.StartRaw.StartLocations.Add(enemySpawn);
 
         return responseGameInfo;

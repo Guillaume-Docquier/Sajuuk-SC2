@@ -1,15 +1,17 @@
-﻿using Bot.MapKnowledge;
+﻿using Bot.GameSense;
+using Bot.MapKnowledge;
 using SC2APIProtocol;
 
 namespace Bot.Tests;
 
 public static class ResponseGameObservationUtils {
-    public static ResponseObservation CreateResponseObservation(IEnumerable<Unit>? units = null, uint frame = 0) {
-        return CreateResponseObservation(units?.Select(unit => unit.RawUnitData), frame);
+    public static ResponseObservation CreateResponseObservation(IEnumerable<Unit>? units = null, uint frame = 0, bool keepPreviousUnits = true) {
+        return CreateResponseObservation(units?.Select(unit => unit.RawUnitData), frame, keepPreviousUnits);
     }
 
-    public static ResponseObservation CreateResponseObservation(IEnumerable<SC2APIProtocol.Unit>? units = null, uint frame = 0) {
-        var visibility = Enumerable.Repeat(true, MapAnalyzer.MaxX * MapAnalyzer.MaxY).ToList();
+    public static ResponseObservation CreateResponseObservation(IEnumerable<SC2APIProtocol.Unit>? units = null, uint frame = 0, bool keepPreviousUnits = true, int maxX = 100, int maxY = 100) {
+        // Visibility.Visible == 2
+        var visibility = Enumerable.Repeat((byte)2, maxX * maxY).ToList();
 
         var responseObservation = new ResponseObservation
         {
@@ -40,6 +42,10 @@ public static class ResponseGameObservationUtils {
 
         if (units != null) {
             responseObservation.Observation.RawData.Units.AddRange(units);
+        }
+
+        if (keepPreviousUnits) {
+            responseObservation.Observation.RawData.Units.AddRange(UnitsTracker.UnitsByTag.Values.Select(unit => unit.RawUnitData));
         }
 
         return responseObservation;

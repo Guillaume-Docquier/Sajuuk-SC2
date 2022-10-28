@@ -1,12 +1,11 @@
-﻿using System.Numerics;
-using Bot.GameData;
+﻿using Bot.GameData;
 using Bot.Tests.Fixtures;
 using SC2APIProtocol;
 
 namespace Bot.Tests;
 
 [Collection("Sequential")]
-public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IDisposable {
+public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IClassFixture<GraphicalDebuggerFixture>, IDisposable {
     public ControllerTests() {
         Controller.Reset();
     }
@@ -22,8 +21,7 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IDisposable 
     public void GivenPlayersWithDistinctRaces_WhenNewGameInfo_SetsEnemyRace(Race playerRace, Race enemyRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
-        var startingTownHall = TestUtils.CreateUnit(Units.Hatchery, position: new Vector3(0, 0, 0));
-        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: new List<Unit> { startingTownHall });
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
 
         // Act
         Controller.NewFrame(gameInfo, observation);
@@ -39,8 +37,7 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IDisposable 
     public void GivenPlayersWithSameRaces_WhenNewGameInfo_SetsEnemyRace(Race playerRace, Race enemyRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
-        var startingTownHall = TestUtils.CreateUnit(Units.Hatchery, position: new Vector3(0, 0, 0));
-        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: new List<Unit> { startingTownHall });
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
 
         // Act
         Controller.NewFrame(gameInfo, observation);
@@ -53,8 +50,7 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IDisposable 
     public void GivenEnemyRandomRaceAndNoVisibleUnits_WhenNewGameInfo_ThenSetsRaceToRandom() {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
-        var startingTownHall = TestUtils.CreateUnit(Units.Hatchery, position: new Vector3(0, 0, 0));
-        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: new List<Unit> { startingTownHall });
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
 
         // Act
         Controller.NewFrame(gameInfo, observation);
@@ -64,11 +60,11 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IDisposable 
     }
 
     public static IEnumerable<object[]> EnemyRandomRaceAndVisibleUnitsTestData() {
-        var startingTownHall = TestUtils.CreateUnit(Units.Hatchery, position: new Vector3(0, 0, 0));
+        var units = BaseTestClass.GetInitialUnits();
 
-        yield return new object[] { new List<Unit> { startingTownHall, TestUtils.CreateUnit(Units.Scv, alliance: Alliance.Enemy) }, Race.Terran };
-        yield return new object[] { new List<Unit> { startingTownHall, TestUtils.CreateUnit(Units.Probe, alliance: Alliance.Enemy) }, Race.Protoss };
-        yield return new object[] { new List<Unit> { startingTownHall, TestUtils.CreateUnit(Units.Drone, alliance: Alliance.Enemy) }, Race.Zerg };
+        yield return new object[] { units.Concat(new List<Unit> { TestUtils.CreateUnit(Units.Scv, alliance: Alliance.Enemy) }), Race.Terran };
+        yield return new object[] { units.Concat(new List<Unit> { TestUtils.CreateUnit(Units.Probe, alliance: Alliance.Enemy) }), Race.Protoss };
+        yield return new object[] { units.Concat(new List<Unit> { TestUtils.CreateUnit(Units.Drone, alliance: Alliance.Enemy) }), Race.Zerg };
     }
 
     [Theory]
