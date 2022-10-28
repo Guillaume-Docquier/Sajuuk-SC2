@@ -24,9 +24,9 @@ public class DebugLocationModule: UnitModule {
     }
 
     protected override void DoExecute() {
-        Program.GraphicalDebugger.AddSphere(_unit, _color);
-        if (_showName) {
-            Program.GraphicalDebugger.AddText($"{_unit.Name} [{_unit.UnitType}]", worldPos: _unit.Position.ToPoint());
-        }
+        //Program.GraphicalDebugger.AddSphere(_unit, _color);
+        //if (_showName) {
+        //    Program.GraphicalDebugger.AddText($"{_unit.Name} [{_unit.UnitType}]", worldPos: _unit.Position.ToPoint());
+        //}
     }
 }

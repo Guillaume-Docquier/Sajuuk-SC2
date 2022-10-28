@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace Bot.MapKnowledge;
 
 public static class RegionDataStore {
-    public static bool IsEnabled = true;
+    public static bool IsEnabled = false;
 
     private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
     {

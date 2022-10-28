@@ -25,10 +25,10 @@ public abstract class PoliteBot: IBot {
     }
 
     public void OnFrame() {
-        EnsureGreeting();
+        //EnsureGreeting();
         EnsureGG();
 
-        PlayScenarios();
+        //PlayScenarios();
         DoOnFrame();
     }
 

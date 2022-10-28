@@ -18,7 +18,7 @@ public class Program {
 
     private static readonly IBot Bot = new SajuukBot("3_0_0", scenarios: Scenarios);
 
-    private const string MapFileName = Maps.Season_2022_4.FileNames.Waterfall;
+    private const string MapFileName = Maps.Season_2022_4.FileNames.Stargazers;
     private const Race OpponentRace = Race.Zerg;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 

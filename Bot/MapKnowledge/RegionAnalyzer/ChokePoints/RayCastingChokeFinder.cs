@@ -10,7 +10,7 @@ namespace Bot.MapKnowledge;
 
 // TODO GD Considering the obstacles (resources, rocks) might be interesting at some point
 public static partial class RayCastingChokeFinder {
-    private const bool DrawEnabled = false; // TODO GD Flag this
+    private const bool DrawEnabled = true; // TODO GD Flag this
 
     private const int StartingAngle = 0;
     private const int MaxAngle = 175;
