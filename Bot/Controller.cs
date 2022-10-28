@@ -130,6 +130,8 @@ public static class Controller {
     }
 
     public static void NewFrame(ResponseGameInfo gameInfo, ResponseObservation observation) {
+        Actions.Clear();
+
         GameInfo = gameInfo;
         Observation = observation;
         Frame = Observation.Observation.GameLoop;
@@ -142,8 +144,6 @@ public static class Controller {
         UpdateEnemyRace();
 
         ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Update(Observation));
-
-        Actions.Clear();
 
         CurrentSupply = Observation.Observation.PlayerCommon.FoodUsed;
         var hasOddAmountOfZerglings = UnitsTracker.OwnedUnits.Count(unit => unit.UnitType == Units.Zergling) % 2 == 1;

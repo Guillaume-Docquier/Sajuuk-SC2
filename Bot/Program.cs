@@ -13,7 +13,7 @@ namespace Bot;
 public class Program {
     private static readonly List<IScenario> Scenarios = new List<IScenario>
     {
-        new WorkerRushScenario(),
+        //new WorkerRushScenario(),
     };
 
     private static readonly IBot Bot = new SajuukBot("3_0_0", scenarios: Scenarios);
