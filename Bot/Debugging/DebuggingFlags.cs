@@ -14,11 +14,6 @@ public static class DebuggingFlags {
     public const string Help = ".help";
 
     /// <summary>
-    /// Resets the debugging flags to their default
-    /// </summary>
-    public const string Reset = ".reset";
-
-    /// <summary>
     /// Enables displaying build order data on screen
     /// </summary>
     public const string BuildOrder = ".build";
@@ -59,9 +54,9 @@ public static class DebuggingFlags {
     public const string Regions = ".regions";
 
     /// <summary>
-    /// Enables displaying each cell's region
+    /// Enables displaying each region cells
     /// </summary>
-    public const string CellRegions = ".cellRegion";
+    public const string RegionCells = ".regionCells";
 
     /// <summary>
     /// Enables displaying the choke points
@@ -77,4 +72,9 @@ public static class DebuggingFlags {
     /// Enables displaying the name of every unit and effects
     /// </summary>
     public const string Names = ".names";
+
+    /// <summary>
+    /// Enables displaying the coordinates of each cell
+    /// </summary>
+    public const string Coordinates = ".coords";
 }

@@ -11,6 +11,8 @@ public class DebuggingFlagsTracker : INeedUpdating {
     private readonly HashSet<string> _activeDebuggingFlags = new HashSet<string>();
 
     public static IReadOnlySet<string> AllDebuggingFlags { get; } = DebuggingFlags.GetAll();
+    public static IReadOnlySet<string> AllDebuggingCommands { get; } = DebuggingCommands.GetAll();
+
     public static IReadOnlySet<string> ActiveDebuggingFlags => Instance._activeDebuggingFlags;
 
     private DebuggingFlagsTracker() {
@@ -35,20 +37,34 @@ public class DebuggingFlagsTracker : INeedUpdating {
             return;
         }
 
-        var debugCommands = ChatTracker.NewBotChat
-            .SelectMany(chatReceived => chatReceived.Message.Split(" "))
-            .Where(word => AllDebuggingFlags.Contains(word));
+        var messages = ChatTracker.NewBotChat.SelectMany(chatReceived => chatReceived.Message.Split(" "));
+        foreach (var message in messages) {
+            if (AllDebuggingCommands.Contains(message)) {
+                HandleCommand(message);
+            }
+            else if (AllDebuggingFlags.Contains(message)) {
+                ToggleFlag(message);
+            }
+        }
+    }
 
-        foreach (var debugCommand in debugCommands) {
-            if (debugCommand is DebuggingFlags.Reset) {
+    private void HandleCommand(string debugCommand) {
+        switch (debugCommand) {
+            case DebuggingCommands.Reset:
                 Reset();
-            }
-            else if (_activeDebuggingFlags.Contains(debugCommand)) {
-                _activeDebuggingFlags.Remove(debugCommand);
-            }
-            else {
-                _activeDebuggingFlags.Add(debugCommand);
-            }
+                break;
+            case DebuggingCommands.Off:
+                _activeDebuggingFlags.Clear();
+                break;
+        }
+    }
+
+    private void ToggleFlag(string debugFlag) {
+        if (_activeDebuggingFlags.Contains(debugFlag)) {
+            _activeDebuggingFlags.Remove(debugFlag);
+        }
+        else {
+            _activeDebuggingFlags.Add(debugFlag);
         }
     }
 }

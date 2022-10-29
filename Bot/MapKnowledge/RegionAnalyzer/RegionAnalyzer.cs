@@ -138,7 +138,7 @@ public class RegionAnalyzer: INeedUpdating {
     /// Enables graphical debugging of the RegionAnalyzer's data based on debug flags
     /// </summary>
     private static void Debug() {
-        if (DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.CellRegions)) {
+        if (DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.RegionCells)) {
             DrawRegions();
             DrawNoise();
         }

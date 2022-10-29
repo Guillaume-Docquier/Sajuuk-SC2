@@ -15,8 +15,8 @@ public class ChokePoint {
     public ChokePoint(Vector3 start, Vector3 end) {
         Edge = start.WithoutZ()
             .GetPointsInBetween(end.WithoutZ())
-            .Where(point => MapAnalyzer.IsWalkable(point, includeObstacles: false))
-            .Select(point => point.ToVector2())
+            .Where(cell => MapAnalyzer.IsWalkable(cell, includeObstacles: false))
+            .Select(cell => cell.ToVector2())
             .ToHashSet();
 
         Start = Edge.MinBy(edgePoint => edgePoint.DistanceTo(start.ToVector2()));

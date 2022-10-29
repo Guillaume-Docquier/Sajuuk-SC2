@@ -5,7 +5,9 @@ using System.Text.Json;
 namespace Bot.MapKnowledge;
 
 public static partial class RayCastingChokeFinder {
-    private static class VisionLinesDataStore {
+    public static class VisionLinesDataStore {
+        public static bool IsEnabled = false;
+
         private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
         {
             Converters =
@@ -28,6 +30,10 @@ public static partial class RayCastingChokeFinder {
         }
 
         public static List<VisionLine> Load(string mapName) {
+            if (!IsEnabled) {
+                return null;
+            }
+
             var loadFilePath = $"Data/{GetFileName(mapName)}";
             if (!File.Exists(loadFilePath)) {
                 return null;

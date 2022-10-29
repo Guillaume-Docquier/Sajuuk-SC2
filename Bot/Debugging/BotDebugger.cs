@@ -31,6 +31,7 @@ public class BotDebugger {
         DebugMatchupData();
         DebugExploration();
         DebugUnitAndEffectNames();
+        DebugCoordinates();
     }
 
     private static void DebugHelp() {
@@ -194,6 +195,21 @@ public class BotDebugger {
                 Program.GraphicalDebugger.AddText(effectText, size: 11, worldPos: effectPosition.ToPoint(xOffset: -0.4f));
                 Program.GraphicalDebugger.AddSphere(effectPosition, effect.Radius, Colors.Cyan);
             }
+        }
+    }
+
+    private static void DebugCoordinates() {
+        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Coordinates)) {
+            return;
+        }
+
+        foreach (var cell in MapAnalyzer.WalkableCells) {
+            var coords = new List<string>
+            {
+                $"{cell.X}",
+                $"{cell.Y}"
+            };
+            Program.GraphicalDebugger.AddTextGroup(coords, size: 10, worldPos: cell.ToVector3().ToPoint(xOffset: -0.25f, yOffset: 0.2f));
         }
     }
 }
