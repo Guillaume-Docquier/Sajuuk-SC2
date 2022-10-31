@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Bot.GameData;
 using Bot.MapKnowledge;
@@ -7,10 +8,10 @@ using Bot.MapKnowledge;
 namespace Bot.ExtensionMethods;
 
 public static class Vector2Extensions {
-    public static Vector3 ToVector3(this Vector2 vector, bool withWorldHeight = true) {
-        var vector3 = new Vector3(vector.X, vector.Y, 0);
+    public static Vector3 ToVector3(this Vector2 vector, bool withWorldHeight = true, float zOffset = 0f) {
+        var vector3 = new Vector3(vector.X, vector.Y, zOffset);
 
-        return withWorldHeight ? vector3.WithWorldHeight() : vector3;
+        return withWorldHeight ? vector3.WithWorldHeight(zOffset) : vector3;
     }
 
     public static float DistanceTo(this Vector2 origin, Unit unit) {
@@ -54,5 +55,42 @@ public static class Vector2Extensions {
     /// <returns>The Region of the given position</returns>
     public static Region GetRegion(this Vector2 position) {
         return RegionAnalyzer.GetRegion(position);
+    }
+
+    /// <summary>
+    /// Gets all cells traversed by the ray from origin to destination using digital differential analyzer (DDA)
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <param name="destination"></param>
+    /// <returns>The cells traversed by the ray from origin to destination</returns>
+    public static HashSet<Vector2> GetPointsInBetween(this Vector2 origin, Vector2 destination) {
+        var targetCellCorner = destination.AsWorldGridCorner();
+
+        var pointsInBetween = RayCasting.RayCast(origin, destination, cellCorner => cellCorner == targetCellCorner)
+            .Select(result => result.CornerOfCell.AsWorldGridCenter())
+            .ToHashSet();
+
+        return pointsInBetween;
+    }
+
+    /// <summary>
+    /// Rotates the given position by a certain angle in radians with respect to a given origin, or (0, 0, 0)
+    /// </summary>
+    /// <param name="position">The position to rotate</param>
+    /// <param name="angleInRadians">The angle in radians to rotate by</param>
+    /// <param name="origin">The origin to rotate around</param>
+    /// <returns>The resulting position</returns>
+    public static Vector2 Rotate(this Vector2 position, double angleInRadians, Vector2 origin = default) {
+        var sinTheta = Math.Sin(angleInRadians);
+        var cosTheta = Math.Cos(angleInRadians);
+
+        var translatedX = position.X - origin.X;
+        var translatedY = position.Y - origin.Y;
+
+        return new Vector2
+        {
+            X = (float)(translatedX * cosTheta - translatedY * sinTheta + origin.X),
+            Y = (float)(translatedX * sinTheta + translatedY * cosTheta + origin.X),
+        };
     }
 }

@@ -2,7 +2,6 @@
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;
-using SC2APIProtocol;
 
 namespace Bot.Tests.Managers.TownHallSupervisor;
 

@@ -86,6 +86,10 @@ public static class Vector3Extensions {
             return vector;
         }
 
+        if (!MapAnalyzer.IsInBounds(vector)) {
+            return vector;
+        }
+
         return vector with { Z = MapAnalyzer.HeightMap[(int)vector.X][(int)vector.Y] + zOffset };
     }
 
@@ -193,89 +197,11 @@ public static class Vector3Extensions {
     /// <param name="destination"></param>
     /// <returns>The cells traversed by the ray from origin to destination</returns>
     public static HashSet<Vector3> GetPointsInBetween(this Vector3 origin, Vector3 destination) {
-        var delta = destination - origin;
+        var targetCellCorner = destination.ToVector2().AsWorldGridCorner();
 
-        // If delta X is 0, we set the rayLength to a big one so that the Y ray is always chosen (we're moving straight up or straight down)
-        var rayLengthWhenMovingInX = delta.Length() + 1;
-        if (delta.X != 0) {
-            rayLengthWhenMovingInX = (float)Math.Sqrt(1 + (delta.Y / delta.X) * (delta.Y / delta.X));
-        }
-
-        // If delta Y is 0, we set the rayLength to a big one so that the X ray is always chosen (we're moving straight left or straight right)
-        var rayLengthWhenMovingInY = delta.Length() + 1;
-        if (delta.Y != 0) {
-            rayLengthWhenMovingInY = (float)Math.Sqrt(1 + (delta.X / delta.Y) * (delta.X / delta.Y));
-        }
-
-        // Edge case, if deltaX is 0, stepXDistance can be 0, making the first ray 0, thus it's going to be picked
-        // We want to avoid that so we set it to 1
-        var stepX = 1;
-        var stepXDistance = 1f;
-        if (delta.X > 0) {
-            // Moving right
-            stepX = 1;
-            stepXDistance = (float)Math.Floor(origin.X + 1) - origin.X;
-        }
-        else if (delta.X < 0) {
-            // Moving left
-            stepX = -1;
-            stepXDistance = origin.X - (float)Math.Floor(origin.X);
-        }
-
-        // Edge case, if deltaY is 0, stepYDistance can be 0, making the first ray 0, thus it's going to be picked
-        // We want to avoid that so we set it to 1
-        var stepY = 1;
-        var stepYDistance = 1f;
-        if (delta.Y > 0) {
-            // Moving up
-            stepY = 1;
-            stepYDistance = (float)Math.Floor(origin.Y + 1) - origin.Y;
-        }
-        else if (delta.Y < 0) {
-            // Moving down
-            stepY = -1;
-            stepYDistance = origin.Y - (float)Math.Floor(origin.Y);
-        }
-
-        var currentCell = origin.AsWorldGridCorner();
-        var targetCell = destination.AsWorldGridCorner();
-        var xRayLength = stepXDistance * rayLengthWhenMovingInX;
-        var yRayLength = stepYDistance * rayLengthWhenMovingInY;
-
-        var pointsInBetween = new HashSet<Vector3> { currentCell.AsWorldGridCenter() };
-        while (currentCell != targetCell) {
-            if (xRayLength < yRayLength) {
-                // Step in X, reduce Y ray
-                yRayLength -= xRayLength;
-
-                // Move to the cell on the left or right
-                currentCell.X += stepX;
-
-                // Reset X ray
-                xRayLength = rayLengthWhenMovingInX;
-            }
-            else if (yRayLength < xRayLength) {
-                // Step in Y, reduce X ray
-                xRayLength -= yRayLength;
-
-                // Move to the cell on the bottom or top
-                currentCell.Y += stepY;
-
-                // Reset Y ray
-                yRayLength = rayLengthWhenMovingInY;
-            }
-            else {
-                // Both rays are the same, means we landed exactly on a corner
-                currentCell.X += stepX; // Move to the left/right
-                currentCell.Y += stepY; // And up/down
-
-                // Reset all rays
-                xRayLength = rayLengthWhenMovingInX;
-                yRayLength = rayLengthWhenMovingInY;
-            }
-
-            pointsInBetween.Add(currentCell.AsWorldGridCenter());
-        }
+        var pointsInBetween = RayCasting.RayCast(origin.ToVector2(), destination.ToVector2(), cellCorner => cellCorner == targetCellCorner)
+            .Select(result => result.CornerOfCell.AsWorldGridCenter().ToVector3())
+            .ToHashSet();
 
         return pointsInBetween;
     }
@@ -298,6 +224,7 @@ public static class Vector3Extensions {
         {
             X = (float)(translatedX * cosTheta - translatedY * sinTheta + origin.X),
             Y = (float)(translatedX * sinTheta + translatedY * cosTheta + origin.X),
+            Z = position.Z,
         };
     }
 

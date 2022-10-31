@@ -8,16 +8,16 @@ namespace Bot.MapKnowledge;
 
 public static partial class RayCastingChokeFinder {
     public class VisionLine: IHavePosition {
-        public List<Vector3> OrderedTraversedCells { get; }
+        public List<Vector2> OrderedTraversedCells { get; }
         public int Angle { get; }
 
-        public Vector3 Start { get; }
-        public Vector3 End { get; }
-        public Vector3 Position => Vector3.Lerp(Start, End, 0.5f);
+        public Vector2 Start { get; }
+        public Vector2 End { get; }
+        public Vector3 Position => Vector3.Lerp(Start.ToVector3(), End.ToVector3(), 0.5f);
         public float Length { get; }
 
         [JsonConstructor]
-        public VisionLine(List<Vector3> orderedTraversedCells, int angle, Vector3 start, Vector3 end, float length) {
+        public VisionLine(List<Vector2> orderedTraversedCells, int angle, Vector2 start, Vector2 end, float length) {
             OrderedTraversedCells = orderedTraversedCells;
             Angle = angle;
 
@@ -26,26 +26,26 @@ public static partial class RayCastingChokeFinder {
             Length = length;
         }
 
-        public VisionLine(Vector3 start, Vector3 end, int angle) {
+        public VisionLine(Vector2 start, Vector2 end, int angle) {
             var centerOfStart = start.AsWorldGridCenter();
 
             OrderedTraversedCells = start.GetPointsInBetween(end)
-                .OrderBy(current => current.HorizontalDistanceTo(centerOfStart))
+                .OrderBy(current => current.DistanceTo(centerOfStart))
                 .ToList();
 
             Start = OrderedTraversedCells[0];
             End = OrderedTraversedCells.Last();
-            Length = Start.HorizontalDistanceTo(End);
+            Length = Start.DistanceTo(End);
 
             Angle = angle;
         }
 
-        public VisionLine(List<Vector3> orderedTraversedCells, int angle) {
+        public VisionLine(List<Vector2> orderedTraversedCells, int angle) {
             OrderedTraversedCells = orderedTraversedCells;
 
             Start = OrderedTraversedCells[0];
             End = OrderedTraversedCells.Last();
-            Length = Start.HorizontalDistanceTo(End);
+            Length = Start.DistanceTo(End);
 
             Angle = angle;
         }

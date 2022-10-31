@@ -1,5 +1,4 @@
 ﻿using Bot.GameSense;
-using Bot.MapKnowledge;
 using SC2APIProtocol;
 
 namespace Bot.Tests;

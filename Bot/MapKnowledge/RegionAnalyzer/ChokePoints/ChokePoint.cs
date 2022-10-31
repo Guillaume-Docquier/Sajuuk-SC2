@@ -12,15 +12,13 @@ public class ChokePoint {
     public float Length { get; }
     public HashSet<Vector2> Edge { get; }
 
-    public ChokePoint(Vector3 start, Vector3 end) {
-        Edge = start.WithoutZ()
-            .GetPointsInBetween(end.WithoutZ())
+    public ChokePoint(Vector2 start, Vector2 end) {
+        Edge = start.GetPointsInBetween(end)
             .Where(cell => MapAnalyzer.IsWalkable(cell, includeObstacles: false))
-            .Select(cell => cell.ToVector2())
             .ToHashSet();
 
-        Start = Edge.MinBy(edgePoint => edgePoint.DistanceTo(start.ToVector2()));
-        End = Edge.MinBy(edgePoint => edgePoint.DistanceTo(end.ToVector2()));
+        Start = Edge.MinBy(edgePoint => edgePoint.DistanceTo(start));
+        End = Edge.MinBy(edgePoint => edgePoint.DistanceTo(end));
         Length = Start.DistanceTo(End);
     }
 

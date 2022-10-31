@@ -31,11 +31,11 @@ public static partial class RayCastingChokeFinder {
         return ComputeChokePoints(nodes);
     }
 
-    private static Dictionary<Vector3, Node> ComputeWalkableNodesInMap() {
-        var nodes = new Dictionary<Vector3, Node>();
+    private static Dictionary<Vector2, Node> ComputeWalkableNodesInMap() {
+        var nodes = new Dictionary<Vector2, Node>();
         for (var x = 0; x < MaxX; x++) {
             for (var y = 0; y < MaxY; y++) {
-                var position = new Vector3(x, y, 0).AsWorldGridCenter();
+                var position = new Vector2(x, y).AsWorldGridCenter();
                 if (MapAnalyzer.IsWalkable(position, includeObstacles: false)) {
                     nodes[position] = new Node(position);
                 }
@@ -70,16 +70,18 @@ public static partial class RayCastingChokeFinder {
     }
 
     private static List<VisionLine> CreateLinesAtAnAngle(int angleInDegrees) {
+        var origin = new Vector2 { X = MaxX / 2f, Y = MaxY / 2f };
+
         var lineLength = (int)Math.Ceiling(Math.Sqrt(MaxX * MaxX + MaxY * MaxY));
-        var origin = new Vector3 { X = MaxX / 2f, Y = MaxY / 2f };
         var paddingX = (int)(lineLength / 2f - origin.X);
         var paddingY = (int)(lineLength / 2f - origin.Y);
+
         var angleInRadians = DegToRad(angleInDegrees);
 
         var lines = new List<VisionLine>();
         for (var y = -paddingY; y < MaxY + paddingY; y++) {
-            var start = new Vector3(-paddingX, y, 0).Rotate2D(angleInRadians, origin);
-            var end = new Vector3(MaxX + paddingX, y, 0).Rotate2D(angleInRadians, origin);
+            var start = new Vector2(-paddingX, y).Rotate(angleInRadians, origin);
+            var end = new Vector2(MaxX + paddingX, y).Rotate(angleInRadians, origin);
 
             lines.Add(new VisionLine(start, end, angleInDegrees));
         }
@@ -165,7 +167,7 @@ public static partial class RayCastingChokeFinder {
         return currentCellIndex - 1;
     }
 
-    private static void MarkTraversedNodes(IReadOnlyDictionary<Vector3, Node> nodes, List<VisionLine> lines) {
+    private static void MarkTraversedNodes(IReadOnlyDictionary<Vector2, Node> nodes, List<VisionLine> lines) {
         foreach (var line in lines) {
             foreach (var cell in line.OrderedTraversedCells) {
                 nodes[cell].VisionLines.Add(line);
@@ -173,7 +175,8 @@ public static partial class RayCastingChokeFinder {
         }
     }
 
-    private static List<ChokePoint> ComputeChokePoints(Dictionary<Vector3, Node> nodes) {
+    private static List<ChokePoint> ComputeChokePoints(Dictionary<Vector2, Node> nodes) {
+
         foreach (var node in nodes.Values) {
             node.UpdateChokeScore();
         }
@@ -234,11 +237,11 @@ public static partial class RayCastingChokeFinder {
 
     private static void DebugLines(List<VisionLine> lines, Color color = null) {
         if (!Program.DebugEnabled || !DrawEnabled) {
-            return;
+            //return;
         }
 
         foreach (var line in lines) {
-            Program.GraphicalDebugger.AddLink(line.Start.WithWorldHeight(zOffset: 0.5f), line.End.WithWorldHeight(zOffset: 0.5f), color ?? Colors.Orange, withText: false);
+            Program.GraphicalDebugger.AddLink(line.Start.ToVector3(zOffset: 0.5f), line.End.ToVector3(zOffset: 0.5f), color ?? Colors.Orange, withText: false);
         }
     }
 

@@ -40,7 +40,7 @@ public class BotDebugger {
         }
 
         var help = DebuggingFlagsTracker.AllDebuggingFlags
-            .Select(flag => $"{flag,-11} {(DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(flag) ? "ON" : "OFF")}")
+            .Select(flag => $"{flag,-12} {(DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(flag) ? "ON" : "OFF")}")
             .ToList();
 
         help.Insert(0, "Debug flags");
