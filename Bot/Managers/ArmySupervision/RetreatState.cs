@@ -46,7 +46,7 @@ public partial class ArmySupervisor {
                     $"Strongest: {StateMachine.Context._strongestForce}",
                     $"Rally at: {_rallyAtForce}"
                 },
-                worldPos: StateMachine.Context._mainArmy.GetCenter().Translate(1f, 1f).ToPoint());
+                worldPos: StateMachine.Context._mainArmy.GetCenter().Translate(1f, 1f).ToVector3().ToPoint());
         }
 
         private static void Retreat(Vector2 retreatPosition, IReadOnlyCollection<Unit> soldiers) {
@@ -55,7 +55,7 @@ public partial class ArmySupervisor {
             }
 
             Program.GraphicalDebugger.AddSphere(retreatPosition.ToVector3(), AcceptableDistanceToTarget, Colors.Yellow);
-            Program.GraphicalDebugger.AddText("Retreat", worldPos: retreatPosition.ToPoint());
+            Program.GraphicalDebugger.AddText("Retreat", worldPos: retreatPosition.ToVector3().ToPoint());
 
             soldiers.Where(unit => unit.DistanceTo(retreatPosition) > AcceptableDistanceToTarget)
                 .ToList()

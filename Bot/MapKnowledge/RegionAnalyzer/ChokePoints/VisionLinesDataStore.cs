@@ -12,6 +12,7 @@ public static partial class RayCastingChokeFinder {
         {
             Converters =
             {
+                new JsonSerializers.Vector2JsonConverter(),
                 new JsonSerializers.Vector3JsonConverter(),
             },
         };

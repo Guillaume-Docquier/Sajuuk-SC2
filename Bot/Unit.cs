@@ -408,7 +408,8 @@ public class Unit: ICanDie, IHavePosition {
         }
 
         if (producingOrder.TargetWorldSpacePos != null) {
-            return producingOrder.TargetWorldSpacePos.Equals(atLocation.ToPoint());
+            // TargetWorldSpacePos is a point, but never has a Z
+            return producingOrder.TargetWorldSpacePos.Equals(atLocation.ToVector3(withWorldHeight: false).ToPoint());
         }
 
         // Extractors are built on a gas, not at a location

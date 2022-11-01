@@ -131,7 +131,7 @@ public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
         Program.GraphicalDebugger.AddSphere(_targetPosition.ToVector3(), 1, Colors.Magenta);
 
         if (_isTargetPriority) {
-            Program.GraphicalDebugger.AddText("!", size: 20, worldPos: _targetPosition.ToPoint());
+            Program.GraphicalDebugger.AddText("!", size: 20, worldPos: _targetPosition.ToVector3().ToPoint());
         }
     }
 

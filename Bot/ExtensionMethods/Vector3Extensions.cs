@@ -19,8 +19,12 @@ public static class Vector3Extensions {
         };
     }
 
-    public static Point2D ToPoint2D(this Vector3 vector) {
-        return new Point2D { X = vector.X, Y = vector.Y };
+    public static Point2D ToPoint2D(this Vector3 vector, float xOffset = 0, float yOffset = 0) {
+        return new Point2D
+        {
+            X = vector.X + xOffset,
+            Y = vector.Y + yOffset,
+        };
     }
 
     public static Vector2 ToVector2(this Vector3 vector) {

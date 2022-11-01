@@ -12,6 +12,7 @@ public static class ExpandLocationDataStore {
     {
         Converters =
         {
+            new JsonSerializers.Vector2JsonConverter(),
             new JsonSerializers.Vector3JsonConverter(),
         }
     };

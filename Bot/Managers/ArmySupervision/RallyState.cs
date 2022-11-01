@@ -41,7 +41,7 @@ public partial class ArmySupervisor {
                     $"Strongest: {StateMachine.Context._strongestForce}",
                     $"Attack at: {_attackAtForce}"
                 },
-                worldPos: StateMachine.Context._mainArmy.GetCenter().Translate(1f, 1f).ToPoint());
+                worldPos: StateMachine.Context._mainArmy.GetCenter().Translate(1f, 1f).ToVector3().ToPoint());
         }
 
         private static void Grow(Vector2 growPosition, IReadOnlyCollection<Unit> soldiers) {
@@ -52,7 +52,7 @@ public partial class ArmySupervisor {
             growPosition = growPosition.ClosestWalkable();
 
             Program.GraphicalDebugger.AddSphere(growPosition.ToVector3(), AcceptableDistanceToTarget, Colors.Yellow);
-            Program.GraphicalDebugger.AddText("Grow", worldPos: growPosition.ToPoint());
+            Program.GraphicalDebugger.AddText("Grow", worldPos: growPosition.ToVector3().ToPoint());
 
             soldiers.Where(unit => unit.DistanceTo(growPosition) > AcceptableDistanceToTarget)
                 .ToList()

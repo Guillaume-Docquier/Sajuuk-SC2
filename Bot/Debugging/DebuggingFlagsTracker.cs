@@ -29,7 +29,9 @@ public class DebuggingFlagsTracker : INeedUpdating {
         _activeDebuggingFlags.Add(DebuggingFlags.EnemyDetectors);
         _activeDebuggingFlags.Add(DebuggingFlags.GhostUnits);
         _activeDebuggingFlags.Add(DebuggingFlags.KnownEnemyUnits);
-        _activeDebuggingFlags.Add(DebuggingFlags.Regions);
+        //_activeDebuggingFlags.Add(DebuggingFlags.Regions);
+        _activeDebuggingFlags.Add(DebuggingFlags.RegionCells);
+        _activeDebuggingFlags.Add(DebuggingFlags.ChokePoints);
     }
 
     public void Update(ResponseObservation observation) {

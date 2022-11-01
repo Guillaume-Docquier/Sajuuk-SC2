@@ -160,12 +160,12 @@ public class RegionAnalyzer: INeedUpdating {
             var frontier = region.Neighbors.SelectMany(neighboringRegion => neighboringRegion.Frontier).ToList();
 
             foreach (var position in region.Cells.Except(frontier)) {
-                Program.GraphicalDebugger.AddText($"{regionIndex}", size: 12, worldPos: position.ToPoint(), color: regionColor);
+                Program.GraphicalDebugger.AddText($"{regionIndex}", size: 12, worldPos: position.ToVector3().ToPoint(), color: regionColor);
                 Program.GraphicalDebugger.AddGridSquare(position.ToVector3(), regionColor);
             }
 
             foreach (var position in frontier) {
-                Program.GraphicalDebugger.AddText($"F{regionIndex}", size: 12, worldPos: position.ToPoint(), color: regionColor);
+                Program.GraphicalDebugger.AddText($"F{regionIndex}", size: 12, worldPos: position.ToVector3().ToPoint(), color: regionColor);
                 Program.GraphicalDebugger.AddGridSphere(position.ToVector3(), regionColor);
             }
 

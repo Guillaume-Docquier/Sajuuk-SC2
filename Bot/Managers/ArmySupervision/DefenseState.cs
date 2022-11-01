@@ -44,7 +44,7 @@ public partial class ArmySupervisor {
                 {
                     $"Force: {soldiers.GetForce()}",
                 },
-                worldPos: soldiers.GetCenter().Translate(1f, 1f).ToPoint());
+                worldPos: soldiers.GetCenter().Translate(1f, 1f).ToVector3().ToPoint());
         }
 
         private static void Defend(Vector2 targetToDefend, IReadOnlyCollection<Unit> soldiers, float defenseRadius, bool canHitAirUnits) {
@@ -55,7 +55,7 @@ public partial class ArmySupervisor {
             targetToDefend = targetToDefend.ClosestWalkable();
 
             Program.GraphicalDebugger.AddSphere(targetToDefend.ToVector3(), AcceptableDistanceToTarget, Colors.Green);
-            Program.GraphicalDebugger.AddTextGroup(new[] { "Defend", $"Radius: {defenseRadius}" }, worldPos: targetToDefend.ToPoint());
+            Program.GraphicalDebugger.AddTextGroup(new[] { "Defend", $"Radius: {defenseRadius}" }, worldPos: targetToDefend.ToVector3().ToPoint());
 
             var targetList = UnitsTracker.EnemyUnits
                 .Where(unit => !unit.IsCloaked)
@@ -89,7 +89,7 @@ public partial class ArmySupervisor {
             rallyPoint = rallyPoint.ClosestWalkable();
 
             Program.GraphicalDebugger.AddSphere(rallyPoint.ToVector3(), AcceptableDistanceToTarget, Colors.Blue);
-            Program.GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToPoint());
+            Program.GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToVector3().ToPoint());
 
             soldiers.Where(unit => unit.DistanceTo(rallyPoint) > AcceptableDistanceToTarget)
                 .ToList()

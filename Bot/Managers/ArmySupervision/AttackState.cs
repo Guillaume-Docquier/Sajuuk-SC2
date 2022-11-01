@@ -87,7 +87,7 @@ public partial class ArmySupervisor {
                     $"Initial: {_initialForce}",
                     $"Retreat at: {_retreatAtForce}"
                 },
-                worldPos: soldiers.GetCenter().Translate(1f, 1f).ToPoint());
+                worldPos: soldiers.GetCenter().Translate(1f, 1f).ToVector3().ToPoint());
         }
 
         private void Attack(Vector2 targetToAttack, IReadOnlyCollection<Unit> army) {
@@ -148,7 +148,7 @@ public partial class ArmySupervisor {
 
         private static void DrawAttackData(Vector2 targetToAttack, IEnumerable<Unit> soldiers) {
             Program.GraphicalDebugger.AddSphere(targetToAttack.ToVector3(), AcceptableDistanceToTarget, Colors.Red);
-            Program.GraphicalDebugger.AddText("Attack", worldPos: targetToAttack.ToPoint());
+            Program.GraphicalDebugger.AddText("Attack", worldPos: targetToAttack.ToVector3().ToPoint());
             foreach (var soldier in soldiers) {
                 Program.GraphicalDebugger.AddLine(soldier.Position, targetToAttack.ToVector3(), Colors.Red);
             }
@@ -191,7 +191,7 @@ public partial class ArmySupervisor {
 
         private static void DrawRallyData(Vector2 rallyPoint, IEnumerable<Unit> soldiers) {
             Program.GraphicalDebugger.AddSphere(rallyPoint.ToVector3(), AcceptableDistanceToTarget, Colors.Blue);
-            Program.GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToPoint());
+            Program.GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToVector3().ToPoint());
             foreach (var soldier in soldiers) {
                 Program.GraphicalDebugger.AddLine(soldier.Position, rallyPoint.ToVector3(), Colors.Blue);
             }

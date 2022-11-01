@@ -9,19 +9,11 @@ using SC2APIProtocol;
 namespace Bot.ExtensionMethods;
 
 public static class Vector2Extensions {
-    public static Point ToPoint(this Vector2 vector, float xOffset = 0, float yOffset = 0) {
-        return new Point
-        {
-            X = vector.X + xOffset,
-            Y = vector.Y + yOffset,
-        };
-    }
-
     public static Point2D ToPoint2D(this Vector2 vector, float xOffset = 0, float yOffset = 0) {
         return new Point2D
         {
-            X = vector.X,
-            Y = vector.Y
+            X = vector.X + xOffset,
+            Y = vector.Y + yOffset,
         };
     }
 
