@@ -237,7 +237,7 @@ public static partial class RayCastingChokeFinder {
 
     private static void DebugLines(List<VisionLine> lines, Color color = null) {
         if (!Program.DebugEnabled || !DrawEnabled) {
-            //return;
+            return;
         }
 
         foreach (var line in lines) {

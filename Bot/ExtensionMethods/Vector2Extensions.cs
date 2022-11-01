@@ -98,8 +98,10 @@ public static class Vector2Extensions {
     /// <param name="origin">The origin to rotate around</param>
     /// <returns>The resulting position</returns>
     public static Vector2 Rotate(this Vector2 position, double angleInRadians, Vector2 origin = default) {
-        var sinTheta = Math.Sin(angleInRadians);
-        var cosTheta = Math.Cos(angleInRadians);
+        // We round because Math.Cos(Math.PI / 2) == 6.123233995736766E-17
+        // Rounding at the 15th decimal makes it 0, and shouldn't affect other results too much
+        var sinTheta = Math.Round(Math.Sin(angleInRadians), 15);
+        var cosTheta = Math.Round(Math.Cos(angleInRadians), 15);
 
         var translatedX = position.X - origin.X;
         var translatedY = position.Y - origin.Y;

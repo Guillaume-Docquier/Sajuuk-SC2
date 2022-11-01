@@ -7,6 +7,8 @@ using Bot.ExtensionMethods;
 namespace Bot;
 
 public static class Clustering {
+    private const bool DrawEnabled = false; // TODO GD Flag this
+
     private enum Labels {
         Noise,
         BorderPoint,
@@ -111,6 +113,10 @@ public static class Clustering {
     }
 
     private static void DrawBoundingBox<T>(IReadOnlyCollection<T> cluster) where T: class, IHavePosition {
+        if (!DrawEnabled) {
+            return;
+        }
+
         var minX = cluster.Select(unit => unit.Position.X).Min();
         var maxX = cluster.Select(unit => unit.Position.X).Max();
         var minY = cluster.Select(unit => unit.Position.Y).Min();

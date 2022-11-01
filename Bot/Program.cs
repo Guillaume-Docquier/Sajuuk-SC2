@@ -18,7 +18,7 @@ public class Program {
 
     private static readonly IBot Bot = new SajuukBot("3_0_0", scenarios: Scenarios);
 
-    private const string MapFileName = Maps.Season_2022_4.FileNames.Waterfall;
+    private const string MapFileName = Maps.Season_2022_4.FileNames.Berlingrad;
     private const Race OpponentRace = Race.Zerg;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
@@ -37,9 +37,7 @@ public class Program {
                 foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
                     Logger.Info("Generating data for {0}", mapFileName);
 
-                    ExpandLocationDataStore.IsEnabled = false;
-                    RegionDataStore.IsEnabled = false;
-                    RayCastingChokeFinder.VisionLinesDataStore.IsEnabled = false;
+                    DisableDataStores();
 
                     DebugEnabled = true;
                     GraphicalDebugger = new LadderGraphicalDebugger();
@@ -72,5 +70,11 @@ public class Program {
         }
 
         Logger.Info("Terminated.");
+    }
+
+    private static void DisableDataStores() {
+        ExpandLocationDataStore.IsEnabled = false;
+        RegionDataStore.IsEnabled = false;
+        RayCastingChokeFinder.VisionLinesDataStore.IsEnabled = false;
     }
 }

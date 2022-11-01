@@ -10,6 +10,8 @@ namespace Bot.MapKnowledge;
 using Path = List<Vector2>;
 
 public static class Pathfinder {
+    private const bool DrawEnabled = true; // TODO GD Flag this
+
     public static readonly Dictionary<Vector2, Dictionary<Vector2, Path>> Memory = new Dictionary<Vector2, Dictionary<Vector2, List<Vector2>>>();
 
     /// <summary>
@@ -32,7 +34,7 @@ public static class Pathfinder {
 
         var isPathKnown = TryGetPathFromMemory(origin, destination, out var knownPath);
         if (isPathKnown) {
-            Program.GraphicalDebugger.AddPath(knownPath, Colors.LightGreen, Colors.DarkGreen);
+            DebugPath(knownPath, true);
             return knownPath;
         }
 
@@ -44,11 +46,30 @@ public static class Pathfinder {
         }
 
         var path = maybeNullPath.Select(step => step.AsWorldGridCenter()).ToList();
-        Program.GraphicalDebugger.AddPath(path, Colors.LightBlue, Colors.DarkBlue);
+        DebugPath(path, false);
 
         SavePathToMemory(origin, destination, path);
 
         return path;
+    }
+
+    /// <summary>
+    /// Draws a path in green if it is known, or in blue if it has just been calculated.
+    /// Nothing is drawn if drawing is not enabled.
+    /// </summary>
+    /// <param name="path"></param>
+    /// <param name="isKnown"></param>
+    private static void DebugPath(List<Vector2> path, bool isKnown) {
+        if (!DrawEnabled) {
+            return;
+        }
+
+        if (isKnown) {
+            Program.GraphicalDebugger.AddPath(path, Colors.LightGreen, Colors.DarkGreen);
+        }
+        else {
+            Program.GraphicalDebugger.AddPath(path, Colors.LightBlue, Colors.DarkBlue);
+        }
     }
 
     /// <summary>
