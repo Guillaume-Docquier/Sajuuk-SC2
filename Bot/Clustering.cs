@@ -72,7 +72,7 @@ public static class Clustering {
         return (clusters, noise);
     }
 
-    public static Vector3 GetCenter(List<Vector3> cluster) {
+    public static Vector2 GetCenter(List<Vector2> cluster) {
         if (cluster.Count <= 0) {
             Logger.Error("Trying to GetCenter of an empty cluster");
 
@@ -82,7 +82,7 @@ public static class Clustering {
         var avgX = cluster.Average(position => position.X);
         var avgY = cluster.Average(position => position.Y);
 
-        return new Vector3(avgX, avgY, 0).WithWorldHeight();
+        return new Vector2(avgX, avgY);
     }
 
     public static Vector3 GetCenter<T>(List<T> cluster) where T: class, IHavePosition {

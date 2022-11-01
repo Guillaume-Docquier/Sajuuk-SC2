@@ -17,13 +17,13 @@ public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
 
     private readonly StateMachine<SneakAttackTactic, SneakAttackState> _stateMachine;
     private readonly HashSet<Unit> _unitsWithUninstalledModule = new HashSet<Unit>();
-    private Vector3 _targetPosition;
+    private Vector2 _targetPosition;
     private bool _isTargetPriority = false;
 
     private ulong _coolDownUntil = 0;
 
     private List<Unit> _army;
-    private Vector3 _armyCenter;
+    private Vector2 _armyCenter;
 
     private static readonly HashSet<uint> PriorityTargets = new HashSet<uint>
     {
@@ -109,7 +109,7 @@ public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
         return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military)
             .Where(enemy => enemy.IsVisible)
             .Where(enemy => !enemy.IsFlying)
-            .Where(enemy => army.Any(soldier => enemy.HorizontalDistanceTo(soldier) <= Math.Max(enemy.UnitTypeData.SightRange, soldier.UnitTypeData.SightRange)));
+            .Where(enemy => army.Any(soldier => enemy.DistanceTo(soldier) <= Math.Max(enemy.UnitTypeData.SightRange, soldier.UnitTypeData.SightRange)));
     }
 
     private static void BurrowOverlings(IEnumerable<Unit> army) {
@@ -118,8 +118,8 @@ public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
         }
     }
 
-    private static IEnumerable<Unit> GetPriorityTargetsInOperationRadius(Vector3 armyCenter) {
-        return Controller.GetUnits(UnitsTracker.EnemyUnits, PriorityTargets).Where(enemy => enemy.HorizontalDistanceTo(armyCenter) <= OperationRadius);
+    private static IEnumerable<Unit> GetPriorityTargetsInOperationRadius(Vector2 armyCenter) {
+        return Controller.GetUnits(UnitsTracker.EnemyUnits, PriorityTargets).Where(enemy => enemy.DistanceTo(armyCenter) <= OperationRadius);
     }
 
     private void DebugTarget() {
@@ -127,8 +127,8 @@ public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
             return;
         }
 
-        Program.GraphicalDebugger.AddLink(_armyCenter, _targetPosition, Colors.Magenta);
-        Program.GraphicalDebugger.AddSphere(_targetPosition, 1, Colors.Magenta);
+        Program.GraphicalDebugger.AddLink(_armyCenter.ToVector3(), _targetPosition.ToVector3(), Colors.Magenta);
+        Program.GraphicalDebugger.AddSphere(_targetPosition.ToVector3(), 1, Colors.Magenta);
 
         if (_isTargetPriority) {
             Program.GraphicalDebugger.AddText("!", size: 20, worldPos: _targetPosition.ToPoint());

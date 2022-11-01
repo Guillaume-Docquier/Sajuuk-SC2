@@ -82,13 +82,13 @@ public class ExpandAnalyzer: INeedUpdating {
     }
 
     // TODO GD Doesn't take into account the building dimensions, but good enough for creep spread since it's 1x1
-    public static bool IsNotBlockingExpand(Vector3 position) {
+    public static bool IsNotBlockingExpand(Vector2 position) {
         // We could use Regions here, but I'd rather not because of dependencies
         var closestExpandLocation = Instance._expandLocations
             .Select(expandLocation => expandLocation.Position)
-            .MinBy(expandPosition => expandPosition.HorizontalDistanceTo(position));
+            .MinBy(expandPosition => expandPosition.DistanceTo(position));
 
-        return closestExpandLocation.HorizontalDistanceTo(position) > ExpandRadius + 1;
+        return closestExpandLocation.DistanceTo(position) > ExpandRadius + 1;
     }
 
     /// <summary>
@@ -101,8 +101,8 @@ public class ExpandAnalyzer: INeedUpdating {
         var expands = ExpandLocations.Where(expandLocation => expandLocation.ExpandType == expandType);
 
         return alliance == Alliance.Enemy
-            ? expands.MinBy(expandLocation => expandLocation.Position.HorizontalDistanceTo(MapAnalyzer.EnemyStartingLocation))!
-            : expands.MinBy(expandLocation => expandLocation.Position.HorizontalDistanceTo(MapAnalyzer.StartingLocation))!;
+            ? expands.MinBy(expandLocation => expandLocation.Position.DistanceTo(MapAnalyzer.EnemyStartingLocation))!
+            : expands.MinBy(expandLocation => expandLocation.Position.DistanceTo(MapAnalyzer.StartingLocation))!;
     }
 
     private static IEnumerable<List<Unit>> FindResourceClusters() {
@@ -114,19 +114,19 @@ public class ExpandAnalyzer: INeedUpdating {
         return Clustering.DBSCAN(resources, epsilon: 8, minPoints: 4).clusters;
     }
 
-    private IEnumerable<Vector3> FindExpandLocations(List<List<Unit>> resourceClusters) {
+    private IEnumerable<Vector2> FindExpandLocations(List<List<Unit>> resourceClusters) {
         InitTooCloseToResourceGrid(resourceClusters);
 
-        var expandLocations = new List<Vector3>();
+        var expandLocations = new List<Vector2>();
         foreach (var resourceCluster in resourceClusters) {
-            var centerPosition = Clustering.GetBoundingBoxCenter(resourceCluster).AsWorldGridCenter();
+            var centerPosition = Clustering.GetBoundingBoxCenter(resourceCluster).AsWorldGridCenter().ToVector2();
             var searchGrid = MapAnalyzer.BuildSearchGrid(centerPosition, gridRadius: ExpandSearchRadius);
 
             var goodBuildSpot = searchGrid.FirstOrDefault(IsValidExpandPlacement);
             if (goodBuildSpot != default) {
                 expandLocations.Add(goodBuildSpot);
-                Program.GraphicalDebugger.AddSphere(goodBuildSpot, KnowledgeBase.GameGridCellRadius, Colors.Green);
-                Program.GraphicalDebugger.AddSphere(centerPosition, KnowledgeBase.GameGridCellRadius, Colors.Yellow);
+                Program.GraphicalDebugger.AddSphere(goodBuildSpot.ToVector3(), KnowledgeBase.GameGridCellRadius, Colors.Green);
+                Program.GraphicalDebugger.AddSphere(centerPosition.ToVector3(), KnowledgeBase.GameGridCellRadius, Colors.Yellow);
             }
         }
 
@@ -145,16 +145,16 @@ public class ExpandAnalyzer: INeedUpdating {
 
         var cellsTooCloseToResource = resourceClusters.SelectMany(cluster => cluster)
             .SelectMany(MapAnalyzer.GetObstacleFootprint)
-            .SelectMany(position => MapAnalyzer.BuildSearchRadius(position.ToVector3(), TooCloseToResourceDistance))
+            .SelectMany(position => MapAnalyzer.BuildSearchRadius(position, TooCloseToResourceDistance))
             .Select(position => position.AsWorldGridCorner());
 
         foreach (var cell in cellsTooCloseToResource) {
-            Program.GraphicalDebugger.AddGridSquare(cell.AsWorldGridCenter(), Colors.SunbrightOrange);
+            Program.GraphicalDebugger.AddGridSquare(cell.AsWorldGridCenter().ToVector3(), Colors.SunbrightOrange);
             _tooCloseToResourceGrid[(int)cell.X][(int)cell.Y] = true;
         }
     }
 
-    private bool IsValidExpandPlacement(Vector3 buildSpot) {
+    private bool IsValidExpandPlacement(Vector2 buildSpot) {
         var footprint = MapAnalyzer.GetBuildingFootprint(buildSpot, Units.Hatchery);
         var footprintIsClear = footprint.All(cell => !_tooCloseToResourceGrid[(int)cell.X][(int)cell.Y]);
 
@@ -172,20 +172,20 @@ public class ExpandAnalyzer: INeedUpdating {
     /// <param name="expandPositions"></param>
     /// <param name="resourceClusters"></param>
     /// <returns>The ExpandLocations</returns>
-    private List<ExpandLocation> GenerateExpandLocations(IReadOnlyList<Vector3> expandPositions, IReadOnlyList<List<Unit>> resourceClusters) {
+    private List<ExpandLocation> GenerateExpandLocations(IReadOnlyList<Vector2> expandPositions, IReadOnlyList<List<Unit>> resourceClusters) {
         // Clusters
-        var resourceClustersByExpand = new Dictionary<Vector3, HashSet<Unit>>();
+        var resourceClustersByExpand = new Dictionary<Vector2, HashSet<Unit>>();
         foreach (var expandPosition in expandPositions) {
             resourceClustersByExpand[expandPosition] = GetExpandResourceCluster(expandPosition, resourceClusters);
         }
 
         // Blockers
-        var blockersByExpand = new Dictionary<Vector3, HashSet<Unit>>();
+        var blockersByExpand = new Dictionary<Vector2, HashSet<Unit>>();
         foreach (var expandPosition in expandPositions) {
             blockersByExpand[expandPosition] = FindExpandBlockers(expandPosition);
         }
 
-        var expandTypes = new Dictionary<Vector3, ExpandType>();
+        var expandTypes = new Dictionary<Vector2, ExpandType>();
 
         // ExpandType based on distance to own base
         var rank = 0;
@@ -249,8 +249,8 @@ public class ExpandAnalyzer: INeedUpdating {
     /// <param name="expandPosition"></param>
     /// <param name="resourceClusters"></param>
     /// <returns>The resource cluster of that expand position</returns>
-    private static HashSet<Unit> GetExpandResourceCluster(Vector3 expandPosition, IEnumerable<List<Unit>> resourceClusters) {
-        return resourceClusters.MinBy(cluster => cluster.GetCenter().HorizontalDistanceTo(expandPosition))!.ToHashSet();
+    private static HashSet<Unit> GetExpandResourceCluster(Vector2 expandPosition, IEnumerable<List<Unit>> resourceClusters) {
+        return resourceClusters.MinBy(cluster => cluster.GetCenter().DistanceTo(expandPosition))!.ToHashSet();
     }
 
     /// <summary>
@@ -258,11 +258,11 @@ public class ExpandAnalyzer: INeedUpdating {
     /// </summary>
     /// <param name="expandLocation"></param>
     /// <returns>All units that need to be cleared to take the expand</returns>
-    private static HashSet<Unit> FindExpandBlockers(Vector3 expandLocation) {
+    private static HashSet<Unit> FindExpandBlockers(Vector2 expandLocation) {
         var hatcheryRadius = KnowledgeBase.GetBuildingRadius(Units.Hatchery);
 
         return UnitsTracker.NeutralUnits
-            .Where(neutralUnit => neutralUnit.HorizontalDistanceTo(expandLocation) <= neutralUnit.Radius + hatcheryRadius)
+            .Where(neutralUnit => neutralUnit.DistanceTo(expandLocation) <= neutralUnit.Radius + hatcheryRadius)
             .ToHashSet();
     }
 

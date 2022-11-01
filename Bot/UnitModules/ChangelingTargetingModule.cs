@@ -25,7 +25,7 @@ public class ChangelingTargetingModule: UnitModule {
             return;
         }
 
-        var closestChangelingInRange = changelings.FirstOrDefault(changeling => changeling.HorizontalDistanceTo(_unit) <= _unit.MaxRange);
+        var closestChangelingInRange = changelings.FirstOrDefault(changeling => changeling.DistanceTo(_unit) <= _unit.MaxRange);
         if (closestChangelingInRange != null) {
             _unit.Attack(closestChangelingInRange);
         }

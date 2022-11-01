@@ -56,7 +56,7 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
         if (_expandTiming == 0) {
             var hatchery = enemyUnits
                 .Where(unit => unit.UnitType == Units.Hatchery)
-                .FirstOrDefault(hatchery => hatchery.HorizontalDistanceTo(EnemyNatural.Position) <= HatcheryRadius);
+                .FirstOrDefault(hatchery => hatchery.DistanceTo(EnemyNatural.Position) <= HatcheryRadius);
 
             if (hatchery != null) {
                 _expandTiming = Controller.Frame - (ulong)(HatcheryBuildTime * hatchery.RawUnitData.BuildProgress);

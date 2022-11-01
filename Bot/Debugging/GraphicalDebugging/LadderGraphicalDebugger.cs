@@ -36,6 +36,8 @@ public class LadderGraphicalDebugger: IGraphicalDebugger {
 
     public void AddLink(Vector3 start, Vector3 end, Color color, bool withText = true) {}
 
+    public void AddPath(List<Vector2> path, Color startColor, Color endColor) {}
+
     public void AddPath(List<Vector3> path, Color startColor, Color endColor) {}
 
     public void AddUnit(Unit unit, Color color = null) {}

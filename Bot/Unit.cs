@@ -132,22 +132,14 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     public double DistanceTo(Unit otherUnit) {
-        return DistanceTo(otherUnit.Position);
+        return DistanceTo(otherUnit.Position.ToVector2());
     }
 
     public double DistanceTo(Vector3 location) {
-        return Position.DistanceTo(location);
+        return DistanceTo(location.ToVector2());
     }
 
-    public double HorizontalDistanceTo(Unit otherUnit) {
-        return HorizontalDistanceTo(otherUnit.Position);
-    }
-
-    public double HorizontalDistanceTo(Vector3 location) {
-        return Position.HorizontalDistanceTo(location);
-    }
-
-    public double HorizontalDistanceTo(Vector2 location) {
+    public double DistanceTo(Vector2 location) {
         return Position.ToVector2().DistanceTo(location);
     }
 
@@ -176,8 +168,8 @@ public class Unit: ICanDie, IHavePosition {
     /// </summary>
     /// <param name="target">The target position to move towards</param>
     /// <param name="distance">The step distance</param>
-    public void MoveTowards(Vector3 target, float distance = 0.5f) {
-        Move(Position.TranslateTowards(target, distance), distance / 2);
+    public void MoveTowards(Vector2 target, float distance = 0.5f) {
+        Move(Position.ToVector2().TranslateTowards(target, distance), distance / 2);
     }
 
     /// <summary>
@@ -189,19 +181,7 @@ public class Unit: ICanDie, IHavePosition {
     /// <param name="precision">The allowed precision on the move order</param>
     /// <param name="allowSpam">Enables spamming orders. Not recommended because it might generate a lot of actions</param>
     public void Move(Vector2 target, float precision = 0.5f, bool allowSpam = false) {
-        Move(target.ToVector3(withWorldHeight: false), precision, allowSpam);
-    }
-
-    /// <summary>
-    /// Send the order to move to a target position.
-    /// If the unit already has a move order to that target, given the precision, no order will be sent.
-    /// You can override this check with allowSpam = true.
-    /// </summary>
-    /// <param name="target">The target position to move to</param>
-    /// <param name="precision">The allowed precision on the move order</param>
-    /// <param name="allowSpam">Enables spamming orders. Not recommended because it might generate a lot of actions</param>
-    public void Move(Vector3 target, float precision = 0.5f, bool allowSpam = false) {
-        if (Position.HorizontalDistanceTo(target) <= 0.01) {
+        if (Position.ToVector2().DistanceTo(target) <= 0.01) {
             return;
         }
 
@@ -228,7 +208,7 @@ public class Unit: ICanDie, IHavePosition {
     /// <param name="target">The target position to attack move to</param>
     /// <param name="precision">The allowed precision on the attack move order</param>
     /// <param name="allowSpam">Enables spamming orders. Not recommended because it might generate a lot of actions</param>
-    public void AttackMove(Vector3 target, float precision = 0.5f, bool allowSpam = false) {
+    public void AttackMove(Vector2 target, float precision = 0.5f, bool allowSpam = false) {
         if (!allowSpam && IsTargeting(target, Abilities.Attack, precision)) {
             return;
         }
@@ -265,7 +245,7 @@ public class Unit: ICanDie, IHavePosition {
         Logger.Info("Upgrading {0} into {1}", this, upgradeName);
     }
 
-    public void PlaceBuilding(uint buildingType, Vector3 target) {
+    public void PlaceBuilding(uint buildingType, Vector2 target) {
         Manager?.Release(this);
         ProcessAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
 
@@ -321,7 +301,7 @@ public class Unit: ICanDie, IHavePosition {
             }
         }
         else if (position != null) {
-            Logger.Info("{0} using ability {1} at {2}", this, abilityName, position.ToVector3().WithWorldHeight());
+            Logger.Info("{0} using ability {1} at {2}", this, abilityName, position);
         }
         else {
             Logger.Info("{0} using ability {1}", this, abilityName);
@@ -398,11 +378,11 @@ public class Unit: ICanDie, IHavePosition {
     /// <param name="abilityId">The ability to check.</param>
     /// <param name="precision">The maximum distance allowed between target and order.TargetWorldSpacePos. Should be positive.</param>
     /// <returns>True if there is an order with abilityId where the TargetWorldSpacePos is within precision of the target.</returns>
-    private bool IsTargeting(Vector3 target, uint abilityId, float precision) {
+    private bool IsTargeting(Vector2 target, uint abilityId, float precision) {
         return Orders
             .Where(order => order.AbilityId == abilityId)
             .Where(order => order.TargetWorldSpacePos != null)
-            .Any(order => order.TargetWorldSpacePos.ToVector3().HorizontalDistanceTo(target) <= precision);
+            .Any(order => order.TargetWorldSpacePos.ToVector2().DistanceTo(target) <= precision);
     }
 
     private bool IsAttacking(Unit unit) {
@@ -414,7 +394,7 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     // TODO GD This doesn't work with upgrades
-    public bool IsProducing(uint buildingOrUnitType, Vector3 atLocation = default) {
+    public bool IsProducing(uint buildingOrUnitType, Vector2 atLocation = default) {
         var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingOrUnitType).AbilityId;
 
         var producingOrder = Orders.FirstOrDefault(order => order.AbilityId == buildingAbilityId);
@@ -428,39 +408,35 @@ public class Unit: ICanDie, IHavePosition {
         }
 
         if (producingOrder.TargetWorldSpacePos != null) {
-            return producingOrder.TargetWorldSpacePos.Equals(atLocation.WithoutZ().ToPoint());
+            return producingOrder.TargetWorldSpacePos.Equals(atLocation.ToPoint());
         }
 
         // Extractors are built on a gas, not at a location
         if (UnitsTracker.UnitsByTag.TryGetValue(producingOrder.TargetUnitTag, out var targetUnit)) {
-            return targetUnit.Position.WithoutZ() == atLocation.WithoutZ();
+            return targetUnit.Position.ToVector2() == atLocation;
         }
 
         return false;
     }
 
     public bool IsInAttackRangeOf(Unit enemy) {
-        return IsInAttackRangeOf(enemy.Position);
+        return IsInAttackRangeOf(enemy.Position.ToVector2());
     }
 
     public bool IsInAttackRangeOf(Unit enemy, float extraRange) {
-        return IsInAttackRangeOf(enemy.Position, extraRange);
+        return IsInAttackRangeOf(enemy.Position.ToVector2(), extraRange);
     }
 
-    public bool IsInAttackRangeOf(Vector3 position, float extraRange = 0) {
-        return HorizontalDistanceTo(position) <= MaxRange + extraRange;
+    public bool IsInAttackRangeOf(Vector2 position, float extraRange = 0) {
+        return DistanceTo(position) <= MaxRange + extraRange;
     }
 
     public bool IsInSightRangeOf(Unit enemy, float extraRange) {
-        return IsInSightRangeOf(enemy.Position, extraRange);
-    }
-
-    public bool IsInSightRangeOf(Vector3 position, float extraRange) {
-        return IsInSightRangeOf(position.ToVector2(), extraRange);
+        return IsInSightRangeOf(enemy.Position.ToVector2(), extraRange);
     }
 
     public bool IsInSightRangeOf(Vector2 position, float extraRange = 0) {
-        return HorizontalDistanceTo(position) <= UnitTypeData.SightRange;
+        return DistanceTo(position) <= UnitTypeData.SightRange;
     }
 
     public override string ToString() {

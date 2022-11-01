@@ -1,4 +1,5 @@
-﻿using Bot.GameData;
+﻿using Bot.ExtensionMethods;
+using Bot.GameData;
 using Bot.MapKnowledge;
 using Bot.Wrapper;
 
@@ -11,7 +12,7 @@ public class FlyingTerranScumScenario : IScenario {
         }
 
 #pragma warning disable CS4014
-        Program.GameConnection.SendRequest(RequestBuilder.DebugCreateUnit(Owner.Enemy, Units.CommandCenterFlying, 1, MapAnalyzer.EnemyStartingLocation));
+        Program.GameConnection.SendRequest(RequestBuilder.DebugCreateUnit(Owner.Enemy, Units.CommandCenterFlying, 1, MapAnalyzer.EnemyStartingLocation.ToVector3()));
 #pragma warning restore CS4014
     }
 }

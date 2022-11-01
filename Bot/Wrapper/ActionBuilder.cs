@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Numerics;
+using Bot.ExtensionMethods;
 using Bot.GameData;
 using SC2APIProtocol;
 
@@ -12,10 +13,10 @@ public static class ActionBuilder {
         return UnitCommand(unitAbilityId, producerTag);
     }
 
-    public static Action PlaceBuilding(uint buildingType, ulong producerTag, Vector3 position) {
+    public static Action PlaceBuilding(uint buildingType, ulong producerTag, Vector2 position) {
         var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingType).AbilityId;
 
-        return UnitCommand(buildingAbilityId, producerTag, position: new Point2D { X = position.X, Y = position.Y });
+        return UnitCommand(buildingAbilityId, producerTag, position: position.ToPoint2D());
     }
 
     public static Action PlaceExtractor(uint buildingType, ulong producerTag, ulong gasTag) {
@@ -34,17 +35,13 @@ public static class ActionBuilder {
         return UnitCommand(Abilities.Stop, unitTag);
     }
 
-    public static Action Move(ulong unitTag, Vector3 position) {
-        return UnitCommand(Abilities.Move, unitTag, position: new Point2D { X = position.X, Y = position.Y });
-    }
-
-    public static Action AttackMove(ulong unitTag, Vector3 position) {
-        return UnitCommand(Abilities.Attack, unitTag, position: new Point2D { X = position.X, Y = position.Y });
+    public static Action Move(ulong unitTag, Vector2 position) {
+        return UnitCommand(Abilities.Move, unitTag, position: position.ToPoint2D());
     }
 
     // TODO GD Might be better to use a single order
-    public static Action AttackMove(IEnumerable<ulong> unitTags, Vector3 position) {
-        return UnitCommand(Abilities.Attack, unitTags: unitTags, position: new Point2D { X = position.X, Y = position.Y });
+    public static Action AttackMove(ulong unitTag, Vector2 position) {
+        return UnitCommand(Abilities.Attack, unitTag, position: position.ToPoint2D());
     }
 
     public static Action Attack(ulong unitTag, ulong targetTag) {

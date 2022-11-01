@@ -39,8 +39,8 @@ public class AttackPriorityModule: UnitModule {
         }
 
         var priorityTargetInRange = Controller.GetUnits(UnitsTracker.EnemyUnits, PriorityTargets)
-            .Where(priorityTarget => priorityTarget.HorizontalDistanceTo(_unit) < _unit.MaxRange)
-            .MinBy(priorityTarget => priorityTarget.HorizontalDistanceTo(_unit));
+            .Where(priorityTarget => priorityTarget.DistanceTo(_unit) < _unit.MaxRange)
+            .MinBy(priorityTarget => priorityTarget.DistanceTo(_unit));
 
         if (priorityTargetInRange != null) {
             _unit.Attack(priorityTargetInRange);

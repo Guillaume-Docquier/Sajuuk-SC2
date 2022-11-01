@@ -73,8 +73,8 @@ public sealed partial class EconomyManager {
         }
 
         private bool DispatchWorker(Unit worker) {
-            var supervisor = _manager.GetClosestSupervisorWithIdealCapacityNotMet(worker.Position);
-            supervisor ??= _manager.GetClosestSupervisorWithSaturatedCapacityNotMet(worker.Position);
+            var supervisor = _manager.GetClosestSupervisorWithIdealCapacityNotMet(worker.Position.ToVector2());
+            supervisor ??= _manager.GetClosestSupervisorWithSaturatedCapacityNotMet(worker.Position.ToVector2());
 
             if (supervisor == null) {
                 Program.GraphicalDebugger.AddText("!", color: Colors.Red, worldPos: worker.Position.ToPoint(yOffset: worker.Radius));

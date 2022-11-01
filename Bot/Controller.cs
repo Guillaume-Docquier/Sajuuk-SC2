@@ -238,7 +238,7 @@ public static class Controller {
         return counter;
     }
 
-    public static Unit GetAvailableProducer(uint unitOrAbilityType, bool allowQueue = false, Vector3 closestTo = default) {
+    public static Unit GetAvailableProducer(uint unitOrAbilityType, bool allowQueue = false, Vector2 closestTo = default) {
         if (!TechTree.Producer.ContainsKey(unitOrAbilityType)) {
             throw new NotImplementedException($"Producer for unit {KnowledgeBase.GetUnitTypeData(unitOrAbilityType).Name} not found");
         }
@@ -256,7 +256,7 @@ public static class Controller {
         }
 
         // This can be tricked by impassable terrain, but looks good enough
-        return producers.MinBy(producer => producer.HorizontalDistanceTo(closestTo));
+        return producers.MinBy(producer => producer.DistanceTo(closestTo));
     }
 
     // TODO GD Should use an IBuildStep, probably. BuildFulfillment seems odd here
@@ -330,13 +330,13 @@ public static class Controller {
         return RequestResult.Ok;
     }
 
-    private static RequestResult PlaceBuilding(uint buildingType, Vector3 location = default) {
+    private static RequestResult PlaceBuilding(uint buildingType, Vector2 location = default) {
         var producer = GetAvailableProducer(buildingType);
 
         return PlaceBuilding(buildingType, producer, location);
     }
 
-    private static RequestResult PlaceBuilding(uint buildingType, Unit producer, Vector3 location = default) {
+    private static RequestResult PlaceBuilding(uint buildingType, Unit producer, Vector2 location = default) {
         var buildingTypeData = KnowledgeBase.GetUnitTypeData(buildingType);
 
         var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
@@ -348,13 +348,13 @@ public static class Controller {
             Logger.Debug("Trying to build {0}", buildingTypeData.Name);
 
             var extractorPositions = GetUnits(UnitsTracker.OwnedUnits, Units.Extractors)
-                .Select(extractor => extractor.Position.WithoutZ())
+                .Select(extractor => extractor.Position.ToVector2())
                 .ToHashSet();
 
             var availableGas = GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers)
                 .Where(gas => gas.Supervisor != null)
-                .Where(gas => BuildingTracker.CanPlace(buildingType, gas.Position))
-                .Where(gas => !extractorPositions.Contains(gas.Position.WithoutZ()))
+                .Where(gas => BuildingTracker.CanPlace(buildingType, gas.Position.ToVector2()))
+                .Where(gas => !extractorPositions.Contains(gas.Position.ToVector2()))
                 .MaxBy(gas => (gas.Supervisor as TownHallSupervisor)!.WorkerCount); // This is not cute nor clean, but it is efficient and we like that
 
             if (availableGas == null) {
@@ -362,9 +362,9 @@ public static class Controller {
                 return RequestResult.NoSuitableLocation;
             }
 
-            producer = GetAvailableProducer(buildingType, closestTo: availableGas.Position);
+            producer = GetAvailableProducer(buildingType, closestTo: availableGas.Position.ToVector2());
             producer.PlaceExtractor(buildingType, availableGas);
-            BuildingTracker.ConfirmPlacement(buildingType, availableGas.Position, producer);
+            BuildingTracker.ConfirmPlacement(buildingType, availableGas.Position.ToVector2(), producer);
         }
         else if (location != default) {
             Logger.Debug("Trying to build {0} with location {1}", buildingTypeData.Name, location);
@@ -573,7 +573,7 @@ public static class Controller {
     }
 
     // TODO GD Implement a more robust check
-    public static IEnumerable<Vector3> GetFreeExpandLocations() {
+    public static IEnumerable<Vector2> GetFreeExpandLocations() {
         return ExpandAnalyzer.ExpandLocations
             .Select(expandLocation => expandLocation.Position)
             .Where(expandLocation => !GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))

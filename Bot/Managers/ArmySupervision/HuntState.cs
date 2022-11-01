@@ -10,7 +10,7 @@ namespace Bot.Managers.ArmySupervision;
 
 public partial class ArmySupervisor {
     public class HuntState: State<ArmySupervisor> {
-        private static Dictionary<Vector3, bool> _checkedExpandLocations;
+        private static Dictionary<Vector2, bool> _checkedExpandLocations;
         private static readonly Dictionary<Vector2, bool> CheckedPositions = new Dictionary<Vector2, bool>();
 
         private bool _isNextTargetSet = false;
@@ -46,7 +46,7 @@ public partial class ArmySupervisor {
                         .ToList();
 
                     if (enemiesToAttack.Count > 0) {
-                        StateMachine.Context._target = enemiesToAttack[0].Position;
+                        StateMachine.Context._target = enemiesToAttack[0].Position.ToVector2();
                         _isNextTargetSet = true;
                     }
                     else {
@@ -114,10 +114,7 @@ public partial class ArmySupervisor {
                 return;
             }
 
-            var closestNotVisiblePosition = notVisiblePositions
-                .MinBy(position => position.DistanceTo(armyCenter.ToVector2()))
-                .ToVector3();
-
+            var closestNotVisiblePosition = notVisiblePositions.MinBy(position => position.DistanceTo(armyCenter));
             foreach (var unit in StateMachine.Context.Army) {
                 unit.Move(closestNotVisiblePosition);
             }

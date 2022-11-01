@@ -45,8 +45,8 @@ public class QueenMicroModule: UnitModule, IWatchUnitsDie {
         else if (_queen.HasEnoughEnergy(Abilities.SpawnCreepTumor)) {
             var tumorPosition = CreepTracker.GetCreepFrontier()
                 .Where(ExpandAnalyzer.IsNotBlockingExpand)
-                .OrderBy(creepNode => _queen.HorizontalDistanceTo(creepNode)) // TODO GD Try to favor between bases and towards the enemy
-                .FirstOrDefault(creepNode => BuildingTracker.CanPlace(Units.CreepTumor, creepNode) && Pathfinder.FindPath(_queen.Position, creepNode) != null);
+                .OrderBy(creepNode => _queen.DistanceTo(creepNode)) // TODO GD Try to favor between bases and towards the enemy
+                .FirstOrDefault(creepNode => BuildingTracker.CanPlace(Units.CreepTumor, creepNode) && Pathfinder.FindPath(_queen.Position.ToVector2(), creepNode) != null);
 
             if (tumorPosition != default) {
                 _queen.UseAbility(Abilities.SpawnCreepTumor, position: tumorPosition.ToPoint2D());

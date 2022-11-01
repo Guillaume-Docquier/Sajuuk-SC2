@@ -63,8 +63,8 @@ public class MineralMiningStrategy: IStrategy {
     private bool IsCloseEnoughToTownHall() {
         var townHall = (_worker.Supervisor as TownHallSupervisor)!.TownHall; // This is not cute nor clean, but it is efficient and we like that
 
-        var distanceBetweenMineralAndTownHall = _mineral.HorizontalDistanceTo(townHall) - townHall.Radius;
-        var distanceToTownHall = _worker.HorizontalDistanceTo(townHall) - townHall.Radius;
+        var distanceBetweenMineralAndTownHall = _mineral.DistanceTo(townHall) - townHall.Radius;
+        var distanceToTownHall = _worker.DistanceTo(townHall) - townHall.Radius;
 
         var percentageOfDistanceRemaining = distanceToTownHall / distanceBetweenMineralAndTownHall;
 
@@ -74,13 +74,13 @@ public class MineralMiningStrategy: IStrategy {
     // TODO GD Speed mining only has to do with preventing drone deceleration. You can speed mine on the way back too
     private void ReturnCargo() {
         var townHall = (_worker.Supervisor as TownHallSupervisor)!.TownHall; // This is not cute nor clean, but it is efficient and we like that
-        var distanceToTownHall = townHall.HorizontalDistanceTo(_worker);
+        var distanceToTownHall = townHall.DistanceTo(_worker);
 
         if (distanceToTownHall <= townHall.Radius + _worker.Radius + 0.01f) {
             _worker.ReturnCargo();
         }
         else {
-            var targetPosition = townHall.Position.TranslateTowards(_worker.Position, townHall.Radius);
+            var targetPosition = townHall.Position.ToVector2().TranslateTowards(_worker.Position.ToVector2(), townHall.Radius);
 
             // Precision 0f is important.
             // It drastically reduces the spamming of orders.

@@ -9,8 +9,8 @@ public static class ArmyExtensions {
         return army.Sum(soldier => soldier.FoodRequired);
     }
 
-    public static Vector3 GetCenter(this IEnumerable<Unit> army) {
-        return Clustering.GetCenter(army.ToList());
+    public static Vector2 GetCenter(this IEnumerable<Unit> army) {
+        return Clustering.GetCenter(army.ToList()).ToVector2();
     }
 
     public static bool IsFighting(this IEnumerable<Unit> army) {

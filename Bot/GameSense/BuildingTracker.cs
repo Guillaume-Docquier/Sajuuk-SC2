@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
+using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.MapKnowledge;
 using Bot.Wrapper;
@@ -13,8 +14,8 @@ namespace Bot.GameSense;
 public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
     public static readonly BuildingTracker Instance = new BuildingTracker();
 
-    private readonly Dictionary<Vector3, Unit> _reservedBuildingCells = new Dictionary<Vector3, Unit>();
-    private readonly Dictionary<Unit, (uint buildingType, Vector3 position, List<Vector3> cells)> _ongoingBuildingOrders = new();
+    private readonly Dictionary<Vector2, Unit> _reservedBuildingCells = new Dictionary<Vector2, Unit>();
+    private readonly Dictionary<Unit, (uint buildingType, Vector2 position, List<Vector2> cells)> _ongoingBuildingOrders = new();
 
     private BuildingTracker() {}
 
@@ -25,7 +26,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
 
     public void Update(ResponseObservation observation) {
         foreach (var reservedBuildingCell in _reservedBuildingCells.Keys) {
-            Program.GraphicalDebugger.AddGridSquare(reservedBuildingCell, Colors.Yellow);
+            Program.GraphicalDebugger.AddGridSquare(reservedBuildingCell.ToVector3(), Colors.Yellow);
         }
 
         foreach (var worker in _ongoingBuildingOrders.Keys) {
@@ -46,7 +47,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
         }
     }
 
-    public static Vector3 FindConstructionSpot(uint buildingType) {
+    public static Vector2 FindConstructionSpot(uint buildingType) {
         var startingSpot = MapAnalyzer.StartingLocation;
         var searchGrid = MapAnalyzer.BuildSearchGrid(startingSpot, gridRadius: 12, stepSize: 2);
         var mineralFields = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.MineralFields).ToList();
@@ -68,7 +69,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
         return default;
     }
 
-    public static void ConfirmPlacement(uint buildingType, Vector3 position, Unit builder) {
+    public static void ConfirmPlacement(uint buildingType, Vector2 position, Unit builder) {
         builder.AddDeathWatcher(Instance);
 
         if (Instance._ongoingBuildingOrders.ContainsKey(builder)) {
@@ -85,12 +86,12 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
         _ongoingBuildingOrders.Remove(unit);
     }
 
-    public static bool CanPlace(uint buildingType, Vector3 position) {
+    public static bool CanPlace(uint buildingType, Vector2 position) {
         return QueryPlacement(buildingType, position) == ActionResult.Success;
     }
 
     // This is a blocking call! Use it sparingly, or you will slow down your execution significantly!
-    public static ActionResult QueryPlacement(uint buildingType, Vector3 position) {
+    public static ActionResult QueryPlacement(uint buildingType, Vector2 position) {
         if (IsTooCloseToTownHall(buildingType, position)) {
             return ActionResult.CantBuildLocationInvalid;
         }
@@ -115,20 +116,20 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
         }
 
         var actionResult = queryBuildingPlacementResponse.Query.Placements[0].Result;
-        DebugBuildingPlacementResult(actionResult, position);
+        DebugBuildingPlacementResult(actionResult, position.ToVector3());
 
         return actionResult;
     }
 
-    private static bool IsInRange(Vector3 targetPosition, List<Unit> units, float maxDistance) {
+    private static bool IsInRange(Vector2 targetPosition, List<Unit> units, float maxDistance) {
         return GetFirstInRange(targetPosition, units, maxDistance) != null;
     }
 
-    private static Unit GetFirstInRange(Vector3 targetPosition, List<Unit> units, float maxDistance) {
+    private static Unit GetFirstInRange(Vector2 targetPosition, List<Unit> units, float maxDistance) {
         //squared distance is faster to calculate
         var maxDistanceSqr = maxDistance * maxDistance;
         foreach (var unit in units) {
-            if (Vector3.DistanceSquared(targetPosition, unit.Position) <= maxDistanceSqr) {
+            if (Vector2.DistanceSquared(targetPosition, unit.Position.ToVector2()) <= maxDistanceSqr) {
                 return unit;
             }
         }
@@ -155,7 +156,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
         }
     }
 
-    private static IEnumerable<Vector3> GetBuildingCells(uint buildingType, Vector3 position) {
+    private static IEnumerable<Vector2> GetBuildingCells(uint buildingType, Vector2 position) {
         var buildingDimension = Buildings.Dimensions[buildingType];
 
         // Odd dimensions are centered
@@ -173,12 +174,12 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
 
         for (var x = position.X - deltaX; x <= position.X + deltaX; x++) {
             for (var y = position.Y - deltaY; y <= position.Y + deltaY; y++) {
-                yield return new Vector3 { X = x, Y = y, Z = position.Z };
+                yield return new Vector2 { X = x, Y = y };
             }
         }
     }
 
-    private static bool IsTooCloseToTownHall(uint buildingType, Vector3 position) {
+    private static bool IsTooCloseToTownHall(uint buildingType, Vector2 position) {
         var buildingDimension = Buildings.Dimensions[buildingType];
         var townHallDimension = Buildings.Dimensions[Units.Hatchery];
 

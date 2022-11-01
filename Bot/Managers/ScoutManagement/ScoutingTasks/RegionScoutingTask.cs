@@ -9,13 +9,13 @@ namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 
 public class RegionScoutingTask : ScoutingTask {
     private readonly Region _region;
-    private readonly HashSet<Vector3> _cellsToExplore;
+    private readonly HashSet<Vector2> _cellsToExplore;
     private bool _isCancelled = false;
 
-    public RegionScoutingTask(Vector3 scoutLocation, int priority, int maxScouts)
+    public RegionScoutingTask(Vector2 scoutLocation, int priority, int maxScouts)
         : base(scoutLocation, priority, maxScouts) {
         _region = scoutLocation.GetRegion();
-        _cellsToExplore = new HashSet<Vector3>(_region.Cells);
+        _cellsToExplore = new HashSet<Vector2>(_region.Cells);
     }
 
     public override bool IsComplete() {
@@ -59,16 +59,16 @@ public class RegionScoutingTask : ScoutingTask {
 
     // TODO GD Consider keeping distance with walls to maximize vision
     private void SoloScout(Unit scout) {
-        scout.Move(_cellsToExplore.MinBy(cell => cell.HorizontalDistanceTo(scout)));
+        scout.Move(_cellsToExplore.MinBy(cell => cell.DistanceTo(scout)));
     }
 
     // TODO GD Consider keeping distance with walls to maximize vision
     private void TeamScout(HashSet<Unit> scouts) {
-        var distanceToScouts = new Dictionary<Vector3, Dictionary<Unit, float>>();
+        var distanceToScouts = new Dictionary<Vector2, Dictionary<Unit, float>>();
         foreach (var cellToExplore in _cellsToExplore) {
             var distances = new Dictionary<Unit, float>();
             foreach (var scout in scouts) {
-                distances[scout] = cellToExplore.HorizontalDistanceTo(scout);
+                distances[scout] = cellToExplore.DistanceTo(scout);
             }
 
             distanceToScouts[cellToExplore] = distances;

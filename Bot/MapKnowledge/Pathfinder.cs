@@ -7,10 +7,10 @@ using Bot.ExtensionMethods;
 
 namespace Bot.MapKnowledge;
 
-using Path = List<Vector3>;
+using Path = List<Vector2>;
 
 public static class Pathfinder {
-    public static readonly Dictionary<Vector3, Dictionary<Vector3, Path>> Memory = new Dictionary<Vector3, Dictionary<Vector3, List<Vector3>>>();
+    public static readonly Dictionary<Vector2, Dictionary<Vector2, Path>> Memory = new Dictionary<Vector2, Dictionary<Vector2, List<Vector2>>>();
 
     /// <summary>
     /// <para>Finds a path between the origin and destination.</para>
@@ -21,10 +21,10 @@ public static class Pathfinder {
     /// <param name="destination">The destination position.</param>
     /// <param name="includeObstacles">If you're wondering if you should be using this, you shouldn't.</param>
     /// <returns>The requested path, or null if the destination is unreachable from the origin.</returns>
-    public static Path FindPath(Vector3 origin, Vector3 destination, bool includeObstacles = true) {
+    public static Path FindPath(Vector2 origin, Vector2 destination, bool includeObstacles = true) {
         // Improve caching performance
-        origin = origin.ClosestWalkable().AsWorldGridCorner().WithoutZ();
-        destination = destination.ClosestWalkable().AsWorldGridCorner().WithoutZ();
+        origin = origin.ClosestWalkable().AsWorldGridCorner();
+        destination = destination.ClosestWalkable().AsWorldGridCorner();
 
         if (origin == destination) {
             return new Path();
@@ -36,7 +36,7 @@ public static class Pathfinder {
             return knownPath;
         }
 
-        var maybeNullPath = AStar(origin, destination, (from, to) => from.HorizontalDistanceTo(to), includeObstacles);
+        var maybeNullPath = AStar(origin, destination, (from, to) => from.DistanceTo(to), includeObstacles);
         if (maybeNullPath == null) {
             Logger.Info("No path found between {0} and {1}", origin, destination);
             SavePathToMemory(origin, destination, null);
@@ -60,24 +60,24 @@ public static class Pathfinder {
     /// <param name="getEdgeLength">A function that computes the distance between two nodes</param>
     /// <param name="includeObstacles">If you're wondering if you should be using this, you shouldn't.</param>
     /// <returns>The requested path, or null if the destination is unreachable from the origin.</returns>
-    private static IEnumerable<Vector3> AStar(Vector3 origin, Vector3 destination, Func<Vector3, Vector3, float> getEdgeLength, bool includeObstacles = true) {
-        var cameFrom = new Dictionary<Vector3, Vector3>();
+    private static IEnumerable<Vector2> AStar(Vector2 origin, Vector2 destination, Func<Vector2, Vector2, float> getEdgeLength, bool includeObstacles = true) {
+        var cameFrom = new Dictionary<Vector2, Vector2>();
 
-        var gScore = new Dictionary<Vector3, float>
+        var gScore = new Dictionary<Vector2, float>
         {
             [origin] = 0,
         };
 
-        var fScore = new Dictionary<Vector3, float>
+        var fScore = new Dictionary<Vector2, float>
         {
             [origin] = getEdgeLength(origin, destination),
         };
 
-        var openSetContents = new HashSet<Vector3>
+        var openSetContents = new HashSet<Vector2>
         {
             origin,
         };
-        var openSet = new PriorityQueue<Vector3, float>();
+        var openSet = new PriorityQueue<Vector2, float>();
         openSet.Enqueue(origin, fScore[origin]);
 
         while (openSet.Count > 0) {
@@ -107,9 +107,9 @@ public static class Pathfinder {
         return null;
     }
 
-    private static IEnumerable<Vector3> BuildPath(IReadOnlyDictionary<Vector3, Vector3> cameFrom, Vector3 end) {
+    private static IEnumerable<Vector2> BuildPath(IReadOnlyDictionary<Vector2, Vector2> cameFrom, Vector2 end) {
         var current = end;
-        var path = new List<Vector3> { current };
+        var path = new List<Vector2> { current };
         while (cameFrom.ContainsKey(current)) {
             current = cameFrom[current];
             path.Add(current);
@@ -117,10 +117,10 @@ public static class Pathfinder {
 
         path.Reverse();
 
-        return path.Select(step => step.WithWorldHeight());
+        return path;
     }
 
-    private static bool TryGetPathFromMemory(Vector3 origin, Vector3 destination, out Path path) {
+    private static bool TryGetPathFromMemory(Vector2 origin, Vector2 destination, out Path path) {
         if (Memory.ContainsKey(origin) && Memory[origin].ContainsKey(destination)) {
             path = Memory[origin][destination];
             return true;
@@ -135,9 +135,9 @@ public static class Pathfinder {
         return false;
     }
 
-    private static void SavePathToMemory(Vector3 origin, Vector3 destination, Path path) {
+    private static void SavePathToMemory(Vector2 origin, Vector2 destination, Path path) {
         if (!Memory.ContainsKey(origin)) {
-            Memory[origin] = new Dictionary<Vector3, Path> { [destination] = path };
+            Memory[origin] = new Dictionary<Vector2, Path> { [destination] = path };
         }
         else {
             Memory[origin][destination] = path;

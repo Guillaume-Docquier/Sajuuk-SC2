@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapKnowledge;
@@ -16,7 +17,7 @@ public class SpawnStuffScenario : IScenario {
 
         if (Controller.Frame >= Controller.SecsToFrames(1)) {
             var main = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
-                .MaxBy(townHall => Pathfinder.FindPath(townHall.Position, MapAnalyzer.EnemyStartingLocation).Count);
+                .MaxBy(townHall => Pathfinder.FindPath(townHall.Position.ToVector2(), MapAnalyzer.EnemyStartingLocation).Count);
 
             Logger.Debug("Spawning 1 observer on the main");
 

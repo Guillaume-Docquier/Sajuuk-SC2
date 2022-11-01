@@ -44,22 +44,22 @@ public partial class ArmySupervisor {
                 worldPos: StateMachine.Context._mainArmy.GetCenter().Translate(1f, 1f).ToPoint());
         }
 
-        private static void Grow(Vector3 growPosition, IReadOnlyCollection<Unit> soldiers) {
+        private static void Grow(Vector2 growPosition, IReadOnlyCollection<Unit> soldiers) {
             if (soldiers.Count <= 0) {
                 return;
             }
 
             growPosition = growPosition.ClosestWalkable();
 
-            Program.GraphicalDebugger.AddSphere(growPosition, AcceptableDistanceToTarget, Colors.Yellow);
+            Program.GraphicalDebugger.AddSphere(growPosition.ToVector3(), AcceptableDistanceToTarget, Colors.Yellow);
             Program.GraphicalDebugger.AddText("Grow", worldPos: growPosition.ToPoint());
 
-            soldiers.Where(unit => unit.HorizontalDistanceTo(growPosition) > AcceptableDistanceToTarget)
+            soldiers.Where(unit => unit.DistanceTo(growPosition) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.AttackMove(growPosition));
 
             foreach (var soldier in soldiers) {
-                Program.GraphicalDebugger.AddLine(soldier.Position, growPosition, Colors.Yellow);
+                Program.GraphicalDebugger.AddLine(soldier.Position, growPosition.ToVector3(), Colors.Yellow);
             }
         }
     }

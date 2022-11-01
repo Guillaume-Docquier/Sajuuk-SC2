@@ -125,7 +125,7 @@ public static class RequestBuilder {
         };
     }
 
-    public static Request RequestQueryBuildingPlacement(uint buildingType, Vector3 position) {
+    public static Request RequestQueryBuildingPlacement(uint buildingType, Vector2 position) {
         var requestQuery = new RequestQuery();
 
         // TODO GD Can I send multiple placements at the same time?

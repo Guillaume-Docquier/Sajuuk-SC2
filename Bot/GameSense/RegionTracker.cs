@@ -117,7 +117,7 @@ public class RegionTracker : INeedUpdating {
 
         // Update the enemy spawn
         var enemySpawnRegion = MapAnalyzer.EnemyStartingLocation.GetRegion();
-        var enemySpawnRegionExplorationPercentage = (float)VisibilityTracker.ExploredCells.Count(exploredCell => enemySpawnRegion.Cells.Contains(exploredCell.ToVector3())) / enemySpawnRegion.Cells.Count;
+        var enemySpawnRegionExplorationPercentage = (float)VisibilityTracker.ExploredCells.Count(exploredCell => enemySpawnRegion.Cells.Contains(exploredCell)) / enemySpawnRegion.Cells.Count;
         if (enemySpawnRegionExplorationPercentage < 0.6) {
             var dangerLevel = DangerLevel.Lethal * (1 - enemySpawnRegionExplorationPercentage);
             if (!newDangerLevels.ContainsKey(enemySpawnRegion)) {
@@ -275,14 +275,14 @@ public class RegionTracker : INeedUpdating {
         var regionIndex = 0;
         foreach (var region in RegionAnalyzer.Regions) {
             var regionColor = RegionColors[regionIndex % RegionColors.Count];
-            var offsetRegionCenter = region.Center.Translate(zTranslation: zOffset);
+            var offsetRegionCenter = region.Center.ToVector3(zOffset: zOffset);
 
             var regionTypeText = region.Type.ToString();
             if (region.Type == RegionType.Expand) {
                 regionTypeText += $" - {region.ExpandLocation.ExpandType}";
             }
 
-            Program.GraphicalDebugger.AddLink(region.Center, offsetRegionCenter, color: regionColor, withText: false);
+            Program.GraphicalDebugger.AddLink(region.Center.ToVector3(), offsetRegionCenter, color: regionColor, withText: false);
             Program.GraphicalDebugger.AddTextGroup(
                 new[]
                 {
@@ -292,7 +292,7 @@ public class RegionTracker : INeedUpdating {
                 size: 14, worldPos: offsetRegionCenter.ToPoint(), color: regionColor);
 
             foreach (var neighbor in region.Neighbors) {
-                var neighborOffsetCenter = neighbor.Region.Center.Translate(zTranslation: zOffset);
+                var neighborOffsetCenter = neighbor.Region.Center.ToVector3(zOffset: zOffset);
                 var regionSizeRatio = (float)region.Cells.Count / (region.Cells.Count + neighbor.Region.Cells.Count); // TODO GD Link to frontier instead
                 var lineEnd = Vector3.Lerp(offsetRegionCenter, neighborOffsetCenter, regionSizeRatio);
                 Program.GraphicalDebugger.AddLine(offsetRegionCenter, lineEnd, color: regionColor);

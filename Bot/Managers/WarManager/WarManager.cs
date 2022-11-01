@@ -47,9 +47,9 @@ public partial class WarManager: Manager {
         Dispatcher = new WarManagerDispatcher(this);
         Releaser = new WarManagerReleaser(this);
 
-        _townHallToDefend = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First(townHall => townHall.Position == MapAnalyzer.StartingLocation);
+        _townHallToDefend = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First(townHall => townHall.Position.ToVector2() == MapAnalyzer.StartingLocation);
 
-        var townHallDefensePosition = GetTownHallDefensePosition(_townHallToDefend.Position, MapAnalyzer.EnemyStartingLocation);
+        var townHallDefensePosition = GetTownHallDefensePosition(_townHallToDefend.Position.ToVector2(), MapAnalyzer.EnemyStartingLocation);
         _groundArmySupervisor.AssignTarget(townHallDefensePosition, GuardRadius, false);
         _airArmySupervisor.AssignTarget(townHallDefensePosition, AttackRadius);
     }
@@ -127,7 +127,8 @@ public partial class WarManager: Manager {
             if (!_rushInProgress) {
                 _rushInProgress = true;
                 // TODO GD We should know which expand to defend and be able to switch
-                _groundArmySupervisor.AssignTarget(GetTownHallDefensePosition(_expandsInDanger.First().Position, MapAnalyzer.EnemyStartingLocation), GuardRadius, false);
+                var townHallDefensePosition = GetTownHallDefensePosition(_expandsInDanger.First().Position.ToVector2(), MapAnalyzer.EnemyStartingLocation);
+                _groundArmySupervisor.AssignTarget(townHallDefensePosition, GuardRadius, false);
             }
 
             // TODO GD We should be smarter about how many units we draft
@@ -147,8 +148,8 @@ public partial class WarManager: Manager {
         return _rushInProgress;
     }
 
-    private void DefendNewTownHalls(Vector3 enemyPosition) {
-        var pathToTheEnemy = Pathfinder.FindPath(_townHallToDefend.Position, enemyPosition);
+    private void DefendNewTownHalls(Vector2 enemyPosition) {
+        var pathToTheEnemy = Pathfinder.FindPath(_townHallToDefend.Position.ToVector2(), enemyPosition);
         if (pathToTheEnemy == null) {
             Logger.Error("<DefendNewTownHalls> No path found from base {0} to enemy base {1}", _townHallToDefend.Position, enemyPosition);
             return;
@@ -156,16 +157,16 @@ public partial class WarManager: Manager {
 
         var currentDistanceToEnemy = pathToTheEnemy.Count; // Not exact, but the distance difference should not matter
         var newTownHallToDefend = Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.Hatchery)
-            .FirstOrDefault(townHall => Pathfinder.FindPath(townHall.Position, enemyPosition).Count < currentDistanceToEnemy);
+            .FirstOrDefault(townHall => Pathfinder.FindPath(townHall.Position.ToVector2(), enemyPosition).Count < currentDistanceToEnemy);
 
         // TODO GD Fallback on other townhalls when destroyed
         if (newTownHallToDefend != default) {
-            _groundArmySupervisor.AssignTarget(GetTownHallDefensePosition(newTownHallToDefend.Position, MapAnalyzer.EnemyStartingLocation), GuardRadius, false);
+            _groundArmySupervisor.AssignTarget(GetTownHallDefensePosition(newTownHallToDefend.Position.ToVector2(), MapAnalyzer.EnemyStartingLocation), GuardRadius, false);
             _townHallToDefend = newTownHallToDefend;
         }
     }
 
-    private void StartTheAssault(Vector3 enemyPosition) {
+    private void StartTheAssault(Vector2 enemyPosition) {
         _hasAssaultStarted = true;
         _groundArmySupervisor.AssignTarget(enemyPosition, AttackRadius);
 
@@ -175,7 +176,7 @@ public partial class WarManager: Manager {
         }
     }
 
-    private static Vector3 GetTownHallDefensePosition(Vector3 townHallPosition, Vector3 threatPosition) {
+    private static Vector2 GetTownHallDefensePosition(Vector2 townHallPosition, Vector2 threatPosition) {
         var pathToThreat = Pathfinder.FindPath(townHallPosition, threatPosition);
         var guardDistance = Math.Min(pathToThreat.Count, GuardDistance);
 

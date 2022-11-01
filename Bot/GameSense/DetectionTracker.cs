@@ -32,11 +32,11 @@ public static class DetectionTracker {
 
         return Controller.GetEffects(Effects.ScanSweep)
             .SelectMany(scanEffect => scanEffect.Pos.ToList())
-            .Any(scan => army.Any(soldier => scan.ToVector3().HorizontalDistanceTo(soldier.Position) <= scanRadius));
+            .Any(scan => army.Any(soldier => scan.ToVector2().DistanceTo(soldier.Position.ToVector2()) <= scanRadius));
     }
 
     private static bool IsArmyInDetectorRange(IReadOnlyCollection<Unit> army) {
         return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Detectors)
-            .Any(detector => army.Any(soldier => soldier.HorizontalDistanceTo(detector) <= detector.UnitTypeData.SightRange));
+            .Any(detector => army.Any(soldier => soldier.DistanceTo(detector) <= detector.UnitTypeData.SightRange));
     }
 }

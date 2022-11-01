@@ -13,7 +13,7 @@ public partial class ArmySupervisor: Supervisor {
     public readonly List<Unit> Army = new List<Unit>();
     private List<Unit> _mainArmy;
 
-    private Vector3 _target;
+    private Vector2 _target;
     private float _blastRadius;
     private bool _canHuntTheEnemy = true;
 
@@ -44,8 +44,8 @@ public partial class ArmySupervisor: Supervisor {
         _stateMachine.OnFrame();
     }
 
-    public void AssignTarget(Vector3 target, float blastRadius, bool canHuntTheEnemy = true) {
-        _target = target.WithWorldHeight();
+    public void AssignTarget(Vector2 target, float blastRadius, bool canHuntTheEnemy = true) {
+        _target = target;
         _blastRadius = blastRadius;
         _strongestForce = Army.GetForce();
         _canHuntTheEnemy = canHuntTheEnemy;

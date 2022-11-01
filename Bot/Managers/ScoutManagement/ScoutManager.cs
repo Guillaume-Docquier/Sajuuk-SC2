@@ -60,10 +60,10 @@ public partial class ScoutManager : Manager {
         // TODO GD Change to most defended?
         var safestRegion = RegionAnalyzer.Regions
             .OrderBy(RegionTracker.GetDangerLevel)
-            .ThenBy(region => region.Center.HorizontalDistanceTo(MapAnalyzer.StartingLocation))
+            .ThenBy(region => region.Center.DistanceTo(MapAnalyzer.StartingLocation))
             .First();
 
-        foreach (var unitToRecall in unitsToRecall.Where(unit => unit.HorizontalDistanceTo(safestRegion.Center) > 5)) {
+        foreach (var unitToRecall in unitsToRecall.Where(unit => unit.DistanceTo(safestRegion.Center) > 5)) {
             unitToRecall.Move(safestRegion.Center);
         }
     }
@@ -90,7 +90,7 @@ public partial class ScoutManager : Manager {
     }
 
     private static Vector2 ComputeFleeUnitVector(Unit unitToPreserve, IEnumerable<Unit> enemyUnitsToAvoid) {
-        var avoidanceVectors = enemyUnitsToAvoid.Select(enemy => Vector2.Divide(enemy.Position.DirectionTo(unitToPreserve.Position).ToVector2(), (float)enemy.HorizontalDistanceTo(unitToPreserve)));
+        var avoidanceVectors = enemyUnitsToAvoid.Select(enemy => Vector2.Divide(enemy.Position.DirectionTo(unitToPreserve.Position).ToVector2(), (float)enemy.DistanceTo(unitToPreserve)));
 
         var fleeX = 0f;
         var fleeY = 0f;

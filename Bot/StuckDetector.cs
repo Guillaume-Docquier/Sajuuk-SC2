@@ -8,12 +8,12 @@ public class StuckDetector {
     private static readonly ulong ReasonableMoveDelay = Controller.SecsToFrames(3);
 
     private ulong _ticksWithoutRealMove = 0;
-    private Vector3 _previousArmyLocation;
+    private Vector2 _previousArmyLocation;
 
     public bool IsStuck => _ticksWithoutRealMove > ReasonableMoveDelay;
 
-    public void Tick(Vector3 armyLocation) {
-        if (armyLocation.HorizontalDistanceTo(_previousArmyLocation) < NegligibleMovement) {
+    public void Tick(Vector2 armyLocation) {
+        if (armyLocation.DistanceTo(_previousArmyLocation) < NegligibleMovement) {
             _ticksWithoutRealMove++;
         }
         else {
@@ -21,7 +21,7 @@ public class StuckDetector {
         }
     }
 
-    public void Reset(Vector3 armyLocation) {
+    public void Reset(Vector2 armyLocation) {
         _ticksWithoutRealMove = 0;
         _previousArmyLocation = armyLocation;
     }

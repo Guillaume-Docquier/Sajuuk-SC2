@@ -117,8 +117,8 @@ public class BurrowMicroModule: UnitModule {
         return true;
     }
 
-    private void MoveAwayFrom(Vector3 position) {
+    private void MoveAwayFrom(Vector2 position) {
         // TODO Check if you're creating a bottleneck
-        _unit.Move(_unit.Position.TranslateAwayFrom(position, 1f), precision: 0.25f);
+        _unit.Move(_unit.Position.ToVector2().TranslateAwayFrom(position, 1f), precision: 0.25f);
     }
 }

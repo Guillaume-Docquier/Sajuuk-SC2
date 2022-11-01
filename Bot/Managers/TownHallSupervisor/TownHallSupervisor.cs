@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
@@ -141,7 +142,7 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
         var workers = GetAssignedIdleWorkers().ToHashSet();
         while (workers.Count > 0) {
             var farthestWorker = workers.MaxBy(
-                worker => GetClosestMineralWithAvailableCapacity(worker, 1).HorizontalDistanceTo(worker)
+                worker => GetClosestMineralWithAvailableCapacity(worker, 1).DistanceTo(worker)
             );
             var closestMineral = GetClosestMineralWithAvailableCapacity(farthestWorker, 1);
 

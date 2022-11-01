@@ -24,7 +24,7 @@ public partial class ArmySupervisor {
         protected override bool TryTransitioning() {
             if (StateMachine.Context.Army.GetForce() >= _rallyAtForce
                 || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed
-                || StateMachine.Context._mainArmy.GetCenter().HorizontalDistanceTo(GetRetreatPosition()) <= AcceptableDistanceToTarget) {
+                || StateMachine.Context._mainArmy.GetCenter().DistanceTo(GetRetreatPosition()) <= AcceptableDistanceToTarget) {
                 StateMachine.TransitionTo(new RallyState());
                 return true;
             }
@@ -49,27 +49,27 @@ public partial class ArmySupervisor {
                 worldPos: StateMachine.Context._mainArmy.GetCenter().Translate(1f, 1f).ToPoint());
         }
 
-        private static void Retreat(Vector3 retreatPosition, IReadOnlyCollection<Unit> soldiers) {
+        private static void Retreat(Vector2 retreatPosition, IReadOnlyCollection<Unit> soldiers) {
             if (soldiers.Count <= 0) {
                 return;
             }
 
-            Program.GraphicalDebugger.AddSphere(retreatPosition, AcceptableDistanceToTarget, Colors.Yellow);
+            Program.GraphicalDebugger.AddSphere(retreatPosition.ToVector3(), AcceptableDistanceToTarget, Colors.Yellow);
             Program.GraphicalDebugger.AddText("Retreat", worldPos: retreatPosition.ToPoint());
 
-            soldiers.Where(unit => unit.HorizontalDistanceTo(retreatPosition) > AcceptableDistanceToTarget)
+            soldiers.Where(unit => unit.DistanceTo(retreatPosition) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.Move(retreatPosition));
 
             foreach (var soldier in soldiers) {
-                Program.GraphicalDebugger.AddLine(soldier.Position, retreatPosition, Colors.Yellow);
+                Program.GraphicalDebugger.AddLine(soldier.Position, retreatPosition.ToVector3(), Colors.Yellow);
             }
         }
 
-        private static Vector3 GetRetreatPosition() {
+        private static Vector2 GetRetreatPosition() {
             var shortestPathBetweenBaseAndEnemy = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery)
-                .Where(townHall => Pathfinder.FindPath(townHall.Position, MapAnalyzer.EnemyStartingLocation) != null)
-                .Select(townHall => Pathfinder.FindPath(townHall.Position, MapAnalyzer.EnemyStartingLocation))
+                .Where(townHall => Pathfinder.FindPath(townHall.Position.ToVector2(), MapAnalyzer.EnemyStartingLocation) != null)
+                .Select(townHall => Pathfinder.FindPath(townHall.Position.ToVector2(), MapAnalyzer.EnemyStartingLocation))
                 .MinBy(path => path.Count);
 
             shortestPathBetweenBaseAndEnemy ??= Pathfinder.FindPath(MapAnalyzer.StartingLocation, MapAnalyzer.EnemyStartingLocation);

@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 namespace Bot.MapKnowledge;
 
 public class ExpandLocation : IWatchUnitsDie {
-    public Vector3 Position { get; }
+    public Vector2 Position { get; }
 
     [JsonIgnore]
     private HashSet<Unit> _resourceCluster;
@@ -24,7 +24,7 @@ public class ExpandLocation : IWatchUnitsDie {
 
     public ExpandType ExpandType { get; }
 
-    public ExpandLocation(Vector3 position, ExpandType expandType) {
+    public ExpandLocation(Vector2 position, ExpandType expandType) {
         Position = position;
         ExpandType = expandType;
     }

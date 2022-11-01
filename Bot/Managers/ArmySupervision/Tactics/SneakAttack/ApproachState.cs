@@ -29,15 +29,15 @@ public partial class SneakAttackTactic {
                 return;
             }
 
-            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(StateMachine.Context._armyCenter).MinBy(enemy => enemy.HorizontalDistanceTo(StateMachine.Context._armyCenter));
+            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(StateMachine.Context._armyCenter).MinBy(enemy => enemy.DistanceTo(StateMachine.Context._armyCenter));
             if (closestPriorityTarget != null) {
-                StateMachine.Context._targetPosition = closestPriorityTarget.Position;
+                StateMachine.Context._targetPosition = closestPriorityTarget.Position.ToVector2();
                 StateMachine.Context._isTargetPriority = true;
             }
             else if (!StateMachine.Context._isTargetPriority) {
-                var closestVisibleEnemy = GetGroundEnemiesInSight(StateMachine.Context._army).MinBy(enemy => enemy.HorizontalDistanceTo(StateMachine.Context._armyCenter));
+                var closestVisibleEnemy = GetGroundEnemiesInSight(StateMachine.Context._army).MinBy(enemy => enemy.DistanceTo(StateMachine.Context._armyCenter));
                 if (closestVisibleEnemy != null) {
-                    StateMachine.Context._targetPosition = closestVisibleEnemy.Position;
+                    StateMachine.Context._targetPosition = closestVisibleEnemy.Position.ToVector2();
                     StateMachine.Context._isTargetPriority = false;
                 }
             }
@@ -52,7 +52,7 @@ public partial class SneakAttackTactic {
 
             BurrowOverlings(StateMachine.Context._army);
 
-            if (StateMachine.Context._targetPosition.HorizontalDistanceTo(StateMachine.Context._armyCenter) > SetupDistance) {
+            if (StateMachine.Context._targetPosition.DistanceTo(StateMachine.Context._armyCenter) > SetupDistance) {
                 foreach (var soldier in StateMachine.Context._army.Where(soldier => soldier.IsIdleOrMovingOrAttacking())) {
                     soldier.Move(StateMachine.Context._targetPosition);
                 }

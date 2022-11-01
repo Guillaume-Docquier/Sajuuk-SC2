@@ -46,7 +46,7 @@ public partial class ArmySupervisor {
                 return false;
             }
 
-            if (StateMachine.Context._mainArmy.GetCenter().HorizontalDistanceTo(StateMachine.Context._target) < AcceptableDistanceToTarget) {
+            if (StateMachine.Context._mainArmy.GetCenter().DistanceTo(StateMachine.Context._target) < AcceptableDistanceToTarget) {
                 StateMachine.TransitionTo(new DefenseState());
                 return true;
             }
@@ -90,7 +90,7 @@ public partial class ArmySupervisor {
                 worldPos: soldiers.GetCenter().Translate(1f, 1f).ToPoint());
         }
 
-        private void Attack(Vector3 targetToAttack, IReadOnlyCollection<Unit> army) {
+        private void Attack(Vector2 targetToAttack, IReadOnlyCollection<Unit> army) {
             if (army.Count <= 0) {
                 return;
             }
@@ -99,11 +99,11 @@ public partial class ArmySupervisor {
 
             var unitsToAttackWith = army.Where(unit => unit.IsIdleOrMovingOrAttacking())
                 .Where(unit => !unit.IsBurrowed)
-                .Where(unit => unit.HorizontalDistanceTo(targetToAttack) > AcceptableDistanceToTarget)
+                .Where(unit => unit.DistanceTo(targetToAttack) > AcceptableDistanceToTarget)
                 .ToList();
 
             var armyLocation = army.GetCenter();
-            var absoluteDistanceToTarget = armyLocation.HorizontalDistanceTo(targetToAttack);
+            var absoluteDistanceToTarget = armyLocation.DistanceTo(targetToAttack);
 
             if (!army.IsFighting()) {
                 _stuckDetector.Tick(armyLocation);
@@ -116,10 +116,10 @@ public partial class ArmySupervisor {
             if (_stuckDetector.IsStuck) {
                 Logger.Warning("{0} army is stuck", Name);
 
-                var closestRock = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.Destructibles).MinBy(rock => rock.HorizontalDistanceTo(armyLocation));
+                var closestRock = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.Destructibles).MinBy(rock => rock.DistanceTo(armyLocation));
                 if (closestRock != null) {
-                    Logger.Info("{0} closest rock is {1:F2} units away", Name, closestRock.HorizontalDistanceTo(armyLocation));
-                    if (closestRock.HorizontalDistanceTo(armyLocation) <= RocksDestructionRange) {
+                    Logger.Info("{0} closest rock is {1:F2} units away", Name, closestRock.DistanceTo(armyLocation));
+                    if (closestRock.DistanceTo(armyLocation) <= RocksDestructionRange) {
                         Logger.Info("{0} attacking nearby rock", Name);
                         Attack(closestRock, unitsToAttackWith);
                         return;
@@ -146,15 +146,15 @@ public partial class ArmySupervisor {
             }
         }
 
-        private static void DrawAttackData(Vector3 targetToAttack, IEnumerable<Unit> soldiers) {
-            Program.GraphicalDebugger.AddSphere(targetToAttack, AcceptableDistanceToTarget, Colors.Red);
+        private static void DrawAttackData(Vector2 targetToAttack, IEnumerable<Unit> soldiers) {
+            Program.GraphicalDebugger.AddSphere(targetToAttack.ToVector3(), AcceptableDistanceToTarget, Colors.Red);
             Program.GraphicalDebugger.AddText("Attack", worldPos: targetToAttack.ToPoint());
             foreach (var soldier in soldiers) {
-                Program.GraphicalDebugger.AddLine(soldier.Position, targetToAttack, Colors.Red);
+                Program.GraphicalDebugger.AddLine(soldier.Position, targetToAttack.ToVector3(), Colors.Red);
             }
         }
 
-        private static void WalkAlongThePath(Vector3 targetToAttack, Vector3 armyLocation, IEnumerable<Unit> soldiers) {
+        private static void WalkAlongThePath(Vector2 targetToAttack, Vector2 armyLocation, IEnumerable<Unit> soldiers) {
             var path = Pathfinder.FindPath(armyLocation, targetToAttack);
             if (path != null && path.Count > 0) {
                 targetToAttack = path[Math.Min(path.Count - 1, PathfindingStep)];
@@ -163,7 +163,7 @@ public partial class ArmySupervisor {
             AttackMove(targetToAttack, soldiers);
         }
 
-        private static void AttackMove(Vector3 targetToAttack, IEnumerable<Unit> soldiers) {
+        private static void AttackMove(Vector2 targetToAttack, IEnumerable<Unit> soldiers) {
             targetToAttack = targetToAttack.ClosestWalkable();
 
             soldiers
@@ -177,7 +177,7 @@ public partial class ArmySupervisor {
                 .ForEach(unit => unit.Attack(targetToAttack));
         }
 
-        private static void Rally(Vector3 rallyPoint, IReadOnlyCollection<Unit> soldiers) {
+        private static void Rally(Vector2 rallyPoint, IReadOnlyCollection<Unit> soldiers) {
             if (soldiers.Count <= 0) {
                 return;
             }
@@ -186,14 +186,14 @@ public partial class ArmySupervisor {
 
             DrawRallyData(rallyPoint, soldiers);
 
-            AttackMove(rallyPoint, soldiers.Where(unit => unit.HorizontalDistanceTo(rallyPoint) > AcceptableDistanceToTarget));
+            AttackMove(rallyPoint, soldiers.Where(unit => unit.DistanceTo(rallyPoint) > AcceptableDistanceToTarget));
         }
 
-        private static void DrawRallyData(Vector3 rallyPoint, IEnumerable<Unit> soldiers) {
-            Program.GraphicalDebugger.AddSphere(rallyPoint, AcceptableDistanceToTarget, Colors.Blue);
+        private static void DrawRallyData(Vector2 rallyPoint, IEnumerable<Unit> soldiers) {
+            Program.GraphicalDebugger.AddSphere(rallyPoint.ToVector3(), AcceptableDistanceToTarget, Colors.Blue);
             Program.GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToPoint());
             foreach (var soldier in soldiers) {
-                Program.GraphicalDebugger.AddLine(soldier.Position, rallyPoint, Colors.Blue);
+                Program.GraphicalDebugger.AddLine(soldier.Position, rallyPoint.ToVector3(), Colors.Blue);
             }
         }
 

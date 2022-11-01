@@ -16,7 +16,7 @@ public class CreepTracker: INeedUpdating {
     private static List<List<bool>> _creepMap;
 
     private static ulong _creepFrontierLastGeneratedAt = ulong.MaxValue;
-    private static List<Vector3> _creepFrontier = new List<Vector3>();
+    private static List<Vector2> _creepFrontier = new List<Vector2>();
 
     private static ImageData _rawCreepMap;
 
@@ -33,11 +33,7 @@ public class CreepTracker: INeedUpdating {
 
         _rawCreepMap = observation.Observation.RawData.MapState.Creep;
 
-        _creepFrontier.ForEach(creepFrontierNode => Program.GraphicalDebugger.AddGridSquare(creepFrontierNode, Colors.Orange));
-    }
-
-    public static bool HasCreep(Vector3 position) {
-        return HasCreep(position.ToVector2());
+        _creepFrontier.ForEach(creepFrontierNode => Program.GraphicalDebugger.AddGridSquare(creepFrontierNode.ToVector3(), Colors.Orange));
     }
 
     public static bool HasCreep(Vector2 position) {
@@ -53,7 +49,7 @@ public class CreepTracker: INeedUpdating {
         return _creepMap[(int)position.X][(int)position.Y];
     }
 
-    public static List<Vector3> GetCreepFrontier() {
+    public static List<Vector2> GetCreepFrontier() {
         if (_creepFrontierLastGeneratedAt != Controller.Frame) {
             GenerateCreepFrontier();
         }
@@ -64,7 +60,7 @@ public class CreepTracker: INeedUpdating {
     private static void GenerateCreepFrontier() {
         // TODO GD At this point, we don't need to calculate the frontier until a hatch or creep tumor dies
         if (MapAnalyzer.WalkableCells.All(HasCreep)) {
-            _creepFrontier = new List<Vector3>();
+            _creepFrontier = new List<Vector2>();
             _creepFrontierLastGeneratedAt = Controller.Frame;
 
             return;
@@ -76,7 +72,6 @@ public class CreepTracker: INeedUpdating {
             .Where(HasCreep)
             .Where(IsFrontier)
             .Where(frontierCell => !IsTooCrowded(frontierCell, creepTumors))
-            .Select(vector2 => vector2.ToVector3())
             .ToList();
 
         _creepFrontierLastGeneratedAt = Controller.Frame;
@@ -95,7 +90,7 @@ public class CreepTracker: INeedUpdating {
         }
 
         // Prevent clumps around fresh tumors. Creep will spread soon.
-        return creepTumors.Min(tumor => tumor.HorizontalDistanceTo(frontierCell)) < 7;
+        return creepTumors.Min(tumor => tumor.DistanceTo(frontierCell)) < 7;
     }
 
     private static void GenerateCreepMap() {

@@ -24,7 +24,7 @@ public partial class ScoutManager {
 
             var scoutingSupervisor = supervisorsInNeed
                 .MinBy(supervisor => {
-                    var distanceToTask = supervisor.ScoutingTask.ScoutLocation.HorizontalDistanceTo(unit);
+                    var distanceToTask = supervisor.ScoutingTask.ScoutLocation.DistanceTo(unit);
 
                     var allowedScouts = supervisor.ScoutingTask.MaxScouts - supervisor.SupervisedUnits.Count;
                     var crowdMultiplier = allowedScouts <= 0 ? 2f : 1f / allowedScouts;

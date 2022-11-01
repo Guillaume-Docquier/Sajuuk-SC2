@@ -12,8 +12,8 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     public static readonly MapAnalyzer Instance = new MapAnalyzer();
 
     public static bool IsInitialized { get; private set; } = false;
-    public static Vector3 StartingLocation { get; private set; }
-    public static Vector3 EnemyStartingLocation { get; private set; }
+    public static Vector2 StartingLocation { get; private set; }
+    public static Vector2 EnemyStartingLocation { get; private set; }
 
     public static List<List<float>> HeightMap { get; private set; }
 
@@ -94,15 +94,15 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     }
 
     public static string GetStartingCorner() {
-        var corners = new List<(Vector3 Position, string Name)>
+        var corners = new List<(Vector2 Position, string Name)>
         {
-            (new Vector3(0, 0, 0), "bottom left"),
-            (new Vector3(MaxX, 0, 0), "bottom right"),
-            (new Vector3(0, MaxY, 0), "top left"),
-            (new Vector3(MaxX, MaxY, 0), "top right"),
+            (new Vector2(0,    0),    "bottom left"),
+            (new Vector2(MaxX, 0),    "bottom right"),
+            (new Vector2(0,    MaxY), "top left"),
+            (new Vector2(MaxX, MaxY), "top right"),
         };
 
-        return corners.MinBy(corner => corner.Position.HorizontalDistanceTo(StartingLocation)).Name;
+        return corners.MinBy(corner => corner.Position.DistanceTo(StartingLocation)).Name;
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
@@ -150,10 +150,10 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     }
 
     private static void InitSpawnLocations() {
-        StartingLocation = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).First().Position;
+        StartingLocation = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).First().Position.ToVector2();
         EnemyStartingLocation = Controller.GameInfo.StartRaw.StartLocations
-            .Select(startLocation => new Vector3(startLocation.X, startLocation.Y, 0))
-            .MaxBy(enemyLocation => StartingLocation.HorizontalDistanceTo(enemyLocation));
+            .Select(startLocation => new Vector2(startLocation.X, startLocation.Y))
+            .MaxBy(enemyLocation => StartingLocation.DistanceTo(enemyLocation));
     }
 
     private static void InitHeightMap() {
@@ -215,6 +215,19 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         return walkMap;
     }
 
+    public static IEnumerable<Vector2> BuildSearchGrid(Vector2 centerPosition, int gridRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
+        var grid = new List<Vector2>();
+        for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x += stepSize) {
+            for (var y = centerPosition.Y - gridRadius; y <= centerPosition.Y + gridRadius; y += stepSize) {
+                if (!IsInitialized || IsInBounds(x, y)) {
+                    grid.Add(new Vector2(x, y));
+                }
+            }
+        }
+
+        return grid.OrderBy(position => centerPosition.DistanceTo(position));
+    }
+
     public static IEnumerable<Vector3> BuildSearchGrid(Vector3 centerPosition, int gridRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
         var grid = new List<Vector3>();
         for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x += stepSize) {
@@ -229,7 +242,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     }
 
     // TODO GD Might not work with 2x2 buildings
-    public static IEnumerable<Vector3> GetBuildingFootprint(Vector3 buildingCenter, uint buildingType) {
+    public static IEnumerable<Vector2> GetBuildingFootprint(Vector2 buildingCenter, uint buildingType) {
         return BuildSearchGrid(buildingCenter, (int)KnowledgeBase.GetBuildingRadius(buildingType));
     }
 
@@ -240,9 +253,9 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     /// <param name="centerPosition">The position to search around</param>
     /// <param name="circleRadius">The radius of the search area</param>
     /// <param name="stepSize">The cells gap</param>
-    /// <returns>The search area composed of all the 1x1 game cells around a center position with a stepSize sized gap and with proper heights set</returns>
-    public static IEnumerable<Vector3> BuildSearchRadius(Vector3 centerPosition, float circleRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
-        return BuildSearchGrid(centerPosition, (int)circleRadius + 1, stepSize).Where(cell => cell.HorizontalDistanceTo(centerPosition) <= circleRadius);
+    /// <returns>The search area composed of all the 1x1 game cells around a center position with a stepSize sized gap</returns>
+    public static IEnumerable<Vector2> BuildSearchRadius(Vector2 centerPosition, float circleRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
+        return BuildSearchGrid(centerPosition, (int)circleRadius + 1, stepSize).Where(cell => cell.DistanceTo(centerPosition) <= circleRadius);
     }
 
     public static bool IsInBounds(Vector2 position) {

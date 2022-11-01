@@ -46,7 +46,7 @@ public class UnitTests: BaseTestClass {
 
         // Act
         Assert.Contains(unit, manager.ManagedUnits);
-        unit.PlaceBuilding(Units.Hatchery, new Vector3());
+        unit.PlaceBuilding(Units.Hatchery, new Vector2());
 
         //Assert
         Assert.Null(unit.Manager);
@@ -78,7 +78,7 @@ public class UnitTests: BaseTestClass {
 
         // Act
         Assert.Null(unit.Manager);
-        var exception = Record.Exception(() => unit.PlaceBuilding(Units.Hatchery, new Vector3()));
+        var exception = Record.Exception(() => unit.PlaceBuilding(Units.Hatchery, new Vector2()));
 
         //Assert
         Assert.Null(exception);

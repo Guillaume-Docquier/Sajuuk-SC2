@@ -39,7 +39,7 @@ public partial class SneakAttackTactic {
             }
 
             var enemyMilitaryUnits = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military)
-                .OrderBy(enemy => enemy.HorizontalDistanceTo(army.GetCenter()))
+                .OrderBy(enemy => enemy.DistanceTo(army.GetCenter()))
                 .ToList();
 
             var nbSoldiersInRange = army.Count(soldier => enemyMilitaryUnits.Any(soldier.IsInAttackRangeOf));
@@ -53,20 +53,20 @@ public partial class SneakAttackTactic {
         }
 
         protected override void Execute() {
-            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(StateMachine.Context._armyCenter).MinBy(enemy => enemy.HorizontalDistanceTo(StateMachine.Context._armyCenter));
+            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(StateMachine.Context._armyCenter).MinBy(enemy => enemy.DistanceTo(StateMachine.Context._armyCenter));
             if (closestPriorityTarget != null) {
-                StateMachine.Context._targetPosition = closestPriorityTarget.Position;
+                StateMachine.Context._targetPosition = closestPriorityTarget.Position.ToVector2();
                 StateMachine.Context._isTargetPriority = true;
             }
             else {
-                var closestTarget = GetGroundEnemiesInSight(StateMachine.Context._army).MinBy(enemy => enemy.HorizontalDistanceTo(StateMachine.Context._armyCenter));
+                var closestTarget = GetGroundEnemiesInSight(StateMachine.Context._army).MinBy(enemy => enemy.DistanceTo(StateMachine.Context._armyCenter));
                 if (closestTarget == null) {
                     Logger.Error("BurrowSurprise: Went from None -> Fight because no enemies nearby");
                     NextState = new TerminalState();
                     return;
                 }
 
-                StateMachine.Context._targetPosition = closestTarget.Position;
+                StateMachine.Context._targetPosition = closestTarget.Position.ToVector2();
                 StateMachine.Context._isTargetPriority = false;
             }
 

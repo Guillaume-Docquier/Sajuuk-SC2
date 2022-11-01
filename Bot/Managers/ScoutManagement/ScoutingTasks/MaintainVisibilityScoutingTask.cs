@@ -19,13 +19,12 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
 
     private readonly HashSet<Vector2> _areaToScout;
 
-    public MaintainVisibilityScoutingTask(IReadOnlyCollection<Vector3> area, int priority, int maxScouts)
+    public MaintainVisibilityScoutingTask(IReadOnlyCollection<Vector2> area, int priority, int maxScouts)
         : base(GetCenter(area), priority, maxScouts) {
         // Lower the resolution for better time performance on large areas
         // The algorithm results are virtually unaffected by this
         _areaToScout = area
             .Where(cell => (cell.X + cell.Y) % ResolutionReductionFactor == 0)
-            .Select(cell => cell.ToVector2())
             .ToHashSet();
     }
 
@@ -70,7 +69,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
     /// </summary>
     /// <param name="area">The area to find the center of</param>
     /// <returns>A cell that's the center of the area</returns>
-    private static Vector3 GetCenter(IReadOnlyCollection<Vector3> area) {
+    private static Vector2 GetCenter(IReadOnlyCollection<Vector2> area) {
         if (area.Count <= 0) {
             Logger.Error("Trying to GetCenter of an empty area");
 
@@ -80,7 +79,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
         var avgX = area.Average(element => element.X);
         var avgY = area.Average(element => element.Y);
 
-        return new Vector3(avgX, avgY, 0).WithWorldHeight();
+        return new Vector2(avgX, avgY);
     }
 
     /// <summary>

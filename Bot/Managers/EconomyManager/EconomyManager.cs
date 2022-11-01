@@ -111,13 +111,13 @@ public sealed partial class EconomyManager: Manager {
         }
     }
 
-    private TownHallSupervisor GetClosestSupervisorWithIdealCapacityNotMet(Vector3 position) {
+    private TownHallSupervisor GetClosestSupervisorWithIdealCapacityNotMet(Vector2 position) {
         return GetAvailableSupervisors()
             .Where(manager => manager.IdealAvailableCapacity > 0)
             .MinBy(manager => manager.TownHall.DistanceTo(position));
     }
 
-    private TownHallSupervisor GetClosestSupervisorWithSaturatedCapacityNotMet(Vector3 position) {
+    private TownHallSupervisor GetClosestSupervisorWithSaturatedCapacityNotMet(Vector2 position) {
         return GetAvailableSupervisors()
             .Where(manager => manager.SaturatedAvailableCapacity > 0)
             .MinBy(manager => manager.TownHall.DistanceTo(position));

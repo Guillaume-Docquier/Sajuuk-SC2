@@ -7,8 +7,8 @@ using Bot.ExtensionMethods;
 namespace Bot.MapKnowledge;
 
 public class Region {
-    public HashSet<Vector3> Cells { get; }
-    public Vector3 Center { get; }
+    public HashSet<Vector2> Cells { get; }
+    public Vector2 Center { get; }
     public RegionType Type { get; }
 
     [JsonIgnore]
@@ -18,14 +18,14 @@ public class Region {
     public HashSet<NeighboringRegion> Neighbors { get; private set; }
 
     [JsonConstructor]
-    public Region(HashSet<Vector3> cells, Vector3 center, RegionType type) {
+    public Region(HashSet<Vector2> cells, Vector2 center, RegionType type) {
         Cells = cells;
         Center = center;
         Type = type;
     }
 
     public Region(IEnumerable<Vector2> cells, RegionType type) {
-        Cells = cells.Select(vector2 => vector2.ToVector3()).ToHashSet();
+        Cells = cells.ToHashSet();
 
         Type = type;
         if (Type == RegionType.Unknown) {
@@ -41,22 +41,22 @@ public class Region {
 
         if (Center == default) {
             var regionCenter = Clustering.GetCenter(Cells.ToList());
-            Center = Cells.MinBy(cell => cell.HorizontalDistanceTo(regionCenter));
+            Center = Cells.MinBy(cell => cell.DistanceTo(regionCenter));
         }
     }
 
     public void Init() {
-        var neighbors = new Dictionary<Region, List<Vector3>>();
+        var neighbors = new Dictionary<Region, List<Vector2>>();
         foreach (var cell in Cells) {
             var neighboringRegions = cell
                 .GetNeighbors()
-                .Where(neighbor => neighbor.HorizontalDistanceTo(cell) <= 1) // Disallow diagonals
+                .Where(neighbor => neighbor.DistanceTo(cell) <= 1) // Disallow diagonals
                 .Select(RegionAnalyzer.GetRegion)
                 .Where(region => region != null && region != this);
 
             foreach (var neighboringRegion in neighboringRegions) {
                 if (!neighbors.ContainsKey(neighboringRegion)) {
-                    neighbors[neighboringRegion] = new List<Vector3> { cell };
+                    neighbors[neighboringRegion] = new List<Vector2> { cell };
                 }
                 else {
                     neighbors[neighboringRegion].Add(cell);

@@ -59,18 +59,18 @@ public partial class SneakAttackTactic {
         private void ComputeTargetPosition() {
             // Do we need _isTargetPriority at this point? We shouldn't lose sight at this point, right?
             var closestPriorityTarget = GetPriorityTargetsInOperationRadius(StateMachine.Context._armyCenter)
-                .MinBy(enemy => enemy.HorizontalDistanceTo(StateMachine.Context._armyCenter));
+                .MinBy(enemy => enemy.DistanceTo(StateMachine.Context._armyCenter));
 
             if (closestPriorityTarget != null) {
-                StateMachine.Context._targetPosition = closestPriorityTarget.Position;
+                StateMachine.Context._targetPosition = closestPriorityTarget.Position.ToVector2();
                 StateMachine.Context._isTargetPriority = true;
             }
             else {
                 var enemies = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military).ToList();
-                var closestEnemyCluster = Clustering.DBSCAN(enemies, 5, 2).clusters.MinBy(cluster => cluster.GetCenter().HorizontalDistanceTo(StateMachine.Context._armyCenter));
+                var closestEnemyCluster = Clustering.DBSCAN(enemies, 5, 2).clusters.MinBy(cluster => cluster.GetCenter().DistanceTo(StateMachine.Context._armyCenter));
 
                 // TODO GD Tweak this to create a concave instead?
-                if (closestEnemyCluster != null && StateMachine.Context._armyCenter.HorizontalDistanceTo(closestEnemyCluster.GetCenter()) <= OperationRadius) {
+                if (closestEnemyCluster != null && StateMachine.Context._armyCenter.DistanceTo(closestEnemyCluster.GetCenter()) <= OperationRadius) {
                     StateMachine.Context._targetPosition = closestEnemyCluster.GetCenter();
                     StateMachine.Context._isTargetPriority = false;
                 }
@@ -82,7 +82,7 @@ public partial class SneakAttackTactic {
         }
 
         private bool HasEnoughArmyInRange() {
-            if (StateMachine.Context._targetPosition.HorizontalDistanceTo(StateMachine.Context._armyCenter) <= EngageDistance) {
+            if (StateMachine.Context._targetPosition.DistanceTo(StateMachine.Context._armyCenter) <= EngageDistance) {
                 return true;
             }
 
@@ -92,7 +92,7 @@ public partial class SneakAttackTactic {
             }
             else {
                 var enemyMilitaryUnits = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military)
-                    .OrderBy(enemy => enemy.HorizontalDistanceTo(StateMachine.Context._armyCenter))
+                    .OrderBy(enemy => enemy.DistanceTo(StateMachine.Context._armyCenter))
                     .ToList();
 
                 nbSoldiersInRange = StateMachine.Context._army.Count(soldier => enemyMilitaryUnits.Any(soldier.IsInAttackRangeOf));

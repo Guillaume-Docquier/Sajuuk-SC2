@@ -16,14 +16,14 @@ public static class DangerScanner {
         foreach (var expand in expands) {
             var enemyUnitsCloseBy = UnitsTracker.EnemyUnits
                 .Where(unit => unit.UnitType != Units.Overlord)
-                .Where(unit => unit.HorizontalDistanceTo(expand) < InVicinity).ToList();
+                .Where(unit => unit.DistanceTo(expand) < InVicinity).ToList();
 
             if (!IsThreatening(enemyUnitsCloseBy)) {
                 continue;
             }
 
             var enemyUnitsCenter = enemyUnitsCloseBy.GetCenter();
-            var ownedUnitsCloseBy = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Military).Where(unit => unit.HorizontalDistanceTo(expand) < InVicinity || unit.HorizontalDistanceTo(enemyUnitsCenter) < InVicinity);
+            var ownedUnitsCloseBy = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Military).Where(unit => unit.DistanceTo(expand) < InVicinity || unit.DistanceTo(enemyUnitsCenter) < InVicinity);
 
             var enemyForce = enemyUnitsCloseBy.Count;
             var ownForce = ownedUnitsCloseBy.Count();

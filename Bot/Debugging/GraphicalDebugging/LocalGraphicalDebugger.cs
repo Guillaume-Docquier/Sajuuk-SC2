@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
@@ -75,8 +76,8 @@ public class LocalGraphicalDebugger: IGraphicalDebugger {
     }
 
     public void AddGridSquaresInRadius(Vector3 centerPosition, int radius, Color color) {
-        foreach (var cell in MapAnalyzer.BuildSearchRadius(centerPosition, radius)) {
-            AddSquare(cell.WithWorldHeight(), KnowledgeBase.GameGridCellWidth, color, padded: true);
+        foreach (var cell in MapAnalyzer.BuildSearchRadius(centerPosition.ToVector2(), radius)) {
+            AddSquare(cell.ToVector3(), KnowledgeBase.GameGridCellWidth, color, padded: true);
         }
     }
 
@@ -124,6 +125,10 @@ public class LocalGraphicalDebugger: IGraphicalDebugger {
         AddGridSphere(start, color);
         AddLine(start, end, color);
         AddGridSphere(end, color);
+    }
+
+    public void AddPath(List<Vector2> path, Color startColor, Color endColor) {
+        AddPath(path.Select(cell => cell.ToVector3()).ToList(), startColor, endColor);
     }
 
     public void AddPath(List<Vector3> path, Color startColor, Color endColor) {

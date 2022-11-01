@@ -105,7 +105,7 @@ public class RegionAnalyzer: INeedUpdating {
 
         return Regions
             .Where(region => region.Type == RegionType.OpenArea)
-            .MinBy(region => region.Center.HorizontalDistanceTo(natural.Position))!;
+            .MinBy(region => region.Center.DistanceTo(natural.Position))!;
     }
 
     /// <summary>
@@ -161,12 +161,12 @@ public class RegionAnalyzer: INeedUpdating {
 
             foreach (var position in region.Cells.Except(frontier)) {
                 Program.GraphicalDebugger.AddText($"{regionIndex}", size: 12, worldPos: position.ToPoint(), color: regionColor);
-                Program.GraphicalDebugger.AddGridSquare(position, regionColor);
+                Program.GraphicalDebugger.AddGridSquare(position.ToVector3(), regionColor);
             }
 
             foreach (var position in frontier) {
                 Program.GraphicalDebugger.AddText($"F{regionIndex}", size: 12, worldPos: position.ToPoint(), color: regionColor);
-                Program.GraphicalDebugger.AddGridSphere(position, regionColor);
+                Program.GraphicalDebugger.AddGridSphere(position.ToVector3(), regionColor);
             }
 
             regionIndex++;
@@ -354,7 +354,7 @@ public class RegionAnalyzer: INeedUpdating {
         var regionsMap = new Dictionary<Vector2, Region>();
         foreach (var region in regions) {
             foreach (var cell in region.Cells) {
-                regionsMap[cell.ToVector2()] = region;
+                regionsMap[cell] = region;
             }
         }
 

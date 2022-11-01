@@ -36,14 +36,16 @@ public class Program {
                 Logger.Info("Game launched in data generation mode");
                 foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
                     Logger.Info("Generating data for {0}", mapFileName);
+
                     ExpandLocationDataStore.IsEnabled = false;
                     RegionDataStore.IsEnabled = false;
+                    RayCastingChokeFinder.VisionLinesDataStore.IsEnabled = false;
 
                     DebugEnabled = true;
                     GraphicalDebugger = new LadderGraphicalDebugger();
 
                     GameConnection = new GameConnection(stepSize: 2);
-                    GameConnection.RunLocal(new SajuukBot("2_3_0", scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
+                    GameConnection.RunLocal(new SajuukBot("3_0_0", scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
                 }
             }
             // Local
