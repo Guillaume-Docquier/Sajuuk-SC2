@@ -10,7 +10,10 @@ namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 
 public class ZergScoutingStrategy : IScoutingStrategy {
     private const int TopPriority = 100;
-    private static HashSet<uint> _threateningUnitTypes = new HashSet<uint>
+
+    private bool _isInitialized = false;
+
+    private static readonly HashSet<uint> ThreateningUnitTypes = new HashSet<uint>
     {
         Units.Mutalisk,
         Units.Corruptor,
@@ -18,12 +21,35 @@ public class ZergScoutingStrategy : IScoutingStrategy {
         Units.Hydralisk,
     };
 
-    private readonly ScoutingTask _naturalScoutingTask;
-    private readonly ScoutingTask _naturalExitVisibilityTask;
-    private readonly ScoutingTask _thirdScoutingTask;
-    private readonly ScoutingTask _fourthScoutingTask;
+    private ScoutingTask _naturalScoutingTask;
+    private ScoutingTask _naturalExitVisibilityTask;
+    private ScoutingTask _thirdScoutingTask;
+    private ScoutingTask _fourthScoutingTask;
 
-    public ZergScoutingStrategy() {
+    public IEnumerable<ScoutingTask> Execute() {
+        if (!ExpandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
+            yield break;
+        }
+
+        if (!_isInitialized) {
+            Init();
+
+            yield return _naturalScoutingTask;
+            yield return _naturalExitVisibilityTask;
+            yield return _thirdScoutingTask;
+            yield return _fourthScoutingTask;
+        }
+
+        // TODO GD Decide based on amount of dead units instead?
+        if (UnitsTracker.EnemyUnits.Any(unit => ThreateningUnitTypes.Contains(unit.UnitType))) {
+            _naturalScoutingTask.Cancel();
+            _naturalExitVisibilityTask.Cancel();
+            _thirdScoutingTask.Cancel();
+            _fourthScoutingTask.Cancel();
+        }
+    }
+
+    private void Init() {
         var enemyNaturalExpandLocation = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
         _naturalScoutingTask = new ExpandScoutingTask(enemyNaturalExpandLocation.Position, TopPriority, maxScouts: 1, waitForExpand: true);
 
@@ -44,22 +70,7 @@ public class ZergScoutingStrategy : IScoutingStrategy {
 
         var enemyFourthExpandLocation = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Fourth);
         _fourthScoutingTask = new ExpandScoutingTask(enemyFourthExpandLocation.Position, TopPriority - 2, maxScouts: 1, waitForExpand: true);
-    }
 
-    public IEnumerable<ScoutingTask> Execute() {
-        if (Controller.Frame == 0) {
-            yield return _naturalScoutingTask;
-            yield return _naturalExitVisibilityTask;
-            yield return _thirdScoutingTask;
-            yield return _fourthScoutingTask;
-        }
-
-        // TODO GD Decide based on amount of dead units instead?
-        if (UnitsTracker.EnemyUnits.Any(unit => _threateningUnitTypes.Contains(unit.UnitType))) {
-            _naturalScoutingTask.Cancel();
-            _naturalExitVisibilityTask.Cancel();
-            _thirdScoutingTask.Cancel();
-            _fourthScoutingTask.Cancel();
-        }
+        _isInitialized = true;
     }
 }

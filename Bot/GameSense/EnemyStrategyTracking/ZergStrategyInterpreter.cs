@@ -8,21 +8,23 @@ using SC2APIProtocol;
 namespace Bot.GameSense.EnemyStrategyTracking;
 
 public class ZergStrategyInterpreter : IStrategyInterpreter {
+    private bool _isInitialized = false;
+
     private ulong _poolTiming = 0;
     private ulong _expandTiming = 0;
     private ulong _zerglingAttackTiming = 0;
+
+    private static ExpandLocation _enemyMain;
+    private static ExpandLocation _enemyNatural;
+
+    private static Region _enemyMainRegion;
+    private static Region _enemyNaturalRegion;
 
     private readonly ulong _vulnerabilityWindow = Controller.SecsToFrames(4 * 60);
 
     private static readonly ulong SpawningPoolBuildTime = (ulong)KnowledgeBase.GetUnitTypeData(Units.SpawningPool).BuildTime;
     private static readonly ulong ZerglingBuildTime = (ulong)KnowledgeBase.GetUnitTypeData(Units.Zergling).BuildTime;
     private static readonly ulong HatcheryBuildTime = (ulong)KnowledgeBase.GetUnitTypeData(Units.Hatchery).BuildTime;
-
-    private static readonly ExpandLocation EnemyMain = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main);
-    private static readonly ExpandLocation EnemyNatural = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
-
-    private static readonly Region EnemyMainRegion = EnemyMain.Position.GetRegion();
-    private static readonly Region EnemyNaturalRegion = EnemyNatural.Position.GetRegion();
 
     private static readonly float HatcheryRadius = KnowledgeBase.GetBuildingRadius(Units.Hatchery);
 
@@ -35,9 +37,27 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
     private static readonly ulong OneBaseTiming = Controller.SecsToFrames(2 * 60 + 30);
 
     public EnemyStrategy Interpret(List<Unit> enemyUnits) {
+        if (!ExpandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
+            return EnemyStrategy.Unknown;
+        }
+
+        if (!_isInitialized) {
+            Init();
+        }
+
         AnalyzeTimings(enemyUnits);
 
         return InterpretTimings();
+    }
+
+    private void Init() {
+        _enemyMain = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main);
+        _enemyNatural = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
+
+        _enemyMainRegion = _enemyMain.Position.GetRegion();
+        _enemyNaturalRegion = _enemyNatural.Position.GetRegion();
+
+        _isInitialized = true;
     }
 
     // TODO GD We could split all of this and pop from a list of checks once done?
@@ -56,7 +76,7 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
         if (_expandTiming == 0) {
             var hatchery = enemyUnits
                 .Where(unit => unit.UnitType == Units.Hatchery)
-                .FirstOrDefault(hatchery => hatchery.DistanceTo(EnemyNatural.Position) <= HatcheryRadius);
+                .FirstOrDefault(hatchery => hatchery.DistanceTo(_enemyNatural.Position) <= HatcheryRadius);
 
             if (hatchery != null) {
                 _expandTiming = Controller.Frame - (ulong)(HatcheryBuildTime * hatchery.RawUnitData.BuildProgress);
@@ -64,7 +84,7 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
         }
 
         if (_zerglingAttackTiming == 0) {
-            if (enemyZerglings.Count(zergling => zergling.GetRegion() != EnemyMainRegion && zergling.GetRegion() != EnemyNaturalRegion) >= 6) {
+            if (enemyZerglings.Count(zergling => zergling.GetRegion() != _enemyMainRegion && zergling.GetRegion() != _enemyNaturalRegion) >= 6) {
                 _zerglingAttackTiming = Controller.Frame;
             }
         }

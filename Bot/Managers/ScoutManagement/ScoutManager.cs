@@ -45,6 +45,10 @@ public partial class ScoutManager : Manager {
     }
 
     protected override void Manage() {
+        if (!RegionAnalyzer.IsInitialized) {
+            return;
+        }
+
         ClearCompletedTasks();
 
         // TODO GD Consider releasing units
