@@ -179,4 +179,24 @@ public static class RequestBuilder {
             }
         };
     }
+
+    /// <summary>
+    /// Moves the camera somewhere on the map
+    /// </summary>
+    /// <param name="moveTo">The point to center the camera on</param>
+    /// <returns></returns>
+    public static Request DebugMoveCamera(Point moveTo) {
+        var moveCameraAction = new Action
+        {
+            ActionRaw = new ActionRaw
+            {
+                CameraMove = new ActionRawCameraMove
+                {
+                    CenterWorldSpace = moveTo,
+                }
+            }
+        };
+
+        return RequestAction(new List<Action> { moveCameraAction });
+    }
 }

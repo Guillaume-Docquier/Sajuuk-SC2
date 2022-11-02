@@ -29,11 +29,10 @@ public static class Controller {
         NotSupported,
     }
 
-    private const int RealTime = (int)(1000 / FramesPerSecond);
+    private const int RealTime = (int)(1000 / TimeUtils.FramesPerSecond);
     private static int _frameDelayMs = 0;
 
     private static readonly List<Action> Actions = new List<Action>();
-    public const double FramesPerSecond = 22.4;
     public const float ExpandIsTakenRadius = 4f;
 
     public static ResponseGameInfo GameInfo { get; private set; }
@@ -93,18 +92,6 @@ public static class Controller {
 
     public static void SetRealTime() {
         _frameDelayMs = RealTime;
-    }
-
-    public static ulong SecsToFrames(int seconds) {
-        return (ulong)(FramesPerSecond * seconds);
-    }
-
-    public static string GetGameTimeString() {
-        var totalSeconds = (int)(Frame / FramesPerSecond);
-        var minutes = totalSeconds / 60;
-        var seconds = totalSeconds % 60;
-
-        return $"{minutes:00}:{seconds:00}";
     }
 
     private static void UpdateEnemyRace() {

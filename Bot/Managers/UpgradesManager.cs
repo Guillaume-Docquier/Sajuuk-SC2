@@ -117,7 +117,7 @@ public class UpgradesManager : Manager {
     private static uint GetBuildTime(uint unitId) {
         var unitData = KnowledgeBase.GetUnitTypeData(unitId);
 
-        return (uint)(unitData.BuildTime / Controller.FramesPerSecond);
+        return (uint)(unitData.BuildTime / TimeUtils.FramesPerSecond);
     }
 
     private static uint GetRemainingResearchTime(uint upgradeId) {
@@ -128,7 +128,7 @@ public class UpgradesManager : Manager {
         var remainingPercent = 1 - Controller.GetResearchProgress(upgradeId);
         var upgradeData = KnowledgeBase.GetUpgradeData(upgradeId);
 
-        return (uint)(upgradeData.ResearchTime / Controller.FramesPerSecond * remainingPercent);
+        return (uint)(upgradeData.ResearchTime / TimeUtils.FramesPerSecond * remainingPercent);
     }
 
     private static bool AreResearchedOrInProgress(IEnumerable<uint> upgradeIds) {

@@ -15,7 +15,7 @@ public class SpawnStuffScenario : IScenario {
             return;
         }
 
-        if (Controller.Frame >= Controller.SecsToFrames(1)) {
+        if (Controller.Frame >= TimeUtils.SecsToFrames(1)) {
             var main = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
                 .MaxBy(townHall => Pathfinder.FindPath(townHall.Position.ToVector2(), MapAnalyzer.EnemyStartingLocation).Count);
 

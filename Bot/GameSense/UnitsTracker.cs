@@ -114,7 +114,7 @@ public class UnitsTracker: INeedUpdating {
                 newUnit = equivalentUnit;
             }
             else if (newUnit.Alliance == Alliance.Enemy) {
-                newUnit.DeathDelay = Controller.SecsToFrames(EnemyDeathDelaySeconds);
+                newUnit.DeathDelay = TimeUtils.SecsToFrames(EnemyDeathDelaySeconds);
                 EnemyGhostUnits.Remove(newUnit.Tag);
                 EnemyMemorizedUnits.Remove(newUnit.Tag);
             }

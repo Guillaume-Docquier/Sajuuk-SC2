@@ -6,7 +6,7 @@ using Bot.GameData;
 namespace Bot.UnitModules;
 
 public class GasMiningStrategy: IStrategy {
-    private static readonly ulong GasDeathDelay = Convert.ToUInt64(1.415 * Controller.FramesPerSecond) + 5; // +5 just to be sure
+    private static readonly ulong GasDeathDelay = Convert.ToUInt64(1.415 * TimeUtils.FramesPerSecond) + 5; // +5 just to be sure
 
     private readonly Unit _worker;
     private readonly Unit _resource;

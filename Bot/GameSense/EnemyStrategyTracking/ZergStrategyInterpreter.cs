@@ -20,7 +20,7 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
     private static Region _enemyMainRegion;
     private static Region _enemyNaturalRegion;
 
-    private readonly ulong _vulnerabilityWindow = Controller.SecsToFrames(4 * 60);
+    private readonly ulong _vulnerabilityWindow = TimeUtils.SecsToFrames(4 * 60);
 
     private static readonly ulong SpawningPoolBuildTime = (ulong)KnowledgeBase.GetUnitTypeData(Units.SpawningPool).BuildTime;
     private static readonly ulong ZerglingBuildTime = (ulong)KnowledgeBase.GetUnitTypeData(Units.Zergling).BuildTime;
@@ -28,13 +28,13 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
 
     private static readonly float HatcheryRadius = KnowledgeBase.GetBuildingRadius(Units.Hatchery);
 
-    private static readonly ulong TwelvePoolTiming = Controller.SecsToFrames(15);
-    private static readonly ulong TwelvePoolZerglingTiming = Controller.SecsToFrames(1 * 60 + 19);
-    private static readonly ulong SixteenHatchTiming = Controller.SecsToFrames(45);
-    private static readonly ulong AggressiveHatchGasPoolTiming = Controller.SecsToFrames(60);
-    private static readonly ulong HatchGasPoolTiming = Controller.SecsToFrames(1 * 60 + 12);
+    private static readonly ulong TwelvePoolTiming = TimeUtils.SecsToFrames(15);
+    private static readonly ulong TwelvePoolZerglingTiming = TimeUtils.SecsToFrames(1 * 60 + 19);
+    private static readonly ulong SixteenHatchTiming = TimeUtils.SecsToFrames(45);
+    private static readonly ulong AggressiveHatchGasPoolTiming = TimeUtils.SecsToFrames(60);
+    private static readonly ulong HatchGasPoolTiming = TimeUtils.SecsToFrames(1 * 60 + 12);
 
-    private static readonly ulong OneBaseTiming = Controller.SecsToFrames(2 * 60 + 30);
+    private static readonly ulong OneBaseTiming = TimeUtils.SecsToFrames(2 * 60 + 30);
 
     public EnemyStrategy Interpret(List<Unit> enemyUnits) {
         if (!ExpandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
@@ -130,6 +130,6 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
             return false;
         }
 
-        return actualTiming < expectedTiming + Controller.SecsToFrames(tolerance);
+        return actualTiming < expectedTiming + TimeUtils.SecsToFrames(tolerance);
     }
 }

@@ -31,7 +31,7 @@ public class EnemyStrategyTracker : INeedUpdating {
             var newEnemyStrategy = _strategyInterpreter.Interpret(knownEnemyUnits);
             if (newEnemyStrategy != EnemyStrategy.Unknown && _enemyStrategy != newEnemyStrategy) {
                 _enemyStrategy = newEnemyStrategy;
-                Controller.TagGame($"Strategy_{_enemyStrategy}_{Controller.GetGameTimeString()}");
+                Controller.TagGame($"Strategy_{_enemyStrategy}_{TimeUtils.GetGameTimeString()}");
             }
         }
     }

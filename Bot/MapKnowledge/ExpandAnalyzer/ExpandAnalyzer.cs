@@ -58,7 +58,7 @@ public class ExpandAnalyzer: INeedUpdating {
         }
 
         // For some reason querying for placement doesn't work before a few seconds after the game starts
-        if (Controller.Frame < Controller.SecsToFrames(5)) {
+        if (Controller.Frame < TimeUtils.SecsToFrames(5)) {
             return;
         }
 

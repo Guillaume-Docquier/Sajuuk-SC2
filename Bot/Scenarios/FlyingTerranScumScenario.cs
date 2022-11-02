@@ -7,7 +7,7 @@ namespace Bot.Scenarios;
 
 public class FlyingTerranScumScenario : IScenario {
     public void OnFrame() {
-        if (Controller.Frame % Controller.SecsToFrames(120) != 0) {
+        if (Controller.Frame % TimeUtils.SecsToFrames(120) != 0) {
             return;
         }
 

@@ -24,7 +24,7 @@ public class WorkerRushScenario: IScenario {
             return;
         }
 
-        if (Controller.Frame >= Controller.SecsToFrames(_timingInSeconds)) {
+        if (Controller.Frame >= TimeUtils.SecsToFrames(_timingInSeconds)) {
             var natural = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
                 .MinBy(townHall => Pathfinder.FindPath(townHall.Position.ToVector2(), MapAnalyzer.EnemyStartingLocation).Count);
 

@@ -37,7 +37,7 @@ public static class Logger {
             Initialize();
         }
 
-        var msg = $"[{DateTime.UtcNow.ToString("HH:mm:ss")} | {Controller.GetGameTimeString()} @ {Controller.Frame,5}] {logLevel,7}: {string.Format(line, parameters)}";
+        var msg = $"[{DateTime.UtcNow.ToString("HH:mm:ss")} | {TimeUtils.GetGameTimeString()} @ {Controller.Frame,5}] {logLevel,7}: {string.Format(line, parameters)}";
 
         _fileStream!.WriteLine(msg);
 
@@ -97,6 +97,12 @@ public static class Logger {
     public static void Tag(string line, params object[] parameters) {
         Console.ForegroundColor = ConsoleColor.Blue;
         WriteLine("TAG", line, parameters);
+        Console.ResetColor();
+    }
+
+    public static void Important(string line, params object[] parameters) {
+        Console.ForegroundColor = ConsoleColor.DarkCyan;
+        WriteLine("VIP", line, parameters);
         Console.ResetColor();
     }
 }

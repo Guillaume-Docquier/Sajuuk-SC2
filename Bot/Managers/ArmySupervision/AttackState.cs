@@ -25,10 +25,10 @@ public partial class ArmySupervisor {
 
         private readonly StuckDetector _stuckDetector = new StuckDetector();
 
-        private static readonly ulong MaximumPathfindingLockDelay = Controller.SecsToFrames(15);
+        private static readonly ulong MaximumPathfindingLockDelay = TimeUtils.SecsToFrames(15);
         private bool PathfindingIsUnlocked => _pathfindingLock < Controller.Frame;
         private ulong _pathfindingLock = 0;
-        private ulong _pathfindingLockDelay = Controller.SecsToFrames(4);
+        private ulong _pathfindingLockDelay = TimeUtils.SecsToFrames(4);
 
         private readonly ITactic _sneakAttackTactic = new SneakAttackTactic();
 
@@ -135,7 +135,7 @@ public partial class ArmySupervisor {
             }
             else {
                 if (_stuckDetector.IsStuck) {
-                    Logger.Warning("{0} disabling pathfinding for {1:F2} seconds", Name, _pathfindingLockDelay / Controller.FramesPerSecond);
+                    Logger.Warning("{0} disabling pathfinding for {1:F2} seconds", Name, _pathfindingLockDelay / TimeUtils.FramesPerSecond);
                     _pathfindingLock = Controller.Frame + _pathfindingLockDelay;
                     _pathfindingLockDelay = Math.Min(MaximumPathfindingLockDelay, (ulong)(_pathfindingLockDelay * 1.25));
 

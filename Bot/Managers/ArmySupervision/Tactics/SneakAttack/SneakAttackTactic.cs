@@ -59,7 +59,7 @@ public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
     }
 
     public void Execute(IReadOnlyCollection<Unit> army) {
-        _coolDownUntil = Controller.Frame + Controller.SecsToFrames(5);
+        _coolDownUntil = Controller.Frame + TimeUtils.SecsToFrames(5);
 
         _army = army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed).ToList();
         if (_army.Count <= 0) {

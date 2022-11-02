@@ -5,7 +5,7 @@ namespace Bot;
 
 public class StuckDetector {
     private const float NegligibleMovement = 2f;
-    private static readonly ulong ReasonableMoveDelay = Controller.SecsToFrames(3);
+    private static readonly ulong ReasonableMoveDelay = TimeUtils.SecsToFrames(3);
 
     private ulong _ticksWithoutRealMove = 0;
     private Vector2 _previousArmyLocation;

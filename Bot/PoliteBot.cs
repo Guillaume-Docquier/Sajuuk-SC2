@@ -42,7 +42,7 @@ public abstract class PoliteBot: IBot {
             Logger.Info("--------------------------------------");
         }
 
-        if (!_greetDone && Controller.Frame >= Controller.SecsToFrames(1)) {
+        if (!_greetDone && Controller.Frame >= TimeUtils.SecsToFrames(1)) {
             Controller.Chat($"Hi, my name is {Name}");
             Controller.Chat("I wish you good luck and good fun!");
             Controller.TagGame($"v{_version}");

@@ -31,7 +31,7 @@ public class TumorCreepSpreadModule: UnitModule {
     protected override void DoExecute() {
         if (_spreadAt == default) {
             if (_creepTumor.UnitType == Units.CreepTumorBurrowed) {
-                _spreadAt = Controller.Frame + Controller.SecsToFrames(CreepSpreadCooldown);
+                _spreadAt = Controller.Frame + TimeUtils.SecsToFrames(CreepSpreadCooldown);
             }
         }
         else if (_spreadAt <= Controller.Frame) {

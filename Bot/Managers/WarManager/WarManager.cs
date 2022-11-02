@@ -118,9 +118,9 @@ public partial class WarManager: Manager {
     }
 
     private bool HandleRushes() {
-        if (_expandsInDanger.Count > 0 && Controller.Frame <= Controller.SecsToFrames(RushTimingInSeconds)) {
+        if (_expandsInDanger.Count > 0 && Controller.Frame <= TimeUtils.SecsToFrames(RushTimingInSeconds)) {
             if (!_rushTagged) {
-                Controller.TagGame($"EarlyRush_{Controller.GetGameTimeString()}"); // TODO GD Make utility functions for tags so we know which tags exist
+                Controller.TagGame($"EarlyRush_{TimeUtils.GetGameTimeString()}"); // TODO GD Make utility functions for tags so we know which tags exist
                 _rushTagged = true;
             }
 
@@ -194,11 +194,11 @@ public partial class WarManager: Manager {
             return false;
         }
 
-        if (Controller.Frame < Controller.SecsToFrames(12 * 60)) {
+        if (Controller.Frame < TimeUtils.SecsToFrames(12 * 60)) {
             return false;
         }
 
-        if (Controller.Frame % Controller.SecsToFrames(60) != 0) {
+        if (Controller.Frame % TimeUtils.SecsToFrames(60) != 0) {
             return false;
         }
 

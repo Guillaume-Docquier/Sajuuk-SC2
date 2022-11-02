@@ -13,7 +13,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
     private const bool DrawEnabled = false;
 
     private const int ResolutionReductionFactor = 2;
-    private static readonly double ExecuteEvery = Controller.SecsToFrames(1);
+    private static readonly double ExecuteEvery = TimeUtils.SecsToFrames(1);
 
     private bool _isCanceled = false;
 
