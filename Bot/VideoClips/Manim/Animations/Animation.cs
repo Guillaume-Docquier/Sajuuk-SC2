@@ -1,0 +1,74 @@
+﻿namespace Bot.VideoClips.Manim.Animations;
+
+public abstract class Animation {
+    public int StartFrame { get; }
+    public abstract int Duration { get; protected set; }
+    public int EndFrame => StartFrame + Duration;
+
+    protected Animation(int startFrame) {
+        StartFrame = startFrame;
+    }
+
+    public void Render(int currentClipFrame) {
+        if (currentClipFrame < StartFrame) {
+            PreAnimate(currentClipFrame);
+        }
+        else if (currentClipFrame <= EndFrame) {
+            Animate(currentClipFrame);
+        }
+        else {
+            PostAnimate(currentClipFrame);
+        }
+    }
+
+    protected virtual void PreAnimate(int currentClipFrame) {
+        return;
+    }
+
+    protected abstract void Animate(int currentClipFrame);
+
+    protected virtual void PostAnimate(int currentClipFrame) {
+        return;
+    }
+}
+
+public abstract class Animation<TAnimation> : Animation where TAnimation : Animation<TAnimation> {
+    public override int Duration { get; protected set; } = 0;
+
+    protected Animation(int startFrame) : base(startFrame) {}
+
+    /// <summary>
+    /// Builder method to set the animation duration in terms of frames.
+    /// Returns the derived instance so that it can be chained.
+    /// </summary>
+    /// <param name="frameDuration">The amount of frames the animation should last</param>
+    /// <returns>The derived instance so that it can be chained</returns>
+    public TAnimation WithDurationInFrames(int frameDuration) {
+        Duration = frameDuration;
+
+        return (TAnimation)this;
+    }
+
+    /// <summary>
+    /// Builder method to set the animation duration in terms of seconds.
+    /// </summary>
+    /// <param name="secondsDuration">The amount of seconds the animation should last</param>
+    /// <returns>The derived instance so that it can be chained</returns>
+    public TAnimation WithDurationInSeconds(int secondsDuration) {
+        Duration = (int)TimeUtils.SecsToFrames(secondsDuration);
+
+        return (TAnimation)this;
+    }
+
+    /// <summary>
+    /// Builder method to set the animation duration based on the end frame.
+    /// Returns the derived instance so that it can be chained.
+    /// </summary>
+    /// <param name="endFrame">The frame at which the animation should end</param>
+    /// <returns>The derived instance so that it can be chained</returns>
+    public TAnimation WithEndFrame(int endFrame) {
+        Duration = endFrame - StartFrame;
+
+        return (TAnimation)this;
+    }
+}

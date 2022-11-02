@@ -20,7 +20,7 @@ public class RegionAnalysisClip : Clip {
         var lineDrawingAnimation = new LineDrawingAnimation(lineStart.ToVector3(), lineEnd.ToVector3(), Colors.Cyan, moveCameraAnimation.EndFrame)
             .WithDurationInSeconds(1);
 
-        AddAnimation(moveCameraAnimation); // 10 - 15
-        AddAnimation(lineDrawingAnimation); // 15 - 25
+        AddAnimation(moveCameraAnimation); // 5 - 10
+        AddAnimation(lineDrawingAnimation); // 10 - 11
     }
 }

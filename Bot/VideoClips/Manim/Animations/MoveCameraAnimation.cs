@@ -5,52 +5,21 @@ using SC2APIProtocol;
 
 namespace Bot.VideoClips.Manim.Animations;
 
-public class MoveCameraAnimation : IAnimation {
+public class MoveCameraAnimation : Animation<MoveCameraAnimation> {
     private readonly Vector2 _moveTo;
     private Vector2 _originalCameraPosition;
 
-    public int StartFrame { get; }
-    private int _duration = 0;
-    public int EndFrame => StartFrame + _duration;
-
-    public MoveCameraAnimation(Vector2 moveTo, int startFrame) {
+    public MoveCameraAnimation(Vector2 moveTo, int startFrame): base(startFrame) {
         _moveTo = moveTo;
-        StartFrame = startFrame;
     }
 
-    public MoveCameraAnimation WithDurationInFrames(int frameDuration) {
-        _duration = frameDuration;
-
-        return this;
-    }
-
-    public MoveCameraAnimation WithDurationInSeconds(int secondsDuration) {
-        _duration = (int)TimeUtils.SecsToFrames(secondsDuration);
-
-        return this;
-    }
-
-    public MoveCameraAnimation WithEndFrame(int endFrame) {
-        _duration = endFrame - StartFrame;
-
-        return this;
-    }
-
-    public void Render(int currentClipFrame) {
-        if (currentClipFrame < StartFrame || currentClipFrame > EndFrame) {
-            return;
-        }
-
-        DoMoveCamera(currentClipFrame);
-    }
-
-    private void DoMoveCamera(int currentClipFrame) {
+    protected override void Animate(int currentClipFrame) {
         if (currentClipFrame == StartFrame) {
             _originalCameraPosition = Controller.Observation.Observation.RawData.Player.Camera.ToVector2();
         }
 
         var currentDuration = currentClipFrame - StartFrame;
-        var percentDone = (float)currentDuration / _duration;
+        var percentDone = (float)currentDuration / Duration;
         var nextPosition = Vector2.Lerp(_originalCameraPosition, _moveTo, percentDone);
 
         // We should support the async nature here somehow
