@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.MapKnowledge;
 using Bot.Scenarios;
+using Bot.VideoClips;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
@@ -45,6 +46,16 @@ public class Program {
                     GameConnection = new GameConnection(stepSize: 2);
                     GameConnection.RunLocal(new SajuukBot("3_0_0", scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
                 }
+            }
+            // Video clip
+            if (args.Length == 1 && args[0] == "--videoClip") {
+                Logger.Info("Game launched in video clip mode");
+
+                DebugEnabled = true;
+                GraphicalDebugger = new LocalGraphicalDebugger();
+
+                GameConnection = new GameConnection(stepSize: 1);
+                GameConnection.RunLocal(new VideoClipPlayer(), MapFileName, OpponentRace, Difficulty.VeryEasy, realTime: true).Wait();
             }
             // Local
             else if (args.Length == 0) {

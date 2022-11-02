@@ -1,4 +1,5 @@
-﻿using SC2APIProtocol;
+﻿using System.Threading.Tasks;
+using SC2APIProtocol;
 
 namespace Bot.Wrapper;
 
@@ -7,5 +8,5 @@ public interface IBot {
 
     Race Race { get; }
 
-    void OnFrame();
+    Task OnFrame();
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapKnowledge;
@@ -24,12 +25,12 @@ public abstract class PoliteBot: IBot {
         _scenarios = scenarios;
     }
 
-    public void OnFrame() {
+    public async Task OnFrame() {
         EnsureGreeting();
         EnsureGG();
 
         PlayScenarios();
-        DoOnFrame();
+        await DoOnFrame();
     }
 
     private void EnsureGreeting() {
@@ -65,5 +66,5 @@ public abstract class PoliteBot: IBot {
         }
     }
 
-    protected abstract void DoOnFrame();
+    protected abstract Task DoOnFrame();
 }

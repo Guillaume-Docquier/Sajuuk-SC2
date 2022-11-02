@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Bot.Builds;
 using Bot.Debugging;
 using Bot.GameData;
@@ -30,7 +31,7 @@ public class SajuukBot: PoliteBot {
 
     public SajuukBot(string version, List<IScenario> scenarios = null) : base(version, scenarios) {}
 
-    protected override void DoOnFrame() {
+    protected override Task DoOnFrame() {
         if (Controller.Frame == 0) {
             InitManagers();
         }
@@ -57,6 +58,8 @@ public class SajuukBot: PoliteBot {
         foreach (var unit in UnitsTracker.UnitsByTag.Values) {
             unit.ExecuteModules();
         }
+
+        return Task.CompletedTask;
     }
 
     private void InitManagers() {

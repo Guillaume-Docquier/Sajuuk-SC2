@@ -247,7 +247,7 @@ public class GameConnection {
         _performanceDebugger.ControllerStopwatch.Stop();
 
         _performanceDebugger.BotStopwatch.Start();
-        bot.OnFrame();
+        await bot.OnFrame();
         _performanceDebugger.BotStopwatch.Stop();
 
         _performanceDebugger.ActionsStopwatch.Start();
