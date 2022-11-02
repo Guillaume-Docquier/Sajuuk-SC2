@@ -28,7 +28,7 @@ public static class RequestBuilder {
         };
     }
 
-    public static Request RequestDebug(IEnumerable<DebugText> debugTexts, IEnumerable<DebugSphere> debugSpheres, IEnumerable<DebugBox> debugBoxes, IEnumerable<DebugLine> debugLines) {
+    public static Request DebugDraw(IEnumerable<DebugText> debugTexts, IEnumerable<DebugSphere> debugSpheres, IEnumerable<DebugBox> debugBoxes, IEnumerable<DebugLine> debugLines) {
         return new Request
         {
             Debug = new RequestDebug
@@ -198,5 +198,26 @@ public static class RequestBuilder {
         };
 
         return RequestAction(new List<Action> { moveCameraAction });
+    }
+
+    /// <summary>
+    /// Creates a debug request to reveal the map.
+    /// You only need to set this once.
+    /// </summary>
+    /// <returns>A debug request to reveal the map</returns>
+    public static Request DebugRevealMap() {
+        return new Request
+        {
+            Debug = new RequestDebug
+            {
+                Debug =
+                {
+                    new DebugCommand
+                    {
+                        GameState = DebugGameState.ShowMap,
+                    }
+                }
+            }
+        };
     }
 }

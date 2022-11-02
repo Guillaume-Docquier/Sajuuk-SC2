@@ -22,7 +22,7 @@ public class LocalGraphicalDebugger: IGraphicalDebugger {
     private readonly List<DebugLine> _debugLines = new List<DebugLine>();
 
     public Request GetDebugRequest() {
-        var debugRequest = RequestBuilder.RequestDebug(_debugTexts, _debugSpheres, _debugBoxes, _debugLines);
+        var debugRequest = RequestBuilder.DebugDraw(_debugTexts, _debugSpheres, _debugBoxes, _debugLines);
 
         _debugTexts.Clear();
         _debugSpheres.Clear();
