@@ -12,7 +12,7 @@ namespace Bot.MapKnowledge;
 public class RegionAnalyzer: INeedUpdating {
     public static readonly RegionAnalyzer Instance = new RegionAnalyzer();
 
-    public static bool IsInitialized { get; private set; }  = false;
+    public static bool IsInitialized { get; private set; } = false;
     private static Dictionary<Vector2, Region> _regionsMap;
     private static RegionData _regionData;
 
@@ -190,15 +190,8 @@ public class RegionAnalyzer: INeedUpdating {
     /// </summary>
     private static void DrawChokePoints() {
         foreach (var chokePoint in _regionData.ChokePoints) {
-            DrawChokePoint(chokePoint);
+            Program.GraphicalDebugger.AddPath(chokePoint.Edge.Select(edge => edge.ToVector3()).ToList(), Colors.LightRed, Colors.LightRed);
         }
-    }
-
-    /// <summary>
-    /// Draws a choke point
-    /// </summary>
-    private static void DrawChokePoint(ChokePoint chokePoint, Color color = null) {
-        Program.GraphicalDebugger.AddPath(chokePoint.Edge.Select(edge => edge.ToVector3()).ToList(), color ?? Colors.LightRed, color ?? Colors.LightRed);
     }
 
     /// <summary>

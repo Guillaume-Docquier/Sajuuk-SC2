@@ -11,7 +11,7 @@ namespace Bot.MapKnowledge;
 
 // TODO GD Considering the obstacles (resources, rocks) might be interesting at some point
 public static partial class RayCastingChokeFinder {
-    private const bool DrawEnabled = false; // TODO GD Flag this
+    private const bool DrawEnabled = true; // TODO GD Flag this
 
     private const int StartingAngle = 0;
     private const int MaxAngle = 175;
@@ -173,20 +173,57 @@ public static partial class RayCastingChokeFinder {
     }
 
     private static List<ChokePoint> ComputeChokePoints(Dictionary<Vector2, Node> nodes) {
-
         foreach (var node in nodes.Values) {
             node.UpdateChokeScore();
         }
 
         LogDistribution(nodes.Values.Select(node => node.ChokeScore).ToList());
 
-        var chokeNodes = nodes.Values.Where(node => node.ChokeScore > 5f).ToList();
-        DebugScores(chokeNodes.Select(node => (node.Position, node.ChokeScore)).ToList());
+        var initialChokeNodes = nodes.Values.Where(node => node.ChokeScore > 5f).ToList();
+        var (chokeNodeClusters, _) = Clustering.DBSCAN(initialChokeNodes, 1.5f, 4);
+
+        // Eliminate outliers from node clusters.
+        // We compute a dispersion score based on the average, median and std.
+        // In low dispersion clusters, we are tolerant to outliers.
+        // In high dispersion cluster, we are sensitive to outliers.
+        var chokeNodes = new List<Node>();
+        foreach (var chokeNodeCluster in chokeNodeClusters) {
+            var average = chokeNodeCluster.Average(node => node.ChokeScore);
+            var median = chokeNodeCluster.OrderBy(node => node.ChokeScore).ToList()[chokeNodeCluster.Count / 2].ChokeScore;
+            var std = Math.Sqrt(chokeNodeCluster.Average(node => Math.Pow(node.ChokeScore - average, 2)));
+
+            // Dispersion is proportional to the relative std
+            var dispersionScore = std / Math.Max(average, median);
+
+            // Make high dispersion scores higher and small ones smaller
+            dispersionScore = Math.Pow(dispersionScore + 0.5, 2) - 0.5;
+
+            // Try to nullify the cut in low disparity clusters
+            // A low cut means an inclusive cluster
+            var cut = Math.Min(average, median) - (1 - dispersionScore) * std;
+
+            var textGroup = new []
+            {
+                $"Avg: {average,4:F2}",
+                $"Med: {median,4:F2}",
+                $"Std: {std,4:F2}",
+                $"Dsp: {dispersionScore,4:F2}",
+                $"Cut: {cut,4:F2}",
+            };
+            var chokeNodeClusterCenter = Clustering.GetCenter(chokeNodeCluster);
+            Program.GraphicalDebugger.AddTextGroup(textGroup, worldPos: chokeNodeClusterCenter.ToPoint(zOffset: 5));
+            Program.GraphicalDebugger.AddLink(chokeNodeClusterCenter, chokeNodeClusterCenter.Translate(zTranslation: 5), Colors.SunbrightOrange, withText: false);
+
+            DebugScores(chokeNodeCluster, cut);
+
+            // Keep the nodes that make the cut
+            chokeNodes.AddRange(chokeNodeCluster.Where(node => node.ChokeScore >= cut));
+        }
 
         var chokeLines = chokeNodes
             .SelectMany(node => node.MostLikelyChokeLines)
             .GroupBy(line => line)
-            .Where(group => group.Count() >= 3) // Some lines are length 0, some touch the same wall. This discards them but might also discard too many.
+            .Where(group => group.Count() >= 2) // Some lines are length 0, some touch the same wall. This discards them but might also discard too many.
             .Where(group => group.Count() >= group.Key.Length * 0.5)
             .Select(group => group.Key)
             .ToList();
@@ -206,17 +243,21 @@ public static partial class RayCastingChokeFinder {
         return chokePoints;
     }
 
-    private static void DebugScores(List<(Vector3 Position, float Score)> nodes) {
+    private static void DebugScores(List<Node> nodes, double cutScore) {
         if (!Program.DebugEnabled || !DrawEnabled) {
             return;
         }
 
-        var minScore = nodes.Min(node => node.Score);
-        var maxScore = nodes.Max(node => node.Score);
+        var minScore = nodes.Min(node => node.ChokeScore);
+        var maxScore = nodes.Max(node => node.ChokeScore);
 
         foreach (var node in nodes) {
-            var textColor = Colors.Gradient(Colors.DarkGrey, Colors.DarkRed, LogScale(node.Score, minScore, maxScore));
-            Program.GraphicalDebugger.AddText($"{node.Score:F1}", worldPos: node.Position.WithWorldHeight().ToPoint(), color: textColor, size: 13);
+            var textColor = Colors.Gradient(Colors.DarkGrey, Colors.DarkRed, LogScale(node.ChokeScore, minScore, maxScore));
+            if (node.ChokeScore < cutScore) {
+                textColor = Colors.Blue;
+            }
+
+            Program.GraphicalDebugger.AddText($"{node.ChokeScore:F1}", worldPos: node.Position.WithWorldHeight().ToPoint(), color: textColor, size: 13);
         }
     }
 

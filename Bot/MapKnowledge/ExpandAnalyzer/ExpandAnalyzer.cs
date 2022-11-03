@@ -13,6 +13,7 @@ namespace Bot.MapKnowledge;
 
 public class ExpandAnalyzer: INeedUpdating {
     public static ExpandAnalyzer Instance { get; private set; } = new ExpandAnalyzer();
+    private const bool DrawEnabled = false;
 
     private bool _isInitialized = false;
     public static bool IsInitialized => Instance._isInitialized;
@@ -150,7 +151,10 @@ public class ExpandAnalyzer: INeedUpdating {
             .Select(position => position.AsWorldGridCorner());
 
         foreach (var cell in cellsTooCloseToResource) {
-            Program.GraphicalDebugger.AddGridSquare(cell.AsWorldGridCenter().ToVector3(), Colors.SunbrightOrange);
+            if (DrawEnabled) {
+                Program.GraphicalDebugger.AddGridSquare(cell.AsWorldGridCenter().ToVector3(), Colors.SunbrightOrange);
+            }
+
             _tooCloseToResourceGrid[(int)cell.X][(int)cell.Y] = true;
         }
     }

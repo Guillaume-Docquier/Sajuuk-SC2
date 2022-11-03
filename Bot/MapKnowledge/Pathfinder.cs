@@ -10,7 +10,7 @@ namespace Bot.MapKnowledge;
 using Path = List<Vector2>;
 
 public static class Pathfinder {
-    private const bool DrawEnabled = true; // TODO GD Flag this
+    private const bool DrawEnabled = false; // TODO GD Flag this
 
     public static readonly Dictionary<Vector2, Dictionary<Vector2, Path>> Memory = new Dictionary<Vector2, Dictionary<Vector2, List<Vector2>>>();
 
