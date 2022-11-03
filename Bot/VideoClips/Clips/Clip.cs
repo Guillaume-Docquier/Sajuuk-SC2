@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Bot.VideoClips.Manim.Animations;
 
 namespace Bot.VideoClips.Clips;
@@ -14,13 +15,13 @@ public class Clip {
         _animations.Add(animation);
     }
 
-    public void Render() {
+    public async Task Render() {
         if (IsDone) {
             return;
         }
 
         foreach (var animation in _animations) {
-            animation.Render(_clipFrame);
+            await animation.Render(_clipFrame);
         }
 
         _clipFrame++;

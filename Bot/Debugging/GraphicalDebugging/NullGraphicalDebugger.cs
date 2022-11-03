@@ -5,9 +5,10 @@ using SC2APIProtocol;
 namespace Bot.Debugging.GraphicalDebugging;
 
 /// <summary>
-/// The LadderGraphicalDebugger is essentially a void GraphicalDebugger because on the ladder, we cannot see the screen.
+/// The NullGraphicalDebugger does nothing.because on the ladder, we cannot see the screen.
+/// Intended to use on the ladder to reduce frame times and memory footprint.
 /// </summary>
-public class LadderGraphicalDebugger: IGraphicalDebugger {
+public class NullGraphicalDebugger: IGraphicalDebugger {
     public Request GetDebugRequest() {
         return null;
     }

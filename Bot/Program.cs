@@ -17,7 +17,8 @@ public class Program {
         //new WorkerRushScenario(),
     };
 
-    private static readonly IBot Bot = new SajuukBot("3_0_0", scenarios: Scenarios);
+    private const string Version = "3_0_0";
+    private static readonly IBot Bot = new SajuukBot(Version, scenarios: Scenarios);
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.Stargazers;
     private const Race OpponentRace = Race.Zerg;
@@ -32,48 +33,19 @@ public class Program {
 
     public static void Main(string[] args) {
         try {
-            // Data generation
-            if (args.Length == 1 && args[0] == "--generateData") {
-                Logger.Info("Game launched in data generation mode");
-                foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
-                    Logger.Info("Generating data for {0}", mapFileName);
-
-                    DisableDataStores();
-
-                    DebugEnabled = true;
-                    GraphicalDebugger = new LadderGraphicalDebugger();
-
-                    GameConnection = new GameConnection(stepSize: 2);
-                    GameConnection.RunLocal(new SajuukBot("3_0_0", scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
-                }
-            }
-            // Video clip
-            if (args.Length == 1 && args[0] == "--videoClip") {
-                Logger.Info("Game launched in video clip mode");
-
-                DebugEnabled = true;
-                GraphicalDebugger = new LocalGraphicalDebugger();
-
-                GameConnection = new GameConnection(stepSize: 1);
-                GameConnection.RunLocal(new VideoClipPlayer(), MapFileName, OpponentRace, Difficulty.VeryEasy, realTime: true).Wait();
-            }
-            // Local
-            else if (args.Length == 0) {
-                DebugEnabled = true;
-                GraphicalDebugger = new LocalGraphicalDebugger();
-
-                GameConnection = new GameConnection(stepSize: 2);
-                GameConnection.RunLocal(Bot, MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
-            }
-            // Ladder
-            else {
-                DebugEnabled = false;
-                GraphicalDebugger = new LadderGraphicalDebugger();
-
-                // On the ladder, for some reason, actions have a 1 frame delay before being received and applied
-                // We will run every 2 frames, this way we won't notice the delay
-                GameConnection = new GameConnection(stepSize: 2);
-                GameConnection.RunLadder(Bot, args).Wait();
+            switch (args.Length) {
+                case 1 when args[0] == "--generateData":
+                    PlayDataGeneration();
+                    break;
+                case 1 when args[0] == "--videoClip":
+                    PlayVideoClip();
+                    break;
+                case 0:
+                    PlayLocalGame();
+                    break;
+                default:
+                    PlayLadderGame(args);
+                    break;
             }
         }
         catch (Exception ex) {
@@ -87,5 +59,49 @@ public class Program {
         ExpandLocationDataStore.IsEnabled = false;
         RegionDataStore.IsEnabled = false;
         RayCastingChokeFinder.VisionLinesDataStore.IsEnabled = false;
+    }
+
+    private static void PlayDataGeneration() {
+        Logger.Info("Game launched in data generation mode");
+        foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
+            Logger.Info("Generating data for {0}", mapFileName);
+
+            DisableDataStores();
+
+            DebugEnabled = true;
+            GraphicalDebugger = new NullGraphicalDebugger();
+
+            GameConnection = new GameConnection(stepSize: 2);
+            GameConnection.RunLocal(new SajuukBot(Version, scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
+        }
+    }
+
+    private static void PlayVideoClip() {
+        Logger.Info("Game launched in video clip mode");
+
+        DebugEnabled = true;
+        GraphicalDebugger = new Sc2GraphicalDebugger();
+
+        GameConnection = new GameConnection(stepSize: 1);
+        GameConnection.RunLocal(new VideoClipPlayer(), MapFileName, OpponentRace, Difficulty.VeryEasy, realTime: true).Wait();
+    }
+
+    private static void PlayLocalGame() {
+        DebugEnabled = true;
+        GraphicalDebugger = new Sc2GraphicalDebugger();
+
+        // We run just like the ladder to test the real deal
+        GameConnection = new GameConnection(stepSize: 2);
+        GameConnection.RunLocal(Bot, MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
+    }
+
+    private static void PlayLadderGame(string[] args) {
+        DebugEnabled = false;
+        GraphicalDebugger = new NullGraphicalDebugger();
+
+        // On the ladder, for some reason, actions have a 1 frame delay before being received and applied
+        // We will run every 2 frames, this way we won't notice the delay
+        GameConnection = new GameConnection(stepSize: 2);
+        GameConnection.RunLadder(Bot, args).Wait();
     }
 }

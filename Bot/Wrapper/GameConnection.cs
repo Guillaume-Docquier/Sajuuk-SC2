@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapKnowledge;
-using Bot.VideoClips.Clips;
 using SC2APIProtocol;
 
 namespace Bot.Wrapper;
@@ -194,7 +193,6 @@ public class GameConnection {
         var dataResponse = await SendRequest(dataRequest);
         KnowledgeBase.Data = dataResponse.Data;
 
-        RegionAnalysisClip regionAnalysisClip = null;
         while (true) {
             // Controller.Frame is uint.MaxValue until we request frame 0
             var nextFrame = Controller.Frame == uint.MaxValue ? 0 : Controller.Frame + _stepSize;
@@ -219,10 +217,6 @@ public class GameConnection {
             }
 
             await RunBot(bot, observation);
-            if (ExpandAnalyzer.IsInitialized && MapAnalyzer.IsInitialized) {
-                regionAnalysisClip ??= new RegionAnalysisClip();
-                regionAnalysisClip.Render();
-            }
 
             if (observation.Observation.GameLoop % DebugMemoryEvery == 0) {
                 PrintMemoryInfo();

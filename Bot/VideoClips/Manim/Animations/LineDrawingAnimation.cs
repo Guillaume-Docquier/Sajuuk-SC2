@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Threading.Tasks;
 using SC2APIProtocol;
 
 namespace Bot.VideoClips.Manim.Animations;
@@ -14,7 +15,7 @@ public class LineDrawingAnimation : Animation<LineDrawingAnimation> {
         _lineColor = lineColor;
     }
 
-    protected override void Animate(int currentClipFrame) {
+    protected override Task Animate(int currentClipFrame) {
         var currentDuration = currentClipFrame - StartFrame;
         var percentDone = (float)currentDuration / Duration;
 
@@ -23,6 +24,8 @@ public class LineDrawingAnimation : Animation<LineDrawingAnimation> {
             Vector3.Lerp(_lineStart, _lineEnd, percentDone),
             _lineColor
         );
+
+        return Task.CompletedTask;
     }
 
     protected override void PostAnimate(int currentFrame) {

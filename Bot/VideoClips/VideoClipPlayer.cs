@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel;
 using System.Threading.Tasks;
 using Bot.VideoClips.Clips;
 using Bot.Wrapper;
@@ -26,7 +25,7 @@ public class VideoClipPlayer : IBot {
             return;
         }
 
-        _currentlyPlayingClip.Render();
+        await _currentlyPlayingClip.Render();
     }
 
     private async Task EnsureInitialization() {

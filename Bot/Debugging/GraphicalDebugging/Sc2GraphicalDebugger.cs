@@ -12,7 +12,7 @@ namespace Bot.Debugging.GraphicalDebugging;
 /// <summary>
 /// Implements all sorts of graphical shapes to help in local debugging.
 /// </summary>
-public class LocalGraphicalDebugger: IGraphicalDebugger {
+public class Sc2GraphicalDebugger: IGraphicalDebugger {
     private const float CreepHeight = 0.02f;
     private const float Padding = 0.05f;
 

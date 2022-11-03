@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Threading.Tasks;
 using Bot.ExtensionMethods;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -13,7 +14,7 @@ public class MoveCameraAnimation : Animation<MoveCameraAnimation> {
         _moveTo = moveTo;
     }
 
-    protected override void Animate(int currentClipFrame) {
+    protected override async Task Animate(int currentClipFrame) {
         if (currentClipFrame == StartFrame) {
             _originalCameraPosition = Controller.Observation.Observation.RawData.Player.Camera.ToVector2();
         }
@@ -24,8 +25,6 @@ public class MoveCameraAnimation : Animation<MoveCameraAnimation> {
 
         // We should support the async nature here somehow
         // Request service of make all render async
-#pragma warning disable CS4014
-        Program.GameConnection.SendRequest(RequestBuilder.DebugMoveCamera(new Point { X = nextPosition.X, Y = nextPosition.Y, Z = 0 }));
-#pragma warning restore CS4014
+        await Program.GameConnection.SendRequest(RequestBuilder.DebugMoveCamera(new Point { X = nextPosition.X, Y = nextPosition.Y, Z = 0 }));
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Bot.VideoClips.Manim.Animations;
+﻿using System.Threading.Tasks;
+
+namespace Bot.VideoClips.Manim.Animations;
 
 public abstract class Animation {
     public int StartFrame { get; }
@@ -9,12 +11,12 @@ public abstract class Animation {
         StartFrame = startFrame;
     }
 
-    public void Render(int currentClipFrame) {
+    public async Task Render(int currentClipFrame) {
         if (currentClipFrame < StartFrame) {
             PreAnimate(currentClipFrame);
         }
         else if (currentClipFrame <= EndFrame) {
-            Animate(currentClipFrame);
+            await Animate(currentClipFrame);
         }
         else {
             PostAnimate(currentClipFrame);
@@ -25,7 +27,7 @@ public abstract class Animation {
         return;
     }
 
-    protected abstract void Animate(int currentClipFrame);
+    protected abstract Task Animate(int currentClipFrame);
 
     protected virtual void PostAnimate(int currentClipFrame) {
         return;
