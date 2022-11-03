@@ -3,6 +3,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapKnowledge;
+using Bot.Utils;
 using Bot.Wrapper;
 
 namespace Bot.Scenarios;

@@ -5,6 +5,7 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapKnowledge;
 using Bot.Scenarios;
+using Bot.Utils;
 using Bot.Wrapper;
 using SC2APIProtocol;
 

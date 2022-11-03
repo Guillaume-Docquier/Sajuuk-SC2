@@ -19,8 +19,12 @@ public static class RayCasting {
     /// <param name="angleInRadians">The angle to ray cast</param>
     /// <param name="shouldStopRay">A function that receives the current cell corner to decide if we should stop ray casting</param>
     /// <returns>All the crossed cells and their intersection point when the ray entered the cell. The origin and the last cell are included.</returns>
-    public static IEnumerable<RayCastResult> RayCast(Vector2 origin, float angleInRadians, Func<Vector2, bool> shouldStopRay) {
-        return RayCast(origin, origin.Rotate(angleInRadians, origin.Translate(yTranslation: 1)), shouldStopRay);
+    public static IEnumerable<RayCastResult> RayCast(Vector2 origin, double angleInRadians, Func<Vector2, bool> shouldStopRay) {
+        var direction = origin
+            .Translate(yTranslation: 1)
+            .Rotate(angleInRadians, origin);
+
+        return RayCast(origin, direction, shouldStopRay);
     }
 
     /// <summary>

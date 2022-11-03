@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
+using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
 
 namespace Bot.VideoClips.Clips;

@@ -6,6 +6,7 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.Utils;
 using SC2APIProtocol;
 
 namespace Bot.MapKnowledge;

@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Bot.Builds;
+using Bot.Debugging;
 using Bot.VideoClips.Clips;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -14,8 +17,11 @@ public class VideoClipPlayer : IBot {
     public string Name => "VideoClipPlayer";
     public Race Race => Race.Zerg;
 
+    private readonly BotDebugger _debugger = new BotDebugger();
+
     public async Task OnFrame() {
         await EnsureInitialization();
+        _debugger.Debug(Enumerable.Empty<BuildRequest>(), Enumerable.Empty<BuildFulfillment>());
 
         if (_currentlyPlayingClip == null) {
             return;
@@ -34,9 +40,9 @@ public class VideoClipPlayer : IBot {
         }
 
         await Program.GameConnection.SendRequest(RequestBuilder.DebugRevealMap());
+        DebuggingFlagsTracker.Instance.HandleMessage(DebuggingCommands.Off);
 
-        _clips.Enqueue(new RegionAnalysisClip());
-        _clips.Enqueue(new RegionAnalysisClip());
+        _clips.Enqueue(new SingleRayCastingClip());
 
         _currentlyPlayingClip = _clips.Dequeue();
 

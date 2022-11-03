@@ -39,12 +39,16 @@ public class DebuggingFlagsTracker : INeedUpdating {
 
         var messages = ChatTracker.NewBotChat.SelectMany(chatReceived => chatReceived.Message.Split(" "));
         foreach (var message in messages) {
-            if (AllDebuggingCommands.Contains(message)) {
-                HandleCommand(message);
-            }
-            else if (AllDebuggingFlags.Contains(message)) {
-                ToggleFlag(message);
-            }
+            HandleMessage(message);
+        }
+    }
+
+    public void HandleMessage(string message) {
+        if (AllDebuggingCommands.Contains(message)) {
+            HandleCommand(message);
+        }
+        else if (AllDebuggingFlags.Contains(message)) {
+            ToggleFlag(message);
         }
     }
 

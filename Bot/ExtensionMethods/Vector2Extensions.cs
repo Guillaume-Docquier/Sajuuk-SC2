@@ -101,7 +101,7 @@ public static class Vector2Extensions {
         return new Vector2
         {
             X = (float)(translatedX * cosTheta - translatedY * sinTheta + origin.X),
-            Y = (float)(translatedX * sinTheta + translatedY * cosTheta + origin.X),
+            Y = (float)(translatedX * sinTheta + translatedY * cosTheta + origin.Y),
         };
     }
 

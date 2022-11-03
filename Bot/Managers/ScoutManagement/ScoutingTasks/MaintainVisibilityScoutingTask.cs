@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
+using Bot.Utils;
 
 namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 

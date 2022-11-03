@@ -1,9 +1,13 @@
-﻿namespace Bot;
+﻿namespace Bot.Utils;
 
 public static class TimeUtils {
     public const double FramesPerSecond = 22.4;
 
     public static ulong SecsToFrames(int seconds) {
+        return SecsToFrames((float)seconds);
+    }
+
+    public static ulong SecsToFrames(float seconds) {
         return (ulong)(FramesPerSecond * seconds);
     }
 

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
+using Bot.Utils;
 using SC2APIProtocol;
 
 namespace Bot.MapKnowledge;
@@ -76,7 +77,7 @@ public static partial class RayCastingChokeFinder {
         var paddingX = (int)(lineLength / 2f - origin.X);
         var paddingY = (int)(lineLength / 2f - origin.Y);
 
-        var angleInRadians = DegToRad(angleInDegrees);
+        var angleInRadians = MathUtils.DegToRad(angleInDegrees);
 
         var lines = new List<VisionLine>();
         for (var y = -paddingY; y < MaxY + paddingY; y++) {
@@ -87,10 +88,6 @@ public static partial class RayCastingChokeFinder {
         }
 
         return lines;
-    }
-
-    private static double DegToRad(double degrees) {
-        return Math.PI / 180 * degrees;
     }
 
     private static List<VisionLine> BreakDownIntoContinuousSegments(IEnumerable<VisionLine> lines) {

@@ -8,6 +8,7 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.StateManagement;
 using Bot.UnitModules;
+using Bot.Utils;
 
 namespace Bot.Managers.ArmySupervision.Tactics.SneakAttack;
 
