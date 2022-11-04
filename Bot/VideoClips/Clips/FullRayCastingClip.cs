@@ -15,7 +15,6 @@ public class FullRayCastingClip : Clip {
         var cameraReadyFrame = CenterCamera(origin, (int)TimeUtils.SecsToFrames(0));
 
         CastAllRays(origin, cameraReadyFrame);
-        ShowGrid(origin, cameraReadyFrame);
 
         Pause(60);
     }
@@ -31,23 +30,25 @@ public class FullRayCastingClip : Clip {
 
     private void CastAllRays(Vector2 origin, int startAt) {
         for (var angle = 0; angle < 360; angle++) {
-            var rayCast = RayCasting.RayCast(origin, MathUtils.DegToRad(angle + 5), cell => !MapAnalyzer.IsWalkable(cell)).ToList();
+            var rayCastResults = RayCasting.RayCast(origin, MathUtils.DegToRad(angle), cell => !MapAnalyzer.IsWalkable(cell)).ToList();
 
-            var rayEnd = rayCast.Last().RayIntersection;
-            var lineDrawingAnimation = new LineDrawingAnimation(origin.ToVector3(), rayEnd.ToVector3(), Colors.Green, startAt)
-                .WithConstantRate(3);
+            var previousIntersection = rayCastResults[0].RayIntersection;
+            var previousAnimationEnd = startAt;
+            foreach (var rayCastResult in rayCastResults) {
+                var rayEnd = rayCastResult.RayIntersection;
+                var lineDrawingAnimation = new LineDrawingAnimation(previousIntersection.ToVector3(), rayEnd.ToVector3(), Colors.Green, previousAnimationEnd)
+                    .WithConstantRate(3);
 
-            AddAnimation(lineDrawingAnimation);
-        }
-    }
+                AddAnimation(lineDrawingAnimation);
 
-    private void ShowGrid(Vector2 origin, int startAt) {
-        var random = new Random();
-        foreach (var cell in MapAnalyzer.BuildSearchRadius(origin, 15)) {
-            var rng = (float)random.NextDouble();
-            var rngStartFrame = startAt + (int)TimeUtils.SecsToFrames(rng * 2f);
-            var squareAnimation = new CellDrawingAnimation(cell.ToVector3(), rngStartFrame).WithDurationInSeconds(0.5f);
-            AddAnimation(squareAnimation);
+                var squareAnimation = new CellDrawingAnimation(rayCastResult.CornerOfCell.AsWorldGridCenter().ToVector3(), lineDrawingAnimation.EndFrame)
+                    .WithDurationInSeconds(0.5f);
+
+                AddAnimation(squareAnimation);
+
+                previousIntersection = rayCastResult.RayIntersection;
+                previousAnimationEnd = lineDrawingAnimation.EndFrame;
+            }
         }
     }
 
