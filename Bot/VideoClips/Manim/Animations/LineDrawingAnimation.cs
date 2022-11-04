@@ -22,8 +22,7 @@ public class LineDrawingAnimation : Animation<LineDrawingAnimation> {
     }
 
     protected override Task Animate(int currentClipFrame) {
-        var currentDuration = currentClipFrame - StartFrame;
-        var percentDone = (float)currentDuration / Duration;
+        var percentDone = GetAnimationPercentDone(currentClipFrame);
 
         Program.GraphicalDebugger.AddLine(
             _lineStart,

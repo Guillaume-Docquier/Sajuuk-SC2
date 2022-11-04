@@ -24,6 +24,20 @@ public abstract class Animation {
         }
     }
 
+    protected float GetAnimationPercentDone(int currentClipFrame) {
+        if (currentClipFrame < StartFrame) {
+            return 0;
+        }
+
+        if (currentClipFrame > EndFrame) {
+            return 1;
+        }
+
+        var currentDuration = currentClipFrame - StartFrame;
+
+        return (float)currentDuration / Duration;
+    }
+
     protected virtual void PreAnimate(int currentClipFrame) {
         return;
     }

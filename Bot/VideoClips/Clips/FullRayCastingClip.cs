@@ -9,10 +9,8 @@ using Bot.VideoClips.Manim.Animations;
 namespace Bot.VideoClips.Clips;
 
 public class FullRayCastingClip : Clip {
-    public FullRayCastingClip() {
-        var origin = new Vector2(99.5f, 52.5f);
+    public FullRayCastingClip(Vector2 origin) {
         var cameraReadyFrame = CenterCamera(origin, (int)TimeUtils.SecsToFrames(0));
-
         CastAllRays(origin, cameraReadyFrame);
 
         Pause(30);

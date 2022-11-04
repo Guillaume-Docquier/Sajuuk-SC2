@@ -16,8 +16,7 @@ public class SphereDrawingAnimation : Animation<SphereDrawingAnimation> {
     }
 
     protected override Task Animate(int currentClipFrame) {
-        var currentDuration = currentClipFrame - StartFrame;
-        var percentDone = (float)currentDuration / Duration;
+        var percentDone = GetAnimationPercentDone(currentClipFrame);
         var sphereRadius = _radius * percentDone;
 
         Program.GraphicalDebugger.AddSphere(_center, sphereRadius, _color);

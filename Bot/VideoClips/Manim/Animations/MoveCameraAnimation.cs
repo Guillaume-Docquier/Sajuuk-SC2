@@ -19,8 +19,7 @@ public class MoveCameraAnimation : Animation<MoveCameraAnimation> {
             _originalCameraPosition = Controller.Observation.Observation.RawData.Player.Camera.ToVector2();
         }
 
-        var currentDuration = currentClipFrame - StartFrame;
-        var percentDone = (float)currentDuration / Duration;
+        var percentDone = GetAnimationPercentDone(currentClipFrame);
         var nextPosition = Vector2.Lerp(_originalCameraPosition, _moveTo, percentDone);
 
         // We should support the async nature here somehow

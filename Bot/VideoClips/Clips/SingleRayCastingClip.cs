@@ -10,13 +10,10 @@ using Bot.VideoClips.Manim.Animations;
 namespace Bot.VideoClips.Clips;
 
 public class SingleRayCastingClip : Clip {
-    public SingleRayCastingClip() {
-        var origin = new Vector2(99.5f, 52.5f);
-
+    public SingleRayCastingClip(Vector2 origin) {
         var cameraReadyFrame = CenterCamera(origin, (int)TimeUtils.SecsToFrames(0));
-
-        CastRay(origin, cameraReadyFrame);
         ShowGrid(origin, cameraReadyFrame);
+        CastRay(origin, cameraReadyFrame);
 
         Pause(60);
     }

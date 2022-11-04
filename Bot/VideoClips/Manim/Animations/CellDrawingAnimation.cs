@@ -20,8 +20,7 @@ public class CellDrawingAnimation : Animation<CellDrawingAnimation> {
     }
 
     protected override Task Animate(int currentClipFrame) {
-        var currentDuration = currentClipFrame - StartFrame;
-        var percentDone = (float)currentDuration / Duration;
+        var percentDone = GetAnimationPercentDone(currentClipFrame);
         var squareSide = Math.Max(0, KnowledgeBase.GameGridCellWidth - _padding) * percentDone;
 
         Program.GraphicalDebugger.AddRectangle(_cell, squareSide, squareSide, _cellColor, padded: false);
