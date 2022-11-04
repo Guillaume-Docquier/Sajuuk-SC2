@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
@@ -29,15 +28,20 @@ public class FullRayCastingClip : Clip {
     }
 
     private void CastAllRays(Vector2 origin, int startAt) {
-        for (var angle = 0; angle < 360; angle++) {
+        var sphereDrawingAnimation = new SphereDrawingAnimation(origin.ToVector3(), 0.5f, Colors.Purple, startAt)
+            .WithDurationInSeconds(0.5f);
+
+        AddAnimation(sphereDrawingAnimation);
+
+        for (var angle = 0; angle < 360; angle += 2) {
             var rayCastResults = RayCasting.RayCast(origin, MathUtils.DegToRad(angle), cell => !MapAnalyzer.IsWalkable(cell)).ToList();
 
             var previousIntersection = rayCastResults[0].RayIntersection;
-            var previousAnimationEnd = startAt;
+            var previousAnimationEnd = sphereDrawingAnimation.EndFrame + (int)TimeUtils.SecsToFrames((float)angle / 360 * 2);
             foreach (var rayCastResult in rayCastResults) {
                 var rayEnd = rayCastResult.RayIntersection;
                 var lineDrawingAnimation = new LineDrawingAnimation(previousIntersection.ToVector3(), rayEnd.ToVector3(), Colors.Green, previousAnimationEnd)
-                    .WithConstantRate(3);
+                    .WithConstantRate(4);
 
                 AddAnimation(lineDrawingAnimation);
 

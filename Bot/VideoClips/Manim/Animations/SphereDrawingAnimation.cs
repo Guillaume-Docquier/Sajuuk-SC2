@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using System.Threading.Tasks;
-using Bot.ExtensionMethods;
 using SC2APIProtocol;
 
 namespace Bot.VideoClips.Manim.Animations;
