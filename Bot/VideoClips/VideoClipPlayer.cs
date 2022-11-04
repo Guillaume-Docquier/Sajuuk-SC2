@@ -24,12 +24,13 @@ public class VideoClipPlayer : IBot {
         _debugger.Debug(Enumerable.Empty<BuildRequest>(), Enumerable.Empty<BuildFulfillment>());
 
         if (_currentlyPlayingClip == null) {
+            await Program.GameConnection.Quit();
             return;
         }
 
-        if (_currentlyPlayingClip.IsDone && !_clips.TryDequeue(out _currentlyPlayingClip)) {
-            return;
-        }
+        //if (_currentlyPlayingClip.IsDone && !_clips.TryDequeue(out _currentlyPlayingClip)) {
+        //    return;
+        //}
 
         await _currentlyPlayingClip.Render();
     }
@@ -42,7 +43,7 @@ public class VideoClipPlayer : IBot {
         await Program.GameConnection.SendRequest(RequestBuilder.DebugRevealMap());
         DebuggingFlagsTracker.Instance.HandleMessage(DebuggingCommands.Off);
 
-        _clips.Enqueue(new SingleRayCastingClip());
+        _clips.Enqueue(new FullRayCastingClip());
 
         _currentlyPlayingClip = _clips.Dequeue();
 

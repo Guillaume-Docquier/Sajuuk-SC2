@@ -90,6 +90,14 @@ public static class Vector3Extensions {
             return vector;
         }
 
+        // Some unwalkable cells are low on the map, let's try to bring them up if they touch a walkable cell (that generally have proper heights)
+        if (!MapAnalyzer.IsWalkable(vector)) {
+            var walkableNeighbors = vector.GetNeighbors().Where(neighbor => MapAnalyzer.IsWalkable(neighbor)).ToList();
+            if (walkableNeighbors.Any()) {
+                return vector with { Z = walkableNeighbors.Max(neighbor => neighbor.WithWorldHeight().Z) };
+            }
+        }
+
         return vector with { Z = MapAnalyzer.HeightMap[(int)vector.X][(int)vector.Y] + zOffset };
     }
 

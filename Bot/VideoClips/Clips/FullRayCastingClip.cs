@@ -9,13 +9,12 @@ using Bot.VideoClips.Manim.Animations;
 
 namespace Bot.VideoClips.Clips;
 
-public class SingleRayCastingClip : Clip {
-    public SingleRayCastingClip() {
+public class FullRayCastingClip : Clip {
+    public FullRayCastingClip() {
         var origin = new Vector2(99.5f, 52.5f);
-
         var cameraReadyFrame = CenterCamera(origin, (int)TimeUtils.SecsToFrames(0));
 
-        CastRay(origin, cameraReadyFrame);
+        CastAllRays(origin, cameraReadyFrame);
         ShowGrid(origin, cameraReadyFrame);
 
         Pause(60);
@@ -30,6 +29,18 @@ public class SingleRayCastingClip : Clip {
         return moveCameraAnimation.EndFrame;
     }
 
+    private void CastAllRays(Vector2 origin, int startAt) {
+        for (var angle = 0; angle < 360; angle++) {
+            var rayCast = RayCasting.RayCast(origin, MathUtils.DegToRad(angle + 5), cell => !MapAnalyzer.IsWalkable(cell)).ToList();
+
+            var rayEnd = rayCast.Last().RayIntersection;
+            var lineDrawingAnimation = new LineDrawingAnimation(origin.ToVector3(), rayEnd.ToVector3(), Colors.Green, startAt)
+                .WithConstantRate(3);
+
+            AddAnimation(lineDrawingAnimation);
+        }
+    }
+
     private void ShowGrid(Vector2 origin, int startAt) {
         var random = new Random();
         foreach (var cell in MapAnalyzer.BuildSearchRadius(origin, 15)) {
@@ -38,16 +49,6 @@ public class SingleRayCastingClip : Clip {
             var squareAnimation = new CellDrawingAnimation(cell.ToVector3(), rngStartFrame).WithDurationInSeconds(0.5f);
             AddAnimation(squareAnimation);
         }
-    }
-
-    private void CastRay(Vector2 origin, int startAt) {
-        var rayCast = RayCasting.RayCast(origin, MathUtils.DegToRad(30), cell => !MapAnalyzer.IsWalkable(cell)).ToList();
-
-        var rayEnd = rayCast.Last().RayIntersection;
-        var lineDrawingAnimation = new LineDrawingAnimation(origin.ToVector3(), rayEnd.ToVector3(), Colors.Green, startAt)
-            .WithConstantRate(3);
-
-        AddAnimation(lineDrawingAnimation);
     }
 
     private void Pause(int durationInSeconds) {

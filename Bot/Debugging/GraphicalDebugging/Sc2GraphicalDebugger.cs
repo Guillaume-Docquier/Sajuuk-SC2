@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
@@ -91,8 +92,8 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
         _debugBoxes.Add(
             new DebugBox
             {
-                Min = centerPosition.ToPoint(xOffset: -width / 2 + padding, yOffset: -length / 2 + padding, zOffset: CreepHeight),
-                Max = centerPosition.ToPoint(xOffset:  width / 2 - padding, yOffset:  length / 2 - padding, zOffset: CreepHeight),
+                Min = centerPosition.ToPoint(xOffset: Math.Min(0, -width / 2 + padding), yOffset: Math.Min(0, -length / 2 + padding), zOffset: CreepHeight),
+                Max = centerPosition.ToPoint(xOffset: Math.Max(0,  width / 2 - padding), yOffset: Math.Max(0,  length / 2 - padding), zOffset: CreepHeight),
                 Color = color,
             }
         );

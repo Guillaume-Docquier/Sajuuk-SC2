@@ -57,7 +57,7 @@ public abstract class Animation<TAnimation> : Animation where TAnimation : Anima
     /// </summary>
     /// <param name="secondsDuration">The amount of seconds the animation should last</param>
     /// <returns>The derived instance so that it can be chained</returns>
-    public TAnimation WithDurationInSeconds(int secondsDuration) {
+    public TAnimation WithDurationInSeconds(float secondsDuration) {
         Duration = (int)TimeUtils.SecsToFrames(secondsDuration);
 
         return (TAnimation)this;
