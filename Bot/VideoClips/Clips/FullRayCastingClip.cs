@@ -15,12 +15,12 @@ public class FullRayCastingClip : Clip {
 
         CastAllRays(origin, cameraReadyFrame);
 
-        Pause(60);
+        Pause(30);
     }
 
     private int CenterCamera(Vector2 origin, int startAt) {
         var moveCameraAnimation = new MoveCameraAnimation(origin, startAt)
-            .WithDurationInSeconds(2);
+            .WithDurationInSeconds(1);
 
         AddAnimation(moveCameraAnimation);
 
@@ -38,7 +38,7 @@ public class FullRayCastingClip : Clip {
 
             var previousIntersection = rayCastResults[0].RayIntersection;
             var previousAnimationEnd = sphereDrawingAnimation.EndFrame + (int)TimeUtils.SecsToFrames((float)angle / 360 * 2);
-            foreach (var rayCastResult in rayCastResults) {
+            foreach (var rayCastResult in rayCastResults.Skip(1)) {
                 var rayEnd = rayCastResult.RayIntersection;
                 var lineDrawingAnimation = new LineDrawingAnimation(previousIntersection.ToVector3(), rayEnd.ToVector3(), Colors.Green, previousAnimationEnd)
                     .WithConstantRate(4);
