@@ -22,7 +22,7 @@ public static class RayCasting {
     public static IEnumerable<RayCastResult> RayCast(Vector2 origin, double angleInRadians, Func<Vector2, bool> shouldStopRay) {
         var direction = origin
             .Translate(yTranslation: 1)
-            .Rotate(angleInRadians, origin);
+            .RotateAround(origin, angleInRadians);
 
         return RayCast(origin, direction, shouldStopRay);
     }
@@ -35,7 +35,7 @@ public static class RayCasting {
     /// <param name="shouldStopRay">A function that receives the current cell corner to decide if we should stop ray casting</param>
     /// <returns>All the crossed cells and their intersection point when the ray entered the cell. The origin and the last cell are included.</returns>
     public static IEnumerable<RayCastResult> RayCast(Vector2 origin, Vector2 direction, Func<Vector2, bool> shouldStopRay) {
-        var delta = direction - origin;
+        var delta = Vector2.Normalize(direction - origin);
 
         var dxdy = delta.Y == 0 ? 0 : delta.X / delta.Y;
         var dydx = delta.X == 0 ? 0 : delta.Y / delta.X;
@@ -100,7 +100,7 @@ public static class RayCasting {
 
                 // Move to the cell on the left or right
                 currentCell.X += stepX;
-                lastIntersection = lastIntersection.Translate(xTranslation: 1 * stepX, yTranslation: dydx * stepY);
+                lastIntersection += delta * xRayLength;
 
                 // Reset X ray
                 xRayLength = rayLengthWhenMovingInX;
@@ -111,7 +111,7 @@ public static class RayCasting {
 
                 // Move to the cell on the bottom or top
                 currentCell.Y += stepY;
-                lastIntersection = lastIntersection.Translate(xTranslation: dxdy * stepX, yTranslation: 1 * stepY);
+                lastIntersection += delta * yRayLength;
 
                 // Reset Y ray
                 yRayLength = rayLengthWhenMovingInY;

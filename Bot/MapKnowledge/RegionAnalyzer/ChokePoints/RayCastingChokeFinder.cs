@@ -81,8 +81,8 @@ public static partial class RayCastingChokeFinder {
 
         var lines = new List<VisionLine>();
         for (var y = -paddingY; y < MaxY + paddingY; y++) {
-            var start = new Vector2(-paddingX, y).Rotate(angleInRadians, origin);
-            var end = new Vector2(MaxX + paddingX, y).Rotate(angleInRadians, origin);
+            var start = new Vector2(-paddingX, y).RotateAround(origin, angleInRadians);
+            var end = new Vector2(MaxX + paddingX, y).RotateAround(origin, angleInRadians);
 
             lines.Add(new VisionLine(start, end, angleInDegrees));
         }
