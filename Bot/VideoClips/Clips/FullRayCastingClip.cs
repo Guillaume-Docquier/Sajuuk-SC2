@@ -9,15 +9,15 @@ using Bot.VideoClips.Manim.Animations;
 namespace Bot.VideoClips.Clips;
 
 public class FullRayCastingClip : Clip {
-    public FullRayCastingClip(Vector2 currentCameraLocation, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
-        var cameraReadyFrame = CenterCamera(currentCameraLocation, sceneLocation);
-        CastAllRays(sceneLocation, cameraReadyFrame);
+    public FullRayCastingClip(Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
+        var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
+        AddAnimation(centerCameraAnimation);
+
+        CastAllRays(sceneLocation, centerCameraAnimation.EndFrame);
     }
 
     private void CastAllRays(Vector2 origin, int startAt) {
-        var sphereDrawingAnimation = new SphereDrawingAnimation(origin.ToVector3(), 0.5f, Colors.Purple, startAt)
-            .WithDurationInSeconds(0.5f);
-
+        var sphereDrawingAnimation = new SphereDrawingAnimation(origin.ToVector3(), 0.5f, Colors.Purple, startAt).WithDurationInSeconds(0.5f);
         AddAnimation(sphereDrawingAnimation);
 
         for (var angle = 0; angle < 360; angle += 2) {

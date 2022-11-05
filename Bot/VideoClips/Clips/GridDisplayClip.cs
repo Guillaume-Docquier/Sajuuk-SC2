@@ -9,9 +9,11 @@ using Bot.VideoClips.Manim.Animations;
 namespace Bot.VideoClips.Clips;
 
 public class GridDisplayClip : Clip {
-    public GridDisplayClip(Vector2 currentCameraLocation, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
-        var cameraReadyFrame = CenterCamera(currentCameraLocation, sceneLocation);
-        ShowGrid(sceneLocation, cameraReadyFrame);
+    public GridDisplayClip(Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
+        var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
+        AddAnimation(centerCameraAnimation);
+
+        ShowGrid(sceneLocation, centerCameraAnimation.EndFrame);
     }
 
     private int ShowGrid(Vector2 origin, int startAt) {
@@ -23,8 +25,8 @@ public class GridDisplayClip : Clip {
         foreach (var cell in grid) {
             var relativeDistance = cell.DistanceTo(origin) / maxDistance;
             var startFrame = startAt + (int)(relativeDistance * animationTotalDuration);
-            var squareAnimation = new CellDrawingAnimation(cell.ToVector3(), startFrame).WithDurationInSeconds(0.5f);
 
+            var squareAnimation = new CellDrawingAnimation(cell.ToVector3(), startFrame).WithDurationInSeconds(0.5f);
             AddAnimation(squareAnimation);
 
             endFrame = Math.Max(endFrame, squareAnimation.EndFrame);

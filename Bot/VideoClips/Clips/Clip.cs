@@ -46,30 +46,4 @@ public abstract class Clip {
         _clipFrame = 0;
         IsDone = false;
     }
-
-    protected int CenterCamera(Vector2 origin, Vector2 destination, int startAt = 0, float durationInSeconds = 1) {
-        if (origin == destination) {
-            return startAt;
-        }
-
-        var moveCameraAnimation = new MoveCameraAnimation(origin, destination, startAt)
-            .WithDurationInSeconds(durationInSeconds);
-
-        AddAnimation(moveCameraAnimation);
-
-        return moveCameraAnimation.EndFrame;
-    }
-
-    protected int CenterCamera(Vector2 origin, Vector2 destination, int startAt, int endFrame) {
-        if (origin == destination) {
-            return startAt;
-        }
-
-        var moveCameraAnimation = new MoveCameraAnimation(origin, destination, startAt)
-            .WithEndFrame(endFrame);
-
-        AddAnimation(moveCameraAnimation);
-
-        return moveCameraAnimation.EndFrame;
-    }
 }

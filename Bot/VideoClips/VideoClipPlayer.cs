@@ -58,12 +58,11 @@ public class VideoClipPlayer : IBot {
         DebuggingFlagsTracker.Instance.HandleMessage(DebuggingCommands.Off);
 
         // TODO GD Wait for 20 seconds for the chat to disappear
-        var currentCameraLocation = Controller.GetCurrentCameraLocation().ToVector2();
-        _clips.Enqueue(new SingleRayCastingClip       (currentCameraLocation,     new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
-        _clips.Enqueue(new GridDisplayClip            (new Vector2(99.5f, 52.5f), new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
-        _clips.Enqueue(new RaySteppingClip            (new Vector2(99.5f, 52.5f), new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
-        _clips.Enqueue(new RayCastingIntersectionsClip(new Vector2(99.5f, 52.5f), new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
-        _clips.Enqueue(new FullRayCastingClip         (new Vector2(99.5f, 52.5f), new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new SingleRayCastingClip       (new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new GridDisplayClip            (new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new RaySteppingClip            (new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new RayCastingIntersectionsClip(new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new FullRayCastingClip         (new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
 
         _currentlyPlayingClip = _clips.Dequeue();
         _startAt = Controller.Frame + TimeUtils.SecsToFrames(2.5f);

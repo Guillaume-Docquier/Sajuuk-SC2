@@ -13,15 +13,15 @@ namespace Bot.VideoClips.Clips;
 public class RaySteppingClip : Clip {
     private const int StepTranslation = 4;
     private static readonly List<int> Angles = new List<int> { 25, 45, 65 };
-    public RaySteppingClip(Vector2 currentCameraLocation, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
+    public RaySteppingClip(Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
         sceneLocation = sceneLocation.Translate(xTranslation: -StepTranslation * (Angles.Count - 1));
 
         var nextAnimationStart = 0;
         foreach (var angle in Angles) {
-            var cameraReadyFrame = CenterCamera(currentCameraLocation, sceneLocation, nextAnimationStart, durationInSeconds: 1f);
-            nextAnimationStart = RayStep(sceneLocation, angle, cameraReadyFrame);
+            var panCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: nextAnimationStart).WithDurationInSeconds(1);
+            AddAnimation(panCameraAnimation);
 
-            currentCameraLocation = sceneLocation;
+            nextAnimationStart = RayStep(sceneLocation, angle, panCameraAnimation.EndFrame);
             sceneLocation = sceneLocation.Translate(xTranslation: StepTranslation);
         }
     }
