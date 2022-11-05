@@ -4,7 +4,7 @@ using Bot.Utils;
 namespace Bot.VideoClips.Manim.Animations;
 
 public abstract class Animation {
-    public int StartFrame { get; }
+    public int StartFrame { get; private set; }
     public abstract int Duration { get; protected set; }
     public int EndFrame => StartFrame + Duration;
 
@@ -22,6 +22,10 @@ public abstract class Animation {
         else {
             PostAnimate(currentClipFrame);
         }
+    }
+
+    public void ChangeStartFrame(int newStartFrame) {
+        StartFrame = newStartFrame;
     }
 
     protected float GetAnimationPercentDone(int currentClipFrame) {

@@ -1,29 +1,31 @@
 ﻿using System.Numerics;
 using System.Threading.Tasks;
 using Bot.ExtensionMethods;
+using Bot.Utils;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot.VideoClips.Manim.Animations;
 
 public class MoveCameraAnimation : Animation<MoveCameraAnimation> {
-    private readonly Vector2 _moveTo;
-    private Vector2 _originalCameraPosition;
+    private readonly Vector2 _origin;
+    private readonly Vector2 _destination;
 
-    public MoveCameraAnimation(Vector2 moveTo, int startFrame): base(startFrame) {
-        _moveTo = moveTo;
+    public MoveCameraAnimation(Vector2 origin, Vector2 destination, int startFrame): base(startFrame) {
+        _origin = origin;
+        _destination = destination;
     }
 
     protected override async Task Animate(int currentClipFrame) {
-        if (currentClipFrame == StartFrame) {
-            _originalCameraPosition = Controller.Observation.Observation.RawData.Player.Camera.ToVector2();
-        }
-
         var percentDone = GetAnimationPercentDone(currentClipFrame);
-        var nextPosition = Vector2.Lerp(_originalCameraPosition, _moveTo, percentDone);
+        var nextPosition = Vector2.Lerp(_origin, _destination, percentDone);
 
-        // We should support the async nature here somehow
-        // Request service of make all render async
         await Program.GameConnection.SendRequest(RequestBuilder.DebugMoveCamera(new Point { X = nextPosition.X, Y = nextPosition.Y, Z = 0 }));
+    }
+
+    public MoveCameraAnimation WithConstantRate(float unitsPerSecond) {
+        Duration = (int)TimeUtils.SecsToFrames(_origin.DistanceTo(_destination) / unitsPerSecond);
+
+        return this;
     }
 }

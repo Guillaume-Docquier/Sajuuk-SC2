@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using Bot.Builds;
 using Bot.Debugging;
+using Bot.ExtensionMethods;
 using Bot.Utils;
 using Bot.VideoClips.Clips;
 using Bot.Wrapper;
@@ -50,8 +51,11 @@ public class VideoClipPlayer : IBot {
         await Program.GameConnection.SendRequest(RequestBuilder.DebugRevealMap());
         DebuggingFlagsTracker.Instance.HandleMessage(DebuggingCommands.Off);
 
-        _clips.Enqueue(new RayCastingIntersectionsClip(new Vector2(99.5f, 52.5f)));
-        _clips.Enqueue(new FullRayCastingClip(new Vector2(99.5f, 52.5f)));
+        var currentCameraLocation = Controller.Observation.Observation.RawData.Player.Camera.ToVector2();
+        _clips.Enqueue(new SingleRayCastingClip       (currentCameraLocation,     new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new RayCastingIntersectionsClip(new Vector2(99.5f, 52.5f), new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new FullRayCastingClip         (new Vector2(99.5f, 52.5f), new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new GridDisplayClip            (new Vector2(99.5f, 52.5f), new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
 
         _currentlyPlayingClip = _clips.Dequeue();
         _startAt = Controller.Frame + TimeUtils.SecsToFrames(2.5f);

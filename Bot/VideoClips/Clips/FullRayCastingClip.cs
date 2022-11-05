@@ -9,20 +9,9 @@ using Bot.VideoClips.Manim.Animations;
 namespace Bot.VideoClips.Clips;
 
 public class FullRayCastingClip : Clip {
-    public FullRayCastingClip(Vector2 origin) {
-        var cameraReadyFrame = CenterCamera(origin, (int)TimeUtils.SecsToFrames(0));
-        CastAllRays(origin, cameraReadyFrame);
-
-        Pause(30);
-    }
-
-    private int CenterCamera(Vector2 origin, int startAt) {
-        var moveCameraAnimation = new MoveCameraAnimation(origin, startAt)
-            .WithDurationInSeconds(1);
-
-        AddAnimation(moveCameraAnimation);
-
-        return moveCameraAnimation.EndFrame;
+    public FullRayCastingClip(Vector2 origin, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
+        var cameraReadyFrame = CenterCamera(origin, sceneLocation);
+        CastAllRays(sceneLocation, cameraReadyFrame);
     }
 
     private void CastAllRays(Vector2 origin, int startAt) {
@@ -52,12 +41,5 @@ public class FullRayCastingClip : Clip {
                 previousAnimationEnd = lineDrawingAnimation.EndFrame;
             }
         }
-    }
-
-    private void Pause(int durationInSeconds) {
-        var bufferAnimation = new LineDrawingAnimation(new Vector3(), new Vector3(), Colors.Green, 0)
-            .WithDurationInSeconds(durationInSeconds);
-
-        AddAnimation(bufferAnimation);
     }
 }
