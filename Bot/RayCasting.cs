@@ -102,6 +102,10 @@ public static class RayCasting {
                 currentCell.X += stepX;
                 lastIntersection += delta * xRayLength;
 
+                // Due to float imprecision, we get some rounding errors
+                // We can round X to the closest int to eliminate the error because we know we stepped in X (int, float)
+                lastIntersection.X = (float)Math.Round(lastIntersection.X);
+
                 // Reset X ray
                 xRayLength = rayLengthWhenMovingInX;
             }
@@ -113,6 +117,10 @@ public static class RayCasting {
                 currentCell.Y += stepY;
                 lastIntersection += delta * yRayLength;
 
+                // Due to float imprecision, we get some rounding errors
+                // We can round Y to the closest int to eliminate the error because we know we stepped in Y (float, int)
+                lastIntersection.Y = (float)Math.Round(lastIntersection.Y);
+
                 // Reset Y ray
                 yRayLength = rayLengthWhenMovingInY;
             }
@@ -120,7 +128,12 @@ public static class RayCasting {
                 // Both rays are the same, means we landed exactly on a corner
                 currentCell.X += stepX; // Move to the left/right
                 currentCell.Y += stepY; // And up/down
-                lastIntersection = lastIntersection.Translate(xTranslation: 1 * stepX, yTranslation: 1 * stepY);
+                lastIntersection += delta * yRayLength; // xRayLength and yRayLength are the same, doesn't matter which one we pick
+
+                // Due to float imprecision, we get some rounding errors
+                // We can round to the closest int to eliminate the error because we know we are a at corner (int, int)
+                lastIntersection.X = (float)Math.Round(lastIntersection.X);
+                lastIntersection.Y = (float)Math.Round(lastIntersection.Y);
 
                 // Reset all rays
                 xRayLength = rayLengthWhenMovingInX;

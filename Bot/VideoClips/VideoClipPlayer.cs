@@ -53,9 +53,10 @@ public class VideoClipPlayer : IBot {
 
         var currentCameraLocation = Controller.Observation.Observation.RawData.Player.Camera.ToVector2();
         _clips.Enqueue(new SingleRayCastingClip       (currentCameraLocation,     new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new GridDisplayClip            (new Vector2(99.5f, 52.5f), new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new RaySteppingClip            (new Vector2(99.5f, 52.5f), new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5)); // Play 3 times to show 3 scnerios
         _clips.Enqueue(new RayCastingIntersectionsClip(new Vector2(99.5f, 52.5f), new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
         _clips.Enqueue(new FullRayCastingClip         (new Vector2(99.5f, 52.5f), new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
-        _clips.Enqueue(new GridDisplayClip            (new Vector2(99.5f, 52.5f), new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
 
         _currentlyPlayingClip = _clips.Dequeue();
         _startAt = Controller.Frame + TimeUtils.SecsToFrames(2.5f);

@@ -51,7 +51,7 @@ public abstract class Clip {
         IsDone = false;
     }
 
-    protected int CenterCamera(Vector2 origin, Vector2 destination, int startAt = 0, int durationInSeconds = 1) {
+    protected int CenterCamera(Vector2 origin, Vector2 destination, int startAt = 0, float durationInSeconds = 1) {
         if (origin == destination) {
             return startAt;
         }

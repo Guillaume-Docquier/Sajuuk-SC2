@@ -10,10 +10,10 @@ using Bot.VideoClips.Manim.Animations;
 namespace Bot.VideoClips.Clips;
 
 public class RayCastingIntersectionsClip : Clip {
-    public RayCastingIntersectionsClip(Vector2 origin, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
-        var cameraReadyFrame = CenterCamera(origin, sceneLocation);
-        var gridReadyFrame = ShowGrid(origin, cameraReadyFrame);
-        CastRay(origin, gridReadyFrame);
+    public RayCastingIntersectionsClip(Vector2 currentCameraLocation, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
+        var cameraReadyFrame = CenterCamera(currentCameraLocation, sceneLocation);
+        var gridReadyFrame = ShowGrid(sceneLocation, cameraReadyFrame);
+        CastRay(sceneLocation, gridReadyFrame);
     }
 
     private void CastRay(Vector2 origin, int startAt) {

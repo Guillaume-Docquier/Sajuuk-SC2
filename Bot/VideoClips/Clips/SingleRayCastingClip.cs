@@ -10,8 +10,8 @@ using Bot.VideoClips.Manim.Animations;
 namespace Bot.VideoClips.Clips;
 
 public class SingleRayCastingClip : Clip {
-    public SingleRayCastingClip(Vector2 origin, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
-        var cameraReadyFrame = CenterCamera(origin, sceneLocation);
+    public SingleRayCastingClip(Vector2 currentCameraLocation, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
+        var cameraReadyFrame = CenterCamera(currentCameraLocation, sceneLocation);
 
         var rayCast = RayCasting.RayCast(sceneLocation, MathUtils.DegToRad(30), cell => !MapAnalyzer.IsWalkable(cell)).ToList();
 

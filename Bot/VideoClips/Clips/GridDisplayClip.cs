@@ -9,8 +9,8 @@ using Bot.VideoClips.Manim.Animations;
 namespace Bot.VideoClips.Clips;
 
 public class GridDisplayClip : Clip {
-    public GridDisplayClip(Vector2 origin, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
-        var cameraReadyFrame = CenterCamera(origin, sceneLocation);
+    public GridDisplayClip(Vector2 currentCameraLocation, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
+        var cameraReadyFrame = CenterCamera(currentCameraLocation, sceneLocation);
         ShowGrid(sceneLocation, cameraReadyFrame);
     }
 
