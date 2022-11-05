@@ -20,10 +20,13 @@ public class SingleRayCastingClip : Clip {
     }
 
     private int CastRay(Vector2 rayStart, Vector2 rayEnd, int startAt) {
-        var lineDrawingAnimation = new LineDrawingAnimation(rayStart.ToVector3(), rayEnd.ToVector3(), Colors.Green, startAt)
+        var showPointReadyFrame = ShowPoint(rayStart, startAt);
+        var lineDrawingAnimation = new LineDrawingAnimation(rayStart.ToVector3(), rayEnd.ToVector3(), Colors.Green, showPointReadyFrame)
             .WithConstantRate(3);
 
         AddAnimation(lineDrawingAnimation);
+
+        ShowPoint(rayEnd, lineDrawingAnimation.EndFrame);
 
         return lineDrawingAnimation.EndFrame;
     }
@@ -33,5 +36,14 @@ public class SingleRayCastingClip : Clip {
             .WithDurationInSeconds(0.5f);
 
         AddAnimation(squareAnimation);
+    }
+
+    private int ShowPoint(Vector2 origin, int startAt) {
+        var sphereAnimation = new SphereDrawingAnimation(origin.ToVector3(), radius: 0.15f, Colors.Purple, startAt)
+            .WithDurationInSeconds(0.5f);
+
+        AddAnimation(sphereAnimation);
+
+        return sphereAnimation.EndFrame;
     }
 }

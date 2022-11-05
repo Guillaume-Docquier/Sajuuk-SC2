@@ -33,6 +33,7 @@ public class RayCastingIntersectionsClip : Clip {
 
             AddAnimation(sphereDrawingAnimation);
 
+            // TODO GD Move the camera to follow the intersections
             previousIntersection = rayCastResult.RayIntersection;
             previousAnimationEnd = sphereDrawingAnimation.EndFrame + (int)TimeUtils.SecsToFrames(0.5f);
         }
@@ -44,7 +45,7 @@ public class RayCastingIntersectionsClip : Clip {
         var random = new Random();
         foreach (var cell in MapAnalyzer.BuildSearchRadius(origin, 15)) {
             var rng = (float)random.NextDouble();
-            var rngStartFrame = startAt + (int)TimeUtils.SecsToFrames(rng * 1.5f);
+            var rngStartFrame = startAt + (int)TimeUtils.SecsToFrames(rng * 1f);
             var squareAnimation = new CellDrawingAnimation(cell.ToVector3(), rngStartFrame).WithDurationInSeconds(0.5f);
 
             AddAnimation(squareAnimation);

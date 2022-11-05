@@ -83,7 +83,7 @@ public class Program {
         GraphicalDebugger = new Sc2GraphicalDebugger();
 
         GameConnection = new GameConnection(stepSize: 1);
-        GameConnection.RunLocal(new VideoClipPlayer(), MapFileName, OpponentRace, Difficulty.VeryEasy, realTime: true).Wait();
+        GameConnection.RunLocal(new VideoClipPlayer(), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
     }
 
     private static void PlayLocalGame() {
