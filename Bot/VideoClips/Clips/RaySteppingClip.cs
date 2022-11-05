@@ -31,22 +31,26 @@ public class RaySteppingClip : Clip {
 
         var showOriginCellReadyFrame = ShowCell(rayCastingResults[0].CornerOfCell.AsWorldGridCenter(), startAt);
         var showOriginReadyFrame = ShowPoint(rayCastingResults[0].RayIntersection, startAt);
-        var castRayReadyFrame = CastRay(rayCastingResults[0].RayIntersection, rayCastingResults[1].RayIntersection, Math.Max(showOriginCellReadyFrame, showOriginReadyFrame));
+
+        var pauseBeforeRayAnimation = new PauseAnimation(Math.Max(showOriginCellReadyFrame, showOriginReadyFrame)).WithDurationInSeconds(0.5f);
+        AddAnimation(pauseBeforeRayAnimation);
+
+        var castRayReadyFrame = CastRay(rayCastingResults[0].RayIntersection, rayCastingResults[1].RayIntersection, pauseBeforeRayAnimation.EndFrame);
+
         var showStepReadyFrame = ShowCell(rayCastingResults[1].CornerOfCell.AsWorldGridCenter(), castRayReadyFrame);
+        var showEndReadyFrame = ShowPoint(rayCastingResults[1].RayIntersection, castRayReadyFrame);
 
-        var pauseAnimation = new PauseAnimation(startFrame: showStepReadyFrame).WithDurationInSeconds(1);
-        AddAnimation(pauseAnimation);
+        var pauseBeforeTransitionAnimation = new PauseAnimation(startFrame: Math.Max(showStepReadyFrame, showEndReadyFrame)).WithDurationInSeconds(1);
+        AddAnimation(pauseBeforeTransitionAnimation);
 
-        return pauseAnimation.EndFrame;
+        return pauseBeforeTransitionAnimation.EndFrame;
     }
 
     private int CastRay(Vector2 rayStart, Vector2 rayEnd, int startAt) {
         var lineDrawingAnimation = new LineDrawingAnimation(rayStart.ToVector3(), rayEnd.ToVector3(), Colors.Green, startAt)
-            .WithConstantRate(3);
+            .WithDurationInSeconds(1);
 
         AddAnimation(lineDrawingAnimation);
-
-        ShowPoint(rayEnd, lineDrawingAnimation.EndFrame);
 
         return lineDrawingAnimation.EndFrame;
     }

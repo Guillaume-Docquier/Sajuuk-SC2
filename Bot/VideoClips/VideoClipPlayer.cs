@@ -38,7 +38,7 @@ public class VideoClipPlayer : IBot {
         }
 
         if (_currentlyPlayingClip == null) {
-            await Program.GameConnection.Quit();
+            Logger.Important("VideoClip done!");
             return;
         }
 

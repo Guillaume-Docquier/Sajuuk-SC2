@@ -13,18 +13,28 @@ public class SingleRayCastingClip : Clip {
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
+        var pauseAnimation = new PauseAnimation(centerCameraAnimation.EndFrame).WithDurationInSeconds(1);
+        AddAnimation(pauseAnimation);
+
         var rayCast = RayCasting.RayCast(sceneLocation, MathUtils.DegToRad(30), cell => !MapAnalyzer.IsWalkable(cell)).ToList();
 
-        var castRayReadyFrame = CastRay(rayCast.First().RayIntersection, rayCast.Last().RayIntersection, centerCameraAnimation.EndFrame);
+        var castRayReadyFrame = CastRay(rayCast.First().RayIntersection, rayCast.Last().RayIntersection, pauseAnimation.EndFrame);
         ShowWall(rayCast.Last().RayIntersection.AsWorldGridCenter(), castRayReadyFrame);
     }
 
     private int CastRay(Vector2 rayStart, Vector2 rayEnd, int startAt) {
         var showPointReadyFrame = ShowPoint(rayStart, startAt);
-        var lineDrawingAnimation = new LineDrawingAnimation(rayStart.ToVector3(), rayEnd.ToVector3(), Colors.Green, showPointReadyFrame)
+
+        var pauseAnimation = new PauseAnimation(showPointReadyFrame).WithDurationInSeconds(1);
+        AddAnimation(pauseAnimation);
+
+        var lineDrawingAnimation = new LineDrawingAnimation(rayStart.ToVector3(), rayEnd.ToVector3(), Colors.Green, pauseAnimation.EndFrame)
             .WithConstantRate(3);
 
         AddAnimation(lineDrawingAnimation);
+
+        var centerCameraAnimation = new CenterCameraAnimation(rayEnd, lineDrawingAnimation.StartFrame).WithEndFrame(lineDrawingAnimation.EndFrame);
+        AddAnimation(centerCameraAnimation);
 
         ShowPoint(rayEnd, lineDrawingAnimation.EndFrame);
 
