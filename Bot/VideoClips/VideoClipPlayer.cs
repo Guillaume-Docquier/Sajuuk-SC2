@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Bot.Builds;
 using Bot.Debugging;
 using Bot.ExtensionMethods;
+using Bot.GameData;
+using Bot.GameSense;
 using Bot.Utils;
 using Bot.VideoClips.Clips;
 using Bot.Wrapper;
@@ -26,6 +28,10 @@ public class VideoClipPlayer : IBot {
     public async Task OnFrame() {
         await EnsureInitialization();
         _debugger.Debug(Enumerable.Empty<BuildRequest>(), Enumerable.Empty<BuildFulfillment>());
+
+        foreach (var unit in Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone).Where(unit => unit.HasOrders())) {
+            unit.Stop();
+        }
 
         if (Controller.Frame < _startAt) {
             return;

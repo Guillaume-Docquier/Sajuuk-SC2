@@ -440,6 +440,10 @@ public class Unit: ICanDie, IHavePosition {
         return DistanceTo(position) <= UnitTypeData.SightRange;
     }
 
+    public bool HasOrders() {
+        return Orders.Count > 0;
+    }
+
     public override string ToString() {
         if (Alliance == Alliance.Self) {
             return $"{Name}[{Tag}]";
