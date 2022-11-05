@@ -568,4 +568,8 @@ public static class Controller {
             .Where(expandLocation => !GetUnits(UnitsTracker.EnemyUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
             .Where(expandLocation => !GetUnits(UnitsTracker.NeutralUnits, Units.Destructibles).Any(destructible => destructible.DistanceTo(expandLocation) < ExpandIsTakenRadius));
     }
+
+    public static Point GetCurrentCameraLocation() {
+        return Observation.Observation.RawData.Player.Camera;
+    }
 }

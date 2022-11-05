@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using Bot.Debugging.GraphicalDebugging;
 using Bot.VideoClips.Manim.Animations;
 
 namespace Bot.VideoClips.Clips;
@@ -10,23 +9,20 @@ namespace Bot.VideoClips.Clips;
 public abstract class Clip {
     private readonly List<Animation> _animations = new List<Animation>();
     private int _clipFrame = 0;
-    private readonly Animation _pauseAnimation;
+    private readonly Animation _pauseAtEndOfClipAnimation;
 
     public bool IsDone { get; private set; } = false;
 
     protected Clip(int pauseAtEndOfClipDurationSeconds) {
-        // Dummy animation to run at the end of the clip
-        _pauseAnimation = new LineDrawingAnimation(new Vector3(), new Vector3(), Colors.Green, startFrame: 0)
-            .WithDurationInSeconds(pauseAtEndOfClipDurationSeconds);
-
-        _animations.Add(_pauseAnimation);
+        _pauseAtEndOfClipAnimation = new PauseAnimation(startFrame: 0).WithDurationInSeconds(pauseAtEndOfClipDurationSeconds);
+        _animations.Add(_pauseAtEndOfClipAnimation);
     }
 
     protected void AddAnimation(Animation animation) {
         _animations.Add(animation);
 
-        if (animation.EndFrame > _pauseAnimation.StartFrame) {
-            _pauseAnimation.ChangeStartFrame(animation.EndFrame);
+        if (animation.EndFrame > _pauseAtEndOfClipAnimation.StartFrame) {
+            _pauseAtEndOfClipAnimation.ChangeStartFrame(animation.EndFrame);
         }
     }
 
@@ -58,6 +54,19 @@ public abstract class Clip {
 
         var moveCameraAnimation = new MoveCameraAnimation(origin, destination, startAt)
             .WithDurationInSeconds(durationInSeconds);
+
+        AddAnimation(moveCameraAnimation);
+
+        return moveCameraAnimation.EndFrame;
+    }
+
+    protected int CenterCamera(Vector2 origin, Vector2 destination, int startAt, int endFrame) {
+        if (origin == destination) {
+            return startAt;
+        }
+
+        var moveCameraAnimation = new MoveCameraAnimation(origin, destination, startAt)
+            .WithEndFrame(endFrame);
 
         AddAnimation(moveCameraAnimation);
 

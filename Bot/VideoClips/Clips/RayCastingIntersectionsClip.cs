@@ -10,7 +10,11 @@ using Bot.VideoClips.Manim.Animations;
 namespace Bot.VideoClips.Clips;
 
 public class RayCastingIntersectionsClip : Clip {
-    public RayCastingIntersectionsClip(Vector2 currentCameraLocation, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
+    private readonly int _pauseAtEndOfClipDurationSeconds;
+
+    public RayCastingIntersectionsClip(Vector2 currentCameraLocation, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(0) {
+        _pauseAtEndOfClipDurationSeconds = pauseAtEndOfClipDurationSeconds;
+
         var cameraReadyFrame = CenterCamera(currentCameraLocation, sceneLocation);
         var gridReadyFrame = ShowGrid(sceneLocation, cameraReadyFrame);
         CastRay(sceneLocation, gridReadyFrame);
@@ -33,10 +37,16 @@ public class RayCastingIntersectionsClip : Clip {
 
             AddAnimation(sphereDrawingAnimation);
 
-            // TODO GD Move the camera to follow the intersections
             previousIntersection = rayCastResult.RayIntersection;
             previousAnimationEnd = sphereDrawingAnimation.EndFrame + (int)TimeUtils.SecsToFrames(0.5f);
         }
+
+        var cameraReadyFrame = CenterCamera(rayCastResults.First().RayIntersection, rayCastResults.Last().RayIntersection, startAt, previousAnimationEnd);
+
+        var pauseAnimation = new PauseAnimation(cameraReadyFrame).WithDurationInSeconds(_pauseAtEndOfClipDurationSeconds);
+        AddAnimation(pauseAnimation);
+
+        CenterCamera(rayCastResults.Last().RayIntersection, rayCastResults.First().RayIntersection, pauseAnimation.EndFrame, 0.5f);
     }
 
     private int ShowGrid(Vector2 origin, int startAt) {

@@ -34,8 +34,8 @@ public class RaySteppingClip : Clip {
         var castRayReadyFrame = CastRay(rayCastingResults[0].RayIntersection, rayCastingResults[1].RayIntersection, Math.Max(showOriginCellReadyFrame, showOriginReadyFrame));
         var showStepReadyFrame = ShowCell(rayCastingResults[1].CornerOfCell.AsWorldGridCenter(), castRayReadyFrame);
 
-        var pauseAnimation = new LineDrawingAnimation(new Vector3(), new Vector3(), Colors.Green, startFrame: showStepReadyFrame)
-            .WithDurationInSeconds(1f);
+        var pauseAnimation = new PauseAnimation(startFrame: showStepReadyFrame).WithDurationInSeconds(1);
+        AddAnimation(pauseAnimation);
 
         return pauseAnimation.EndFrame;
     }
