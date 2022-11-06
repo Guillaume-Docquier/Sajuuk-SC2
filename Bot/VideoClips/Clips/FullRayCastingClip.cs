@@ -27,7 +27,7 @@ public class FullRayCastingClip : Clip {
             var previousAnimationEnd = sphereDrawingAnimation.EndFrame + (int)TimeUtils.SecsToFrames((float)angle / 360 * 2);
             foreach (var rayCastResult in rayCastResults.Skip(1)) {
                 var rayEnd = rayCastResult.RayIntersection;
-                var lineDrawingAnimation = new LineDrawingAnimation(previousIntersection.ToVector3(), rayEnd.ToVector3(), Colors.Green, previousAnimationEnd)
+                var lineDrawingAnimation = new LineDrawingAnimation(previousIntersection.ToVector3(), rayEnd.ToVector3(), Colors.Green, previousAnimationEnd, thickness: 1)
                     .WithConstantRate(4);
 
                 AddAnimation(lineDrawingAnimation);
