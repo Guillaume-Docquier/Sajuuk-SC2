@@ -20,7 +20,7 @@ public class Program {
     private const string Version = "3_0_0";
     private static readonly IBot Bot = new SajuukBot(Version, scenarios: Scenarios);
 
-    private const string MapFileName = Maps.Season_2022_4.FileNames.Stargazers;
+    private const string MapFileName = Maps.Season_2022_4.FileNames.Hardwire;
     private const Race OpponentRace = Race.Zerg;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
@@ -83,7 +83,7 @@ public class Program {
         GraphicalDebugger = new Sc2GraphicalDebugger();
 
         GameConnection = new GameConnection(stepSize: 1);
-        GameConnection.RunLocal(new VideoClipPlayer(), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
+        GameConnection.RunLocal(new VideoClipPlayer(MapFileName), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
     }
 
     private static void PlayLocalGame() {
