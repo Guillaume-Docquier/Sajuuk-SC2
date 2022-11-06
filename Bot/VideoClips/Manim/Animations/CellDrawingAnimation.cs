@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Numerics;
 using System.Threading.Tasks;
-using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.MapKnowledge;
 using SC2APIProtocol;

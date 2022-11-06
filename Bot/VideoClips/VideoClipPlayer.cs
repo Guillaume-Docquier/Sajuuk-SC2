@@ -4,7 +4,6 @@ using System.Numerics;
 using System.Threading.Tasks;
 using Bot.Builds;
 using Bot.Debugging;
-using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Utils;
@@ -84,6 +83,8 @@ public class VideoClipPlayer : IBot {
         switch (mapName) {
             case Maps.Season_2022_4.FileNames.Stargazers:
                 yield return new SingleRayCastingClip       (new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (new Vector2(99.5f,  52.5f),  stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (new Vector2(99.5f,  52.5f),  stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
                 yield return new GridDisplayClip            (new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new RaySteppingClip            (new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new RayCastingIntersectionsClip(new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
@@ -93,6 +94,8 @@ public class VideoClipPlayer : IBot {
                 break;
             case Maps.Season_2022_4.FileNames.CosmicSapphire:
                 yield return new SingleRayCastingClip       (new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (new Vector2(132.5f, 47.5f),  stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (new Vector2(132.5f, 47.5f),  stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
                 yield return new GridDisplayClip            (new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new RaySteppingClip            (new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new RayCastingIntersectionsClip(new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
@@ -102,6 +105,8 @@ public class VideoClipPlayer : IBot {
                 break;
             case Maps.Season_2022_4.FileNames.Hardwire:
                 yield return new SingleRayCastingClip       (new Vector2(80.5f,  82.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (new Vector2(80.5f,  82.5f),  stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (new Vector2(80.5f,  82.5f),  stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
                 yield return new GridDisplayClip            (new Vector2(80.5f,  82.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new RaySteppingClip            (new Vector2(80.5f,  82.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new RayCastingIntersectionsClip(new Vector2(80.5f,  82.5f),  pauseAtEndOfClipDurationSeconds: 5);

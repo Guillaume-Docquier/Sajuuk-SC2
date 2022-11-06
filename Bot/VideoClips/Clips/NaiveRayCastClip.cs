@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.MapKnowledge;
@@ -8,13 +7,13 @@ using Bot.VideoClips.Manim.Animations;
 
 namespace Bot.VideoClips.Clips;
 
-public class RayCastingIntersectionsClip : Clip {
-    public RayCastingIntersectionsClip(Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
+public class NaiveRayCastClip : Clip {
+    public NaiveRayCastClip(Vector2 sceneLocation, float stepSize, int pauseAtEndOfClipDurationSeconds = 5) : base(pauseAtEndOfClipDurationSeconds) {
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
-        var gridReadyFrame = ShowGrid(sceneLocation, centerCameraAnimation.EndFrame);
-        CastRay(sceneLocation, gridReadyFrame);
+        var showGridEndFrame = ShowGrid(sceneLocation, centerCameraAnimation.EndFrame);
+        NaiveCastRay(sceneLocation, stepSize, showGridEndFrame);
     }
 
     private int ShowGrid(Vector2 origin, int startAt) {
@@ -34,28 +33,28 @@ public class RayCastingIntersectionsClip : Clip {
         return endFrame;
     }
 
-    private void CastRay(Vector2 origin, int startAt) {
-        var rayCastResults = RayCasting.RayCast(origin, MathUtils.DegToRad(30), cell => !MapAnalyzer.IsWalkable(cell)).ToList();
+    private void NaiveCastRay(Vector2 rayStart, float stepSize, int startFrame) {
+        var step = rayStart.Translate(yTranslation: stepSize).RotateAround(rayStart, MathUtils.DegToRad(30)) - rayStart;
 
-        var previousIntersection = rayCastResults[0].RayIntersection;
-        var previousAnimationEnd = startAt;
-        foreach (var rayCastResult in rayCastResults) {
-            var rayEnd = rayCastResult.RayIntersection;
+        var previousAnimationEnd = startFrame;
+        var previousIntersection = rayStart;
+        while (MapAnalyzer.IsWalkable(previousIntersection)) {
+            var rayEnd = previousIntersection + step;
             var lineDrawingAnimation = new LineDrawingAnimation(previousIntersection.ToVector3(), rayEnd.ToVector3(), ColorService.Instance.RayColor, previousAnimationEnd)
                 .WithConstantRate(4);
 
             AddAnimation(lineDrawingAnimation);
 
             var sphereDrawingAnimation = new SphereDrawingAnimation(rayEnd.ToVector3(), 0.1f, ColorService.Instance.PointColor, lineDrawingAnimation.EndFrame)
-                .WithDurationInSeconds(0.5f);
+                .WithDurationInSeconds(0.2f);
 
             AddAnimation(sphereDrawingAnimation);
 
-            previousIntersection = rayCastResult.RayIntersection;
-            previousAnimationEnd = sphereDrawingAnimation.EndFrame + (int)TimeUtils.SecsToFrames(0.5f);
+            previousIntersection = rayEnd;
+            previousAnimationEnd = sphereDrawingAnimation.EndFrame;
         }
 
-        var cameraMoveToEndAnimation = new CenterCameraAnimation(rayCastResults.Last().RayIntersection, startAt)
+        var cameraMoveToEndAnimation = new CenterCameraAnimation(previousIntersection, startFrame)
             .WithEndFrame(previousAnimationEnd);
 
         AddAnimation(cameraMoveToEndAnimation);
