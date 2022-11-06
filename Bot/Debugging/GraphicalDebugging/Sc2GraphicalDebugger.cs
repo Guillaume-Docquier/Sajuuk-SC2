@@ -19,11 +19,16 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
 
     private readonly List<DebugText> _debugTexts = new List<DebugText>();
     private readonly List<DebugSphere> _debugSpheres = new List<DebugSphere>();
-    private readonly List<DebugBox> _debugBoxes = new List<DebugBox>();
+    private readonly Dictionary<Vector3, List<DebugBox>> _debugBoxes = new Dictionary<Vector3, List<DebugBox>>();
     private readonly List<DebugLine> _debugLines = new List<DebugLine>();
 
     public Request GetDebugRequest() {
-        var debugRequest = RequestBuilder.DebugDraw(_debugTexts, _debugSpheres, _debugBoxes, _debugLines);
+        var debugRequest = RequestBuilder.DebugDraw(
+            _debugTexts,
+            _debugSpheres,
+            _debugBoxes.SelectMany(kv => kv.Value),
+            _debugLines
+        );
 
         _debugTexts.Clear();
         _debugSpheres.Clear();
@@ -88,15 +93,21 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
 
     public void AddRectangle(Vector3 centerPosition, float width, float length, Color color, bool padded = false) {
         var padding = padded ? Padding : 0;
+        var debugBox = new DebugBox
+        {
+            Min = centerPosition.ToPoint(xOffset: Math.Min(0, -width / 2 + padding), yOffset: Math.Min(0, -length / 2 + padding), zOffset: CreepHeight),
+            Max = centerPosition.ToPoint(xOffset: Math.Max(0, width / 2 - padding), yOffset: Math.Max(0, length / 2 - padding), zOffset: CreepHeight),
+            Color = color,
+        };
 
-        _debugBoxes.Add(
-            new DebugBox
-            {
-                Min = centerPosition.ToPoint(xOffset: Math.Min(0, -width / 2 + padding), yOffset: Math.Min(0, -length / 2 + padding), zOffset: CreepHeight),
-                Max = centerPosition.ToPoint(xOffset: Math.Max(0,  width / 2 - padding), yOffset: Math.Max(0,  length / 2 - padding), zOffset: CreepHeight),
-                Color = color,
+        if (_debugBoxes.TryGetValue(centerPosition, out var storedDebugBoxes)) {
+            if (!storedDebugBoxes.Any(storedDebugBox => storedDebugBox.Min.Equals(debugBox.Min) || storedDebugBox.Max.Equals(debugBox.Max))) {
+                storedDebugBoxes.Add(debugBox);
             }
-        );
+        }
+        else {
+            _debugBoxes.Add(centerPosition, new List<DebugBox> { debugBox });
+        }
     }
 
     public void AddLine(Vector3 start, Vector3 end, Color color) {
