@@ -82,6 +82,7 @@ public class VideoClipPlayer : IBot {
     private static IEnumerable<Clip> GetClipsForMap(string mapName) {
         switch (mapName) {
             case Maps.Season_2022_4.FileNames.Stargazers:
+                yield return new PerpendicularLinesScanClip (new Vector2(50.5f,  92.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new SingleRayCastingClip       (new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new NaiveRayCastClip           (new Vector2(99.5f,  52.5f),  stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
                 yield return new NaiveRayCastClip           (new Vector2(99.5f,  52.5f),  stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
@@ -107,15 +108,16 @@ public class VideoClipPlayer : IBot {
                 yield return new FullRayCastingClip         (new Vector2(32.5f,  94.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 break;
             case Maps.Season_2022_4.FileNames.Hardwire:
-                yield return new SingleRayCastingClip       (new Vector2(80.5f,  82.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new NaiveRayCastClip           (new Vector2(80.5f,  82.5f),  stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
-                yield return new NaiveRayCastClip           (new Vector2(80.5f,  82.5f),  stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
-                yield return new GridDisplayClip            (new Vector2(80.5f,  82.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new RaySteppingClip            (new Vector2(80.5f,  82.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new RayCastingIntersectionsClip(new Vector2(80.5f,  82.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new FullRayCastingClip         (new Vector2(80.5f,  82.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new FullRayCastingClip         (new Vector2(100.5f, 60.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new FullRayCastingClip         (new Vector2(126.5f, 65.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new PerpendicularLinesScanClip (new Vector2(126.5f, 158.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new SingleRayCastingClip       (new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (new Vector2(80.5f,  82.5f),   stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (new Vector2(80.5f,  82.5f),   stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
+                yield return new GridDisplayClip            (new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new RaySteppingClip            (new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new RayCastingIntersectionsClip(new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new FullRayCastingClip         (new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new FullRayCastingClip         (new Vector2(100.5f, 60.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new FullRayCastingClip         (new Vector2(126.5f, 65.5f),   pauseAtEndOfClipDurationSeconds: 5);
                 break;
         }
     }
