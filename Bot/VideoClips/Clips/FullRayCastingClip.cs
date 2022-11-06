@@ -32,10 +32,12 @@ public class FullRayCastingClip : Clip {
 
                 AddAnimation(lineDrawingAnimation);
 
-                var squareAnimation = new CellDrawingAnimation(rayCastResult.CornerOfCell.AsWorldGridCenter().ToVector3(), lineDrawingAnimation.EndFrame)
-                    .WithDurationInSeconds(0.5f);
+                if (!MapAnalyzer.IsWalkable(rayCastResult.CornerOfCell)) {
+                    var squareAnimation = new CellDrawingAnimation(rayCastResult.CornerOfCell.AsWorldGridCenter().ToVector3(), lineDrawingAnimation.EndFrame)
+                        .WithDurationInSeconds(0.5f);
 
-                AddAnimation(squareAnimation);
+                    AddAnimation(squareAnimation);
+                }
 
                 previousIntersection = rayCastResult.RayIntersection;
                 previousAnimationEnd = lineDrawingAnimation.EndFrame;

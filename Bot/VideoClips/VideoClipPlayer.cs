@@ -57,11 +57,13 @@ public class VideoClipPlayer : IBot {
         await Program.GameConnection.SendRequest(RequestBuilder.DebugRevealMap());
         DebuggingFlagsTracker.Instance.HandleMessage(DebuggingCommands.Off);
 
-        _clips.Enqueue(new SingleRayCastingClip       (new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
-        _clips.Enqueue(new GridDisplayClip            (new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
-        _clips.Enqueue(new RaySteppingClip            (new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
-        _clips.Enqueue(new RayCastingIntersectionsClip(new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
-        _clips.Enqueue(new FullRayCastingClip         (new Vector2(99.5f, 52.5f), pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new SingleRayCastingClip       (new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new GridDisplayClip            (new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new RaySteppingClip            (new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new RayCastingIntersectionsClip(new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new FullRayCastingClip         (new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new FullRayCastingClip         (new Vector2(111.5f, 33.5f),  pauseAtEndOfClipDurationSeconds: 5));
+        _clips.Enqueue(new FullRayCastingClip         (new Vector2(148.5f, 91.5f),  pauseAtEndOfClipDurationSeconds: 5));
 
         _currentlyPlayingClip = _clips.Dequeue();
         _startAt = Controller.Frame + TimeUtils.SecsToFrames(20);

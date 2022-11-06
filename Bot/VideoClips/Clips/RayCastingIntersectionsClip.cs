@@ -39,7 +39,7 @@ public class RayCastingIntersectionsClip : Clip {
             previousAnimationEnd = sphereDrawingAnimation.EndFrame + (int)TimeUtils.SecsToFrames(0.5f);
         }
 
-        var cameraMoveToEndAnimation = new MoveCameraAnimation(rayCastResults.First().RayIntersection, rayCastResults.Last().RayIntersection, startAt)
+        var cameraMoveToEndAnimation = new CenterCameraAnimation(rayCastResults.Last().RayIntersection, startAt)
             .WithEndFrame(previousAnimationEnd);
 
         AddAnimation(cameraMoveToEndAnimation);

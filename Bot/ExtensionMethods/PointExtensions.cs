@@ -4,11 +4,11 @@ using SC2APIProtocol;
 namespace Bot.ExtensionMethods;
 
 public static class PointExtensions {
-    public static Vector2 ToVector2(this Point point) {
+    public static Vector2 ToVector2(this Point point, float xOffset = 0, float yOffset = 0) {
         return new Vector2
         {
-            X = point.X,
-            Y = point.Y,
+            X = point.X + xOffset,
+            Y = point.Y + yOffset,
         };
     }
 
