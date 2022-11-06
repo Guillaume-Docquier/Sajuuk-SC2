@@ -16,7 +16,7 @@ public class CellDrawingAnimation : Animation<CellDrawingAnimation> {
     public CellDrawingAnimation(Vector3 cell, int startFrame, float padding = 0f) : base(startFrame) {
         _cell = cell;
         _padding = padding;
-        _cellColor = MapAnalyzer.IsWalkable(_cell) ? Colors.CornflowerBlue : Colors.LightRed;
+        _cellColor = MapAnalyzer.IsWalkable(_cell) ? ColorService.Instance.WalkableCellColor : ColorService.Instance.UnwalkableCellColor;
     }
 
     protected override Task Animate(int currentClipFrame) {

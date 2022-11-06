@@ -25,12 +25,12 @@ public class RayCastingIntersectionsClip : Clip {
         var previousAnimationEnd = startAt;
         foreach (var rayCastResult in rayCastResults) {
             var rayEnd = rayCastResult.RayIntersection;
-            var lineDrawingAnimation = new LineDrawingAnimation(previousIntersection.ToVector3(), rayEnd.ToVector3(), Colors.Green, previousAnimationEnd)
+            var lineDrawingAnimation = new LineDrawingAnimation(previousIntersection.ToVector3(), rayEnd.ToVector3(), ColorService.Instance.RayColor, previousAnimationEnd)
                 .WithConstantRate(4);
 
             AddAnimation(lineDrawingAnimation);
 
-            var sphereDrawingAnimation = new SphereDrawingAnimation(rayEnd.ToVector3(), 0.1f, Colors.Purple, lineDrawingAnimation.EndFrame)
+            var sphereDrawingAnimation = new SphereDrawingAnimation(rayEnd.ToVector3(), 0.1f, ColorService.Instance.PointColor, lineDrawingAnimation.EndFrame)
                 .WithDurationInSeconds(0.5f);
 
             AddAnimation(sphereDrawingAnimation);

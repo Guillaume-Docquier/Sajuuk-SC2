@@ -28,7 +28,7 @@ public class SingleRayCastingClip : Clip {
         var pauseAnimation = new PauseAnimation(showPointReadyFrame).WithDurationInSeconds(1);
         AddAnimation(pauseAnimation);
 
-        var lineDrawingAnimation = new LineDrawingAnimation(rayStart.ToVector3(), rayEnd.ToVector3(), Colors.Green, pauseAnimation.EndFrame)
+        var lineDrawingAnimation = new LineDrawingAnimation(rayStart.ToVector3(), rayEnd.ToVector3(), ColorService.Instance.RayColor, pauseAnimation.EndFrame)
             .WithConstantRate(3);
 
         AddAnimation(lineDrawingAnimation);
@@ -49,7 +49,7 @@ public class SingleRayCastingClip : Clip {
     }
 
     private int ShowPoint(Vector2 origin, int startAt) {
-        var sphereAnimation = new SphereDrawingAnimation(origin.ToVector3(), radius: 0.15f, Colors.Purple, startAt)
+        var sphereAnimation = new SphereDrawingAnimation(origin.ToVector3(), radius: 0.15f, ColorService.Instance.PointColor, startAt)
             .WithDurationInSeconds(0.5f);
 
         AddAnimation(sphereAnimation);

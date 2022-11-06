@@ -62,6 +62,8 @@ public class VideoClipPlayer : IBot {
         await Program.GameConnection.SendRequest(RequestBuilder.DebugRevealMap());
         DebuggingFlagsTracker.Instance.HandleMessage(DebuggingCommands.Off);
 
+        ColorService.SetMap(_mapName);
+
         foreach (var clip in GetClipsForMap(_mapName)) {
             _clips.Enqueue(clip);
         }

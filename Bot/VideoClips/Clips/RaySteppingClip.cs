@@ -47,7 +47,7 @@ public class RaySteppingClip : Clip {
     }
 
     private int CastRay(Vector2 rayStart, Vector2 rayEnd, int startAt) {
-        var lineDrawingAnimation = new LineDrawingAnimation(rayStart.ToVector3(), rayEnd.ToVector3(), Colors.Green, startAt)
+        var lineDrawingAnimation = new LineDrawingAnimation(rayStart.ToVector3(), rayEnd.ToVector3(), ColorService.Instance.RayColor, startAt)
             .WithDurationInSeconds(1);
 
         AddAnimation(lineDrawingAnimation);
@@ -65,7 +65,7 @@ public class RaySteppingClip : Clip {
     }
 
     private int ShowPoint(Vector2 origin, int startAt) {
-        var sphereAnimation = new SphereDrawingAnimation(origin.ToVector3(), radius: 0.15f, Colors.Purple, startAt)
+        var sphereAnimation = new SphereDrawingAnimation(origin.ToVector3(), radius: 0.15f, ColorService.Instance.PointColor, startAt)
             .WithDurationInSeconds(0.5f);
 
         AddAnimation(sphereAnimation);
