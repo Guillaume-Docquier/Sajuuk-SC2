@@ -12,7 +12,7 @@ public class FullRayCastingClip : Clip {
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
-        CastAllRays(sceneLocation, centerCameraAnimation.EndFrame);
+        CastAllRays(sceneLocation, centerCameraAnimation.AnimationEndFrame);
     }
 
     private void CastAllRays(Vector2 origin, int startAt) {
@@ -23,7 +23,7 @@ public class FullRayCastingClip : Clip {
             var rayCastResults = RayCasting.RayCast(origin, MathUtils.DegToRad(angle), cell => !MapAnalyzer.IsWalkable(cell)).ToList();
 
             var previousIntersection = rayCastResults[0].RayIntersection;
-            var previousAnimationEnd = sphereDrawingAnimation.EndFrame + (int)TimeUtils.SecsToFrames((float)angle / 360 * 2);
+            var previousAnimationEnd = sphereDrawingAnimation.AnimationEndFrame + (int)TimeUtils.SecsToFrames((float)angle / 360 * 2);
             foreach (var rayCastResult in rayCastResults.Skip(1)) {
                 var rayEnd = rayCastResult.RayIntersection;
                 var lineDrawingAnimation = new LineDrawingAnimation(previousIntersection.ToVector3(), rayEnd.ToVector3(), ColorService.Instance.RayColor, previousAnimationEnd, thickness: 1)
@@ -32,14 +32,14 @@ public class FullRayCastingClip : Clip {
                 AddAnimation(lineDrawingAnimation);
 
                 if (!MapAnalyzer.IsWalkable(rayCastResult.CornerOfCell)) {
-                    var squareAnimation = new CellDrawingAnimation(rayCastResult.CornerOfCell.AsWorldGridCenter().ToVector3(), lineDrawingAnimation.EndFrame)
+                    var squareAnimation = new CellDrawingAnimation(rayCastResult.CornerOfCell.AsWorldGridCenter().ToVector3(), lineDrawingAnimation.AnimationEndFrame)
                         .WithDurationInSeconds(0.5f);
 
                     AddAnimation(squareAnimation);
                 }
 
                 previousIntersection = rayCastResult.RayIntersection;
-                previousAnimationEnd = lineDrawingAnimation.EndFrame;
+                previousAnimationEnd = lineDrawingAnimation.AnimationEndFrame;
             }
         }
     }

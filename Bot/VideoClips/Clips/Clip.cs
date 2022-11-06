@@ -20,8 +20,8 @@ public abstract class Clip {
     protected void AddAnimation(Animation animation) {
         _animations.Add(animation);
 
-        if (animation.EndFrame > _pauseAtEndOfClipAnimation.StartFrame) {
-            _pauseAtEndOfClipAnimation.ChangeStartFrame(animation.EndFrame);
+        if (animation.AnimationEndFrame > _pauseAtEndOfClipAnimation.StartFrame) {
+            _pauseAtEndOfClipAnimation.ChangeStartFrame(animation.AnimationEndFrame);
         }
     }
 
@@ -36,7 +36,7 @@ public abstract class Clip {
 
         _clipFrame++;
 
-        if (_animations.All(animation => animation.EndFrame <= _clipFrame)) {
+        if (_animations.All(animation => animation.AnimationEndFrame <= _clipFrame)) {
             IsDone = true;
         }
     }

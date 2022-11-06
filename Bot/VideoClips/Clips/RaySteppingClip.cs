@@ -20,7 +20,7 @@ public class RaySteppingClip : Clip {
             var panCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: nextAnimationStart).WithDurationInSeconds(1);
             AddAnimation(panCameraAnimation);
 
-            nextAnimationStart = RayStep(sceneLocation, angle, panCameraAnimation.EndFrame);
+            nextAnimationStart = RayStep(sceneLocation, angle, panCameraAnimation.AnimationEndFrame);
             sceneLocation = sceneLocation.Translate(xTranslation: StepTranslation);
         }
     }
@@ -34,7 +34,7 @@ public class RaySteppingClip : Clip {
         var pauseBeforeRayAnimation = new PauseAnimation(Math.Max(showOriginCellReadyFrame, showOriginReadyFrame)).WithDurationInSeconds(0.5f);
         AddAnimation(pauseBeforeRayAnimation);
 
-        var castRayReadyFrame = CastRay(rayCastingResults[0].RayIntersection, rayCastingResults[1].RayIntersection, pauseBeforeRayAnimation.EndFrame);
+        var castRayReadyFrame = CastRay(rayCastingResults[0].RayIntersection, rayCastingResults[1].RayIntersection, pauseBeforeRayAnimation.AnimationEndFrame);
 
         var showStepReadyFrame = ShowCell(rayCastingResults[1].CornerOfCell.AsWorldGridCenter(), castRayReadyFrame);
         var showEndReadyFrame = ShowPoint(rayCastingResults[1].RayIntersection, castRayReadyFrame);
@@ -42,7 +42,7 @@ public class RaySteppingClip : Clip {
         var pauseBeforeTransitionAnimation = new PauseAnimation(startFrame: Math.Max(showStepReadyFrame, showEndReadyFrame)).WithDurationInSeconds(1);
         AddAnimation(pauseBeforeTransitionAnimation);
 
-        return pauseBeforeTransitionAnimation.EndFrame;
+        return pauseBeforeTransitionAnimation.AnimationEndFrame;
     }
 
     private int CastRay(Vector2 rayStart, Vector2 rayEnd, int startAt) {
@@ -51,7 +51,7 @@ public class RaySteppingClip : Clip {
 
         AddAnimation(lineDrawingAnimation);
 
-        return lineDrawingAnimation.EndFrame;
+        return lineDrawingAnimation.AnimationEndFrame;
     }
 
     private int ShowCell(Vector2 cell, int startAt) {
@@ -60,7 +60,7 @@ public class RaySteppingClip : Clip {
 
         AddAnimation(squareAnimation);
 
-        return squareAnimation.EndFrame;
+        return squareAnimation.AnimationEndFrame;
     }
 
     private int ShowPoint(Vector2 origin, int startAt) {
@@ -69,6 +69,6 @@ public class RaySteppingClip : Clip {
 
         AddAnimation(sphereAnimation);
 
-        return sphereAnimation.EndFrame;
+        return sphereAnimation.AnimationEndFrame;
     }
 }

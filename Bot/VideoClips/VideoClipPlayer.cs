@@ -86,6 +86,7 @@ public class VideoClipPlayer : IBot {
                 yield return new NaiveRayCastClip           (new Vector2(99.5f,  52.5f),  stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
                 yield return new NaiveRayCastClip           (new Vector2(99.5f,  52.5f),  stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
                 yield return new GridDisplayClip            (new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new StepComparisonClip         (new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new RaySteppingClip            (new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new RayCastingIntersectionsClip(new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new FullRayCastingClip         (new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);

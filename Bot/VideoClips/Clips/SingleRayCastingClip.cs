@@ -12,12 +12,12 @@ public class SingleRayCastingClip : Clip {
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
-        var pauseAnimation = new PauseAnimation(centerCameraAnimation.EndFrame).WithDurationInSeconds(1);
+        var pauseAnimation = new PauseAnimation(centerCameraAnimation.AnimationEndFrame).WithDurationInSeconds(1);
         AddAnimation(pauseAnimation);
 
         var rayCast = RayCasting.RayCast(sceneLocation, MathUtils.DegToRad(30), cell => !MapAnalyzer.IsWalkable(cell)).ToList();
 
-        var castRayReadyFrame = CastRay(rayCast.First().RayIntersection, rayCast.Last().RayIntersection, pauseAnimation.EndFrame);
+        var castRayReadyFrame = CastRay(rayCast.First().RayIntersection, rayCast.Last().RayIntersection, pauseAnimation.AnimationEndFrame);
         ShowWall(rayCast.Last().RayIntersection.AsWorldGridCenter(), castRayReadyFrame);
     }
 
@@ -27,17 +27,17 @@ public class SingleRayCastingClip : Clip {
         var pauseAnimation = new PauseAnimation(showPointReadyFrame).WithDurationInSeconds(1);
         AddAnimation(pauseAnimation);
 
-        var lineDrawingAnimation = new LineDrawingAnimation(rayStart.ToVector3(), rayEnd.ToVector3(), ColorService.Instance.RayColor, pauseAnimation.EndFrame)
+        var lineDrawingAnimation = new LineDrawingAnimation(rayStart.ToVector3(), rayEnd.ToVector3(), ColorService.Instance.RayColor, pauseAnimation.AnimationEndFrame)
             .WithConstantRate(3);
 
         AddAnimation(lineDrawingAnimation);
 
-        var centerCameraAnimation = new CenterCameraAnimation(rayEnd, lineDrawingAnimation.StartFrame).WithEndFrame(lineDrawingAnimation.EndFrame);
+        var centerCameraAnimation = new CenterCameraAnimation(rayEnd, lineDrawingAnimation.StartFrame).WithEndFrame(lineDrawingAnimation.AnimationEndFrame);
         AddAnimation(centerCameraAnimation);
 
-        ShowPoint(rayEnd, lineDrawingAnimation.EndFrame);
+        ShowPoint(rayEnd, lineDrawingAnimation.AnimationEndFrame);
 
-        return lineDrawingAnimation.EndFrame;
+        return lineDrawingAnimation.AnimationEndFrame;
     }
 
     private void ShowWall(Vector2 wall, int startAt) {
@@ -53,6 +53,6 @@ public class SingleRayCastingClip : Clip {
 
         AddAnimation(sphereAnimation);
 
-        return sphereAnimation.EndFrame;
+        return sphereAnimation.AnimationEndFrame;
     }
 }

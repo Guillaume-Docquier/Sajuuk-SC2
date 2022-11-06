@@ -4,9 +4,15 @@ using Bot.Utils;
 namespace Bot.VideoClips.Manim.Animations;
 
 public abstract class Animation {
+    private const int PostAnimateForever = -1;
+
     public int StartFrame { get; private set; }
-    public abstract int Duration { get; protected set; }
-    public int EndFrame => StartFrame + Duration;
+
+    public int AnimationDuration { get; protected set; } = 0;
+    public int AnimationEndFrame => StartFrame + AnimationDuration;
+
+    public int PostAnimationDuration { get; protected set; } = PostAnimateForever;
+    public int PostAnimationEndFrame => AnimationEndFrame + PostAnimationDuration;
 
     protected Animation(int startFrame) {
         StartFrame = startFrame;
@@ -16,10 +22,10 @@ public abstract class Animation {
         if (currentClipFrame < StartFrame) {
             PreAnimate(currentClipFrame);
         }
-        else if (currentClipFrame <= EndFrame) {
+        else if (currentClipFrame <= AnimationEndFrame) {
             await Animate(currentClipFrame);
         }
-        else {
+        else if (PostAnimationDuration == PostAnimateForever || currentClipFrame <= PostAnimationEndFrame) {
             PostAnimate(currentClipFrame);
         }
     }
@@ -33,13 +39,13 @@ public abstract class Animation {
             return 0;
         }
 
-        if (currentClipFrame > EndFrame) {
+        if (currentClipFrame > AnimationEndFrame) {
             return 1;
         }
 
         var currentDuration = currentClipFrame - StartFrame;
 
-        return (float)currentDuration / Duration;
+        return (float)currentDuration / AnimationDuration;
     }
 
     protected virtual void PreAnimate(int currentClipFrame) {
@@ -54,8 +60,6 @@ public abstract class Animation {
 }
 
 public abstract class Animation<TAnimation> : Animation where TAnimation : Animation<TAnimation> {
-    public override int Duration { get; protected set; } = 0;
-
     protected Animation(int startFrame) : base(startFrame) {}
 
     /// <summary>
@@ -65,7 +69,7 @@ public abstract class Animation<TAnimation> : Animation where TAnimation : Anima
     /// <param name="frameDuration">The amount of frames the animation should last</param>
     /// <returns>The derived instance so that it can be chained</returns>
     public TAnimation WithDurationInFrames(int frameDuration) {
-        Duration = frameDuration;
+        AnimationDuration = frameDuration;
 
         return (TAnimation)this;
     }
@@ -76,7 +80,7 @@ public abstract class Animation<TAnimation> : Animation where TAnimation : Anima
     /// <param name="secondsDuration">The amount of seconds the animation should last</param>
     /// <returns>The derived instance so that it can be chained</returns>
     public TAnimation WithDurationInSeconds(float secondsDuration) {
-        Duration = (int)TimeUtils.SecsToFrames(secondsDuration);
+        AnimationDuration = (int)TimeUtils.SecsToFrames(secondsDuration);
 
         return (TAnimation)this;
     }
@@ -88,7 +92,19 @@ public abstract class Animation<TAnimation> : Animation where TAnimation : Anima
     /// <param name="endFrame">The frame at which the animation should end</param>
     /// <returns>The derived instance so that it can be chained</returns>
     public TAnimation WithEndFrame(int endFrame) {
-        Duration = endFrame - StartFrame;
+        AnimationDuration = endFrame - StartFrame;
+
+        return (TAnimation)this;
+    }
+
+    public TAnimation WithPostAnimationDurationInSeconds(int secondsDuration) {
+        PostAnimationDuration = (int)TimeUtils.SecsToFrames(secondsDuration);
+
+        return (TAnimation)this;
+    }
+
+    public TAnimation WithPostAnimationEndFrame(int endFrame) {
+        PostAnimationDuration = endFrame - AnimationEndFrame;
 
         return (TAnimation)this;
     }

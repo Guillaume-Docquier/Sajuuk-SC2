@@ -24,7 +24,7 @@ public class MoveCameraAnimation : Animation<MoveCameraAnimation> {
     }
 
     public MoveCameraAnimation WithConstantRate(float unitsPerSecond) {
-        Duration = (int)TimeUtils.SecsToFrames(_origin.DistanceTo(_destination) / unitsPerSecond);
+        AnimationDuration = (int)TimeUtils.SecsToFrames(_origin.DistanceTo(_destination) / unitsPerSecond);
 
         return this;
     }

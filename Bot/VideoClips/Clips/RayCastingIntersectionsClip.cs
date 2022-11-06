@@ -13,7 +13,7 @@ public class RayCastingIntersectionsClip : Clip {
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
-        var gridReadyFrame = ShowGrid(sceneLocation, centerCameraAnimation.EndFrame);
+        var gridReadyFrame = ShowGrid(sceneLocation, centerCameraAnimation.AnimationEndFrame);
         CastRay(sceneLocation, gridReadyFrame);
     }
 
@@ -28,7 +28,7 @@ public class RayCastingIntersectionsClip : Clip {
 
             AddAnimation(squareAnimation);
 
-            endFrame = Math.Max(endFrame, squareAnimation.EndFrame);
+            endFrame = Math.Max(endFrame, squareAnimation.AnimationEndFrame);
         }
 
         return endFrame;
@@ -46,13 +46,13 @@ public class RayCastingIntersectionsClip : Clip {
 
             AddAnimation(lineDrawingAnimation);
 
-            var sphereDrawingAnimation = new SphereDrawingAnimation(rayEnd.ToVector3(), 0.1f, ColorService.Instance.PointColor, lineDrawingAnimation.EndFrame)
+            var sphereDrawingAnimation = new SphereDrawingAnimation(rayEnd.ToVector3(), 0.1f, ColorService.Instance.PointColor, lineDrawingAnimation.AnimationEndFrame)
                 .WithDurationInSeconds(0.5f);
 
             AddAnimation(sphereDrawingAnimation);
 
             previousIntersection = rayCastResult.RayIntersection;
-            previousAnimationEnd = sphereDrawingAnimation.EndFrame + (int)TimeUtils.SecsToFrames(0.5f);
+            previousAnimationEnd = sphereDrawingAnimation.AnimationEndFrame + (int)TimeUtils.SecsToFrames(0.5f);
         }
 
         var cameraMoveToEndAnimation = new CenterCameraAnimation(rayCastResults.Last().RayIntersection, startAt)

@@ -52,7 +52,7 @@ public class LineDrawingAnimation : Animation<LineDrawingAnimation> {
     }
 
     public LineDrawingAnimation WithConstantRate(float unitsPerSecond) {
-        Duration = (int)TimeUtils.SecsToFrames(_lineLength / unitsPerSecond);
+        AnimationDuration = (int)TimeUtils.SecsToFrames(_lineLength / unitsPerSecond);
 
         return this;
     }

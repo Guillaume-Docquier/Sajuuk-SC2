@@ -13,10 +13,10 @@ public class GridDisplayClip : Clip {
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
-        ShowGrid(sceneLocation, centerCameraAnimation.EndFrame);
+        ShowGridClosestFirst(sceneLocation, centerCameraAnimation.AnimationEndFrame);
     }
 
-    private int ShowGrid(Vector2 origin, int startAt) {
+    private int ShowGridClosestFirst(Vector2 origin, int startAt) {
         var grid = MapAnalyzer.BuildSearchRadius(origin, 15).ToList();
         var maxDistance = grid.Max(cell => cell.DistanceTo(origin));
         var animationTotalDuration = TimeUtils.SecsToFrames(2);
@@ -29,7 +29,7 @@ public class GridDisplayClip : Clip {
             var squareAnimation = new CellDrawingAnimation(cell.ToVector3(), startFrame).WithDurationInSeconds(0.5f);
             AddAnimation(squareAnimation);
 
-            endFrame = Math.Max(endFrame, squareAnimation.EndFrame);
+            endFrame = Math.Max(endFrame, squareAnimation.AnimationEndFrame);
         }
 
         return endFrame;
