@@ -97,6 +97,12 @@ public abstract class Animation<TAnimation> : Animation where TAnimation : Anima
         return (TAnimation)this;
     }
 
+    public TAnimation WithPostAnimationDurationInFrames(int frameDuration) {
+        PostAnimationDuration = frameDuration;
+
+        return (TAnimation)this;
+    }
+
     public TAnimation WithPostAnimationDurationInSeconds(int secondsDuration) {
         PostAnimationDuration = (int)TimeUtils.SecsToFrames(secondsDuration);
 

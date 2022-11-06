@@ -74,7 +74,7 @@ public class VideoClipPlayer : IBot {
             DebuggingFlagsTracker.Instance.HandleMessage(DebuggingFlags.Coordinates);
         }
 
-        _startAt = Controller.Frame + TimeUtils.SecsToFrames(20);
+        _startAt = Controller.Frame + TimeUtils.SecsToFrames(3);
 
         _isInitialized = true;
     }
@@ -100,6 +100,7 @@ public class VideoClipPlayer : IBot {
                 yield return new GridDisplayClip            (new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new RaySteppingClip            (new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new RayCastingIntersectionsClip(new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new ChokeWidenessClip          (new Vector2(27.5f, 100.5f),  new Vector2(38.5f, 89.5f), pauseAtEndOfClipDurationSeconds: 5);
                 yield return new FullRayCastingClip         (new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new FullRayCastingClip         (new Vector2(134.5f, 133.5f), pauseAtEndOfClipDurationSeconds: 5);
                 yield return new FullRayCastingClip         (new Vector2(32.5f,  94.5f),  pauseAtEndOfClipDurationSeconds: 5);
