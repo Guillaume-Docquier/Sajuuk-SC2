@@ -63,7 +63,7 @@ public static class RegionDataStore {
 
     /// <summary>
     /// Saves the regions as an image where each region has a different color than its neighbors.
-    /// The saved imaged is actually horizontally flipped because the SC2 origin is the bottom left, while an image origin is top left.
+    /// The saved imaged is actually upside down because the SC2 origin is the bottom left, while an image origin is top left.
     /// (Oh well. Fix it if you want, I don't)
     /// </summary>
     /// <param name="mapName"></param>
