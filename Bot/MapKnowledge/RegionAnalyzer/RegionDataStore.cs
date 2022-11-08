@@ -21,15 +21,15 @@ public static class RegionDataStore {
         }
     };
 
-    private const int UpscalingFactor = 8;
+    private const int UpscalingFactor = 4;
     private static readonly HashSet<Color> RegionColors = new HashSet<Color>
     {
-        Color.Aqua,
+        Color.Cyan,
         Color.Red,
-        Color.ForestGreen,
+        Color.Lime,
         Color.Blue,
-        Color.DarkOrange,
-        Color.MediumPurple
+        Color.Orange,
+        Color.Magenta
     };
 
     private static string GetFileName(string mapName, string format) {
@@ -61,6 +61,13 @@ public static class RegionDataStore {
         return JsonSerializer.Deserialize<RegionData>(jsonString, JsonSerializerOptions)!;
     }
 
+    /// <summary>
+    /// Saves the regions as an image where each region has a different color than its neighbors.
+    /// The saved imaged is actually horizontally flipped because the SC2 origin is the bottom left, while an image origin is top left.
+    /// (Oh well. Fix it if you want, I don't)
+    /// </summary>
+    /// <param name="mapName"></param>
+    /// <param name="regions"></param>
     private static void SaveAsImage(string mapName, List<Region> regions) {
         if (!OperatingSystem.IsWindows()) {
             return;
@@ -68,21 +75,24 @@ public static class RegionDataStore {
 
         var regionsColors = new Dictionary<Region, Color>();
         foreach (var region in regions) {
-            regionsColors[region] = Color.ForestGreen;
+            regionsColors[region] = Color.Cyan;
         }
 
+        var rng = new Random();
         foreach (var region in regions) {
             var neighborColors = region.Neighbors.Select(neighbor => regionsColors[neighbor.Region]).ToHashSet();
             if (neighborColors.Contains(regionsColors[region])) {
                 // There should be enough colors so that one is always available
-                regionsColors[region] = RegionColors.Except(neighborColors).First();
+                var availableColors = RegionColors.Except(neighborColors).ToList();
+
+                var randomColorIndex = rng.Next(availableColors.Count);
+                regionsColors[region] = availableColors[randomColorIndex];
             }
         }
 
         var image = new Bitmap(MapAnalyzer.MaxX, MapAnalyzer.MaxY);
         for (var x = 0; x < image.Width; x++) {
             for (var y = 0; y < image.Height; y++) {
-                // This code needs to change if UpSamplingFactor factor changes, oh well lazy me
                 image.SetPixel(x, y, Color.Black);
             }
         }
@@ -90,13 +100,37 @@ public static class RegionDataStore {
         foreach (var region in regions) {
             var pixelColor = regionsColors[region];
             foreach (var cell in region.Cells.Select(cell => cell.AsWorldGridCorner())) {
-                // This code needs to change if UpSamplingFactor factor changes, oh well lazy me
                 image.SetPixel((int)cell.X, (int)cell.Y, pixelColor);
             }
         }
 
         var imageSaveFilePath = GetFileName(mapName, "png");
-        var upscaledImage = new Bitmap(image, new Size(image.Width * UpscalingFactor, image.Height * UpscalingFactor));
-        upscaledImage.Save(imageSaveFilePath, ImageFormat.Png);
+        ScaleImage(image, UpscalingFactor).Save(imageSaveFilePath, ImageFormat.Png);
+    }
+
+    private static Bitmap ScaleImage(Bitmap originalImage, int scalingFactor) {
+        if (!OperatingSystem.IsWindows()) {
+            return originalImage;
+        }
+
+        var scaledWidth = originalImage.Width * scalingFactor;
+        var scaledHeight = originalImage.Height * scalingFactor;
+        var scaledImage = new Bitmap(scaledWidth, scaledHeight);
+
+        for (var x = 0; x < originalImage.Width; x++) {
+            for (var y = 0; y < originalImage.Height; y++) {
+                for (var virtualX = 0; virtualX < scalingFactor; virtualX++) {
+                    for (var virtualY = 0; virtualY < scalingFactor; virtualY++) {
+                        scaledImage.SetPixel(
+                            x * scalingFactor + virtualX,
+                            y * scalingFactor + virtualY,
+                            originalImage.GetPixel(x, y)
+                        );
+                    }
+                }
+            }
+        }
+
+        return scaledImage;
     }
 }

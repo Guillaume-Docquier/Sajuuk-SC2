@@ -21,10 +21,6 @@ public class CenterCameraAnimation : Animation<CenterCameraAnimation> {
             _origin = Controller.GetCurrentCameraLocation().ToVector2();
         }
 
-        if (_origin == default) {
-            var stop = 1;
-        }
-
         var percentDone = GetAnimationPercentDone(currentClipFrame);
         var nextPosition = Vector2.Lerp(_origin, _destination, percentDone);
 

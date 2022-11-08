@@ -20,11 +20,11 @@ public class Program {
     private const string Version = "3_0_0";
     private static readonly IBot Bot = new SajuukBot(Version, scenarios: Scenarios);
 
-    private const string MapFileName = Maps.Season_2022_4.FileNames.Hardwire;
+    private const string MapFileName = Maps.Season_2022_4.FileNames.Berlingrad;
     private const Race OpponentRace = Race.Zerg;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
-    private const bool RealTime = false;
+    private const bool RealTime = true;
 
     public static GameConnection GameConnection { get; private set; }
     public static bool DebugEnabled { get; private set; }
@@ -73,7 +73,6 @@ public class Program {
 
             GameConnection = new GameConnection(stepSize: 2);
             GameConnection.RunLocal(new SajuukBot(Version, scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
-            break;
         }
     }
 
