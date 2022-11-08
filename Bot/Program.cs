@@ -73,6 +73,7 @@ public class Program {
 
             GameConnection = new GameConnection(stepSize: 2);
             GameConnection.RunLocal(new SajuukBot(Version, scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
+            break;
         }
     }
 
