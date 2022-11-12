@@ -23,7 +23,7 @@ public class BuildManager : UnitlessManager {
         if (!_buildOrderDoneAndTagged) {
             var buildOrderDone = _buildOrder.BuildRequests.All(request => request.Fulfillment.Remaining == 0);
             if (buildOrderDone) {
-                Controller.TagGame($"BuildDone_{TimeUtils.GetGameTimeString()}_Supply_{Controller.CurrentSupply}");
+                TaggingService.TagGame(TaggingService.Tag.BuildDone);
                 _buildOrderDoneAndTagged = true;
             }
         }

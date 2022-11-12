@@ -182,18 +182,6 @@ public static class Controller {
         AddAction(ActionBuilder.Chat(message, toTeam));
     }
 
-    // TODO GD Make a class out of this
-    public static void TagGame(string tag) {
-        tag = tag
-            .Replace(" ", "")
-            .Replace(".", "_")
-            .Replace("-", "_")
-            .Replace(":", "_");
-
-        Logger.Tag("Tagging game with {0}", tag);
-        AddAction(ActionBuilder.Chat($"Tag:{tag}", toTeam: true));
-    }
-
     private static int GetTotalCount(uint unitType) {
         var pendingCount = GetPendingCount(unitType, inConstruction: false);
         var constructionCount = GetUnits(UnitsTracker.OwnedUnits, unitType).Count();

@@ -28,7 +28,7 @@ public abstract class PoliteBot: IBot {
 
     public async Task OnFrame() {
         EnsureGreeting();
-        EnsureGG();
+        EnsureGg();
 
         PlayScenarios();
         await DoOnFrame();
@@ -47,13 +47,13 @@ public abstract class PoliteBot: IBot {
         if (!_greetDone && Controller.Frame >= TimeUtils.SecsToFrames(1)) {
             Controller.Chat($"Hi, my name is {Name}");
             Controller.Chat("I wish you good luck and good fun!");
-            Controller.TagGame($"v{_version}");
+            TaggingService.TagGame(TaggingService.Tag.Version, _version);
 
             _greetDone = true;
         }
     }
 
-    private void EnsureGG() {
+    private void EnsureGg() {
         var structures = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Buildings).ToList();
         if (!_admittedDefeat && structures.Count == 1 && structures.First().Integrity < 0.4) {
             Controller.Chat("gg wp");
