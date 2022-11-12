@@ -4,7 +4,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 
-namespace Bot.Managers;
+namespace Bot.Managers.WarManagement;
 
 public static class DangerScanner {
     private const float InVicinity = 12;

@@ -3,7 +3,7 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;
 
-namespace Bot.Tests.Managers.TownHallSupervisor;
+namespace Bot.Tests.Managers.EconomyManagement.TownHallSupervision;
 
 public class TownHallSupervisorTests : BaseTestClass {
     [Fact]
@@ -20,7 +20,7 @@ public class TownHallSupervisorTests : BaseTestClass {
 
         // Act
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
-        var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(townHall, Colors.Cyan);
 
         // Assert
         var farMineral = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.MineralField450).First();
@@ -42,7 +42,7 @@ public class TownHallSupervisorTests : BaseTestClass {
 
         // Act
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
-        var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(townHall, Colors.Cyan);
 
         // Assert
         var closeMineral = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.MineralField450).First();
@@ -64,7 +64,7 @@ public class TownHallSupervisorTests : BaseTestClass {
 
         // Act
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
-        var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(townHall, Colors.Cyan);
 
         // Assert
         Assert.Equal(2, townHallSupervisor.IdealCapacity);
@@ -85,7 +85,7 @@ public class TownHallSupervisorTests : BaseTestClass {
 
         // Act
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
-        var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(townHall, Colors.Cyan);
 
         // Assert
         var farGas = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.SpacePlatformGeyser).First();
@@ -107,7 +107,7 @@ public class TownHallSupervisorTests : BaseTestClass {
 
         // Act
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
-        var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(townHall, Colors.Cyan);
 
         // Assert
         var closeGas = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.SpacePlatformGeyser).First();
@@ -130,7 +130,7 @@ public class TownHallSupervisorTests : BaseTestClass {
 
         // Act
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
-        var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(townHall, Colors.Cyan);
 
         // Assert
         var extractor = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Extractor).First();
@@ -153,7 +153,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         TestUtils.NewFrame(observation);
 
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
-        var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(townHall, Colors.Cyan);
 
         // Act
         gasRaw.VespeneContents = 0;
@@ -185,7 +185,7 @@ public class TownHallSupervisorTests : BaseTestClass {
 
         // Act
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
-        var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(townHall, Colors.Cyan);
         townHallSupervisor.Assign(worker);
         townHallSupervisor.OnFrame();
 
@@ -208,7 +208,7 @@ public class TownHallSupervisorTests : BaseTestClass {
 
         var worker = TestUtils.CreateUnit(Units.Drone);
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
-        var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(townHall, Colors.Cyan);
         townHallSupervisor.Assign(worker);
         townHallSupervisor.OnFrame();
 
@@ -234,7 +234,7 @@ public class TownHallSupervisorTests : BaseTestClass {
 
         var worker = TestUtils.CreateUnit(Units.Drone);
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
-        var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(townHall, Colors.Cyan);
         townHallSupervisor.Assign(worker);
         townHallSupervisor.OnFrame();
 
@@ -262,7 +262,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         TestUtils.NewFrame(observation);
 
         var townHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
-        var townHallSupervisor = new Bot.Managers.TownHallSupervisor(townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(townHall, Colors.Cyan);
 
         var worker = TestUtils.CreateUnit(Units.Drone);
         townHallSupervisor.Assign(worker);

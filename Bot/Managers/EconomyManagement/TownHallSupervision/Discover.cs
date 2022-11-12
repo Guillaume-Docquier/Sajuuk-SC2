@@ -3,7 +3,7 @@ using System.Linq;
 using Bot.GameData;
 using Bot.GameSense;
 
-namespace Bot.Managers;
+namespace Bot.Managers.EconomyManagement.TownHallSupervision;
 
 public partial class TownHallSupervisor {
     private const int MaxDistanceToExpand = 10;

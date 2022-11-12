@@ -6,7 +6,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingStrategies;
-using Bot.Managers.ScoutManagement.ScoutSupervision;
+using Bot.Managers.ScoutManagement.ScoutingSupervision;
 using Bot.MapKnowledge;
 
 namespace Bot.Managers.ScoutManagement;

@@ -2,9 +2,10 @@
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
+using Bot.Managers.EconomyManagement.TownHallSupervision;
 using SC2APIProtocol;
 
-namespace Bot.Managers;
+namespace Bot.Managers.EconomyManagement;
 
 public sealed partial class EconomyManager {
     private class EconomyManagerDispatcher: Dispatcher<EconomyManager> {

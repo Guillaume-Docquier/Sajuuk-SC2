@@ -5,9 +5,10 @@ using System.Numerics;
 using Bot.Builds;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.Managers.EconomyManagement.TownHallSupervision;
 using Bot.MapKnowledge;
 
-namespace Bot.Managers;
+namespace Bot.Managers.EconomyManagement;
 
 public sealed partial class EconomyManager: Manager {
     private const int MaxDroneCount = 70;

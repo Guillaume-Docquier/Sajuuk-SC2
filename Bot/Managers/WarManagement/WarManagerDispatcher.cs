@@ -1,4 +1,4 @@
-﻿namespace Bot.Managers;
+﻿namespace Bot.Managers.WarManagement;
 
 public partial class WarManager {
     private class WarManagerDispatcher: Dispatcher<WarManager> {

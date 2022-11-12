@@ -1,6 +1,6 @@
 ﻿using Bot.UnitModules;
 
-namespace Bot.Managers;
+namespace Bot.Managers.WarManagement;
 
 public partial class WarManager {
     private class WarManagerAssigner: Assigner<WarManager> {

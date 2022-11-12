@@ -8,7 +8,9 @@ using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Managers;
+using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
+using Bot.Managers.WarManagement;
 using Bot.Scenarios;
 using SC2APIProtocol;
 

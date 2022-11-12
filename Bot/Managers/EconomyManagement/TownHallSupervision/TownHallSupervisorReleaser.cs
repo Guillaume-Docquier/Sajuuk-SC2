@@ -2,7 +2,7 @@
 using Bot.GameData;
 using Bot.UnitModules;
 
-namespace Bot.Managers;
+namespace Bot.Managers.EconomyManagement.TownHallSupervision;
 
 public partial class TownHallSupervisor {
     private class TownHallSupervisorReleaser: IReleaser {

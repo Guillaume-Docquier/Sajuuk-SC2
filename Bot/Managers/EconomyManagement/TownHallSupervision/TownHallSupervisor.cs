@@ -7,7 +7,7 @@ using Bot.GameSense;
 using Bot.UnitModules;
 using SC2APIProtocol;
 
-namespace Bot.Managers;
+namespace Bot.Managers.EconomyManagement.TownHallSupervision;
 
 public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     private const int MaxPerExtractor = 3;

@@ -11,7 +11,7 @@ using Bot.MapKnowledge;
 using Bot.Utils;
 using SC2APIProtocol;
 
-namespace Bot.Managers;
+namespace Bot.Managers.WarManagement;
 
 public partial class WarManager: Manager {
     private const int GuardDistance = 6;

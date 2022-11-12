@@ -1,4 +1,4 @@
-﻿namespace Bot.Managers.ScoutManagement.ScoutSupervision;
+﻿namespace Bot.Managers.ScoutManagement.ScoutingSupervision;
 
 public partial class ScoutSupervisor {
     private class ScoutSupervisorAssigner : Assigner<ScoutSupervisor> {

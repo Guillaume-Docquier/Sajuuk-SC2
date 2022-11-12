@@ -6,7 +6,7 @@ using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
 
-namespace Bot.Managers.ScoutManagement.ScoutSupervision;
+namespace Bot.Managers.ScoutManagement.ScoutingSupervision;
 
 public partial class ScoutSupervisor : Supervisor {
     public readonly ScoutingTask ScoutingTask;

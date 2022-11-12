@@ -1,7 +1,7 @@
 ﻿using Bot.GameData;
 using Bot.UnitModules;
 
-namespace Bot.Managers;
+namespace Bot.Managers.EconomyManagement;
 
 public sealed partial class EconomyManager {
     private class EconomyManagerAssigner: Assigner<EconomyManager> {
