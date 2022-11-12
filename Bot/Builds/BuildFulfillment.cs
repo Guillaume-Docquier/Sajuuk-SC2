@@ -20,6 +20,8 @@ public abstract class BuildFulfillment {
 
     public bool Queue => BuildRequest.Queue;
 
+    public BuildRequestPriority Priority => BuildRequest.Priority;
+
     public virtual int Remaining => Math.Max(0, BuildRequest.Requested - Fulfilled);
     public abstract int Fulfilled { get; }
 

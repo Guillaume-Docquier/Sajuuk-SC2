@@ -16,13 +16,13 @@ namespace Bot.Debugging;
 public class BotDebugger {
     private float _maxMineralRate = 0;
 
-    public void Debug(IEnumerable<BuildRequest> buildOrder, IEnumerable<BuildFulfillment> managerBuildRequests) {
+    public void Debug(List<BuildFulfillment> managerBuildRequests) {
         if (!Program.DebugEnabled) {
             return;
         }
 
         DebugHelp();
-        DebugBuildOrder(buildOrder, managerBuildRequests);
+        DebugBuildRequests(managerBuildRequests);
         DebugEnemyDetectors();
         DebugWalkableAreas();
         DebugIncomeRate();
@@ -48,30 +48,22 @@ public class BotDebugger {
         Program.GraphicalDebugger.AddTextGroup(help, virtualPos: new Point { X = 0.02f, Y = 0.46f });
     }
 
-    private static void DebugBuildOrder(IEnumerable<BuildRequest> buildOrder, IEnumerable<BuildFulfillment> managerBuildRequests) {
+    private static void DebugBuildRequests(List<BuildFulfillment> managerBuildRequests) {
         if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.BuildOrder)) {
             return;
         }
 
-        var nextBuildStepsData = buildOrder
-            .Take(3)
-            .Select(nextBuildStep => nextBuildStep.ToString())
-            .ToList();
-
-        if (nextBuildStepsData.Count > 0) {
-            nextBuildStepsData.Insert(0, $"Next {nextBuildStepsData.Count} bot builds:\n");
-        }
-
+        // TODO GD The display is a bit confusing because AtSupply 0 will be at the end
         var managersBuildStepsData = managerBuildRequests
             .Select(nextBuildStep => nextBuildStep.ToString())
+            .Take(25)
             .ToList();
 
         if (managersBuildStepsData.Count > 0) {
-            nextBuildStepsData.Add($"\nNext {managersBuildStepsData.Count} manager requests:\n");
+            managersBuildStepsData.Insert(0, $"\nNext {managersBuildStepsData.Count}/{managerBuildRequests.Count} build requests:\n");
         }
-        nextBuildStepsData.AddRange(managersBuildStepsData);
 
-        Program.GraphicalDebugger.AddTextGroup(nextBuildStepsData, virtualPos: new Point { X = 0.02f, Y = 0.02f });
+        Program.GraphicalDebugger.AddTextGroup(managersBuildStepsData, virtualPos: new Point { X = 0.02f, Y = 0.02f });
     }
 
     private static void DebugEnemyDetectors() {

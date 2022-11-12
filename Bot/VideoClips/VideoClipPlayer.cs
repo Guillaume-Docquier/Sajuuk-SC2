@@ -31,7 +31,7 @@ public class VideoClipPlayer : IBot {
 
     public async Task OnFrame() {
         await EnsureInitialization();
-        _debugger.Debug(Enumerable.Empty<BuildRequest>(), Enumerable.Empty<BuildFulfillment>());
+        _debugger.Debug(new List<BuildFulfillment>());
 
         foreach (var unit in Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone).Where(unit => unit.HasOrders())) {
             unit.Stop();

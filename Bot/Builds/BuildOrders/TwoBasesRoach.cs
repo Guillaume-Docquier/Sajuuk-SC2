@@ -35,11 +35,15 @@ public class TwoBasesRoach : IBuildOrder {
             new TargetBuildRequest  (BuildType.Research,    Upgrades.TunnelingClaws,           atSupply: 50, targetQuantity: 1),
             new QuantityBuildRequest(BuildType.Train,       Units.Roach,                       atSupply: 50, quantity: 8),
             // All in
-            new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    quantity: 2),
-            new QuantityBuildRequest(BuildType.Train,       Units.Roach,                       quantity: 8),
-            new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    quantity: 5),
-            new TargetBuildRequest  (BuildType.Research,    Upgrades.GlialReconstitution,      targetQuantity: 1, queue: true),
+            new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 50, quantity: 2),
+            new QuantityBuildRequest(BuildType.Train,       Units.Roach,                       atSupply: 50, quantity: 8),
+            new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 50, quantity: 5),
+            new TargetBuildRequest  (BuildType.Research,    Upgrades.GlialReconstitution,      atSupply: 50, targetQuantity: 1, queue: true),
         };
+
+        foreach (var buildRequest in _buildRequests) {
+            buildRequest.Priority = BuildRequestPriority.BuildOrder;
+        }
     }
 
     public void PruneRequests() {

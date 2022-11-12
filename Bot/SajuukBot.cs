@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Bot.Builds;
 using Bot.Builds.BuildOrders;
@@ -7,6 +8,7 @@ using Bot.Debugging;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers;
+using Bot.Managers.BuildManagement;
 using Bot.Managers.ScoutManagement;
 using Bot.Scenarios;
 using SC2APIProtocol;
@@ -14,16 +16,7 @@ using SC2APIProtocol;
 namespace Bot;
 
 public class SajuukBot: PoliteBot {
-    private readonly IBuildOrder _buildOrder = new TwoBasesRoach();
-    private IEnumerable<BuildRequest> RemainingBuildOrder => _buildOrder
-        .BuildRequests
-        .ToList() // Make a copy in case we edit _buildOrder
-        .Where(buildRequest => buildRequest.Fulfillment.Remaining > 0);
-
     private readonly List<Manager> _managers = new List<Manager>();
-
-    private const int PriorityChangePeriod = 100;
-    private int _managerPriorityIndex = 0;
 
     public override string Name => "Sajuuk";
 
@@ -41,23 +34,15 @@ public class SajuukBot: PoliteBot {
             Logger.Metric("Collected Minerals: {0}", Controller.Observation.Observation.Score.ScoreDetails.CollectedMinerals);
         }
 
-        FollowBuildOrder();
-
         _managers.ForEach(manager => manager.OnFrame());
 
-        // TODO GD Most likely we will consume all the larvae in one shot
-        // TODO GD A larvae round robin might be more interesting?
-        // Make sure everyone gets a turn
-        if (Controller.Frame % PriorityChangePeriod == 0) {
-            _managerPriorityIndex = (_managerPriorityIndex + 1) % _managers.Count;
-        }
+        var managerRequests = GetManagersBuildRequests();
+        AddressManagerRequests(managerRequests);
 
-        AddressManagerRequests();
-        FixSupply();
-
-        _buildOrder.PruneRequests();
-
-        _debugger.Debug(RemainingBuildOrder, GetManagersBuildRequests());
+        _debugger.Debug(managerRequests
+            .SelectMany(groupedBySupply => groupedBySupply.SelectMany(request => request))
+            .ToList()
+        );
 
         foreach (var unit in UnitsTracker.UnitsByTag.Values) {
             unit.ExecuteModules();
@@ -67,6 +52,8 @@ public class SajuukBot: PoliteBot {
     }
 
     private void InitManagers() {
+        // TODO GD Add a supply manager
+        _managers.Add(new BuildManager(new TwoBasesRoach()));
         _managers.Add(new ScoutManager());
         _managers.Add(new EconomyManager());
         _managers.Add(new WarManager());
@@ -74,75 +61,56 @@ public class SajuukBot: PoliteBot {
         _managers.Add(new UpgradesManager());
     }
 
-    private void FollowBuildOrder() {
-        foreach (var buildStep in RemainingBuildOrder) {
-            while (buildStep.Fulfillment.Remaining > 0) {
-                if (Controller.CurrentSupply < buildStep.AtSupply || Controller.ExecuteBuildStep(buildStep.Fulfillment) != Controller.RequestResult.Ok) {
-                    return;
+    private void AddressManagerRequests(List<List<List<BuildFulfillment>>> groupedManagersBuildRequests) {
+        // TODO GD Add blocking steps, ensure expands
+        foreach (var priorityGroups in groupedManagersBuildRequests) {
+            foreach (var supplyGroups in priorityGroups) {
+                if (supplyGroups[0].AtSupply > Controller.CurrentSupply) {
+                    continue;
                 }
 
-                buildStep.Fulfillment.Fulfill(1);
+                // TODO GD Interweave requests (i.e if we have 2 requests, 10 roaches and 10 drones, do 1 roach 1 drone, 1 roach 1 drone, etc)
+                foreach (var buildStep in supplyGroups) {
+                    while (buildStep.Remaining > 0) {
+                        var buildStepResult = Controller.ExecuteBuildStep(buildStep);
+                        if (buildStepResult == Controller.RequestResult.Ok) {
+                            buildStep.Fulfill(1);
+                            // TODO GD Look back if supply has unlocked other build orders
+                        }
+                        // Don't retry expands if they are all taken
+                        else if (buildStep.BuildType == BuildType.Expand && buildStepResult == Controller.RequestResult.NoSuitableLocation) {
+                            buildStep.Fulfill(1);
+                        }
+                        else {
+                            // Impossible, stop trying
+                            break;
+                        }
+                    }
+                }
             }
         }
     }
 
-    private void AddressManagerRequests() {
-        // TODO GD Check if we should stop when we can't fulfill a build order
-        // Do everything you can
-        foreach (var buildStep in GetManagersBuildRequests()) {
-            if (buildStep.AtSupply > Controller.CurrentSupply) {
-                continue;
-            }
+    /// <summary>
+    /// Returns the managers build requests grouped by priority and supply required
+    /// </summary>
+    /// <returns>Nested lists containing the managers build requests grouped by priority and supply required</returns>
+    private List<List<List<BuildFulfillment>>> GetManagersBuildRequests() {
+        var priorityGroups = _managers
+            .SelectMany(manager => manager.BuildFulfillments.Where(buildFulfillment => buildFulfillment.Remaining > 0))
+            .GroupBy(buildRequest => buildRequest.Priority)
+            .OrderByDescending(group => group.Key);
 
-            while (!IsBuildOrderBlocking() && buildStep.Remaining > 0) {
-                var buildStepResult = Controller.ExecuteBuildStep(buildStep);
-                if (buildStepResult == Controller.RequestResult.Ok) {
-                    buildStep.Fulfill(1);
-                    FollowBuildOrder(); // Sometimes the build order will be unblocked
-                }
-                // Don't retry expands if they are all taken
-                else if (buildStep.BuildType == BuildType.Expand && buildStepResult == Controller.RequestResult.NoSuitableLocation) {
-                    buildStep.Fulfill(1);
-                }
-                else {
-                    break;
-                }
-            }
+        var buildFulfillments = priorityGroups
+            .Select(priorityGroup => priorityGroup
+                .GroupBy(buildRequest => buildRequest.AtSupply)
+                // AtSupply 0 should be last because it means we don't care about the supply value
+                .OrderBy(group => group.Key == 0 ? int.MaxValue : group.Key)
+                .Select(supplyGroup => supplyGroup.ToList())
+                .ToList()
+            )
+            .ToList();
 
-            // Ensure expands get made
-            if (buildStep.BuildType == BuildType.Expand && buildStep.Remaining > 0) {
-                break;
-            }
-        }
-    }
-
-    private bool IsBuildOrderBlocking() {
-        var nextBuildStep = RemainingBuildOrder.FirstOrDefault();
-
-        return nextBuildStep != null
-               &&nextBuildStep.AtSupply <= Controller.CurrentSupply
-               && Controller.IsUnlocked(nextBuildStep.UnitOrUpgradeType);
-    }
-
-    private IEnumerable<BuildFulfillment> GetManagersBuildRequests() {
-        var buildFulfillments = new List<BuildFulfillment>();
-        for (var i = 0; i < _managers.Count; i++) {
-            var managerIndex = (_managerPriorityIndex + i) % _managers.Count;
-
-            buildFulfillments.AddRange(_managers[managerIndex].BuildFulfillments.Where(buildFulfillment => buildFulfillment.Remaining > 0));
-        }
-
-        // Prioritize expands
-        return buildFulfillments.OrderBy(buildRequest => buildRequest.BuildType == BuildType.Expand ? 0 : 1);
-    }
-
-    // TODO GD Handle overlords dying early game
-    private void FixSupply() {
-        if (!RemainingBuildOrder.Any()
-            && Controller.AvailableSupply <= 2
-            && Controller.MaxSupply < KnowledgeBase.MaxSupplyAllowed
-            && !Controller.GetProducersCarryingOrders(Units.Overlord).Any()) {
-            _buildOrder.AddRequest(new QuantityBuildRequest(BuildType.Train, Units.Overlord, quantity: 4));
-        }
+        return buildFulfillments;
     }
 }

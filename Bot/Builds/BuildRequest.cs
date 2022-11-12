@@ -18,12 +18,30 @@ public abstract class BuildRequest {
 
     public readonly bool Queue;
 
+    public BuildRequestPriority Priority = BuildRequestPriority.Normal;
+
     public BuildRequest(BuildType buildType, uint unitOrUpgradeType, int quantity, uint atSupply, bool queue) {
         BuildType = buildType;
         UnitOrUpgradeType = unitOrUpgradeType;
         AtSupply = atSupply;
         Requested = quantity;
         Queue = queue;
+    }
+
+    public override string ToString() {
+        var buildStepUnitOrUpgradeName = BuildType == BuildType.Research
+            ? KnowledgeBase.GetUpgradeData(UnitOrUpgradeType).Name
+            : $"{Fulfillment.Fulfilled}/{Requested} {KnowledgeBase.GetUnitTypeData(UnitOrUpgradeType).Name}";
+
+        var when = $"at {AtSupply} supply";
+        if (AtSupply == 0) {
+            when = "";
+        }
+        else if (AtSupply <= Controller.CurrentSupply) {
+            when = "now";
+        }
+
+        return $"{BuildType.ToString()} {buildStepUnitOrUpgradeName} {when}";
     }
 }
 
@@ -35,16 +53,6 @@ public class QuantityBuildRequest: BuildRequest {
     protected override BuildFulfillment GenerateBuildFulfillment() {
         return new QuantityFulfillment(this);
     }
-
-    public override string ToString() {
-        var buildStepUnitOrUpgradeName = BuildType == BuildType.Research
-            ? KnowledgeBase.GetUpgradeData(UnitOrUpgradeType).Name
-            : $"{Fulfillment.Remaining} {KnowledgeBase.GetUnitTypeData(UnitOrUpgradeType).Name}";
-
-        var when = AtSupply > Controller.CurrentSupply ? $"at {AtSupply} supply" : "";
-
-        return $"{BuildType.ToString()} {buildStepUnitOrUpgradeName} {when}";
-    }
 }
 
 public class TargetBuildRequest: BuildRequest {
@@ -54,15 +62,5 @@ public class TargetBuildRequest: BuildRequest {
 
     protected override BuildFulfillment GenerateBuildFulfillment() {
         return new TargetFulfillment(this);
-    }
-
-    public override string ToString() {
-        var buildStepUnitOrUpgradeName = BuildType == BuildType.Research
-            ? KnowledgeBase.GetUpgradeData(UnitOrUpgradeType).Name
-            : $"{Fulfillment.Fulfilled}/{Requested} {KnowledgeBase.GetUnitTypeData(UnitOrUpgradeType).Name}";
-
-        var when = AtSupply > Controller.CurrentSupply ? $"at {AtSupply} supply" : "";
-
-        return $"{BuildType.ToString()} {buildStepUnitOrUpgradeName} {when}";
     }
 }
