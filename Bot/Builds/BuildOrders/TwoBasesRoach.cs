@@ -43,6 +43,7 @@ public class TwoBasesRoach : IBuildOrder {
 
         foreach (var buildRequest in _buildRequests) {
             buildRequest.Priority = BuildRequestPriority.BuildOrder;
+            buildRequest.IsBlocking = true;
         }
     }
 

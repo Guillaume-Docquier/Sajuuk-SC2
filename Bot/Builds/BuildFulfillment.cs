@@ -20,12 +20,10 @@ public abstract class BuildFulfillment {
     }
 
     public BuildType BuildType => BuildRequest.BuildType;
-
-    public uint AtSupply => BuildRequest.AtSupply;
-
     public uint UnitOrUpgradeType => BuildRequest.UnitOrUpgradeType;
-
+    public uint AtSupply => BuildRequest.AtSupply;
     public bool Queue => BuildRequest.Queue;
+    public bool IsBlocking => BuildRequest.IsBlocking;
 
     public BuildRequestPriority Priority => BuildRequest.Priority;
 

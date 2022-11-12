@@ -9,14 +9,11 @@ public abstract class BuildRequest {
     protected abstract BuildFulfillment GenerateBuildFulfillment();
 
     public readonly BuildType BuildType;
-
-    public readonly uint AtSupply;
-
     public readonly uint UnitOrUpgradeType;
-
+    public readonly uint AtSupply;
     public int Requested;
-
     public readonly bool Queue;
+    public bool IsBlocking = false;
 
     public BuildRequestPriority Priority = BuildRequestPriority.Normal;
 

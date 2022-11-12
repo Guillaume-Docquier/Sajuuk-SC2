@@ -94,6 +94,10 @@ public class SajuukBot: PoliteBot {
                         else if (buildStep.BuildType == BuildType.Expand && buildStepResult == Controller.RequestResult.NoSuitableLocation) {
                             buildStep.Fulfill(1);
                         }
+                        else if (ShouldBlock(buildStep)) {
+                            // We must wait to fulfill this one
+                            return;
+                        }
                         else {
                             // Not possible anymore, go to next
                             break;
@@ -129,5 +133,15 @@ public class SajuukBot: PoliteBot {
             .ToList();
 
         return buildFulfillments;
+    }
+
+    /// <summary>
+    /// Determines if a BuildFulfillment should block the build.
+    /// A blocking buildFulfillment is ignored if it relies on tech that's not ready yet, partially to allow said tech to be built.
+    /// </summary>
+    /// <param name="buildFulfillment"></param>
+    /// <returns></returns>
+    private static bool ShouldBlock(BuildFulfillment buildFulfillment) {
+        return buildFulfillment.IsBlocking && Controller.IsUnlocked(buildFulfillment.UnitOrUpgradeType);
     }
 }
