@@ -1,13 +1,15 @@
 ﻿using System.Collections.Generic;
 using Bot.GameData;
+using Bot.GameSense.EnemyStrategyTracking;
 
-namespace Bot.Builds;
+namespace Bot.Builds.BuildOrders;
 
-using BuildOrder = List<BuildRequest>;
+public class TwoBasesRoach : IBuildOrder {
+    public List<BuildRequest> BuildRequests { get; }
 
-public static class BuildOrders {
-    public static BuildOrder TwoBasesRoach() {
-        return new BuildOrder(new BuildRequest[]
+    // TODO GD Tweak based on matchup?
+    public TwoBasesRoach() {
+        BuildRequests = new List<BuildRequest>
         {
             new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 13),
             new QuantityBuildRequest(BuildType.Expand,      Units.Hatchery,                    atSupply: 16),                    // TODO GD Need to be able to say 1 expand as opposed to 2 hatcheries
@@ -34,53 +36,10 @@ public static class BuildOrders {
             new QuantityBuildRequest(BuildType.Train,       Units.Roach,                       quantity: 8),
             new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    quantity: 5),
             new TargetBuildRequest  (BuildType.Research,    Upgrades.GlialReconstitution,      targetQuantity: 1, queue: true),
-        });
+        };
     }
 
-    public static BuildOrder TestGasMining() {
-        return new BuildOrder(new[]
-        {
-            new QuantityBuildRequest(BuildType.Build, Units.Extractor),
-            new QuantityBuildRequest(BuildType.Train, Units.Overlord, atSupply: 13),
-            new QuantityBuildRequest(BuildType.Build, Units.Extractor),
-            new QuantityBuildRequest(BuildType.Train, Units.Overlord, atSupply: 19),
-            new QuantityBuildRequest(BuildType.Train, Units.Overlord, atSupply: 19),
-        });
+    public void ReactTo(EnemyStrategy enemyStrategy) {
+        throw new System.NotImplementedException();
     }
-
-    public static BuildOrder TestExpands() {
-        return new BuildOrder(new[]
-        {
-            new QuantityBuildRequest(BuildType.Train,  Units.Overlord,     atSupply: 13),
-            new QuantityBuildRequest(BuildType.Build,  Units.Extractor,    atSupply: 16),
-            new QuantityBuildRequest(BuildType.Expand, Units.Hatchery,     atSupply: 16),
-            new QuantityBuildRequest(BuildType.Build,  Units.SpawningPool, atSupply: 17),
-            new QuantityBuildRequest(BuildType.Train,  Units.Overlord,     atSupply: 19),
-            new QuantityBuildRequest(BuildType.Build,  Units.Extractor,    atSupply: 20, quantity: 3),
-            new QuantityBuildRequest(BuildType.Train,  Units.Queen,        atSupply: 20),
-            new QuantityBuildRequest(BuildType.Expand, Units.Hatchery,     atSupply: 24),
-            new QuantityBuildRequest(BuildType.Train,  Units.Overlord,     atSupply: 30, quantity: 2),
-            new QuantityBuildRequest(BuildType.Train,  Units.Queen,        atSupply: 30, quantity: 2),
-            new QuantityBuildRequest(BuildType.Train,  Units.Overlord,     atSupply: 50),
-            new QuantityBuildRequest(BuildType.Train,  Units.Overlord,     atSupply: 63),
-            new QuantityBuildRequest(BuildType.Train,  Units.Overlord,     atSupply: 70, quantity: 6),
-        });
-    }
-
-    public static BuildOrder TestSpeedMining() {
-        return new BuildOrder(new BuildRequest[]
-        {
-            new QuantityBuildRequest(BuildType.Train, Units.Drone,    atSupply: 12),
-            new QuantityBuildRequest(BuildType.Train, Units.Overlord, atSupply: 13),
-            new TargetBuildRequest  (BuildType.Train, Units.Drone,    atSupply: 13, targetQuantity: 16),
-        });
-    }
-}
-
-public enum BuildType {
-    Train,
-    Build,
-    Research,
-    UpgradeInto,
-    Expand,
 }

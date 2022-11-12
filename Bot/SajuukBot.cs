@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Bot.Builds;
+using Bot.Builds.BuildOrders;
 using Bot.Debugging;
 using Bot.GameData;
 using Bot.GameSense;
@@ -13,9 +14,9 @@ using SC2APIProtocol;
 namespace Bot;
 
 public class SajuukBot: PoliteBot {
-    private readonly List<BuildRequest> _buildOrder = BuildOrders.TwoBasesRoach();
+    private readonly IBuildOrder _buildOrder = new TwoBasesRoach();
     private IEnumerable<BuildRequest> RemainingBuildOrder => _buildOrder
-        .ToList() // Make a copy in case we edit _buildOrder
+        .BuildRequests // Make a copy in case we edit _buildOrder
         .Where(buildRequest => buildRequest.Fulfillment.Remaining > 0);
 
     private readonly List<Manager> _managers = new List<Manager>();
@@ -81,7 +82,7 @@ public class SajuukBot: PoliteBot {
             }
 
             if (buildStep.Fulfillment is QuantityFulfillment) {
-                _buildOrder.Remove(buildStep);
+                _buildOrder.BuildRequests.Remove(buildStep);
             }
         }
     }
@@ -142,7 +143,7 @@ public class SajuukBot: PoliteBot {
             && Controller.AvailableSupply <= 2
             && Controller.MaxSupply < KnowledgeBase.MaxSupplyAllowed
             && !Controller.GetProducersCarryingOrders(Units.Overlord).Any()) {
-            _buildOrder.Add(new QuantityBuildRequest(BuildType.Train, Units.Overlord, quantity: 4));
+            _buildOrder.BuildRequests.Add(new QuantityBuildRequest(BuildType.Train, Units.Overlord, quantity: 4));
         }
     }
 }
