@@ -4,11 +4,10 @@ using System.Linq;
 using Bot.Builds;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.Managers.BuildManagement;
 
 namespace Bot.Managers;
 
-public class SupplyManager : Manager {
+public class SupplyManager : UnitlessManager {
     private const int SupplyPerHatchery = 6;
     private const int SupplyPerOverlord = 8;
 
@@ -20,22 +19,11 @@ public class SupplyManager : Manager {
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
-    protected override IAssigner Assigner { get; }
-    protected override IDispatcher Dispatcher { get; }
-    protected override IReleaser Releaser { get; }
 
     public SupplyManager(BuildManager buildManager) {
-        Assigner = new DummyAssigner();
-        Dispatcher = new DummyDispatcher();
-        Releaser = new DummyReleaser();
-
         _buildManager = buildManager;
         _buildRequests.Add(_overlordsBuildRequest);
     }
-
-    protected override void AssignmentPhase() {}
-
-    protected override void DispatchPhase() {}
 
     protected override void ManagementPhase() {
         MaintainOverlords();
@@ -77,17 +65,5 @@ public class SupplyManager : Manager {
 
     private int GetRequestedSupportedSupply() {
         return _overlordsBuildRequest.Requested * SupplyPerOverlord + GetSupplyFromHatcheries();
-    }
-
-    private class DummyAssigner : IAssigner {
-        public void Assign(Unit unit) {}
-    }
-
-    private class DummyDispatcher : IDispatcher {
-        public void Dispatch(Unit unit) {}
-    }
-
-    private class DummyReleaser : IReleaser {
-        public void Release(Unit unit) {}
     }
 }

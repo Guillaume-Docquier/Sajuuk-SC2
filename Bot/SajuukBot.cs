@@ -8,7 +8,6 @@ using Bot.Debugging;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers;
-using Bot.Managers.BuildManagement;
 using Bot.Managers.ScoutManagement;
 using Bot.Scenarios;
 using SC2APIProtocol;

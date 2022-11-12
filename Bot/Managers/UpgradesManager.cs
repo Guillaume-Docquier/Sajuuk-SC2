@@ -7,24 +7,16 @@ using Bot.Utils;
 
 namespace Bot.Managers;
 
-public class UpgradesManager : Manager {
+public class UpgradesManager : UnitlessManager {
     private readonly BuildRequest _evolutionChamberBuildRequest = new TargetBuildRequest(BuildType.Build, Units.EvolutionChamber, targetQuantity: 0);
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
     private readonly HashSet<uint> _requestedUpgrades = new HashSet<uint>();
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(request => request.Fulfillment);
 
-    protected override IAssigner Assigner { get; } = new DummyAssigner();
-    protected override IDispatcher Dispatcher { get; } = new DummyDispatcher();
-    protected override IReleaser Releaser { get; } = new DummyReleaser();
-
     public UpgradesManager() {
         _buildRequests.Add(_evolutionChamberBuildRequest);
     }
-
-    protected override void AssignmentPhase() {}
-
-    protected override void DispatchPhase() {}
 
     protected override void ManagementPhase() {
         // We assume the build order takes care of ZergMissileWeaponsLevel1
@@ -134,17 +126,5 @@ public class UpgradesManager : Manager {
 
     private static bool AreResearchedOrInProgress(IEnumerable<uint> upgradeIds) {
         return upgradeIds.All(upgradeId => Controller.ResearchedUpgrades.Contains(upgradeId) || Controller.IsResearchInProgress(upgradeId));
-    }
-
-    private class DummyAssigner : IAssigner {
-        public void Assign(Unit unit) {}
-    }
-
-    private class DummyDispatcher : IDispatcher {
-        public void Dispatch(Unit unit) {}
-    }
-
-    private class DummyReleaser : IReleaser {
-        public void Release(Unit unit) {}
     }
 }
