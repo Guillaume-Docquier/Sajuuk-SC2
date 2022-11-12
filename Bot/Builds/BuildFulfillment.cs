@@ -5,10 +5,17 @@ using Bot.GameSense;
 
 namespace Bot.Builds;
 
+/// <summary>
+/// A proxy class for a BuildRequest that prevents consumers from setting certain properties reserved to producers.
+/// i.e: BuildRequest.Requested
+///
+/// It also provides a consumer focused API
+/// i.e: Fulfill
+/// </summary>
 public abstract class BuildFulfillment {
     protected readonly BuildRequest BuildRequest;
 
-    public BuildFulfillment(BuildRequest buildRequest) {
+    protected BuildFulfillment(BuildRequest buildRequest) {
         BuildRequest = buildRequest;
     }
 

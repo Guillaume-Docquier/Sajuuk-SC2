@@ -20,7 +20,7 @@ public abstract class BuildRequest {
 
     public BuildRequestPriority Priority = BuildRequestPriority.Normal;
 
-    public BuildRequest(BuildType buildType, uint unitOrUpgradeType, int quantity, uint atSupply, bool queue) {
+    protected BuildRequest(BuildType buildType, uint unitOrUpgradeType, int quantity, uint atSupply, bool queue) {
         BuildType = buildType;
         UnitOrUpgradeType = unitOrUpgradeType;
         AtSupply = atSupply;

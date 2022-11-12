@@ -7,5 +7,6 @@
 public enum BuildRequestPriority {
     Normal = 0,
     BuildOrder = 1,
-    Important = 2,
+    Notable = 2,
+    Important = 3,
 }

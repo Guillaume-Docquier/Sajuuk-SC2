@@ -38,6 +38,10 @@ public class UpgradesManager : UnitlessManager {
         ImproveResearchInfrastructure();
         AttemptResearchTier2(roachCount);
         AttemptResearchTier3(roachCount);
+
+        foreach (var buildRequest in _buildRequests) {
+            buildRequest.Priority = BuildRequestPriority.Notable;
+        }
     }
 
     public override string ToString() {

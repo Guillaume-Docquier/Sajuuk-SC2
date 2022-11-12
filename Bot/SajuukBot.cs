@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Bot.Builds;
 using Bot.Builds.BuildOrders;
 using Bot.Debugging;
-using Bot.GameData;
+using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Managers;
 using Bot.Managers.ScoutManagement;
@@ -62,11 +62,19 @@ public class SajuukBot: PoliteBot {
         _managers.Add(new UpgradesManager());
     }
 
-    private void AddressManagerRequests(List<List<List<BuildFulfillment>>> groupedManagersBuildRequests) {
+    /// <summary>
+    /// Try to fulfill the manager requests in a smart order.
+    /// Orders are sorted by priority and supply timing.
+    /// When we add an order that changes the supply, we look back to see if a previous order now meets its timing.
+    /// </summary>
+    /// <param name="groupedManagersBuildRequests"></param>
+    private static void AddressManagerRequests(List<List<List<BuildFulfillment>>> groupedManagersBuildRequests) {
         // TODO GD Add blocking steps, ensure expands
+        var lookBackSupplyTarget = long.MaxValue;
         foreach (var priorityGroups in groupedManagersBuildRequests) {
             foreach (var supplyGroups in priorityGroups) {
                 if (supplyGroups[0].AtSupply > Controller.CurrentSupply) {
+                    lookBackSupplyTarget = Math.Min(lookBackSupplyTarget, supplyGroups[0].AtSupply);
                     continue;
                 }
 
@@ -76,14 +84,18 @@ public class SajuukBot: PoliteBot {
                         var buildStepResult = Controller.ExecuteBuildStep(buildStep);
                         if (buildStepResult == Controller.RequestResult.Ok) {
                             buildStep.Fulfill(1);
-                            // TODO GD Look back if supply has unlocked other build orders
+
+                            if (Controller.CurrentSupply >= lookBackSupplyTarget) {
+                                AddressManagerRequests(groupedManagersBuildRequests);
+                                return;
+                            }
                         }
                         // Don't retry expands if they are all taken
                         else if (buildStep.BuildType == BuildType.Expand && buildStepResult == Controller.RequestResult.NoSuitableLocation) {
                             buildStep.Fulfill(1);
                         }
                         else {
-                            // Impossible, stop trying
+                            // Not possible anymore, go to next
                             break;
                         }
                     }
@@ -97,7 +109,11 @@ public class SajuukBot: PoliteBot {
     /// </summary>
     /// <returns>Nested lists containing the managers build requests grouped by priority and supply required</returns>
     private List<List<List<BuildFulfillment>>> GetManagersBuildRequests() {
-        var priorityGroups = _managers
+        // We shuffle so that the requests are not always in the same order
+        // We cannot shuffle request groups because we want to preserve the relative order of a manager's requests
+        var shuffledManagers = _managers.ToList().Shuffle();
+
+        var priorityGroups = shuffledManagers
             .SelectMany(manager => manager.BuildFulfillments.Where(buildFulfillment => buildFulfillment.Remaining > 0))
             .GroupBy(buildRequest => buildRequest.Priority)
             .OrderByDescending(group => group.Key);

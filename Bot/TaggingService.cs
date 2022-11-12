@@ -36,11 +36,11 @@ public static class TaggingService {
     private static string FormatTag(Tag tag, params object[] parameters) {
         return tag switch
         {
-            Tag.EarlyAttack => $"{tag:G}_{TimeUtils.GetGameTimeString()}",
-            Tag.BuildDone => $"{tag:G}_{TimeUtils.GetGameTimeString()}_Supply_{Controller.CurrentSupply}",
-            Tag.EnemyStrategy => $"{tag:G}_{parameters[0]}_{TimeUtils.GetGameTimeString()}",
+            Tag.EarlyAttack => $"{tag}_{TimeUtils.GetGameTimeString()}",
+            Tag.BuildDone => $"{tag}_{TimeUtils.GetGameTimeString()}_Supply_{Controller.CurrentSupply}",
+            Tag.EnemyStrategy => $"{tag}_{parameters[0]}_{TimeUtils.GetGameTimeString()}",
             Tag.Version => $"v{parameters[0]}",
-            _ => tag.ToString("G"),
+            _ => tag.ToString(),
         };
     }
 
