@@ -52,8 +52,10 @@ public class SajuukBot: PoliteBot {
     }
 
     private void InitManagers() {
-        // TODO GD Add a supply manager
-        _managers.Add(new BuildManager(new TwoBasesRoach()));
+        var buildManager = new BuildManager(new TwoBasesRoach());
+        _managers.Add(buildManager);
+
+        _managers.Add(new SupplyManager(buildManager));
         _managers.Add(new ScoutManager());
         _managers.Add(new EconomyManager());
         _managers.Add(new WarManager());
