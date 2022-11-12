@@ -22,11 +22,11 @@ public class UpgradesManager : Manager {
         _buildRequests.Add(_evolutionChamberBuildRequest);
     }
 
-    protected override void AssignUnits() {}
+    protected override void AssignmentPhase() {}
 
-    protected override void DispatchUnits() {}
+    protected override void DispatchPhase() {}
 
-    protected override void Manage() {
+    protected override void ManagementPhase() {
         // We assume the build order takes care of ZergMissileWeaponsLevel1
         if (!Controller.ResearchedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel1)) {
             return;

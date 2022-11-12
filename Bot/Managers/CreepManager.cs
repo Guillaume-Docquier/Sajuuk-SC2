@@ -14,11 +14,11 @@ public class CreepManager: Manager {
     protected override IDispatcher Dispatcher { get; } = new DummyDispatcher();
     protected override IReleaser Releaser { get; } = new DummyReleaser();
 
-    protected override void AssignUnits() {}
+    protected override void AssignmentPhase() {}
 
-    protected override void DispatchUnits() {}
+    protected override void DispatchPhase() {}
 
-    protected override void Manage() {
+    protected override void ManagementPhase() {
         foreach (var creepTumor in Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.CreepTumor)) {
             TumorCreepSpreadModule.Install(creepTumor);
         }

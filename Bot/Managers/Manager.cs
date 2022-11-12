@@ -13,14 +13,14 @@ public abstract class Manager: IWatchUnitsDie {
     protected abstract IReleaser Releaser { get; }
 
     public void OnFrame() {
-        AssignUnits();
-        DispatchUnits();
-        Manage();
+        AssignmentPhase();
+        DispatchPhase();
+        ManagementPhase();
     }
 
-    protected abstract void AssignUnits();
-    protected abstract void DispatchUnits();
-    protected abstract void Manage();
+    protected abstract void AssignmentPhase();
+    protected abstract void DispatchPhase();
+    protected abstract void ManagementPhase();
 
     public void Assign(IEnumerable<Unit> units) {
         foreach (var unit in units) {

@@ -46,7 +46,7 @@ public sealed partial class EconomyManager: Manager {
         _buildRequests.Add(_dronesBuildRequest);
     }
 
-    protected override void AssignUnits() {
+    protected override void AssignmentPhase() {
         var unmanagedTownHalls = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).Where(unit => unit.Manager == null);
         Assign(unmanagedTownHalls);
 
@@ -60,15 +60,12 @@ public sealed partial class EconomyManager: Manager {
         Assign(unmanagedIdleWorkers);
     }
 
-    protected override void DispatchUnits() {
-        Dispatch(_townHalls.Where(townHall => townHall.Supervisor == null));
-        Dispatch(_queens.Where(queen => queen.Supervisor == null));
-        Dispatch(_workers.Where(worker => worker.Supervisor == null));
-
+    protected override void DispatchPhase() {
+        Dispatch(ManagedUnits.Where(unit => unit.Supervisor == null));
         EqualizeWorkers();
     }
 
-    protected override void Manage() {
+    protected override void ManagementPhase() {
         foreach (var townHallSupervisor in _townHallSupervisors) {
             townHallSupervisor.OnFrame();
         }

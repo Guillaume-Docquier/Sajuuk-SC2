@@ -67,11 +67,11 @@ public static class TestUtils {
             Releaser = releaser ?? new DummyReleaser();
         }
 
-        protected override void AssignUnits() {}
+        protected override void AssignmentPhase() {}
 
-        protected override void DispatchUnits() {}
+        protected override void DispatchPhase() {}
 
-        protected override void Manage() {}
+        protected override void ManagementPhase() {}
     }
 
     public class DummySupervisor : Supervisor {

@@ -15,15 +15,15 @@ public partial class BuildManager : Manager {
         Releaser = new BuildManagerReleaser(this);
     }
 
-    protected override void AssignUnits() {
+    protected override void AssignmentPhase() {
         throw new System.NotImplementedException();
     }
 
-    protected override void DispatchUnits() {
+    protected override void DispatchPhase() {
         throw new System.NotImplementedException();
     }
 
-    protected override void Manage() {
+    protected override void ManagementPhase() {
         throw new System.NotImplementedException();
     }
 }

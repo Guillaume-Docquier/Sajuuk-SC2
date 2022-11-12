@@ -29,13 +29,13 @@ public partial class ScoutManager : Manager {
         _scoutingStrategy = ScoutingStrategyFactory.CreateNew(Controller.EnemyRace);
     }
 
-    protected override void AssignUnits() {
+    protected override void AssignmentPhase() {
         Assign(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Overlord).Where(unit => unit.Manager == null));
 
         // Add some condition to request a Drone / Zergling
     }
 
-    protected override void DispatchUnits() {
+    protected override void DispatchPhase() {
         foreach (var scoutingTask in _scoutingStrategy.Execute()) {
             _scoutSupervisors.Add(new ScoutSupervisor(scoutingTask));
         }
@@ -44,7 +44,7 @@ public partial class ScoutManager : Manager {
         Dispatch(ManagedUnits.Where(unit => unit.Supervisor == null));
     }
 
-    protected override void Manage() {
+    protected override void ManagementPhase() {
         if (!RegionAnalyzer.IsInitialized) {
             return;
         }

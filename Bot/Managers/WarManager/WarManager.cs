@@ -55,15 +55,15 @@ public partial class WarManager: Manager {
         _airArmySupervisor.AssignTarget(townHallDefensePosition, AttackRadius);
     }
 
-    protected override void AssignUnits() {
+    protected override void AssignmentPhase() {
         Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
     }
 
-    protected override void DispatchUnits() {
+    protected override void DispatchPhase() {
         Dispatch(_soldiers.Where(soldier => soldier.Supervisor == null));
     }
 
-    protected override void Manage() {
+    protected override void ManagementPhase() {
         ScanForEndangeredExpands();
 
         // TODO Use states

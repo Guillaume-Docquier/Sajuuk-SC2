@@ -495,15 +495,15 @@ public class ManagerTests : BaseTestClass {
 
         public readonly List<Call> CallStack = new List<Call>();
 
-        protected override void AssignUnits() {
+        protected override void AssignmentPhase() {
             CallStack.Add(Call.Assign);
         }
 
-        protected override void DispatchUnits() {
+        protected override void DispatchPhase() {
             CallStack.Add(Call.Dispatch);
         }
 
-        protected override void Manage() {
+        protected override void ManagementPhase() {
             CallStack.Add(Call.Manage);
         }
     }
