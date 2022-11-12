@@ -16,7 +16,8 @@ namespace Bot;
 public class SajuukBot: PoliteBot {
     private readonly IBuildOrder _buildOrder = new TwoBasesRoach();
     private IEnumerable<BuildRequest> RemainingBuildOrder => _buildOrder
-        .BuildRequests // Make a copy in case we edit _buildOrder
+        .BuildRequests
+        .ToList() // Make a copy in case we edit _buildOrder
         .Where(buildRequest => buildRequest.Fulfillment.Remaining > 0);
 
     private readonly List<Manager> _managers = new List<Manager>();
@@ -54,6 +55,8 @@ public class SajuukBot: PoliteBot {
         AddressManagerRequests();
         FixSupply();
 
+        _buildOrder.PruneRequests();
+
         _debugger.Debug(RemainingBuildOrder, GetManagersBuildRequests());
 
         foreach (var unit in UnitsTracker.UnitsByTag.Values) {
@@ -79,10 +82,6 @@ public class SajuukBot: PoliteBot {
                 }
 
                 buildStep.Fulfillment.Fulfill(1);
-            }
-
-            if (buildStep.Fulfillment is QuantityFulfillment) {
-                _buildOrder.BuildRequests.Remove(buildStep);
             }
         }
     }
@@ -143,7 +142,7 @@ public class SajuukBot: PoliteBot {
             && Controller.AvailableSupply <= 2
             && Controller.MaxSupply < KnowledgeBase.MaxSupplyAllowed
             && !Controller.GetProducersCarryingOrders(Units.Overlord).Any()) {
-            _buildOrder.BuildRequests.Add(new QuantityBuildRequest(BuildType.Train, Units.Overlord, quantity: 4));
+            _buildOrder.AddRequest(new QuantityBuildRequest(BuildType.Train, Units.Overlord, quantity: 4));
         }
     }
 }

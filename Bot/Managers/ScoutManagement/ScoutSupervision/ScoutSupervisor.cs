@@ -33,7 +33,6 @@ public partial class ScoutSupervisor : Supervisor {
                 : enemyUnits.Where(enemy => supervisedUnit.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList();
 
             if (enemiesInVicinity.Count > 0) {
-                Controller.SetRealTime();
                 var fleeVector = ComputeFleeUnitVector(supervisedUnit, enemiesInVicinity);
                 supervisedUnit.MoveInDirection(3 * fleeVector);
                 scoutsThatCanWork.Remove(supervisedUnit);

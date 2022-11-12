@@ -1,15 +1,18 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Bot.GameData;
 using Bot.GameSense.EnemyStrategyTracking;
 
 namespace Bot.Builds.BuildOrders;
 
 public class TwoBasesRoach : IBuildOrder {
-    public List<BuildRequest> BuildRequests { get; }
+    private List<BuildRequest> _buildRequests;
+
+    public IReadOnlyCollection<BuildRequest> BuildRequests => _buildRequests;
 
     // TODO GD Tweak based on matchup?
     public TwoBasesRoach() {
-        BuildRequests = new List<BuildRequest>
+        _buildRequests = new List<BuildRequest>
         {
             new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 13),
             new QuantityBuildRequest(BuildType.Expand,      Units.Hatchery,                    atSupply: 16),                    // TODO GD Need to be able to say 1 expand as opposed to 2 hatcheries
@@ -38,6 +41,14 @@ public class TwoBasesRoach : IBuildOrder {
             new TargetBuildRequest  (BuildType.Research,    Upgrades.GlialReconstitution,      targetQuantity: 1, queue: true),
         };
     }
+
+    public void PruneRequests() {
+        _buildRequests = _buildRequests
+            .Where(buildRequest => buildRequest is TargetBuildRequest || buildRequest.Fulfillment.Remaining > 0)
+            .ToList();
+    }
+
+    public void AddRequest(BuildRequest buildRequest) {}
 
     public void ReactTo(EnemyStrategy enemyStrategy) {
         throw new System.NotImplementedException();

@@ -5,7 +5,7 @@ using Bot.GameSense.EnemyStrategyTracking;
 namespace Bot.Builds.BuildOrders;
 
 public class TestGasMining : IBuildOrder {
-    public List<BuildRequest> BuildRequests { get; }
+    public IReadOnlyCollection<BuildRequest> BuildRequests { get; }
 
     public TestGasMining() {
         BuildRequests = new List<BuildRequest>
@@ -17,6 +17,10 @@ public class TestGasMining : IBuildOrder {
             new QuantityBuildRequest(BuildType.Train, Units.Overlord, atSupply: 19),
         };
     }
+
+    public void PruneRequests() {}
+
+    public void AddRequest(BuildRequest buildRequest) {}
 
     public void ReactTo(EnemyStrategy enemyStrategy) {}
 }

@@ -5,7 +5,7 @@ using Bot.GameSense.EnemyStrategyTracking;
 namespace Bot.Builds.BuildOrders;
 
 public class TestSpeedMining : IBuildOrder {
-    public List<BuildRequest> BuildRequests { get; }
+    public IReadOnlyCollection<BuildRequest> BuildRequests { get; }
 
     public TestSpeedMining() {
         BuildRequests = new List<BuildRequest>
@@ -15,6 +15,10 @@ public class TestSpeedMining : IBuildOrder {
             new TargetBuildRequest  (BuildType.Train, Units.Drone,    atSupply: 13, targetQuantity: 16),
         };
     }
+
+    public void PruneRequests() {}
+
+    public void AddRequest(BuildRequest buildRequest) {}
 
     public void ReactTo(EnemyStrategy enemyStrategy) {}
 }

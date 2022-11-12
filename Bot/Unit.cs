@@ -301,7 +301,7 @@ public class Unit: ICanDie, IHavePosition {
             }
         }
         else if (position != null) {
-            Logger.Info("{0} using ability {1} at {2}", this, abilityName, position);
+            Logger.Info("{0} using ability {1} at {2}", this, abilityName, position.ToVector2());
         }
         else {
             Logger.Info("{0} using ability {1}", this, abilityName);
