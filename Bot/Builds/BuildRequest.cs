@@ -13,16 +13,17 @@ public abstract class BuildRequest {
     public readonly uint AtSupply;
     public int Requested;
     public readonly bool Queue;
-    public bool IsBlocking = false;
+    public bool IsBlocking;
+    public BuildRequestPriority Priority;
 
-    public BuildRequestPriority Priority = BuildRequestPriority.Normal;
-
-    protected BuildRequest(BuildType buildType, uint unitOrUpgradeType, int quantity, uint atSupply, bool queue) {
+    protected BuildRequest(BuildType buildType, uint unitOrUpgradeType, int quantity, uint atSupply, bool queue, bool isBlocking, BuildRequestPriority priority) {
         BuildType = buildType;
         UnitOrUpgradeType = unitOrUpgradeType;
         AtSupply = atSupply;
         Requested = quantity;
         Queue = queue;
+        IsBlocking = isBlocking;
+        Priority = priority;
     }
 
     public override string ToString() {
@@ -43,9 +44,16 @@ public abstract class BuildRequest {
 }
 
 public class QuantityBuildRequest: BuildRequest {
-    public QuantityBuildRequest(BuildType buildType, uint unitOrUpgradeType, int quantity = 1, uint atSupply = 0, bool queue = false)
-        : base(buildType, unitOrUpgradeType, quantity, atSupply, queue) {
-    }
+    public QuantityBuildRequest(
+        BuildType buildType,
+        uint unitOrUpgradeType,
+        int quantity = 1,
+        uint atSupply = 0,
+        bool queue = false,
+        bool isBlocking = false,
+        BuildRequestPriority priority = BuildRequestPriority.Normal
+    )
+        : base(buildType, unitOrUpgradeType, quantity, atSupply, queue, isBlocking, priority) {}
 
     protected override BuildFulfillment GenerateBuildFulfillment() {
         return new QuantityFulfillment(this);
@@ -53,9 +61,16 @@ public class QuantityBuildRequest: BuildRequest {
 }
 
 public class TargetBuildRequest: BuildRequest {
-    public TargetBuildRequest(BuildType buildType, uint unitOrUpgradeType, int targetQuantity, uint atSupply = 0, bool queue = false)
-        : base(buildType, unitOrUpgradeType, targetQuantity, atSupply, queue) {
-    }
+    public TargetBuildRequest(
+        BuildType buildType,
+        uint unitOrUpgradeType,
+        int targetQuantity,
+        uint atSupply = 0,
+        bool queue = false,
+        bool isBlocking = false,
+        BuildRequestPriority priority = BuildRequestPriority.Normal
+    )
+        : base(buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, isBlocking, priority) {}
 
     protected override BuildFulfillment GenerateBuildFulfillment() {
         return new TargetFulfillment(this);

@@ -7,7 +7,7 @@ using SC2APIProtocol;
 namespace Bot.Managers;
 
 public sealed partial class EconomyManager {
-    private class EconomyManagerDispatcher: IDispatcher {
+    private class EconomyManagerDispatcher: Dispatcher<EconomyManager> {
         private static readonly List<Color> SupervisorColors = new List<Color>
         {
             Colors.MaroonRed,
@@ -17,13 +17,9 @@ public sealed partial class EconomyManager {
             Colors.DarkBlue,
         };
 
-        private readonly EconomyManager _manager;
+        public EconomyManagerDispatcher(EconomyManager client) : base(client) {}
 
-        public EconomyManagerDispatcher(EconomyManager manager) {
-            _manager = manager;
-        }
-
-        public void Dispatch(Unit unit) {
+        public override void Dispatch(Unit unit) {
             var dispatched = false;
 
             switch (unit.UnitType) {
@@ -41,27 +37,27 @@ public sealed partial class EconomyManager {
                     dispatched = DispatchWorker(unit);
                     break;
                 default:
-                    Logger.Error("({0}) Tried to dispatch {1}, but we don't manage this unit type", _manager, unit);
+                    Logger.Error("({0}) Tried to dispatch {1}, but we don't manage this unit type", Client, unit);
                     break;
             }
 
             if (dispatched) {
-                Logger.Debug("({0}) Dispatched {1}", _manager, unit);
+                Logger.Debug("({0}) Dispatched {1}", Client, unit);
             }
         }
 
         private bool DispatchTownHall(Unit townHall) {
             // TODO GD Assign a color to each region/expand instead?
-            var newExpandColor = SupervisorColors[_manager._townHalls.Count % SupervisorColors.Count];
+            var newExpandColor = SupervisorColors[Client._townHalls.Count % SupervisorColors.Count];
 
             var townHallSupervisor = new TownHallSupervisor(townHall, newExpandColor);
-            _manager._townHallSupervisors.Add(townHallSupervisor);
+            Client._townHallSupervisors.Add(townHallSupervisor);
 
             return true;
         }
 
         private bool DispatchQueen(Unit queen) {
-            var supervisor = _manager.GetClosestSupervisorWithNoQueen(queen);
+            var supervisor = Client.GetClosestSupervisorWithNoQueen(queen);
 
             if (supervisor == null) {
                 return false;
@@ -73,8 +69,8 @@ public sealed partial class EconomyManager {
         }
 
         private bool DispatchWorker(Unit worker) {
-            var supervisor = _manager.GetClosestSupervisorWithIdealCapacityNotMet(worker.Position.ToVector2());
-            supervisor ??= _manager.GetClosestSupervisorWithSaturatedCapacityNotMet(worker.Position.ToVector2());
+            var supervisor = Client.GetClosestSupervisorWithIdealCapacityNotMet(worker.Position.ToVector2());
+            supervisor ??= Client.GetClosestSupervisorWithSaturatedCapacityNotMet(worker.Position.ToVector2());
 
             if (supervisor == null) {
                 Program.GraphicalDebugger.AddText("!", color: Colors.Red, worldPos: worker.Position.ToPoint(yOffset: worker.Radius));

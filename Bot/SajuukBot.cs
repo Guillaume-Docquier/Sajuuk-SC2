@@ -69,7 +69,6 @@ public class SajuukBot: PoliteBot {
     /// </summary>
     /// <param name="groupedManagersBuildRequests"></param>
     private static void AddressManagerRequests(List<List<List<BuildFulfillment>>> groupedManagersBuildRequests) {
-        // TODO GD Add blocking steps, ensure expands
         var lookBackSupplyTarget = long.MaxValue;
         foreach (var priorityGroups in groupedManagersBuildRequests) {
             foreach (var supplyGroups in priorityGroups) {

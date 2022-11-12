@@ -4,14 +4,10 @@ using Bot.UnitModules;
 namespace Bot.Managers;
 
 public sealed partial class EconomyManager {
-    private class EconomyManagerReleaser: IReleaser {
-        private readonly EconomyManager _manager;
+    private class EconomyManagerReleaser: Releaser<EconomyManager> {
+        public EconomyManagerReleaser(EconomyManager client) : base(client) {}
 
-        public EconomyManagerReleaser(EconomyManager manager) {
-            _manager = manager;
-        }
-
-        public void Release(Unit unit) {
+        public override void Release(Unit unit) {
             var released = false;
 
             switch (unit.UnitType) {
@@ -29,20 +25,20 @@ public sealed partial class EconomyManager {
                     released = ReleaseWorker(unit);
                     break;
                 default:
-                    Logger.Error("({0}) Tried to release {1}, but we don't manage this unit type", _manager, unit);
+                    Logger.Error("({0}) Tried to release {1}, but we don't manage this unit type", Client, unit);
                     break;
             }
 
             if (released) {
-                Logger.Debug("({0}) Released {1}", _manager, unit);
+                Logger.Debug("({0}) Released {1}", Client, unit);
             }
         }
 
         private bool ReleaseTownHall(Unit townHall) {
-            _manager._townHalls.Remove(townHall);
+            Client._townHalls.Remove(townHall);
 
             var supervisor = townHall.Supervisor;
-            if (supervisor is TownHallSupervisor townHallSupervisor && _manager._townHallSupervisors.Remove(townHallSupervisor)) {
+            if (supervisor is TownHallSupervisor townHallSupervisor && Client._townHallSupervisors.Remove(townHallSupervisor)) {
                 supervisor.Retire();
             }
             else {
@@ -52,9 +48,7 @@ public sealed partial class EconomyManager {
             return true;
         }
 
-        private bool ReleaseQueen(Unit queen) {
-            _manager._queens.Remove(queen);
-
+        private static bool ReleaseQueen(Unit queen) {
             UnitModule.Uninstall<QueenMicroModule>(queen);
             UnitModule.Uninstall<ChangelingTargetingModule>(queen);
 
@@ -62,7 +56,7 @@ public sealed partial class EconomyManager {
         }
 
         private bool ReleaseWorker(Unit worker) {
-            _manager._workers.Remove(worker);
+            Client._workers.Remove(worker);
 
             return true;
         }

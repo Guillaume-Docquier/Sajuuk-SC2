@@ -15,12 +15,11 @@ public sealed partial class EconomyManager: Manager {
     private readonly HashSet<TownHallSupervisor> _townHallSupervisors = new HashSet<TownHallSupervisor>();
 
     private readonly HashSet<Unit> _townHalls = new HashSet<Unit>();
-    private readonly HashSet<Unit> _queens = new HashSet<Unit>();
     private readonly HashSet<Unit> _workers = new HashSet<Unit>();
 
     private int _creepQueensCount = 1;
 
-    private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, quantity: 0);
+    private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, quantity: 0, isBlocking: true, priority: BuildRequestPriority.Important);
     private readonly BuildRequest _macroHatchBuildRequest = new TargetBuildRequest(BuildType.Build, Units.Hatchery, targetQuantity: 0);
     private readonly BuildRequest _queenBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Queen, targetQuantity: 0);
     private readonly BuildRequest _dronesBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Drone, targetQuantity: 0);
