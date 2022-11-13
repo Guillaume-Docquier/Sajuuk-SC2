@@ -178,13 +178,4 @@ public static class Vector3Extensions {
     public static Region GetRegion(this Vector3 position) {
         return RegionAnalyzer.GetRegion(position);
     }
-
-    /// <summary>
-    /// Gets the danger level associated with this position
-    /// </summary>
-    /// <param name="position">The position to get the danger level of</param>
-    /// <returns>A number representing the danger level. Positive is dangerous, 0 is considered neutral and negative is safe</returns>
-    public static float GetDangerLevel(this Vector3 position) {
-        return RegionTracker.GetDangerLevel(position);
-    }
 }

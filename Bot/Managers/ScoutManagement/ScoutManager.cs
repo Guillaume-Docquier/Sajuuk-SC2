@@ -8,6 +8,7 @@ using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingStrategies;
 using Bot.Managers.ScoutManagement.ScoutingSupervision;
 using Bot.MapKnowledge;
+using SC2APIProtocol;
 
 namespace Bot.Managers.ScoutManagement;
 
@@ -63,7 +64,7 @@ public partial class ScoutManager : Manager {
 
         // TODO GD Change to most defended?
         var safestRegion = RegionAnalyzer.Regions
-            .OrderBy(RegionTracker.GetDangerLevel)
+            .OrderBy(region => RegionTracker.GetForce(region, Alliance.Enemy))
             .ThenBy(region => region.Center.DistanceTo(MapAnalyzer.StartingLocation))
             .First();
 

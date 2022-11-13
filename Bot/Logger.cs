@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using Bot.Utils;
 
@@ -83,9 +84,9 @@ public static class Logger {
         Console.ResetColor();
     }
 
-    public static void Error(string line, params object[] parameters) {
+    public static void Error(string error, params object[] parameters) {
         Console.ForegroundColor = ConsoleColor.Red;
-        WriteLine("ERROR", line, parameters);
+        WriteLine("ERROR", $"({GetNameOfCallingClass()}) {error}", parameters);
         Console.ResetColor();
     }
 
@@ -105,5 +106,29 @@ public static class Logger {
         Console.ForegroundColor = ConsoleColor.DarkCyan;
         WriteLine("VIP", line, parameters);
         Console.ResetColor();
+    }
+
+    // https://stackoverflow.com/questions/48570573/how-to-get-class-name-that-is-calling-my-method
+    private static string GetNameOfCallingClass() {
+        string fullName;
+        Type declaringType;
+        var skipFrames = 2;
+        do {
+            var method = new StackFrame(skipFrames, false).GetMethod()!;
+            declaringType = method.DeclaringType;
+            if (declaringType == null) {
+                return method.Name;
+            }
+            skipFrames++;
+            fullName = declaringType.FullName;
+        }
+        while (declaringType.Module.Name.Equals("mscorlib.dll", StringComparison.OrdinalIgnoreCase));
+
+        if (fullName == null) {
+            return "UNKNOWN CALLER";
+        }
+
+        // Remove the namespaces, just keep the class name
+        return fullName.Split(".")[^1];
     }
 }

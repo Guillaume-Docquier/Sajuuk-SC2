@@ -5,6 +5,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapKnowledge;
+using SC2APIProtocol;
 
 namespace Bot.UnitModules;
 
@@ -94,10 +95,10 @@ public class BurrowMicroModule: UnitModule {
         // Run to safety
         var safestRegion = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
             .Select(townHall => townHall.GetRegion())
-            .MinBy(RegionTracker.GetDangerLevel);
+            .MinBy(region => RegionTracker.GetForce(region, Alliance.Enemy));
 
         if (safestRegion == null) {
-            safestRegion = RegionAnalyzer.Regions.MinBy(RegionTracker.GetDangerLevel);
+            safestRegion = RegionAnalyzer.Regions.MinBy(region => RegionTracker.GetForce(region, Alliance.Enemy));
         }
 
         _unit.Move(safestRegion!.Center);

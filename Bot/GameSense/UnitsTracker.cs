@@ -27,6 +27,24 @@ public class UnitsTracker: INeedUpdating {
 
     private UnitsTracker() {}
 
+    public static List<Unit> GetUnits(Alliance alliance) {
+        return alliance switch
+        {
+            Alliance.Self => OwnedUnits,
+            Alliance.Enemy => EnemyUnits,
+            Alliance.Neutral => NeutralUnits,
+            _ => new List<Unit>()
+        };
+    }
+
+    public static List<Unit> GetGhostUnits(Alliance alliance) {
+        return alliance switch
+        {
+            Alliance.Enemy => EnemyGhostUnits.Values.ToList(),
+            _ => new List<Unit>()
+        };
+    }
+
     public void Reset() {
         _isInitialized = false;
 
