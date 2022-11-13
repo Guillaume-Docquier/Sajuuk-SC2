@@ -20,5 +20,5 @@ public class TestSpeedMining : IBuildOrder {
 
     public void AddRequest(BuildRequest buildRequest) {}
 
-    public void ReactTo(EnemyStrategy enemyStrategy) {}
+    public void ReactTo(EnemyStrategy newEnemyStrategy) {}
 }

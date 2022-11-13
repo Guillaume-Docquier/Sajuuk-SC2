@@ -10,19 +10,19 @@ public abstract class BuildRequest {
 
     public readonly BuildType BuildType;
     public readonly uint UnitOrUpgradeType;
-    public readonly uint AtSupply;
+    public uint AtSupply;
     public int Requested;
     public readonly bool Queue;
-    public bool IsBlocking;
+    public BuildBlockCondition BlockCondition;
     public BuildRequestPriority Priority;
 
-    protected BuildRequest(BuildType buildType, uint unitOrUpgradeType, int quantity, uint atSupply, bool queue, bool isBlocking, BuildRequestPriority priority) {
+    protected BuildRequest(BuildType buildType, uint unitOrUpgradeType, int quantity, uint atSupply, bool queue, BuildBlockCondition blockCondition, BuildRequestPriority priority) {
         BuildType = buildType;
         UnitOrUpgradeType = unitOrUpgradeType;
         AtSupply = atSupply;
         Requested = quantity;
         Queue = queue;
-        IsBlocking = isBlocking;
+        BlockCondition = blockCondition;
         Priority = priority;
     }
 
@@ -50,10 +50,10 @@ public class QuantityBuildRequest: BuildRequest {
         int quantity = 1,
         uint atSupply = 0,
         bool queue = false,
-        bool isBlocking = false,
+        BuildBlockCondition blockCondition = BuildBlockCondition.None,
         BuildRequestPriority priority = BuildRequestPriority.Normal
     )
-        : base(buildType, unitOrUpgradeType, quantity, atSupply, queue, isBlocking, priority) {}
+        : base(buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority) {}
 
     protected override BuildFulfillment GenerateBuildFulfillment() {
         return new QuantityFulfillment(this);
@@ -67,10 +67,10 @@ public class TargetBuildRequest: BuildRequest {
         int targetQuantity,
         uint atSupply = 0,
         bool queue = false,
-        bool isBlocking = false,
+        BuildBlockCondition blockCondition = BuildBlockCondition.None,
         BuildRequestPriority priority = BuildRequestPriority.Normal
     )
-        : base(buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, isBlocking, priority) {}
+        : base(buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority) {}
 
     protected override BuildFulfillment GenerateBuildFulfillment() {
         return new TargetFulfillment(this);

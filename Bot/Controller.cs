@@ -85,15 +85,10 @@ public static class Controller {
         ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Reset());
     }
 
-    public static void Pause() {
-        Console.WriteLine("Press any key to continue...");
-        while (Console.ReadKey().Key != ConsoleKey.Enter) {
-            //do nothing
-        }
-    }
-
-    public static void SetRealTime() {
+    public static void SetRealTime(string reason) {
         _frameDelayMs = RealTime;
+
+        Chat($"Real time set: {reason}", toTeam: true);
     }
 
     private static void UpdateEnemyRace() {
@@ -126,7 +121,6 @@ public static class Controller {
         Frame = Observation.Observation.GameLoop;
 
         if (!IsProperlyInitialized()) {
-            Pause();
             Environment.Exit(0);
         }
 

@@ -5,6 +5,7 @@ public enum EnemyStrategy {
 
     // All races
     OneBase,
+    WorkerRush,
 
     // Zerg
     TwelvePool,

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.Builds;
+using Bot.GameSense.EnemyStrategyTracking;
 
 namespace Bot.Managers;
 
@@ -15,10 +16,9 @@ public class BuildManager : UnitlessManager {
     }
 
     protected override void ManagementPhase() {
-        // TODO GD React to scouting
+        _buildOrder.ReactTo(EnemyStrategyTracker.EnemyStrategy);
         _buildOrder.PruneRequests();
 
-        // TODO GD Compare timing with implementation before the BuildManager
         if (!_buildOrderDoneAndTagged) {
             var buildOrderDone = _buildOrder.BuildRequests.All(request => request.Fulfillment.Remaining == 0);
             if (buildOrderDone) {

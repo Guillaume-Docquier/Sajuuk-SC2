@@ -95,7 +95,7 @@ public class SajuukBot: PoliteBot {
                         else if (buildStep.BuildType == BuildType.Expand && buildStepResult == Controller.RequestResult.NoSuitableLocation) {
                             buildStep.Fulfill(1);
                         }
-                        else if (ShouldBlock(buildStep)) {
+                        else if (ShouldBlock(buildStep, buildStepResult)) {
                             // We must wait to fulfill this one
                             return;
                         }
@@ -137,12 +137,22 @@ public class SajuukBot: PoliteBot {
     }
 
     /// <summary>
-    /// Determines if a BuildFulfillment should block the build.
-    /// A blocking buildFulfillment is ignored if it relies on tech that's not ready yet, partially to allow said tech to be built.
+    /// Determines if a BuildFulfillment should block the build based on its block conditions and the request result.
     /// </summary>
     /// <param name="buildFulfillment"></param>
+    /// <param name="requestResult"></param>
     /// <returns></returns>
-    private static bool ShouldBlock(BuildFulfillment buildFulfillment) {
-        return buildFulfillment.IsBlocking && Controller.IsUnlocked(buildFulfillment.UnitOrUpgradeType);
+    private static bool ShouldBlock(BuildFulfillment buildFulfillment, Controller.RequestResult requestResult) {
+        switch (requestResult) {
+            case Controller.RequestResult.TechRequirementsNotMet:
+                return (buildFulfillment.BlockCondition & BuildBlockCondition.MissingTech) == BuildBlockCondition.MissingTech;
+            case Controller.RequestResult.NotEnoughMinerals:
+            case Controller.RequestResult.NotEnoughVespeneGas:
+                return (buildFulfillment.BlockCondition & BuildBlockCondition.MissingResources) == BuildBlockCondition.MissingResources;
+            case Controller.RequestResult.NoProducersAvailable:
+                return (buildFulfillment.BlockCondition & BuildBlockCondition.MissingProducer) == BuildBlockCondition.MissingProducer;
+            default:
+                return false;
+        }
     }
 }

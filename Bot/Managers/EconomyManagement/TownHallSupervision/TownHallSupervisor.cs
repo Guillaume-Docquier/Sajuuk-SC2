@@ -27,7 +27,7 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     private bool _expandHasBeenRequested = false;
     private readonly int _initialMineralsSum;
 
-    private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, atSupply: 75, quantity: 0, isBlocking: true, priority: BuildRequestPriority.Important);
+    private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, atSupply: 75, quantity: 0, blockCondition: BuildBlockCondition.MissingResources, priority: BuildRequestPriority.Important);
     private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>();
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildStepRequests.Select(buildRequest => buildRequest.Fulfillment);

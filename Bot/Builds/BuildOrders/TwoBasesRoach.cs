@@ -1,12 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.GameData;
+using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
 
 namespace Bot.Builds.BuildOrders;
 
 public class TwoBasesRoach : IBuildOrder {
     private List<BuildRequest> _buildRequests;
+    private EnemyStrategy _enemyStrategy = EnemyStrategy.Unknown;
 
     public IReadOnlyCollection<BuildRequest> BuildRequests => _buildRequests;
 
@@ -20,7 +22,7 @@ public class TwoBasesRoach : IBuildOrder {
             new TargetBuildRequest  (BuildType.Build,       Units.SpawningPool,                atSupply: 17, targetQuantity: 1),
             new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 19),
             new TargetBuildRequest  (BuildType.Train,       Units.Queen,                       atSupply: 22, targetQuantity: 2),
-            new QuantityBuildRequest(BuildType.Train,       Units.Zergling,                    atSupply: 24, quantity: 3),
+            new QuantityBuildRequest(BuildType.Train,       Units.Zergling,                    atSupply: 24, quantity: 2),
             new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 30),
             new TargetBuildRequest  (BuildType.Train,       Units.Queen,                       atSupply: 30, targetQuantity: 3),
             new TargetBuildRequest  (BuildType.UpgradeInto, Units.Lair,                        atSupply: 33, targetQuantity: 1),
@@ -43,7 +45,7 @@ public class TwoBasesRoach : IBuildOrder {
 
         foreach (var buildRequest in _buildRequests) {
             buildRequest.Priority = BuildRequestPriority.BuildOrder;
-            buildRequest.IsBlocking = true;
+            buildRequest.BlockCondition = BuildBlockCondition.MissingResources;
         }
     }
 
@@ -55,7 +57,61 @@ public class TwoBasesRoach : IBuildOrder {
 
     public void AddRequest(BuildRequest buildRequest) {}
 
-    public void ReactTo(EnemyStrategy enemyStrategy) {
-        throw new System.NotImplementedException();
+    public void ReactTo(EnemyStrategy newEnemyStrategy) {
+        if (_enemyStrategy == newEnemyStrategy) {
+            return;
+        }
+
+        switch (newEnemyStrategy) {
+            case EnemyStrategy.OneBase:
+            case EnemyStrategy.AggressivePool:
+                TransitionToDefensiveBuild();
+                break;
+            case EnemyStrategy.TwelvePool:
+            case EnemyStrategy.ZerglingRush:
+                TransitionToRushDefense();
+                break;
+        }
+
+        _enemyStrategy = newEnemyStrategy;
+    }
+
+    private void TransitionToDefensiveBuild() {
+        var evos = _buildRequests.Where(request => request.BuildType == BuildType.Build && request.UnitOrUpgradeType == Units.EvolutionChamber);
+        var lair = _buildRequests.Where(request => request.BuildType == BuildType.UpgradeInto && request.UnitOrUpgradeType == Units.Lair);
+        var upgrades = _buildRequests.Where(request => request.BuildType == BuildType.Research);
+        var stepsToPushBack = evos.Concat(lair).Concat(upgrades).ToList();
+        foreach (var buildRequest in stepsToPushBack) {
+            buildRequest.AtSupply = 50;
+        }
+
+        _buildRequests = _buildRequests
+            .Except(stepsToPushBack)
+            .Concat(stepsToPushBack)
+            .ToList();
+
+        Controller.SetRealTime("TransitionToDefensiveBuild");
+    }
+
+    private void TransitionToRushDefense() {
+        if (Controller.GetUnits(UnitsTracker.OwnedUnits, Units.RoachWarren).Any()) {
+            return;
+        }
+
+        var evos = _buildRequests.Where(request => request.BuildType == BuildType.Build && request.UnitOrUpgradeType == Units.EvolutionChamber);
+        var lair = _buildRequests.Where(request => request.BuildType == BuildType.UpgradeInto && request.UnitOrUpgradeType == Units.Lair);
+        var upgrades = _buildRequests.Where(request => request.BuildType == BuildType.Research);
+
+        var stepsToPushBack = evos.Concat(lair).Concat(upgrades).ToList();
+        foreach (var buildRequest in stepsToPushBack) {
+            buildRequest.AtSupply = 50;
+        }
+
+        _buildRequests = _buildRequests
+            .Except(stepsToPushBack)
+            .Concat(stepsToPushBack)
+            .ToList();
+
+        Controller.SetRealTime("TransitionToRushDefense");
     }
 }

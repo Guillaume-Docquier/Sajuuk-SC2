@@ -22,6 +22,6 @@ public interface IBuildOrder {
     /// Allows the build order to react to a new enemy strategy
     /// Certain builds will have to completely switch, others might shuffle BuildRequests
     /// </summary>
-    /// <param name="enemyStrategy"></param>
-    void ReactTo(EnemyStrategy enemyStrategy);
+    /// <param name="newEnemyStrategy"></param>
+    void ReactTo(EnemyStrategy newEnemyStrategy);
 }
