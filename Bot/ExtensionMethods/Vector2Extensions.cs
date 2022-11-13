@@ -68,12 +68,23 @@ public static class Vector2Extensions {
     }
 
     /// <summary>
-    /// Gets the danger level associated with this position
+    /// Gets the force associated with this position
     /// </summary>
-    /// <param name="position">The position to get the danger level of</param>
-    /// <returns>A number representing the danger level. Positive is dangerous, 0 is considered neutral and negative is safe</returns>
-    public static float GetDangerLevel(this Vector2 position, Alliance alliance) {
+    /// <param name="position">The position to get the force of</param>
+    /// <param name="alliance">The alliance to get the force of</param>
+    /// <returns>A number representing the force. The higher the better.</returns>
+    public static float GetForce(this Vector2 position, Alliance alliance) {
         return RegionTracker.GetForce(position, alliance);
+    }
+
+    /// <summary>
+    /// Gets the value associated with this position
+    /// </summary>
+    /// <param name="position">The position to get the value of</param>
+    /// <param name="alliance">The alliance to get the force of</param>
+    /// <returns>A number representing the value. The higher the better.</returns>
+    public static float GetValue(this Vector2 position, Alliance alliance) {
+        return RegionTracker.GetValue(position, alliance);
     }
 
     /// <summary>

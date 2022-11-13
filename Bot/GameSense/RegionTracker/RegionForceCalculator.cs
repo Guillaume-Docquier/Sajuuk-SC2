@@ -31,7 +31,7 @@ public class RegionForceCalculator {
     public float GetForce(Region region) {
         if (!_regionForces.ContainsKey(region)) {
             Logger.Error("Trying to get the force of an unknown region. {0} regions are known.", _regionForces.Count);
-            return RegionTracker.ForceLevel.Unknown;
+            return RegionTracker.Force.Unknown;
         }
 
         return _regionForces[region];
@@ -42,8 +42,8 @@ public class RegionForceCalculator {
     /// </summary>
     public void Init(List<Region> regions) {
         var initialForce = _hasAbsoluteKnowledge
-            ? RegionTracker.ForceLevel.None
-            : RegionTracker.ForceLevel.Unknown;
+            ? RegionTracker.Force.None
+            : RegionTracker.Force.Unknown;
 
         _regionForces = new Dictionary<Region, float>();
         foreach (var region in regions) {
@@ -83,7 +83,7 @@ public class RegionForceCalculator {
         // Update the forces
         foreach (var (region, newRegionForce) in newRegionForces) {
             // Let dangerous force decay over time
-            if (newRegionForce > RegionTracker.ForceLevel.Neutral) {
+            if (newRegionForce > RegionTracker.Force.Neutral) {
                 _regionForces[region] = Math.Max(_regionForces[region], newRegionForce);
             }
             // Let safe force decay over time
@@ -131,36 +131,36 @@ public class RegionForceCalculator {
     private float GetUnitForce(Unit unit) {
         // TODO GD This should be more nuanced, a lone dropship is more dangerous than a dropship with a visible army
         if (Units.DropShips.Contains(unit.UnitType)) {
-            return RegionTracker.ForceLevel.Strong;
+            return RegionTracker.Force.Strong;
         }
 
         if (Units.CreepTumors.Contains(unit.UnitType)) {
-            return RegionTracker.ForceLevel.Medium / 16;
+            return RegionTracker.Force.Medium / 16;
         }
 
         if (Units.Military.Contains(unit.UnitType)) {
-            return RegionTracker.ForceLevel.Medium / 2;
+            return RegionTracker.Force.Medium / 2;
         }
 
         if (Units.Workers.Contains(unit.UnitType)) {
-            return RegionTracker.ForceLevel.Medium / 8;
+            return RegionTracker.Force.Medium / 8;
         }
 
         if (Units.StaticDefenses.Contains(unit.UnitType)) {
-            return RegionTracker.ForceLevel.Medium;
+            return RegionTracker.Force.Medium;
         }
 
         if (unit.UnitType == Units.Pylon) {
             if (IsProxyPylon(unit, _alliance)) {
-                return RegionTracker.ForceLevel.Medium;
+                return RegionTracker.Force.Medium;
             }
 
-            return RegionTracker.ForceLevel.Medium / 3;
+            return RegionTracker.Force.Medium / 3;
         }
 
         // The rest are buildings
         // TODO GD Consider production buildings as somewhat dangerous (they produce units)
-        return RegionTracker.ForceLevel.None;
+        return RegionTracker.Force.None;
     }
 
     /// <summary>
@@ -210,7 +210,7 @@ public class RegionForceCalculator {
         var fogOfWarDanger = new Dictionary<Region, float>();
         foreach (var (region, visibleCellCount) in regionVisibility) {
             var percentNotVisible = 1 - (float)visibleCellCount / region.Cells.Count;
-            fogOfWarDanger[region] = percentNotVisible * RegionTracker.ForceLevel.Unknown;
+            fogOfWarDanger[region] = percentNotVisible * RegionTracker.Force.Unknown;
         }
 
         return fogOfWarDanger;
@@ -249,7 +249,7 @@ public class RegionForceCalculator {
         var enemySpawnRegion = MapAnalyzer.EnemyStartingLocation.GetRegion();
         var enemySpawnRegionExplorationPercentage = (float)VisibilityTracker.ExploredCells.Count(exploredCell => enemySpawnRegion.Cells.Contains(exploredCell)) / enemySpawnRegion.Cells.Count;
         if (enemySpawnRegionExplorationPercentage < 0.6) {
-            var force = RegionTracker.ForceLevel.Lethal * (1 - enemySpawnRegionExplorationPercentage);
+            var force = RegionTracker.Force.Lethal * (1 - enemySpawnRegionExplorationPercentage);
             return (enemySpawnRegion, force);
         }
 
@@ -260,12 +260,12 @@ public class RegionForceCalculator {
     /// Decays the forces to represent uncertainty over time
     /// </summary>
     private void DecayForces() {
-        // Decay towards neutral over time
+        // Decay towards Neutral over time
         foreach (var region in _regionForces.Keys) {
-            var normalizedTowardsNeutralForce = _regionForces[region] - RegionTracker.ForceLevel.Neutral;
-            var decayedForce = normalizedTowardsNeutralForce * RegionDecayRate + RegionTracker.ForceLevel.Neutral;
-            if (Math.Abs(RegionTracker.ForceLevel.Neutral - decayedForce) < 0.05) {
-                decayedForce = RegionTracker.ForceLevel.Neutral;
+            var normalizedTowardsNeutralForce = _regionForces[region] - RegionTracker.Force.Neutral;
+            var decayedForce = normalizedTowardsNeutralForce * RegionDecayRate + RegionTracker.Force.Neutral;
+            if (Math.Abs(RegionTracker.Force.Neutral - decayedForce) < 0.05) {
+                decayedForce = RegionTracker.Force.Neutral;
             }
 
             _regionForces[region] = decayedForce;
