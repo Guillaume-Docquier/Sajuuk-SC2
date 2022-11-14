@@ -21,6 +21,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     private static readonly HashSet<Vector2> ObstructionMap = new HashSet<Vector2>();
     private static List<List<bool>> _terrainWalkMap;
     private static List<List<bool>> _currentWalkMap;
+    private static List<List<bool>> _buildMap;
 
     public static int MaxX { get; private set; }
     public static int MaxY { get; private set; }
@@ -87,6 +88,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
 
         InitHeightMap();
         InitTerrainWalkMap();
+        InitTerrainBuildMap();
 
         InitWalkableCells();
 
@@ -188,6 +190,24 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         }
     }
 
+    private static void InitTerrainBuildMap() {
+        _buildMap = new List<List<bool>>();
+        for (var x = 0; x < MaxX; x++) {
+            _buildMap.Add(new List<bool>(new bool[MaxY]));
+        }
+
+        var buildVector = Controller.GameInfo.StartRaw.PlacementGrid.Data
+            .ToByteArray()
+            .SelectMany(ImageDataUtils.ByteToBoolArray)
+            .ToList();
+
+        for (var x = 0; x < MaxX; x++) {
+            for (var y = 0; y < MaxY; y++) {
+                _buildMap[x][y] = buildVector[y * MaxX + x]; // walkVector[4] is (4, 0)
+            }
+        }
+    }
+
     private static List<List<bool>> ParseWalkMap() {
         var walkMap = new List<List<bool>>();
         for (var x = 0; x < MaxX; x++) {
@@ -283,6 +303,21 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         var isObstructed = includeObstacles && ObstructionMap.Contains(position.AsWorldGridCenter());
 
         return isWalkable && !isObstructed;
+    }
+
+    public static bool IsBuildable(Vector3 position, bool includeObstacles = true) {
+        return IsBuildable(position.ToVector2(), includeObstacles);
+    }
+
+    public static bool IsBuildable(Vector2 position, bool includeObstacles = true) {
+        if (!IsInBounds(position)) {
+            return false;
+        }
+
+        var isBuildable = _buildMap[(int)position.X][(int)position.Y];
+        var isObstructed = includeObstacles && ObstructionMap.Contains(position.AsWorldGridCenter());
+
+        return isBuildable && !isObstructed;
     }
 
     private static void InitWalkableCells() {

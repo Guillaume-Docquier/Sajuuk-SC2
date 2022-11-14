@@ -194,13 +194,19 @@ public static class Vector2Extensions {
         }
     }
 
-    public static Vector2 ClosestWalkable(this Vector2 position) {
+    public static Vector2 ClosestWalkable(this Vector2 position, HashSet<Vector2> allowedCells = null) {
         if (MapAnalyzer.IsWalkable(position)) {
             return position;
         }
 
-        var closestWalkableCell = MapAnalyzer.BuildSearchGrid(position, 15)
-            .Where(cell => MapAnalyzer.IsWalkable(cell))
+        var searchGrid = MapAnalyzer.BuildSearchGrid(position, 15)
+            .Where(cell => MapAnalyzer.IsWalkable(cell));
+
+        if (allowedCells != null) {
+            searchGrid = searchGrid.Where(allowedCells.Contains);
+        }
+
+        var closestWalkableCell = searchGrid
             .DefaultIfEmpty()
             .MinBy(cell => cell.DistanceTo(position));
 

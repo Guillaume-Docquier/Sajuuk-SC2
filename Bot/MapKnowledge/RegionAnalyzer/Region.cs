@@ -3,6 +3,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
 using Bot.ExtensionMethods;
+using Bot.Utils;
 
 namespace Bot.MapKnowledge;
 
@@ -79,6 +80,8 @@ public class Region {
         }
     }
 
+    // TODO GD Some ramps touch 3 regions
+    // The rocks footprints makes it hard for Pathfinder to find proper paths
     private bool IsRegionObstructed() {
         if (Neighbors.Count != 2) {
             return false;

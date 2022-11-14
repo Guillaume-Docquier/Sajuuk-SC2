@@ -5,6 +5,7 @@ using System.Numerics;
 using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
+using Bot.Utils;
 using SC2APIProtocol;
 
 namespace Bot.MapKnowledge;
@@ -74,12 +75,20 @@ public class RegionAnalyzer: INeedUpdating {
             return;
         }
 
-        var map = GenerateMap();
-        Logger.Info("Starting region analysis on {0} cells ({1}x{2})", map.Count, MapAnalyzer.MaxX, MapAnalyzer.MaxY);
+        var walkableMap = GenerateWalkableMap();
+        Logger.Info("Starting region analysis on {0} cells ({1}x{2})", walkableMap.Count, MapAnalyzer.MaxX, MapAnalyzer.MaxY);
 
-        var (potentialRegions, regionsNoise) = ComputePotentialRegions(map);
-        var (ramps, rampsNoise) = ComputeRamps(regionsNoise);
-        var noise = rampsNoise.Select(mapCell => mapCell.Position.ToVector2()).ToList(); // TODO GD Noise should be added to any region that it touches
+        var rampsPotentialCells = walkableMap.Where(cell => !MapAnalyzer.IsBuildable(cell.Position, includeObstacles: false)).ToList();
+        var (ramps, rampsNoise) = ComputeRamps(rampsPotentialCells);
+
+        var regionsPotentialCells = walkableMap
+            .Where(cell => MapAnalyzer.IsBuildable(cell.Position, includeObstacles: false))
+            .Concat(rampsNoise)
+            .ToList();
+        var (potentialRegions, regionNoise) = ComputePotentialRegions(regionsPotentialCells);
+
+        var noise = regionNoise.Select(mapCell => mapCell.Position.ToVector2()).ToList();
+
         var chokePoints = ComputePotentialChokePoints();
 
         var regions = BuildRegions(potentialRegions, ramps, chokePoints);
@@ -197,7 +206,7 @@ public class RegionAnalyzer: INeedUpdating {
     /// <summary>
     /// Generates a list of MapCell representing each playable tile in the map.
     /// </summary>
-    private static List<MapCell> GenerateMap() {
+    private static List<MapCell> GenerateWalkableMap() {
         var map = new List<MapCell>();
         for (var x = 0; x < MapAnalyzer.MaxX; x++) {
             for (var y = 0; y < MapAnalyzer.MaxY; y++) {
@@ -219,22 +228,39 @@ public class RegionAnalyzer: INeedUpdating {
     /// <returns>
     /// The potential regions and the cells that are not part of any region.
     /// </returns>
-    private static (List<HashSet<Vector2>> potentialRegions, List<MapCell> regionsNoise) ComputePotentialRegions(List<MapCell> cells) {
+    private static (List<HashSet<Vector2>> potentialRegions, IEnumerable<MapCell> regionsNoise) ComputePotentialRegions(List<MapCell> cells) {
         cells.ForEach(mapCell => {
             // Highly penalize height differences
-            var trickPosition = mapCell.Position;
+            var trickPosition = mapCell.Position.WithWorldHeight();
             trickPosition.Z *= RegionZMultiplier;
+
             mapCell.Position = trickPosition;
         });
 
-        var (clusters, noise) = Clustering.DBSCAN(cells, epsilon: DiagonalDistance + 0.04f, minPoints: RegionMinPoints);
-        var potentialRegions = clusters.Select(cluster => cluster.Select(mapCell => mapCell.Position.ToVector2()).ToHashSet()).ToList();
+        var noise = new HashSet<MapCell>();
+        var clusteringResult = Clustering.DBSCAN(cells, epsilon: DiagonalDistance + 0.04f, minPoints: RegionMinPoints);
+        foreach (var mapCell in clusteringResult.noise) {
+            noise.Add(mapCell);
+        }
+
+        var potentialRegions = clusteringResult.clusters.Select(cluster => cluster.Select(mapCell => mapCell.Position.ToVector2()).ToHashSet()).ToList();
+
+        // Add noise to any neighboring region
+        foreach (var mapCell in noise.ToList()) {
+            var mapCellNeighbors = mapCell.Position.ToVector2().GetNeighbors();
+            var regionToAddTo = potentialRegions.FirstOrDefault(potentialRegion => mapCellNeighbors.Any(potentialRegion.Contains));
+            if (regionToAddTo != default) {
+                regionToAddTo.Add(mapCell.Position.ToVector2());
+                noise.Remove(mapCell);
+            }
+        }
 
         return (potentialRegions, noise);
     }
 
     /// <summary>
-    /// Identify ramps given cells that are not part of any regions using clustering.
+    /// Identify ramps given cells that should be walkable but not buildable.
+    /// Some noise will be produced because some unbuildable cells are vision blockers and they should be used to find regions.
     /// </summary>
     /// <returns>
     /// The ramps and the cells that are not part of any ramp.
@@ -242,10 +268,68 @@ public class RegionAnalyzer: INeedUpdating {
     private static (List<HashSet<Vector2>> ramps, IEnumerable<MapCell> rampsNoise) ComputeRamps(List<MapCell> cells) {
         cells.ForEach(mapCell => mapCell.Position = mapCell.Position with { Z = 0 }); // Ignore Z
 
-        var (clusters, noise) = Clustering.DBSCAN(cells, epsilon: DiagonalDistance, minPoints: MinRampSize);
-        var ramps = clusters.Select(cluster => cluster.Select(mapCell => mapCell.Position.ToVector2()).ToHashSet()).ToList();
+        var ramps = new List<HashSet<Vector2>>();
+        var noise = new HashSet<MapCell>();
+
+        // We cluster once for an initial split
+        var weakClusteringResult = Clustering.DBSCAN(cells, epsilon: 1, minPoints: 1);
+        foreach (var mapCell in weakClusteringResult.noise) {
+            noise.Add(mapCell);
+        }
+
+        foreach (var weakCluster in weakClusteringResult.clusters) {
+            var clusterSet = weakCluster.Select(cell => cell.Position).ToHashSet();
+            var maxConnections = weakCluster.Max(cell => cell.Position.GetNeighbors().Count(neighbor => clusterSet.Contains(neighbor)));
+            if (maxConnections < 8) {
+                // This is to make ramps work
+                maxConnections = (int)Math.Floor(0.875f * maxConnections);
+            }
+
+            // Some ramps touch each other (berlingrad)
+            // We do a 2nd round of clustering based on the connectivity of the cluster
+            // This is because ramps have low connectivity, so we need it to be variable
+            var rampClusterResult = Clustering.DBSCAN(weakCluster, epsilon: DiagonalDistance, minPoints: maxConnections);
+
+            foreach (var mapCell in rampClusterResult.noise) {
+                noise.Add(mapCell);
+            }
+
+            foreach (var rampCluster in rampClusterResult.clusters) {
+                if (IsReallyARamp(rampCluster)) {
+                    ramps.Add(rampCluster.Select(mapCell => mapCell.Position.ToVector2()).ToHashSet());
+                }
+                else {
+                    foreach (var mapCell in rampCluster) {
+                        noise.Add(mapCell);
+                    }
+                }
+            }
+        }
+
+        // Add noise to a neighboring ramp, if any
+        foreach (var mapCell in noise.ToList()) {
+            var mapCellNeighbors = mapCell.Position.ToVector2().GetNeighbors();
+            var rampToAddTo = ramps.FirstOrDefault(ramp => mapCellNeighbors.Any(ramp.Contains));
+            if (rampToAddTo != default) {
+                rampToAddTo.Add(mapCell.Position.ToVector2());
+                noise.Remove(mapCell);
+            }
+        }
 
         return (ramps, noise);
+    }
+
+    /// <summary>
+    /// A real ramp connects two different height layers
+    /// If all the tiles in the given ramp are roughly on the same height, this is not a ramp
+    /// </summary>
+    /// <param name="rampCluster"></param>
+    /// <returns>True if the tiles have varied heights, false otherwise</returns>
+    private static bool IsReallyARamp(IReadOnlyCollection<MapCell> rampCluster) {
+        var minHeight = rampCluster.Min(cell => cell.Position.WithWorldHeight().Z);
+        var maxHeight = rampCluster.Max(cell => cell.Position.WithWorldHeight().Z);
+
+        return Math.Abs(minHeight - maxHeight) > 0.05;
     }
 
     private static List<ChokePoint> ComputePotentialChokePoints() {
@@ -284,7 +368,7 @@ public class RegionAnalyzer: INeedUpdating {
         // Sometimes we will need more than 1 choke to split a region into two
         var nbChokesToConsider = 1;
         while (nbChokesToConsider <= chokesInRegion.Count) {
-            var chokePointCombinations = Combinations(chokesInRegion, nbChokesToConsider).Select(setOfChokes => setOfChokes.ToList());
+            var chokePointCombinations = MathUtils.Combinations(chokesInRegion, nbChokesToConsider).Select(setOfChokes => setOfChokes.ToList());
             foreach (var chokePointCombination in chokePointCombinations) {
                 var (subregion1, subregion2) = SplitRegion(region, chokePointCombination.SelectMany(choke => choke.Edge).ToList());
 
@@ -348,16 +432,6 @@ public class RegionAnalyzer: INeedUpdating {
         }
 
         return true;
-    }
-
-    // TODO GD Code this yourself :rofl: this looks... questionable
-    private static IEnumerable<IEnumerable<T>> Combinations<T>(IEnumerable<T> elements, int k)
-    {
-        if (k == 0) {
-            return new[] { Array.Empty<T>() };
-        }
-
-        return elements.SelectMany((e, i) => Combinations(elements.Skip(i + 1), k - 1).Select(c => new[] { e }.Concat(c)));
     }
 
     private static Dictionary<Vector2, Region> BuildRegionsMap(List<Region> regions) {

@@ -27,9 +27,8 @@ public static class Pathfinder {
     /// </summary>
     /// <param name="origin">The origin position.</param>
     /// <param name="destination">The destination position.</param>
-    /// <param name="includeObstacles">If you're wondering if you should be using this, you shouldn't.</param>
     /// <returns>The requested path, or null if the destination is unreachable from the origin.</returns>
-    public static CellPath FindPath(Vector2 origin, Vector2 destination, bool includeObstacles = true) {
+    public static CellPath FindPath(Vector2 origin, Vector2 destination) {
         // Improve caching performance
         origin = origin.ClosestWalkable().AsWorldGridCorner();
         destination = destination.ClosestWalkable().AsWorldGridCorner();
@@ -44,7 +43,7 @@ public static class Pathfinder {
             return knownPath;
         }
 
-        var maybeNullPath = AStar(origin, destination, (from, to) => from.DistanceTo(to), current => current.GetReachableNeighbors(includeObstacles));
+        var maybeNullPath = AStar(origin, destination, (from, to) => from.DistanceTo(to), current => current.GetReachableNeighbors());
         if (maybeNullPath == null) {
             Logger.Info("No path found between {0} and {1}", origin, destination);
             SavePathToMemory(origin, destination, CellPathsMemory, null);

@@ -15,6 +15,7 @@ public static class Clustering {
         CorePoint
     }
 
+    // TODO GD Overload for Vector2...
     public static (List<List<T>> clusters, List<T> noise) DBSCAN<T>(List<T> items, float epsilon, int minPoints) where T: class, IHavePosition {
         var clusters = new List<List<T>>();
         var labels = new Dictionary<T, Labels>();
