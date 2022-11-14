@@ -8,6 +8,7 @@ public static class ResponseGameInfoUtils {
 
     public static ResponseGameInfo CreateResponseGameInfo(int mapWidth = 100, int mapHeight = 100, Race playerRace = Race.Zerg, Race enemyRace = Race.Random) {
         var pathingGrid = Enumerable.Repeat(true, mapWidth * mapHeight).ToList();
+        var placementGrid = Enumerable.Repeat(true, mapWidth * mapHeight).ToList();
         var terrainHeight = Enumerable.Repeat(0f, mapWidth * mapHeight).ToList();
 
         var responseGameInfo = new ResponseGameInfo
@@ -27,6 +28,10 @@ public static class ResponseGameInfoUtils {
                 PathingGrid = new ImageData
                 {
                     Data = ImageDataUtils.CreateByeString(pathingGrid),
+                },
+                PlacementGrid = new ImageData
+                {
+                    Data = ImageDataUtils.CreateByeString(placementGrid),
                 },
             },
             PlayerInfo =
