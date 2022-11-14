@@ -287,8 +287,8 @@ public class GameConnection {
             Logger.Performance("Units: {0} owned, {1} neutral, {2} enemy", UnitsTracker.OwnedUnits.Count, UnitsTracker.NeutralUnits.Count, UnitsTracker.EnemyUnits.Count);
             Logger.Performance(
                 "Pathfinding cache: {0} paths, {1} tiles",
-                Pathfinder.Memory.Values.Sum(destinations => destinations.Keys.Count),
-                Pathfinder.Memory.Values.SelectMany(destinations => destinations.Values).Sum(path => path.Count));
+                Pathfinder.CellPathsMemory.Values.Sum(destinations => destinations.Keys.Count),
+                Pathfinder.CellPathsMemory.Values.SelectMany(destinations => destinations.Values).Sum(path => path.Count));
             Logger.Performance("==== Memory Debug End ====");
         }
     }

@@ -150,7 +150,7 @@ public class RegionTracker : INeedUpdating {
     /// <para>The marker also indicates the force of each alliance in the region.</para>
     /// <para>Each region gets a different color using the color pool.</para>
     /// </summary>
-    private void DrawRegionsSummary() {
+    private static void DrawRegionsSummary() {
         if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Regions)) {
             return;
         }
@@ -167,7 +167,7 @@ public class RegionTracker : INeedUpdating {
                 regionTypeText += $" - {region.ExpandLocation.ExpandType}";
             }
 
-            Program.GraphicalDebugger.AddLink(region.Center.ToVector3(), offsetRegionCenter, color: regionColor, withText: false);
+            Program.GraphicalDebugger.AddLink(region.Center.ToVector3(), offsetRegionCenter, color: regionColor);
             Program.GraphicalDebugger.AddTextGroup(
                 new[]
                 {

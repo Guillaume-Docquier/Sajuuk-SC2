@@ -124,16 +124,11 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
         );
     }
 
-    public void AddLink(Unit start, Unit end, Color color, bool withText = true) {
-        AddLink(start.Position, end.Position, color, withText);
+    public void AddLink(Unit start, Unit end, Color color) {
+        AddLink(start.Position, end.Position, color);
     }
 
-    public void AddLink(Vector3 start, Vector3 end, Color color, bool withText = true) {
-        if (withText) {
-            AddText("from", worldPos: start.ToPoint(), color: color);
-            AddText("to", worldPos: end.ToPoint(), color: color);
-        }
-
+    public void AddLink(Vector3 start, Vector3 end, Color color) {
         AddGridSphere(start, color);
         AddLine(start, end, color);
         AddGridSphere(end, color);

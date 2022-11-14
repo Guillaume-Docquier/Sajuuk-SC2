@@ -132,7 +132,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         Logger.Info("Obstacle removed, invalidating Pathfinder cache");
 
         // This is a big ugly, the pathfinder should know about this
-        Pathfinder.Memory.Clear();
+        Pathfinder.InvalidateCache();
     }
 
     public static IEnumerable<Vector2> GetObstacleFootprint(Unit obstacle) {

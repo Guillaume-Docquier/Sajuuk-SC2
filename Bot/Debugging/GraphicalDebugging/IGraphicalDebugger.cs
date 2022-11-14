@@ -27,9 +27,9 @@ public interface IGraphicalDebugger {
 
     void AddLine(Vector3 start, Vector3 end, Color color);
 
-    void AddLink(Unit start, Unit end, Color color, bool withText = true);
+    void AddLink(Unit start, Unit end, Color color);
 
-    void AddLink(Vector3 start, Vector3 end, Color color, bool withText = true);
+    void AddLink(Vector3 start, Vector3 end, Color color);
 
     void AddPath(List<Vector2> path, Color startColor, Color endColor);
 

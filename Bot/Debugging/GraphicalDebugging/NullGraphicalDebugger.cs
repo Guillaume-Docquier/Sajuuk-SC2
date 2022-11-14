@@ -33,9 +33,9 @@ public class NullGraphicalDebugger: IGraphicalDebugger {
 
     public void AddLine(Vector3 start, Vector3 end, Color color) {}
 
-    public void AddLink(Unit start, Unit end, Color color, bool withText = true) {}
+    public void AddLink(Unit start, Unit end, Color color) {}
 
-    public void AddLink(Vector3 start, Vector3 end, Color color, bool withText = true) {}
+    public void AddLink(Vector3 start, Vector3 end, Color color) {}
 
     public void AddPath(List<Vector2> path, Color startColor, Color endColor) {}
 

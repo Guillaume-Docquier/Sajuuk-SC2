@@ -93,7 +93,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
         var cellToExplore = _areaToScout.MinBy(cell => coverageScores[cell]);
 
         scout.Move(cellToExplore);
-        Program.GraphicalDebugger.AddLink(scout.Position, cellToExplore.ToVector3(), Colors.LightBlue, withText: false);
+        Program.GraphicalDebugger.AddLink(scout.Position, cellToExplore.ToVector3(), Colors.LightBlue);
     }
 
     /// <summary>
@@ -132,7 +132,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
             });
 
             scout.Move(cellToExplore);
-            Program.GraphicalDebugger.AddLink(scout.Position, cellToExplore.ToVector3(), Colors.LightBlue, withText: false);
+            Program.GraphicalDebugger.AddLink(scout.Position, cellToExplore.ToVector3(), Colors.LightBlue);
         }
     }
 

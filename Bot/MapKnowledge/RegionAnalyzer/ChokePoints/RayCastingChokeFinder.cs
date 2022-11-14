@@ -212,7 +212,7 @@ public static partial class RayCastingChokeFinder {
             };
             var chokeNodeClusterCenter = Clustering.GetCenter(chokeNodeCluster);
             Program.GraphicalDebugger.AddTextGroup(textGroup, worldPos: chokeNodeClusterCenter.ToPoint(zOffset: 5));
-            Program.GraphicalDebugger.AddLink(chokeNodeClusterCenter, chokeNodeClusterCenter.Translate(zTranslation: 5), Colors.SunbrightOrange, withText: false);
+            Program.GraphicalDebugger.AddLink(chokeNodeClusterCenter, chokeNodeClusterCenter.Translate(zTranslation: 5), Colors.SunbrightOrange);
 
             DebugScores(chokeNodeCluster, cut);
 
@@ -279,7 +279,7 @@ public static partial class RayCastingChokeFinder {
         }
 
         foreach (var line in lines) {
-            Program.GraphicalDebugger.AddLink(line.Start.ToVector3(zOffset: 0.5f), line.End.ToVector3(zOffset: 0.5f), color ?? Colors.Orange, withText: false);
+            Program.GraphicalDebugger.AddLink(line.Start.ToVector3(zOffset: 0.5f), line.End.ToVector3(zOffset: 0.5f), color ?? Colors.Orange);
         }
     }
 
