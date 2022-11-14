@@ -10,6 +10,7 @@ public class Region {
     public HashSet<Vector2> Cells { get; }
     public Vector2 Center { get; }
     public RegionType Type { get; }
+    public bool IsObstructed { get; private set; }
 
     [JsonIgnore]
     public ExpandLocation ExpandLocation { get; private set; }
@@ -18,10 +19,11 @@ public class Region {
     public HashSet<NeighboringRegion> Neighbors { get; private set; }
 
     [JsonConstructor]
-    public Region(HashSet<Vector2> cells, Vector2 center, RegionType type) {
+    public Region(HashSet<Vector2> cells, Vector2 center, RegionType type, bool isObstructed) {
         Cells = cells;
         Center = center;
         Type = type;
+        IsObstructed = isObstructed;
     }
 
     public Region(IEnumerable<Vector2> cells, RegionType type) {
@@ -45,7 +47,7 @@ public class Region {
         }
     }
 
-    public void Init() {
+    public void Init(bool computeObstruction) {
         var neighbors = new Dictionary<Region, List<Vector2>>();
         foreach (var cell in Cells) {
             var neighboringRegions = cell
@@ -71,5 +73,25 @@ public class Region {
 
         var expandInRegion = ExpandAnalyzer.ExpandLocations.FirstOrDefault(expandLocation => Cells.Contains(expandLocation.Position));
         ExpandLocation = expandInRegion;
+
+        if (computeObstruction) {
+            IsObstructed = IsRegionObstructed();
+        }
+    }
+
+    private bool IsRegionObstructed() {
+        if (Neighbors.Count != 2) {
+            return false;
+        }
+
+        var neighboringRegions = Neighbors.Select(neighbor => neighbor.Region).ToList();
+        var pathThrough = Pathfinder.FindPath(neighboringRegions[0].Center, neighboringRegions[1].Center);
+        if (pathThrough == null) {
+            return true;
+        }
+
+        // Obstructed if the path between the neighbors does not go through this region
+        // Let's hope no regions have two direct paths between each other
+        return !pathThrough.Any(cell => Cells.Contains(cell));
     }
 }

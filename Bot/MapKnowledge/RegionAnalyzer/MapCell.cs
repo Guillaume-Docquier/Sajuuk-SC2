@@ -4,8 +4,8 @@ using Bot.ExtensionMethods;
 namespace Bot.MapKnowledge;
 
 public class MapCell: IHavePosition {
-    public MapCell(Vector3 position) {
-        Position = position;
+    public MapCell(Vector2 position) {
+        Position = position.ToVector3(withWorldHeight: false);
     }
 
     public MapCell(float x, float y, bool withWorldHeight = true) {

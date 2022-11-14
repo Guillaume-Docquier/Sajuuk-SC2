@@ -83,10 +83,14 @@ public class BotDebugger {
             return;
         }
 
+        // We will ignore cells that are too low because we don't see them anyways
+        // Showing all of them is too much for protobuf, the CodedOutputStream runs out of space
+        var minHeightRequiredToShow = MapAnalyzer.WalkableCells.Min(cell => cell.ToVector3().Z) - 1;
+
         for (var x = 0; x < MapAnalyzer.MaxX; x++) {
             for (var y = 0; y < MapAnalyzer.MaxY; y++) {
                 var position = new Vector3(x, y, 0).AsWorldGridCenter().WithWorldHeight();
-                if (!MapAnalyzer.IsWalkable(position)) {
+                if (!MapAnalyzer.IsWalkable(position) && position.Z >= minHeightRequiredToShow) {
                     Program.GraphicalDebugger.AddGridSquare(position, Colors.LightRed);
                 }
             }

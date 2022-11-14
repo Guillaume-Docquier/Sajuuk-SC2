@@ -77,7 +77,13 @@ public static class Pathfinder {
             return knownPath;
         }
 
-        var maybeNullPath = AStar(origin, destination, (from, to) => from.Center.DistanceTo(to.Center), current => current.Neighbors.Select(neighbor => neighbor.Region));
+        var maybeNullPath = AStar(
+            origin,
+            destination,
+            (from, to) => from.Center.DistanceTo(to.Center),
+            current => current.Neighbors.Select(neighbor => neighbor.Region).Where(neighbor => !neighbor.IsObstructed)
+        );
+
         if (maybeNullPath == null) {
             Logger.Info("No path found between {0} and {1}", origin, destination);
             SavePathToMemory(origin, destination, RegionPathsMemory, null);

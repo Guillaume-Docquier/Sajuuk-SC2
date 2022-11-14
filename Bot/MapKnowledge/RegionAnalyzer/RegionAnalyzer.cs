@@ -18,7 +18,7 @@ public class RegionAnalyzer: INeedUpdating {
 
     public static List<Region> Regions => _regionData.Regions;
 
-    private const int MinRampSize = 5;
+    private const int MinRampSize = 6;
     private const int RegionMinPoints = 6;
     private const float RegionZMultiplier = 8;
     private static readonly float DiagonalDistance = (float)Math.Sqrt(2);
@@ -65,9 +65,9 @@ public class RegionAnalyzer: INeedUpdating {
             _regionData = regionsData;
 
             _regionsMap = BuildRegionsMap(_regionData.Regions);
-            _regionData.Regions.ForEach(region => region.Init());
+            _regionData.Regions.ForEach(region => region.Init(computeObstruction: false));
 
-            Logger.Metric("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", _regionData.Regions.Count, _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
+            Logger.Metric("{0} regions ({1} obstructed), {2} ramps, {3} unclassified cells and {4} choke points", _regionData.Regions.Count, _regionData.Regions.Count(region => region.IsObstructed), _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
             Logger.Success("Regions loaded from file");
             IsInitialized = true;
 
@@ -86,11 +86,11 @@ public class RegionAnalyzer: INeedUpdating {
         _regionData = new RegionData(regions, ramps, noise, chokePoints);
 
         _regionsMap = BuildRegionsMap(regions);
-        regions.ForEach(region => region.Init());
+        regions.ForEach(region => region.Init(computeObstruction: true));
 
         RegionDataStore.Save(Controller.GameInfo.MapName, _regionData);
 
-        Logger.Metric("{0} regions, {1} ramps, {2} unclassified cells and {3} choke points", _regionData.Regions.Count, _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
+        Logger.Metric("{0} regions ({1} obstructed), {2} ramps, {3} unclassified cells and {4} choke points", _regionData.Regions.Count, _regionData.Regions.Count(region => region.IsObstructed), _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
         Logger.Success("Region analysis done and saved");
         IsInitialized = true;
     }
@@ -240,9 +240,9 @@ public class RegionAnalyzer: INeedUpdating {
     /// The ramps and the cells that are not part of any ramp.
     /// </returns>
     private static (List<HashSet<Vector2>> ramps, IEnumerable<MapCell> rampsNoise) ComputeRamps(List<MapCell> cells) {
-        cells.ForEach(mapCell => mapCell.Position = mapCell.Position.WithWorldHeight()); // Reset the Z
+        cells.ForEach(mapCell => mapCell.Position = mapCell.Position with { Z = 0 }); // Ignore Z
 
-        var (clusters, noise) = Clustering.DBSCAN(cells, epsilon: DiagonalDistance * 2, minPoints: MinRampSize);
+        var (clusters, noise) = Clustering.DBSCAN(cells, epsilon: DiagonalDistance, minPoints: MinRampSize);
         var ramps = clusters.Select(cluster => cluster.Select(mapCell => mapCell.Position.ToVector2()).ToHashSet()).ToList();
 
         return (ramps, noise);
@@ -328,9 +328,26 @@ public class RegionAnalyzer: INeedUpdating {
         return (subregion1, subregion2);
     }
 
+    /// <summary>
+    /// Determines if a subregion is the result of a valid split given the cut length
+    /// A subregion should be a single cluster of cells that's big enough compared to the cut
+    /// </summary>
+    /// <param name="subregion"></param>
+    /// <param name="cutLength"></param>
+    /// <returns>True if the split is valid, false otherwise</returns>
     private static bool IsValidSplit(IReadOnlyCollection<Vector2> subregion, float cutLength) {
         // If the split region is too small compared to the cut, it might not be worth a cut
-        return subregion.Count > Math.Max(10, cutLength * cutLength / 2);
+        if (subregion.Count <= Math.Max(10, cutLength * cutLength / 2)) {
+            return false;
+        }
+
+        // A region should form a single cluster of cells
+        var clusteringResult = Clustering.DBSCAN(subregion.Select(cell => new MapCell(cell)).ToList(), 1, 2);
+        if (clusteringResult.clusters.Count > 1 || clusteringResult.noise.Count > 0) {
+            return false;
+        }
+
+        return true;
     }
 
     // TODO GD Code this yourself :rofl: this looks... questionable

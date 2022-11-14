@@ -167,11 +167,13 @@ public class RegionTracker : INeedUpdating {
                 regionTypeText += $" - {region.ExpandLocation.ExpandType}";
             }
 
+            var obstructedText = region.IsObstructed ? "OBSTRUCTED" : "";
+
             Program.GraphicalDebugger.AddLink(region.Center.ToVector3(), offsetRegionCenter, color: regionColor);
             Program.GraphicalDebugger.AddTextGroup(
                 new[]
                 {
-                    $"R{regionIndex} ({regionTypeText})",
+                    $"R{regionIndex} ({regionTypeText}) {obstructedText}",
                     $"Self:  {GetForceLabel(region, Alliance.Self),-7} ({GetForce(region, Alliance.Self),5:F2}) | {GetValueLabel(region, Alliance.Self),-10} ({GetValue(region, Alliance.Self),5:F2})",
                     $"Enemy: {GetForceLabel(region, Alliance.Enemy),-7} ({GetForce(region, Alliance.Enemy),5:F2}) | {GetValueLabel(region, Alliance.Enemy),-10} ({GetValue(region, Alliance.Enemy),5:F2})",
                 },

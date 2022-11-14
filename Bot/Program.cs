@@ -20,7 +20,7 @@ public class Program {
     private const string Version = "3_0_0";
     private static readonly IBot Bot = new SajuukBot(Version, scenarios: Scenarios);
 
-    private const string MapFileName = Maps.Season_2022_4.FileNames.Stargazers;
+    private const string MapFileName = Maps.Season_2022_4.FileNames.Berlingrad;
     private const Race OpponentRace = Race.Zerg;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
@@ -89,6 +89,8 @@ public class Program {
     private static void PlayLocalGame() {
         DebugEnabled = true;
         GraphicalDebugger = new Sc2GraphicalDebugger();
+
+        DisableDataStores();
 
         // We run just like the ladder to test the real deal
         GameConnection = new GameConnection(stepSize: 2);
