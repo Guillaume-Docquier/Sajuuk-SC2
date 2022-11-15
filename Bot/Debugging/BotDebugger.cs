@@ -32,6 +32,7 @@ public class BotDebugger {
         DebugExploration();
         DebugUnitAndEffectNames();
         DebugCoordinates();
+        //DebugRocks();
     }
 
     private static void DebugHelp() {
@@ -206,6 +207,18 @@ public class BotDebugger {
                 $"{cell.Y}"
             };
             Program.GraphicalDebugger.AddTextGroup(coords, size: 10, worldPos: cell.ToVector3().ToPoint(xOffset: -0.25f, yOffset: 0.2f));
+        }
+    }
+
+    private static void DebugRocks() {
+        foreach (var neutralUnit in UnitsTracker.NeutralUnits) {
+            var rockInfo = new []
+            {
+                neutralUnit.Name,
+                neutralUnit.Position.ToString(),
+            };
+
+            Program.GraphicalDebugger.AddTextGroup(rockInfo, worldPos: neutralUnit.Position.ToPoint());
         }
     }
 }

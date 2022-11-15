@@ -119,7 +119,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
 
         _obstacles.ForEach(obstacle => {
             obstacle.AddDeathWatcher(Instance);
-            foreach (var cell in GetObstacleFootprint(obstacle)) {
+            foreach (var cell in FootprintCalculator.GetFootprint(obstacle)) {
                 ObstructionMap.Add(cell);
             }
         });
@@ -127,7 +127,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
 
     private static void RemoveObstacle(Unit obstacle) {
         _obstacles.Remove(obstacle);
-        foreach (var cell in GetObstacleFootprint(obstacle)) {
+        foreach (var cell in FootprintCalculator.GetFootprint(obstacle)) {
             ObstructionMap.Remove(cell);
         }
 
@@ -135,20 +135,6 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
 
         // This is a big ugly, the pathfinder should know about this
         Pathfinder.InvalidateCache();
-    }
-
-    public static IEnumerable<Vector2> GetObstacleFootprint(Unit obstacle) {
-        if (Units.MineralFields.Contains(obstacle.UnitType)) {
-            // Mineral fields are 1x2
-            return new List<Vector2>
-            {
-                obstacle.Position.Translate(xTranslation: -0.5f).AsWorldGridCenter().ToVector2(),
-                obstacle.Position.Translate(xTranslation: 0.5f).AsWorldGridCenter().ToVector2(),
-            };
-        }
-
-        // TODO GD Some debris are rectangular at an angle, so the grid is way bigger than it should be
-        return BuildSearchGrid(obstacle.Position, (int)obstacle.Radius).Select(cell => cell.AsWorldGridCenter().ToVector2());
     }
 
     private static void InitSpawnLocations() {

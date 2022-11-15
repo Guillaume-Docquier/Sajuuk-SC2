@@ -146,7 +146,7 @@ public class ExpandAnalyzer: INeedUpdating {
         }
 
         var cellsTooCloseToResource = resourceClusters.SelectMany(cluster => cluster)
-            .SelectMany(MapAnalyzer.GetObstacleFootprint)
+            .SelectMany(FootprintCalculator.GetFootprint)
             .SelectMany(position => MapAnalyzer.BuildSearchRadius(position, TooCloseToResourceDistance))
             .Select(position => position.AsWorldGridCorner());
 
