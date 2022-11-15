@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
@@ -83,18 +84,30 @@ public class Region {
     // TODO GD Some ramps touch 3 regions
     // The rocks footprints makes it hard for Pathfinder to find proper paths
     private bool IsRegionObstructed() {
-        if (Neighbors.Count != 2) {
+        // I **think** only ramps can be obstructed
+        if (Type != RegionType.Ramp) {
             return false;
         }
 
-        var neighboringRegions = Neighbors.Select(neighbor => neighbor.Region).ToList();
-        var pathThrough = Pathfinder.FindPath(neighboringRegions[0].Center, neighboringRegions[1].Center);
+        var frontier = Neighbors.SelectMany(neighbor => neighbor.Frontier).ToList();
+        var clusteringResult = Clustering.DBSCAN(frontier, epsilon: (float)Math.Sqrt(2), minPoints: 1);
+        if (clusteringResult.clusters.Count != 2) {
+            Logger.Error("This ramp has {0} frontiers instead of the expected 2", clusteringResult.clusters.Count);
+            return false;
+        }
+
+        var pathThrough = Pathfinder.FindPath(
+            clusteringResult.clusters[0].First(cell => MapAnalyzer.IsWalkable(cell)),
+            clusteringResult.clusters[1].First(cell => MapAnalyzer.IsWalkable(cell))
+        );
+
         if (pathThrough == null) {
             return true;
         }
 
         // Obstructed if the path between the neighbors does not go through this region
         // Let's hope no regions have two direct paths between each other
-        return !pathThrough.Any(cell => Cells.Contains(cell));
+        var portionPassingThrough = (float)pathThrough.Count(cell => Cells.Contains(cell)) / pathThrough.Count;
+        return portionPassingThrough <= 0.5f;
     }
 }

@@ -210,7 +210,7 @@ public static partial class RayCastingChokeFinder {
                 $"Dsp: {dispersionScore,4:F2}",
                 $"Cut: {cut,4:F2}",
             };
-            var chokeNodeClusterCenter = Clustering.GetCenter(chokeNodeCluster);
+            var chokeNodeClusterCenter = Clustering.GetCenter(chokeNodeCluster).ToVector3();
             Program.GraphicalDebugger.AddTextGroup(textGroup, worldPos: chokeNodeClusterCenter.ToPoint(zOffset: 5));
             Program.GraphicalDebugger.AddLink(chokeNodeClusterCenter, chokeNodeClusterCenter.Translate(zTranslation: 5), Colors.SunbrightOrange);
 
@@ -235,7 +235,7 @@ public static partial class RayCastingChokeFinder {
         foreach (var lineCentersCluster in lineCentersClusters) {
             var clusterCenter = Clustering.GetCenter(lineCentersCluster);
 
-            var shortestCenterLine = lineCentersCluster.MinBy(line => line.Length + line.Position.HorizontalDistanceTo(clusterCenter) * 0.5)!;
+            var shortestCenterLine = lineCentersCluster.MinBy(line => line.Length + line.Position.ToVector2().DistanceTo(clusterCenter) * 0.5)!;
             DebugLines(new List<VisionLine> { shortestCenterLine }, color: Colors.LimeGreen);
             chokePoints.Add(new ChokePoint(shortestCenterLine.Start, shortestCenterLine.End));
         }

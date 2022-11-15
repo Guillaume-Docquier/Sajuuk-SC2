@@ -10,7 +10,7 @@ public static class ArmyExtensions {
     }
 
     public static Vector2 GetCenter(this IEnumerable<Unit> army) {
-        return Clustering.GetCenter(army.ToList()).ToVector2();
+        return Clustering.GetCenter(army.ToList());
     }
 
     public static bool IsFighting(this IEnumerable<Unit> army) {

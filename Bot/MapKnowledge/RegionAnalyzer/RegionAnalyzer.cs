@@ -426,12 +426,8 @@ public class RegionAnalyzer: INeedUpdating {
         }
 
         // A region should form a single cluster of cells
-        var clusteringResult = Clustering.DBSCAN(subregion.Select(cell => new MapCell(cell)).ToList(), 1, 2);
-        if (clusteringResult.clusters.Count > 1 || clusteringResult.noise.Count > 0) {
-            return false;
-        }
-
-        return true;
+        var floodFill = Clustering.FloodFill(subregion, subregion.First());
+        return floodFill.Count() == subregion.Count;
     }
 
     private static Dictionary<Vector2, Region> BuildRegionsMap(List<Region> regions) {
