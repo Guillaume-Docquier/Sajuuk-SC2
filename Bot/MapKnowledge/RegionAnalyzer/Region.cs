@@ -89,6 +89,10 @@ public class Region {
             return false;
         }
 
+        if (!Cells.Any(cell => MapAnalyzer.IsWalkable(cell))) {
+            return true;
+        }
+
         var frontier = Neighbors.SelectMany(neighbor => neighbor.Frontier).ToList();
         var clusteringResult = Clustering.DBSCAN(frontier, epsilon: (float)Math.Sqrt(2), minPoints: 1);
         if (clusteringResult.clusters.Count != 2) {
@@ -97,8 +101,8 @@ public class Region {
         }
 
         var pathThrough = Pathfinder.FindPath(
-            clusteringResult.clusters[0].First(cell => MapAnalyzer.IsWalkable(cell)),
-            clusteringResult.clusters[1].First(cell => MapAnalyzer.IsWalkable(cell))
+            GetWalkableCellNearFrontier(clusteringResult.clusters[0]),
+            GetWalkableCellNearFrontier(clusteringResult.clusters[1])
         );
 
         if (pathThrough == null) {
@@ -109,5 +113,13 @@ public class Region {
         // Let's hope no regions have two direct paths between each other
         var portionPassingThrough = (float)pathThrough.Count(cell => Cells.Contains(cell)) / pathThrough.Count;
         return portionPassingThrough <= 0.5f;
+    }
+
+    private static Vector2 GetWalkableCellNearFrontier(IReadOnlyCollection<Vector2> frontier) {
+        var walkableCell = frontier.FirstOrDefault(cell => MapAnalyzer.IsWalkable(cell));
+
+        return walkableCell != default
+            ? walkableCell
+            : frontier.First().ClosestWalkable();
     }
 }

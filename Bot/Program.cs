@@ -20,7 +20,7 @@ public class Program {
     private const string Version = "3_0_0";
     private static readonly IBot Bot = new SajuukBot(Version, scenarios: Scenarios);
 
-    private const string MapFileName = Maps.Season_2022_4.FileNames.Hardwire;
+    private const string MapFileName = Maps.Season_2022_4.FileNames.Moondance;
     private const Race OpponentRace = Race.Zerg;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
@@ -71,7 +71,7 @@ public class Program {
             DebugEnabled = true;
             GraphicalDebugger = new NullGraphicalDebugger();
 
-            GameConnection = new GameConnection(stepSize: 2);
+            GameConnection = new GameConnection();
             GameConnection.RunLocal(new SajuukBot(Version, scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
         }
     }
@@ -90,10 +90,7 @@ public class Program {
         DebugEnabled = true;
         GraphicalDebugger = new Sc2GraphicalDebugger();
 
-        DisableDataStores();
-
-        // We run just like the ladder to test the real deal
-        GameConnection = new GameConnection(stepSize: 2);
+        GameConnection = new GameConnection();
         GameConnection.RunLocal(Bot, MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
     }
 
@@ -101,9 +98,7 @@ public class Program {
         DebugEnabled = false;
         GraphicalDebugger = new NullGraphicalDebugger();
 
-        // On the ladder, for some reason, actions have a 1 frame delay before being received and applied
-        // We will run every 2 frames, this way we won't notice the delay
-        GameConnection = new GameConnection(stepSize: 2);
+        GameConnection = new GameConnection();
         GameConnection.RunLadder(Bot, args).Wait();
     }
 }

@@ -24,7 +24,7 @@ public class BotDebugger {
         DebugHelp();
         DebugBuildRequests(managerBuildRequests);
         DebugEnemyDetectors();
-        DebugWalkableAreas();
+        DebugUnwalkableAreas();
         DebugIncomeRate();
         DebugEnemyGhostUnits();
         DebugKnownEnemyUnits();
@@ -79,8 +79,8 @@ public class BotDebugger {
         }
     }
 
-    private static void DebugWalkableAreas() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.WalkableAreas)) {
+    private static void DebugUnwalkableAreas() {
+        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.UnwalkableAreas)) {
             return;
         }
 

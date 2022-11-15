@@ -23,14 +23,13 @@ public class DebuggingFlagsTracker : INeedUpdating {
         _activeDebuggingFlags.Clear();
 
         _activeDebuggingFlags.Add(DebuggingFlags.Help);
-        //_activeDebuggingFlags.Add(DebuggingFlags.BuildOrder);
-        //_activeDebuggingFlags.Add(DebuggingFlags.MatchupData);
-        //_activeDebuggingFlags.Add(DebuggingFlags.IncomeRate);
-        //_activeDebuggingFlags.Add(DebuggingFlags.EnemyDetectors);
-        //_activeDebuggingFlags.Add(DebuggingFlags.GhostUnits);
-        //_activeDebuggingFlags.Add(DebuggingFlags.KnownEnemyUnits);
+        _activeDebuggingFlags.Add(DebuggingFlags.BuildOrder);
+        _activeDebuggingFlags.Add(DebuggingFlags.MatchupData);
+        _activeDebuggingFlags.Add(DebuggingFlags.IncomeRate);
+        _activeDebuggingFlags.Add(DebuggingFlags.EnemyDetectors);
+        _activeDebuggingFlags.Add(DebuggingFlags.GhostUnits);
+        _activeDebuggingFlags.Add(DebuggingFlags.KnownEnemyUnits);
         _activeDebuggingFlags.Add(DebuggingFlags.Regions);
-        _activeDebuggingFlags.Add(DebuggingFlags.RegionCells);
     }
 
     public void Update(ResponseObservation observation) {

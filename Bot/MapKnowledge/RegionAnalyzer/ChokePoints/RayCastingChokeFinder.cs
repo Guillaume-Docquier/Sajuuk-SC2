@@ -13,6 +13,7 @@ namespace Bot.MapKnowledge;
 public static partial class RayCastingChokeFinder {
     private const bool DrawEnabled = true; // TODO GD Flag this
 
+    private const float ChokeScoreCutOff = 4.4f;
     private const int StartingAngle = 0;
     private const int MaxAngle = 175;
     private const int AngleIncrement = 5;
@@ -179,7 +180,7 @@ public static partial class RayCastingChokeFinder {
 
         LogDistribution(nodes.Values.Select(node => node.ChokeScore).ToList());
 
-        var initialChokeNodes = nodes.Values.Where(node => node.ChokeScore > 5f).ToList();
+        var initialChokeNodes = nodes.Values.Where(node => node.ChokeScore > ChokeScoreCutOff).ToList();
         var (chokeNodeClusters, _) = Clustering.DBSCAN(initialChokeNodes, 1.5f, 4);
 
         // Eliminate outliers from node clusters.
@@ -230,7 +231,7 @@ public static partial class RayCastingChokeFinder {
 
         DebugLines(chokeLines);
 
-        var (lineCentersClusters, _) = Clustering.DBSCAN(chokeLines, 1.5f, 2);
+        var (lineCentersClusters, _) = Clustering.DBSCAN(chokeLines, 1.5f, 1);
         var chokePoints = new List<ChokePoint>();
         foreach (var lineCentersCluster in lineCentersClusters) {
             var clusterCenter = Clustering.GetCenter(lineCentersCluster);

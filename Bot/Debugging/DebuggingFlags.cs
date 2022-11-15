@@ -24,9 +24,9 @@ public static class DebuggingFlags {
     public const string EnemyDetectors = ".detectors";
 
     /// <summary>
-    /// Enables displaying individual walkable tiles
+    /// Enables displaying individual unwalkable tiles
     /// </summary>
-    public const string WalkableAreas = ".walkable";
+    public const string UnwalkableAreas = ".unwalkable";
 
     /// <summary>
     /// Enables displaying income information on screen

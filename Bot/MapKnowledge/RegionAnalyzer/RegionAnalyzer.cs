@@ -19,7 +19,6 @@ public class RegionAnalyzer: INeedUpdating {
 
     public static List<Region> Regions => _regionData.Regions;
 
-    private const int MinRampSize = 6;
     private const int RegionMinPoints = 6;
     private const float RegionZMultiplier = 8;
     private static readonly float DiagonalDistance = (float)Math.Sqrt(2);
@@ -326,10 +325,16 @@ public class RegionAnalyzer: INeedUpdating {
     /// <param name="rampCluster"></param>
     /// <returns>True if the tiles have varied heights, false otherwise</returns>
     private static bool IsReallyARamp(IReadOnlyCollection<MapCell> rampCluster) {
+        // This fixes some glitches
+        if (rampCluster.Count < 7) {
+            return false;
+        }
+
         var minHeight = rampCluster.Min(cell => cell.Position.WithWorldHeight().Z);
         var maxHeight = rampCluster.Max(cell => cell.Position.WithWorldHeight().Z);
+        var heightDifference = Math.Abs(minHeight - maxHeight);
 
-        return Math.Abs(minHeight - maxHeight) > 0.05;
+        return 0.05 < heightDifference && heightDifference < 10;
     }
 
     private static List<ChokePoint> ComputePotentialChokePoints() {
