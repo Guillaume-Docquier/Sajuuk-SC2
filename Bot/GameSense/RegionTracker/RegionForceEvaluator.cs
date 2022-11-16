@@ -9,7 +9,7 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
-public class RegionForceCalculator {
+public class RegionForceEvaluator {
     private readonly Alliance _alliance;
     private readonly bool _hasAbsoluteKnowledge;
     private Dictionary<Region, float> _regionForces;
@@ -23,7 +23,7 @@ public class RegionForceCalculator {
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(60);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
-    public RegionForceCalculator(Alliance alliance) {
+    public RegionForceEvaluator(Alliance alliance) {
         _alliance = alliance;
         _hasAbsoluteKnowledge = alliance == Alliance.Self;
     }
@@ -52,10 +52,10 @@ public class RegionForceCalculator {
     }
 
     /// <summary>
-    /// Calculate the force of each region based on the units and fog of war
+    /// Evaluates the force of each region based on the units and fog of war
     /// The force decays as the information grows older
     /// </summary>
-    public void Calculate() {
+    public void Evaluate() {
         // Update based on units
         var newRegionForces = ComputeUnitsForce();
 

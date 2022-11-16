@@ -9,7 +9,7 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
-public class RegionValueCalculator {
+public class RegionValueEvaluator {
     private readonly Alliance _alliance;
     private readonly bool _hasAbsoluteKnowledge;
     private Dictionary<Region, float> _regionValues;
@@ -23,7 +23,7 @@ public class RegionValueCalculator {
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(120);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
-    public RegionValueCalculator(Alliance alliance) {
+    public RegionValueEvaluator(Alliance alliance) {
         _alliance = alliance;
         _hasAbsoluteKnowledge = alliance == Alliance.Self;
     }
@@ -52,10 +52,10 @@ public class RegionValueCalculator {
     }
 
     /// <summary>
-    /// Calculate the value of each region based on the units and fog of war
+    /// Evaluates the value of each region based on the units and fog of war
     /// The value decays as the information grows older
     /// </summary>
-    public void Calculate() {
+    public void Evaluate() {
         // Update based on units
         var newRegionValues = ComputeUnitsValue();
 

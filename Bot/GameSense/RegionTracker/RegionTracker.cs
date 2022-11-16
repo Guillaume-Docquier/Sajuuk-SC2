@@ -13,16 +13,16 @@ public class RegionTracker : INeedUpdating {
 
     private bool _isInitialized = false;
 
-    private readonly Dictionary<Alliance, RegionForceCalculator> _regionForceCalculators = new Dictionary<Alliance, RegionForceCalculator>
+    private readonly Dictionary<Alliance, RegionForceEvaluator> _regionForceEvaluators = new Dictionary<Alliance, RegionForceEvaluator>
     {
-        { Alliance.Self, new RegionForceCalculator(Alliance.Self) },
-        { Alliance.Enemy, new RegionForceCalculator(Alliance.Enemy) },
+        { Alliance.Self, new RegionForceEvaluator(Alliance.Self) },
+        { Alliance.Enemy, new RegionForceEvaluator(Alliance.Enemy) },
     };
 
-    private readonly Dictionary<Alliance, RegionValueCalculator> _regionValueCalculators = new Dictionary<Alliance, RegionValueCalculator>
+    private readonly Dictionary<Alliance, RegionValueEvaluator> _regionValueEvaluators = new Dictionary<Alliance, RegionValueEvaluator>
     {
-        { Alliance.Self, new RegionValueCalculator(Alliance.Self) },
-        { Alliance.Enemy, new RegionValueCalculator(Alliance.Enemy) },
+        { Alliance.Self, new RegionValueEvaluator(Alliance.Self) },
+        { Alliance.Enemy, new RegionValueEvaluator(Alliance.Enemy) },
     };
 
     public static class Force {
@@ -74,11 +74,11 @@ public class RegionTracker : INeedUpdating {
     /// <param name="alliance">The alliance to get the force of</param>
     /// <returns>The force of the region</returns>
     public static float GetForce(Region region, Alliance alliance) {
-        if (!Instance._regionForceCalculators.ContainsKey(alliance)) {
+        if (!Instance._regionForceEvaluators.ContainsKey(alliance)) {
             Logger.Error("Cannot get force for alliance {0}. We don't track that", alliance);
         }
 
-        return Instance._regionForceCalculators[alliance].GetForce(region);
+        return Instance._regionForceEvaluators[alliance].GetForce(region);
     }
 
     /// <summary>
@@ -98,11 +98,11 @@ public class RegionTracker : INeedUpdating {
     /// <param name="alliance">The alliance to get the value of</param>
     /// <returns>The value of the region</returns>
     public static float GetValue(Region region, Alliance alliance) {
-        if (!Instance._regionValueCalculators.ContainsKey(alliance)) {
+        if (!Instance._regionValueEvaluators.ContainsKey(alliance)) {
             Logger.Error("Cannot get value for alliance {0}. We don't track that", alliance);
         }
 
-        return Instance._regionValueCalculators[alliance].GetValue(region);
+        return Instance._regionValueEvaluators[alliance].GetValue(region);
     }
 
     public void Reset() {
@@ -115,33 +115,33 @@ public class RegionTracker : INeedUpdating {
         }
 
         if (!_isInitialized) {
-            InitCalculators();
+            InitEvaluators();
         }
 
-        UpdateCalculations();
+        UpdateEvaluations();
 
         DrawRegionsSummary();
     }
 
-    private void InitCalculators() {
-        foreach (var regionForceCalculator in _regionForceCalculators.Values) {
-            regionForceCalculator.Init(RegionAnalyzer.Regions);
+    private void InitEvaluators() {
+        foreach (var regionForceEvaluator in _regionForceEvaluators.Values) {
+            regionForceEvaluator.Init(RegionAnalyzer.Regions);
         }
 
-        foreach (var regionValueCalculator in _regionValueCalculators.Values) {
-            regionValueCalculator.Init(RegionAnalyzer.Regions);
+        foreach (var regionValueEvaluator in _regionValueEvaluators.Values) {
+            regionValueEvaluator.Init(RegionAnalyzer.Regions);
         }
 
         _isInitialized = true;
     }
 
-    private void UpdateCalculations() {
-        foreach (var regionForceCalculator in _regionForceCalculators.Values) {
-            regionForceCalculator.Calculate();
+    private void UpdateEvaluations() {
+        foreach (var regionForceEvaluator in _regionForceEvaluators.Values) {
+            regionForceEvaluator.Evaluate();
         }
 
-        foreach (var regionValueCalculator in _regionValueCalculators.Values) {
-            regionValueCalculator.Calculate();
+        foreach (var regionValueEvaluator in _regionValueEvaluators.Values) {
+            regionValueEvaluator.Evaluate();
         }
     }
 
