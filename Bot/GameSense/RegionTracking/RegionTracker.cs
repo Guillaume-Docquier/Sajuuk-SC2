@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
@@ -6,25 +7,33 @@ using Bot.ExtensionMethods;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
 
-namespace Bot.GameSense;
+namespace Bot.GameSense.RegionTracking;
 
 public class RegionTracker : INeedUpdating {
     public static RegionTracker Instance { get; private set; } = new RegionTracker();
 
     private bool _isInitialized = false;
 
-    private readonly Dictionary<Alliance, RegionForceEvaluator> _regionForceEvaluators = new Dictionary<Alliance, RegionForceEvaluator>
+    // TODO GD Make this pretty
+    private IEnumerable<IRegionsEvaluator> Evaluators => _regionForceEvaluators.Values
+        .Concat(_regionValueEvaluators.Values)
+        .Concat(new[] { _regionDefenseEvaluator });
+
+    private readonly Dictionary<Alliance, IRegionsEvaluator> _regionForceEvaluators = new Dictionary<Alliance, IRegionsEvaluator>
     {
-        { Alliance.Self, new RegionForceEvaluator(Alliance.Self) },
-        { Alliance.Enemy, new RegionForceEvaluator(Alliance.Enemy) },
+        { Alliance.Self, new RegionsForceEvaluator(Alliance.Self) },
+        { Alliance.Enemy, new RegionsForceEvaluator(Alliance.Enemy) },
     };
 
-    private readonly Dictionary<Alliance, RegionValueEvaluator> _regionValueEvaluators = new Dictionary<Alliance, RegionValueEvaluator>
+    private readonly Dictionary<Alliance, IRegionsEvaluator> _regionValueEvaluators = new Dictionary<Alliance, IRegionsEvaluator>
     {
-        { Alliance.Self, new RegionValueEvaluator(Alliance.Self) },
-        { Alliance.Enemy, new RegionValueEvaluator(Alliance.Enemy) },
+        { Alliance.Self, new RegionsValueEvaluator(Alliance.Self) },
+        { Alliance.Enemy, new RegionsValueEvaluator(Alliance.Enemy) },
     };
 
+    private readonly IRegionsEvaluator _regionDefenseEvaluator = new RegionDefenseEvaluator();
+
+    // TODO GD This might not live in here
     public static class Force {
         public const float None = 0f;
         public const float Unknown = 1f;
@@ -34,6 +43,7 @@ public class RegionTracker : INeedUpdating {
         public const float Lethal = 15f;
     }
 
+    // TODO GD This might not live in here
     public static class Value {
         public const float None = 0f;
         public const float Unknown = 1f;
@@ -78,7 +88,7 @@ public class RegionTracker : INeedUpdating {
             Logger.Error("Cannot get force for alliance {0}. We don't track that", alliance);
         }
 
-        return Instance._regionForceEvaluators[alliance].GetForce(region);
+        return Instance._regionForceEvaluators[alliance].GetEvaluation(region);
     }
 
     /// <summary>
@@ -102,7 +112,7 @@ public class RegionTracker : INeedUpdating {
             Logger.Error("Cannot get value for alliance {0}. We don't track that", alliance);
         }
 
-        return Instance._regionValueEvaluators[alliance].GetValue(region);
+        return Instance._regionValueEvaluators[alliance].GetEvaluation(region);
     }
 
     public void Reset() {
@@ -124,24 +134,16 @@ public class RegionTracker : INeedUpdating {
     }
 
     private void InitEvaluators() {
-        foreach (var regionForceEvaluator in _regionForceEvaluators.Values) {
-            regionForceEvaluator.Init(RegionAnalyzer.Regions);
-        }
-
-        foreach (var regionValueEvaluator in _regionValueEvaluators.Values) {
-            regionValueEvaluator.Init(RegionAnalyzer.Regions);
+        foreach (var evaluator in Evaluators) {
+            evaluator.Init(RegionAnalyzer.Regions);
         }
 
         _isInitialized = true;
     }
 
     private void UpdateEvaluations() {
-        foreach (var regionForceEvaluator in _regionForceEvaluators.Values) {
-            regionForceEvaluator.Evaluate();
-        }
-
-        foreach (var regionValueEvaluator in _regionValueEvaluators.Values) {
-            regionValueEvaluator.Evaluate();
+        foreach (var evaluator in Evaluators) {
+            evaluator.Evaluate();
         }
     }
 
@@ -190,6 +192,7 @@ public class RegionTracker : INeedUpdating {
         }
     }
 
+    // TODO GD This might not live in here
     /// <summary>
     /// Returns a string label associated with the region's force
     /// </summary>
@@ -209,6 +212,7 @@ public class RegionTracker : INeedUpdating {
         };
     }
 
+    // TODO GD This might not live in here
     /// <summary>
     /// Returns a string label associated with the region's value
     /// </summary>

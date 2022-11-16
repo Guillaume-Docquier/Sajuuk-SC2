@@ -7,9 +7,9 @@ using Bot.MapKnowledge;
 using Bot.Utils;
 using SC2APIProtocol;
 
-namespace Bot.GameSense;
+namespace Bot.GameSense.RegionTracking;
 
-public class RegionValueEvaluator {
+public class RegionsValueEvaluator : IRegionsEvaluator {
     private readonly Alliance _alliance;
     private readonly bool _hasAbsoluteKnowledge;
     private Dictionary<Region, float> _regionValues;
@@ -23,12 +23,17 @@ public class RegionValueEvaluator {
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(120);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
-    public RegionValueEvaluator(Alliance alliance) {
+    public RegionsValueEvaluator(Alliance alliance) {
         _alliance = alliance;
         _hasAbsoluteKnowledge = alliance == Alliance.Self;
     }
 
-    public float GetValue(Region region) {
+    /// <summary>
+    /// Gets the evaluated value of the provided region
+    /// </summary>
+    /// <param name="region">The region to get the evaluated value of</param>
+    /// <returns>The evaluated value of the region</returns>
+    public float GetEvaluation(Region region) {
         if (!_regionValues.ContainsKey(region)) {
             Logger.Error("Trying to get the value of an unknown region. {0} regions are known.", _regionValues.Count);
             return RegionTracker.Value.Unknown;

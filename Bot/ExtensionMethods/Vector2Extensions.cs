@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.GameSense.RegionTracking;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
 

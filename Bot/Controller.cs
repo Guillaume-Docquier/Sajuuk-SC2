@@ -9,6 +9,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
+using Bot.GameSense.RegionTracking;
 using Bot.Managers.EconomyManagement.TownHallSupervision;
 using Bot.MapKnowledge;
 using Bot.Utils;

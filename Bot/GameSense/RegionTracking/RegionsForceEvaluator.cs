@@ -7,9 +7,9 @@ using Bot.MapKnowledge;
 using Bot.Utils;
 using SC2APIProtocol;
 
-namespace Bot.GameSense;
+namespace Bot.GameSense.RegionTracking;
 
-public class RegionForceEvaluator {
+public class RegionsForceEvaluator : IRegionsEvaluator {
     private readonly Alliance _alliance;
     private readonly bool _hasAbsoluteKnowledge;
     private Dictionary<Region, float> _regionForces;
@@ -23,12 +23,17 @@ public class RegionForceEvaluator {
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(60);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
-    public RegionForceEvaluator(Alliance alliance) {
+    public RegionsForceEvaluator(Alliance alliance) {
         _alliance = alliance;
         _hasAbsoluteKnowledge = alliance == Alliance.Self;
     }
 
-    public float GetForce(Region region) {
+    /// <summary>
+    /// Gets the evaluated force of the provided region
+    /// </summary>
+    /// <param name="region">The region to get the evaluated force of</param>
+    /// <returns>The evaluated force of the region</returns>
+    public float GetEvaluation(Region region) {
         if (!_regionForces.ContainsKey(region)) {
             Logger.Error("Trying to get the force of an unknown region. {0} regions are known.", _regionForces.Count);
             return RegionTracker.Force.Unknown;
