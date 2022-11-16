@@ -131,10 +131,12 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
             ObstructionMap.Remove(cell);
         }
 
-        Logger.Info("Obstacle removed, invalidating Pathfinder cache");
+        Logger.Info("Obstacle removed, invalidating Pathfinder cache and updating region obstruction");
 
-        // This is a big ugly, the pathfinder should know about this
+        // This is a bit ugly, the pathfinder should know about this
         Pathfinder.InvalidateCache();
+
+        obstacle.Position.GetRegion().UpdateObstruction();
     }
 
     private static void InitSpawnLocations() {

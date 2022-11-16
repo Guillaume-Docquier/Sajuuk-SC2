@@ -4,12 +4,19 @@ using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
 using Bot.ExtensionMethods;
-using Bot.Utils;
 
 namespace Bot.MapKnowledge;
 
 public class Region {
+    /// <summary>
+    /// Contains all walkable world grid center cells in this region.
+    /// </summary>
     public HashSet<Vector2> Cells { get; }
+
+    /// <summary>
+    /// The region's center.
+    /// It is guaranteed to be a walkable world grid center cell.
+    /// </summary>
     public Vector2 Center { get; }
     public RegionType Type { get; }
     public bool IsObstructed { get; private set; }
@@ -81,8 +88,26 @@ public class Region {
         }
     }
 
-    // TODO GD Some ramps touch 3 regions
-    // The rocks footprints makes it hard for Pathfinder to find proper paths
+    /// <summary>
+    /// Check if the region is still obstructed.
+    /// You should call this when neutral units in this region die because we only track those.
+    /// </summary>
+    public void UpdateObstruction() {
+        if (IsObstructed) {
+            IsObstructed = IsRegionObstructed();
+        }
+    }
+
+    /// <summary>
+    /// Gets the neighboring regions that can be reached from this region
+    /// </summary>
+    /// <returns>The neighboring regions that can be reached from this region</returns>
+    public IEnumerable<Region> GetReachableNeighbors() {
+        return Neighbors
+            .Select(neighbor => neighbor.Region)
+            .Where(neighbor => !neighbor.IsObstructed);
+    }
+
     private bool IsRegionObstructed() {
         // I **think** only ramps can be obstructed
         if (Type != RegionType.Ramp) {

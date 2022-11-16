@@ -37,8 +37,7 @@ public static class Pathfinder {
             return new CellPath();
         }
 
-        var isPathKnown = TryGetPathFromMemory(origin, destination, CellPathsMemory, out var knownPath);
-        if (isPathKnown) {
+        if (TryGetPathFromMemory(origin, destination, CellPathsMemory, out var knownPath)) {
             DebugPath(knownPath, isKnown: true);
             return knownPath;
         }
@@ -65,28 +64,27 @@ public static class Pathfinder {
     /// </summary>
     /// <param name="origin">The origin region.</param>
     /// <param name="destination">The destination region.</param>
+    /// <param name="excludedRegions">Regions that should be omitted from pathfinding</param>
     /// <returns>The requested path, or null if the destination is unreachable from the origin.</returns>
-    public static RegionPath FindPath(Region origin, Region destination) {
+    public static RegionPath FindPath(Region origin, Region destination, HashSet<Region> excludedRegions = null) {
         if (origin == destination) {
             return new RegionPath();
         }
 
-        var isPathKnown = TryGetPathFromMemory(origin, destination, RegionPathsMemory, out var knownPath);
-        if (isPathKnown) {
+        if (TryGetPathFromMemory(origin, destination, RegionPathsMemory, out var knownPath)) {
             return knownPath;
         }
 
+        excludedRegions ??= new HashSet<Region>();
         var maybeNullPath = AStar(
             origin,
             destination,
-            (from, to) => from.Center.DistanceTo(to.Center),
-            current => current.Neighbors.Select(neighbor => neighbor.Region).Where(neighbor => !neighbor.IsObstructed)
+            (from, to) => from.Center.DistanceTo(to.Center), // TODO GD Maybe consider real path? Might be very slow the first time
+            current => current.GetReachableNeighbors().Where(neighbor => !excludedRegions.Contains(neighbor))
         );
 
         if (maybeNullPath == null) {
             Logger.Info("No path found between {0} and {1}", origin, destination);
-            SavePathToMemory(origin, destination, RegionPathsMemory, null);
-            return null;
         }
 
         SavePathToMemory(origin, destination, RegionPathsMemory, maybeNullPath);
@@ -94,6 +92,10 @@ public static class Pathfinder {
         return maybeNullPath;
     }
 
+    /// <summary>
+    /// Invalidate the pathfinding memory.
+    /// This is useful if rocks are broken because new paths might be available.
+    /// </summary>
     public static void InvalidateCache() {
         CellPathsMemory.Clear();
         RegionPathsMemory.Clear();
