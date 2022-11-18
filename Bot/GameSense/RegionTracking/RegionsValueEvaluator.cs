@@ -13,6 +13,7 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     private readonly Alliance _alliance;
     private readonly bool _hasAbsoluteKnowledge;
     private Dictionary<Region, float> _regionValues;
+    private Dictionary<Region, float> _normalizedRegionValues;
 
     // It would be cool to use the exponential decay everywhere
     // But that would require tracking the last value update of each region
@@ -32,11 +33,16 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     /// Gets the evaluated value of the provided region
     /// </summary>
     /// <param name="region">The region to get the evaluated value of</param>
+    /// <param name="normalized">Whether or not to get the normalized value between 0 and 1.</param>
     /// <returns>The evaluated value of the region</returns>
-    public float GetEvaluation(Region region) {
+    public float GetEvaluation(Region region, bool normalized = false) {
         if (!_regionValues.ContainsKey(region)) {
             Logger.Error("Trying to get the value of an unknown region. {0} regions are known.", _regionValues.Count);
             return RegionTracker.Value.Unknown;
+        }
+
+        if (normalized) {
+            return _normalizedRegionValues[region];
         }
 
         return _regionValues[region];
@@ -65,7 +71,7 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
         var newRegionValues = ComputeUnitsValue();
 
         // Update based on visibility
-        foreach (var (region, fogOfWarDanger) in ComputeFogOfWarDanger()) {
+        foreach (var (region, fogOfWarDanger) in ComputeFogOfWarValue()) {
             if (!newRegionValues.ContainsKey(region)) {
                 newRegionValues[region] = fogOfWarDanger;
             }
@@ -89,6 +95,8 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
         if (!_hasAbsoluteKnowledge) {
             DecayValues();
         }
+
+        _normalizedRegionValues = ComputeNormalizedValues(_regionValues);
     }
 
     /// <summary>
@@ -164,7 +172,7 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     /// For each region, return some value based on the non-visible portion of the region.
     /// </summary>
     /// <returns>The value of each region based on the visible percentage of the region</returns>
-    private Dictionary<Region, float> ComputeFogOfWarDanger() {
+    private Dictionary<Region, float> ComputeFogOfWarValue() {
         if (_hasAbsoluteKnowledge) {
             return new Dictionary<Region, float>();
         }
@@ -204,21 +212,6 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     }
 
     /// <summary>
-    /// Determines if this pylon of ours is a proxy pylon
-    /// My proxy pylon is closer to them than it is to me
-    /// </summary>
-    /// <param name="pylon"></param>
-    /// <param name="myAlliance"></param>
-    /// <returns></returns>
-    private static bool IsProxyPylon(Unit pylon, Alliance myAlliance) {
-        var mains = ExpandAnalyzer.ExpandLocations.Where(expand => expand.ExpandType == ExpandType.Main);
-        var myMain = ExpandAnalyzer.GetExpand(myAlliance, ExpandType.Main);
-        var theirMain = mains.First(main => main != myMain);
-
-        return pylon.DistanceTo(theirMain.Position) < pylon.DistanceTo(myMain.Position);
-    }
-
-    /// <summary>
     /// Decays the values to represent uncertainty over time
     /// </summary>
     private void DecayValues() {
@@ -232,5 +225,22 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
 
             _regionValues[region] = decayedValue;
         }
+    }
+
+    /// <summary>
+    /// Normalizes the given values to put them between 0 and 1.
+    /// </summary>
+    /// <param name="values">The values to normalize</param>
+    /// <returns>A new dictionary with the values normalized</returns>
+    private static Dictionary<Region, float> ComputeNormalizedValues(Dictionary<Region, float> values) {
+        var minValue = values.Values.Min();
+        var maxValue = values.Values.Max();
+
+        var normalizedValues = new Dictionary<Region, float>();
+        foreach (var region in values.Keys) {
+            normalizedValues[region] = MathUtils.Normalize(values[region], minValue, maxValue);
+        }
+
+        return normalizedValues;
     }
 }

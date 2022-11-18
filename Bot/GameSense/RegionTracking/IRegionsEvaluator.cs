@@ -8,5 +8,5 @@ public interface IRegionsEvaluator {
 
     void Evaluate();
 
-    float GetEvaluation(Region region);
+    float GetEvaluation(Region region, bool normalized = false);
 }

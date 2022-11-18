@@ -16,9 +16,13 @@ public static class Pathfinder {
     /// <summary>
     /// This is public for the performance debugging report, please don't rely on this
     /// </summary>
-    public static readonly Dictionary<Vector2, Dictionary<Vector2, CellPath>> CellPathsMemory = new Dictionary<Vector2, Dictionary<Vector2, CellPath>>();
+    public static readonly Dictionary<Vector2, Dictionary<Vector2, CellPath>> CellPathsMemory = new ();
 
-    private static readonly Dictionary<Region, Dictionary<Region, RegionPath>> RegionPathsMemory = new Dictionary<Region, Dictionary<Region, RegionPath>>();
+    /// <summary>
+    /// A multi-level cache for region pathfinding
+    /// Used to store paths based on different sets of blocked regions (common use case)
+    /// </summary>
+    private static readonly Dictionary<string, Dictionary<Region, Dictionary<Region, RegionPath>>> RegionPathsMemory = new ();
 
     /// <summary>
     /// <para>Finds a path between the origin and destination.</para>
@@ -71,11 +75,14 @@ public static class Pathfinder {
             return new RegionPath();
         }
 
-        if (TryGetPathFromMemory(origin, destination, RegionPathsMemory, out var knownPath)) {
+        excludedRegions ??= new HashSet<Region>();
+        var regionMemoryKey = GetRegionMemoryKey(excludedRegions);
+        var regionMemory = GetRegionMemory(RegionPathsMemory, regionMemoryKey);
+
+        if (TryGetPathFromMemory(origin, destination, regionMemory, out var knownPath)) {
             return knownPath;
         }
 
-        excludedRegions ??= new HashSet<Region>();
         var maybeNullPath = AStar(
             origin,
             destination,
@@ -84,12 +91,41 @@ public static class Pathfinder {
         );
 
         if (maybeNullPath == null) {
-            Logger.Info("No path found between {0} and {1}", origin, destination);
+            if (excludedRegions.Count == 0) {
+                Logger.Info("No path found between {0} and {1}", origin, destination);
+            }
+
+            SavePathToMemory(origin, destination, regionMemory, null);
+        }
+        else {
+            // Save all sub paths because they also are the shortest paths
+            // This can save a lot of computing if you try to always pathfind the longest expected paths first
+            for (var i = 0; i <= maybeNullPath.Count - 2; i++) {
+                for (var j = 2; j <= maybeNullPath.Count - i; j++) {
+                    SavePathToMemory(origin, destination, regionMemory, maybeNullPath.Skip(i).Take(j).ToList());
+                }
+            }
         }
 
-        SavePathToMemory(origin, destination, RegionPathsMemory, maybeNullPath);
-
         return maybeNullPath;
+    }
+
+    /// <summary>
+    /// Gets a region memory key based on the blocked regions.
+    /// </summary>
+    /// <param name="blockedRegions">The blocked regions</param>
+    /// <returns>A unique key for a unique set of blocked regions</returns>
+    private static string GetRegionMemoryKey(IReadOnlyCollection<Region> blockedRegions) {
+        if (blockedRegions.Count == 0) {
+            return "NO-BLOCKERS";
+        }
+
+        // We sort to get a deterministic string
+        var sortedRegionStrings = blockedRegions
+            .Select(region => region.Center.ToString())
+            .OrderBy(posString => posString);
+
+        return string.Join(" ", sortedRegionStrings);
     }
 
     /// <summary>
@@ -216,5 +252,13 @@ public static class Pathfinder {
         else {
             memory[origin][destination] = path;
         }
+    }
+
+    private static Dictionary<Region, Dictionary<Region, RegionPath>> GetRegionMemory(IDictionary<string, Dictionary<Region, Dictionary<Region, RegionPath>>> memory, string key) {
+        if (!memory.ContainsKey(key)) {
+            memory[key] = new Dictionary<Region, Dictionary<Region, RegionPath>>();
+        }
+
+        return memory[key];
     }
 }

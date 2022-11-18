@@ -13,6 +13,7 @@ public class DebuggingFlagsTracker : INeedUpdating {
     public static IReadOnlySet<string> AllDebuggingFlags { get; } = DebuggingFlags.GetAll();
     public static IReadOnlySet<string> AllDebuggingCommands { get; } = DebuggingCommands.GetAll();
 
+    // TODO GD Make a method to get if a flag is active instead of exposing this
     public static IReadOnlySet<string> ActiveDebuggingFlags => Instance._activeDebuggingFlags;
 
     private DebuggingFlagsTracker() {

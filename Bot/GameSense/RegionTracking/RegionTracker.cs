@@ -5,6 +5,7 @@ using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.MapKnowledge;
+using Bot.Utils;
 using SC2APIProtocol;
 
 namespace Bot.GameSense.RegionTracking;
@@ -96,9 +97,10 @@ public class RegionTracker : INeedUpdating {
     /// </summary>
     /// <param name="position">The position to get the value of</param>
     /// <param name="alliance">The alliance to get the value of</param>
+    /// <param name="normalized">Whether or not to get the normalized value between 0 and 1</param>
     /// <returns>The value of the position's region</returns>
-    public static float GetValue(Vector2 position, Alliance alliance) {
-        return GetValue(position.GetRegion(), alliance);
+    public static float GetValue(Vector2 position, Alliance alliance, bool normalized = false) {
+        return GetValue(position.GetRegion(), alliance, normalized);
     }
 
     /// <summary>
@@ -106,13 +108,24 @@ public class RegionTracker : INeedUpdating {
     /// </summary>
     /// <param name="region">The region to get the value of</param>
     /// <param name="alliance">The alliance to get the value of</param>
+    /// <param name="normalized">Whether or not to get the normalized value between 0 and 1</param>
     /// <returns>The value of the region</returns>
-    public static float GetValue(Region region, Alliance alliance) {
+    public static float GetValue(Region region, Alliance alliance, bool normalized = false) {
         if (!Instance._regionValueEvaluators.ContainsKey(alliance)) {
             Logger.Error("Cannot get value for alliance {0}. We don't track that", alliance);
         }
 
-        return Instance._regionValueEvaluators[alliance].GetEvaluation(region);
+        return Instance._regionValueEvaluators[alliance].GetEvaluation(region, normalized);
+    }
+
+    /// <summary>
+    /// Gets the defense score of the region.
+    /// The defense score represents valuable defending this region is
+    /// </summary>
+    /// <param name="region">The region to get the defense score of</param>
+    /// <returns>The defense score of the given region</returns>
+    public static float GetDefenseScore(Region region) {
+        return Instance._regionDefenseEvaluator.GetEvaluation(region);
     }
 
     public void Reset() {
@@ -131,6 +144,7 @@ public class RegionTracker : INeedUpdating {
         UpdateEvaluations();
 
         DrawRegionsSummary();
+        DrawRegionDefenseScores();
     }
 
     private void InitEvaluators() {
@@ -157,12 +171,10 @@ public class RegionTracker : INeedUpdating {
             return;
         }
 
-        const int zOffset = 5;
-
         var regionIndex = 0;
         foreach (var region in RegionAnalyzer.Regions) {
+            // TODO GD Set colors on each region directly, with a color different from its neighbors
             var regionColor = RegionColors[regionIndex % RegionColors.Count];
-            var offsetRegionCenter = region.Center.ToVector3(zOffset: zOffset);
 
             var regionTypeText = region.Type.ToString();
             if (region.Type == RegionType.Expand) {
@@ -171,22 +183,12 @@ public class RegionTracker : INeedUpdating {
 
             var obstructedText = region.IsObstructed ? "OBSTRUCTED" : "";
 
-            Program.GraphicalDebugger.AddLink(region.Center.ToVector3(), offsetRegionCenter, color: regionColor);
-            Program.GraphicalDebugger.AddTextGroup(
-                new[]
-                {
-                    $"R{regionIndex} ({regionTypeText}) {obstructedText}",
-                    $"Self:  {GetForceLabel(region, Alliance.Self),-7} ({GetForce(region, Alliance.Self),5:F2}) | {GetValueLabel(region, Alliance.Self),-10} ({GetValue(region, Alliance.Self),5:F2})",
-                    $"Enemy: {GetForceLabel(region, Alliance.Enemy),-7} ({GetForce(region, Alliance.Enemy),5:F2}) | {GetValueLabel(region, Alliance.Enemy),-10} ({GetValue(region, Alliance.Enemy),5:F2})",
-                },
-                size: 14, worldPos: offsetRegionCenter.ToPoint(xOffset: -3f), color: regionColor);
-
-            foreach (var neighbor in region.Neighbors) {
-                var neighborOffsetCenter = neighbor.Region.Center.ToVector3(zOffset: zOffset);
-                var regionSizeRatio = (float)region.Cells.Count / (region.Cells.Count + neighbor.Region.Cells.Count);
-                var lineEnd = Vector3.Lerp(offsetRegionCenter, neighborOffsetCenter, regionSizeRatio);
-                Program.GraphicalDebugger.AddLine(offsetRegionCenter, lineEnd, color: regionColor);
-            }
+            DrawRegionMarker(region, regionColor, new[]
+            {
+                $"R{regionIndex} ({regionTypeText}) {obstructedText}",
+                $"Self:  {GetForceLabel(region, Alliance.Self),-7} ({GetForce(region, Alliance.Self),5:F2}) | {GetValueLabel(region, Alliance.Self),-10} ({GetValue(region, Alliance.Self),5:F2})",
+                $"Enemy: {GetForceLabel(region, Alliance.Enemy),-7} ({GetForce(region, Alliance.Enemy),5:F2}) | {GetValueLabel(region, Alliance.Enemy),-10} ({GetValue(region, Alliance.Enemy),5:F2})",
+            }, textXOffset: -3f);
 
             regionIndex++;
         }
@@ -230,5 +232,52 @@ public class RegionTracker : INeedUpdating {
             >= Value.Intriguing => "Intriguing",
             _ => "No Value"
         };
+    }
+
+    private static void DrawRegionDefenseScores() {
+        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Defense)) {
+            return;
+        }
+
+        var allScores = RegionAnalyzer.Regions.Select(GetDefenseScore).ToList();
+        var minScore = allScores.Min();
+        var maxScore = allScores.Max();
+
+        foreach (var region in RegionAnalyzer.Regions) {
+            var defenseScore = GetDefenseScore(region);
+            var normalizedDefenseScore = MathUtils.Normalize(defenseScore, minScore, maxScore);
+            var color = Colors.Gradient(Colors.DarkGrey, Colors.BrightGreen, normalizedDefenseScore);
+
+            if (region.Type == RegionType.Ramp) {
+                foreach (var cell in region.Cells) {
+                    // Spheres are more visible then squares for ramps
+                    Program.GraphicalDebugger.AddGridSphere(cell.ToVector3(), color);
+                }
+            }
+            else {
+                foreach (var cell in region.Cells) {
+                    Program.GraphicalDebugger.AddGridSquare(cell.ToVector3(), color);
+                }
+            }
+
+            DrawRegionMarker(region, Colors.Green, new []{ $"Defense score: {defenseScore,4:F2} ({normalizedDefenseScore,5:P2})" }, textXOffset: -2f);
+        }
+    }
+
+    private static void DrawRegionMarker(Region region, Color regionColor, string[] texts, float textXOffset = 0f) {
+        const int zOffset = 5;
+        var offsetRegionCenter = region.Center.ToVector3(zOffset: zOffset);
+
+        // Draw the marker
+        Program.GraphicalDebugger.AddLink(region.Center.ToVector3(), offsetRegionCenter, color: regionColor);
+        Program.GraphicalDebugger.AddTextGroup(texts, size: 14, worldPos: offsetRegionCenter.ToPoint(xOffset: textXOffset), color: regionColor);
+
+        // Draw lines to neighbors
+        foreach (var neighbor in region.Neighbors) {
+            var neighborOffsetCenter = neighbor.Region.Center.ToVector3(zOffset: zOffset);
+            var regionSizeRatio = (float)region.Cells.Count / (region.Cells.Count + neighbor.Region.Cells.Count);
+            var lineEnd = Vector3.Lerp(offsetRegionCenter, neighborOffsetCenter, regionSizeRatio);
+            Program.GraphicalDebugger.AddLine(offsetRegionCenter, lineEnd, color: regionColor);
+        }
     }
 }

@@ -32,8 +32,9 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     /// Gets the evaluated force of the provided region
     /// </summary>
     /// <param name="region">The region to get the evaluated force of</param>
+    /// <param name="normalized">Whether or not to get the normalized value between 0 and 1. NOT IMPLEMENTED</param>
     /// <returns>The evaluated force of the region</returns>
-    public float GetEvaluation(Region region) {
+    public float GetEvaluation(Region region, bool normalized = false) {
         if (!_regionForces.ContainsKey(region)) {
             Logger.Error("Trying to get the force of an unknown region. {0} regions are known.", _regionForces.Count);
             return RegionTracker.Force.Unknown;

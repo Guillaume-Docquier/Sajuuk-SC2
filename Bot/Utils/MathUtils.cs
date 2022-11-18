@@ -22,4 +22,16 @@ public static class MathUtils {
 
         return elements.SelectMany((e, i) => Combinations(elements.Skip(i + 1), k - 1).Select(c => new[] { e }.Concat(c)));
     }
+
+    public static float Normalize(float number, float min, float max) {
+        return (number - min) / (max - min);
+    }
+
+    public static float LogScale(float number, float min, float max) {
+        var logNum = (float)Math.Log2(number + 1);
+        var logMin = (float)Math.Log2(min + 1);
+        var logMax = (float)Math.Log2(max + 1);
+
+        return (logNum - logMin) / (logMax - logMin);
+    }
 }

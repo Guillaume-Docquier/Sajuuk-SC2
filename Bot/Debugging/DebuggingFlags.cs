@@ -77,4 +77,9 @@ public static class DebuggingFlags {
     /// Enables displaying the coordinates of each cell
     /// </summary>
     public const string Coordinates = ".coords";
+
+    /// <summary>
+    /// Enables displaying the defense scores of each region
+    /// </summary>
+    public const string Defense = ".def";
 }

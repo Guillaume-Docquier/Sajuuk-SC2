@@ -253,25 +253,13 @@ public static partial class RayCastingChokeFinder {
         var maxScore = nodes.Max(node => node.ChokeScore);
 
         foreach (var node in nodes) {
-            var textColor = Colors.Gradient(Colors.DarkGrey, Colors.DarkRed, LogScale(node.ChokeScore, minScore, maxScore));
+            var textColor = Colors.Gradient(Colors.DarkGrey, Colors.DarkRed, MathUtils.LogScale(node.ChokeScore, minScore, maxScore));
             if (node.ChokeScore < cutScore) {
                 textColor = Colors.Blue;
             }
 
             Program.GraphicalDebugger.AddText($"{node.ChokeScore:F1}", worldPos: node.Position.WithWorldHeight().ToPoint(), color: textColor, size: 13);
         }
-    }
-
-    private static float LogScale(float number, float min, float max) {
-        var logNum = (float)Math.Log2(number + 1);
-        var logMin = (float)Math.Log2(min + 1);
-        var logMax = (float)Math.Log2(max + 1);
-
-        return (logNum - logMin) / (logMax - logMin);
-    }
-
-    private static float LinScale(float number, float min, float max) {
-        return (number - min) / (max - min);
     }
 
     private static void DebugLines(List<VisionLine> lines, Color color = null) {
