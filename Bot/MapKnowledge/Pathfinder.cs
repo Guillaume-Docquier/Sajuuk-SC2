@@ -237,22 +237,21 @@ public static class Pathfinder {
             return true;
         }
 
-        if (memory.ContainsKey(destination) && memory[destination].ContainsKey(origin)) {
-            path = Enumerable.Reverse(memory[destination][origin]).ToList();
-            return true;
-        }
-
         path = null;
         return false;
     }
 
     private static void SavePathToMemory<TVertex>(TVertex origin, TVertex destination, IDictionary<TVertex, Dictionary<TVertex, List<TVertex>>> memory, List<TVertex> path) {
         if (!memory.ContainsKey(origin)) {
-            memory[origin] = new Dictionary<TVertex, List<TVertex>> { [destination] = path };
+            memory[origin] = new Dictionary<TVertex, List<TVertex>>();
         }
-        else {
-            memory[origin][destination] = path;
+
+        if (!memory.ContainsKey(destination)) {
+            memory[destination] = new Dictionary<TVertex, List<TVertex>>();
         }
+
+        memory[origin][destination] = path;
+        memory[destination][origin] = path == null ? null : Enumerable.Reverse(path).ToList();
     }
 
     private static Dictionary<Region, Dictionary<Region, RegionPath>> GetRegionMemory(IDictionary<string, Dictionary<Region, Dictionary<Region, RegionPath>>> memory, string key) {

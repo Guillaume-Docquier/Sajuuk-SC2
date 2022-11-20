@@ -13,6 +13,7 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     private readonly Alliance _alliance;
     private readonly bool _hasAbsoluteKnowledge;
     private Dictionary<Region, float> _regionForces;
+    private Dictionary<Region, float> _normalizedRegionForces;
 
     // It would be cool to use the exponential decay everywhere
     // But that would require tracking the last force update of each region
@@ -32,12 +33,16 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     /// Gets the evaluated force of the provided region
     /// </summary>
     /// <param name="region">The region to get the evaluated force of</param>
-    /// <param name="normalized">Whether or not to get the normalized value between 0 and 1. NOT IMPLEMENTED</param>
+    /// <param name="normalized">Whether or not to get the normalized value between 0 and 1.</param>
     /// <returns>The evaluated force of the region</returns>
     public float GetEvaluation(Region region, bool normalized = false) {
         if (!_regionForces.ContainsKey(region)) {
             Logger.Error("Trying to get the force of an unknown region. {0} regions are known.", _regionForces.Count);
             return RegionTracker.Force.Unknown;
+        }
+
+        if (normalized) {
+            return _normalizedRegionForces[region];
         }
 
         return _regionForces[region];
@@ -101,6 +106,8 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
         if (!_hasAbsoluteKnowledge) {
             DecayForces();
         }
+
+        _normalizedRegionForces = ComputeNormalizedForces(_regionForces);
     }
 
     /// <summary>
@@ -276,5 +283,22 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
 
             _regionForces[region] = decayedForce;
         }
+    }
+
+    /// <summary>
+    /// Normalizes the given forces to put them between 0 and 1.
+    /// </summary>
+    /// <param name="forces">The forces to normalize</param>
+    /// <returns>A new dictionary with the forces normalized</returns>
+    private static Dictionary<Region, float> ComputeNormalizedForces(Dictionary<Region, float> forces) {
+        var minForce = forces.Values.Min();
+        var maxForce = forces.Values.Max();
+
+        var normalizedForces = new Dictionary<Region, float>();
+        foreach (var region in forces.Keys) {
+            normalizedForces[region] = MathUtils.Normalize(forces[region], minForce, maxForce);
+        }
+
+        return normalizedForces;
     }
 }

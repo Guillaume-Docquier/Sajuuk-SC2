@@ -73,9 +73,10 @@ public class RegionTracker : INeedUpdating {
     /// </summary>
     /// <param name="position">The position to get the force of</param>
     /// <param name="alliance">The alliance to get the force of</param>
+    /// <param name="normalized">Whether or not to get the normalized force between 0 and 1</param>
     /// <returns>The force of the position's region</returns>
-    public static float GetForce(Vector2 position, Alliance alliance) {
-        return GetForce(position.GetRegion(), alliance);
+    public static float GetForce(Vector2 position, Alliance alliance, bool normalized = false) {
+        return GetForce(position.GetRegion(), alliance, normalized);
     }
 
     /// <summary>
@@ -83,13 +84,14 @@ public class RegionTracker : INeedUpdating {
     /// </summary>
     /// <param name="region">The region to get the force of</param>
     /// <param name="alliance">The alliance to get the force of</param>
+    /// <param name="normalized">Whether or not to get the normalized force between 0 and 1</param>
     /// <returns>The force of the region</returns>
-    public static float GetForce(Region region, Alliance alliance) {
+    public static float GetForce(Region region, Alliance alliance, bool normalized = false) {
         if (!Instance._regionForceEvaluators.ContainsKey(alliance)) {
             Logger.Error("Cannot get force for alliance {0}. We don't track that", alliance);
         }
 
-        return Instance._regionForceEvaluators[alliance].GetEvaluation(region);
+        return Instance._regionForceEvaluators[alliance].GetEvaluation(region, normalized);
     }
 
     /// <summary>

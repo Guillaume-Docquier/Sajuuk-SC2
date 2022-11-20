@@ -44,12 +44,16 @@ public class RegionDefenseEvaluator : IRegionsEvaluator {
     /// A defense score indicates how important defending a region is. The higher, the better.
     /// </summary>
     public void Evaluate() {
-        // TODO GD Consider the dangerous regions instead of the static spawn
-        var enemySpawnRegion = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).Position.GetRegion();
         var allRegions = _regionDefenseScores.Keys.ToList();
 
         foreach (var defendedRegion in allRegions) {
-            _regionDefenseScores[defendedRegion] = ComputeDefenseScore(enemySpawnRegion, defendedRegion, allRegions);
+            _regionDefenseScores[defendedRegion] = 0;
+
+            var threateningRegions = allRegions.Where(region => RegionTracker.GetForce(region, Alliance.Enemy) >= RegionTracker.Force.Medium);
+            foreach (var threateningRegion in threateningRegions) {
+                var normalizedThreat = RegionTracker.GetForce(threateningRegion, Alliance.Enemy, normalized: true);
+                _regionDefenseScores[defendedRegion] += normalizedThreat * ComputeDefenseScore(threateningRegion, defendedRegion, allRegions);
+            }
         }
     }
 
