@@ -143,8 +143,8 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
             return;
         }
 
-        AddSphere(path[0], 1.5f, startColor);
-        AddSphere(path[^1], 1.5f, endColor);
+        AddSphere(path.First(), 1.5f, startColor);
+        AddSphere(path.Last(), 1.5f, endColor);
         for (var i = 0; i < path.Count; i++) {
             AddGridSquare(path[i], Colors.Gradient(startColor, endColor, (float)i / path.Count));
         }

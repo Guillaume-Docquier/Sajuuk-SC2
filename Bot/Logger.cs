@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using Bot.Utils;
 
 // ReSharper disable AssignNullToNotNullAttribute
@@ -129,6 +130,6 @@ public static class Logger {
         }
 
         // Remove the namespaces, just keep the class name
-        return fullName.Split(".")[^1];
+        return fullName.Split(".").Last();
     }
 }

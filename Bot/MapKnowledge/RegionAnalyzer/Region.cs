@@ -147,4 +147,8 @@ public class Region {
             ? walkableCell
             : frontier.First().ClosestWalkable();
     }
+
+    public override string ToString() {
+        return $"Region at {Center}";
+    }
 }

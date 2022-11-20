@@ -86,7 +86,7 @@ public static class Pathfinder {
         var maybeNullPath = AStar(
             origin,
             destination,
-            (from, to) => from.Center.DistanceTo(to.Center), // TODO GD Maybe consider real path? Might be very slow the first time
+            (from, to) => from.Center.DistanceTo(to.Center),
             current => current.GetReachableNeighbors().Where(neighbor => !excludedRegions.Contains(neighbor))
         );
 
@@ -100,9 +100,10 @@ public static class Pathfinder {
         else {
             // Save all sub paths because they also are the shortest paths
             // This can save a lot of computing if you try to always pathfind the longest expected paths first
-            for (var i = 0; i <= maybeNullPath.Count - 2; i++) {
-                for (var j = 2; j <= maybeNullPath.Count - i; j++) {
-                    SavePathToMemory(origin, destination, regionMemory, maybeNullPath.Skip(i).Take(j).ToList());
+            for (var skip = 0; skip <= maybeNullPath.Count - 2; skip++) {
+                for (var take = 2; take <= maybeNullPath.Count - skip; take++) {
+                    var path = maybeNullPath.Skip(skip).Take(take).ToList();
+                    SavePathToMemory(path.First(), path.Last(), regionMemory, path);
                 }
             }
         }
