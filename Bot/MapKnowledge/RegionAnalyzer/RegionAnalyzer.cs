@@ -14,7 +14,7 @@ public class RegionAnalyzer: INeedUpdating {
     public static readonly RegionAnalyzer Instance = new RegionAnalyzer();
 
     public static bool IsInitialized { get; private set; } = false;
-    private static Dictionary<Vector2, Region> _regionsMap;
+    private static Dictionary<Vector2, Region> _regionsLookupMap;
     private static RegionData _regionData;
 
     public static List<Region> Regions => _regionData.Regions;
@@ -23,23 +23,11 @@ public class RegionAnalyzer: INeedUpdating {
     private const float RegionZMultiplier = 8;
     private static readonly float DiagonalDistance = (float)Math.Sqrt(2);
 
-    private static readonly List<Color> RegionColors = new List<Color>
-    {
-        Colors.MulberryRed,
-        Colors.MediumTurquoise,
-        Colors.SunbrightOrange,
-        Colors.PeachPink,
-        Colors.Purple,
-        Colors.LimeGreen,
-        Colors.BurlywoodBeige,
-        Colors.LightRed,
-    };
-
     private RegionAnalyzer() {}
 
     public void Reset() {
         IsInitialized = false;
-        _regionsMap = null;
+        _regionsLookupMap = null;
         _regionData = null;
     }
 
@@ -64,8 +52,11 @@ public class RegionAnalyzer: INeedUpdating {
 
             _regionData = regionsData;
 
-            _regionsMap = BuildRegionsMap(_regionData.Regions);
-            _regionData.Regions.ForEach(region => region.Init(computeObstruction: false));
+            _regionsLookupMap = BuildRegionsLookupMap(_regionData.Regions);
+
+            for (var regionIndex = 0; regionIndex < _regionData.Regions.Count; regionIndex++) {
+                _regionData.Regions[regionIndex].Init(regionIndex, computeObstruction: false);
+            }
 
             Logger.Metric("{0} regions ({1} obstructed), {2} ramps, {3} unclassified cells and {4} choke points", _regionData.Regions.Count, _regionData.Regions.Count(region => region.IsObstructed), _regionData.Ramps.Count, _regionData.Noise.Count, _regionData.ChokePoints.Count);
             Logger.Success("Regions loaded from file");
@@ -93,8 +84,11 @@ public class RegionAnalyzer: INeedUpdating {
         var regions = BuildRegions(potentialRegions, ramps, chokePoints);
         _regionData = new RegionData(regions, ramps, noise, chokePoints);
 
-        _regionsMap = BuildRegionsMap(regions);
-        regions.ForEach(region => region.Init(computeObstruction: true));
+        _regionsLookupMap = BuildRegionsLookupMap(regions);
+
+        for (var regionIndex = 0; regionIndex < regions.Count; regionIndex++) {
+            regions[regionIndex].Init(regionIndex, computeObstruction: false);
+        }
 
         RegionDataStore.Save(Controller.GameInfo.MapName, _regionData);
 
@@ -131,7 +125,7 @@ public class RegionAnalyzer: INeedUpdating {
     /// <param name="position">The position to get the Region of</param>
     /// <returns>The Region of the given position</returns>
     public static Region GetRegion(Vector2 position) {
-        if (_regionsMap.TryGetValue(position.AsWorldGridCenter(), out var region)) {
+        if (_regionsLookupMap.TryGetValue(position.AsWorldGridCenter(), out var region)) {
             return region;
         }
 
@@ -162,22 +156,18 @@ public class RegionAnalyzer: INeedUpdating {
     /// <para>Each cell also gets a text 'EX', where E stands for 'Expand' and X is the region index.</para>
     /// </summary>
     private static void DrawRegions() {
-        var regionIndex = 0;
         foreach (var region in _regionData.Regions) {
-            var regionColor = RegionColors[regionIndex % RegionColors.Count];
             var frontier = region.Neighbors.SelectMany(neighboringRegion => neighboringRegion.Frontier).ToList();
 
             foreach (var position in region.Cells.Except(frontier)) {
-                Program.GraphicalDebugger.AddText($"{regionIndex}", size: 12, worldPos: position.ToVector3().ToPoint(), color: regionColor);
-                Program.GraphicalDebugger.AddGridSquare(position.ToVector3(), regionColor);
+                Program.GraphicalDebugger.AddText($"{region.Id}", size: 12, worldPos: position.ToVector3().ToPoint(), color: region.Color);
+                Program.GraphicalDebugger.AddGridSquare(position.ToVector3(), region.Color);
             }
 
             foreach (var position in frontier) {
-                Program.GraphicalDebugger.AddText($"F{regionIndex}", size: 12, worldPos: position.ToVector3().ToPoint(), color: regionColor);
-                Program.GraphicalDebugger.AddGridSphere(position.ToVector3(), regionColor);
+                Program.GraphicalDebugger.AddText($"F{region.Id}", size: 12, worldPos: position.ToVector3().ToPoint(), color: region.Color);
+                Program.GraphicalDebugger.AddGridSphere(position.ToVector3(), region.Color);
             }
-
-            regionIndex++;
         }
     }
 
@@ -435,7 +425,7 @@ public class RegionAnalyzer: INeedUpdating {
         return floodFill.Count() == subregion.Count;
     }
 
-    private static Dictionary<Vector2, Region> BuildRegionsMap(List<Region> regions) {
+    private static Dictionary<Vector2, Region> BuildRegionsLookupMap(List<Region> regions) {
         var regionsMap = new Dictionary<Vector2, Region>();
         foreach (var region in regions) {
             foreach (var cell in region.Cells) {

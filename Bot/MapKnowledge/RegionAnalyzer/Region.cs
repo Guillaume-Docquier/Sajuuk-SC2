@@ -3,11 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
+using SC2APIProtocol;
 
 namespace Bot.MapKnowledge;
 
 public class Region {
+    private static readonly List<Color> RegionColors = new List<Color>
+    {
+        Colors.Cyan,
+        Colors.Red,
+        Colors.LimeGreen,
+        Colors.Blue,
+        Colors.Orange,
+        Colors.Magenta
+    };
+
     /// <summary>
     /// Contains all walkable world grid center cells in this region.
     /// </summary>
@@ -20,6 +32,14 @@ public class Region {
     public Vector2 Center { get; }
     public RegionType Type { get; }
     public bool IsObstructed { get; private set; }
+
+    // TODO GD Persist this next time you run the algo
+    [JsonIgnore]
+    public int Id { get; private set; }
+
+    // TODO GD Persist this next time you run the algo
+    [JsonIgnore]
+    public Color Color { get; private set; }
 
     [JsonIgnore]
     public ExpandLocation ExpandLocation { get; private set; }
@@ -56,7 +76,9 @@ public class Region {
         }
     }
 
-    public void Init(bool computeObstruction) {
+    public void Init(int id, bool computeObstruction) {
+        Id = id;
+
         var neighbors = new Dictionary<Region, List<Vector2>>();
         foreach (var cell in Cells) {
             var neighboringRegions = cell
@@ -86,6 +108,24 @@ public class Region {
         if (computeObstruction) {
             IsObstructed = IsRegionObstructed();
         }
+
+        // Get a random color that's not the same as our neighbors
+        var rng = new Random();
+        var color = RegionColors[rng.Next(RegionColors.Count)];
+        var neighborColors = GetReachableNeighbors()
+            .Where(neighbor => neighbor.Color != default)
+            .Select(neighbor => neighbor.Color)
+            .ToHashSet();
+
+        if (neighborColors.Contains(color)) {
+            // There should be enough colors so that one is always available
+            var availableColors = RegionColors.Except(neighborColors).ToList();
+
+            var randomColorIndex = rng.Next(availableColors.Count);
+            color = availableColors[randomColorIndex];
+        }
+
+        Color = color;
     }
 
     /// <summary>
@@ -149,6 +189,6 @@ public class Region {
     }
 
     public override string ToString() {
-        return $"Region at {Center}";
+        return $"Region {Id} at {Center}";
     }
 }
