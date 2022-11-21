@@ -8,7 +8,7 @@ public abstract class UnitlessManager : Manager {
     protected sealed override IDispatcher Dispatcher { get; } = new DummyDispatcher();
     protected sealed override IReleaser Releaser { get; } = new DummyReleaser();
 
-    protected sealed override void AssignmentPhase() {}
+    protected sealed override void RecruitmentPhase() {}
     protected sealed override void DispatchPhase() {}
 
     private class DummyAssigner : IAssigner {

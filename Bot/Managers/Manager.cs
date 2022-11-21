@@ -13,12 +13,13 @@ public abstract class Manager: IWatchUnitsDie {
     protected abstract IReleaser Releaser { get; }
 
     public void OnFrame() {
-        AssignmentPhase();
+        RecruitmentPhase();
         DispatchPhase();
         ManagementPhase();
     }
 
-    protected abstract void AssignmentPhase();
+    // TODO GD Review this system, dispatch often is empty/simple and ManagementPhase often does dispatching
+    protected abstract void RecruitmentPhase();
     protected abstract void DispatchPhase();
     protected abstract void ManagementPhase();
 

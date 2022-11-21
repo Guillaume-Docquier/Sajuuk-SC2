@@ -89,8 +89,6 @@ public class TwoBasesRoach : IBuildOrder {
             .Except(stepsToPushBack)
             .Concat(stepsToPushBack)
             .ToList();
-
-        Controller.SetRealTime("TransitionToDefensiveBuild");
     }
 
     private void TransitionToRushDefense() {
@@ -111,7 +109,5 @@ public class TwoBasesRoach : IBuildOrder {
             .Except(stepsToPushBack)
             .Concat(stepsToPushBack)
             .ToList();
-
-        Controller.SetRealTime("TransitionToRushDefense");
     }
 }

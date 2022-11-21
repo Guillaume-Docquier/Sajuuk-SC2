@@ -30,6 +30,7 @@ public partial class WarManager: Manager {
     private bool _hasAssaultStarted = false;
     private readonly HashSet<Unit> _soldiers = new HashSet<Unit>();
 
+    private readonly ArmySupervisor _defenseSupervisor = new ArmySupervisor();
     private readonly ArmySupervisor _groundArmySupervisor = new ArmySupervisor();
     private readonly ArmySupervisor _airArmySupervisor = new ArmySupervisor();
     private Unit _townHallToDefend;
@@ -55,7 +56,7 @@ public partial class WarManager: Manager {
         _airArmySupervisor.AssignTarget(townHallDefensePosition, AttackRadius);
     }
 
-    protected override void AssignmentPhase() {
+    protected override void RecruitmentPhase() {
         Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
     }
 
@@ -64,6 +65,17 @@ public partial class WarManager: Manager {
     }
 
     protected override void ManagementPhase() {
+        // Determine regions to defend
+        //var regionToDefend = RegionAnalyzer.Regions.MaxBy(region => RegionTracker.GetDefenseScore(region));
+        //_defenseSupervisor.AssignTarget(regionToDefend);
+
+        // Determine regions to attack
+        //var regionToAttack = RegionAnalyzer.Regions.MaxBy(region => RegionTracker.GetValue(region, Alliance.Enemy) / RegionTracker.GetForce(region, Alliance.Enemy));
+        //_groundArmySupervisor.AssignTarget(regionToAttack);
+
+        // Dispatch personnel
+        // Request more forces
+
         ScanForEndangeredExpands();
 
         // TODO Use states
@@ -101,6 +113,7 @@ public partial class WarManager: Manager {
             _groundArmySupervisor.OnFrame();
         }
 
+        _defenseSupervisor.OnFrame();
         _airArmySupervisor.OnFrame();
     }
 

@@ -10,8 +10,23 @@ namespace Bot.GameSense.RegionTracking;
 using ReachMap = Dictionary<Region, float>;
 
 // TODO GD Highlight the dependency to Force and Value evaluators
-public class RegionDefenseEvaluator : IRegionsEvaluator {
+public class RegionDefenseEvaluator : IRegionsEvaluator, IWatchUnitsDie {
     private Dictionary<Region, float> _regionDefenseScores;
+    private readonly ReachCache _reachCache = new ReachCache();
+
+    public RegionDefenseEvaluator() {
+        // Watch neutral units to invalidate _reachCache
+        foreach (var neutralUnit in UnitsTracker.NeutralUnits) {
+            neutralUnit.AddDeathWatcher(this);
+        }
+    }
+
+    public void ReportUnitDeath(Unit deadUnit) {
+        // Obstacles might clear some paths
+        // Actually this should be only when a region becomes un-obstructed
+        // TODO Pub sub + topics
+        _reachCache.Clear();
+    }
 
     /// <summary>
     /// Gets the defense score of the provided region
@@ -64,8 +79,8 @@ public class RegionDefenseEvaluator : IRegionsEvaluator {
     /// <param name="regionToDefendFrom"></param>
     /// <param name="allRegions"></param>
     /// <returns></returns>
-    private static float ComputeDefenseScore(Region regionToDefendAgainst, Region regionToDefendFrom, List<Region> allRegions) {
-        // compute the enemy reach as if the defendedRegion was blocked
+    private float ComputeDefenseScore(Region regionToDefendAgainst, Region regionToDefendFrom, List<Region> allRegions) {
+        // Compute the enemy reach as if the defendedRegion was blocked
         var enemyReach = ComputeReach(regionToDefendAgainst, allRegions, regionToDefendFrom);
         var ourReach = ComputeReach(regionToDefendFrom, allRegions);
 
@@ -89,7 +104,11 @@ public class RegionDefenseEvaluator : IRegionsEvaluator {
     /// <param name="regions"></param>
     /// <param name="blockedRegion"></param>
     /// <returns></returns>
-    private static ReachMap ComputeReach(Region startingRegion, IEnumerable<Region> regions, Region blockedRegion = null) {
+    private ReachMap ComputeReach(Region startingRegion, IReadOnlyCollection<Region> regions, Region blockedRegion = null) {
+        if (_reachCache.TryGet(startingRegion, regions, blockedRegion, out var cachedReach)) {
+            return cachedReach;
+        }
+
         var reach = new Dictionary<Region, float>
         {
             [startingRegion] = 0
@@ -112,6 +131,8 @@ public class RegionDefenseEvaluator : IRegionsEvaluator {
                 reach[region] = path.GetPathDistance();
             }
         }
+
+        _reachCache.Save(startingRegion, regions, blockedRegion, reach);
 
         return reach;
     }

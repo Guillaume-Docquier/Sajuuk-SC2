@@ -67,7 +67,7 @@ public static class TestUtils {
             Releaser = releaser ?? new DummyReleaser();
         }
 
-        protected override void AssignmentPhase() {}
+        protected override void RecruitmentPhase() {}
 
         protected override void DispatchPhase() {}
 

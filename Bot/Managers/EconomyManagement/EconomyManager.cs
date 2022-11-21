@@ -46,7 +46,7 @@ public sealed partial class EconomyManager: Manager {
         _buildRequests.Add(_dronesBuildRequest);
     }
 
-    protected override void AssignmentPhase() {
+    protected override void RecruitmentPhase() {
         var unmanagedTownHalls = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).Where(unit => unit.Manager == null);
         Assign(unmanagedTownHalls);
 

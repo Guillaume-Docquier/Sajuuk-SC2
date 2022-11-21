@@ -31,7 +31,7 @@ public partial class ScoutManager : Manager {
         _scoutingStrategy = ScoutingStrategyFactory.CreateNew(Controller.EnemyRace);
     }
 
-    protected override void AssignmentPhase() {
+    protected override void RecruitmentPhase() {
         Assign(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Overlord).Where(unit => unit.Manager == null));
 
         // Add some condition to request a Drone / Zergling

@@ -126,7 +126,9 @@ public static class Controller {
 
         UpdateEnemyRace();
 
-        ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Update(Observation));
+        foreach (var needsUpdating in ThoseWhoNeedUpdating) {
+            needsUpdating.Update(Observation);
+        }
 
         CurrentSupply = Observation.Observation.PlayerCommon.FoodUsed;
         var hasOddAmountOfZerglings = UnitsTracker.OwnedUnits.Count(unit => unit.UnitType == Units.Zergling) % 2 == 1;

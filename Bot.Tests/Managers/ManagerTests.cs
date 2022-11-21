@@ -495,7 +495,7 @@ public class ManagerTests : BaseTestClass {
 
         public readonly List<Call> CallStack = new List<Call>();
 
-        protected override void AssignmentPhase() {
+        protected override void RecruitmentPhase() {
             CallStack.Add(Call.Assign);
         }
 

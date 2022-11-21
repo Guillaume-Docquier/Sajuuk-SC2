@@ -5,10 +5,14 @@ namespace Bot.ExtensionMethods;
 
 // https://stackoverflow.com/a/16130260
 public static class StopwatchExtensions {
-    public static double GetElapsedTimeMs(this Stopwatch stopwatch, int decimals = 2)
-    {
+    public static double GetElapsedTimeMs(this Stopwatch stopwatch, int decimals = 2) {
         var timeInSeconds = stopwatch.ElapsedTicks / (double)Stopwatch.Frequency;
 
         return Math.Round(1e3 * timeInSeconds, decimals);
+    }
+
+    public static void LogPerformance(this Stopwatch stopwatch, string name) {
+        stopwatch.Stop();
+        PerformanceLogger.Log($"{name,-25} {stopwatch.GetElapsedTimeMs(),6:F2} ms");
     }
 }

@@ -24,7 +24,7 @@ public class Program {
     private const Race OpponentRace = Race.Zerg;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
-    private const bool RealTime = true;
+    private const bool RealTime = false;
 
     public static GameConnection GameConnection { get; private set; }
     public static bool DebugEnabled { get; private set; }
