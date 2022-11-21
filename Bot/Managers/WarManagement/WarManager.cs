@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.GameSense.RegionTracking;
 using Bot.Managers.ArmySupervision;
 using Bot.MapKnowledge;
 using Bot.Utils;
@@ -14,11 +14,9 @@ using SC2APIProtocol;
 namespace Bot.Managers.WarManagement;
 
 public partial class WarManager: Manager {
-    private const int GuardDistance = 6;
-    private const int GuardRadius = 8;
-    private const int AttackRadius = 999; // Basically the whole map
-    private const int ForceRequiredBeforeAttacking = 18;
     private const int RushTimingInSeconds = (int)(5 * 60);
+
+    private readonly Dictionary<ArmySupervisor, Region> _targets = new Dictionary<ArmySupervisor, Region>();
 
     // TODO GD Use queens?
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
@@ -31,9 +29,8 @@ public partial class WarManager: Manager {
     private readonly HashSet<Unit> _soldiers = new HashSet<Unit>();
 
     private readonly ArmySupervisor _defenseSupervisor = new ArmySupervisor();
-    private readonly ArmySupervisor _groundArmySupervisor = new ArmySupervisor();
-    private readonly ArmySupervisor _airArmySupervisor = new ArmySupervisor();
-    private Unit _townHallToDefend;
+    private readonly ArmySupervisor _groundAttackSupervisor = new ArmySupervisor();
+    private readonly ArmySupervisor _airAttackSupervisor = new ArmySupervisor();
 
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
     private bool _terranFinisherInitiated = false;
@@ -49,59 +46,93 @@ public partial class WarManager: Manager {
         Dispatcher = new WarManagerDispatcher(this);
         Releaser = new WarManagerReleaser(this);
 
-        _townHallToDefend = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First(townHall => townHall.Position.ToVector2() == MapAnalyzer.StartingLocation);
-
-        var townHallDefensePosition = GetTownHallDefensePosition(_townHallToDefend.Position.ToVector2(), MapAnalyzer.EnemyStartingLocation);
-        _groundArmySupervisor.AssignTarget(townHallDefensePosition, GuardRadius, false);
-        _airArmySupervisor.AssignTarget(townHallDefensePosition, AttackRadius);
+        _targets[_defenseSupervisor] = null;
+        _targets[_groundAttackSupervisor] = null;
+        _targets[_airAttackSupervisor] = null;
     }
 
     protected override void RecruitmentPhase() {
+        HandleRushes();
+
         Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
     }
 
     protected override void DispatchPhase() {
-        Dispatch(_soldiers.Where(soldier => soldier.Supervisor == null));
+        var attackTarget = _targets[_groundAttackSupervisor];
+        if (!_hasAssaultStarted) {
+            // Start the attack
+            // TODO GD _soldiers.GetForce() is not the same force evaluation as RegionTracker.GetForce, extract and share
+            if (attackTarget != null && _soldiers.GetForce() / 2 > RegionTracker.GetForce(attackTarget, Alliance.Enemy)) {
+                _hasAssaultStarted = true;
+
+                // TODO GD Should be called ReleaseAll?
+                _defenseSupervisor.Retire();
+                // TODO GD Dispatch only has the logic to dispatch to the attack supervisors
+                Dispatch(_soldiers.Where(soldier => soldier.Supervisor == null));
+            }
+            // Keep defending
+            else {
+                foreach (var soldier in _soldiers.Where(soldier => soldier.Supervisor == null)) {
+                    _defenseSupervisor.Assign(soldier);
+                }
+            }
+        }
+        // Abort the attack
+        else if (attackTarget != null && _groundAttackSupervisor.Army.GetForce() < RegionTracker.GetForce(_targets[_groundAttackSupervisor], Alliance.Enemy)) {
+            _groundAttackSupervisor.Retire();
+            foreach (var soldier in _soldiers.Where(soldier => soldier.Supervisor == null)) {
+                _defenseSupervisor.Assign(soldier);
+            }
+        }
+        // Keep attacking
+        else {
+            Dispatch(_soldiers.Where(soldier => soldier.Supervisor == null));
+        }
     }
 
+    // TODO GD Add graphical debugging to show regions to attack/defend
     protected override void ManagementPhase() {
         // Determine regions to defend
-        //var regionToDefend = RegionAnalyzer.Regions.MaxBy(region => RegionTracker.GetDefenseScore(region));
-        //_defenseSupervisor.AssignTarget(regionToDefend);
+        var regionToDefend = RegionAnalyzer.Regions.MaxBy(region => RegionTracker.GetDefenseScore(region))!;
+        _defenseSupervisor.AssignTarget(regionToDefend.Center, ApproximateRegionRadius(regionToDefend));
+        _targets[_defenseSupervisor] = regionToDefend;
 
         // Determine regions to attack
-        //var regionToAttack = RegionAnalyzer.Regions.MaxBy(region => RegionTracker.GetValue(region, Alliance.Enemy) / RegionTracker.GetForce(region, Alliance.Enemy));
-        //_groundArmySupervisor.AssignTarget(regionToAttack);
+        // TODO GD This makes the attack target switch as we destroy buildings. At some point, fog of war becomes more interesting and we won't hunt the remaining buildings
+        var valuableEnemyRegions = RegionAnalyzer.Regions
+            .Where(region => RegionTracker.GetValue(region, Alliance.Enemy) > RegionTracker.Value.Intriguing)
+            .ToList();
 
-        // Dispatch personnel
-        // Request more forces
+        if (!valuableEnemyRegions.Any()) {
+            valuableEnemyRegions = RegionAnalyzer.Regions;
+        }
 
-        ScanForEndangeredExpands();
+        var regionToAttack = valuableEnemyRegions
+            .MaxBy(region => RegionTracker.GetValue(region, Alliance.Enemy) / RegionTracker.GetForce(region, Alliance.Enemy))!;
 
-        // TODO Use states
-        if (!HandleRushes()) {
-            var enemyPosition = MapAnalyzer.EnemyStartingLocation;
+        _groundAttackSupervisor.AssignTarget(regionToAttack.Center, ApproximateRegionRadius(regionToAttack), canHuntTheEnemy: true);
+        _targets[_groundAttackSupervisor] = regionToAttack;
 
-            if (!_hasAssaultStarted) {
-                DefendNewTownHalls(enemyPosition);
-            }
+        _groundAttackSupervisor.AssignTarget(regionToAttack.Center, 999, canHuntTheEnemy: true);
+        _targets[_airAttackSupervisor] = regionToAttack;
 
-            if (!_hasAssaultStarted && _groundArmySupervisor.Army.GetForce() >= ForceRequiredBeforeAttacking) {
-                StartTheAssault(enemyPosition);
-            }
+        // TODO GD Request more forces (i.e zerglings when rushed? or is it the build manager?)
+        // TODO GD Handle this better
+        if (_hasAssaultStarted && _buildRequests.Count == 0) {
+            _buildRequests.Add(new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100));
+        }
 
-            if (_hasAssaultStarted && ShouldFinishOffTerran()) {
-                FinishOffTerran();
-            }
+        if (_hasAssaultStarted && ShouldFinishOffTerran()) {
+            FinishOffTerran();
         }
 
         // TODO GD Send this task to the supervisor instead
         if (_terranFinisherInitiated && Controller.AvailableSupply < 2) {
-            foreach (var supervisedUnit in _groundArmySupervisor.SupervisedUnits.Where(unit => unit.IsBurrowed)) {
+            foreach (var supervisedUnit in _groundAttackSupervisor.SupervisedUnits.Where(unit => unit.IsBurrowed)) {
                 supervisedUnit.UseAbility(Abilities.BurrowRoachUp);
             }
 
-            var unburrowedUnits = _groundArmySupervisor.SupervisedUnits.Where(unit => !unit.IsBurrowed).ToList();
+            var unburrowedUnits = _groundAttackSupervisor.SupervisedUnits.Where(unit => !unit.IsBurrowed).ToList();
             if (unburrowedUnits.Count > 0) {
                 var unitToSacrifice = unburrowedUnits[0];
                 foreach (var unburrowedUnit in unburrowedUnits) {
@@ -110,15 +141,14 @@ public partial class WarManager: Manager {
             }
         }
         else {
-            _groundArmySupervisor.OnFrame();
+            _groundAttackSupervisor.OnFrame();
         }
 
         _defenseSupervisor.OnFrame();
-        _airArmySupervisor.OnFrame();
+        _airAttackSupervisor.OnFrame();
     }
 
     private void ScanForEndangeredExpands() {
-        // TODO GD Don't run this all the time
         var expandsInDanger = DangerScanner.GetEndangeredExpands().ToHashSet();
         foreach (var expandNewlyInDanger in expandsInDanger.Except(_expandsInDanger)) {
             Logger.Info("({0}) An expand is newly in danger: {1}", this, expandNewlyInDanger);
@@ -131,25 +161,25 @@ public partial class WarManager: Manager {
         _expandsInDanger = expandsInDanger;
     }
 
-    private bool HandleRushes() {
+    private void HandleRushes() {
+        ScanForEndangeredExpands();
+
         if (_expandsInDanger.Count > 0 && Controller.Frame <= TimeUtils.SecsToFrames(RushTimingInSeconds)) {
             if (!_rushTagged) {
                 TaggingService.TagGame(TaggingService.Tag.EarlyAttack);
                 _rushTagged = true;
             }
 
-            if (!_rushInProgress) {
-                _rushInProgress = true;
-                // TODO GD We should know which expand to defend and be able to switch
-                var townHallDefensePosition = GetTownHallDefensePosition(_expandsInDanger.First().Position.ToVector2(), MapAnalyzer.EnemyStartingLocation);
-                _groundArmySupervisor.AssignTarget(townHallDefensePosition, GuardRadius, false);
-            }
+            _rushInProgress = true;
 
             // TODO GD We should be smarter about how many units we draft
             var supervisedTownHalls = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).Where(unit => unit.Supervisor != null);
-            foreach (var expandToDefend in supervisedTownHalls) {
-                var draftedUnits = expandToDefend.Supervisor.SupervisedUnits.Where(unit => Units.Workers.Contains(unit.UnitType) || unit.UnitType == Units.Queen);
-                Assign(draftedUnits);
+            foreach (var supervisedTownHall in supervisedTownHalls) {
+                var draftedWorkers = supervisedTownHall.Supervisor.SupervisedUnits.Where(unit => Units.Workers.Contains(unit.UnitType)).Skip(2);
+                Assign(draftedWorkers);
+
+                var draftedQueens = supervisedTownHall.Supervisor.SupervisedUnits.Where(unit => unit.UnitType == Units.Queen);
+                Assign(draftedQueens);
             }
         }
         else if (_rushInProgress && _expandsInDanger.Count <= 0) {
@@ -158,43 +188,6 @@ public partial class WarManager: Manager {
 
             _rushInProgress = false;
         }
-
-        return _rushInProgress;
-    }
-
-    private void DefendNewTownHalls(Vector2 enemyPosition) {
-        var pathToTheEnemy = Pathfinder.FindPath(_townHallToDefend.Position.ToVector2(), enemyPosition);
-        if (pathToTheEnemy == null) {
-            Logger.Error("<DefendNewTownHalls> No path found from base {0} to enemy base {1}", _townHallToDefend.Position, enemyPosition);
-            return;
-        }
-
-        var currentDistanceToEnemy = pathToTheEnemy.Count; // Not exact, but the distance difference should not matter
-        var newTownHallToDefend = Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.Hatchery)
-            .FirstOrDefault(townHall => Pathfinder.FindPath(townHall.Position.ToVector2(), enemyPosition).Count < currentDistanceToEnemy);
-
-        // TODO GD Fallback on other townhalls when destroyed
-        if (newTownHallToDefend != default) {
-            _groundArmySupervisor.AssignTarget(GetTownHallDefensePosition(newTownHallToDefend.Position.ToVector2(), MapAnalyzer.EnemyStartingLocation), GuardRadius, false);
-            _townHallToDefend = newTownHallToDefend;
-        }
-    }
-
-    private void StartTheAssault(Vector2 enemyPosition) {
-        _hasAssaultStarted = true;
-        _groundArmySupervisor.AssignTarget(enemyPosition, AttackRadius);
-
-        // TODO GD Handle this better
-        if (_buildRequests.Count == 0) {
-            _buildRequests.Add(new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100));
-        }
-    }
-
-    private static Vector2 GetTownHallDefensePosition(Vector2 townHallPosition, Vector2 threatPosition) {
-        var pathToThreat = Pathfinder.FindPath(townHallPosition, threatPosition);
-        var guardDistance = Math.Min(pathToThreat.Count, GuardDistance);
-
-        return pathToThreat[guardDistance];
     }
 
     // TODO GD Probably need a class for this
@@ -239,5 +232,15 @@ public partial class WarManager: Manager {
 
     public override string ToString() {
         return "WarManager";
+    }
+
+    /// <summary>
+    /// Approximates the region's radius based on it's cells
+    /// This is a placeholder while we have a smarter region defense behaviour
+    /// </summary>
+    /// <param name="region"></param>
+    /// <returns></returns>
+    private static float ApproximateRegionRadius(Region region) {
+        return (float)Math.Sqrt(region.Cells.Count) / 2;
     }
 }

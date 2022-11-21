@@ -378,6 +378,7 @@ public static class Controller {
     private static RequestResult ResearchUpgrade(uint upgradeType, Unit producer) {
         var researchTypeData = KnowledgeBase.GetUpgradeData(upgradeType);
 
+        // TODO GD We need to check if the research is available to be researched
         var requirementsValidationResult = ValidateRequirements(upgradeType, producer, researchTypeData);
         if (requirementsValidationResult != RequestResult.Ok) {
             return requirementsValidationResult;

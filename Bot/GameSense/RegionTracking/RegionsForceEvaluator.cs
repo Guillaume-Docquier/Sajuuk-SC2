@@ -36,8 +36,8 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     /// <param name="normalized">Whether or not to get the normalized value between 0 and 1.</param>
     /// <returns>The evaluated force of the region</returns>
     public float GetEvaluation(Region region, bool normalized = false) {
-        if (!_regionForces.ContainsKey(region)) {
-            Logger.Error("Trying to get the force of an unknown region. {0} regions are known.", _regionForces.Count);
+        if (region == null || !_regionForces.ContainsKey(region)) {
+            Logger.Error("Trying to get the force of an unknown region: {0}. {1} regions are known.", region, _regionForces.Count);
             return RegionTracker.Force.Unknown;
         }
 
@@ -81,13 +81,12 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
         }
 
         if (!_hasAbsoluteKnowledge) {
-            // Update the enemy spawn
-            var spawnForce = GetEnemySpawnForceCue();
-            if (!newRegionForces.ContainsKey(spawnForce.Region)) {
-                newRegionForces[spawnForce.Region] = spawnForce.Force;
+            var enemySpawnForceCue = GetSpawnForceCue();
+            if (!newRegionForces.ContainsKey(enemySpawnForceCue.Region)) {
+                newRegionForces[enemySpawnForceCue.Region] = enemySpawnForceCue.Force;
             }
             else {
-                newRegionForces[spawnForce.Region] = Math.Max(spawnForce.Force, newRegionForces[spawnForce.Region]);
+                newRegionForces[enemySpawnForceCue.Region] = Math.Max(enemySpawnForceCue.Force, newRegionForces[enemySpawnForceCue.Region]);
             }
         }
 
@@ -156,7 +155,11 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
         }
 
         if (Units.Workers.Contains(unit.UnitType)) {
-            return RegionTracker.Force.Medium / 8;
+            if (IsOffensive(unit, _alliance)) {
+                return RegionTracker.Force.Medium / 2;
+            }
+
+            return RegionTracker.Force.None;
         }
 
         if (Units.StaticDefenses.Contains(unit.UnitType)) {
@@ -164,7 +167,7 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
         }
 
         if (unit.UnitType == Units.Pylon) {
-            if (IsProxyPylon(unit, _alliance)) {
+            if (IsOffensive(unit, _alliance)) {
                 return RegionTracker.Force.Medium;
             }
 
@@ -239,34 +242,36 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     }
 
     /// <summary>
-    /// Determines if this pylon of ours is a proxy pylon
-    /// My proxy pylon is closer to them than it is to me
+    /// Determines if this unit is offensive
+    /// This is useful to determine if a pylon is a proxy pylon or if a worker is rushing
+    /// An offensive unit is closer to "them" than it is to "us"
     /// </summary>
-    /// <param name="pylon"></param>
+    /// <param name="unit"></param>
     /// <param name="myAlliance"></param>
     /// <returns></returns>
-    private static bool IsProxyPylon(Unit pylon, Alliance myAlliance) {
-        var mains = ExpandAnalyzer.ExpandLocations.Where(expand => expand.ExpandType == ExpandType.Main);
+    private static bool IsOffensive(Unit unit, Alliance myAlliance) {
         var myMain = ExpandAnalyzer.GetExpand(myAlliance, ExpandType.Main);
-        var theirMain = mains.First(main => main != myMain);
+        var theirMain = ExpandAnalyzer.GetExpand(myAlliance.GetOpposing(), ExpandType.Main);
 
-        return pylon.DistanceTo(theirMain.Position) < pylon.DistanceTo(myMain.Position);
+        return unit.DistanceTo(theirMain.Position) < unit.DistanceTo(myMain.Position);
     }
 
     /// <summary>
-    /// Gets a force cue for the enemy spawn.
+    /// Gets a force cue for the spawn.
     /// This is because we know where the enemy is, but the bot doesn't see it.
     /// </summary>
     /// <returns></returns>
-    private static (Region Region, float Force) GetEnemySpawnForceCue() {
-        var enemySpawnRegion = MapAnalyzer.EnemyStartingLocation.GetRegion();
-        var enemySpawnRegionExplorationPercentage = (float)VisibilityTracker.ExploredCells.Count(exploredCell => enemySpawnRegion.Cells.Contains(exploredCell)) / enemySpawnRegion.Cells.Count;
-        if (enemySpawnRegionExplorationPercentage < 0.6) {
-            var force = RegionTracker.Force.Lethal * (1 - enemySpawnRegionExplorationPercentage);
-            return (enemySpawnRegion, force);
+    private (Region Region, float Force) GetSpawnForceCue() {
+        var spawnRegion = ExpandAnalyzer.GetExpand(_alliance, ExpandType.Main).Position.GetRegion();
+        var spawnRegionExplorationPercentage = (float)spawnRegion.Cells.Count(VisibilityTracker.IsExplored) / spawnRegion.Cells.Count;
+
+        // No cue if we've explored it
+        if (spawnRegionExplorationPercentage > 0.6) {
+            return (spawnRegion, 0);
         }
 
-        return (enemySpawnRegion, 0);
+        var force = RegionTracker.Force.Lethal * (1 - spawnRegionExplorationPercentage);
+        return (spawnRegion, force);
     }
 
     /// <summary>

@@ -6,12 +6,17 @@ public partial class WarManager {
 
         public override void Dispatch(Unit unit) {
             Logger.Debug("({0}) Dispatched {1}", Client, unit);
-
-            if (unit.IsFlying) {
-                Client._airArmySupervisor.Assign(unit);
+            // TODO GD Improve this
+            if (!Client._hasAssaultStarted) {
+                Client._defenseSupervisor.Assign(unit);
             }
             else {
-                Client._groundArmySupervisor.Assign(unit);
+                if (unit.IsFlying) {
+                    Client._airAttackSupervisor.Assign(unit);
+                }
+                else {
+                    Client._groundAttackSupervisor.Assign(unit);
+                }
             }
         }
     }

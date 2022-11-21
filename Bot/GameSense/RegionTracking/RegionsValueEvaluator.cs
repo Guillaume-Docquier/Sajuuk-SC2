@@ -36,8 +36,8 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     /// <param name="normalized">Whether or not to get the normalized value between 0 and 1.</param>
     /// <returns>The evaluated value of the region</returns>
     public float GetEvaluation(Region region, bool normalized = false) {
-        if (!_regionValues.ContainsKey(region)) {
-            Logger.Error("Trying to get the value of an unknown region. {0} regions are known.", _regionValues.Count);
+        if (region == null || !_regionValues.ContainsKey(region)) {
+            Logger.Error("Trying to get the value of an unknown region: {0}. {1} regions are known.", region, _regionValues.Count);
             return RegionTracker.Value.Unknown;
         }
 
@@ -77,6 +77,16 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
             }
             else {
                 newRegionValues[region] += fogOfWarDanger;
+            }
+        }
+
+        if (!_hasAbsoluteKnowledge) {
+            var enemySpawnValueCue = GetSpawnValueCue();
+            if (!newRegionValues.ContainsKey(enemySpawnValueCue.Region)) {
+                newRegionValues[enemySpawnValueCue.Region] = enemySpawnValueCue.Value;
+            }
+            else {
+                newRegionValues[enemySpawnValueCue.Region] = Math.Max(enemySpawnValueCue.Value, newRegionValues[enemySpawnValueCue.Region]);
             }
         }
 
@@ -209,6 +219,24 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     /// <returns>The decay factor</returns>
     private static float ExponentialDecayFactor(ulong time) {
         return (float)Math.Exp(-ExponentialDecayConstant * time);
+    }
+
+    /// <summary>
+    /// Gets a value cue for the spawn.
+    /// This is because we know where the enemy is, but the bot doesn't see it.
+    /// </summary>
+    /// <returns></returns>
+    private (Region Region, float Value) GetSpawnValueCue() {
+        var spawnRegion = ExpandAnalyzer.GetExpand(_alliance, ExpandType.Main).Position.GetRegion();
+        var spawnRegionExplorationPercentage = (float)spawnRegion.Cells.Count(VisibilityTracker.IsExplored) / spawnRegion.Cells.Count;
+
+        // No cue if we've explored it
+        if (spawnRegionExplorationPercentage > 0.6) {
+            return (spawnRegion, 0);
+        }
+
+        var value = RegionTracker.Value.Jackpot * (1 - spawnRegionExplorationPercentage);
+        return (spawnRegion, value);
     }
 
     /// <summary>

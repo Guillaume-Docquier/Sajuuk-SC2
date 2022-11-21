@@ -184,6 +184,8 @@ public class RegionDefenseEvaluator : IRegionsEvaluator, IWatchUnitsDie {
         // All distances will be skewed by 1 to avoid division by 0
         var ourDistance = defenseReach[impactedRegion] + 1;
 
+        // TODO GD This makes regions less interesting to defend as the enemy gets closer but sometimes we gotta do what we gotta do
+        // TODO GD Or maybe it's the reach calculation, something something
         // Distance score from 0 to 1. 1 being when we're close and the enemy is far
         var distanceScore = MathUtils.Normalize(enemyDistance / ourDistance, minDistanceRatio, maxDistanceRatio);
 

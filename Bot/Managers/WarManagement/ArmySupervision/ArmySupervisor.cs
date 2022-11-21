@@ -45,15 +45,20 @@ public partial class ArmySupervisor: Supervisor {
     }
 
     public void AssignTarget(Vector2 target, float blastRadius, bool canHuntTheEnemy = true) {
-        _target = target;
+        if (_target != target) {
+            _target = target;
+            _stateMachine.TransitionTo(new AttackState());
+        }
+
         _blastRadius = blastRadius;
         _strongestForce = Army.GetForce();
         _canHuntTheEnemy = canHuntTheEnemy;
-        _stateMachine.TransitionTo(new AttackState());
     }
 
     public override void Retire() {
-        Army.ForEach(Release);
+        foreach (var unit in Army.ToList()) {
+            Release(unit);
+        }
     }
 
     public override string ToString() {
