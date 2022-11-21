@@ -5,7 +5,7 @@ using Bot.GameSense.EnemyStrategyTracking;
 
 namespace Bot.Managers;
 
-public class BuildManager : UnitlessManager {
+public class BuildManager : UnitlessManager, ISubscriber<EnemyStrategyTransition> {
     private bool _buildOrderDoneAndTagged = false;
     private readonly IBuildOrder _buildOrder;
 
@@ -13,10 +13,10 @@ public class BuildManager : UnitlessManager {
 
     public BuildManager(IBuildOrder buildOrder) {
         _buildOrder = buildOrder;
+        EnemyStrategyTracker.Instance.Register(this);
     }
 
     protected override void ManagementPhase() {
-        _buildOrder.ReactTo(EnemyStrategyTracker.EnemyStrategy);
         _buildOrder.PruneRequests();
 
         if (!_buildOrderDoneAndTagged) {
@@ -26,5 +26,9 @@ public class BuildManager : UnitlessManager {
                 _buildOrderDoneAndTagged = true;
             }
         }
+    }
+
+    public void Notify(EnemyStrategyTransition data) {
+        _buildOrder.ReactTo(data.CurrentStrategy);
     }
 }

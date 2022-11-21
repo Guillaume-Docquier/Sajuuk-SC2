@@ -15,9 +15,6 @@ public interface IBuildOrder {
     /// </summary>
     void PruneRequests();
 
-    // TODO GD Ideally we don't need this
-    void AddRequest(BuildRequest buildRequest);
-
     /// <summary>
     /// Allows the build order to react to a new enemy strategy
     /// Certain builds will have to completely switch, others might shuffle BuildRequests
