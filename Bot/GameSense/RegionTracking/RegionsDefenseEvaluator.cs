@@ -64,7 +64,7 @@ public class RegionDefenseEvaluator : IRegionsEvaluator, IWatchUnitsDie {
         foreach (var defendedRegion in allRegions) {
             _regionDefenseScores[defendedRegion] = 0;
 
-            var threateningRegions = allRegions.Where(region => RegionTracker.GetForce(region, Alliance.Enemy) >= RegionTracker.Force.Medium);
+            var threateningRegions = allRegions.Where(region => RegionTracker.GetForce(region, Alliance.Enemy) >= UnitEvaluator.Force.Medium);
             foreach (var threateningRegion in threateningRegions) {
                 var normalizedThreat = RegionTracker.GetForce(threateningRegion, Alliance.Enemy, normalized: true);
                 _regionDefenseScores[defendedRegion] += normalizedThreat * ComputeDefenseScore(threateningRegion, defendedRegion, allRegions);
@@ -155,7 +155,7 @@ public class RegionDefenseEvaluator : IRegionsEvaluator, IWatchUnitsDie {
 
         var regionValue = RegionTracker.GetValue(impactedRegion, Alliance.Self);
         // TODO GD Maybe include intriguing?
-        if (regionValue <= RegionTracker.Value.Intriguing) {
+        if (regionValue <= UnitEvaluator.Value.Intriguing) {
             // Regions with low value are not considered
             return 0;
         }

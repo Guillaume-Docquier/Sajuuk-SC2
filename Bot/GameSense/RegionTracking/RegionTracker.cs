@@ -34,26 +34,6 @@ public class RegionTracker : INeedUpdating {
 
     private readonly IRegionsEvaluator _regionDefenseEvaluator = new RegionDefenseEvaluator();
 
-    // TODO GD This might not live in here
-    public static class Force {
-        public const float None = 0f;
-        public const float Unknown = 1f;
-        public const float Neutral = 1f;
-        public const float Medium = 2f;
-        public const float Strong = 5f;
-        public const float Lethal = 15f;
-    }
-
-    // TODO GD This might not live in here
-    public static class Value {
-        public const float None = 0f;
-        public const float Unknown = 1f;
-        public const float Intriguing = 1f;
-        public const float Valuable = 2f;
-        public const float Prized = 5f;
-        public const float Jackpot = 15f;
-    }
-
     private static readonly List<Color> RegionColors = new List<Color>
     {
         Colors.MulberryRed,
@@ -208,10 +188,10 @@ public class RegionTracker : INeedUpdating {
 
         return force switch
         {
-            >= Force.Lethal => "Lethal",
-            >= Force.Strong => "Strong",
-            >= Force.Medium => "Medium",
-            >= Force.Neutral => "Neutral",
+            >= UnitEvaluator.Force.Lethal => "Lethal",
+            >= UnitEvaluator.Force.Strong => "Strong",
+            >= UnitEvaluator.Force.Medium => "Medium",
+            >= UnitEvaluator.Force.Neutral => "Neutral",
             _ => "Weak"
         };
     }
@@ -228,10 +208,10 @@ public class RegionTracker : INeedUpdating {
 
         return value switch
         {
-            >= Value.Jackpot => "Jackpot",
-            >= Value.Prized => "Prized",
-            >= Value.Valuable => "Valuable",
-            >= Value.Intriguing => "Intriguing",
+            >= UnitEvaluator.Value.Jackpot => "Jackpot",
+            >= UnitEvaluator.Value.Prized => "Prized",
+            >= UnitEvaluator.Value.Valuable => "Valuable",
+            >= UnitEvaluator.Value.Intriguing => "Intriguing",
             _ => "No Value"
         };
     }

@@ -38,7 +38,7 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     public float GetEvaluation(Region region, bool normalized = false) {
         if (region == null || !_regionValues.ContainsKey(region)) {
             Logger.Error("Trying to get the value of an unknown region: {0}. {1} regions are known.", region, _regionValues.Count);
-            return RegionTracker.Value.Unknown;
+            return UnitEvaluator.Value.Unknown;
         }
 
         if (normalized) {
@@ -53,8 +53,8 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     /// </summary>
     public void Init(List<Region> regions) {
         var initialValue = _hasAbsoluteKnowledge
-            ? RegionTracker.Value.None
-            : RegionTracker.Value.Unknown;
+            ? UnitEvaluator.Value.None
+            : UnitEvaluator.Value.Unknown;
 
         _regionValues = new Dictionary<Region, float>();
         foreach (var region in regions) {
@@ -93,7 +93,7 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
         // Update the values
         foreach (var (region, newRegionValue) in newRegionValues) {
             // Let high value decay over time
-            if (newRegionValue > RegionTracker.Value.Intriguing) {
+            if (newRegionValue > UnitEvaluator.Value.Intriguing) {
                 _regionValues[region] = Math.Max(_regionValues[region], newRegionValue);
             }
             // Let low value increase over time
@@ -122,7 +122,7 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
                 continue;
             }
 
-            var value = GetUnitValue(unit) * GetUnitUncertaintyPenalty(unit);
+            var value = UnitEvaluator.EvaluateValue(unit) * GetUnitUncertaintyPenalty(unit);
             if (!regionValues.ContainsKey(region)) {
                 regionValues[region] = value;
             }
@@ -132,30 +132,6 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
         }
 
         return regionValues;
-    }
-
-    /// <summary>
-    /// Get the value of a unit
-    /// </summary>
-    /// <param name="unit">The valuable unit</param>
-    /// <returns>The value of the unit</returns>
-    private float GetUnitValue(Unit unit) {
-        if (Units.TownHalls.Contains(unit.UnitType)) {
-            // TODO GD Value based on remaining resources
-            if (ExpandAnalyzer.ExpandLocations.Any(expandLocation => expandLocation.Position.DistanceTo(unit) <= 1)) {
-                return RegionTracker.Value.Valuable;
-            }
-        }
-
-        if (Units.Workers.Contains(unit.UnitType)) {
-            return RegionTracker.Value.Intriguing / 2;
-        }
-
-        // TODO GD Handle tech buildings
-        // TODO GD Handle production buildings
-        // TODO GD Handle supply buildings
-
-        return RegionTracker.Value.None;
     }
 
     /// <summary>
@@ -206,7 +182,7 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
         var fogOfWarValue = new Dictionary<Region, float>();
         foreach (var (region, visibleCellCount) in regionVisibility) {
             var percentNotVisible = 1 - (float)visibleCellCount / region.Cells.Count;
-            fogOfWarValue[region] = percentNotVisible * RegionTracker.Value.Unknown;
+            fogOfWarValue[region] = percentNotVisible * UnitEvaluator.Value.Unknown;
         }
 
         return fogOfWarValue;
@@ -235,7 +211,7 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
             return (spawnRegion, 0);
         }
 
-        var value = RegionTracker.Value.Jackpot * (1 - spawnRegionExplorationPercentage);
+        var value = UnitEvaluator.Value.Jackpot * (1 - spawnRegionExplorationPercentage);
         return (spawnRegion, value);
     }
 
@@ -245,10 +221,10 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     private void DecayValues() {
         // Decay towards Intriguing over time
         foreach (var region in _regionValues.Keys) {
-            var normalizedTowardsIntriguingValue = _regionValues[region] - RegionTracker.Value.Intriguing;
-            var decayedValue = normalizedTowardsIntriguingValue * RegionDecayRate + RegionTracker.Value.Intriguing;
-            if (Math.Abs(RegionTracker.Value.Intriguing - decayedValue) < 0.05) {
-                decayedValue = RegionTracker.Value.Intriguing;
+            var normalizedTowardsIntriguingValue = _regionValues[region] - UnitEvaluator.Value.Intriguing;
+            var decayedValue = normalizedTowardsIntriguingValue * RegionDecayRate + UnitEvaluator.Value.Intriguing;
+            if (Math.Abs(UnitEvaluator.Value.Intriguing - decayedValue) < 0.05) {
+                decayedValue = UnitEvaluator.Value.Intriguing;
             }
 
             _regionValues[region] = decayedValue;

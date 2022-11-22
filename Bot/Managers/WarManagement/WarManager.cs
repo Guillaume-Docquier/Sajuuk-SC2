@@ -57,12 +57,12 @@ public partial class WarManager: Manager {
         Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
     }
 
+    // TODO GD Figure out an attack / retreat pattern, right now if the army retreats it doesn't go back to attack
     protected override void DispatchPhase() {
         var attackTarget = _targets[_groundAttackSupervisor];
         if (!_hasAssaultStarted) {
             // Start the attack
-            // TODO GD _soldiers.GetForce() is not the same force evaluation as RegionTracker.GetForce, extract and share
-            if (attackTarget != null && _soldiers.GetForce() / 2 > RegionTracker.GetForce(attackTarget, Alliance.Enemy)) {
+            if (attackTarget != null && _soldiers.GetForce() > RegionTracker.GetForce(attackTarget, Alliance.Enemy)) {
                 _hasAssaultStarted = true;
 
                 // TODO GD Should be called ReleaseAll?
@@ -86,6 +86,7 @@ public partial class WarManager: Manager {
         }
         // Keep attacking
         else {
+            _defenseSupervisor.Retire();
             Dispatch(_soldiers.Where(soldier => soldier.Supervisor == null));
         }
     }
@@ -100,7 +101,7 @@ public partial class WarManager: Manager {
         // Determine regions to attack
         // TODO GD This makes the attack target switch as we destroy buildings. At some point, fog of war becomes more interesting and we won't hunt the remaining buildings
         var valuableEnemyRegions = RegionAnalyzer.Regions
-            .Where(region => RegionTracker.GetValue(region, Alliance.Enemy) > RegionTracker.Value.Intriguing)
+            .Where(region => RegionTracker.GetValue(region, Alliance.Enemy) > UnitEvaluator.Value.Intriguing)
             .ToList();
 
         if (!valuableEnemyRegions.Any()) {
@@ -128,23 +129,13 @@ public partial class WarManager: Manager {
 
         // TODO GD Send this task to the supervisor instead
         if (_terranFinisherInitiated && Controller.AvailableSupply < 2) {
-            foreach (var supervisedUnit in _groundAttackSupervisor.SupervisedUnits.Where(unit => unit.IsBurrowed)) {
-                supervisedUnit.UseAbility(Abilities.BurrowRoachUp);
-            }
-
-            var unburrowedUnits = _groundAttackSupervisor.SupervisedUnits.Where(unit => !unit.IsBurrowed).ToList();
-            if (unburrowedUnits.Count > 0) {
-                var unitToSacrifice = unburrowedUnits[0];
-                foreach (var unburrowedUnit in unburrowedUnits) {
-                    unburrowedUnit.Attack(unitToSacrifice);
-                }
-            }
+            FreeSomeSupply();
         }
         else {
             _groundAttackSupervisor.OnFrame();
+            _defenseSupervisor.OnFrame();
         }
 
-        _defenseSupervisor.OnFrame();
         _airAttackSupervisor.OnFrame();
     }
 
@@ -242,5 +233,22 @@ public partial class WarManager: Manager {
     /// <returns></returns>
     private static float ApproximateRegionRadius(Region region) {
         return (float)Math.Sqrt(region.Cells.Count) / 2;
+    }
+
+    /// <summary>
+    /// Orders the army to kill 1 of their own to free some supply
+    /// </summary>
+    private void FreeSomeSupply() {
+        foreach (var supervisedUnit in _groundAttackSupervisor.SupervisedUnits.Where(unit => unit.IsBurrowed)) {
+            supervisedUnit.UseAbility(Abilities.BurrowRoachUp);
+        }
+
+        var unburrowedUnits = _groundAttackSupervisor.SupervisedUnits.Where(unit => !unit.IsBurrowed).ToList();
+        if (unburrowedUnits.Count > 0) {
+            var unitToSacrifice = unburrowedUnits[0];
+            foreach (var unburrowedUnit in unburrowedUnits) {
+                unburrowedUnit.Attack(unitToSacrifice);
+            }
+        }
     }
 }

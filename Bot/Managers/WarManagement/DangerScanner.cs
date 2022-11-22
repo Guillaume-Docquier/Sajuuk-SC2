@@ -8,15 +8,14 @@ using SC2APIProtocol;
 namespace Bot.Managers.WarManagement;
 
 public static class DangerScanner {
-    // TODO GD Return a danger report containing enemy units
-    // TODO GD Use regions?
     public static IEnumerable<Unit> GetEndangeredExpands() {
         var expands = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).Where(townHall => townHall.Supervisor != null);
         foreach (var expand in expands) {
             var enemyForce = RegionTracker.GetForce(expand.GetRegion(), Alliance.Enemy);
             var ownForce = RegionTracker.GetForce(expand.GetRegion(), Alliance.Self);
 
-            if (enemyForce > ownForce) {
+            // TODO GD The fog of war value is starting to become a problem
+            if (enemyForce > UnitEvaluator.Force.Neutral && enemyForce > ownForce) {
                 yield return expand;
             }
         }

@@ -4,6 +4,8 @@ using System.Linq;
 namespace Bot.GameData;
 
 public static class Units {
+    #region UnitTypeIds
+
     public const uint Colossus = 4;
     public const uint Techlab = 5;
     public const uint Reactor = 6;
@@ -236,44 +238,88 @@ public static class Units {
 
     public const uint ReaperMine = 831; // KD8Charge
 
-    public static readonly HashSet<uint> Changelings = new HashSet<uint>
+    #endregion
+
+    public static readonly HashSet<uint> Workers = new HashSet<uint>
     {
-        Changeling,
-        ChangelingZealot,
-        ChangelingMarineShield,
-        ChangelingMarine,
-        ChangelingZerglingWings,
-        ChangelingZergling,
+        Scv,
+        Probe,
+        Drone,
     };
 
-    // TODO GD Terran flying building should probably be a Unit instead of a Building
-    public static readonly HashSet<uint> TerranBuildings = new HashSet<uint>
+    public static readonly HashSet<uint> MobileDetectors = new HashSet<uint>
     {
-        // Townhalls
+        Overseer,
+        Observer,
+        Raven,
+    };
+
+    public static readonly HashSet<uint> StaticDetectors = new HashSet<uint>
+    {
+        SporeCrawler,
+        PhotonCannon,
+        MissileTurret,
+    };
+
+    public static readonly HashSet<uint> Detectors = new HashSet<uint>(MobileDetectors.Concat(StaticDetectors));
+
+    public static readonly HashSet<uint> DropShips = new HashSet<uint>
+    {
+        Medivac,
+        WarpPrism,
+        WarpPrismPhasing,
+        OverlordTransport,
+    };
+
+    // TODO GD Might be able to use the unitTypeData.alias for this?
+    public static readonly Dictionary<uint, HashSet<uint>> EquivalentTo = new Dictionary<uint, HashSet<uint>>
+    {
+        { Hatchery,      new HashSet<uint> { Lair, Hive } },
+        { Lair,          new HashSet<uint> { Hive } },
+        { Spire,         new HashSet<uint> { GreaterSpire } },
+        { CommandCenter, new HashSet<uint> { OrbitalCommand, PlanetaryFortress } },
+        { CreepTumor,    new HashSet<uint> { CreepTumorQueen, CreepTumorBurrowed } },
+        { Roach,         new HashSet<uint> { RoachBurrowed } }, // TODO GD Do all the burrowed units, or something nicer
+    };
+
+    #region Terran
+
+    public static readonly HashSet<uint> TerranTownHalls = new HashSet<uint>
+    {
         CommandCenter,
         CommandCenterFlying,
         OrbitalCommand,
         OrbitalCommandFlying,
         PlanetaryFortress,
+    };
 
-        // Eco
+    public static readonly HashSet<uint> TerranExtractor = new HashSet<uint>
+    {
         Refinery,
+    };
 
-        // Supply
+    public static readonly HashSet<uint> TerranSupplyBuildings = new HashSet<uint>
+    {
         SupplyDepot,
         SupplyDepotLowered,
+    };
 
-        // Tech
+    public static readonly HashSet<uint> TerranTechBuildings = new HashSet<uint>
+    {
         EngineeringBay,
         Armory,
         FusionCore,
+    };
 
-        // Defense
+    public static readonly HashSet<uint> TerranDefenseBuildings = new HashSet<uint>
+    {
         MissileTurret,
         Bunker,
         SensorTower,
+    };
 
-        // Production
+    public static readonly HashSet<uint> TerranProductionBuildings = new HashSet<uint>
+    {
         Barracks,
         BarracksFlying,
         Factory,
@@ -281,8 +327,10 @@ public static class Units {
         Starport,
         StarportFlying,
         GhostAcademy,
+    };
 
-        // Add-ons
+    public static readonly HashSet<uint> TerranAddOnBuildings = new HashSet<uint>
+    {
         BarracksReactor,
         BarracksTechlab,
         FactoryReactor,
@@ -291,75 +339,15 @@ public static class Units {
         StarportTechlab,
     };
 
-    public static readonly HashSet<uint> ProtossBuildings = new HashSet<uint>
-    {
-        // Townhalls
-        Nexus,
-
-        // Eco
-        Assimilator,
-
-        // Supply
-        Pylon,
-
-        // Tech
-        Forge,
-        CyberneticsCore,
-        TwilightCouncil,
-        TemplarArchive,
-        DarkShrine,
-        FleetBeacon,
-
-        // Defense
-        PhotonCannon,
-        ShieldBattery,
-
-        // Production
-        Gateway,
-        WarpGate,
-        Stargate,
-        RoboticsFacility,
-        RoboticsBay,
-    };
-
-
-    public static readonly HashSet<uint> ZergBuildings = new HashSet<uint>
-    {
-        // Townhalls
-        Hatchery,
-        Lair,
-        Hive,
-
-        // Eco
-        Extractor,
-
-        // Tech
-        EvolutionChamber,
-
-        // Defense
-        SpineCrawler,
-        SpineCrawlerUprooted,
-        SporeCrawler,
-        SporeCrawlerUprooted,
-
-        // Production
-        SpawningPool,
-        RoachWarren,
-        BanelingNest,
-        HydraliskDen,
-        LurkerDen,
-        InfestationPit,
-        Spire,
-        GreaterSpire,
-        UltraliskCavern,
-
-        // Other
-        NydusNetwork,
-        NydusWorm,
-    };
-
-    public static readonly HashSet<uint> Buildings = new HashSet<uint>(TerranBuildings.Concat(ProtossBuildings).Concat(ZergBuildings));
-
+    public static readonly HashSet<uint> TerranBuildings = new HashSet<uint>(
+        TerranTownHalls
+            .Concat(TerranExtractor)
+            .Concat(TerranSupplyBuildings)
+            .Concat(TerranTechBuildings)
+            .Concat(TerranDefenseBuildings)
+            .Concat(TerranProductionBuildings)
+            .Concat(TerranAddOnBuildings)
+    );
 
     public static readonly HashSet<uint> TerranMilitary = new HashSet<uint>
     {
@@ -387,6 +375,59 @@ public static class Units {
         Battlecruiser,
     };
 
+    #endregion
+
+    #region Protoss
+
+    public static readonly HashSet<uint> ProtossTownHalls = new HashSet<uint>
+    {
+        Nexus,
+    };
+
+    public static readonly HashSet<uint> ProtossExtractor = new HashSet<uint>
+    {
+        Assimilator,
+    };
+
+    public static readonly HashSet<uint> ProtossSupplyBuildings = new HashSet<uint>
+    {
+        Pylon,
+    };
+
+    public static readonly HashSet<uint> ProtossTechBuildings = new HashSet<uint>
+    {
+        Forge,
+        CyberneticsCore,
+        TwilightCouncil,
+        TemplarArchive,
+        DarkShrine,
+        FleetBeacon,
+    };
+
+    public static readonly HashSet<uint> ProtossDefenseBuildings = new HashSet<uint>
+    {
+        PhotonCannon,
+        ShieldBattery,
+    };
+
+    public static readonly HashSet<uint> ProtossProductionBuildings = new HashSet<uint>
+    {
+        Gateway,
+        WarpGate,
+        Stargate,
+        RoboticsFacility,
+        RoboticsBay,
+    };
+
+    public static readonly HashSet<uint> ProtossBuildings = new HashSet<uint>(
+        ProtossTownHalls
+            .Concat(ProtossExtractor)
+            .Concat(ProtossSupplyBuildings)
+            .Concat(ProtossTechBuildings)
+            .Concat(ProtossDefenseBuildings)
+            .Concat(ProtossProductionBuildings)
+    );
+
     public static readonly HashSet<uint> ProtossMilitary = new HashSet<uint>
     {
         Zealot,
@@ -410,6 +451,70 @@ public static class Units {
         Carrier,
         Mothership,
     };
+
+    #endregion
+
+    #region Zerg
+
+    public static readonly HashSet<uint> ZergTownHalls = new HashSet<uint>
+    {
+        Hatchery,
+        Lair,
+        Hive,
+    };
+
+    public static readonly HashSet<uint> ZergExtractor = new HashSet<uint>
+    {
+        Extractor,
+    };
+
+    public static readonly HashSet<uint> ZergSupplyBuildings = new HashSet<uint>
+    {
+        Overlord,
+        Overseer,
+        OverlordTransport,
+    };
+
+    public static readonly HashSet<uint> ZergTechBuildings = new HashSet<uint>
+    {
+        EvolutionChamber,
+        Lair,
+        Hive,
+    };
+
+    public static readonly HashSet<uint> ZergDefenseBuildings = new HashSet<uint>
+    {
+        SpineCrawler,
+        SpineCrawlerUprooted,
+        SporeCrawler,
+        SporeCrawlerUprooted,
+
+        // Maybe this doesn't go here but for now I don't know any better
+        NydusNetwork,
+        NydusWorm,
+    };
+
+    public static readonly HashSet<uint> ZergProductionBuildings = new HashSet<uint>
+    {
+        SpawningPool,
+        RoachWarren,
+        BanelingNest,
+        HydraliskDen,
+        LurkerDen,
+        InfestationPit,
+        Spire,
+        GreaterSpire,
+        UltraliskCavern,
+    };
+
+    public static readonly HashSet<uint> ZergBuildings = new HashSet<uint>(
+        ZergTownHalls
+            .Concat(ZergExtractor)
+            .Concat(ZergSupplyBuildings)
+            .Concat(ZergTechBuildings)
+            .Concat(ZergDefenseBuildings)
+            .Concat(ZergProductionBuildings)
+    );
 
     public static readonly HashSet<uint> ZergMilitary = new HashSet<uint>
     {
@@ -444,76 +549,78 @@ public static class Units {
         Viper,
     };
 
-    public static readonly HashSet<uint> Military = new HashSet<uint>(TerranMilitary.Concat(ProtossMilitary).Concat(ZergMilitary));
-
-    public static readonly HashSet<uint> TownHalls = new HashSet<uint>
+    public static readonly HashSet<uint> CreepTumors = new HashSet<uint>
     {
-        Hatchery,
-        Lair,
-        Hive,
-        CommandCenter,
-        CommandCenterFlying,
-        OrbitalCommand,
-        OrbitalCommandFlying,
-        PlanetaryFortress,
-        Nexus,
+        CreepTumor,
+        CreepTumorBurrowed,
+        CreepTumorQueen,
     };
 
-    // Mineral field types seem to differ from map to map
-    public static readonly HashSet<uint> NormalMineralFields = new HashSet<uint>
+    public static readonly HashSet<uint> Changelings = new HashSet<uint>
     {
-        MineralField,
-        MineralField750,
-        LabMineralField,
-        LabMineralField750,
-        PurifierMineralField,
-        PurifierMineralField750,
-        BattleStationMineralField,
-        BattleStationMineralField750,
-        MineralField450, // Should we exclude this one? See note
+        Changeling,
+        ChangelingZealot,
+        ChangelingMarineShield,
+        ChangelingMarine,
+        ChangelingZerglingWings,
+        ChangelingZergling,
     };
 
-    public static readonly HashSet<uint> GoldMineralFields = new HashSet<uint>
-    {
-        RichMineralField,
-        RichMineralField750,
-        PurifierRichMineralField,
-        PurifierRichMineralField750,
-    };
+    #endregion
 
-    public static readonly HashSet<uint> MineralFields = new HashSet<uint>(NormalMineralFields.Concat(GoldMineralFields));
+    #region RaceAgnostic
 
-    // Gas geyser types seem to differ from map to map
-    public static readonly HashSet<uint> NormalGasGeysers = new HashSet<uint>
-    {
-        VespeneGeyser,
-        SpacePlatformGeyser,
-        RichVespeneGeyser,
-        ProtossVespeneGeyser,
-        PurifierVespeneGeyser,
-        ShakurasVespeneGeyser,
-    };
+    public static readonly HashSet<uint> Buildings = new HashSet<uint>(
+        TerranBuildings
+            .Concat(ProtossBuildings)
+            .Concat(ZergBuildings)
+    );
 
-    public static readonly HashSet<uint> GoldGasGeysers = new HashSet<uint>
-    {
-        RichVespeneGeyser,
-    };
+    public static readonly HashSet<uint> Military = new HashSet<uint>(
+        TerranMilitary
+            .Concat(ProtossMilitary)
+            .Concat(ZergMilitary)
+    );
 
-    public static readonly HashSet<uint> GasGeysers = new HashSet<uint>(NormalGasGeysers.Concat(GoldGasGeysers));
+    public static readonly HashSet<uint> TownHalls = new HashSet<uint>(
+        TerranTownHalls
+            .Concat(ProtossTownHalls)
+            .Concat(ZergTownHalls)
+    );
 
-    public static readonly HashSet<uint> Extractors = new HashSet<uint>
-    {
-        Extractor,
-        Refinery,
-        Assimilator,
-    };
+    public static readonly HashSet<uint> StaticDefenses = new HashSet<uint>(
+        TerranDefenseBuildings
+            .Concat(ProtossDefenseBuildings)
+            .Concat(ZergDefenseBuildings)
+    );
 
-    public static readonly HashSet<uint> Workers = new HashSet<uint>
-    {
-        Scv,
-        Probe,
-        Drone,
-    };
+    public static readonly HashSet<uint> Extractors = new HashSet<uint>(
+        TerranExtractor
+            .Concat(ProtossExtractor)
+            .Concat(ZergExtractor)
+    );
+
+    public static readonly HashSet<uint> TechBuildings = new HashSet<uint>(
+        TerranTechBuildings
+            .Concat(ProtossTechBuildings)
+            .Concat(ZergTechBuildings)
+    );
+
+    public static readonly HashSet<uint> ProductionBuildings = new HashSet<uint>(
+        TerranProductionBuildings
+            .Concat(ProtossProductionBuildings)
+            .Concat(ZergProductionBuildings)
+    );
+
+    public static readonly HashSet<uint> SupplyBuildings = new HashSet<uint>(
+        TerranSupplyBuildings
+            .Concat(ProtossSupplyBuildings)
+            .Concat(ZergSupplyBuildings)
+    );
+
+    #endregion
+
+    #region Rocks
 
     public static readonly HashSet<uint> BuildBlockers = new HashSet<uint>
     {
@@ -563,65 +670,56 @@ public static class Units {
         DestructibleCityDebrisHugeDiagonalBLUR,
     };
 
-    public static readonly HashSet<uint> Destructibles = new HashSet<uint>(BuildBlockers.Concat(Obstacles));
+    public static readonly HashSet<uint> Destructibles = new HashSet<uint>(
+        BuildBlockers
+            .Concat(Obstacles)
+    );
 
-    public static readonly HashSet<uint> MobileDetectors = new HashSet<uint>
+    #endregion
+
+    #region Resources
+
+    // Mineral field types seem to differ from map to map
+    public static readonly HashSet<uint> NormalMineralFields = new HashSet<uint>
     {
-        Overseer,
-        Observer,
-        Raven,
+        MineralField,
+        MineralField750,
+        LabMineralField,
+        LabMineralField750,
+        PurifierMineralField,
+        PurifierMineralField750,
+        BattleStationMineralField,
+        BattleStationMineralField750,
+        MineralField450, // Should we exclude this one? See note
     };
 
-    public static readonly HashSet<uint> StaticDetectors = new HashSet<uint>
+    public static readonly HashSet<uint> GoldMineralFields = new HashSet<uint>
     {
-        SporeCrawler,
-        PhotonCannon,
-        MissileTurret,
+        RichMineralField,
+        RichMineralField750,
+        PurifierRichMineralField,
+        PurifierRichMineralField750,
     };
 
-    public static readonly HashSet<uint> Detectors = new HashSet<uint>(MobileDetectors.Concat(StaticDetectors));
+    public static readonly HashSet<uint> MineralFields = new HashSet<uint>(NormalMineralFields.Concat(GoldMineralFields));
 
-    public static readonly HashSet<uint> StaticDefenses = new HashSet<uint>
+    // Gas geyser types seem to differ from map to map
+    public static readonly HashSet<uint> NormalGasGeysers = new HashSet<uint>
     {
-        // Zerg
-        SporeCrawler,
-        SporeCrawlerUprooted,
-        SpineCrawler,
-        SpineCrawlerUprooted,
-
-        // Protoss
-        PhotonCannon,
-        ShieldBattery,
-
-        // Terran
-        MissileTurret,
-        Bunker,
-        PlanetaryFortress,
+        VespeneGeyser,
+        SpacePlatformGeyser,
+        RichVespeneGeyser,
+        ProtossVespeneGeyser,
+        PurifierVespeneGeyser,
+        ShakurasVespeneGeyser,
     };
 
-    public static readonly HashSet<uint> DropShips = new HashSet<uint>
+    public static readonly HashSet<uint> GoldGasGeysers = new HashSet<uint>
     {
-        Medivac,
-        WarpPrism,
-        WarpPrismPhasing,
-        OverlordTransport,
+        RichVespeneGeyser,
     };
 
-    // TODO GD Might be able to use the unitTypeData.alias for this?
-    public static readonly Dictionary<uint, HashSet<uint>> EquivalentTo = new Dictionary<uint, HashSet<uint>>
-    {
-        { Hatchery,      new HashSet<uint> { Lair, Hive } },
-        { Lair,          new HashSet<uint> { Hive } },
-        { Spire,         new HashSet<uint> { GreaterSpire } },
-        { CommandCenter, new HashSet<uint> { OrbitalCommand, PlanetaryFortress } },
-        { CreepTumor,    new HashSet<uint> { CreepTumorQueen, CreepTumorBurrowed } },
-        { Roach,         new HashSet<uint> { RoachBurrowed } }, // TODO GD Do all the burrowed units, or something nicer
-    };
+    public static readonly HashSet<uint> GasGeysers = new HashSet<uint>(NormalGasGeysers.Concat(GoldGasGeysers));
 
-    public static readonly HashSet<uint> CreepTumors = new HashSet<uint>
-    {
-        CreepTumor,
-        CreepTumorBurrowed,
-        CreepTumorQueen,
-    };
+    #endregion
 }

@@ -38,7 +38,7 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     public float GetEvaluation(Region region, bool normalized = false) {
         if (region == null || !_regionForces.ContainsKey(region)) {
             Logger.Error("Trying to get the force of an unknown region: {0}. {1} regions are known.", region, _regionForces.Count);
-            return RegionTracker.Force.Unknown;
+            return UnitEvaluator.Force.Unknown;
         }
 
         if (normalized) {
@@ -53,8 +53,8 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     /// </summary>
     public void Init(List<Region> regions) {
         var initialForce = _hasAbsoluteKnowledge
-            ? RegionTracker.Force.None
-            : RegionTracker.Force.Unknown;
+            ? UnitEvaluator.Force.None
+            : UnitEvaluator.Force.Unknown;
 
         _regionForces = new Dictionary<Region, float>();
         foreach (var region in regions) {
@@ -93,7 +93,7 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
         // Update the forces
         foreach (var (region, newRegionForce) in newRegionForces) {
             // Let dangerous force decay over time
-            if (newRegionForce > RegionTracker.Force.Neutral) {
+            if (newRegionForce > UnitEvaluator.Force.Neutral) {
                 _regionForces[region] = Math.Max(_regionForces[region], newRegionForce);
             }
             // Let safe force decay over time
@@ -122,7 +122,7 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
                 continue;
             }
 
-            var force = GetUnitForce(unit) * GetUnitUncertaintyPenalty(unit);
+            var force = UnitEvaluator.EvaluateForce(unit) * GetUnitUncertaintyPenalty(unit);
             if (!regionForces.ContainsKey(region)) {
                 regionForces[region] = force;
             }
@@ -132,51 +132,6 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
         }
 
         return regionForces;
-    }
-
-    /// <summary>
-    /// Get the force of a unit
-    /// TODO GD Make this more sophisticated (based on unit cost, probably)
-    /// </summary>
-    /// <param name="unit">The dangerous unit</param>
-    /// <returns>The force of the unit</returns>
-    private float GetUnitForce(Unit unit) {
-        // TODO GD This should be more nuanced, a lone dropship is more dangerous than a dropship with a visible army
-        if (Units.DropShips.Contains(unit.UnitType)) {
-            return RegionTracker.Force.Strong;
-        }
-
-        if (Units.CreepTumors.Contains(unit.UnitType)) {
-            return RegionTracker.Force.Medium / 16;
-        }
-
-        if (Units.Military.Contains(unit.UnitType)) {
-            return RegionTracker.Force.Medium / 2;
-        }
-
-        if (Units.Workers.Contains(unit.UnitType)) {
-            if (IsOffensive(unit, _alliance)) {
-                return RegionTracker.Force.Medium / 2;
-            }
-
-            return RegionTracker.Force.None;
-        }
-
-        if (Units.StaticDefenses.Contains(unit.UnitType)) {
-            return RegionTracker.Force.Medium;
-        }
-
-        if (unit.UnitType == Units.Pylon) {
-            if (IsOffensive(unit, _alliance)) {
-                return RegionTracker.Force.Medium;
-            }
-
-            return RegionTracker.Force.Medium / 3;
-        }
-
-        // The rest are buildings
-        // TODO GD Consider production buildings as somewhat dangerous (they produce units)
-        return RegionTracker.Force.None;
     }
 
     /// <summary>
@@ -226,7 +181,7 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
         var fogOfWarDanger = new Dictionary<Region, float>();
         foreach (var (region, visibleCellCount) in regionVisibility) {
             var percentNotVisible = 1 - (float)visibleCellCount / region.Cells.Count;
-            fogOfWarDanger[region] = percentNotVisible * RegionTracker.Force.Unknown;
+            fogOfWarDanger[region] = percentNotVisible * UnitEvaluator.Force.Unknown;
         }
 
         return fogOfWarDanger;
@@ -239,21 +194,6 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     /// <returns>The decay factor</returns>
     private static float ExponentialDecayFactor(ulong time) {
         return (float)Math.Exp(-ExponentialDecayConstant * time);
-    }
-
-    /// <summary>
-    /// Determines if this unit is offensive
-    /// This is useful to determine if a pylon is a proxy pylon or if a worker is rushing
-    /// An offensive unit is closer to "them" than it is to "us"
-    /// </summary>
-    /// <param name="unit"></param>
-    /// <param name="myAlliance"></param>
-    /// <returns></returns>
-    private static bool IsOffensive(Unit unit, Alliance myAlliance) {
-        var myMain = ExpandAnalyzer.GetExpand(myAlliance, ExpandType.Main);
-        var theirMain = ExpandAnalyzer.GetExpand(myAlliance.GetOpposing(), ExpandType.Main);
-
-        return unit.DistanceTo(theirMain.Position) < unit.DistanceTo(myMain.Position);
     }
 
     /// <summary>
@@ -270,7 +210,7 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
             return (spawnRegion, 0);
         }
 
-        var force = RegionTracker.Force.Lethal * (1 - spawnRegionExplorationPercentage);
+        var force = UnitEvaluator.Force.Lethal * (1 - spawnRegionExplorationPercentage);
         return (spawnRegion, force);
     }
 
@@ -280,10 +220,10 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     private void DecayForces() {
         // Decay towards Neutral over time
         foreach (var region in _regionForces.Keys) {
-            var normalizedTowardsNeutralForce = _regionForces[region] - RegionTracker.Force.Neutral;
-            var decayedForce = normalizedTowardsNeutralForce * RegionDecayRate + RegionTracker.Force.Neutral;
-            if (Math.Abs(RegionTracker.Force.Neutral - decayedForce) < 0.05) {
-                decayedForce = RegionTracker.Force.Neutral;
+            var normalizedTowardsNeutralForce = _regionForces[region] - UnitEvaluator.Force.Neutral;
+            var decayedForce = normalizedTowardsNeutralForce * RegionDecayRate + UnitEvaluator.Force.Neutral;
+            if (Math.Abs(UnitEvaluator.Force.Neutral - decayedForce) < 0.05) {
+                decayedForce = UnitEvaluator.Force.Neutral;
             }
 
             _regionForces[region] = decayedForce;
