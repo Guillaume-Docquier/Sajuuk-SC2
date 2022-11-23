@@ -14,6 +14,11 @@ using SC2APIProtocol;
 namespace Bot.Managers.WarManagement;
 
 public partial class WarManager: Manager {
+    public enum Stance {
+        Attack,
+        Defend,
+    }
+
     private const int RushTimingInSeconds = (int)(5 * 60);
 
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
@@ -22,7 +27,7 @@ public partial class WarManager: Manager {
     private bool _rushInProgress;
     private HashSet<Unit> _expandsInDanger = new HashSet<Unit>();
 
-    private bool _isAttacking = false;
+    private Stance _stance = Stance.Defend;
     private readonly HashSet<Unit> _soldiers = new HashSet<Unit>();
 
     private readonly ArmySupervisor _defenseSupervisor = new ArmySupervisor();
@@ -31,6 +36,8 @@ public partial class WarManager: Manager {
 
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
     private bool _terranFinisherInitiated = false;
+
+    private readonly WarManagerDebugger _debugger = new WarManagerDebugger();
 
     private static BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
@@ -72,10 +79,10 @@ public partial class WarManager: Manager {
         _groundAttackSupervisor.AssignTarget(regionToAttack.Center, ApproximateRegionRadius(regionToAttack), canHuntTheEnemy: true);
         _airAttackSupervisor.AssignTarget(regionToAttack.Center, 999, canHuntTheEnemy: true);
 
-        AttackOrDefend(regionToAttack);
+        AttackOrDefend(regionToAttack, regionToDefend);
         AdjustBuildRequests();
 
-        if (_isAttacking && ShouldFinishOffTerran()) {
+        if (_stance == Stance.Attack && ShouldFinishOffTerran()) {
             FinishOffTerran();
         }
 
@@ -89,6 +96,8 @@ public partial class WarManager: Manager {
         }
 
         _airAttackSupervisor.OnFrame();
+
+        _debugger.Debug();
     }
 
     private void ScanForEndangeredExpands() {
@@ -205,6 +214,7 @@ public partial class WarManager: Manager {
     /// </summary>
     /// <returns>The region to defend next</returns>
     private static Region GetRegionToDefend() {
+        // TODO GD We sometimes try to defend a position that's behind the enemy army while we are losing
         return RegionAnalyzer.Regions.MaxBy(region => RegionTracker.GetDefenseScore(region))!;
     }
 
@@ -232,18 +242,37 @@ public partial class WarManager: Manager {
     /// Determines if we should attack the given region or defend our home.
     /// </summary>
     /// <param name="regionToAttack">The region that we would attack</param>
-    private void AttackOrDefend(Region regionToAttack) {
+    /// <param name="regionToDefend">The region that we would defend</param>
+    private void AttackOrDefend(Region regionToAttack, Region regionToDefend) {
+        if (_soldiers.Count == 0) {
+            // TODO GD Should we do stuff here?
+            return;
+        }
+
+        var ourForce = _soldiers.GetForce();
+        var enemyForce = Pathfinder
+            .FindPath(_soldiers.Where(soldier => soldier.GetRegion() != null).GetCenter().GetRegion(), regionToAttack)
+            .Sum(region => RegionTracker.GetForce(region, Alliance.Enemy));
+
         // TODO GD Only attack when we beat UnitsTracker.EnemyMemorizedUnits?
-        // TODO GD Checking only the region's force doesn't take into account that maybe we are forced to go through more enemies to get to our target.
-        if (_soldiers.GetForce() > RegionTracker.GetForce(regionToAttack, Alliance.Enemy)) {
-            _isAttacking = true;
-            _defenseSupervisor.Retire();
+        if (ourForce > enemyForce) {
+            if (_stance == Stance.Defend) {
+                _defenseSupervisor.Retire();
+            }
+
+            _stance = Stance.Attack;
         }
         else {
-            _isAttacking = false;
-            _groundAttackSupervisor.Retire();
-            _airAttackSupervisor.Retire();
+            if (_stance == Stance.Attack) {
+                _groundAttackSupervisor.Retire();
+                _airAttackSupervisor.Retire();
+            }
+
+            _stance = Stance.Defend;
         }
+
+        _debugger.CurrentStance = _stance;
+        _debugger.Target = _stance == Stance.Attack ? regionToAttack : regionToDefend;
     }
 
     /// <summary>
@@ -258,20 +287,30 @@ public partial class WarManager: Manager {
             _buildRequests.Add(_armyBuildRequest);
         }
 
-        var ourForce = _soldiers.GetForce();
-        var theirForce = UnitsTracker.EnemyMemorizedUnits.Values.GetForce();
-
         // TODO GD Consider units in production too
-        if (ourForce * 1.5 < theirForce) {
+        var ourForce = _soldiers.GetForce();
+        // TODO GD Exclude buildings?
+        var enemyForce = UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits).GetForce();
+
+        if (ourForce * 1.5 < enemyForce) {
             _armyBuildRequest.BlockCondition = BuildBlockCondition.All;
         }
+        else {
+            _armyBuildRequest.BlockCondition = BuildBlockCondition.None;
+        }
 
-        if (ourForce < theirForce) {
+        // TODO GD Try to see if they are attacking or not. If they're not, keep droning
+        if (ourForce < enemyForce) {
             _armyBuildRequest.Priority = BuildRequestPriority.Medium;
         }
         else {
             _armyBuildRequest.Priority = BuildRequestPriority.Low;
         }
+
+        _debugger.OwnForce = ourForce;
+        _debugger.EnemyForce = enemyForce;
+        _debugger.BuildPriority = _armyBuildRequest.Priority;
+        _debugger.BuildBlockCondition = _armyBuildRequest.BlockCondition;
     }
 
     /// <summary>

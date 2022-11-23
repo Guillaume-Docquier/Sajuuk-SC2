@@ -27,8 +27,7 @@ public class UnitsTracker: INeedUpdating {
     public static Dictionary<ulong, Unit> EnemyGhostUnits { get; } = new Dictionary<ulong, Unit>();
 
     /// <summary>
-    /// Holds all the units that we have seen alive but not dead.
-    /// Some of them might be currently visible, others we might only their last location and the rest might be unknown.
+    /// Holds all the units that are unaccounted for and that we know are not where we last saw them.
     /// </summary>
     public static Dictionary<ulong, Unit> EnemyMemorizedUnits { get; } = new Dictionary<ulong, Unit>();
 

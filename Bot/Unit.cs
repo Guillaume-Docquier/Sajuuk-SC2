@@ -192,12 +192,23 @@ public class Unit: ICanDie, IHavePosition {
         ProcessAction(ActionBuilder.Move(Tag, target));
     }
 
-    public void Attack(Unit target) {
-        if (IsAttacking(target)) {
+    /// <summary>
+    /// Orders this unit to attack a specific unit.
+    /// If the unit is already attacking the specified unit, no additional order is sent
+    /// </summary>
+    /// <param name="targetUnit">The target unit to attack</param>
+    public void Attack(Unit targetUnit) {
+        // TODO GD Should check if can move while burrowed
+        if (RawUnitData.IsBurrowed) {
+            Move(targetUnit.Position.ToVector2());
             return;
         }
 
-        ProcessAction(ActionBuilder.Attack(Tag, target.Tag));
+        if (IsAttacking(targetUnit)) {
+            return;
+        }
+
+        ProcessAction(ActionBuilder.Attack(Tag, targetUnit.Tag));
     }
 
     /// <summary>
@@ -209,16 +220,17 @@ public class Unit: ICanDie, IHavePosition {
     /// <param name="precision">The allowed precision on the attack move order</param>
     /// <param name="allowSpam">Enables spamming orders. Not recommended because it might generate a lot of actions</param>
     public void AttackMove(Vector2 target, float precision = 0.5f, bool allowSpam = false) {
+        // TODO GD Should check if can move while burrowed
+        if (RawUnitData.IsBurrowed) {
+            Move(target, precision, allowSpam);
+            return;
+        }
+
         if (!allowSpam && IsTargeting(target, Abilities.Attack, precision)) {
             return;
         }
 
-        if (RawUnitData.IsBurrowed) {
-            Move(target);
-        }
-        else {
-            ProcessAction(ActionBuilder.AttackMove(Tag, target));
-        }
+        ProcessAction(ActionBuilder.AttackMove(Tag, target));
     }
 
     public void TrainUnit(uint unitType, bool queue = false) {
@@ -387,10 +399,6 @@ public class Unit: ICanDie, IHavePosition {
 
     private bool IsAttacking(Unit unit) {
         return Orders.Any(order => order.TargetUnitTag == unit.Tag);
-    }
-
-    public bool IsEngaging(IReadOnlySet<ulong> unitTags) {
-        return unitTags.Contains(RawUnitData.EngagedTargetTag);
     }
 
     // TODO GD This doesn't work with upgrades

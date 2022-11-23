@@ -7,7 +7,7 @@ public partial class WarManager {
         public override void Dispatch(Unit unit) {
             Logger.Debug("({0}) Dispatched {1}", Client, unit);
             // TODO GD Improve this
-            if (Client._isAttacking) {
+            if (Client._stance == Stance.Attack) {
                 if (unit.IsFlying) {
                     Client._airAttackSupervisor.Assign(unit);
                 }

@@ -10,14 +10,17 @@ public class DebuggingFlagsTracker : INeedUpdating {
 
     private readonly HashSet<string> _activeDebuggingFlags = new HashSet<string>();
 
-    public static IReadOnlySet<string> AllDebuggingFlags { get; } = DebuggingFlags.GetAll();
-    public static IReadOnlySet<string> AllDebuggingCommands { get; } = DebuggingCommands.GetAll();
-
-    // TODO GD Make a method to get if a flag is active instead of exposing this
-    public static IReadOnlySet<string> ActiveDebuggingFlags => Instance._activeDebuggingFlags;
+    private static IReadOnlySet<string> AllDebuggingFlags { get; } = DebuggingFlags.GetAll();
+    private static IReadOnlySet<string> AllDebuggingCommands { get; } = DebuggingCommands.GetAll();
 
     private DebuggingFlagsTracker() {
-        Reset();
+        if (Program.DebugEnabled) {
+            Reset();
+        }
+    }
+
+    public static bool IsActive(string debuggingFlag) {
+        return Instance._activeDebuggingFlags.Contains(debuggingFlag);
     }
 
     public void Reset() {
@@ -31,6 +34,7 @@ public class DebuggingFlagsTracker : INeedUpdating {
         _activeDebuggingFlags.Add(DebuggingFlags.GhostUnits);
         _activeDebuggingFlags.Add(DebuggingFlags.KnownEnemyUnits);
         _activeDebuggingFlags.Add(DebuggingFlags.Regions);
+        _activeDebuggingFlags.Add(DebuggingFlags.WarManager);
     }
 
     public void Update(ResponseObservation observation) {

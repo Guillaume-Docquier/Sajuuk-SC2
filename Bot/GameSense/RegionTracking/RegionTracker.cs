@@ -149,7 +149,7 @@ public class RegionTracker : INeedUpdating {
     /// <para>Each region gets a different color using the color pool.</para>
     /// </summary>
     private static void DrawRegionsSummary() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Regions)) {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Regions)) {
             return;
         }
 
@@ -217,7 +217,7 @@ public class RegionTracker : INeedUpdating {
     }
 
     private static void DrawRegionDefenseScores() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Defense)) {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Defense)) {
             return;
         }
 

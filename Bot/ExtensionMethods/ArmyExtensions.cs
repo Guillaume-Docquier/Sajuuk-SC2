@@ -11,7 +11,14 @@ public static class ArmyExtensions {
     }
 
     public static Vector2 GetCenter(this IEnumerable<Unit> army) {
-        return Clustering.GetCenter(army.ToList());
+        var armyList = army.ToList();
+        var armyCenter = Clustering.GetCenter(armyList);
+
+        return armyList
+            .MinBy(soldier => soldier.Position.ToVector2().DistanceTo(armyCenter))!
+            .Position
+            .ToVector2()
+            .AsWorldGridCenter();
     }
 
     public static bool IsFighting(this IEnumerable<Unit> army) {

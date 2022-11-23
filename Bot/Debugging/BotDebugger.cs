@@ -36,12 +36,12 @@ public class BotDebugger {
     }
 
     private static void DebugHelp() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Help)) {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Help)) {
             return;
         }
 
-        var help = DebuggingFlagsTracker.AllDebuggingFlags
-            .Select(flag => $"{flag,-12} {(DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(flag) ? "ON" : "OFF")}")
+        var help = DebuggingFlags.GetAll()
+            .Select(flag => $"{flag,-12} {(DebuggingFlagsTracker.IsActive(flag) ? "ON" : "OFF")}")
             .Take(14)
             .ToList();
 
@@ -51,7 +51,7 @@ public class BotDebugger {
     }
 
     private static void DebugBuildRequests(List<BuildFulfillment> managerBuildRequests) {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.BuildOrder)) {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.BuildOrder)) {
             return;
         }
 
@@ -61,15 +61,13 @@ public class BotDebugger {
             .Take(25)
             .ToList();
 
-        if (managersBuildStepsData.Count > 0) {
-            managersBuildStepsData.Insert(0, $"\nNext {managersBuildStepsData.Count}/{managerBuildRequests.Count} build requests:\n");
-        }
+        managersBuildStepsData.Insert(0, $"Next {managersBuildStepsData.Count}/{managerBuildRequests.Count} build requests:\n");
 
         Program.GraphicalDebugger.AddTextGroup(managersBuildStepsData, virtualPos: new Point { X = 0.02f, Y = 0.02f });
     }
 
     private static void DebugEnemyDetectors() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.EnemyDetectors)) {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.EnemyDetectors)) {
             return;
         }
 
@@ -81,7 +79,7 @@ public class BotDebugger {
     }
 
     private static void DebugUnwalkableAreas() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.UnwalkableAreas)) {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.UnwalkableAreas)) {
             return;
         }
 
@@ -100,7 +98,7 @@ public class BotDebugger {
     }
 
     private void DebugIncomeRate() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.IncomeRate)) {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.IncomeRate)) {
             return;
         }
 
@@ -114,7 +112,7 @@ public class BotDebugger {
     }
 
     private static void DebugEnemyGhostUnits() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.GhostUnits)) {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.GhostUnits)) {
             return;
         }
 
@@ -124,7 +122,7 @@ public class BotDebugger {
     }
 
     private static void DebugKnownEnemyUnits() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.KnownEnemyUnits)) {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.KnownEnemyUnits)) {
             return;
         }
 
@@ -151,7 +149,7 @@ public class BotDebugger {
     }
 
     private static void DebugMatchupData() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.MatchupData)) {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.MatchupData)) {
             return;
         }
 
@@ -166,7 +164,7 @@ public class BotDebugger {
     }
 
     private static void DebugExploration() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Exploration)) {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Exploration)) {
             return;
         }
 
@@ -178,7 +176,7 @@ public class BotDebugger {
     }
 
     private static void DebugUnitAndEffectNames() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Names)) {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Names)) {
             return;
         }
 
@@ -197,7 +195,7 @@ public class BotDebugger {
     }
 
     private static void DebugCoordinates() {
-        if (!DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.Coordinates)) {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Coordinates)) {
             return;
         }
 

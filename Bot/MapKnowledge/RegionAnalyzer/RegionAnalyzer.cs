@@ -140,12 +140,12 @@ public class RegionAnalyzer: INeedUpdating {
     /// Enables graphical debugging of the RegionAnalyzer's data based on debug flags
     /// </summary>
     private static void Debug() {
-        if (DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.RegionCells)) {
+        if (DebuggingFlagsTracker.IsActive(DebuggingFlags.RegionCells)) {
             DrawRegions();
             DrawNoise();
         }
 
-        if (DebuggingFlagsTracker.ActiveDebuggingFlags.Contains(DebuggingFlags.ChokePoints)) {
+        if (DebuggingFlagsTracker.IsActive(DebuggingFlags.ChokePoints)) {
             DrawChokePoints();
         }
     }

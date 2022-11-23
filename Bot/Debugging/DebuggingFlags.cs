@@ -82,4 +82,9 @@ public static class DebuggingFlags {
     /// Enables displaying the defense scores of each region
     /// </summary>
     public const string Defense = ".def";
+
+    /// <summary>
+    /// Enables displaying the stance of the war manager
+    /// </summary>
+    public const string WarManager = ".war";
 }
