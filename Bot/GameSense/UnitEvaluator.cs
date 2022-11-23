@@ -33,6 +33,11 @@ public static class UnitEvaluator {
     /// <param name="unit">The unit to evaluate</param>
     /// <returns>The force of the unit</returns>
     public static float EvaluateForce(Unit unit) {
+        // TODO GD For now we purposefully don't handle air units, so we can't kill them
+        if (unit.IsFlying) {
+            return Value.None;
+        }
+
         // TODO GD This should be more nuanced, a lone dropship is more dangerous than a dropship with a visible army
         if (Units.DropShips.Contains(unit.UnitType)) {
             return Force.Strong;
@@ -77,6 +82,11 @@ public static class UnitEvaluator {
     /// <param name="unit">The valuable unit</param>
     /// <returns>The value of the unit</returns>
     public static float EvaluateValue(Unit unit) {
+        // TODO GD For now we purposefully don't handle air units, so we can't kill them
+        if (unit.IsFlying) {
+            return Value.None;
+        }
+
         if (Units.TownHalls.Contains(unit.UnitType)) {
             // TODO GD Value based on remaining resources
             if (ExpandAnalyzer.ExpandLocations.Any(expandLocation => expandLocation.Position.DistanceTo(unit) <= 1)) {
@@ -104,11 +114,7 @@ public static class UnitEvaluator {
             return Value.Valuable;
         }
 
-        if (Units.SupplyBuildings.Contains(unit.UnitType)) {
-            return Value.Intriguing;
-        }
-
-        return Value.None;
+        return Value.Intriguing / 2;
     }
 
     /// <summary>

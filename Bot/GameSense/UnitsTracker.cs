@@ -20,7 +20,16 @@ public class UnitsTracker: INeedUpdating {
     public static List<Unit> OwnedUnits { get; private set; } = new List<Unit>();
     public static List<Unit> EnemyUnits { get; private set; } = new List<Unit>();
 
+    /// <summary>
+    /// Holds all the units that we've lost vision of.
+    /// Does not contain units that we confirmed have moved in the meantime.
+    /// </summary>
     public static Dictionary<ulong, Unit> EnemyGhostUnits { get; } = new Dictionary<ulong, Unit>();
+
+    /// <summary>
+    /// Holds all the units that we have seen alive but not dead.
+    /// Some of them might be currently visible, others we might only their last location and the rest might be unknown.
+    /// </summary>
     public static Dictionary<ulong, Unit> EnemyMemorizedUnits { get; } = new Dictionary<ulong, Unit>();
 
     private const int EnemyDeathDelaySeconds = 4 * 60;

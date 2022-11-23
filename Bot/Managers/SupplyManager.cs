@@ -33,7 +33,7 @@ public class SupplyManager : UnitlessManager {
                 _overlordsBuildRequest.Requested += OverlordBatchSize;
             }
 
-            _overlordsBuildRequest.Priority = BuildRequestPriority.Important;
+            _overlordsBuildRequest.Priority = BuildRequestPriority.High;
         }
         else {
             _overlordsBuildRequest.Priority = BuildRequestPriority.Normal;

@@ -21,9 +21,6 @@ public partial class ArmySupervisor {
         private const float MaxDistanceForPathfinding = 25;
         private const int PathfindingStep = 3;
 
-        private float _initialForce;
-        private float _retreatAtForce;
-
         private readonly StuckDetector _stuckDetector = new StuckDetector();
 
         private static readonly ulong MaximumPathfindingLockDelay = TimeUtils.SecsToFrames(15);
@@ -32,11 +29,6 @@ public partial class ArmySupervisor {
         private ulong _pathfindingLockDelay = TimeUtils.SecsToFrames(4);
 
         private readonly ITactic _sneakAttackTactic = new SneakAttackTactic();
-
-        protected override void OnSetStateMachine() {
-            _initialForce = StateMachine.Context.Army.GetForce();
-            _retreatAtForce = _initialForce * 0.5f;
-        }
 
         protected override void OnTransition() {
             _sneakAttackTactic.Reset(null);
@@ -49,11 +41,6 @@ public partial class ArmySupervisor {
 
             if (StateMachine.Context._mainArmy.GetCenter().DistanceTo(StateMachine.Context._target) < AcceptableDistanceToTarget) {
                 StateMachine.TransitionTo(new DefenseState());
-                return true;
-            }
-
-            if (StateMachine.Context._mainArmy.GetForce() <= _retreatAtForce) {
-                StateMachine.TransitionTo(new RetreatState());
                 return true;
             }
 
@@ -85,8 +72,6 @@ public partial class ArmySupervisor {
                 new[]
                 {
                     $"Force: {soldiers.GetForce()}",
-                    $"Initial: {_initialForce}",
-                    $"Retreat at: {_retreatAtForce}"
                 },
                 worldPos: soldiers.GetCenter().Translate(1f, 1f).ToVector3().ToPoint());
         }

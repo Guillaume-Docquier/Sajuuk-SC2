@@ -40,7 +40,7 @@ public class UpgradesManager : UnitlessManager {
         AttemptResearchTier3(roachCount);
 
         foreach (var buildRequest in _buildRequests) {
-            buildRequest.Priority = BuildRequestPriority.Notable;
+            buildRequest.Priority = BuildRequestPriority.Medium;
         }
     }
 

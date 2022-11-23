@@ -16,7 +16,7 @@ public partial class ArmySupervisor {
             if (StateMachine.Context._canHuntTheEnemy) {
                 var remainingUnits = UnitsTracker.EnemyUnits
                     .Where(unit => !unit.IsCloaked)
-                    .Where(unit => StateMachine.Context._canHitAirUnits || !unit.IsFlying);
+                    .Where(unit => StateMachine.Context.CanHitAirUnits || !unit.IsFlying);
 
                 if (!remainingUnits.Any()) {
                     StateMachine.TransitionTo(new HuntState());
@@ -30,7 +30,7 @@ public partial class ArmySupervisor {
         protected override void Execute() {
             DrawArmyData(StateMachine.Context._mainArmy);
 
-            Defend(StateMachine.Context._target, StateMachine.Context._mainArmy, StateMachine.Context._blastRadius, StateMachine.Context._canHitAirUnits);
+            Defend(StateMachine.Context._target, StateMachine.Context._mainArmy, StateMachine.Context._blastRadius, StateMachine.Context.CanHitAirUnits);
             Rally(StateMachine.Context._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
         }
 

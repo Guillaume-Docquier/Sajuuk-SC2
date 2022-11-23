@@ -16,16 +16,13 @@ namespace Bot.Managers.WarManagement;
 public partial class WarManager: Manager {
     private const int RushTimingInSeconds = (int)(5 * 60);
 
-    private readonly Dictionary<ArmySupervisor, Region> _targets = new Dictionary<ArmySupervisor, Region>();
-
-    // TODO GD Use queens?
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
 
     private bool _rushTagged = false;
     private bool _rushInProgress;
     private HashSet<Unit> _expandsInDanger = new HashSet<Unit>();
 
-    private bool _hasAssaultStarted = false;
+    private bool _isAttacking = false;
     private readonly HashSet<Unit> _soldiers = new HashSet<Unit>();
 
     private readonly ArmySupervisor _defenseSupervisor = new ArmySupervisor();
@@ -35,6 +32,7 @@ public partial class WarManager: Manager {
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
     private bool _terranFinisherInitiated = false;
 
+    private static BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
     protected override IAssigner Assigner { get; }
@@ -46,9 +44,7 @@ public partial class WarManager: Manager {
         Dispatcher = new WarManagerDispatcher(this);
         Releaser = new WarManagerReleaser(this);
 
-        _targets[_defenseSupervisor] = null;
-        _targets[_groundAttackSupervisor] = null;
-        _targets[_airAttackSupervisor] = null;
+        _buildRequests.Add(_armyBuildRequest);
     }
 
     protected override void RecruitmentPhase() {
@@ -57,77 +53,49 @@ public partial class WarManager: Manager {
         Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
     }
 
-    // TODO GD Figure out an attack / retreat pattern, right now if the army retreats it doesn't go back to attack
     protected override void DispatchPhase() {
-        var attackTarget = _targets[_groundAttackSupervisor];
-        if (!_hasAssaultStarted) {
-            // Start the attack
-            if (attackTarget != null && _soldiers.GetForce() > RegionTracker.GetForce(attackTarget, Alliance.Enemy)) {
-                _hasAssaultStarted = true;
-
-                // TODO GD Should be called ReleaseAll?
-                _defenseSupervisor.Retire();
-                // TODO GD Dispatch only has the logic to dispatch to the attack supervisors
-                Dispatch(_soldiers.Where(soldier => soldier.Supervisor == null));
-            }
-            // Keep defending
-            else {
-                foreach (var soldier in _soldiers.Where(soldier => soldier.Supervisor == null)) {
-                    _defenseSupervisor.Assign(soldier);
-                }
-            }
-        }
-        // Abort the attack
-        else if (attackTarget != null && _groundAttackSupervisor.Army.GetForce() < RegionTracker.GetForce(_targets[_groundAttackSupervisor], Alliance.Enemy)) {
-            _groundAttackSupervisor.Retire();
-            foreach (var soldier in _soldiers.Where(soldier => soldier.Supervisor == null)) {
-                _defenseSupervisor.Assign(soldier);
-            }
-        }
-        // Keep attacking
-        else {
-            _defenseSupervisor.Retire();
-            Dispatch(_soldiers.Where(soldier => soldier.Supervisor == null));
-        }
+        Dispatch(_soldiers.Where(soldier => soldier.Supervisor == null));
     }
 
     // TODO GD Add graphical debugging to show regions to attack/defend
     protected override void ManagementPhase() {
         // Determine regions to defend
-        var regionToDefend = RegionAnalyzer.Regions.MaxBy(region => RegionTracker.GetDefenseScore(region))!;
-        _defenseSupervisor.AssignTarget(regionToDefend.Center, ApproximateRegionRadius(regionToDefend));
-        _targets[_defenseSupervisor] = regionToDefend;
+        var regionToDefend = GetRegionToDefend();
+        _defenseSupervisor.AssignTarget(regionToDefend.Center, ApproximateRegionRadius(regionToDefend), canHuntTheEnemy: false);
 
         // Determine regions to attack
-        // TODO GD This makes the attack target switch as we destroy buildings. At some point, fog of war becomes more interesting and we won't hunt the remaining buildings
-        var valuableEnemyRegions = RegionAnalyzer.Regions
-            .Where(region => RegionTracker.GetValue(region, Alliance.Enemy) > UnitEvaluator.Value.Intriguing)
-            .ToList();
+        var regionToAttack = GetRegionToAttack();
 
-        if (!valuableEnemyRegions.Any()) {
-            valuableEnemyRegions = RegionAnalyzer.Regions;
+        // Defend by default
+        // Try to see if the army could attack, if yes, do
+        // If the army is too weak, call it off
+        // TODO GD Only attack when we beat UnitsTracker.EnemyMemorizedUnits?
+        if (_soldiers.GetForce() > RegionTracker.GetForce(regionToAttack, Alliance.Enemy)) {
+            _isAttacking = true;
+            _defenseSupervisor.Retire();
+
+            _groundAttackSupervisor.AssignTarget(regionToAttack.Center, ApproximateRegionRadius(regionToAttack), canHuntTheEnemy: true);
+            _airAttackSupervisor.AssignTarget(regionToAttack.Center, 999, canHuntTheEnemy: true);
+        }
+        else {
+            _isAttacking = false;
+            _groundAttackSupervisor.Retire();
+            _airAttackSupervisor.Retire();
         }
 
-        var regionToAttack = valuableEnemyRegions
-            .MaxBy(region => RegionTracker.GetValue(region, Alliance.Enemy) / RegionTracker.GetForce(region, Alliance.Enemy))!;
-
-        _groundAttackSupervisor.AssignTarget(regionToAttack.Center, ApproximateRegionRadius(regionToAttack), canHuntTheEnemy: true);
-        _targets[_groundAttackSupervisor] = regionToAttack;
-
-        _groundAttackSupervisor.AssignTarget(regionToAttack.Center, 999, canHuntTheEnemy: true);
-        _targets[_airAttackSupervisor] = regionToAttack;
-
-        // TODO GD Request more forces (i.e zerglings when rushed? or is it the build manager?)
-        // TODO GD Handle this better
-        if (_hasAssaultStarted && _buildRequests.Count == 0) {
-            _buildRequests.Add(new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100));
+        // TODO GD Improve on this idea, this is great. We can make the order blocker if the pressure is too high
+        if (_soldiers.GetForce() < UnitsTracker.EnemyMemorizedUnits.Values.GetForce()) {
+            _armyBuildRequest.Priority = BuildRequestPriority.Medium;
+        }
+        else {
+            _armyBuildRequest.Priority = BuildRequestPriority.Low;
         }
 
-        if (_hasAssaultStarted && ShouldFinishOffTerran()) {
+        if (_isAttacking && ShouldFinishOffTerran()) {
             FinishOffTerran();
         }
 
-        // TODO GD Send this task to the supervisor instead
+        // TODO GD Send this task to the supervisor instead?
         if (_terranFinisherInitiated && Controller.AvailableSupply < 2) {
             FreeSomeSupply();
         }
@@ -250,5 +218,32 @@ public partial class WarManager: Manager {
                 unburrowedUnit.Attack(unitToSacrifice);
             }
         }
+    }
+
+    /// <summary>
+    /// Determines which region to defend next
+    /// </summary>
+    /// <returns>The region to defend next</returns>
+    private static Region GetRegionToDefend() {
+        return RegionAnalyzer.Regions.MaxBy(region => RegionTracker.GetDefenseScore(region))!;
+    }
+
+    /// <summary>
+    /// Determines which region to attack next
+    /// </summary>
+    /// <returns>The region to attack next</returns>
+    private static Region GetRegionToAttack() {
+        var valuableEnemyRegions = RegionAnalyzer.Regions
+            .Where(region => RegionTracker.GetValue(region, Alliance.Enemy) > UnitEvaluator.Value.Intriguing)
+            .ToList();
+
+        if (!valuableEnemyRegions.Any()) {
+            valuableEnemyRegions = RegionAnalyzer.Regions;
+        }
+
+        var regionToAttack = valuableEnemyRegions
+            .MaxBy(region => RegionTracker.GetValue(region, Alliance.Enemy) / RegionTracker.GetForce(region, Alliance.Enemy))!;
+
+        return regionToAttack;
     }
 }

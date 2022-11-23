@@ -18,8 +18,8 @@ public partial class ArmySupervisor: Supervisor {
     private bool _canHuntTheEnemy = true;
 
     private float _strongestForce;
-    private bool _canHitAirUnits => SupervisedUnits.Any(supervisedUnit => supervisedUnit.CanHitAir);
-    private bool _canFly => SupervisedUnits.Any(supervisedUnit => supervisedUnit.IsFlying);
+    private bool CanHitAirUnits => SupervisedUnits.Any(supervisedUnit => supervisedUnit.CanHitAir);
+    private bool CanFly => SupervisedUnits.Any(supervisedUnit => supervisedUnit.IsFlying);
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 

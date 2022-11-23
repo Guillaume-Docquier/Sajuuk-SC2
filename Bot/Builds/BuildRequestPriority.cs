@@ -5,8 +5,10 @@
 /// Higher priority means more important.
 /// </summary>
 public enum BuildRequestPriority {
+    Low = -1,
     Normal = 0,
     BuildOrder = 1,
-    Notable = 2,
-    Important = 3,
+    Medium = 2,
+    High = 3,
+    VeryHigh = 4,
 }

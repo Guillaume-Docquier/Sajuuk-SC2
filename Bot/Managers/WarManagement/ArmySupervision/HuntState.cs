@@ -42,7 +42,7 @@ public partial class ArmySupervisor {
                 if (AllLocationsHaveBeenChecked(_checkedExpandLocations)) {
                     var enemiesToAttack = UnitsTracker.EnemyUnits
                         .Where(unit => !unit.IsCloaked)
-                        .Where(unit => StateMachine.Context._canHitAirUnits || !unit.IsFlying)
+                        .Where(unit => StateMachine.Context.CanHitAirUnits || !unit.IsFlying)
                         .ToList();
 
                     if (enemiesToAttack.Count > 0) {
@@ -79,7 +79,7 @@ public partial class ArmySupervisor {
             for (var x = 0; x < MapAnalyzer.MaxX; x++) {
                 for (var y = 0; y < MapAnalyzer.MaxY; y++) {
                     var position = new Vector2(x, y).AsWorldGridCenter();
-                    if (!StateMachine.Context._canFly && !MapAnalyzer.IsWalkable(position)) {
+                    if (!StateMachine.Context.CanFly && !MapAnalyzer.IsWalkable(position)) {
                         continue;
                     }
 
@@ -101,7 +101,7 @@ public partial class ArmySupervisor {
             }
 
             var armyCenter = StateMachine.Context._mainArmy.GetCenter();
-            if (!StateMachine.Context._canFly) {
+            if (!StateMachine.Context.CanFly) {
                 armyCenter = armyCenter.ClosestWalkable();
             }
 

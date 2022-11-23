@@ -20,7 +20,7 @@ public sealed partial class EconomyManager: Manager {
 
     private int _creepQueensCount = 1;
 
-    private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, quantity: 0, blockCondition: BuildBlockCondition.MissingResources, priority: BuildRequestPriority.Important);
+    private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, quantity: 0, blockCondition: BuildBlockCondition.MissingResources, priority: BuildRequestPriority.High);
     private readonly BuildRequest _macroHatchBuildRequest = new TargetBuildRequest(BuildType.Build, Units.Hatchery, targetQuantity: 0);
     private readonly BuildRequest _queenBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Queen, targetQuantity: 0);
     private readonly BuildRequest _dronesBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Drone, targetQuantity: 0);
