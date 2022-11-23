@@ -19,7 +19,7 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     // But that would require tracking the last value update of each region
     // And we would be doing some fancy (expensive?) exponent operations
     // But in the end, a good ol' factor works perfectly well, so... maybe some other day
-    private static readonly float RegionDecayRate = 1f - 1f / TimeUtils.SecsToFrames(30);
+    private static readonly float RegionDecayRate = 1f - 1f / TimeUtils.SecsToFrames(120);
 
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(120);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
