@@ -6,7 +6,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
-using Bot.Managers.ArmySupervision;
+using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.MapKnowledge;
 using Bot.Utils;
 using SC2APIProtocol;
@@ -47,6 +47,10 @@ public partial class WarManager: Manager {
         _buildRequests.Add(_armyBuildRequest);
     }
 
+    public override string ToString() {
+        return "WarManager";
+    }
+
     protected override void RecruitmentPhase() {
         HandleRushes();
 
@@ -65,31 +69,11 @@ public partial class WarManager: Manager {
 
         // Determine regions to attack
         var regionToAttack = GetRegionToAttack();
+        _groundAttackSupervisor.AssignTarget(regionToAttack.Center, ApproximateRegionRadius(regionToAttack), canHuntTheEnemy: true);
+        _airAttackSupervisor.AssignTarget(regionToAttack.Center, 999, canHuntTheEnemy: true);
 
-        // Defend by default
-        // Try to see if the army could attack, if yes, do
-        // If the army is too weak, call it off
-        // TODO GD Only attack when we beat UnitsTracker.EnemyMemorizedUnits?
-        if (_soldiers.GetForce() > RegionTracker.GetForce(regionToAttack, Alliance.Enemy)) {
-            _isAttacking = true;
-            _defenseSupervisor.Retire();
-
-            _groundAttackSupervisor.AssignTarget(regionToAttack.Center, ApproximateRegionRadius(regionToAttack), canHuntTheEnemy: true);
-            _airAttackSupervisor.AssignTarget(regionToAttack.Center, 999, canHuntTheEnemy: true);
-        }
-        else {
-            _isAttacking = false;
-            _groundAttackSupervisor.Retire();
-            _airAttackSupervisor.Retire();
-        }
-
-        // TODO GD Improve on this idea, this is great. We can make the order blocker if the pressure is too high
-        if (_soldiers.GetForce() < UnitsTracker.EnemyMemorizedUnits.Values.GetForce()) {
-            _armyBuildRequest.Priority = BuildRequestPriority.Medium;
-        }
-        else {
-            _armyBuildRequest.Priority = BuildRequestPriority.Low;
-        }
+        AttackOrDefend(regionToAttack);
+        AdjustBuildRequests();
 
         if (_isAttacking && ShouldFinishOffTerran()) {
             FinishOffTerran();
@@ -189,10 +173,6 @@ public partial class WarManager: Manager {
         _terranFinisherInitiated = true;
     }
 
-    public override string ToString() {
-        return "WarManager";
-    }
-
     /// <summary>
     /// Approximates the region's radius based on it's cells
     /// This is a placeholder while we have a smarter region defense behaviour
@@ -241,9 +221,69 @@ public partial class WarManager: Manager {
             valuableEnemyRegions = RegionAnalyzer.Regions;
         }
 
+        // TODO GD Checking only the region's force doesn't take into account that maybe we are forced to go through more enemies to get to our target.
         var regionToAttack = valuableEnemyRegions
             .MaxBy(region => RegionTracker.GetValue(region, Alliance.Enemy) / RegionTracker.GetForce(region, Alliance.Enemy))!;
 
         return regionToAttack;
+    }
+
+    /// <summary>
+    /// Determines if we should attack the given region or defend our home.
+    /// </summary>
+    /// <param name="regionToAttack">The region that we would attack</param>
+    private void AttackOrDefend(Region regionToAttack) {
+        // TODO GD Only attack when we beat UnitsTracker.EnemyMemorizedUnits?
+        // TODO GD Checking only the region's force doesn't take into account that maybe we are forced to go through more enemies to get to our target.
+        if (_soldiers.GetForce() > RegionTracker.GetForce(regionToAttack, Alliance.Enemy)) {
+            _isAttacking = true;
+            _defenseSupervisor.Retire();
+        }
+        else {
+            _isAttacking = false;
+            _groundAttackSupervisor.Retire();
+            _airAttackSupervisor.Retire();
+        }
+    }
+
+    /// <summary>
+    /// Request more or less army based on what the WarManager has and what the enemy has and is doing.
+    /// </summary>
+    private void AdjustBuildRequests() {
+        var unitTypeToProduce = GetUnitTypeToProduce();
+        if (_armyBuildRequest.UnitOrUpgradeType != unitTypeToProduce) {
+            _buildRequests.Remove(_armyBuildRequest);
+
+            _armyBuildRequest = new TargetBuildRequest(BuildType.Train, unitTypeToProduce, targetQuantity: 100, priority: BuildRequestPriority.Low);
+            _buildRequests.Add(_armyBuildRequest);
+        }
+
+        var ourForce = _soldiers.GetForce();
+        var theirForce = UnitsTracker.EnemyMemorizedUnits.Values.GetForce();
+
+        // TODO GD Consider units in production too
+        if (ourForce * 1.5 < theirForce) {
+            _armyBuildRequest.BlockCondition = BuildBlockCondition.All;
+        }
+
+        if (ourForce < theirForce) {
+            _armyBuildRequest.Priority = BuildRequestPriority.Medium;
+        }
+        else {
+            _armyBuildRequest.Priority = BuildRequestPriority.Low;
+        }
+    }
+
+    /// <summary>
+    /// Determines the unit type to produce given the current situation.
+    /// Right now, it just checks if it can make roaches, but in the future it might check against the enemy composition.
+    /// </summary>
+    /// <returns>The unit type id to produce.</returns>
+    private static uint GetUnitTypeToProduce() {
+        if (Controller.IsUnlocked(Units.Roach)) {
+            return Units.Roach;
+        }
+
+        return Units.Zergling;
     }
 }

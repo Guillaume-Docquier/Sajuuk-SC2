@@ -48,6 +48,11 @@ public static class UnitEvaluator {
         }
 
         if (Units.Military.Contains(unit.UnitType)) {
+            if (unit.UnitType == Units.Zergling) {
+                // Zerglings are very small
+                return Force.Medium / 4;
+            }
+
             return Force.Medium / 2;
         }
 

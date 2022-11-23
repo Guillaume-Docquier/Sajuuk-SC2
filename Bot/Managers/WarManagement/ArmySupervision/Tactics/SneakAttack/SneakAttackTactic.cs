@@ -10,7 +10,7 @@ using Bot.StateManagement;
 using Bot.UnitModules;
 using Bot.Utils;
 
-namespace Bot.Managers.ArmySupervision.Tactics.SneakAttack;
+namespace Bot.Managers.WarManagement.ArmySupervision.Tactics.SneakAttack;
 
 public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
     private const float TankRange = 13;

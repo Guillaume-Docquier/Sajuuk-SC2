@@ -1,6 +1,6 @@
 ﻿using Bot.UnitModules;
 
-namespace Bot.Managers.ArmySupervision;
+namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public partial class ArmySupervisor {
     private class ArmySupervisorReleaser: IReleaser {

@@ -2,7 +2,7 @@
 using System.Linq;
 using Bot.GameData;
 
-namespace Bot.Managers.ArmySupervision.Tactics.SneakAttack;
+namespace Bot.Managers.WarManagement.ArmySupervision.Tactics.SneakAttack;
 
 public partial class SneakAttackTactic {
     public class EngageState : SneakAttackState {

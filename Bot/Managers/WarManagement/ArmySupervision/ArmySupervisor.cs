@@ -5,7 +5,7 @@ using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.StateManagement;
 
-namespace Bot.Managers.ArmySupervision;
+namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public partial class ArmySupervisor: Supervisor {
     private readonly StateMachine<ArmySupervisor> _stateMachine;
@@ -31,6 +31,10 @@ public partial class ArmySupervisor: Supervisor {
         Releaser = new ArmySupervisorReleaser(this);
 
         _stateMachine = new StateMachine<ArmySupervisor>(this, new AttackState());
+    }
+
+    public override string ToString() {
+        return "ArmySupervisor";
     }
 
     protected override void Supervise() {
@@ -59,9 +63,5 @@ public partial class ArmySupervisor: Supervisor {
         foreach (var unit in Army.ToList()) {
             Release(unit);
         }
-    }
-
-    public override string ToString() {
-        return "ArmySupervisor";
     }
 }

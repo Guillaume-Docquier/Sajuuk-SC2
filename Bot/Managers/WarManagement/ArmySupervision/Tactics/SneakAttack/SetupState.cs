@@ -5,7 +5,7 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.UnitModules;
 
-namespace Bot.Managers.ArmySupervision.Tactics.SneakAttack;
+namespace Bot.Managers.WarManagement.ArmySupervision.Tactics.SneakAttack;
 
 public partial class SneakAttackTactic {
     public class SetupState : SneakAttackState {

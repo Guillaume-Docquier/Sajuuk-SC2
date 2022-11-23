@@ -4,7 +4,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 
-namespace Bot.Managers.ArmySupervision.Tactics.SneakAttack;
+namespace Bot.Managers.WarManagement.ArmySupervision.Tactics.SneakAttack;
 
 public partial class SneakAttackTactic {
     public class InactiveState: SneakAttackState {

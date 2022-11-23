@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Bot.Managers.ArmySupervision.Tactics;
+namespace Bot.Managers.WarManagement.ArmySupervision.Tactics;
 
 public interface ITactic {
     bool IsViable(IReadOnlyCollection<Unit> army);

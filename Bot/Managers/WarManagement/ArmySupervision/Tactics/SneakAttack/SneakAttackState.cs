@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Bot.StateManagement;
 
-namespace Bot.Managers.ArmySupervision.Tactics.SneakAttack;
+namespace Bot.Managers.WarManagement.ArmySupervision.Tactics.SneakAttack;
 
 public abstract class SneakAttackState: State<SneakAttackTactic> {
     protected SneakAttackState NextState = null;

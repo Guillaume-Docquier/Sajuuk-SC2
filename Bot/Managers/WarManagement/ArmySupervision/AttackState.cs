@@ -6,13 +6,13 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.Managers.ArmySupervision.Tactics;
+using Bot.Managers.WarManagement.ArmySupervision.Tactics;
 using Bot.MapKnowledge;
 using Bot.StateManagement;
 using Bot.Utils;
-using SneakAttackTactic = Bot.Managers.ArmySupervision.Tactics.SneakAttack.SneakAttackTactic;
+using SneakAttackTactic = Bot.Managers.WarManagement.ArmySupervision.Tactics.SneakAttack.SneakAttackTactic;
 
-namespace Bot.Managers.ArmySupervision;
+namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public partial class ArmySupervisor {
     public class AttackState: State<ArmySupervisor> {

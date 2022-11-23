@@ -6,7 +6,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.StateManagement;
 
-namespace Bot.Managers.ArmySupervision;
+namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public partial class ArmySupervisor {
     public class RallyState: State<ArmySupervisor> {
