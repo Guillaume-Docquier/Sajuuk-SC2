@@ -28,7 +28,5 @@ public class TestExpands : IBuildOrder {
 
     public void PruneRequests() {}
 
-    public void AddRequest(BuildRequest buildRequest) {}
-
     public void ReactTo(EnemyStrategy newEnemyStrategy) {}
 }

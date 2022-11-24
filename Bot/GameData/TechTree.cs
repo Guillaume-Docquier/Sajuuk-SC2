@@ -91,7 +91,7 @@ public static class TechTree {
         { Units.UltraliskCavern,  Units.Drone },
     };
 
-    public static readonly Dictionary<uint, List<IPrerequisite>> Prerequisite = new Dictionary<uint, List<IPrerequisite>>
+    public static readonly Dictionary<uint, List<IPrerequisite>> UnitPrerequisites = new Dictionary<uint, List<IPrerequisite>>
     {
         { Units.EvolutionChamber,            new List<IPrerequisite> { new UnitPrerequisite(Units.Hatchery) }},
         { Units.SpawningPool,                new List<IPrerequisite> { new UnitPrerequisite(Units.Hatchery) }},
@@ -124,7 +124,10 @@ public static class TechTree {
         { Units.BroodLord,                   new List<IPrerequisite> { new UnitPrerequisite(Units.GreaterSpire) }},
         { Units.UltraliskCavern,             new List<IPrerequisite> { new UnitPrerequisite(Units.Hive) }},
         { Units.Ultralisk,                   new List<IPrerequisite> { new UnitPrerequisite(Units.UltraliskCavern) }},
+    };
 
+    public static readonly Dictionary<uint, List<IPrerequisite>> UpgradePrerequisites = new Dictionary<uint, List<IPrerequisite>>
+    {
         { Upgrades.ZergMissileWeaponsLevel1, new List<IPrerequisite> { new UnitPrerequisite(Units.EvolutionChamber) }},
         { Upgrades.ZergMissileWeaponsLevel2, new List<IPrerequisite> { new TechPrerequisite(Upgrades.ZergMissileWeaponsLevel1), new UnitPrerequisite(Units.Lair) }},
         { Upgrades.ZergMissileWeaponsLevel3, new List<IPrerequisite> { new TechPrerequisite(Upgrades.ZergMissileWeaponsLevel2), new UnitPrerequisite(Units.Hive) }},

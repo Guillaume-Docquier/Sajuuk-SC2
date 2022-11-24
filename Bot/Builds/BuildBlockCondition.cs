@@ -6,7 +6,9 @@ namespace Bot.Builds;
 public enum BuildBlockCondition {
     None = 0,
     MissingTech = 1,
-    MissingResources = 2,
-    MissingProducer = 4,
-    All = 8 - 1,
+    MissingMinerals = 2,
+    MissingVespene = 4,
+    MissingResources = 2 + 4,
+    MissingProducer = 8,
+    All = 16 - 1,
 }

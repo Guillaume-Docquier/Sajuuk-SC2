@@ -244,14 +244,19 @@ public partial class WarManager: Manager {
     /// <param name="regionToAttack">The region that we would attack</param>
     /// <param name="regionToDefend">The region that we would defend</param>
     private void AttackOrDefend(Region regionToAttack, Region regionToDefend) {
-        if (_soldiers.Count == 0) {
+        // Because of the map resolution, some units can actually walk on unwalkable tiles
+        // This causes GetRegion() to return null
+        // It's fixable, but I need to measure the impact of such a fix first
+        var soldiersInARegion = _soldiers.Where(soldier => soldier.GetRegion() != null).ToList();
+
+        if (soldiersInARegion.Count == 0) {
             // TODO GD Should we do stuff here?
             return;
         }
 
         var ourForce = _soldiers.GetForce();
         var enemyForce = Pathfinder
-            .FindPath(_soldiers.Where(soldier => soldier.GetRegion() != null).GetCenter().GetRegion(), regionToAttack)
+            .FindPath(soldiersInARegion.GetCenter().GetRegion(), regionToAttack)
             .Sum(region => RegionTracker.GetForce(region, Alliance.Enemy));
 
         // TODO GD Only attack when we beat UnitsTracker.EnemyMemorizedUnits?
@@ -293,7 +298,7 @@ public partial class WarManager: Manager {
         var enemyForce = UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits).GetForce();
 
         if (ourForce * 1.5 < enemyForce) {
-            _armyBuildRequest.BlockCondition = BuildBlockCondition.All;
+            _armyBuildRequest.BlockCondition = BuildBlockCondition.MissingMinerals | BuildBlockCondition.MissingProducer | BuildBlockCondition.MissingTech;
         }
         else {
             _armyBuildRequest.BlockCondition = BuildBlockCondition.None;
@@ -319,7 +324,7 @@ public partial class WarManager: Manager {
     /// </summary>
     /// <returns>The unit type id to produce.</returns>
     private static uint GetUnitTypeToProduce() {
-        if (Controller.IsUnlocked(Units.Roach)) {
+        if (Controller.IsUnitUnlocked(Units.Roach)) {
             return Units.Roach;
         }
 

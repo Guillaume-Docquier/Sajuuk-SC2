@@ -38,11 +38,13 @@ public class SajuukBot: PoliteBot {
         _managers.ForEach(manager => manager.OnFrame());
 
         var managerRequests = GetManagersBuildRequests();
-        AddressManagerRequests(managerRequests);
+        var buildBlockStatus = AddressManagerRequests(managerRequests);
 
-        _debugger.Debug(managerRequests
-            .SelectMany(groupedBySupply => groupedBySupply.SelectMany(request => request))
-            .ToList()
+        _debugger.Debug(
+            managerRequests
+                .SelectMany(groupedBySupply => groupedBySupply.SelectMany(request => request))
+                .ToList(),
+            buildBlockStatus
         );
 
         foreach (var unit in UnitsTracker.UnitsByTag.Values) {
@@ -70,7 +72,8 @@ public class SajuukBot: PoliteBot {
     /// When we add an order that changes the supply, we look back to see if a previous order now meets its timing.
     /// </summary>
     /// <param name="groupedManagersBuildRequests"></param>
-    private static void AddressManagerRequests(List<List<List<BuildFulfillment>>> groupedManagersBuildRequests) {
+    /// <returns>The blocking build fulfillment with the block reason, or (null, None) if nothing was blocking</returns>
+    private static (BuildFulfillment, BuildBlockCondition) AddressManagerRequests(List<List<List<BuildFulfillment>>> groupedManagersBuildRequests) {
         var lookBackSupplyTarget = long.MaxValue;
         foreach (var priorityGroups in groupedManagersBuildRequests) {
             foreach (var supplyGroups in priorityGroups) {
@@ -83,21 +86,20 @@ public class SajuukBot: PoliteBot {
                 foreach (var buildStep in supplyGroups) {
                     while (buildStep.Remaining > 0) {
                         var buildStepResult = Controller.ExecuteBuildStep(buildStep);
-                        if (buildStepResult == Controller.RequestResult.Ok) {
+                        if (buildStepResult == BuildRequestResult.Ok) {
                             buildStep.Fulfill(1);
 
                             if (Controller.CurrentSupply >= lookBackSupplyTarget) {
-                                AddressManagerRequests(groupedManagersBuildRequests);
-                                return;
+                                return AddressManagerRequests(groupedManagersBuildRequests);
                             }
                         }
                         // Don't retry expands if they are all taken
-                        else if (buildStep.BuildType == BuildType.Expand && buildStepResult == Controller.RequestResult.NoSuitableLocation) {
+                        else if (buildStep.BuildType == BuildType.Expand && buildStepResult.HasFlag(BuildRequestResult.NoSuitableLocation)) {
                             buildStep.Fulfill(1);
                         }
-                        else if (ShouldBlock(buildStep, buildStepResult)) {
+                        else if (ShouldBlock(buildStep, buildStepResult, out var buildBlockingReason)) {
                             // We must wait to fulfill this one
-                            return;
+                            return (buildStep, buildBlockingReason);
                         }
                         else {
                             // Not possible anymore, go to next
@@ -107,6 +109,8 @@ public class SajuukBot: PoliteBot {
                 }
             }
         }
+
+        return (null, BuildBlockCondition.None);
     }
 
     /// <summary>
@@ -139,20 +143,33 @@ public class SajuukBot: PoliteBot {
     /// <summary>
     /// Determines if a BuildFulfillment should block the build based on its block conditions and the request result.
     /// </summary>
-    /// <param name="buildFulfillment"></param>
-    /// <param name="requestResult"></param>
-    /// <returns></returns>
-    private static bool ShouldBlock(BuildFulfillment buildFulfillment, Controller.RequestResult requestResult) {
-        switch (requestResult) {
-            case Controller.RequestResult.TechRequirementsNotMet:
-                return (buildFulfillment.BlockCondition & BuildBlockCondition.MissingTech) == BuildBlockCondition.MissingTech;
-            case Controller.RequestResult.NotEnoughMinerals:
-            case Controller.RequestResult.NotEnoughVespeneGas:
-                return (buildFulfillment.BlockCondition & BuildBlockCondition.MissingResources) == BuildBlockCondition.MissingResources;
-            case Controller.RequestResult.NoProducersAvailable:
-                return (buildFulfillment.BlockCondition & BuildBlockCondition.MissingProducer) == BuildBlockCondition.MissingProducer;
-            default:
-                return false;
+    /// <param name="buildFulfillment">The build fulfillment that might be blocking</param>
+    /// <param name="buildRequestResult">The build request result</param>
+    /// <param name="buildBlockingReason">The blocking reason, if any</param>
+    /// <returns>True if the build should be blocked</returns>
+    private static bool ShouldBlock(BuildFulfillment buildFulfillment, BuildRequestResult buildRequestResult, out BuildBlockCondition buildBlockingReason) {
+        // TODO GD All of this is not really cute, is there a nicer way?
+        if (buildRequestResult.HasFlag(BuildRequestResult.TechRequirementsNotMet) && buildFulfillment.BlockCondition.HasFlag(BuildBlockCondition.MissingTech)) {
+            buildBlockingReason = BuildBlockCondition.MissingTech;
+            return true;
         }
+
+        if (buildRequestResult.HasFlag(BuildRequestResult.NotEnoughMinerals) && buildFulfillment.BlockCondition.HasFlag(BuildBlockCondition.MissingMinerals)) {
+            buildBlockingReason = BuildBlockCondition.MissingMinerals;
+            return true;
+        }
+
+        if (buildRequestResult.HasFlag(BuildRequestResult.NotEnoughVespeneGas) && buildFulfillment.BlockCondition.HasFlag(BuildBlockCondition.MissingVespene)) {
+            buildBlockingReason = BuildBlockCondition.MissingVespene;
+            return true;
+        }
+
+        if (buildRequestResult.HasFlag(BuildRequestResult.NoProducersAvailable) && buildFulfillment.BlockCondition.HasFlag(BuildBlockCondition.MissingProducer)) {
+            buildBlockingReason = BuildBlockCondition.MissingProducer;
+            return true;
+        }
+
+        buildBlockingReason = BuildBlockCondition.None;
+        return false;
     }
 }

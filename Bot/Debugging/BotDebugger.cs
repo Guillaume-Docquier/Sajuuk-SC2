@@ -16,13 +16,13 @@ namespace Bot.Debugging;
 public class BotDebugger {
     private float _maxMineralRate = 0;
 
-    public void Debug(List<BuildFulfillment> managerBuildRequests) {
+    public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus) {
         if (!Program.DebugEnabled) {
             return;
         }
 
         DebugHelp();
-        DebugBuildRequests(managerBuildRequests);
+        DebugBuildRequests(managerBuildRequests, buildBlockStatus);
         DebugEnemyDetectors();
         DebugUnwalkableAreas();
         DebugIncomeRate();
@@ -50,14 +50,20 @@ public class BotDebugger {
         Program.GraphicalDebugger.AddTextGroup(help, virtualPos: new Point { X = 0.02f, Y = 0.46f });
     }
 
-    private static void DebugBuildRequests(List<BuildFulfillment> managerBuildRequests) {
+    private static void DebugBuildRequests(IReadOnlyCollection<BuildFulfillment> managerBuildRequests, (BuildFulfillment blockingStep, BuildBlockCondition blockingReason) buildBlockStatus) {
         if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.BuildOrder)) {
             return;
         }
 
-        // TODO GD The display is a bit confusing because AtSupply 0 will be at the end
         var managersBuildStepsData = managerBuildRequests
-            .Select(nextBuildStep => nextBuildStep.ToString())
+            .Select(nextBuildStep => {
+                var stepString = nextBuildStep.ToString();
+                if (buildBlockStatus.blockingStep == nextBuildStep) {
+                    stepString += $" ({buildBlockStatus.blockingReason})";
+                }
+
+                return stepString;
+            })
             .Take(25)
             .ToList();
 

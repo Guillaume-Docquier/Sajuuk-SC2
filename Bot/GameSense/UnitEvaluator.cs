@@ -44,7 +44,7 @@ public static class UnitEvaluator {
         }
 
         if (Units.CreepTumors.Contains(unit.UnitType)) {
-            return Force.Medium / 16;
+            return Force.Medium / 64;
         }
 
         if (Units.Military.Contains(unit.UnitType)) {
@@ -99,6 +99,10 @@ public static class UnitEvaluator {
             }
 
             return Value.Prized / 2;
+        }
+
+        if (Units.CreepTumors.Contains(unit.UnitType)) {
+            return Value.Intriguing / 32;
         }
 
         if (Units.Workers.Contains(unit.UnitType)) {

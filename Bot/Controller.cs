@@ -20,17 +20,6 @@ using Action = SC2APIProtocol.Action;
 namespace Bot;
 
 public static class Controller {
-    public enum RequestResult {
-        Ok,
-        NoProducersAvailable,
-        NotEnoughMinerals,
-        NotEnoughVespeneGas,
-        NotEnoughSupply,
-        NoSuitableLocation,
-        TechRequirementsNotMet,
-        NotSupported,
-    }
-
     private const int RealTime = (int)(1000 / TimeUtils.FramesPerSecond);
     private static int _frameDelayMs = 0;
 
@@ -233,7 +222,7 @@ public static class Controller {
     }
 
     // TODO GD Should use an IBuildStep, probably. BuildFulfillment seems odd here
-    public static RequestResult ExecuteBuildStep(BuildFulfillment buildStep) {
+    public static BuildRequestResult ExecuteBuildStep(BuildFulfillment buildStep) {
         var result = buildStep.BuildType switch
         {
             BuildType.Train => TrainUnit(buildStep.UnitOrUpgradeType),
@@ -241,56 +230,90 @@ public static class Controller {
             BuildType.Research => ResearchUpgrade(buildStep.UnitOrUpgradeType, buildStep.Queue),
             BuildType.UpgradeInto => UpgradeInto(buildStep.UnitOrUpgradeType),
             BuildType.Expand => PlaceExpand(buildStep.UnitOrUpgradeType),
-            _ => RequestResult.NotSupported
+            _ => BuildRequestResult.NotSupported
         };
 
-        if (result == RequestResult.Ok) {
+        if (result == BuildRequestResult.Ok) {
             Logger.Info("(Controller) Completed build step {0}", buildStep);
         }
 
         return result;
     }
 
-    private static RequestResult ValidateRequirements(uint unitType, Unit producer, UnitTypeData unitTypeData) {
-        return ValidateRequirements(unitType, producer, (int)unitTypeData.MineralCost, (int)unitTypeData.VespeneCost, unitTypeData.FoodRequired);
+    /// <summary>
+    /// Validates if unit requirements are met based on the provided unit type data.
+    /// </summary>
+    /// <param name="unitType">The unit type to produce</param>
+    /// <param name="producer">The producer for the unit</param>
+    /// <param name="unitTypeData">The unit type data describing costs</param>
+    /// <returns>The appropriate BuildRequestResult flags describing the requirements validation</returns>
+    private static BuildRequestResult ValidateRequirements(uint unitType, Unit producer, UnitTypeData unitTypeData) {
+        return ValidateRequirements(unitType, producer, (int)unitTypeData.MineralCost, (int)unitTypeData.VespeneCost, RequirementType.Unit, unitTypeData.FoodRequired);
     }
 
-    private static RequestResult ValidateRequirements(uint upgradeType, Unit producer, UpgradeData upgradeData) {
-        return ValidateRequirements(upgradeType, producer, (int)upgradeData.MineralCost, (int)upgradeData.VespeneCost);
+    /// <summary>
+    /// Validates if upgrade requirements are met based on the provided upgrade data.
+    /// </summary>
+    /// <param name="upgradeType">The upgrade type to produce</param>
+    /// <param name="producer">The producer for the upgrade</param>
+    /// <param name="upgradeData">The upgrade data describing costs</param>
+    /// <returns>The appropriate BuildRequestResult flags describing the requirements validation</returns>
+    private static BuildRequestResult ValidateRequirements(uint upgradeType, Unit producer, UpgradeData upgradeData) {
+        return ValidateRequirements(upgradeType, producer, (int)upgradeData.MineralCost, (int)upgradeData.VespeneCost, RequirementType.Upgrade);
     }
 
-    private static RequestResult ValidateRequirements(uint unitType, Unit producer, int mineralCost, int vespeneCost, float foodCost = 0) {
+    private enum RequirementType {
+        Unit,
+        Upgrade,
+    }
+
+    /// <summary>
+    /// Validates if the given requirements are met.
+    /// </summary>
+    /// <param name="unitOrUpgradeType">The unit or upgrade type to produce</param>
+    /// <param name="producer">The producer for the unit or upgrade</param>
+    /// <param name="mineralCost">The mineral cost of the unit or upgrade</param>
+    /// <param name="vespeneCost">The vespene cost of the unit or upgrade</param>
+    /// <param name="requirementType">Whether the type is a unit or upgrade</param>
+    /// <param name="foodCost">The food cost of the unit or upgrade</param>
+    /// <returns>The appropriate BuildRequestResult flags describing the requirements validation</returns>
+    private static BuildRequestResult ValidateRequirements(uint unitOrUpgradeType, Unit producer, int mineralCost, int vespeneCost, RequirementType requirementType, float foodCost = 0) {
+        var result = BuildRequestResult.Ok;
+
         if (producer == null) {
-            return RequestResult.NoProducersAvailable;
+            result |= BuildRequestResult.NoProducersAvailable;
         }
 
         var canAffordResult = CanAfford(mineralCost, vespeneCost);
-        if (canAffordResult != RequestResult.Ok) {
-            return canAffordResult;
+        if (canAffordResult != BuildRequestResult.Ok) {
+            result |= canAffordResult;
         }
 
         if (!HasEnoughSupply(foodCost)) {
-            return RequestResult.NotEnoughSupply;
+            result |= BuildRequestResult.NotEnoughSupply;
         }
 
-        if (!IsUnlocked(unitType)) {
-            return RequestResult.TechRequirementsNotMet;
+        switch (requirementType) {
+            case RequirementType.Unit when !IsUnitUnlocked(unitOrUpgradeType):
+            case RequirementType.Upgrade when !IsUpgradeUnlocked(unitOrUpgradeType):
+                result |= BuildRequestResult.TechRequirementsNotMet;
+                break;
         }
 
-        return RequestResult.Ok;
+        return result;
     }
 
-    private static RequestResult TrainUnit(uint unitType) {
+    private static BuildRequestResult TrainUnit(uint unitType) {
         var producer = GetAvailableProducer(unitType);
 
         return TrainUnit(unitType, producer);
     }
 
-    private static RequestResult TrainUnit(uint unitType, Unit producer) {
+    private static BuildRequestResult TrainUnit(uint unitType, Unit producer) {
         var unitTypeData = KnowledgeBase.GetUnitTypeData(unitType);
 
         var requirementsValidationResult = ValidateRequirements(unitType, producer, unitTypeData);
-        if (requirementsValidationResult != RequestResult.Ok) {
+        if (requirementsValidationResult != BuildRequestResult.Ok) {
             return requirementsValidationResult;
         }
 
@@ -300,20 +323,20 @@ public static class Controller {
         AvailableVespene -= (int)unitTypeData.VespeneCost;
         CurrentSupply += Convert.ToUInt32(Math.Ceiling(unitTypeData.FoodRequired)); // Round up zerglings food, will be corrected on next frame
 
-        return RequestResult.Ok;
+        return BuildRequestResult.Ok;
     }
 
-    private static RequestResult PlaceBuilding(uint buildingType, Vector2 location = default) {
+    private static BuildRequestResult PlaceBuilding(uint buildingType, Vector2 location = default) {
         var producer = GetAvailableProducer(buildingType);
 
         return PlaceBuilding(buildingType, producer, location);
     }
 
-    private static RequestResult PlaceBuilding(uint buildingType, Unit producer, Vector2 location = default) {
+    private static BuildRequestResult PlaceBuilding(uint buildingType, Unit producer, Vector2 location = default) {
         var buildingTypeData = KnowledgeBase.GetUnitTypeData(buildingType);
 
         var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
-        if (requirementsValidationResult != RequestResult.Ok) {
+        if (requirementsValidationResult != BuildRequestResult.Ok) {
             return requirementsValidationResult;
         }
 
@@ -332,7 +355,7 @@ public static class Controller {
 
             if (availableGas == null) {
                 Logger.Warning("(Controller) No available gasses for extractor");
-                return RequestResult.NoSuitableLocation;
+                return BuildRequestResult.NoSuitableLocation;
             }
 
             producer = GetAvailableProducer(buildingType, closestTo: availableGas.Position.ToVector2());
@@ -342,7 +365,7 @@ public static class Controller {
         else if (location != default) {
             Logger.Debug("Trying to build {0} with location {1}", buildingTypeData.Name, location);
             if (!BuildingTracker.CanPlace(buildingType, location)) {
-                return RequestResult.NoSuitableLocation;
+                return BuildRequestResult.NoSuitableLocation;
             }
 
             producer = GetAvailableProducer(buildingType, closestTo: location);
@@ -353,7 +376,7 @@ public static class Controller {
             Logger.Debug("Trying to build {0} without location", buildingTypeData.Name);
             var constructionSpot = BuildingTracker.FindConstructionSpot(buildingType);
             if (constructionSpot == default) {
-                return RequestResult.NoSuitableLocation;
+                return BuildRequestResult.NoSuitableLocation;
             }
 
             producer = GetAvailableProducer(buildingType, closestTo: constructionSpot);
@@ -366,21 +389,20 @@ public static class Controller {
         AvailableMinerals -= (int)buildingTypeData.MineralCost;
         AvailableVespene -= (int)buildingTypeData.VespeneCost;
 
-        return RequestResult.Ok;
+        return BuildRequestResult.Ok;
     }
 
-    private static RequestResult ResearchUpgrade(uint upgradeType, bool allowQueue) {
+    private static BuildRequestResult ResearchUpgrade(uint upgradeType, bool allowQueue) {
         var producer = GetAvailableProducer(upgradeType, allowQueue);
 
         return ResearchUpgrade(upgradeType, producer);
     }
 
-    private static RequestResult ResearchUpgrade(uint upgradeType, Unit producer) {
+    private static BuildRequestResult ResearchUpgrade(uint upgradeType, Unit producer) {
         var researchTypeData = KnowledgeBase.GetUpgradeData(upgradeType);
 
-        // TODO GD We need to check if the research is available to be researched
         var requirementsValidationResult = ValidateRequirements(upgradeType, producer, researchTypeData);
-        if (requirementsValidationResult != RequestResult.Ok) {
+        if (requirementsValidationResult != BuildRequestResult.Ok) {
             return requirementsValidationResult;
         }
 
@@ -389,20 +411,20 @@ public static class Controller {
         AvailableMinerals -= (int)researchTypeData.MineralCost;
         AvailableVespene -= (int)researchTypeData.VespeneCost;
 
-        return RequestResult.Ok;
+        return BuildRequestResult.Ok;
     }
 
-    private static RequestResult UpgradeInto(uint buildingType) {
+    private static BuildRequestResult UpgradeInto(uint buildingType) {
         var producer = GetAvailableProducer(buildingType);
 
         return UpgradeInto(buildingType, producer);
     }
 
-    private static RequestResult UpgradeInto(uint buildingType, Unit producer) {
+    private static BuildRequestResult UpgradeInto(uint buildingType, Unit producer) {
         var buildingTypeData = KnowledgeBase.GetUnitTypeData(buildingType);
 
         var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
-        if (requirementsValidationResult != RequestResult.Ok) {
+        if (requirementsValidationResult != BuildRequestResult.Ok) {
             return requirementsValidationResult;
         }
 
@@ -411,12 +433,12 @@ public static class Controller {
         AvailableMinerals -= (int)buildingTypeData.MineralCost;
         AvailableVespene -= (int)buildingTypeData.VespeneCost;
 
-        return RequestResult.Ok;
+        return BuildRequestResult.Ok;
     }
 
-    private static RequestResult PlaceExpand(uint buildingType) {
+    private static BuildRequestResult PlaceExpand(uint buildingType) {
         if (!MapAnalyzer.IsInitialized) {
-            return RequestResult.NotSupported;
+            return BuildRequestResult.NotSupported;
         }
 
         var producer = GetAvailableProducer(buildingType);
@@ -424,14 +446,14 @@ public static class Controller {
         return PlaceExpand(buildingType, producer);
     }
 
-    private static RequestResult PlaceExpand(uint buildingType, Unit producer) {
+    private static BuildRequestResult PlaceExpand(uint buildingType, Unit producer) {
         if (!MapAnalyzer.IsInitialized) {
-            return RequestResult.NotSupported;
+            return BuildRequestResult.NotSupported;
         }
 
         var buildingTypeData = KnowledgeBase.GetUnitTypeData(buildingType);
         var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
-        if (requirementsValidationResult != RequestResult.Ok) {
+        if (requirementsValidationResult != BuildRequestResult.Ok) {
             return requirementsValidationResult;
         }
 
@@ -441,7 +463,7 @@ public static class Controller {
             .FirstOrDefault(expandLocation => BuildingTracker.CanPlace(buildingType, expandLocation));
 
         if (expandLocation == default) {
-            return RequestResult.NoSuitableLocation;
+            return BuildRequestResult.NoSuitableLocation;
         }
 
         return PlaceBuilding(buildingType, producer, expandLocation);
@@ -516,21 +538,46 @@ public static class Controller {
         return Observation.Observation.RawData.Effects.Where(effect => effect.EffectId == effectId);
     }
 
-    private static RequestResult CanAfford(int mineralCost, int vespeneCost)
-    {
+    /// <summary>
+    /// Indicates whether or not you can afford the given mineral and vespene cost.
+    /// </summary>
+    /// <param name="mineralCost">The mineral cost we want to pay</param>
+    /// <param name="vespeneCost">The vespene cost we want to pay</param>
+    /// <returns>The corresponding BuildRequestResult flags</returns>
+    private static BuildRequestResult CanAfford(int mineralCost, int vespeneCost) {
+        var result = BuildRequestResult.Ok;
+
         if (AvailableMinerals < mineralCost) {
-            return RequestResult.NotEnoughMinerals;
+            result |= BuildRequestResult.NotEnoughMinerals;
         }
 
         if (AvailableVespene < vespeneCost) {
-            return RequestResult.NotEnoughVespeneGas;
+            result |= BuildRequestResult.NotEnoughVespeneGas;
         }
 
-        return RequestResult.Ok;
+        return result;
     }
 
-    public static bool IsUnlocked(uint unitType) {
-        if (TechTree.Prerequisite.TryGetValue(unitType, out var prerequisites)) {
+    /// <summary>
+    /// Indicates whether or not the tech requirements for the given unit are met
+    /// </summary>
+    /// <param name="unitType">The unit type you want to build or train</param>
+    /// <returns>True if the unit can be built/trained right now</returns>
+    public static bool IsUnitUnlocked(uint unitType) {
+        if (TechTree.UnitPrerequisites.TryGetValue(unitType, out var prerequisites)) {
+            return prerequisites.All(prerequisite => prerequisite.IsMet());
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Indicates whether or not the tech requirements for the given upgrade are met
+    /// </summary>
+    /// <param name="upgradeType">The upgrade type you want to research</param>
+    /// <returns>True if the upgrade can be researched right now</returns>
+    public static bool IsUpgradeUnlocked(uint upgradeType) {
+        if (TechTree.UpgradePrerequisites.TryGetValue(upgradeType, out var prerequisites)) {
             return prerequisites.All(prerequisite => prerequisite.IsMet());
         }
 
