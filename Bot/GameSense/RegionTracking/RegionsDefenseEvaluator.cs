@@ -105,6 +105,10 @@ public class RegionDefenseEvaluator : IRegionsEvaluator, IWatchUnitsDie {
     /// <param name="blockedRegion"></param>
     /// <returns></returns>
     private ReachMap ComputeReach(Region startingRegion, IReadOnlyCollection<Region> regions, Region blockedRegion = null) {
+        if (startingRegion.IsObstructed) {
+            return new ReachMap();
+        }
+
         if (_reachCache.TryGet(startingRegion, regions, blockedRegion, out var cachedReach)) {
             return cachedReach;
         }
@@ -119,10 +123,11 @@ public class RegionDefenseEvaluator : IRegionsEvaluator, IWatchUnitsDie {
             blockedRegionsHashSet.Add(blockedRegion);
         }
 
-        // We pathfind the farthest regions first to leverage the pathfinding cache
         var regionsToFindPath = regions
             .Where(region => region != startingRegion)
+            .Where(region => !region.IsObstructed)
             .Except(blockedRegionsHashSet)
+            // We will pathfind the farthest regions first to leverage the pathfinding cache
             .OrderByDescending(region => region.Center.DistanceTo(startingRegion.Center));
 
         foreach (var region in regionsToFindPath) {

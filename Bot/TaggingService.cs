@@ -11,6 +11,7 @@ public static class TaggingService {
         BuildDone,
         EnemyStrategy,
         Version,
+        TerranFinisher,
     }
 
     public static void TagGame(Tag tag, params object[] parameters) {
@@ -36,6 +37,7 @@ public static class TaggingService {
     private static string FormatTag(Tag tag, params object[] parameters) {
         return tag switch
         {
+            Tag.TerranFinisher => $"{tag}_{TimeUtils.GetGameTimeString()}",
             Tag.EarlyAttack => $"{tag}_{TimeUtils.GetGameTimeString()}",
             Tag.BuildDone => $"{tag}_{TimeUtils.GetGameTimeString()}_Supply_{Controller.CurrentSupply}",
             Tag.EnemyStrategy => $"{tag}_{parameters[0]}_{TimeUtils.GetGameTimeString()}",

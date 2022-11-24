@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Bot.Builds;
+using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -180,6 +181,7 @@ public partial class WarManager: Manager {
         _buildRequests.Add(new TargetBuildRequest(BuildType.Build, Units.Spire, targetQuantity: 1));
         _buildRequests.Add(new TargetBuildRequest(BuildType.Train, Units.Corruptor, targetQuantity: 10));
         _terranFinisherInitiated = true;
+        TaggingService.TagGame(TaggingService.Tag.TerranFinisher);
     }
 
     /// <summary>
@@ -244,10 +246,18 @@ public partial class WarManager: Manager {
     /// <param name="regionToAttack">The region that we would attack</param>
     /// <param name="regionToDefend">The region that we would defend</param>
     private void AttackOrDefend(Region regionToAttack, Region regionToDefend) {
+        if (regionToAttack.IsObstructed) {
+            Logger.Error("Trying to attack an obstructed region");
+            return;
+        }
+
         // Because of the map resolution, some units can actually walk on unwalkable tiles
         // This causes GetRegion() to return null
         // It's fixable, but I need to measure the impact of such a fix first
-        var soldiersInARegion = _soldiers.Where(soldier => soldier.GetRegion() != null).ToList();
+        var soldiersInARegion = _soldiers
+            .Where(soldier => soldier.GetRegion() != null)
+            .Where(soldier => !soldier.GetRegion().IsObstructed)
+            .ToList();
 
         if (soldiersInARegion.Count == 0) {
             // TODO GD Should we do stuff here?

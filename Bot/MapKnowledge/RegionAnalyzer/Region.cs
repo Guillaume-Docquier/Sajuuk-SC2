@@ -189,6 +189,6 @@ public class Region {
     }
 
     public override string ToString() {
-        return $"Region {Id} at {Center}";
+        return $"Region {Id} ({(IsObstructed ? "Obstructed" : "Clear")}) at {Center}";
     }
 }

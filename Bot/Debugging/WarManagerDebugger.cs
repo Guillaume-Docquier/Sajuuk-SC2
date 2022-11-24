@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using Bot.Builds;
-using Bot.Debugging;
+using Bot.Managers.WarManagement;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
 
-namespace Bot.Managers.WarManagement;
+namespace Bot.Debugging;
 
 public class WarManagerDebugger {
     public float OwnForce { get; set; }
