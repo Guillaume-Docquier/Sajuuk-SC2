@@ -9,10 +9,11 @@ public partial class WarManager {
             // TODO GD Improve this
             if (Client._stance == Stance.Attack) {
                 if (unit.IsFlying) {
-                    Client._airAttackSupervisor.Assign(unit);
+                    // For now we only use flying units when we need to because Terran scums can fly
+                    Client._terranFinisherSupervisor.Assign(unit);
                 }
                 else {
-                    Client._groundAttackSupervisor.Assign(unit);
+                    Client._attackSupervisor.Assign(unit);
                 }
             }
             else {

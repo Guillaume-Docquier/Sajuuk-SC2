@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using Bot.Builds;
 using Bot.Debugging;
 using Bot.ExtensionMethods;
@@ -32,8 +33,8 @@ public partial class WarManager: Manager {
     private readonly HashSet<Unit> _soldiers = new HashSet<Unit>();
 
     private readonly ArmySupervisor _defenseSupervisor = new ArmySupervisor();
-    private readonly ArmySupervisor _groundAttackSupervisor = new ArmySupervisor();
-    private readonly ArmySupervisor _airAttackSupervisor = new ArmySupervisor();
+    private readonly ArmySupervisor _attackSupervisor = new ArmySupervisor();
+    private readonly ArmySupervisor _terranFinisherSupervisor = new ArmySupervisor();
 
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
     private bool _terranFinisherInitiated = false;
@@ -53,6 +54,9 @@ public partial class WarManager: Manager {
         Releaser = new WarManagerReleaser(this);
 
         _buildRequests.Add(_armyBuildRequest);
+
+        // TODO GD Probably do the same thing with attack supervisor at some point to speed up the end of the game
+        _terranFinisherSupervisor.AssignTarget(new Vector2(MapAnalyzer.MaxX / 2f, MapAnalyzer.MaxY / 2f), 999, canHuntTheEnemy: true);
     }
 
     public override string ToString() {
@@ -77,8 +81,7 @@ public partial class WarManager: Manager {
 
         // Determine regions to attack
         var regionToAttack = GetRegionToAttack();
-        _groundAttackSupervisor.AssignTarget(regionToAttack.Center, ApproximateRegionRadius(regionToAttack), canHuntTheEnemy: true);
-        _airAttackSupervisor.AssignTarget(regionToAttack.Center, 999, canHuntTheEnemy: true);
+        _attackSupervisor.AssignTarget(regionToAttack.Center, ApproximateRegionRadius(regionToAttack), canHuntTheEnemy: true);
 
         AttackOrDefend(regionToAttack, regionToDefend);
         AdjustBuildRequests();
@@ -92,11 +95,11 @@ public partial class WarManager: Manager {
             FreeSomeSupply();
         }
         else {
-            _groundAttackSupervisor.OnFrame();
+            _attackSupervisor.OnFrame();
             _defenseSupervisor.OnFrame();
         }
 
-        _airAttackSupervisor.OnFrame();
+        _terranFinisherSupervisor.OnFrame();
 
         _debugger.Debug();
     }
@@ -177,9 +180,8 @@ public partial class WarManager: Manager {
             return;
         }
 
-        _buildRequests.Clear();
-        _buildRequests.Add(new TargetBuildRequest(BuildType.Build, Units.Spire, targetQuantity: 1));
-        _buildRequests.Add(new TargetBuildRequest(BuildType.Train, Units.Corruptor, targetQuantity: 10));
+        _buildRequests.Add(new TargetBuildRequest(BuildType.Build, Units.Spire, targetQuantity: 1, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All));
+        _buildRequests.Add(new TargetBuildRequest(BuildType.Train, Units.Corruptor, targetQuantity: 10, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All));
         _terranFinisherInitiated = true;
         TaggingService.TagGame(TaggingService.Tag.TerranFinisher);
     }
@@ -198,11 +200,11 @@ public partial class WarManager: Manager {
     /// Orders the army to kill 1 of their own to free some supply
     /// </summary>
     private void FreeSomeSupply() {
-        foreach (var supervisedUnit in _groundAttackSupervisor.SupervisedUnits.Where(unit => unit.IsBurrowed)) {
+        foreach (var supervisedUnit in _attackSupervisor.SupervisedUnits.Where(unit => unit.IsBurrowed)) {
             supervisedUnit.UseAbility(Abilities.BurrowRoachUp);
         }
 
-        var unburrowedUnits = _groundAttackSupervisor.SupervisedUnits.Where(unit => !unit.IsBurrowed).ToList();
+        var unburrowedUnits = _attackSupervisor.SupervisedUnits.Where(unit => !unit.IsBurrowed).ToList();
         if (unburrowedUnits.Count > 0) {
             var unitToSacrifice = unburrowedUnits[0];
             foreach (var unburrowedUnit in unburrowedUnits) {
@@ -279,8 +281,7 @@ public partial class WarManager: Manager {
         }
         else {
             if (_stance == Stance.Attack) {
-                _groundAttackSupervisor.Retire();
-                _airAttackSupervisor.Retire();
+                _attackSupervisor.Retire();
             }
 
             _stance = Stance.Defend;

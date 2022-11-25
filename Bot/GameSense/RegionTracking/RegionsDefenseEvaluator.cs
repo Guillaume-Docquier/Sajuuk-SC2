@@ -169,6 +169,7 @@ public class RegionDefenseEvaluator : IRegionsEvaluator, IWatchUnitsDie {
         var valueScore = RegionTracker.GetValue(impactedRegion, Alliance.Self, normalized: true);
 
         // All distances will be skewed by 1 to avoid division by 0
+        // TODO GD Enemy reach can be empty
         var enemyMaxReach = enemyReach.Values.Max() + 1;
         var ourMaxReach = defenseReach.Values.Max() + 1;
 
