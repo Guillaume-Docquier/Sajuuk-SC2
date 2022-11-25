@@ -22,7 +22,7 @@ public class Program {
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.InsideAndOut;
     private const Race OpponentRace = Race.Zerg;
-    private const Difficulty OpponentDifficulty = Difficulty.CheatInsane;
+    private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
     private const bool RealTime = false;
 
