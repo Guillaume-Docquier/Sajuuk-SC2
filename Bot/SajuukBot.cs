@@ -154,6 +154,11 @@ public class SajuukBot: PoliteBot {
             return true;
         }
 
+        if (buildRequestResult.HasFlag(BuildRequestResult.NoProducersAvailable) && buildFulfillment.BlockCondition.HasFlag(BuildBlockCondition.MissingProducer)) {
+            buildBlockingReason = BuildBlockCondition.MissingProducer;
+            return true;
+        }
+
         if (buildRequestResult.HasFlag(BuildRequestResult.NotEnoughMinerals) && buildFulfillment.BlockCondition.HasFlag(BuildBlockCondition.MissingMinerals)) {
             buildBlockingReason = BuildBlockCondition.MissingMinerals;
             return true;
@@ -161,11 +166,6 @@ public class SajuukBot: PoliteBot {
 
         if (buildRequestResult.HasFlag(BuildRequestResult.NotEnoughVespeneGas) && buildFulfillment.BlockCondition.HasFlag(BuildBlockCondition.MissingVespene)) {
             buildBlockingReason = BuildBlockCondition.MissingVespene;
-            return true;
-        }
-
-        if (buildRequestResult.HasFlag(BuildRequestResult.NoProducersAvailable) && buildFulfillment.BlockCondition.HasFlag(BuildBlockCondition.MissingProducer)) {
-            buildBlockingReason = BuildBlockCondition.MissingProducer;
             return true;
         }
 

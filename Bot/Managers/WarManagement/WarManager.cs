@@ -335,7 +335,7 @@ public partial class WarManager: Manager {
     /// </summary>
     /// <returns>The unit type id to produce.</returns>
     private static uint GetUnitTypeToProduce() {
-        if (Controller.IsUnitUnlocked(Units.Roach)) {
+        if (Controller.IsUnlocked(Units.Roach, TechTree.UnitPrerequisites)) {
             return Units.Roach;
         }
 

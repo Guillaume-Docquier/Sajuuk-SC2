@@ -248,7 +248,7 @@ public static class Controller {
     /// <param name="unitTypeData">The unit type data describing costs</param>
     /// <returns>The appropriate BuildRequestResult flags describing the requirements validation</returns>
     private static BuildRequestResult ValidateRequirements(uint unitType, Unit producer, UnitTypeData unitTypeData) {
-        return ValidateRequirements(unitType, producer, (int)unitTypeData.MineralCost, (int)unitTypeData.VespeneCost, RequirementType.Unit, unitTypeData.FoodRequired);
+        return ValidateRequirements(unitType, producer, (int)unitTypeData.MineralCost, (int)unitTypeData.VespeneCost, TechTree.UnitPrerequisites, unitTypeData.FoodRequired);
     }
 
     /// <summary>
@@ -259,12 +259,7 @@ public static class Controller {
     /// <param name="upgradeData">The upgrade data describing costs</param>
     /// <returns>The appropriate BuildRequestResult flags describing the requirements validation</returns>
     private static BuildRequestResult ValidateRequirements(uint upgradeType, Unit producer, UpgradeData upgradeData) {
-        return ValidateRequirements(upgradeType, producer, (int)upgradeData.MineralCost, (int)upgradeData.VespeneCost, RequirementType.Upgrade);
-    }
-
-    private enum RequirementType {
-        Unit,
-        Upgrade,
+        return ValidateRequirements(upgradeType, producer, (int)upgradeData.MineralCost, (int)upgradeData.VespeneCost, TechTree.UpgradePrerequisites);
     }
 
     /// <summary>
@@ -274,10 +269,17 @@ public static class Controller {
     /// <param name="producer">The producer for the unit or upgrade</param>
     /// <param name="mineralCost">The mineral cost of the unit or upgrade</param>
     /// <param name="vespeneCost">The vespene cost of the unit or upgrade</param>
-    /// <param name="requirementType">Whether the type is a unit or upgrade</param>
+    /// <param name="prerequisites">The tech requirements</param>
     /// <param name="foodCost">The food cost of the unit or upgrade</param>
     /// <returns>The appropriate BuildRequestResult flags describing the requirements validation</returns>
-    private static BuildRequestResult ValidateRequirements(uint unitOrUpgradeType, Unit producer, int mineralCost, int vespeneCost, RequirementType requirementType, float foodCost = 0) {
+    private static BuildRequestResult ValidateRequirements(
+        uint unitOrUpgradeType,
+        Unit producer,
+        int mineralCost,
+        int vespeneCost,
+        Dictionary<uint, List<IPrerequisite>> prerequisites,
+        float foodCost = 0
+    ) {
         var result = BuildRequestResult.Ok;
 
         if (producer == null) {
@@ -293,11 +295,8 @@ public static class Controller {
             result |= BuildRequestResult.NotEnoughSupply;
         }
 
-        switch (requirementType) {
-            case RequirementType.Unit when !IsUnitUnlocked(unitOrUpgradeType):
-            case RequirementType.Upgrade when !IsUpgradeUnlocked(unitOrUpgradeType):
-                result |= BuildRequestResult.TechRequirementsNotMet;
-                break;
+        if (!IsUnlocked(unitOrUpgradeType, prerequisites)) {
+            result |= BuildRequestResult.TechRequirementsNotMet;
         }
 
         return result;
@@ -559,26 +558,14 @@ public static class Controller {
     }
 
     /// <summary>
-    /// Indicates whether or not the tech requirements for the given unit are met
-    /// </summary>
-    /// <param name="unitType">The unit type you want to build or train</param>
-    /// <returns>True if the unit can be built/trained right now</returns>
-    public static bool IsUnitUnlocked(uint unitType) {
-        if (TechTree.UnitPrerequisites.TryGetValue(unitType, out var prerequisites)) {
-            return prerequisites.All(prerequisite => prerequisite.IsMet());
-        }
-
-        return true;
-    }
-
-    /// <summary>
     /// Indicates whether or not the tech requirements for the given upgrade are met
     /// </summary>
-    /// <param name="upgradeType">The upgrade type you want to research</param>
+    /// <param name="unitOrUpgradeType">The upgrade type you want to research</param>
+    /// <param name="prerequisites">The tech requirements</param>
     /// <returns>True if the upgrade can be researched right now</returns>
-    public static bool IsUpgradeUnlocked(uint upgradeType) {
-        if (TechTree.UpgradePrerequisites.TryGetValue(upgradeType, out var prerequisites)) {
-            return prerequisites.All(prerequisite => prerequisite.IsMet());
+    public static bool IsUnlocked(uint unitOrUpgradeType, Dictionary<uint, List<IPrerequisite>> prerequisites) {
+        if (prerequisites.TryGetValue(unitOrUpgradeType, out var unitOrUpgradePrerequisites)) {
+            return unitOrUpgradePrerequisites.All(prerequisite => prerequisite.IsMet());
         }
 
         return true;

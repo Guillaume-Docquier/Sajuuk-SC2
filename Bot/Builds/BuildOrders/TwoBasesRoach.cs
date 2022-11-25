@@ -34,7 +34,7 @@ public class TwoBasesRoach : IBuildOrder {
             new TargetBuildRequest  (BuildType.Research,    Upgrades.ZergMissileWeaponsLevel1, atSupply: 44, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 50, targetQuantity: 3),
             new TargetBuildRequest  (BuildType.Research,    Upgrades.TunnelingClaws,           atSupply: 50, targetQuantity: 1),
-            new TargetBuildRequest  (BuildType.Research,    Upgrades.GlialReconstitution,      atSupply: 50, targetQuantity: 1, queue: true),
+            new TargetBuildRequest  (BuildType.Research,    Upgrades.GlialReconstitution,      atSupply: 50, targetQuantity: 1),
         };
 
         foreach (var buildRequest in _buildRequests) {

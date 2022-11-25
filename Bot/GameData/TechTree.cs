@@ -137,8 +137,8 @@ public static class TechTree {
         { Upgrades.ZergGroundArmorsLevel1,   new List<IPrerequisite> { new UnitPrerequisite(Units.EvolutionChamber) }},
         { Upgrades.ZergGroundArmorsLevel2,   new List<IPrerequisite> { new TechPrerequisite(Upgrades.ZergGroundArmorsLevel1), new UnitPrerequisite(Units.Lair) }},
         { Upgrades.ZergGroundArmorsLevel3,   new List<IPrerequisite> { new TechPrerequisite(Upgrades.ZergGroundArmorsLevel2), new UnitPrerequisite(Units.Hive) }},
-        { Upgrades.GlialReconstitution,      new List<IPrerequisite> { new UnitPrerequisite(Units.RoachWarren) }},
-        { Upgrades.TunnelingClaws,           new List<IPrerequisite> { new UnitPrerequisite(Units.RoachWarren) }},
+        { Upgrades.GlialReconstitution,      new List<IPrerequisite> { new UnitPrerequisite(Units.RoachWarren), new UnitPrerequisite(Units.Lair) }},
+        { Upgrades.TunnelingClaws,           new List<IPrerequisite> { new UnitPrerequisite(Units.RoachWarren), new UnitPrerequisite(Units.Lair) }},
         { Upgrades.Burrow,                   new List<IPrerequisite> { new UnitPrerequisite(Units.Hatchery) }},
     };
 }
