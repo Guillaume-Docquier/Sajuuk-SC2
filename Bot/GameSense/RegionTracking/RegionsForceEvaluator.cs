@@ -12,8 +12,10 @@ namespace Bot.GameSense.RegionTracking;
 public class RegionsForceEvaluator : IRegionsEvaluator {
     private readonly Alliance _alliance;
     private readonly bool _hasAbsoluteKnowledge;
-    private Dictionary<Region, float> _regionForces;
-    private Dictionary<Region, float> _normalizedRegionForces;
+    private readonly float _defaultRegionForce;
+
+    private readonly Dictionary<Region, float> _regionForces = new Dictionary<Region, float>();
+    private readonly Dictionary<Region, float> _normalizedRegionForces = new Dictionary<Region, float>();
 
     // It would be cool to use the exponential decay everywhere
     // But that would require tracking the last force update of each region
@@ -27,6 +29,10 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     public RegionsForceEvaluator(Alliance alliance) {
         _alliance = alliance;
         _hasAbsoluteKnowledge = alliance == Alliance.Self;
+
+        _defaultRegionForce = _hasAbsoluteKnowledge
+            ? UnitEvaluator.Force.None
+            : UnitEvaluator.Force.Unknown;
     }
 
     /// <summary>
@@ -51,14 +57,9 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     /// <summary>
     /// Initializes the region forces of the provided regions
     /// </summary>
-    public void Init(List<Region> regions) {
-        var initialForce = _hasAbsoluteKnowledge
-            ? UnitEvaluator.Force.None
-            : UnitEvaluator.Force.Unknown;
-
-        _regionForces = new Dictionary<Region, float>();
+    public void Init(IEnumerable<Region> regions) {
         foreach (var region in regions) {
-            _regionForces[region] = initialForce;
+            _regionForces[region] = _defaultRegionForce;
         }
     }
 
@@ -67,6 +68,10 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     /// The force decays as the information grows older
     /// </summary>
     public void Evaluate() {
+        if (_hasAbsoluteKnowledge) {
+            Init(_regionForces.Keys);
+        }
+
         // Update based on units
         var newRegionForces = ComputeUnitsForce();
 
@@ -106,7 +111,7 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
             DecayForces();
         }
 
-        _normalizedRegionForces = ComputeNormalizedForces(_regionForces);
+        ComputeNormalizedForces();
     }
 
     /// <summary>
@@ -231,19 +236,15 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     }
 
     /// <summary>
-    /// Normalizes the given forces to put them between 0 and 1.
+    /// Normalizes the region forces to put them between 0 and 1.
     /// </summary>
-    /// <param name="forces">The forces to normalize</param>
     /// <returns>A new dictionary with the forces normalized</returns>
-    private static Dictionary<Region, float> ComputeNormalizedForces(Dictionary<Region, float> forces) {
-        var minForce = forces.Values.Min();
-        var maxForce = forces.Values.Max();
+    private void ComputeNormalizedForces() {
+        var minForce = _regionForces.Values.Min();
+        var maxForce = _regionForces.Values.Max();
 
-        var normalizedForces = new Dictionary<Region, float>();
-        foreach (var region in forces.Keys) {
-            normalizedForces[region] = MathUtils.Normalize(forces[region], minForce, maxForce);
+        foreach (var region in _regionForces.Keys) {
+            _normalizedRegionForces[region] = MathUtils.Normalize(_regionForces[region], minForce, maxForce);
         }
-
-        return normalizedForces;
     }
 }

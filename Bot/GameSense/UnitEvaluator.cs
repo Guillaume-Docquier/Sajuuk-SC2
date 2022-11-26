@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameData;
+using Bot.Managers.WarManagement;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
 
@@ -98,15 +98,15 @@ public static class UnitEvaluator {
                 return Value.Prized;
             }
 
-            return Value.Prized / 2;
+            return Value.Prized;
         }
 
         if (Units.CreepTumors.Contains(unit.UnitType)) {
             return Value.Intriguing / 32;
         }
 
-        if (Units.Workers.Contains(unit.UnitType)) {
-            return Value.Intriguing / 2;
+        if (Units.Workers.Contains(unit.UnitType) && !IsOffensive(unit, unit.Alliance)) {
+            return Value.Intriguing;
         }
 
         // Losing a zerg production building prevent any unit of that type to be produced
@@ -123,7 +123,8 @@ public static class UnitEvaluator {
             return Value.Valuable;
         }
 
-        return Value.Intriguing / 2;
+        // The rest are Military units
+        return Value.Intriguing / 8;
     }
 
     /// <summary>
@@ -135,6 +136,10 @@ public static class UnitEvaluator {
     /// <param name="myAlliance"></param>
     /// <returns></returns>
     private static bool IsOffensive(Unit unit, Alliance myAlliance) {
+        if (unit.Manager is WarManager) {
+            return true;
+        }
+
         var myMain = ExpandAnalyzer.GetExpand(myAlliance, ExpandType.Main);
         var theirMain = ExpandAnalyzer.GetExpand(myAlliance.GetOpposing(), ExpandType.Main);
 

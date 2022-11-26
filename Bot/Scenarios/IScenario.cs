@@ -1,5 +1,7 @@
-﻿namespace Bot.Scenarios;
+﻿using System.Threading.Tasks;
+
+namespace Bot.Scenarios;
 
 public interface IScenario {
-    void OnFrame();
+    Task OnFrame();
 }

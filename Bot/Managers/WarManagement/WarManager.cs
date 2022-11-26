@@ -26,8 +26,7 @@ public partial class WarManager: Manager {
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
 
     private bool _rushTagged = false;
-    private bool _rushInProgress;
-    private HashSet<Unit> _expandsInDanger = new HashSet<Unit>();
+    private bool _isRushInProgress = false;
 
     private Stance _stance = Stance.Defend;
     private readonly HashSet<Unit> _soldiers = new HashSet<Unit>();
@@ -104,29 +103,23 @@ public partial class WarManager: Manager {
         _debugger.Debug();
     }
 
-    private void ScanForEndangeredExpands() {
-        var expandsInDanger = DangerScanner.GetEndangeredExpands().ToHashSet();
-        foreach (var expandNewlyInDanger in expandsInDanger.Except(_expandsInDanger)) {
-            Logger.Info("({0}) An expand is newly in danger: {1}", this, expandNewlyInDanger);
-        }
-
-        foreach (var expandNoLongerInDanger in _expandsInDanger.Except(expandsInDanger)) {
-            Logger.Info("({0}) An expand is no longer in danger: {1}", this, expandNoLongerInDanger);
-        }
-
-        _expandsInDanger = expandsInDanger;
-    }
-
     private void HandleRushes() {
-        ScanForEndangeredExpands();
+        if (!_isRushInProgress && Controller.Frame > TimeUtils.SecsToFrames(RushTimingInSeconds)) {
+            // We do not want to trigger a rush defense past a certain point
+            return;
+        }
 
-        if (_expandsInDanger.Count > 0 && Controller.Frame <= TimeUtils.SecsToFrames(RushTimingInSeconds)) {
+        var draftedUnits = ManagedUnits
+            .Where(soldier => Units.Workers.Contains(soldier.UnitType) || soldier.UnitType == Units.Queen)
+            .ToList();
+
+        _isRushInProgress = DangerScanner.IsRushInProgress(ManagedUnits.Except(draftedUnits).ToList());
+
+        if (_isRushInProgress) {
             if (!_rushTagged) {
                 TaggingService.TagGame(TaggingService.Tag.EarlyAttack);
                 _rushTagged = true;
             }
-
-            _rushInProgress = true;
 
             // TODO GD We should be smarter about how many units we draft
             var supervisedTownHalls = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).Where(unit => unit.Supervisor != null);
@@ -138,11 +131,8 @@ public partial class WarManager: Manager {
                 Assign(draftedQueens);
             }
         }
-        else if (_rushInProgress && _expandsInDanger.Count <= 0) {
-            var unitsToReturn = _soldiers.Where(soldier => Units.Workers.Contains(soldier.UnitType) || soldier.UnitType == Units.Queen);
-            Release(unitsToReturn);
-
-            _rushInProgress = false;
+        else {
+            Release(draftedUnits);
         }
     }
 

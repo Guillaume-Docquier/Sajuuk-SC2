@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -11,7 +12,7 @@ namespace Bot.Scenarios;
 public class SpawnStuffScenario : IScenario {
     private bool _isScenarioDone = false;
 
-    public void OnFrame() {
+    public async Task OnFrame() {
         if (_isScenarioDone) {
             return;
         }
@@ -22,11 +23,7 @@ public class SpawnStuffScenario : IScenario {
 
             Logger.Debug("Spawning 1 observer on the main");
 
-            // We don't await, not ideal but we don't need to
-            // Making all the code async just for us would be a chore
-#pragma warning disable CS4014
-            Program.GameConnection.SendRequest(RequestBuilder.DebugCreateUnit(Owner.Enemy, Units.Ravager, 10, main!.Position));
-#pragma warning restore CS4014
+            await Program.GameConnection.SendRequest(RequestBuilder.DebugCreateUnit(Owner.Enemy, Units.Ravager, 10, main!.Position));
 
             _isScenarioDone = true;
         }

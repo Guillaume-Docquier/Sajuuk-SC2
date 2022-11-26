@@ -47,7 +47,7 @@ public class RegionDefenseEvaluator : IRegionsEvaluator, IWatchUnitsDie {
     /// Initializes the evaluator to track the provided regions.
     /// </summary>
     /// <param name="regions">The regions to evaluate in the future</param>
-    public void Init(List<Region> regions) {
+    public void Init(IEnumerable<Region> regions) {
         _regionDefenseScores = new Dictionary<Region, float>();
         foreach (var region in regions) {
             _regionDefenseScores[region] = 0f;

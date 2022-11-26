@@ -23,14 +23,14 @@ public abstract class PoliteBot: IBot {
 
     public PoliteBot(string version, List<IScenario> scenarios = null) {
         _version = version;
-        _scenarios = scenarios;
+        _scenarios = scenarios ?? new List<IScenario>();
     }
 
     public async Task OnFrame() {
         EnsureGreeting();
         EnsureGg();
 
-        PlayScenarios();
+        await PlayScenarios();
         await DoOnFrame();
     }
 
@@ -61,9 +61,13 @@ public abstract class PoliteBot: IBot {
         }
     }
 
-    private void PlayScenarios() {
-        if (Program.DebugEnabled) {
-            _scenarios?.ForEach(scenario => scenario.OnFrame());
+    private async Task PlayScenarios() {
+        if (!Program.DebugEnabled) {
+            return;
+        }
+
+        foreach (var scenario in _scenarios) {
+            await scenario.OnFrame();
         }
     }
 

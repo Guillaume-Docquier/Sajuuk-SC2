@@ -12,8 +12,10 @@ namespace Bot.GameSense.RegionTracking;
 public class RegionsValueEvaluator : IRegionsEvaluator {
     private readonly Alliance _alliance;
     private readonly bool _hasAbsoluteKnowledge;
-    private Dictionary<Region, float> _regionValues;
-    private Dictionary<Region, float> _normalizedRegionValues;
+    private readonly float _defaultRegionValue;
+
+    private readonly Dictionary<Region, float> _regionValues = new Dictionary<Region, float>();
+    private readonly Dictionary<Region, float> _normalizedRegionValues = new Dictionary<Region, float>();
 
     // It would be cool to use the exponential decay everywhere
     // But that would require tracking the last value update of each region
@@ -27,6 +29,10 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     public RegionsValueEvaluator(Alliance alliance) {
         _alliance = alliance;
         _hasAbsoluteKnowledge = alliance == Alliance.Self;
+
+        _defaultRegionValue = _hasAbsoluteKnowledge
+            ? UnitEvaluator.Value.None
+            : UnitEvaluator.Value.Unknown;
     }
 
     /// <summary>
@@ -51,14 +57,9 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     /// <summary>
     /// Initializes the region values of the provided regions
     /// </summary>
-    public void Init(List<Region> regions) {
-        var initialValue = _hasAbsoluteKnowledge
-            ? UnitEvaluator.Value.None
-            : UnitEvaluator.Value.Unknown;
-
-        _regionValues = new Dictionary<Region, float>();
+    public void Init(IEnumerable<Region> regions) {
         foreach (var region in regions) {
-            _regionValues[region] = initialValue;
+            _regionValues[region] = _defaultRegionValue;
         }
     }
 
@@ -67,6 +68,10 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     /// The value decays as the information grows older
     /// </summary>
     public void Evaluate() {
+        if (_hasAbsoluteKnowledge) {
+            Init(_regionValues.Keys);
+        }
+
         // Update based on units
         var newRegionValues = ComputeUnitsValue();
 
@@ -106,7 +111,7 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
             DecayValues();
         }
 
-        _normalizedRegionValues = ComputeNormalizedValues(_regionValues);
+        ComputeNormalizedValues();
     }
 
     /// <summary>
@@ -232,19 +237,14 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     }
 
     /// <summary>
-    /// Normalizes the given values to put them between 0 and 1.
+    /// Normalizes the region values to put them between 0 and 1.
     /// </summary>
-    /// <param name="values">The values to normalize</param>
-    /// <returns>A new dictionary with the values normalized</returns>
-    private static Dictionary<Region, float> ComputeNormalizedValues(Dictionary<Region, float> values) {
-        var minValue = values.Values.Min();
-        var maxValue = values.Values.Max();
+    private void ComputeNormalizedValues() {
+        var minValue = _regionValues.Values.Min();
+        var maxValue = _regionValues.Values.Max();
 
-        var normalizedValues = new Dictionary<Region, float>();
-        foreach (var region in values.Keys) {
-            normalizedValues[region] = MathUtils.Normalize(values[region], minValue, maxValue);
+        foreach (var region in _regionValues.Keys) {
+            _normalizedRegionValues[region] = MathUtils.Normalize(_regionValues[region], minValue, maxValue);
         }
-
-        return normalizedValues;
     }
 }
