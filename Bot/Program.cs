@@ -15,14 +15,15 @@ public class Program {
     private static readonly List<IScenario> Scenarios = new List<IScenario>
     {
         //new WorkerRushScenario(),
+        new FlyingTerranScumScenario(),
     };
 
-    private const string Version = "3_0_0";
+    private const string Version = "3_0_1";
     private static readonly IBot Bot = new SajuukBot(Version, scenarios: Scenarios);
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.InsideAndOut;
     private const Race OpponentRace = Race.Zerg;
-    private const Difficulty OpponentDifficulty = Difficulty.CheatInsane;
+    private const Difficulty OpponentDifficulty = Difficulty.Harder;
 
     private const bool RealTime = false;
 

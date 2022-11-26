@@ -16,9 +16,13 @@ using SC2APIProtocol;
 namespace Bot.Managers.WarManagement;
 
 public partial class WarManager: Manager {
+    [Flags]
     public enum Stance {
-        Attack,
-        Defend,
+        None = 0,
+        Attack = 1,
+        Defend = 2,
+        Finisher = 4,
+        TerranFinisher = 8,
     }
 
     private const int RushTimingInSeconds = (int)(5 * 60);
@@ -37,13 +41,12 @@ public partial class WarManager: Manager {
     private readonly ArmySupervisor _attackSupervisor = new ArmySupervisor();
     private readonly ArmySupervisor _terranFinisherSupervisor = new ArmySupervisor();
 
+    private static BuildRequest _corruptorsBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Corruptor, targetQuantity: 10, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
+    private static BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
-    private bool _terranFinisherInitiated = false;
+    public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
     private readonly WarManagerDebugger _debugger = new WarManagerDebugger();
-
-    private static BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
-    public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
     protected override IAssigner Assigner { get; }
     protected override IDispatcher Dispatcher { get; }
@@ -76,23 +79,21 @@ public partial class WarManager: Manager {
 
     // TODO GD Add graphical debugging to show regions to attack/defend
     protected override void ManagementPhase() {
-        // Determine regions to defend
-        var regionToDefend = GetRegionToDefend();
-        _defenseSupervisor.AssignTarget(regionToDefend.Center, ApproximateRegionRadius(regionToDefend), canHuntTheEnemy: false);
+        if (TheGameIsOurs()) {
+            FinishHim();
+        }
+        else {
+            BigBrainPlay();
+        }
 
-        // Determine regions to attack
-        var regionToAttack = GetRegionToAttack();
-        _attackSupervisor.AssignTarget(regionToAttack.Center, ApproximateRegionRadius(regionToAttack), canHuntTheEnemy: true);
-
-        AttackOrDefend(regionToAttack, regionToDefend);
         AdjustBuildRequests();
 
-        if (_stance == Stance.Attack && ShouldFinishOffTerran()) {
+        if (ShouldFinishOffTerran()) {
             FinishOffTerran();
         }
 
         // TODO GD Send this task to the supervisor instead?
-        if (_terranFinisherInitiated && Controller.AvailableSupply < 2) {
+        if (ShouldFreeSomeSupply()) {
             FreeSomeSupply();
         }
         else {
@@ -144,16 +145,20 @@ public partial class WarManager: Manager {
     /// Check if they are basically dead and we should start dealing with the flying buildings.
     /// </summary>
     /// <returns>True if we should start handling flying terran buildings</returns>
-    private static bool ShouldFinishOffTerran() {
+    private bool ShouldFinishOffTerran() {
         if (Controller.EnemyRace != Race.Terran) {
             return false;
         }
 
-        if (Controller.Frame < TimeUtils.SecsToFrames(12 * 60)) {
+        if (!_stance.HasFlag(Stance.Attack)) {
             return false;
         }
 
-        if (Controller.Frame % TimeUtils.SecsToFrames(60) != 0) {
+        if (Controller.Frame < TimeUtils.SecsToFrames(10 * 60)) {
+            return false;
+        }
+
+        if (Controller.Frame % TimeUtils.SecsToFrames(5) != 0) {
             return false;
         }
 
@@ -168,13 +173,14 @@ public partial class WarManager: Manager {
     /// Create anti-air units to deal with terran flying buildings.
     /// </summary>
     private void FinishOffTerran() {
-        if (_terranFinisherInitiated) {
+        if (_stance.HasFlag(Stance.TerranFinisher)) {
             return;
         }
 
         _buildRequests.Add(new TargetBuildRequest(BuildType.Build, Units.Spire, targetQuantity: 1, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All));
-        _buildRequests.Add(new TargetBuildRequest(BuildType.Train, Units.Corruptor, targetQuantity: 10, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All));
-        _terranFinisherInitiated = true;
+        _buildRequests.Add(_corruptorsBuildRequest);
+
+        _stance |= Stance.TerranFinisher;
         TaggingService.TagGame(TaggingService.Tag.TerranFinisher);
     }
 
@@ -270,22 +276,24 @@ public partial class WarManager: Manager {
         var enemyForce = pathToTarget.Sum(region => RegionTracker.GetForce(region, Alliance.Enemy));
 
         if (ourForce > enemyForce * RequiredForceRatioBeforeAttacking || Controller.CurrentSupply >= MaxSupplyBeforeAttacking) {
-            if (_stance == Stance.Defend) {
+            if (_stance.HasFlag(Stance.Defend)) {
                 _defenseSupervisor.Retire();
             }
 
-            _stance = Stance.Attack;
+            _stance |= Stance.Attack;
+            _stance &= ~Stance.Defend; // Unset the defend flag
+            _debugger.Target = regionToAttack;
         }
         else {
-            if (_stance == Stance.Attack) {
+            if (_stance.HasFlag(Stance.Attack)) {
                 _attackSupervisor.Retire();
             }
 
             _stance = Stance.Defend;
+            _debugger.Target = regionToDefend;
         }
 
         _debugger.CurrentStance = _stance;
-        _debugger.Target = _stance == Stance.Attack ? regionToAttack : regionToDefend;
     }
 
     /// <summary>
@@ -337,5 +345,76 @@ public partial class WarManager: Manager {
         }
 
         return Units.Zergling;
+    }
+
+    /// <summary>
+    /// Evaluates if we are overwhelming the opponent.
+    /// </summary>
+    /// <returns>True if we can stop being fancy and just finish the opponent</returns>
+    private bool TheGameIsOurs() {
+        if (!_stance.HasFlag(Stance.Finisher) && MapAnalyzer.VisibilityRatio < 0.85) {
+            return false;
+        }
+
+        var ourForce = _soldiers.GetForce();
+        var enemyForce = UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits).GetForce();
+        if (ourForce < enemyForce * 3) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Steamroll the opponent.
+    /// </summary>
+    private void FinishHim() {
+        if (_stance.HasFlag(Stance.Finisher)) {
+            return;
+        }
+
+        var target = _soldiers.GetCenter();
+        _attackSupervisor.AssignTarget(target, 999, canHuntTheEnemy: true);
+
+        if (_stance.HasFlag(Stance.Defend)) {
+            _defenseSupervisor.Retire();
+        }
+
+        _stance |= Stance.Attack | Stance.Finisher;
+        _stance &= ~Stance.Defend; // Unset the defend flag
+
+        _debugger.CurrentStance = _stance;
+        _debugger.Target = target.GetRegion();
+    }
+
+    /// <summary>
+    /// Decide between attack and defense and pick good targets based on current map control.
+    /// </summary>
+    private void BigBrainPlay() {
+        // Determine regions to defend
+        var regionToDefend = GetRegionToDefend();
+        _defenseSupervisor.AssignTarget(regionToDefend.Center, ApproximateRegionRadius(regionToDefend), canHuntTheEnemy: false);
+
+        // Determine regions to attack
+        var regionToAttack = GetRegionToAttack();
+        _attackSupervisor.AssignTarget(regionToAttack.Center, ApproximateRegionRadius(regionToAttack), canHuntTheEnemy: true);
+
+        AttackOrDefend(regionToAttack, regionToDefend);
+    }
+
+    /// <summary>
+    /// Determines if supply should be freed to let the TerranFinisher do its job
+    /// </summary>
+    /// <returns></returns>
+    private bool ShouldFreeSomeSupply() {
+        if (!_stance.HasFlag(Stance.TerranFinisher)) {
+            return false;
+        }
+
+        if (Controller.AvailableSupply >= 2) {
+            return false;
+        }
+
+        return _corruptorsBuildRequest.Fulfillment.Remaining > 0;
     }
 }
