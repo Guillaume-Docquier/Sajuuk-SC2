@@ -22,6 +22,8 @@ public partial class WarManager: Manager {
     }
 
     private const int RushTimingInSeconds = (int)(5 * 60);
+    private const float RequiredForceRatioBeforeAttacking = 1.5f;
+    private const float MaxSupplyBeforeAttacking = 175;
 
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
 
@@ -226,6 +228,8 @@ public partial class WarManager: Manager {
         }
 
         // TODO GD Checking only the region's force doesn't take into account that maybe we are forced to go through more enemies to get to our target.
+        // TODO GD Maybe consider forces in regions adjacent to the path?
+        // TODO GD Also consider the distance to the region to simulate commitment? Or only change target if significant value change
         var regionToAttack = valuableEnemyRegions
             .MaxBy(region => RegionTracker.GetValue(region, Alliance.Enemy) / RegionTracker.GetForce(region, Alliance.Enemy))!;
 
@@ -262,7 +266,7 @@ public partial class WarManager: Manager {
             .Sum(region => RegionTracker.GetForce(region, Alliance.Enemy));
 
         // TODO GD Only attack when we beat UnitsTracker.EnemyMemorizedUnits?
-        if (ourForce > enemyForce) {
+        if (ourForce > enemyForce * RequiredForceRatioBeforeAttacking || Controller.CurrentSupply >= MaxSupplyBeforeAttacking) {
             if (_stance == Stance.Defend) {
                 _defenseSupervisor.Retire();
             }

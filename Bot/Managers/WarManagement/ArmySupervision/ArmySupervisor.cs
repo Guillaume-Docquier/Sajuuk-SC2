@@ -63,5 +63,9 @@ public partial class ArmySupervisor: Supervisor {
         foreach (var unit in Army.ToList()) {
             Release(unit);
         }
+
+        // Reset the state to have a clean slate once we're re-hired
+        // Maybe our Manager should just dispose of us instead?
+        _stateMachine.TransitionTo(new AttackState());
     }
 }
