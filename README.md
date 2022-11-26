@@ -4,7 +4,7 @@
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UC_KAanPGVoL4Ppz2FORKoqA?style=social)](https://www.youtube.com/channel/UC_KAanPGVoL4Ppz2FORKoqA)
 
 # Sajuuk-SC2
-Sajuuk is a homemade StarCraft 2 Zerg bot playing a 2 bases Roach all in.  
+Sajuuk is a homemade StarCraft 2 Zerg bot playing a 2 bases Roach opener.  
 Kickstarted using [NikEyX/SC2-CSharpe-Starterkit](https://github.com/NikEyX/SC2-CSharpe-Starterkit)
 
 Want to see it in action or learn more about Sajuuk?  
