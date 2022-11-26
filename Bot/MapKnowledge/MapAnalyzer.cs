@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
@@ -25,6 +26,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
 
     public static int MaxX { get; private set; }
     public static int MaxY { get; private set; }
+    public static float DiagonalLength { get; private set; }
 
     private static readonly HashSet<Vector2> _walkableCells = new HashSet<Vector2>();
     public static IReadOnlySet<Vector2> WalkableCells => _walkableCells;
@@ -74,14 +76,16 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     }
 
     public void Update(ResponseObservation observation) {
-        MaxX = Controller.GameInfo.StartRaw.MapSize.X;
-        MaxY = Controller.GameInfo.StartRaw.MapSize.Y;
-
-        _currentWalkMap = ParseWalkMap();
-
         if (IsInitialized) {
+            _currentWalkMap = ParseWalkMap();
             return;
         }
+
+        MaxX = Controller.GameInfo.StartRaw.MapSize.X;
+        MaxY = Controller.GameInfo.StartRaw.MapSize.Y;
+        DiagonalLength = (float)Math.Sqrt(MaxX * MaxX + MaxY * MaxY);
+
+        _currentWalkMap = ParseWalkMap();
 
         InitSpawnLocations();
         InitObstacles();

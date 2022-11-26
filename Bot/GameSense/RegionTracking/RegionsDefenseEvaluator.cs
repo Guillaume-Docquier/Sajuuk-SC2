@@ -105,10 +105,6 @@ public class RegionDefenseEvaluator : IRegionsEvaluator, IWatchUnitsDie {
     /// <param name="blockedRegion"></param>
     /// <returns></returns>
     private ReachMap ComputeReach(Region startingRegion, IReadOnlyCollection<Region> regions, Region blockedRegion = null) {
-        if (startingRegion.IsObstructed) {
-            return new ReachMap();
-        }
-
         if (_reachCache.TryGet(startingRegion, regions, blockedRegion, out var cachedReach)) {
             return cachedReach;
         }
@@ -117,6 +113,11 @@ public class RegionDefenseEvaluator : IRegionsEvaluator, IWatchUnitsDie {
         {
             [startingRegion] = 0
         };
+
+        if (startingRegion.IsObstructed) {
+            // Pathfinding won't return any paths, let's avoid computing them
+            return reach;
+        }
 
         var blockedRegionsHashSet = new HashSet<Region>();
         if (blockedRegion != null) {
@@ -169,17 +170,13 @@ public class RegionDefenseEvaluator : IRegionsEvaluator, IWatchUnitsDie {
         var valueScore = RegionTracker.GetValue(impactedRegion, Alliance.Self, normalized: true);
 
         // All distances will be skewed by 1 to avoid division by 0
-        // TODO GD Enemy reach can be empty
-        var enemyMaxReach = enemyReach.Values.Max() + 1;
-        var ourMaxReach = defenseReach.Values.Max() + 1;
-
         // Will be used to normalize the distance score
-        var minDistanceRatio = 1 / ourMaxReach;
-        var maxDistanceRatio = enemyMaxReach / 1;
+        var minDistanceRatio = 1 / MapAnalyzer.DiagonalLength;
+        var maxDistanceRatio = MapAnalyzer.DiagonalLength / 1;
 
         // If the enemy cannot reach but we can, give the max distance score plus a bonus
         // (The enemy most likely cannot reach because we are in the way, this is great positioning)
-        var enemyDistance = enemyMaxReach;
+        var enemyDistance = MapAnalyzer.DiagonalLength;
         var obstructionBonus = 1f;
         if (enemyReach.ContainsKey(impactedRegion)) {
             // All distances will be skewed by 1 to avoid division by 0
