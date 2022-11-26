@@ -28,29 +28,6 @@ public class SajuukBot: PoliteBot {
     public SajuukBot(string version, List<IScenario> scenarios = null) : base(version, scenarios) {}
 
     protected override Task DoOnFrame() {
-        if (Controller.Frame == 0) {
-            InitManagers();
-        }
-        else if (Controller.Frame == 2016) {
-            Logger.Metric("Collected Minerals: {0}", Controller.Observation.Observation.Score.ScoreDetails.CollectedMinerals);
-        }
-
-        _managers.ForEach(manager => manager.OnFrame());
-
-        var managerRequests = GetManagersBuildRequests();
-        var buildBlockStatus = AddressManagerRequests(managerRequests);
-
-        _debugger.Debug(
-            managerRequests
-                .SelectMany(groupedBySupply => groupedBySupply.SelectMany(request => request))
-                .ToList(),
-            buildBlockStatus
-        );
-
-        foreach (var unit in UnitsTracker.UnitsByTag.Values) {
-            unit.ExecuteModules();
-        }
-
         return Task.CompletedTask;
     }
 

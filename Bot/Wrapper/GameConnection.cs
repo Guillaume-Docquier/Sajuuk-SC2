@@ -29,7 +29,7 @@ public class GameConnection {
     // On the ladder, for some reason, actions have a 1 frame delay before being received and applied
     // We will run every 2 frames by default, this way we won't notice the delay
     // Lower than 2 is not recommended unless your code is crazy good and can handle the inevitable desync
-    public GameConnection(uint stepSize = 2) {
+    public GameConnection(uint stepSize = 20) {
         _stepSize = stepSize;
     }
 

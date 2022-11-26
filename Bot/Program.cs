@@ -17,7 +17,7 @@ public class Program {
         //new WorkerRushScenario(),
     };
 
-    private const string Version = "3_0_0";
+    private const string Version = "ladder_test_plain_bot";
     private static readonly IBot Bot = new SajuukBot(Version, scenarios: Scenarios);
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.InsideAndOut;

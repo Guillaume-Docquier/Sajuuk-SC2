@@ -45,21 +45,7 @@ public static class Controller {
 
     private static List<INeedUpdating> ThoseWhoNeedUpdating => new List<INeedUpdating>
     {
-        ChatTracker.Instance,           // Depends on nothing
-        VisibilityTracker.Instance,     // Depends on nothing
 
-        UnitsTracker.Instance,          // Depends on VisibilityTracker
-        DebuggingFlagsTracker.Instance, // Depends on ChatTracker
-
-        MapAnalyzer.Instance,           // Depends on UnitsTracker and VisibilityTracker
-
-        CreepTracker.Instance,          // Depends on VisibilityTracker and MapAnalyzer
-        BuildingTracker.Instance,       // Depends on UnitsTracker and MapAnalyzer
-        ExpandAnalyzer.Instance,        // Depends on UnitsTracker and MapAnalyzer
-        RegionAnalyzer.Instance,        // Depends on ExpandAnalyzer and MapAnalyzer
-
-        EnemyStrategyTracker.Instance,  // Depends on UnitsTracker, ExpandAnalyzer and RegionAnalyzer
-        RegionTracker.Instance,         // Depends on VisibilityTracker, UnitsTracker, MapAnalyzer and RegionAnalyzer
     };
 
     public static void Reset() {

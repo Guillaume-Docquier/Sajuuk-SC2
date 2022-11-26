@@ -41,7 +41,7 @@ public static class TaggingService {
             Tag.EarlyAttack => $"{tag}_{TimeUtils.GetGameTimeString()}",
             Tag.BuildDone => $"{tag}_{TimeUtils.GetGameTimeString()}_Supply_{Controller.CurrentSupply}",
             Tag.EnemyStrategy => $"{tag}_{parameters[0]}_{TimeUtils.GetGameTimeString()}",
-            Tag.Version => $"v{parameters[0]}",
+            Tag.Version => $"{parameters[0]}",
             _ => tag.ToString(),
         };
     }
