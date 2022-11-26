@@ -247,25 +247,28 @@ public partial class WarManager: Manager {
             return;
         }
 
-        // Because of the map resolution, some units can actually walk on unwalkable tiles
-        // This causes GetRegion() to return null
-        // It's fixable, but I need to measure the impact of such a fix first
-        var soldiersInARegion = _soldiers
-            .Where(soldier => soldier.GetRegion() != null)
-            .Where(soldier => !soldier.GetRegion().IsObstructed)
-            .ToList();
-
-        if (soldiersInARegion.Count == 0) {
+        if (ManagedUnits.Count == 0) {
             // TODO GD Should we do stuff here?
             return;
         }
 
-        var ourForce = _soldiers.GetForce();
-        var enemyForce = Pathfinder
-            .FindPath(soldiersInARegion.GetCenter().GetRegion(), regionToAttack)
-            .Sum(region => RegionTracker.GetForce(region, Alliance.Enemy));
+        var armyRegion = ManagedUnits.GetRegion();
+        if (armyRegion == null) {
+            Logger.Error("AttackOrDefend could not find the region of its army of size {0}", ManagedUnits.Count);
+            return;
+        }
 
-        // TODO GD Only attack when we beat UnitsTracker.EnemyMemorizedUnits?
+        var pathToTarget = Pathfinder.FindPath(armyRegion, regionToAttack);
+        if (pathToTarget == null) {
+            Logger.Error("AttackOrDefend could not find a path from the army to its target {0} -> {1}", armyRegion, regionToAttack);
+            return;
+        }
+
+        var ourForce = ManagedUnits.GetForce();
+
+        // TODO GD Maybe consider units near the path as well?
+        var enemyForce = pathToTarget.Sum(region => RegionTracker.GetForce(region, Alliance.Enemy));
+
         if (ourForce > enemyForce * RequiredForceRatioBeforeAttacking || Controller.CurrentSupply >= MaxSupplyBeforeAttacking) {
             if (_stance == Stance.Defend) {
                 _defenseSupervisor.Retire();
