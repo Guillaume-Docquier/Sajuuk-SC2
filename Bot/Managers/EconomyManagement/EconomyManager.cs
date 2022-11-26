@@ -55,6 +55,8 @@ public sealed partial class EconomyManager: Manager {
 
         var unmanagedIdleWorkers = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Workers)
             .Where(unit => unit.Manager == null)
+            // We do this to not select drones that are going to build something
+            // TODO GD This is problematic because we need tosend a stop order whenever we release a drone
             .Where(unit => !unit.OrdersExceptMining.Any());
 
         Assign(unmanagedIdleWorkers);

@@ -112,9 +112,13 @@ public partial class WarManager: Manager {
             return;
         }
 
+        // TODO GD Hold these in a separate lists
         var draftedUnits = ManagedUnits
-            .Where(soldier => Units.Workers.Contains(soldier.UnitType) || soldier.UnitType == Units.Queen)
+            .Where(soldier => !ManageableUnitTypes.Contains(soldier.UnitType))
             .ToList();
+
+        // TODO GD To do this we need the eco manager to not send them to a dangerous expand
+        // Release(draftedUnits.Where(unit => unit.HitPoints <= 5));
 
         _isRushInProgress = DangerScanner.IsRushInProgress(ManagedUnits.Except(draftedUnits).ToList());
 
@@ -124,14 +128,32 @@ public partial class WarManager: Manager {
                 _rushTagged = true;
             }
 
-            // TODO GD We should be smarter about how many units we draft
-            var supervisedTownHalls = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).Where(unit => unit.Supervisor != null);
-            foreach (var supervisedTownHall in supervisedTownHalls) {
-                var draftedWorkers = supervisedTownHall.Supervisor.SupervisedUnits.Where(unit => Units.Workers.Contains(unit.UnitType)).Skip(2);
-                Assign(draftedWorkers);
+            var townHallSupervisors = Controller
+                .GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
+                .Where(unit => unit.Supervisor != null)
+                .Select(supervisedTownHall => supervisedTownHall.Supervisor)
+                .ToList();
 
-                var draftedQueens = supervisedTownHall.Supervisor.SupervisedUnits.Where(unit => unit.UnitType == Units.Queen);
-                Assign(draftedQueens);
+            var queensToDraft = new List<Unit>();
+            var draftableDrones = new List<Unit>();
+            foreach (var townHallSupervisor in townHallSupervisors) {
+                queensToDraft.AddRange(Controller.GetUnits(townHallSupervisor.SupervisedUnits, Units.Queen));
+                draftableDrones.AddRange(Controller.GetUnits(townHallSupervisor.SupervisedUnits, Units.Drone).Skip(2));
+            }
+
+            Assign(queensToDraft);
+
+            draftableDrones = draftableDrones
+                .OrderByDescending(drone => drone.Integrity)
+                // TODO GD This could be better, it assumes th threat comes from the natural
+                .ThenBy(drone => drone.DistanceTo(ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural).Position))
+                .ToList();
+
+            var enemyForce = GetEnemyForce();
+            var draftIndex = 0;
+            while (_soldiers.GetForce() < enemyForce) {
+                Assign(draftableDrones[draftIndex]);
+                draftIndex++;
             }
         }
         else {
@@ -311,7 +333,13 @@ public partial class WarManager: Manager {
         // TODO GD Consider units in production too
         var ourForce = _soldiers.GetForce();
         // TODO GD Exclude buildings?
-        var enemyForce = UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits).GetForce();
+        var enemyForce = GetEnemyForce();
+
+        // This is a small tweak to prevent blocking the build when getting scouted (LOL)
+        // TODO GD We need a way to tell that an enemy drone is hostile to better handle this
+        if (enemyForce <= 2) {
+            enemyForce = 0;
+        }
 
         if (ourForce * 1.5 < enemyForce) {
             _armyBuildRequest.BlockCondition = BuildBlockCondition.MissingMinerals | BuildBlockCondition.MissingProducer | BuildBlockCondition.MissingTech;
@@ -344,7 +372,12 @@ public partial class WarManager: Manager {
             return Units.Roach;
         }
 
-        return Units.Zergling;
+        if (Controller.GetUnits(UnitsTracker.OwnedUnits, Units.SpawningPool).Any()) {
+            return Units.Zergling;
+        }
+
+        // TODO GD Not sure if this is good
+        return Units.Drone;
     }
 
     /// <summary>
@@ -357,7 +390,7 @@ public partial class WarManager: Manager {
         }
 
         var ourForce = _soldiers.GetForce();
-        var enemyForce = UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits).GetForce();
+        var enemyForce = GetEnemyForce();
         if (ourForce < enemyForce * 3) {
             return false;
         }
@@ -416,5 +449,13 @@ public partial class WarManager: Manager {
         }
 
         return _corruptorsBuildRequest.Fulfillment.Remaining > 0;
+    }
+
+    /// <summary>
+    /// Returns the enemy force
+    /// </summary>
+    /// <returns></returns>
+    private static float GetEnemyForce() {
+        return UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits).GetForce();
     }
 }

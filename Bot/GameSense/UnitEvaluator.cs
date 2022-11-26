@@ -58,7 +58,7 @@ public static class UnitEvaluator {
 
         if (Units.Workers.Contains(unit.UnitType)) {
             if (IsOffensive(unit, unit.Alliance)) {
-                return Force.Medium / 2;
+                return Force.Medium / 4;
             }
 
             return Force.None;

@@ -502,7 +502,7 @@ public static class Controller {
 
     /**
      * Returns all units of a certain type from the provided unitPool, including units of equivalent types.
-     * Units that are in production are included.
+     * Buildings that are in production are included.
      */
     public static IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, uint unitToGet) {
         return GetUnits(unitPool, new HashSet<uint>{ unitToGet });
@@ -510,7 +510,7 @@ public static class Controller {
 
     /**
      * Returns all units that match a certain set of types from the provided unitPool, including units of equivalent types.
-     * Units that are in production are included.
+     * Buildings that are in production are included.
      */
     public static IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, HashSet<uint> unitTypesToGet, bool includeCloaked = false) {
         var equivalentUnitTypes = unitTypesToGet

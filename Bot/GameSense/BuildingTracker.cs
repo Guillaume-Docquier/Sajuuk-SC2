@@ -35,6 +35,11 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
                 Logger.Warning("Worker {0} stopped its building assignment", worker);
                 ClearBuildingOrder(worker);
             }
+
+            if (worker.Manager != null) {
+                Logger.Warning("Worker {0} is managed while building, but shouldn't be", worker);
+                worker.Manager.Release(worker);
+            }
         }
     }
 

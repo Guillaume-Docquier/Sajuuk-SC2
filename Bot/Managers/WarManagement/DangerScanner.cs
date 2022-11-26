@@ -14,7 +14,7 @@ public static class DangerScanner {
 
         var regionsToProtect = Pathfinder.FindPath(main, natural);
 
-        // TODO GD Per region basis or just globally?
+        // TODO GD Per region or globally?
         foreach (var regionToProtect in regionsToProtect) {
             var enemyForce = UnitsTracker.EnemyUnits
                 .Where(soldier => soldier.GetRegion() == regionToProtect)

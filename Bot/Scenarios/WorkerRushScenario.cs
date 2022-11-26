@@ -36,7 +36,7 @@ public class WorkerRushScenario: IScenario {
 
             // Spawned drones wouldn't be aggressive so we spawn zerglings instead
             await Program.GameConnection.SendRequest(RequestBuilder.DebugCreateUnit(Owner.Enemy, Units.Zergling, 12, pathFromNatural[SpawnDistance].ToVector3()));
-            //Controller.SetRealTime("Worker rush started");
+            Controller.SetRealTime("Worker rush started");
 
             _isScenarioDone = true;
         }

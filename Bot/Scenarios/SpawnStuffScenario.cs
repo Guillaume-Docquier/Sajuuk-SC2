@@ -17,13 +17,14 @@ public class SpawnStuffScenario : IScenario {
             return;
         }
 
-        if (Controller.Frame >= TimeUtils.SecsToFrames(1)) {
+        if (Controller.Frame >= TimeUtils.SecsToFrames(50)) {
             var main = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
                 .MaxBy(townHall => Pathfinder.FindPath(townHall.Position.ToVector2(), MapAnalyzer.EnemyStartingLocation).Count);
 
-            Logger.Debug("Spawning 1 observer on the main");
+            Logger.Debug("Spawning 1 probe on the main");
 
-            await Program.GameConnection.SendRequest(RequestBuilder.DebugCreateUnit(Owner.Enemy, Units.Ravager, 10, main!.Position));
+            await Program.GameConnection.SendRequest(RequestBuilder.DebugCreateUnit(Owner.Enemy, Units.Probe, 3, main!.Position));
+            Controller.SetRealTime("SpawnStuffScenario");
 
             _isScenarioDone = true;
         }

@@ -84,6 +84,7 @@ public class Unit: ICanDie, IHavePosition {
     public readonly Dictionary<string, IUnitModule> Modules = new Dictionary<string, IUnitModule>();
 
     public float Integrity => (RawUnitData.Health + RawUnitData.Shield) / (RawUnitData.HealthMax + RawUnitData.ShieldMax);
+    public float HitPoints => RawUnitData.Health + RawUnitData.Shield;
 
     public bool IsOperational => _buildProgress >= 1;
 
