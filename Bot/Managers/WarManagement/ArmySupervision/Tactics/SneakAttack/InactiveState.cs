@@ -12,7 +12,7 @@ public partial class SneakAttackTactic {
         private const float OverwhelmingForceRatio = 4f;
 
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
-            if (StateMachine.Context._coolDownUntil > Controller.Frame) {
+            if (Context._coolDownUntil > Controller.Frame) {
                 return false;
             }
 
@@ -53,21 +53,21 @@ public partial class SneakAttackTactic {
         }
 
         protected override void Execute() {
-            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(StateMachine.Context._armyCenter).MinBy(enemy => enemy.DistanceTo(StateMachine.Context._armyCenter));
+            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(Context._armyCenter).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
             if (closestPriorityTarget != null) {
-                StateMachine.Context._targetPosition = closestPriorityTarget.Position.ToVector2();
-                StateMachine.Context._isTargetPriority = true;
+                Context._targetPosition = closestPriorityTarget.Position.ToVector2();
+                Context._isTargetPriority = true;
             }
             else {
-                var closestTarget = GetGroundEnemiesInSight(StateMachine.Context._army).MinBy(enemy => enemy.DistanceTo(StateMachine.Context._armyCenter));
+                var closestTarget = GetGroundEnemiesInSight(Context._army).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
                 if (closestTarget == null) {
                     Logger.Error("BurrowSurprise: Went from None -> Fight because no enemies nearby");
                     NextState = new TerminalState();
                     return;
                 }
 
-                StateMachine.Context._targetPosition = closestTarget.Position.ToVector2();
-                StateMachine.Context._isTargetPriority = false;
+                Context._targetPosition = closestTarget.Position.ToVector2();
+                Context._isTargetPriority = false;
             }
 
             NextState = new ApproachState();

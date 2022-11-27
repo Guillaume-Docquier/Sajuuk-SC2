@@ -11,7 +11,7 @@ public partial class SneakAttackTactic {
         }
 
         protected override void Execute() {
-            UnburrowUnderlings(StateMachine.Context._army);
+            UnburrowUnderlings(Context._army);
 
             NextState = new TerminalState();
         }

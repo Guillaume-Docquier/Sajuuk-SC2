@@ -24,13 +24,13 @@ public partial class SneakAttackTactic {
             return !IsArmyGettingEngaged(army);
         }
 
-        protected override void OnSetStateMachine() {
-            StateMachine.Context._targetPosition = default;
-            StateMachine.Context._isTargetPriority = false;
+        protected override void OnStateMachineSet() {
+            Context._targetPosition = default;
+            Context._isTargetPriority = false;
         }
 
         protected override void Execute() {
-            _stuckDetector.Tick(StateMachine.Context._armyCenter);
+            _stuckDetector.Tick(Context._armyCenter);
             if (_stuckDetector.IsStuck) {
                 Logger.Warning("{0} army is stuck", Name);
                 NextState = new TerminalState();
@@ -40,10 +40,10 @@ public partial class SneakAttackTactic {
 
             ComputeTargetPosition();
 
-            if (StateMachine.Context._targetPosition == default) {
+            if (Context._targetPosition == default) {
                 Logger.Warning("{0} has no target", Name);
                 NextState = new TerminalState();
-                StateMachine.Context._isTargetPriority = false;
+                Context._isTargetPriority = false;
 
                 return;
             }
@@ -58,21 +58,21 @@ public partial class SneakAttackTactic {
 
         private void ComputeTargetPosition() {
             // Do we need _isTargetPriority at this point? We shouldn't lose sight at this point, right?
-            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(StateMachine.Context._armyCenter)
-                .MinBy(enemy => enemy.DistanceTo(StateMachine.Context._armyCenter));
+            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(Context._armyCenter)
+                .MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
 
             if (closestPriorityTarget != null) {
-                StateMachine.Context._targetPosition = closestPriorityTarget.Position.ToVector2();
-                StateMachine.Context._isTargetPriority = true;
+                Context._targetPosition = closestPriorityTarget.Position.ToVector2();
+                Context._isTargetPriority = true;
             }
             else {
                 var enemies = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military).ToList();
-                var closestEnemyCluster = Clustering.DBSCAN(enemies, 5, 2).clusters.MinBy(cluster => cluster.GetCenter().DistanceTo(StateMachine.Context._armyCenter));
+                var closestEnemyCluster = Clustering.DBSCAN(enemies, 5, 2).clusters.MinBy(cluster => cluster.GetCenter().DistanceTo(Context._armyCenter));
 
                 // TODO GD Tweak this to create a concave instead?
-                if (closestEnemyCluster != null && StateMachine.Context._armyCenter.DistanceTo(closestEnemyCluster.GetCenter()) <= OperationRadius) {
-                    StateMachine.Context._targetPosition = closestEnemyCluster.GetCenter();
-                    StateMachine.Context._isTargetPriority = false;
+                if (closestEnemyCluster != null && Context._armyCenter.DistanceTo(closestEnemyCluster.GetCenter()) <= OperationRadius) {
+                    Context._targetPosition = closestEnemyCluster.GetCenter();
+                    Context._isTargetPriority = false;
                 }
             }
         }
@@ -82,38 +82,38 @@ public partial class SneakAttackTactic {
         }
 
         private bool HasEnoughArmyInRange() {
-            if (StateMachine.Context._targetPosition.DistanceTo(StateMachine.Context._armyCenter) <= EngageDistance) {
+            if (Context._targetPosition.DistanceTo(Context._armyCenter) <= EngageDistance) {
                 return true;
             }
 
             int nbSoldiersInRange;
-            if (StateMachine.Context._isTargetPriority) {
-                nbSoldiersInRange = StateMachine.Context._army.Count(soldier => soldier.IsInAttackRangeOf(StateMachine.Context._targetPosition));
+            if (Context._isTargetPriority) {
+                nbSoldiersInRange = Context._army.Count(soldier => soldier.IsInAttackRangeOf(Context._targetPosition));
             }
             else {
                 var enemyMilitaryUnits = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military)
-                    .OrderBy(enemy => enemy.DistanceTo(StateMachine.Context._armyCenter))
+                    .OrderBy(enemy => enemy.DistanceTo(Context._armyCenter))
                     .ToList();
 
-                nbSoldiersInRange = StateMachine.Context._army.Count(soldier => enemyMilitaryUnits.Any(soldier.IsInAttackRangeOf));
+                nbSoldiersInRange = Context._army.Count(soldier => enemyMilitaryUnits.Any(soldier.IsInAttackRangeOf));
             }
 
-            return nbSoldiersInRange >= StateMachine.Context._army.Count * MinimumArmyThresholdToEngage;
+            return nbSoldiersInRange >= Context._army.Count * MinimumArmyThresholdToEngage;
         }
 
         private bool IsArmyHealthyEnough() {
-            var armyWithEnoughHealth = StateMachine.Context._army.Where(soldier => soldier.Integrity > MinimumIntegrityToEngage);
+            var armyWithEnoughHealth = Context._army.Where(soldier => soldier.Integrity > MinimumIntegrityToEngage);
 
-            return armyWithEnoughHealth.Count() >= StateMachine.Context._army.Count * MinimumArmyThresholdToEngage;
+            return armyWithEnoughHealth.Count() >= Context._army.Count * MinimumArmyThresholdToEngage;
         }
 
         private void MoveArmyIntoPosition() {
-            foreach (var soldier in StateMachine.Context._army) {
+            foreach (var soldier in Context._army) {
                 if (!soldier.IsBurrowed) {
                     soldier.UseAbility(Abilities.BurrowRoachDown);
                 }
                 else {
-                    soldier.Move(StateMachine.Context._targetPosition);
+                    soldier.Move(Context._targetPosition);
                 }
             }
         }

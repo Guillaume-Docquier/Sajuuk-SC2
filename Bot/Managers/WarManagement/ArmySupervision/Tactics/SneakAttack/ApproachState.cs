@@ -21,7 +21,7 @@ public partial class SneakAttackTactic {
         }
 
         protected override void Execute() {
-            _stuckDetector.Tick(StateMachine.Context._armyCenter);
+            _stuckDetector.Tick(Context._armyCenter);
             if (_stuckDetector.IsStuck) {
                 Logger.Warning("{0} army is stuck", Name);
                 NextState = new TerminalState();
@@ -29,32 +29,32 @@ public partial class SneakAttackTactic {
                 return;
             }
 
-            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(StateMachine.Context._armyCenter).MinBy(enemy => enemy.DistanceTo(StateMachine.Context._armyCenter));
+            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(Context._armyCenter).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
             if (closestPriorityTarget != null) {
-                StateMachine.Context._targetPosition = closestPriorityTarget.Position.ToVector2();
-                StateMachine.Context._isTargetPriority = true;
+                Context._targetPosition = closestPriorityTarget.Position.ToVector2();
+                Context._isTargetPriority = true;
             }
-            else if (!StateMachine.Context._isTargetPriority) {
-                var closestVisibleEnemy = GetGroundEnemiesInSight(StateMachine.Context._army).MinBy(enemy => enemy.DistanceTo(StateMachine.Context._armyCenter));
+            else if (!Context._isTargetPriority) {
+                var closestVisibleEnemy = GetGroundEnemiesInSight(Context._army).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
                 if (closestVisibleEnemy != null) {
-                    StateMachine.Context._targetPosition = closestVisibleEnemy.Position.ToVector2();
-                    StateMachine.Context._isTargetPriority = false;
+                    Context._targetPosition = closestVisibleEnemy.Position.ToVector2();
+                    Context._isTargetPriority = false;
                 }
             }
 
-            if (StateMachine.Context._targetPosition == default) {
+            if (Context._targetPosition == default) {
                 Logger.Warning("{0} has no target", Name);
-                StateMachine.Context._isTargetPriority = false;
+                Context._isTargetPriority = false;
                 NextState = new TerminalState();
 
                 return;
             }
 
-            BurrowOverlings(StateMachine.Context._army);
+            BurrowOverlings(Context._army);
 
-            if (StateMachine.Context._targetPosition.DistanceTo(StateMachine.Context._armyCenter) > SetupDistance) {
-                foreach (var soldier in StateMachine.Context._army.Where(soldier => soldier.IsIdleOrMovingOrAttacking())) {
-                    soldier.Move(StateMachine.Context._targetPosition);
+            if (Context._targetPosition.DistanceTo(Context._armyCenter) > SetupDistance) {
+                foreach (var soldier in Context._army.Where(soldier => soldier.IsIdleOrMovingOrAttacking())) {
+                    soldier.Move(Context._targetPosition);
                 }
             }
             else {

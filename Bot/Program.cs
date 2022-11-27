@@ -14,7 +14,7 @@ namespace Bot;
 public class Program {
     private static readonly List<IScenario> Scenarios = new List<IScenario>
     {
-        new WorkerRushScenario(),
+        //new WorkerRushScenario(),
         //new FlyingTerranScumScenario(),
         //new SpawnStuffScenario(),
     };

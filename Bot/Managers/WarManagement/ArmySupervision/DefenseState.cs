@@ -13,10 +13,10 @@ public partial class ArmySupervisor {
         private const float AcceptableDistanceToTarget = 3;
 
         protected override bool TryTransitioning() {
-            if (StateMachine.Context._canHuntTheEnemy) {
+            if (Context._canHuntTheEnemy) {
                 var remainingUnits = UnitsTracker.EnemyUnits
                     .Where(unit => !unit.IsCloaked)
-                    .Where(unit => StateMachine.Context.CanHitAirUnits || !unit.IsFlying);
+                    .Where(unit => Context.CanHitAirUnits || !unit.IsFlying);
 
                 if (!remainingUnits.Any()) {
                     StateMachine.TransitionTo(new HuntState());
@@ -28,10 +28,10 @@ public partial class ArmySupervisor {
         }
 
         protected override void Execute() {
-            DrawArmyData(StateMachine.Context._mainArmy);
+            DrawArmyData(Context._mainArmy);
 
-            Defend(StateMachine.Context._target, StateMachine.Context._mainArmy, StateMachine.Context._blastRadius, StateMachine.Context.CanHitAirUnits);
-            Rally(StateMachine.Context._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
+            Defend(Context._target, Context._mainArmy, Context._blastRadius, Context.CanHitAirUnits);
+            Rally(Context._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
         }
 
         private static void DrawArmyData(IReadOnlyCollection<Unit> soldiers) {
@@ -101,7 +101,7 @@ public partial class ArmySupervisor {
         }
 
         private IEnumerable<Unit> GetSoldiersNotInMainArmy() {
-            return StateMachine.Context.Army.Where(soldier => !StateMachine.Context._mainArmy.Contains(soldier));
+            return Context.Army.Where(soldier => !Context._mainArmy.Contains(soldier));
         }
     }
 }

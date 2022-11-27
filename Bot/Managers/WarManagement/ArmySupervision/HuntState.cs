@@ -42,11 +42,11 @@ public partial class ArmySupervisor {
                 if (AllLocationsHaveBeenChecked(_checkedExpandLocations)) {
                     var enemiesToAttack = UnitsTracker.EnemyUnits
                         .Where(unit => !unit.IsCloaked)
-                        .Where(unit => StateMachine.Context.CanHitAirUnits || !unit.IsFlying)
+                        .Where(unit => Context.CanHitAirUnits || !unit.IsFlying)
                         .ToList();
 
                     if (enemiesToAttack.Count > 0) {
-                        StateMachine.Context._target = enemiesToAttack[0].Position.ToVector2();
+                        Context._target = enemiesToAttack[0].Position.ToVector2();
                         _isNextTargetSet = true;
                     }
                     else {
@@ -79,7 +79,7 @@ public partial class ArmySupervisor {
             for (var x = 0; x < MapAnalyzer.MaxX; x++) {
                 for (var y = 0; y < MapAnalyzer.MaxY; y++) {
                     var position = new Vector2(x, y).AsWorldGridCenter();
-                    if (!StateMachine.Context.CanFly && !MapAnalyzer.IsWalkable(position)) {
+                    if (!Context.CanFly && !MapAnalyzer.IsWalkable(position)) {
                         continue;
                     }
 
@@ -100,8 +100,8 @@ public partial class ArmySupervisor {
                 ResetCheckedPositions();
             }
 
-            var armyCenter = StateMachine.Context._mainArmy.GetCenter();
-            if (!StateMachine.Context.CanFly) {
+            var armyCenter = Context._mainArmy.GetCenter();
+            if (!Context.CanFly) {
                 armyCenter = armyCenter.ClosestWalkable();
             }
 
@@ -115,7 +115,7 @@ public partial class ArmySupervisor {
             }
 
             var closestNotVisiblePosition = notVisiblePositions.MinBy(position => position.DistanceTo(armyCenter));
-            foreach (var unit in StateMachine.Context.Army) {
+            foreach (var unit in Context.Army) {
                 unit.Move(closestNotVisiblePosition);
             }
         }
@@ -127,7 +127,7 @@ public partial class ArmySupervisor {
             // TODO GD The module and the manager are giving orders to the unit, freezing it
             // _armyManager.Army.ForEach(TargetNeutralUnitsModule.Install);
 
-            var armyCenter = StateMachine.Context._mainArmy.GetCenter().ClosestWalkable();
+            var armyCenter = Context._mainArmy.GetCenter().ClosestWalkable();
             var nextReachableUncheckedLocations = ExpandAnalyzer.ExpandLocations
                 .Select(expandLocation => expandLocation.Position)
                 .Where(expandLocation => !_checkedExpandLocations[expandLocation])
@@ -141,7 +141,7 @@ public partial class ArmySupervisor {
             else {
                 var nextTarget = nextReachableUncheckedLocations.MinBy(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation).Count);
                 Logger.Info("<HuntState> next target is: {0}", nextTarget);
-                StateMachine.Context._target = nextTarget;
+                Context._target = nextTarget;
                 _isNextTargetSet = true;
             }
         }

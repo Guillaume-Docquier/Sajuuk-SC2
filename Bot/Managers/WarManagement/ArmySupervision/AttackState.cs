@@ -39,7 +39,7 @@ public partial class ArmySupervisor {
                 return false;
             }
 
-            if (StateMachine.Context._mainArmy.GetCenter().DistanceTo(StateMachine.Context._target) < AcceptableDistanceToTarget) {
+            if (Context._mainArmy.GetCenter().DistanceTo(Context._target) < AcceptableDistanceToTarget) {
                 StateMachine.TransitionTo(new DefenseState());
                 return true;
             }
@@ -48,19 +48,19 @@ public partial class ArmySupervisor {
         }
 
         protected override void Execute() {
-            StateMachine.Context._strongestForce = Math.Max(StateMachine.Context._strongestForce, StateMachine.Context._mainArmy.GetForce());
+            Context._strongestForce = Math.Max(Context._strongestForce, Context._mainArmy.GetForce());
 
-            DrawArmyData(StateMachine.Context._mainArmy);
+            DrawArmyData(Context._mainArmy);
 
-            if (_sneakAttackTactic.IsViable(StateMachine.Context._mainArmy)) {
-                _sneakAttackTactic.Execute(StateMachine.Context._mainArmy);
+            if (_sneakAttackTactic.IsViable(Context._mainArmy)) {
+                _sneakAttackTactic.Execute(Context._mainArmy);
             }
             else {
-                _sneakAttackTactic.Reset(StateMachine.Context._mainArmy);
-                Attack(StateMachine.Context._target, StateMachine.Context._mainArmy);
+                _sneakAttackTactic.Reset(Context._mainArmy);
+                Attack(Context._target, Context._mainArmy);
             }
 
-            Rally(StateMachine.Context._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
+            Rally(Context._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
         }
 
         private void DrawArmyData(IReadOnlyCollection<Unit> soldiers) {
@@ -184,7 +184,7 @@ public partial class ArmySupervisor {
         }
 
         private IEnumerable<Unit> GetSoldiersNotInMainArmy() {
-            return StateMachine.Context.Army.Where(soldier => !StateMachine.Context._mainArmy.Contains(soldier));
+            return Context.Army.Where(soldier => !Context._mainArmy.Contains(soldier));
         }
     }
 }

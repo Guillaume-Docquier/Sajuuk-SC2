@@ -12,15 +12,32 @@ public abstract class State<TContext> where TContext: class {
     }
 
     protected StateMachine<TContext> StateMachine { get; private set; }
+    protected TContext Context { get; private set; }
 
     public void SetStateMachine(StateMachine<TContext> stateMachine)
     {
+        if (StateMachine == stateMachine) {
+            return;
+        }
+
         StateMachine = stateMachine;
 
-        OnSetStateMachine();
+        OnStateMachineSet();
     }
 
-    protected virtual void OnSetStateMachine() {}
+    public void SetContext(TContext context)
+    {
+        if (Context == context) {
+            return;
+        }
+
+        Context = context;
+
+        OnContextSet();
+    }
+
+    protected virtual void OnStateMachineSet() {}
+    protected virtual void OnContextSet() {}
 
     public void OnFrame() {
         Execute();
