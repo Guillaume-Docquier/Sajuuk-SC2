@@ -19,12 +19,12 @@ public class Program {
         //new SpawnStuffScenario(),
     };
 
-    private const string Version = "3_1_0";
+    private const string Version = "3_1_1";
     private static readonly IBot Bot = new SajuukBot(Version, scenarios: Scenarios);
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.Moondance;
-    private const Race OpponentRace = Race.Protoss;
-    private const Difficulty OpponentDifficulty = Difficulty.Hard;
+    private const Race OpponentRace = Race.Zerg;
+    private const Difficulty OpponentDifficulty = Difficulty.CheatInsane;
 
     private const bool RealTime = false;
 

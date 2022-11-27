@@ -145,13 +145,13 @@ public partial class WarManager: Manager {
 
             draftableDrones = draftableDrones
                 .OrderByDescending(drone => drone.Integrity)
-                // TODO GD This could be better, it assumes th threat comes from the natural
+                // TODO GD This could be better, it assumes the threat comes from the natural
                 .ThenBy(drone => drone.DistanceTo(ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural).Position))
                 .ToList();
 
             var enemyForce = GetEnemyForce();
             var draftIndex = 0;
-            while (_soldiers.GetForce() < enemyForce) {
+            while (draftIndex < draftableDrones.Count && _soldiers.GetForce() < enemyForce) {
                 Assign(draftableDrones[draftIndex]);
                 draftIndex++;
             }
