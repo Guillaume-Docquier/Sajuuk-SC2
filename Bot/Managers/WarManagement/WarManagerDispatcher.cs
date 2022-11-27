@@ -1,7 +1,7 @@
 ﻿namespace Bot.Managers.WarManagement;
 
 public partial class WarManager {
-    private class WarManagerDispatcher: Dispatcher<WarManager> {
+    public class WarManagerDispatcher: Dispatcher<WarManager> {
         public WarManagerDispatcher(WarManager client) : base(client) {}
 
         public override void Dispatch(Unit unit) {

@@ -47,11 +47,11 @@ public abstract class State<TContext> where TContext: class {
         }
     }
 
+    protected abstract void Execute();
+
     protected abstract bool TryTransitioning();
 
     protected virtual void OnTransition() {}
-
-    protected abstract void Execute();
 }
 
 public abstract class State<TContext, TStateMachine>: State<TContext>

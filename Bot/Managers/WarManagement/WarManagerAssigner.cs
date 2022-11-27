@@ -3,7 +3,7 @@
 namespace Bot.Managers.WarManagement;
 
 public partial class WarManager {
-    private class WarManagerAssigner: Assigner<WarManager> {
+    public class WarManagerAssigner: Assigner<WarManager> {
         public WarManagerAssigner(WarManager client) : base(client) {}
 
         public override void Assign(Unit unit) {

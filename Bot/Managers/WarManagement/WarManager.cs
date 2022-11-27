@@ -34,6 +34,30 @@ namespace Bot.Managers.WarManagement;
 public partial class WarManager: Manager {
     private readonly StateMachine<WarManager> _stateMachine;
 
+    public States.Strategy<WarManager> RecruitmentPhaseStrategy;
+    public States.Strategy<WarManager> DispatchPhaseStrategy;
+    public States.Strategy<WarManager> ManagementPhaseStrategy;
+
+    // TODO GD Review this, they should be strategies too? Why did I need to do that?
+    // I think it was to extract the code outside of the Manager class
+    // We should rework this to be strategies instead and avoid the partial pattern so that the file structure doesn't become a mess
+    // Also in here we'd like to avoid the setter methods
+    private IAssigner _assigner;
+    private IDispatcher _dispatcher;
+    private IReleaser _releaser;
+
+    public void SetAssigner(IAssigner assigner) {
+        _assigner = assigner;
+    }
+
+    public void SetDispatcher(IDispatcher dispatcher) {
+        _dispatcher = dispatcher;
+    }
+
+    public void SetReleaser(IReleaser releaser) {
+        _releaser = releaser;
+    }
+
     [Flags]
     public enum Stance {
         None = 0,
@@ -66,16 +90,17 @@ public partial class WarManager: Manager {
 
     private readonly WarManagerDebugger _debugger = new WarManagerDebugger();
 
-    protected override IAssigner Assigner { get; }
-    protected override IDispatcher Dispatcher { get; }
-    protected override IReleaser Releaser { get; }
+    protected override IAssigner Assigner => _assigner;
+    protected override IDispatcher Dispatcher => _dispatcher;
+    protected override IReleaser Releaser => _releaser;
 
     public WarManager() {
         _stateMachine = new StateMachine<WarManager>(this, new States.EarlyGame.State());
+        _stateMachine.OnFrame();
 
-        Assigner = new WarManagerAssigner(this);
-        Dispatcher = new WarManagerDispatcher(this);
-        Releaser = new WarManagerReleaser(this);
+        _assigner = new WarManagerAssigner(this);
+        _dispatcher = new WarManagerDispatcher(this);
+        _releaser = new WarManagerReleaser(this);
 
         _buildRequests.Add(_armyBuildRequest);
 
@@ -123,6 +148,10 @@ public partial class WarManager: Manager {
         _terranFinisherSupervisor.OnFrame();
 
         _debugger.Debug(ManagedUnits);
+    }
+
+    protected override void EndOfFramePhase() {
+        _stateMachine.OnFrame();
     }
 
     private void HandleRushes() {
