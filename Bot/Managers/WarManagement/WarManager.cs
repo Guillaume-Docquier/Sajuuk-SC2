@@ -103,7 +103,7 @@ public partial class WarManager: Manager {
 
         _terranFinisherSupervisor.OnFrame();
 
-        _debugger.Debug();
+        _debugger.Debug(ManagedUnits);
     }
 
     private void HandleRushes() {
@@ -118,7 +118,7 @@ public partial class WarManager: Manager {
             .ToList();
 
         // TODO GD To do this we need the eco manager to not send them to a dangerous expand
-        // Release(draftedUnits.Where(unit => unit.HitPoints <= 5));
+        //Release(draftedUnits.Where(unit => unit.HitPoints <= 10));
 
         _isRushInProgress = DangerScanner.IsRushInProgress(ManagedUnits.Except(draftedUnits).ToList());
 

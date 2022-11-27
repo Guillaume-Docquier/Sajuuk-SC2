@@ -14,7 +14,7 @@ namespace Bot;
 public class Program {
     private static readonly List<IScenario> Scenarios = new List<IScenario>
     {
-        //new WorkerRushScenario(),
+        new WorkerRushScenario(),
         //new FlyingTerranScumScenario(),
         //new SpawnStuffScenario(),
     };
@@ -24,7 +24,7 @@ public class Program {
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.Moondance;
     private const Race OpponentRace = Race.Zerg;
-    private const Difficulty OpponentDifficulty = Difficulty.CheatInsane;
+    private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
     private const bool RealTime = false;
 

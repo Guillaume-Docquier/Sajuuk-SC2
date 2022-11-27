@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using Bot.Builds;
+using Bot.Debugging.GraphicalDebugging;
+using Bot.ExtensionMethods;
 using Bot.Managers.WarManagement;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
@@ -15,7 +17,7 @@ public class WarManagerDebugger {
     public BuildRequestPriority BuildPriority { get; set; }
     public BuildBlockCondition BuildBlockCondition { get; set; }
 
-    public void Debug() {
+    public void Debug(HashSet<Unit> army) {
         if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.WarManager)) {
             return;
         }
@@ -35,5 +37,9 @@ public class WarManagerDebugger {
         texts.Add($" - Blocking: {BuildBlockCondition}");
 
         Program.GraphicalDebugger.AddTextGroup(texts, virtualPos: new Point { X = 0.30f, Y = 0.02f });
+
+        foreach (var soldier in army) {
+            Program.GraphicalDebugger.AddText("W", worldPos: soldier.Position.ToPoint(), color: Colors.Red);
+        }
     }
 }
