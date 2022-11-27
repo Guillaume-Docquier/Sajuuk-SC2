@@ -10,12 +10,30 @@ using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.MapKnowledge;
+using Bot.StateManagement;
 using Bot.Utils;
 using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement;
 
+/*
+ * REFACTOR NOTES
+ * Use a strategy to do each phase
+ * - i.e EarlyGameRecruitmentPhaseStrategy
+ *
+ * Use a state machine to set the strategies, dispatchers, assigners and releasers
+ *
+ * Strategies themselves can use strategies or other states
+ * - TerranFinisher
+ * - CannonRush defense
+ * - WorkerRush defense
+ *
+ * Be conservative about switching states try not to yo-yo
+ */
+
 public partial class WarManager: Manager {
+    private readonly StateMachine<WarManager> _stateMachine;
+
     [Flags]
     public enum Stance {
         None = 0,
@@ -53,6 +71,8 @@ public partial class WarManager: Manager {
     protected override IReleaser Releaser { get; }
 
     public WarManager() {
+        _stateMachine = new StateMachine<WarManager>(this, new States.EarlyGame.State());
+
         Assigner = new WarManagerAssigner(this);
         Dispatcher = new WarManagerDispatcher(this);
         Releaser = new WarManagerReleaser(this);
@@ -77,7 +97,6 @@ public partial class WarManager: Manager {
         Dispatch(_soldiers.Where(soldier => soldier.Supervisor == null));
     }
 
-    // TODO GD Add graphical debugging to show regions to attack/defend
     protected override void ManagementPhase() {
         if (TheGameIsOurs()) {
             FinishHim();
