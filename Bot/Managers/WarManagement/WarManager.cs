@@ -32,7 +32,6 @@ namespace Bot.Managers.WarManagement;
 
 public partial class WarManager: Manager {
     private readonly WarManagerBehaviour _behaviour;
-    private readonly WarManagerDebugger _debugger = new WarManagerDebugger();
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _behaviour.BuildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
@@ -53,15 +52,15 @@ public partial class WarManager: Manager {
     }
 
     protected override void RecruitmentPhase() {
-        _behaviour.RecruitmentPhaseStrategy.Execute();
+        _behaviour.RecruitmentPhase();
     }
 
     protected override void DispatchPhase() {
-        _behaviour.DispatchPhaseStrategy.Execute();
+        _behaviour.DispatchPhase();
     }
 
     protected override void ManagementPhase() {
-        _behaviour.ManagementPhaseStrategy.Execute();
+        _behaviour.ManagementPhase();
         // TODO GD Debug managed units
     }
 }

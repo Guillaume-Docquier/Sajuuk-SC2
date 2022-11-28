@@ -1,41 +1,65 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
+using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.States.EarlyGame;
 
-public class EarlyGameRecruitmentPhaseStrategy : WarManagerStrategy {
+public class EarlyGameBehaviour : IWarManagerBehaviour {
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
 
+    private readonly ArmySupervisor _defenseSupervisor = new ArmySupervisor();
+    private readonly WarManager _warManager;
     private readonly HashSet<Region> _startingRegions;
+
     private bool _rushTagged = false;
     private bool _isRushInProgress = false;
 
+    // TODO GD Deal with those guys
+    public IAssigner Assigner { get; }
+    public IDispatcher Dispatcher { get; }
+    public IReleaser Releaser { get; }
+    public List<BuildRequest> BuildRequests { get; }
 
-    public EarlyGameRecruitmentPhaseStrategy(WarManager context) : base(context) {
+    public EarlyGameBehaviour(WarManager warManager) {
+        _warManager = warManager;
+
         var main = ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).Position.GetRegion();
         var natural = ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural).Position.GetRegion();
         _startingRegions = Pathfinder.FindPath(main, natural).ToHashSet();
     }
 
-    public override void Execute() {
-        WarManager.Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
+    public void RecruitmentPhase() {
+        _warManager.Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
         RecruitEcoUnitsIfNecessary();
     }
 
-    public override bool CleanUp() {
+    public void DispatchPhase() {
+        _warManager.Dispatch(_warManager.ManagedUnits.Where(soldier => soldier.Supervisor == null));
+    }
+
+    public void ManagementPhase() {
+        var regionToDefend = _startingRegions.MaxBy(region => RegionTracker.GetForce(region, Alliance.Enemy))!;
+        _defenseSupervisor.AssignTarget(regionToDefend.Center, ApproximateRegionRadius(regionToDefend), canHuntTheEnemy: false);
+        _defenseSupervisor.OnFrame();
+    }
+
+    // TODO GD Make this part of something
+    public bool CleanUp() {
         if (_isRushInProgress) {
             return false;
         }
 
         var draftedUnits = GetDraftedUnits();
         if (draftedUnits.Any()) {
-            WarManager.Release(draftedUnits);
+            _warManager.Release(draftedUnits);
 
             // We give one tick so that release orders, like stop or unburrow go through
             return false;
@@ -50,9 +74,9 @@ public class EarlyGameRecruitmentPhaseStrategy : WarManagerStrategy {
         // TODO GD To do this we need the eco manager to not send them to a dangerous expand
         //Release(draftedUnits.Where(unit => unit.HitPoints <= 10));
 
-        _isRushInProgress = IsRushInProgress(WarManager.ManagedUnits.Except(draftedUnits).ToList());
+        _isRushInProgress = IsRushInProgress(_warManager.ManagedUnits.Except(draftedUnits).ToList());
         if (!_isRushInProgress) {
-            WarManager.Release(draftedUnits);
+            _warManager.Release(draftedUnits);
             return;
         }
 
@@ -69,7 +93,7 @@ public class EarlyGameRecruitmentPhaseStrategy : WarManagerStrategy {
 
         var draftableDrones = new List<Unit>();
         foreach (var townHallSupervisor in townHallSupervisors) {
-            WarManager.Assign(Controller.GetUnits(townHallSupervisor.SupervisedUnits, Units.Queen));
+            _warManager.Assign(Controller.GetUnits(townHallSupervisor.SupervisedUnits, Units.Queen));
 
             draftableDrones
                 .AddRange(Controller.GetUnits(townHallSupervisor.SupervisedUnits, Units.Drone)
@@ -85,8 +109,8 @@ public class EarlyGameRecruitmentPhaseStrategy : WarManagerStrategy {
 
         var enemyForce = GetEnemyForce();
         var draftIndex = 0;
-        while (draftIndex < draftableDrones.Count && WarManager.ManagedUnits.GetForce() < enemyForce) {
-            WarManager.Assign(draftableDrones[draftIndex]);
+        while (draftIndex < draftableDrones.Count && _warManager.ManagedUnits.GetForce() < enemyForce) {
+            _warManager.Assign(draftableDrones[draftIndex]);
             draftIndex++;
         }
     }
@@ -119,8 +143,19 @@ public class EarlyGameRecruitmentPhaseStrategy : WarManagerStrategy {
     /// </summary>
     /// <returns>All the eco units drafted to help defending</returns>
     private List<Unit> GetDraftedUnits() {
-        return WarManager.ManagedUnits
+        return _warManager.ManagedUnits
             .Where(soldier => !ManageableUnitTypes.Contains(soldier.UnitType))
             .ToList();
+    }
+
+    /// <summary>
+    /// Approximates the region's radius based on it's cells
+    /// TODO GD This is a placeholder while we have a smarter region defense behaviour
+    /// </summary>
+    /// <param name="region"></param>
+    /// <returns></returns>
+    // TODO GD Share this
+    private static float ApproximateRegionRadius(Region region) {
+        return (float)Math.Sqrt(region.Cells.Count) / 2;
     }
 }

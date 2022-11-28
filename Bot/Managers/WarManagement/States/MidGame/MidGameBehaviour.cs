@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.Builds;
@@ -14,26 +15,46 @@ using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.States.MidGame;
 
-public  class MidGameManagementPhaseStrategy : WarManagerStrategy {
+public class MidGameBehaviour : IWarManagerBehaviour {
     private const float RequiredForceRatioBeforeAttacking = 1.5f;
     private const float MaxSupplyBeforeAttacking = 175;
 
-    private Stance _stance = Stance.Defend;
-    private readonly WarManagerDebugger _debugger = new WarManagerDebugger();
+    private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
 
-    private readonly ArmySupervisor _attackSupervisor = new ArmySupervisor();
-    private readonly ArmySupervisor _terranFinisherSupervisor = new ArmySupervisor();
-
-    private static BuildRequest _corruptorsBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Corruptor, targetQuantity: 10, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
+    // TODO GD This being static seems unnecessary
+    private static readonly BuildRequest AntiTerranBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Corruptor, targetQuantity: 10, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
     private static BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
 
-    public MidGameManagementPhaseStrategy(WarManager context) : base(context) {
-        _buildRequests.Add(_armyBuildRequest);
+    private readonly WarManagerDebugger _debugger = new WarManagerDebugger();
+    private readonly ArmySupervisor _attackSupervisor = new ArmySupervisor();
+    private readonly ArmySupervisor _terranFinisherSupervisor = new ArmySupervisor();
+    private readonly WarManager _warManager;
+
+    private Stance _stance = Stance.Defend;
+
+    // TODO GD Deal with those guys
+    public IAssigner Assigner { get; }
+    public IDispatcher Dispatcher { get; }
+    public IReleaser Releaser { get; }
+    public List<BuildRequest> BuildRequests { get; } = new List<BuildRequest>();
+
+    public MidGameBehaviour(WarManager warManager) {
+        _warManager = warManager;
+
+        BuildRequests.Add(_armyBuildRequest);
 
         _terranFinisherSupervisor.AssignTarget(new Vector2(MapAnalyzer.MaxX / 2f, MapAnalyzer.MaxY / 2f), 999, canHuntTheEnemy: true);
     }
 
-    public override void Execute() {
+    public void RecruitmentPhase() {
+        __warManager.Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
+    }
+
+    public void DispatchPhase() {
+        __warManager.Dispatch(__warManager.ManagedUnits.Where(soldier => soldier.Supervisor == null));
+    }
+
+    public void ManagementPhase() {
         if (TheGameIsOurs()) {
             FinishHim();
         }
@@ -58,7 +79,7 @@ public  class MidGameManagementPhaseStrategy : WarManagerStrategy {
 
         _terranFinisherSupervisor.OnFrame();
 
-        _debugger.Debug(WarManager.ManagedUnits);
+        _debugger.Debug(__warManager.ManagedUnits);
     }
 
     public override bool CleanUp() {
@@ -74,7 +95,7 @@ public  class MidGameManagementPhaseStrategy : WarManagerStrategy {
             return false;
         }
 
-        var ourForce = WarManager.ManagedUnits.GetForce();
+        var ourForce = __warManager.ManagedUnits.GetForce();
         var enemyForce = GetEnemyForce();
         if (ourForce < enemyForce * 3) {
             return false;
@@ -91,7 +112,7 @@ public  class MidGameManagementPhaseStrategy : WarManagerStrategy {
             return;
         }
 
-        var target = WarManager.ManagedUnits.GetCenter();
+        var target = _warManager.ManagedUnits.GetCenter();
         _attackSupervisor.AssignTarget(target, 999, canHuntTheEnemy: true);
 
         if (_stance.HasFlag(Stance.Defend)) {
@@ -158,8 +179,8 @@ public  class MidGameManagementPhaseStrategy : WarManagerStrategy {
             return;
         }
 
-        _buildRequests.Add(new TargetBuildRequest(BuildType.Build, Units.Spire, targetQuantity: 1, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All));
-        _buildRequests.Add(_corruptorsBuildRequest);
+        BuildRequests.Add(new TargetBuildRequest(BuildType.Build, Units.Spire, targetQuantity: 1, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All));
+        BuildRequests.Add(AntiTerranBuildRequest);
 
         _stance |= Stance.TerranFinisher;
         TaggingService.TagGame(TaggingService.Tag.TerranFinisher);
@@ -234,14 +255,14 @@ public  class MidGameManagementPhaseStrategy : WarManagerStrategy {
             return;
         }
 
-        if (WarManager.ManagedUnits.Count == 0) {
+        if (_warManager.ManagedUnits.Count == 0) {
             // TODO GD Should we do stuff here?
             return;
         }
 
-        var armyRegion = WarManager.ManagedUnits.GetRegion();
+        var armyRegion = _warManager.ManagedUnits.GetRegion();
         if (armyRegion == null) {
-            Logger.Error("AttackOrDefend could not find the region of its army of size {0}", WarManager.ManagedUnits.Count);
+            Logger.Error("AttackOrDefend could not find the region of its army of size {0}", _warManager.ManagedUnits.Count);
             return;
         }
 
@@ -251,7 +272,7 @@ public  class MidGameManagementPhaseStrategy : WarManagerStrategy {
             return;
         }
 
-        var ourForce = WarManager.ManagedUnits.GetForce();
+        var ourForce = _warManager.ManagedUnits.GetForce();
 
         // TODO GD Maybe consider units near the path as well?
         var enemyForce = pathToTarget.Sum(region => RegionTracker.GetForce(region, Alliance.Enemy));
@@ -283,14 +304,14 @@ public  class MidGameManagementPhaseStrategy : WarManagerStrategy {
     private void AdjustBuildRequests() {
         var unitTypeToProduce = GetUnitTypeToProduce();
         if (_armyBuildRequest.UnitOrUpgradeType != unitTypeToProduce) {
-            _buildRequests.Remove(_armyBuildRequest);
+            BuildRequests.Remove(_armyBuildRequest);
 
             _armyBuildRequest = new TargetBuildRequest(BuildType.Train, unitTypeToProduce, targetQuantity: 100, priority: BuildRequestPriority.Low);
-            _buildRequests.Add(_armyBuildRequest);
+            BuildRequests.Add(_armyBuildRequest);
         }
 
         // TODO GD Consider units in production too
-        var ourForce = WarManager.ManagedUnits.GetForce();
+        var ourForce = _warManager.ManagedUnits.GetForce();
         // TODO GD Exclude buildings?
         var enemyForce = GetEnemyForce();
 
@@ -352,7 +373,7 @@ public  class MidGameManagementPhaseStrategy : WarManagerStrategy {
             return false;
         }
 
-        return _corruptorsBuildRequest.Fulfillment.Remaining > 0;
+        return AntiTerranBuildRequest.Fulfillment.Remaining > 0;
     }
 
     /// <summary>

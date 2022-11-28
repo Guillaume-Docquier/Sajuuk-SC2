@@ -2,17 +2,14 @@
 
 namespace Bot.Managers.WarManagement.States.MidGame;
 
-public class MidGameState : State<WarManagerBehaviour> {
+public class MidGameState : WarManagerState {
     private TransitionState _transitionState = TransitionState.NotTransitioning;
 
-    protected override void OnContextSet() {
-        Context.RecruitmentPhaseStrategy = new MidGameRecruitmentPhaseStrategy(Context.WarManager);
-        Context.DispatchPhaseStrategy = new MidGameDispatchPhaseStrategy(Context.WarManager);
-        Context.ManagementPhaseStrategy = new MidGameManagementPhaseStrategy(Context.WarManager);
+    private IWarManagerBehaviour _behaviour;
+    public override IWarManagerBehaviour Behaviour => _behaviour;
 
-        Context.Assigner = new WarManager.WarManagerAssigner(Context.WarManager);
-        Context.Dispatcher = new WarManager.WarManagerDispatcher(Context.WarManager);
-        Context.Releaser = new WarManager.WarManagerReleaser(Context.WarManager);
+    protected override void OnContextSet() {
+        _behaviour = new MidGameBehaviour(Context);
     }
 
     protected override void Execute() {
