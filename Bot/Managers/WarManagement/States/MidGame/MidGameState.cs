@@ -9,6 +9,7 @@ public class MidGameState : State<WarManagerBehaviour> {
         Context.RecruitmentPhaseStrategy = new MidGameRecruitmentPhaseStrategy(Context.WarManager);
         Context.DispatchPhaseStrategy = new MidGameDispatchPhaseStrategy(Context.WarManager);
         Context.ManagementPhaseStrategy = new MidGameManagementPhaseStrategy(Context.WarManager);
+
         Context.Assigner = new WarManager.WarManagerAssigner(Context.WarManager);
         Context.Dispatcher = new WarManager.WarManagerDispatcher(Context.WarManager);
         Context.Releaser = new WarManager.WarManagerReleaser(Context.WarManager);
@@ -28,7 +29,7 @@ public class MidGameState : State<WarManagerBehaviour> {
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new MidGame.MidGameState());
+            StateMachine.TransitionTo(new MidGameState());
             return true;
         }
 
@@ -36,7 +37,7 @@ public class MidGameState : State<WarManagerBehaviour> {
     }
 
     private bool ShouldTransitionToLateGame() {
-        // TODO GD Do that if needed
+        // TODO GD Once we extract finisher state
         return false;
     }
 

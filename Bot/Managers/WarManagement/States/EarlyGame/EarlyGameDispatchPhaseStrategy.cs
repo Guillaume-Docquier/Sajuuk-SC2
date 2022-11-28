@@ -1,9 +1,11 @@
-﻿namespace Bot.Managers.WarManagement.States.EarlyGame;
+﻿using System.Linq;
 
-public class EarlyGameDispatchPhaseStrategy : Strategy<WarManager> {
+namespace Bot.Managers.WarManagement.States.EarlyGame;
+
+public class EarlyGameDispatchPhaseStrategy : WarManagerStrategy {
     public EarlyGameDispatchPhaseStrategy(WarManager context) : base(context) {}
 
     public override void Execute() {
-        throw new System.NotImplementedException();
+        WarManager.Dispatch(WarManager.ManagedUnits.Where(soldier => soldier.Supervisor == null));
     }
 }

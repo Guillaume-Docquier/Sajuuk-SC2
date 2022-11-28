@@ -1,9 +1,11 @@
-﻿namespace Bot.Managers.WarManagement.States.MidGame;
+﻿using System.Linq;
 
-public class MidGameDispatchPhaseStrategy : Strategy<WarManager> {
+namespace Bot.Managers.WarManagement.States.MidGame;
+
+public class MidGameDispatchPhaseStrategy : WarManagerStrategy {
     public MidGameDispatchPhaseStrategy(WarManager context) : base(context) {}
 
     public override void Execute() {
-        throw new System.NotImplementedException();
+        WarManager.Dispatch(WarManager.ManagedUnits.Where(soldier => soldier.Supervisor == null));
     }
 }

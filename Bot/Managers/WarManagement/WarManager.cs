@@ -42,14 +42,8 @@ public partial class WarManager: Manager {
         TerranFinisher = 8,
     }
 
-    private const int RushTimingInSeconds = (int)(5 * 60);
     private const float RequiredForceRatioBeforeAttacking = 1.5f;
     private const float MaxSupplyBeforeAttacking = 175;
-
-    private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
-
-    private bool _rushTagged = false;
-    private bool _isRushInProgress = false;
 
     private Stance _stance = Stance.Defend;
     private readonly HashSet<Unit> _soldiers = new HashSet<Unit>();
@@ -86,13 +80,11 @@ public partial class WarManager: Manager {
     }
 
     protected override void RecruitmentPhase() {
-        HandleRushes();
-
-        Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
+        _behaviour.RecruitmentPhaseStrategy.Execute();
     }
 
     protected override void DispatchPhase() {
-        Dispatch(_soldiers.Where(soldier => soldier.Supervisor == null));
+        _behaviour.DispatchPhaseStrategy.Execute();
     }
 
     protected override void ManagementPhase() {
@@ -121,61 +113,6 @@ public partial class WarManager: Manager {
         _terranFinisherSupervisor.OnFrame();
 
         _debugger.Debug(ManagedUnits);
-    }
-
-    private void HandleRushes() {
-        if (!_isRushInProgress && Controller.Frame > TimeUtils.SecsToFrames(RushTimingInSeconds)) {
-            // We do not want to trigger a rush defense past a certain point
-            return;
-        }
-
-        // TODO GD Hold these in a separate lists
-        var draftedUnits = ManagedUnits
-            .Where(soldier => !ManageableUnitTypes.Contains(soldier.UnitType))
-            .ToList();
-
-        // TODO GD To do this we need the eco manager to not send them to a dangerous expand
-        //Release(draftedUnits.Where(unit => unit.HitPoints <= 10));
-
-        _isRushInProgress = DangerScanner.IsRushInProgress(ManagedUnits.Except(draftedUnits).ToList());
-
-        if (_isRushInProgress) {
-            if (!_rushTagged) {
-                TaggingService.TagGame(TaggingService.Tag.EarlyAttack);
-                _rushTagged = true;
-            }
-
-            var townHallSupervisors = Controller
-                .GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
-                .Where(unit => unit.Supervisor != null)
-                .Select(supervisedTownHall => supervisedTownHall.Supervisor)
-                .ToList();
-
-            var queensToDraft = new List<Unit>();
-            var draftableDrones = new List<Unit>();
-            foreach (var townHallSupervisor in townHallSupervisors) {
-                queensToDraft.AddRange(Controller.GetUnits(townHallSupervisor.SupervisedUnits, Units.Queen));
-                draftableDrones.AddRange(Controller.GetUnits(townHallSupervisor.SupervisedUnits, Units.Drone).Skip(2));
-            }
-
-            Assign(queensToDraft);
-
-            draftableDrones = draftableDrones
-                .OrderByDescending(drone => drone.Integrity)
-                // TODO GD This could be better, it assumes the threat comes from the natural
-                .ThenBy(drone => drone.DistanceTo(ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural).Position))
-                .ToList();
-
-            var enemyForce = GetEnemyForce();
-            var draftIndex = 0;
-            while (draftIndex < draftableDrones.Count && _soldiers.GetForce() < enemyForce) {
-                Assign(draftableDrones[draftIndex]);
-                draftIndex++;
-            }
-        }
-        else {
-            Release(draftedUnits);
-        }
     }
 
     // TODO GD Probably need a class for this

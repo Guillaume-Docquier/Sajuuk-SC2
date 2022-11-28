@@ -1,9 +1,16 @@
-﻿namespace Bot.Managers.WarManagement.States.MidGame;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Bot.GameData;
+using Bot.GameSense;
 
-public class MidGameRecruitmentPhaseStrategy : Strategy<WarManager> {
+namespace Bot.Managers.WarManagement.States.MidGame;
+
+public class MidGameRecruitmentPhaseStrategy : WarManagerStrategy {
+    private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
+
     public MidGameRecruitmentPhaseStrategy(WarManager context) : base(context) {}
 
     public override void Execute() {
-        throw new System.NotImplementedException();
+        WarManager.Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
     }
 }

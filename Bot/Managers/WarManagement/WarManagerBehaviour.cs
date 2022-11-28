@@ -1,4 +1,5 @@
-﻿using Bot.Managers.WarManagement.States.EarlyGame;
+﻿using Bot.Managers.WarManagement.States;
+using Bot.Managers.WarManagement.States.EarlyGame;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement;
@@ -8,9 +9,9 @@ public class WarManagerBehaviour {
 
     public readonly WarManager WarManager;
 
-    public States.Strategy<WarManager> RecruitmentPhaseStrategy;
-    public States.Strategy<WarManager> DispatchPhaseStrategy;
-    public States.Strategy<WarManager> ManagementPhaseStrategy;
+    public WarManagerStrategy RecruitmentPhaseStrategy;
+    public WarManagerStrategy DispatchPhaseStrategy;
+    public WarManagerStrategy ManagementPhaseStrategy;
 
     public IAssigner Assigner;
     public IDispatcher Dispatcher;
