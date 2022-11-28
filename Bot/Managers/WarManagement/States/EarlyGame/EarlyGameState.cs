@@ -2,13 +2,13 @@
 
 namespace Bot.Managers.WarManagement.States.EarlyGame;
 
-public class State : State<WarManagerBehaviour> {
+public class EarlyGameState : State<WarManagerBehaviour> {
     private TransitionState _transitionState = TransitionState.NotTransitioning;
 
     protected override void OnContextSet() {
-        Context.RecruitmentPhaseStrategy = new RecruitmentPhaseStrategy(Context.WarManager);
-        Context.DispatchPhaseStrategy = new DispatchPhaseStrategy(Context.WarManager);
-        Context.ManagementPhaseStrategy = new ManagementPhaseStrategy(Context.WarManager);
+        Context.RecruitmentPhaseStrategy = new EarlyGameRecruitmentPhaseStrategy(Context.WarManager);
+        Context.DispatchPhaseStrategy = new EarlyGameDispatchPhaseStrategy(Context.WarManager);
+        Context.ManagementPhaseStrategy = new EarlyGameManagementPhaseStrategy(Context.WarManager);
         Context.Assigner = new WarManager.WarManagerAssigner(Context.WarManager);
         Context.Dispatcher = new WarManager.WarManagerDispatcher(Context.WarManager);
         Context.Releaser = new WarManager.WarManagerReleaser(Context.WarManager);
@@ -28,7 +28,7 @@ public class State : State<WarManagerBehaviour> {
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new MidGame.State());
+            StateMachine.TransitionTo(new MidGame.MidGameState());
             return true;
         }
 

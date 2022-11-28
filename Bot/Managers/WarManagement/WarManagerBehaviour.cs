@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using Bot.Managers.WarManagement.States.EarlyGame;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement;
@@ -17,7 +17,7 @@ public class WarManagerBehaviour {
     public IReleaser Releaser;
 
     public WarManagerBehaviour(WarManager warManager) {
-        _stateMachine = new StateMachine<WarManagerBehaviour>(this, new States.EarlyGame.State());
+        _stateMachine = new StateMachine<WarManagerBehaviour>(this, new EarlyGameState());
 
         WarManager = warManager;
     }

@@ -10,7 +10,6 @@ using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.MapKnowledge;
-using Bot.StateManagement;
 using Bot.Utils;
 using SC2APIProtocol;
 
