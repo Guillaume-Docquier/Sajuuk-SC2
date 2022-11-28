@@ -2,16 +2,16 @@
 
 namespace Bot.Managers.WarManagement.States.EarlyGame;
 
-public class State : State<WarManager> {
+public class State : State<WarManagerBehaviour> {
     private TransitionState _transitionState = TransitionState.NotTransitioning;
 
     protected override void OnContextSet() {
-        Context.RecruitmentPhaseStrategy = new RecruitmentPhaseStrategy(Context);
-        Context.DispatchPhaseStrategy = new DispatchPhaseStrategy(Context);
-        Context.ManagementPhaseStrategy = new ManagementPhaseStrategy(Context);
-        Context.SetAssigner(new WarManager.WarManagerAssigner(Context));
-        Context.SetDispatcher(new WarManager.WarManagerDispatcher(Context));
-        Context.SetReleaser(new WarManager.WarManagerReleaser(Context));
+        Context.RecruitmentPhaseStrategy = new RecruitmentPhaseStrategy(Context.WarManager);
+        Context.DispatchPhaseStrategy = new DispatchPhaseStrategy(Context.WarManager);
+        Context.ManagementPhaseStrategy = new ManagementPhaseStrategy(Context.WarManager);
+        Context.Assigner = new WarManager.WarManagerAssigner(Context.WarManager);
+        Context.Dispatcher = new WarManager.WarManagerDispatcher(Context.WarManager);
+        Context.Releaser = new WarManager.WarManagerReleaser(Context.WarManager);
     }
 
     protected override void Execute() {
