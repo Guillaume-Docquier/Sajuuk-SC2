@@ -3,6 +3,7 @@ using Bot.Builds;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.Managers.WarManagement;
+using Bot.Managers.WarManagement.States.MidGame;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
 
@@ -11,7 +12,7 @@ namespace Bot.Debugging;
 public class WarManagerDebugger {
     public float OwnForce { get; set; }
     public float EnemyForce { get; set; }
-    public WarManager.Stance CurrentStance { get; set; }
+    public Stance CurrentStance { get; set; }
     public Region Target { get; set; }
 
     public BuildRequestPriority BuildPriority { get; set; }

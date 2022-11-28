@@ -3,33 +3,49 @@ using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.GameSense.RegionTracking;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.States.EarlyGame;
 
 public class EarlyGameRecruitmentPhaseStrategy : WarManagerStrategy {
+    private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
+
+    private readonly HashSet<Region> _startingRegions;
     private bool _rushTagged = false;
     private bool _isRushInProgress = false;
 
-    private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
 
-    public EarlyGameRecruitmentPhaseStrategy(WarManager context) : base(context) {}
+    public EarlyGameRecruitmentPhaseStrategy(WarManager context) : base(context) {
+        var main = ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).Position.GetRegion();
+        var natural = ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural).Position.GetRegion();
+        _startingRegions = Pathfinder.FindPath(main, natural).ToHashSet();
+    }
 
     public override void Execute() {
         WarManager.Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
         RecruitEcoUnitsIfNecessary();
     }
 
-    public override bool CanTransition() {
-        return !_isRushInProgress;
+    public override bool CleanUp() {
+        if (_isRushInProgress) {
+            return false;
+        }
+
+        var draftedUnits = GetDraftedUnits();
+        if (draftedUnits.Any()) {
+            WarManager.Release(draftedUnits);
+
+            // We give one tick so that release orders, like stop or unburrow go through
+            return false;
+        }
+
+        return true;
     }
 
     private void RecruitEcoUnitsIfNecessary() {
-        // TODO GD Hold these in a separate list
-        var draftedUnits = WarManager.ManagedUnits
-            .Where(soldier => !ManageableUnitTypes.Contains(soldier.UnitType))
-            .ToList();
+        var draftedUnits = GetDraftedUnits();
 
         // TODO GD To do this we need the eco manager to not send them to a dangerous expand
         //Release(draftedUnits.Where(unit => unit.HitPoints <= 10));
@@ -55,8 +71,10 @@ public class EarlyGameRecruitmentPhaseStrategy : WarManagerStrategy {
         foreach (var townHallSupervisor in townHallSupervisors) {
             WarManager.Assign(Controller.GetUnits(townHallSupervisor.SupervisedUnits, Units.Queen));
 
-            // TODO GD Maybe sometimes we should take all of them
-            draftableDrones.AddRange(Controller.GetUnits(townHallSupervisor.SupervisedUnits, Units.Drone).Skip(2));
+            draftableDrones
+                .AddRange(Controller.GetUnits(townHallSupervisor.SupervisedUnits, Units.Drone)
+                // TODO GD Maybe sometimes we should take all of them
+                .Skip(2));
         }
 
         draftableDrones = draftableDrones
@@ -74,7 +92,7 @@ public class EarlyGameRecruitmentPhaseStrategy : WarManagerStrategy {
     }
 
     /// <summary>
-    /// Returns the enemy force
+    /// Returns the global enemy force
     /// </summary>
     /// <returns></returns>
     private static float GetEnemyForce() {
@@ -82,27 +100,27 @@ public class EarlyGameRecruitmentPhaseStrategy : WarManagerStrategy {
         return UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits).GetForce();
     }
 
-    private static bool IsRushInProgress(IReadOnlyCollection<Unit> ownArmy) {
-        var main = ExpandAnalyzer.GetExpand(Alliance.Ally, ExpandType.Main).Position.GetRegion();
-        var natural = ExpandAnalyzer.GetExpand(Alliance.Ally, ExpandType.Natural).Position.GetRegion();
+    /// <summary>
+    /// Determines if a rush is in progress by comparing our army to the enemy's
+    /// </summary>
+    /// <param name="ownArmy"></param>
+    /// <returns></returns>
+    private bool IsRushInProgress(IEnumerable<Unit> ownArmy) {
+        var enemyForce = _startingRegions.Sum(region => RegionTracker.GetForce(region, Alliance.Enemy));
+        var ownForce = ownArmy
+            .Where(soldier => _startingRegions.Contains(soldier.GetRegion()))
+            .GetForce();
 
-        var regionsToProtect = Pathfinder.FindPath(main, natural);
+        return enemyForce > ownForce;
+    }
 
-        // TODO GD Per region or globally?
-        foreach (var regionToProtect in regionsToProtect) {
-            var enemyForce = UnitsTracker.EnemyUnits
-                .Where(soldier => soldier.GetRegion() == regionToProtect)
-                .Sum(UnitEvaluator.EvaluateForce);
-
-            var ownForce = ownArmy
-                .Where(soldier => soldier.GetRegion() == regionToProtect)
-                .Sum(UnitEvaluator.EvaluateForce);
-
-            if (enemyForce > ownForce) {
-                return true;
-            }
-        }
-
-        return false;
+    /// <summary>
+    /// Gets all eco units drafted to help defending
+    /// </summary>
+    /// <returns>All the eco units drafted to help defending</returns>
+    private List<Unit> GetDraftedUnits() {
+        return WarManager.ManagedUnits
+            .Where(soldier => !ManageableUnitTypes.Contains(soldier.UnitType))
+            .ToList();
     }
 }

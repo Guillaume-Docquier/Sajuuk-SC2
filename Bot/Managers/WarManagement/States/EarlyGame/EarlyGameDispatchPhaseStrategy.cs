@@ -8,4 +8,8 @@ public class EarlyGameDispatchPhaseStrategy : WarManagerStrategy {
     public override void Execute() {
         WarManager.Dispatch(WarManager.ManagedUnits.Where(soldier => soldier.Supervisor == null));
     }
+
+    public override bool CleanUp() {
+        return true;
+    }
 }

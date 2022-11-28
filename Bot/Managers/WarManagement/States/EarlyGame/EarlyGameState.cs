@@ -46,20 +46,18 @@ public class EarlyGameState : State<WarManagerBehaviour> {
         return false;
     }
 
-    private bool ShouldTransitionToMidGame() {
-        if (Controller.Frame < TimeUtils.SecsToFrames(EarlyGameEndInSeconds)) {
-            return false;
-        }
-
-        if (!_strategies.All(strategy => strategy.CanTransition())) {
-            return false;
-        }
-
-        return true;
+    private static bool ShouldTransitionToMidGame() {
+        return Controller.Frame > TimeUtils.SecsToFrames(EarlyGameEndInSeconds);
     }
 
     private void TransitionToMidGame() {
-        // TODO GD Clean up strategies/states/whatever
-        _transitionState = TransitionState.TransitionComplete;
+        var transitionComplete = true;
+        foreach (var strategy in _strategies) {
+            transitionComplete &= strategy.CleanUp();
+        }
+
+        if (transitionComplete) {
+            _transitionState = TransitionState.TransitionComplete;
+        }
     }
 }

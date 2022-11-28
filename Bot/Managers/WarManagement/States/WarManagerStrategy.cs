@@ -7,9 +7,16 @@ public abstract class WarManagerStrategy : IStrategy {
         WarManager = warManager;
     }
 
+    /// <summary>
+    /// Execute the strategy
+    /// </summary>
     public abstract void Execute();
 
-    public virtual bool CanTransition() {
-        return true;
-    }
+    /// <summary>
+    /// Execute a cleanup sequence.
+    /// Return true when all cleanup operations are complete.
+    /// This is generally used when transitioning to another strategy.
+    /// </summary>
+    /// <returns>True if cleanup is done, false otherwise</returns>
+    public abstract bool CleanUp();
 }

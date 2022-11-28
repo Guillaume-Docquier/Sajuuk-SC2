@@ -13,4 +13,8 @@ public class MidGameRecruitmentPhaseStrategy : WarManagerStrategy {
     public override void Execute() {
         WarManager.Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
     }
+
+    public override bool CleanUp() {
+        return true;
+    }
 }

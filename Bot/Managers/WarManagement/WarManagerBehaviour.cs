@@ -1,4 +1,6 @@
-﻿using Bot.Managers.WarManagement.States;
+﻿using System.Collections.Generic;
+using Bot.Builds;
+using Bot.Managers.WarManagement.States;
 using Bot.Managers.WarManagement.States.EarlyGame;
 using Bot.StateManagement;
 
@@ -16,6 +18,8 @@ public class WarManagerBehaviour {
     public IAssigner Assigner;
     public IDispatcher Dispatcher;
     public IReleaser Releaser;
+
+    public List<BuildRequest> BuildRequests = new List<BuildRequest>();
 
     public WarManagerBehaviour(WarManager warManager) {
         _stateMachine = new StateMachine<WarManagerBehaviour>(this, new EarlyGameState());
