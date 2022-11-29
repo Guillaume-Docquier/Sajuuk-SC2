@@ -40,8 +40,8 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         Dispatcher = new EarlyGameDispatcher(this);
         Releaser = new WarManagerReleaser<EarlyGameBehaviour>(this);
 
-        var main = ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).Position.GetRegion();
-        var natural = ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural).Position.GetRegion();
+        var main = ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).GetRegion();
+        var natural = ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural).GetRegion();
         _startingRegions = Pathfinder.FindPath(main, natural).ToHashSet();
     }
 
@@ -55,7 +55,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     }
 
     public void ManagementPhase() {
-        var regionToDefend = _startingRegions.MaxBy(region => RegionTracker.GetForce(region, Alliance.Enemy))!;
+        var regionToDefend = GetRegionToDefend();
         DefenseSupervisor.AssignTarget(regionToDefend.Center, regionToDefend.ApproximatedRadius, canHuntTheEnemy: false);
         DefenseSupervisor.OnFrame();
 
@@ -85,6 +85,15 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         }
 
         return true;
+    }
+
+    private Region GetRegionToDefend() {
+        if (GetEnemyForce(_startingRegions) == 0) {
+            var enemyMain = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).GetRegion();
+            return _startingRegions.MinBy(region => Pathfinder.FindPath(region, enemyMain).GetPathDistance());
+        }
+
+        return _startingRegions.MaxBy(region => RegionTracker.GetForce(region, Alliance.Enemy))!;
     }
 
     /// <summary>
@@ -195,12 +204,16 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     }
 
     /// <summary>
-    /// Returns the global enemy force
+    /// Returns the enemy force, filtering by the provided regions, if any.
     /// </summary>
-    /// <returns></returns>
-    private static float GetEnemyForce() {
-        // TODO GD Change EnemyMemorizedUnits to include all units that we know of
-        return UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits).GetForce();
+    /// <returns>The enemy force</returns>
+    private static float GetEnemyForce(IReadOnlySet<Region> regionsFilter = null) {
+        var enemyUnits = UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits);
+        if (regionsFilter != null) {
+            enemyUnits = enemyUnits.Where(enemy => regionsFilter.Contains(enemy.GetRegion()));
+        }
+
+        return enemyUnits.GetForce();
     }
 
     /// <summary>
@@ -209,7 +222,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     /// <param name="ownArmy"></param>
     /// <returns></returns>
     private bool IsRushInProgress(IEnumerable<Unit> ownArmy) {
-        var enemyForce = _startingRegions.Sum(region => RegionTracker.GetForce(region, Alliance.Enemy));
+        var enemyForce = GetEnemyForce(_startingRegions);
         var ownForce = ownArmy
             .Where(soldier => _startingRegions.Contains(soldier.GetRegion()))
             .GetForce();

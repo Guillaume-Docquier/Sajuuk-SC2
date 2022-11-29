@@ -55,8 +55,8 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
         _enemyMain = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main);
         _enemyNatural = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
 
-        _enemyMainRegion = _enemyMain.Position.GetRegion();
-        _enemyNaturalRegion = _enemyNatural.Position.GetRegion();
+        _enemyMainRegion = _enemyMain.GetRegion();
+        _enemyNaturalRegion = _enemyNatural.GetRegion();
 
         _isInitialized = true;
     }

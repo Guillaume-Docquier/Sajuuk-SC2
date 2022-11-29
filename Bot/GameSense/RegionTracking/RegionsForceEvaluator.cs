@@ -207,7 +207,7 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     /// </summary>
     /// <returns></returns>
     private (Region Region, float Force) GetSpawnForceCue() {
-        var spawnRegion = ExpandAnalyzer.GetExpand(_alliance, ExpandType.Main).Position.GetRegion();
+        var spawnRegion = ExpandAnalyzer.GetExpand(_alliance, ExpandType.Main).GetRegion();
         var spawnRegionExplorationPercentage = (float)spawnRegion.Cells.Count(VisibilityTracker.IsExplored) / spawnRegion.Cells.Count;
 
         // No cue if we've explored it

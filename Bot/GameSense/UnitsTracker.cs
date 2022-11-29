@@ -29,6 +29,7 @@ public class UnitsTracker: INeedUpdating {
     /// <summary>
     /// Holds all the units that are unaccounted for and that we know are not where we last saw them.
     /// </summary>
+    // TODO GD Change EnemyMemorizedUnits to include all units that we know of (Units + Ghosts + Unaccounted for)
     public static Dictionary<ulong, Unit> EnemyMemorizedUnits { get; } = new Dictionary<ulong, Unit>();
 
     private const int EnemyDeathDelaySeconds = 4 * 60;

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
+using Bot.ExtensionMethods;
 
 namespace Bot.MapKnowledge;
 
@@ -53,5 +54,9 @@ public class ExpandLocation : IWatchUnitsDie {
 
     public void Clear() {
         // TODO
+    }
+
+    public Region GetRegion() {
+        return Position.GetRegion();
     }
 }
