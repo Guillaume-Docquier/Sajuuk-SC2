@@ -23,6 +23,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
     private bool _rushTagged = false;
     private bool _isRushInProgress = false;
+    private bool _hasCleanUpStarted = false;
 
     public readonly ArmySupervisor DefenseSupervisor = new ArmySupervisor();
 
@@ -46,15 +47,27 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     }
 
     public void RecruitmentPhase() {
+        if (_hasCleanUpStarted) {
+            return;
+        }
+
         _warManager.Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
         RecruitEcoUnitsIfNecessary();
     }
 
     public void DispatchPhase() {
+        if (_hasCleanUpStarted) {
+            return;
+        }
+
         _warManager.Dispatch(_warManager.ManagedUnits.Where(soldier => soldier.Supervisor == null));
     }
 
     public void ManagementPhase() {
+        if (_hasCleanUpStarted) {
+            return;
+        }
+
         var regionToDefend = GetRegionToDefend();
         DefenseSupervisor.AssignTarget(regionToDefend.Center, regionToDefend.ApproximatedRadius, canHuntTheEnemy: false);
         DefenseSupervisor.OnFrame();
@@ -70,15 +83,28 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         _debugger.Debug();
     }
 
-    // TODO GD Make this part of something
+    /// <summary>
+    /// Release drafted eco units and clean up supervisors.
+    /// </summary>
+    /// <returns>True if the cleanup is complete, false if we need more time.</returns>
     public bool CleanUp() {
         if (_isRushInProgress) {
             return false;
         }
 
+        _hasCleanUpStarted = true;
+
         var draftedUnits = GetDraftedUnits();
         if (draftedUnits.Any()) {
             _warManager.Release(draftedUnits);
+
+            // We give one tick so that release orders, like stop or unburrow go through
+            return false;
+        }
+
+        var supervisedUnits = DefenseSupervisor.SupervisedUnits;
+        if (supervisedUnits.Any()) {
+            DefenseSupervisor.Retire();
 
             // We give one tick so that release orders, like stop or unburrow go through
             return false;
