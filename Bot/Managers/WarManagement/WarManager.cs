@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using Bot.Builds;
-using Bot.Debugging;
-using Bot.ExtensionMethods;
-using Bot.GameData;
-using Bot.GameSense;
-using Bot.GameSense.RegionTracking;
-using Bot.Managers.WarManagement.ArmySupervision;
-using Bot.MapKnowledge;
-using Bot.Utils;
-using SC2APIProtocol;
+using Bot.Managers.WarManagement.States;
+using Bot.Managers.WarManagement.States.EarlyGame;
+using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement;
 
@@ -31,16 +23,16 @@ namespace Bot.Managers.WarManagement;
  */
 
 public partial class WarManager: Manager {
-    private readonly WarManagerBehaviour _behaviour;
+    private readonly StateMachine<WarManager, WarManagerState> _stateMachine;
 
-    public override IEnumerable<BuildFulfillment> BuildFulfillments => _behaviour.BuildRequests.Select(buildRequest => buildRequest.Fulfillment);
+    protected override IAssigner Assigner => _stateMachine.State.Behaviour.Assigner;
+    protected override IDispatcher Dispatcher => _stateMachine.State.Behaviour.Dispatcher;
+    protected override IReleaser Releaser => _stateMachine.State.Behaviour.Releaser;
 
-    protected override IAssigner Assigner => _behaviour.Assigner;
-    protected override IDispatcher Dispatcher => _behaviour.Dispatcher;
-    protected override IReleaser Releaser => _behaviour.Releaser;
+    public override IEnumerable<BuildFulfillment> BuildFulfillments => _stateMachine.State.Behaviour.BuildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
     public WarManager() {
-        _behaviour = new WarManagerBehaviour(this);
+        _stateMachine = new StateMachine<WarManager, WarManagerState>(this, new EarlyGameState());
     }
 
     public override string ToString() {
@@ -48,19 +40,19 @@ public partial class WarManager: Manager {
     }
 
     protected override void StartOfFramePhase() {
-        _behaviour.Update();
+        _stateMachine.OnFrame();
     }
 
     protected override void RecruitmentPhase() {
-        _behaviour.RecruitmentPhase();
+        _stateMachine.State.Behaviour.RecruitmentPhase();
     }
 
     protected override void DispatchPhase() {
-        _behaviour.DispatchPhase();
+        _stateMachine.State.Behaviour.DispatchPhase();
     }
 
     protected override void ManagementPhase() {
-        _behaviour.ManagementPhase();
+        _stateMachine.State.Behaviour.ManagementPhase();
         // TODO GD Debug managed units
     }
 }

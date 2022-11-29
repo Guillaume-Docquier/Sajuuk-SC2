@@ -1,6 +1,4 @@
-﻿using Bot.StateManagement;
-
-namespace Bot.Managers.WarManagement.States.MidGame;
+﻿namespace Bot.Managers.WarManagement.States.MidGame;
 
 public class MidGameState : WarManagerState {
     private TransitionState _transitionState = TransitionState.NotTransitioning;
@@ -40,6 +38,8 @@ public class MidGameState : WarManagerState {
 
     private void TransitionToLateGame() {
         // TODO GD Clean up strategies/states/whatever
-        _transitionState = TransitionState.TransitionComplete;
+        if (_behaviour.CleanUp()) {
+            _transitionState = TransitionState.TransitionComplete;
+        }
     }
 }

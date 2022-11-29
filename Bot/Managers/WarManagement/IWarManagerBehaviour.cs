@@ -13,4 +13,7 @@ public interface IWarManagerBehaviour {
     public void RecruitmentPhase();
     public void DispatchPhase();
     public void ManagementPhase();
+
+    // TODO GD This is not pretty, but for simplicity we'll roll with it
+    public bool CleanUp();
 }

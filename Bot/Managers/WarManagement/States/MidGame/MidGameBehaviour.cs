@@ -27,6 +27,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     private readonly WarManagerDebugger _debugger = new WarManagerDebugger();
     private readonly ArmySupervisor _attackSupervisor = new ArmySupervisor();
+    private readonly ArmySupervisor _defenseSupervisor = new ArmySupervisor();
     private readonly ArmySupervisor _terranFinisherSupervisor = new ArmySupervisor();
     private readonly WarManager _warManager;
 
@@ -47,11 +48,11 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     }
 
     public void RecruitmentPhase() {
-        __warManager.Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
+        _warManager.Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
     }
 
     public void DispatchPhase() {
-        __warManager.Dispatch(__warManager.ManagedUnits.Where(soldier => soldier.Supervisor == null));
+        _warManager.Dispatch(_warManager.ManagedUnits.Where(soldier => soldier.Supervisor == null));
     }
 
     public void ManagementPhase() {
@@ -79,11 +80,11 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
         _terranFinisherSupervisor.OnFrame();
 
-        _debugger.Debug(__warManager.ManagedUnits);
+        _debugger.Debug(_warManager.ManagedUnits);
     }
 
-    public override bool CleanUp() {
-        throw new NotImplementedException();
+    public bool CleanUp() {
+        return true;
     }
 
     /// <summary>
@@ -95,7 +96,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             return false;
         }
 
-        var ourForce = __warManager.ManagedUnits.GetForce();
+        var ourForce = _warManager.ManagedUnits.GetForce();
         var enemyForce = GetEnemyForce();
         if (ourForce < enemyForce * 3) {
             return false;
