@@ -34,7 +34,7 @@ public partial class ScoutManager : Manager {
     protected override void RecruitmentPhase() {
         Assign(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Overlord).Where(unit => unit.Manager == null));
 
-        // Add some condition to request a Drone / Zergling
+        // TODO GD Add some condition to request a Drone / Zergling?
     }
 
     protected override void DispatchPhase() {
@@ -42,7 +42,7 @@ public partial class ScoutManager : Manager {
             _scoutSupervisors.Add(new ScoutSupervisor(scoutingTask));
         }
 
-        // TODO GD We might want to reassign as we go?
+        // TODO GD Reassign as we go to avoid selecting a scout that is super far while a nearby one just finished work
         Dispatch(ManagedUnits.Where(unit => unit.Supervisor == null));
     }
 

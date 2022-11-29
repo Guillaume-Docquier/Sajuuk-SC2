@@ -375,6 +375,12 @@ public static class Units {
         Battlecruiser,
     };
 
+    public static readonly HashSet<uint> AllTerranUnits = new HashSet<uint>(
+        TerranBuildings
+            .Concat(TerranMilitary)
+            .Concat(new [] { Scv })
+    );
+
     #endregion
 
     #region Protoss
@@ -451,6 +457,12 @@ public static class Units {
         Carrier,
         Mothership,
     };
+
+    public static readonly HashSet<uint> AllProtossUnits = new HashSet<uint>(
+        ProtossBuildings
+            .Concat(ProtossMilitary)
+            .Concat(new [] { Probe })
+    );
 
     #endregion
 
@@ -565,6 +577,14 @@ public static class Units {
         ChangelingZerglingWings,
         ChangelingZergling,
     };
+
+    public static readonly HashSet<uint> AllZergUnits = new HashSet<uint>(
+        ZergBuildings
+            .Concat(ZergMilitary)
+            .Concat(CreepTumors)
+            .Concat(Changelings)
+            .Concat(new [] { Drone })
+    );
 
     #endregion
 

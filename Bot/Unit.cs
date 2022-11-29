@@ -200,7 +200,7 @@ public class Unit: ICanDie, IHavePosition {
     /// <param name="targetUnit">The target unit to attack</param>
     public void Attack(Unit targetUnit) {
         // TODO GD Should check if can move while burrowed
-        if (RawUnitData.IsBurrowed) {
+        if (IsBurrowed) {
             Move(targetUnit.Position.ToVector2());
             return;
         }
@@ -222,7 +222,7 @@ public class Unit: ICanDie, IHavePosition {
     /// <param name="allowSpam">Enables spamming orders. Not recommended because it might generate a lot of actions</param>
     public void AttackMove(Vector2 target, float precision = 0.5f, bool allowSpam = false) {
         // TODO GD Should check if can move while burrowed
-        if (RawUnitData.IsBurrowed) {
+        if (IsBurrowed) {
             Move(target, precision, allowSpam);
             return;
         }

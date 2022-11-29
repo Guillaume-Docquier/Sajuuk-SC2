@@ -8,6 +8,11 @@ using SC2APIProtocol;
 
 namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 
+/// <summary>
+/// The Zerg scouting strategy scouts the enemy natural, then holds vision just outside of it.
+/// It also scouts the 3rd and 4th afterwards.
+/// Overlords are recalled if dangerous ground to air units are detected.
+/// </summary>
 public class ZergScoutingStrategy : IScoutingStrategy {
     private const int TopPriority = 100;
 

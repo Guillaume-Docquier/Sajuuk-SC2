@@ -89,14 +89,14 @@ public static class Controller {
         }
 
         if (EnemyRace == Race.Random) {
-            var enemyWorkers = GetUnits(UnitsTracker.EnemyUnits, Units.Workers).ToList();
-            if (enemyWorkers.Any(worker => worker.UnitType == Units.Scv)) {
+            var enemyUnits = UnitsTracker.EnemyUnits;
+            if (enemyUnits.Any(worker => Units.AllTerranUnits.Contains(worker.UnitType))) {
                 EnemyRace = Race.Terran;
             }
-            else if (enemyWorkers.Any(worker => worker.UnitType == Units.Probe)) {
+            else if (enemyUnits.Any(worker => Units.AllProtossUnits.Contains(worker.UnitType))) {
                 EnemyRace = Race.Protoss;
             }
-            else if (enemyWorkers.Any(worker => worker.UnitType == Units.Drone)) {
+            else if (enemyUnits.Any(worker => Units.AllZergUnits.Contains(worker.UnitType))) {
                 EnemyRace = Race.Zerg;
             }
         }

@@ -9,12 +9,19 @@ namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 
 public class ExpandScoutingTask : ScoutingTask {
     private readonly bool _waitForExpand;
+    private readonly float _expandRadius;
 
     private bool _isCancelled = false;
 
     public ExpandScoutingTask(Vector2 scoutLocation, int priority, int maxScouts, bool waitForExpand = false)
         : base(scoutLocation, priority, maxScouts) {
         _waitForExpand = waitForExpand;
+
+        // We make the expand radius 0 if we don't wait for confirmation just to
+        // gain a bit of extra vision since we'll be on our way right away
+        _expandRadius = _waitForExpand
+            ? KnowledgeBase.GetBuildingRadius(Units.Hatchery)
+            : 0;
     }
 
     public override bool IsComplete() {
@@ -37,7 +44,7 @@ public class ExpandScoutingTask : ScoutingTask {
 
     public override void Execute(HashSet<Unit> scouts) {
         foreach (var scout in scouts) {
-            var positionInSight = ScoutLocation.TranslateTowards(scout.Position.ToVector2(), scout.UnitTypeData.SightRange + KnowledgeBase.GetBuildingRadius(Units.Hatchery));
+            var positionInSight = ScoutLocation.TranslateTowards(scout.Position.ToVector2(), scout.UnitTypeData.SightRange + _expandRadius);
             if (!scout.IsFlying) {
                 positionInSight = positionInSight.ClosestWalkable();
             }
