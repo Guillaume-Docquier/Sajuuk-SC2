@@ -26,6 +26,9 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(60);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
+    private static readonly ulong CueHalfLife = TimeUtils.SecsToFrames(15 * 60);
+    private static readonly double CueExponentialDecayConstant = Math.Log(2) / CueHalfLife;
+
     public RegionsForceEvaluator(Alliance alliance) {
         _alliance = alliance;
         _hasAbsoluteKnowledge = alliance == Alliance.Self;
@@ -97,18 +100,17 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
 
         // Update the forces
         foreach (var (region, newRegionForce) in newRegionForces) {
-            // Let dangerous force decay over time
-            if (newRegionForce > UnitEvaluator.Force.Neutral) {
-                _regionForces[region] = Math.Max(_regionForces[region], newRegionForce);
+            if (newRegionForce >= UnitEvaluator.Force.Neutral) {
+                _regionForces[region] = newRegionForce;
             }
-            // Let safe force decay over time
             else {
+                // Let Weak slowly turn into Neutral
                 _regionForces[region] = Math.Min(_regionForces[region], newRegionForce);
             }
         }
 
         if (!_hasAbsoluteKnowledge) {
-            DecayForces();
+            DriftWeakForces();
         }
 
         ComputeNormalizedForces();
@@ -156,7 +158,7 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
             return 1;
         }
 
-        return ExponentialDecayFactor(Controller.Frame - enemy.LastSeen);
+        return ExponentialDecayFactor(ExponentialDecayConstant, Controller.Frame - enemy.LastSeen);
     }
 
     /// <summary>
@@ -195,10 +197,11 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
     /// <summary>
     /// Returns the exponential decay factor of a value after some time
     /// </summary>
+    /// <param name="decayConstant">The decay constant representing the half life</param>
     /// <param name="time">The time since decay started</param>
     /// <returns>The decay factor</returns>
-    private static float ExponentialDecayFactor(ulong time) {
-        return (float)Math.Exp(-ExponentialDecayConstant * time);
+    private static float ExponentialDecayFactor(double decayConstant, ulong time) {
+        return (float)Math.Exp(-decayConstant * time);
     }
 
     /// <summary>
@@ -216,15 +219,20 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
         }
 
         var force = UnitEvaluator.Force.Lethal * (1 - spawnRegionExplorationPercentage);
-        return (spawnRegion, force);
+        var decayFactor = ExponentialDecayFactor(CueExponentialDecayConstant, Controller.Frame);
+
+        return (spawnRegion, force * decayFactor);
     }
 
     /// <summary>
-    /// Decays the forces to represent uncertainty over time
+    /// Drifts the Weak forces towards Neutral to represent uncertainty over time
     /// </summary>
-    private void DecayForces() {
-        // Decay towards Neutral over time
+    private void DriftWeakForces() {
         foreach (var region in _regionForces.Keys) {
+            if (_regionForces[region] >= UnitEvaluator.Force.Neutral) {
+                continue;
+            }
+
             var normalizedTowardsNeutralForce = _regionForces[region] - UnitEvaluator.Force.Neutral;
             var decayedForce = normalizedTowardsNeutralForce * RegionDecayRate + UnitEvaluator.Force.Neutral;
             if (Math.Abs(UnitEvaluator.Force.Neutral - decayedForce) < 0.05) {

@@ -21,7 +21,7 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     // But that would require tracking the last value update of each region
     // And we would be doing some fancy (expensive?) exponent operations
     // But in the end, a good ol' factor works perfectly well, so... maybe some other day
-    private static readonly float RegionDecayRate = 1f - 1f / TimeUtils.SecsToFrames(120);
+    private static readonly float RegionDecayRate = 1f - 1f / TimeUtils.SecsToFrames(240);
 
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(120);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
@@ -97,18 +97,17 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
 
         // Update the values
         foreach (var (region, newRegionValue) in newRegionValues) {
-            // Let high value decay over time
-            if (newRegionValue > UnitEvaluator.Value.Intriguing) {
-                _regionValues[region] = Math.Max(_regionValues[region], newRegionValue);
+            if (newRegionValue >= UnitEvaluator.Value.Intriguing) {
+                _regionValues[region] = newRegionValue;
             }
-            // Let low value increase over time
             else {
+                // Let NoValue slowly turn into Intriguing
                 _regionValues[region] = Math.Min(_regionValues[region], newRegionValue);
             }
         }
 
         if (!_hasAbsoluteKnowledge) {
-            DecayValues();
+            DriftNoValues();
         }
 
         ComputeNormalizedValues();
@@ -221,11 +220,14 @@ public class RegionsValueEvaluator : IRegionsEvaluator {
     }
 
     /// <summary>
-    /// Decays the values to represent uncertainty over time
+    /// Drifts the NoValue values towards Intriguing to represent uncertainty over time
     /// </summary>
-    private void DecayValues() {
-        // Decay towards Intriguing over time
+    private void DriftNoValues() {
         foreach (var region in _regionValues.Keys) {
+            if (_regionValues[region] >= UnitEvaluator.Value.Intriguing) {
+                continue;
+            }
+
             var normalizedTowardsIntriguingValue = _regionValues[region] - UnitEvaluator.Value.Intriguing;
             var decayedValue = normalizedTowardsIntriguingValue * RegionDecayRate + UnitEvaluator.Value.Intriguing;
             if (Math.Abs(UnitEvaluator.Value.Intriguing - decayedValue) < 0.05) {
