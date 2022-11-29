@@ -9,10 +9,6 @@ namespace Bot.Managers.WarManagement;
 
 /*
  * REFACTOR NOTES
- * Use a strategy to do each phase
- * - i.e EarlyGameRecruitmentPhaseStrategy
- *
- * Use a state machine to set the strategies, dispatchers, assigners and releasers
  *
  * Strategies themselves can use strategies or other states
  * - TerranFinisher
@@ -22,8 +18,9 @@ namespace Bot.Managers.WarManagement;
  * Be conservative about switching states try not to yo-yo
  */
 
-public partial class WarManager: Manager {
+public class WarManager: Manager {
     private readonly StateMachine<WarManager, WarManagerState> _stateMachine;
+    private readonly WarManagerDebugger _debugger = new WarManagerDebugger();
 
     protected override IAssigner Assigner => _stateMachine.State.Behaviour.Assigner;
     protected override IDispatcher Dispatcher => _stateMachine.State.Behaviour.Dispatcher;
@@ -53,6 +50,6 @@ public partial class WarManager: Manager {
 
     protected override void ManagementPhase() {
         _stateMachine.State.Behaviour.ManagementPhase();
-        // TODO GD Debug managed units
+        _debugger.Debug(ManagedUnits);
     }
 }

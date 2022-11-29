@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.Builds;
-using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -21,30 +20,32 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
 
-    // TODO GD This being static seems unnecessary
-    private static readonly BuildRequest AntiTerranBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Corruptor, targetQuantity: 10, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
-    private static BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
+    private readonly BuildRequest _antiTerranBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Corruptor, targetQuantity: 10, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
+    private BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
 
-    private readonly WarManagerDebugger _debugger = new WarManagerDebugger();
-    private readonly ArmySupervisor _attackSupervisor = new ArmySupervisor();
-    private readonly ArmySupervisor _defenseSupervisor = new ArmySupervisor();
-    private readonly ArmySupervisor _terranFinisherSupervisor = new ArmySupervisor();
+    private readonly MidGameBehaviourDebugger _debugger = new MidGameBehaviourDebugger();
     private readonly WarManager _warManager;
 
-    private Stance _stance = Stance.Defend;
+    public Stance Stance { get; private set; } = Stance.Defend;
+    public readonly ArmySupervisor AttackSupervisor = new ArmySupervisor();
+    public readonly ArmySupervisor DefenseSupervisor = new ArmySupervisor();
+    public readonly ArmySupervisor TerranFinisherSupervisor = new ArmySupervisor();
 
-    // TODO GD Deal with those guys
     public IAssigner Assigner { get; }
     public IDispatcher Dispatcher { get; }
     public IReleaser Releaser { get; }
+
     public List<BuildRequest> BuildRequests { get; } = new List<BuildRequest>();
 
     public MidGameBehaviour(WarManager warManager) {
         _warManager = warManager;
 
         BuildRequests.Add(_armyBuildRequest);
+        TerranFinisherSupervisor.AssignTarget(new Vector2(MapAnalyzer.MaxX / 2f, MapAnalyzer.MaxY / 2f), 999, canHuntTheEnemy: true);
 
-        _terranFinisherSupervisor.AssignTarget(new Vector2(MapAnalyzer.MaxX / 2f, MapAnalyzer.MaxY / 2f), 999, canHuntTheEnemy: true);
+        Assigner = new WarManagerAssigner<MidGameBehaviour>(this);
+        Dispatcher = new MidGameDispatcher(this);
+        Releaser = new WarManagerReleaser<MidGameBehaviour>(this);
     }
 
     public void RecruitmentPhase() {
@@ -69,20 +70,26 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             FinishOffTerran();
         }
 
-        // TODO GD Send this task to the supervisor instead?
         if (ShouldFreeSomeSupply()) {
             FreeSomeSupply();
         }
         else {
-            _attackSupervisor.OnFrame();
-            _defenseSupervisor.OnFrame();
+            AttackSupervisor.OnFrame();
+            DefenseSupervisor.OnFrame();
         }
 
-        _terranFinisherSupervisor.OnFrame();
+        TerranFinisherSupervisor.OnFrame();
 
-        _debugger.Debug(_warManager.ManagedUnits);
+        // TODO GD The war manager could do most of that
+        _debugger.OwnForce = _warManager.ManagedUnits.GetForce();
+        _debugger.EnemyForce = GetEnemyForce();
+        _debugger.CurrentStance = Stance;
+        _debugger.BuildPriority = BuildRequests.FirstOrDefault()?.Priority ?? BuildRequestPriority.Low;
+        _debugger.BuildBlockCondition = BuildRequests.FirstOrDefault()?.BlockCondition ?? BuildBlockCondition.None;
+        _debugger.Debug();
     }
 
+    // TODO GD When we extract finisher from here
     public bool CleanUp() {
         return true;
     }
@@ -92,7 +99,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// </summary>
     /// <returns>True if we can stop being fancy and just finish the opponent</returns>
     private bool TheGameIsOurs() {
-        if (!_stance.HasFlag(Stance.Finisher) && MapAnalyzer.VisibilityRatio < 0.85) {
+        if (!Stance.HasFlag(Stance.Finisher) && MapAnalyzer.VisibilityRatio < 0.85) {
             return false;
         }
 
@@ -109,21 +116,20 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// Steamroll the opponent.
     /// </summary>
     private void FinishHim() {
-        if (_stance.HasFlag(Stance.Finisher)) {
+        if (Stance.HasFlag(Stance.Finisher)) {
             return;
         }
 
         var target = _warManager.ManagedUnits.GetCenter();
-        _attackSupervisor.AssignTarget(target, 999, canHuntTheEnemy: true);
+        AttackSupervisor.AssignTarget(target, 999, canHuntTheEnemy: true);
 
-        if (_stance.HasFlag(Stance.Defend)) {
-            _defenseSupervisor.Retire();
+        if (Stance.HasFlag(Stance.Defend)) {
+            DefenseSupervisor.Retire();
         }
 
-        _stance |= Stance.Attack | Stance.Finisher;
-        _stance &= ~Stance.Defend; // Unset the defend flag
+        Stance |= Stance.Attack | Stance.Finisher;
+        Stance &= ~Stance.Defend; // Unset the defend flag
 
-        _debugger.CurrentStance = _stance;
         _debugger.Target = target.GetRegion();
     }
 
@@ -133,16 +139,15 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     private void BigBrainPlay() {
         // Determine regions to defend
         var regionToDefend = GetRegionToDefend();
-        _defenseSupervisor.AssignTarget(regionToDefend.Center, ApproximateRegionRadius(regionToDefend), canHuntTheEnemy: false);
+        DefenseSupervisor.AssignTarget(regionToDefend.Center, regionToDefend.ApproximatedRadius, canHuntTheEnemy: false);
 
         // Determine regions to attack
         var regionToAttack = GetRegionToAttack();
-        _attackSupervisor.AssignTarget(regionToAttack.Center, ApproximateRegionRadius(regionToAttack), canHuntTheEnemy: true);
+        AttackSupervisor.AssignTarget(regionToAttack.Center, regionToDefend.ApproximatedRadius, canHuntTheEnemy: true);
 
         AttackOrDefend(regionToAttack, regionToDefend);
     }
 
-    // TODO GD Probably need a class for this
     /// <summary>
     /// Some Terran will fly their buildings.
     /// Check if they are basically dead and we should start dealing with the flying buildings.
@@ -153,7 +158,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             return false;
         }
 
-        if (!_stance.HasFlag(Stance.Attack)) {
+        if (!Stance.HasFlag(Stance.Attack)) {
             return false;
         }
 
@@ -176,36 +181,26 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// Create anti-air units to deal with terran flying buildings.
     /// </summary>
     private void FinishOffTerran() {
-        if (_stance.HasFlag(Stance.TerranFinisher)) {
+        if (Stance.HasFlag(Stance.TerranFinisher)) {
             return;
         }
 
         BuildRequests.Add(new TargetBuildRequest(BuildType.Build, Units.Spire, targetQuantity: 1, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All));
-        BuildRequests.Add(AntiTerranBuildRequest);
+        BuildRequests.Add(_antiTerranBuildRequest);
 
-        _stance |= Stance.TerranFinisher;
+        Stance |= Stance.TerranFinisher;
         TaggingService.TagGame(TaggingService.Tag.TerranFinisher);
-    }
-
-    /// <summary>
-    /// Approximates the region's radius based on it's cells
-    /// This is a placeholder while we have a smarter region defense behaviour
-    /// </summary>
-    /// <param name="region"></param>
-    /// <returns></returns>
-    private static float ApproximateRegionRadius(Region region) {
-        return (float)Math.Sqrt(region.Cells.Count) / 2;
     }
 
     /// <summary>
     /// Orders the army to kill 1 of their own to free some supply
     /// </summary>
     private void FreeSomeSupply() {
-        foreach (var supervisedUnit in _attackSupervisor.SupervisedUnits.Where(unit => unit.IsBurrowed)) {
+        foreach (var supervisedUnit in AttackSupervisor.SupervisedUnits.Where(unit => unit.IsBurrowed)) {
             supervisedUnit.UseAbility(Abilities.BurrowRoachUp);
         }
 
-        var unburrowedUnits = _attackSupervisor.SupervisedUnits.Where(unit => !unit.IsBurrowed).ToList();
+        var unburrowedUnits = AttackSupervisor.SupervisedUnits.Where(unit => !unit.IsBurrowed).ToList();
         if (unburrowedUnits.Count > 0) {
             var unitToSacrifice = unburrowedUnits[0];
             foreach (var unburrowedUnit in unburrowedUnits) {
@@ -279,24 +274,22 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         var enemyForce = pathToTarget.Sum(region => RegionTracker.GetForce(region, Alliance.Enemy));
 
         if (ourForce > enemyForce * RequiredForceRatioBeforeAttacking || Controller.CurrentSupply >= MaxSupplyBeforeAttacking) {
-            if (_stance.HasFlag(Stance.Defend)) {
-                _defenseSupervisor.Retire();
+            if (Stance.HasFlag(Stance.Defend)) {
+                DefenseSupervisor.Retire();
             }
 
-            _stance |= Stance.Attack;
-            _stance &= ~Stance.Defend; // Unset the defend flag
+            Stance |= Stance.Attack;
+            Stance &= ~Stance.Defend; // Unset the defend flag
             _debugger.Target = regionToAttack;
         }
         else {
-            if (_stance.HasFlag(Stance.Attack)) {
-                _attackSupervisor.Retire();
+            if (Stance.HasFlag(Stance.Attack)) {
+                AttackSupervisor.Retire();
             }
 
-            _stance = Stance.Defend;
+            Stance = Stance.Defend;
             _debugger.Target = regionToDefend;
         }
-
-        _debugger.CurrentStance = _stance;
     }
 
     /// <summary>
@@ -316,12 +309,6 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         // TODO GD Exclude buildings?
         var enemyForce = GetEnemyForce();
 
-        // This is a small tweak to prevent blocking the build when getting scouted (LOL)
-        // TODO GD We need a way to tell that an enemy drone is hostile to better handle this
-        if (enemyForce <= 2) {
-            enemyForce = 0;
-        }
-
         if (ourForce * 1.5 < enemyForce) {
             _armyBuildRequest.BlockCondition = BuildBlockCondition.MissingMinerals | BuildBlockCondition.MissingProducer | BuildBlockCondition.MissingTech;
         }
@@ -336,11 +323,6 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         else {
             _armyBuildRequest.Priority = BuildRequestPriority.Low;
         }
-
-        _debugger.OwnForce = ourForce;
-        _debugger.EnemyForce = enemyForce;
-        _debugger.BuildPriority = _armyBuildRequest.Priority;
-        _debugger.BuildBlockCondition = _armyBuildRequest.BlockCondition;
     }
 
     /// <summary>
@@ -366,7 +348,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// </summary>
     /// <returns></returns>
     private bool ShouldFreeSomeSupply() {
-        if (!_stance.HasFlag(Stance.TerranFinisher)) {
+        if (!Stance.HasFlag(Stance.TerranFinisher)) {
             return false;
         }
 
@@ -374,7 +356,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             return false;
         }
 
-        return AntiTerranBuildRequest.Fulfillment.Remaining > 0;
+        return _antiTerranBuildRequest.Fulfillment.Remaining > 0;
     }
 
     /// <summary>

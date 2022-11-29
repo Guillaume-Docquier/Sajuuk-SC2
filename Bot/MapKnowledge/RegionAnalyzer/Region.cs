@@ -47,9 +47,19 @@ public class Region {
     [JsonIgnore]
     public HashSet<NeighboringRegion> Neighbors { get; private set; }
 
+    /// <summary>
+    /// Approximates the region's radius based on its cells
+    /// This is a placeholder while we have a smarter region defense behaviour
+    /// </summary>
+    /// <returns>The approximated region's radius</returns>
+    [JsonIgnore]
+    public float ApproximatedRadius { get; }
+
     [JsonConstructor]
     public Region(HashSet<Vector2> cells, Vector2 center, RegionType type, bool isObstructed) {
         Cells = cells;
+        ApproximatedRadius = (float)Math.Sqrt(Cells.Count) / 2;
+
         Center = center;
         Type = type;
         IsObstructed = isObstructed;
@@ -57,6 +67,7 @@ public class Region {
 
     public Region(IEnumerable<Vector2> cells, RegionType type) {
         Cells = cells.ToHashSet();
+        ApproximatedRadius = (float)Math.Sqrt(Cells.Count) / 2;
 
         Type = type;
         if (Type == RegionType.Unknown) {

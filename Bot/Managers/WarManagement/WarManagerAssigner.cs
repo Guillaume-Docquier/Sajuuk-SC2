@@ -2,15 +2,11 @@
 
 namespace Bot.Managers.WarManagement;
 
-public partial class WarManager {
-    public class WarManagerAssigner: Assigner<WarManager> {
-        public WarManagerAssigner(WarManager client) : base(client) {}
+public class WarManagerAssigner<T>: Assigner<T> {
+    public WarManagerAssigner(T client) : base(client) {}
 
-        public override void Assign(Unit unit) {
-            Logger.Debug("({0}) Assigned {1}", Client, unit);
-
-            Client._soldiers.Add(unit);
-            ChangelingTargetingModule.Install(unit);
-        }
+    public override void Assign(Unit unit) {
+        Logger.Debug("({0}) Assigned {1}", Client, unit);
+        ChangelingTargetingModule.Install(unit);
     }
 }

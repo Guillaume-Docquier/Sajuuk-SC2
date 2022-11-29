@@ -2,15 +2,11 @@
 
 namespace Bot.Managers.WarManagement;
 
-public partial class WarManager {
-    public class WarManagerReleaser: Releaser<WarManager> {
-        public WarManagerReleaser(WarManager client) : base(client) {}
+public class WarManagerReleaser<T> : Releaser<T> {
+    public WarManagerReleaser(T client) : base(client) {}
 
-        public override void Release(Unit unit) {
-            Logger.Debug("({0}) Released {1}", Client, unit);
-
-            Client._soldiers.Remove(unit);
-            UnitModule.Uninstall<ChangelingTargetingModule>(unit);
-        }
+    public override void Release(Unit unit) {
+        Logger.Debug("({0}) Released {1}", Client, unit);
+        UnitModule.Uninstall<ChangelingTargetingModule>(unit);
     }
 }
