@@ -14,7 +14,7 @@ public partial class ArmySupervisor {
 
         private float _attackAtForce;
 
-        protected override void OnStateMachineSet() {
+        protected override void OnContextSet() {
             _attackAtForce = Context._strongestForce * 1.2f;
         }
 

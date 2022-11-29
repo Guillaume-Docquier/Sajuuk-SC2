@@ -24,7 +24,7 @@ public partial class SneakAttackTactic {
             return !IsArmyGettingEngaged(army);
         }
 
-        protected override void OnStateMachineSet() {
+        protected override void OnContextSet() {
             Context._targetPosition = default;
             Context._isTargetPriority = false;
         }
