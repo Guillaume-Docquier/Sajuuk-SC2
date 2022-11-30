@@ -58,7 +58,13 @@ public class Region {
     [JsonConstructor]
     public Region(HashSet<Vector2> cells, Vector2 center, RegionType type, bool isObstructed) {
         Cells = cells;
-        ApproximatedRadius = (float)Math.Sqrt(Cells.Count) / 2;
+
+        // The approximated radius is the diagonal of the cells as if they were a square
+        // We also scale them by ^1.05 because this estimation tends to be worse for large regions
+        // Using an exponent makes it so large regions will get a higher scaling
+        var squareSide = Math.Sqrt(Cells.Count);
+        var squareDiagonal = Math.Sqrt(2) * squareSide;
+        ApproximatedRadius = (float)Math.Pow(squareDiagonal / 2, 1.05);
 
         Center = center;
         Type = type;
