@@ -24,6 +24,6 @@ Check out [Artificially Intelligent](https://www.youtube.com/channel/UC_KAanPGVo
 - Hunting Terran flying buildings
 - Region analysis including expand locations, ramps and choke points
 - Remembering enemy units in the fog of war
-- Overlord scouting (Against Zerg)
+- Overlord scouting
 - BuildRequest system with dynamic Priorities and BlockConditions
 - Regions value and force evaluations to decide where to defend and where to attack
