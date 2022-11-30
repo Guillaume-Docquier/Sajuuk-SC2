@@ -63,14 +63,10 @@ public partial class ScoutManager : Manager {
             unitsToRecall.Remove(unitThatIsAvoidingDanger);
         }
 
-        // TODO GD Change to most defended?
-        var safestRegion = RegionAnalyzer.Regions
-            .OrderBy(region => RegionTracker.GetForce(region, Alliance.Enemy))
-            .ThenBy(region => region.Center.DistanceTo(MapAnalyzer.StartingLocation))
-            .First();
-
-        foreach (var unitToRecall in unitsToRecall.Where(unit => unit.DistanceTo(safestRegion.Center) > 5)) {
-            unitToRecall.Move(safestRegion.Center);
+        // TODO GD This can be improved but seems like a sensible default
+        var recallPosition = MapAnalyzer.StartingLocation;
+        foreach (var unitToRecall in unitsToRecall.Where(unit => unit.DistanceTo(recallPosition) > 5)) {
+            unitToRecall.Move(recallPosition);
         }
     }
 
