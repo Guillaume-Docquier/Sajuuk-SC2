@@ -13,6 +13,7 @@ public partial class TownHallSupervisor {
     private IEnumerable<Unit> DiscoverMinerals() {
         return Controller.GetUnits(UnitsTracker.NeutralUnits, Units.MineralFields)
             .Where(mineral => mineral.Supervisor == null)
+            .Where(mineral => mineral.GetRegion() == TownHall.GetRegion())
             .Where(mineral => mineral.DistanceTo(TownHall) < MaxDistanceToExpand)
             .Take(MaxMinerals);
     }
@@ -20,6 +21,7 @@ public partial class TownHallSupervisor {
     private IEnumerable<Unit> DiscoverGasses() {
         return Controller.GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers)
             .Where(gas => gas.Supervisor == null)
+            .Where(gas => gas.GetRegion() == TownHall.GetRegion())
             .Where(gas => gas.DistanceTo(TownHall) < MaxDistanceToExpand)
             .Where(gas => !IsGasDepleted(gas))
             .Take(MaxGas);
