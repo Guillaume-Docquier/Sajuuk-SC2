@@ -31,8 +31,9 @@ public static class UnitEvaluator {
     /// TODO GD Make this more sophisticated (based on unit cost, range, counters, etc)
     /// </summary>
     /// <param name="unit">The unit to evaluate</param>
+    /// <param name="areWorkersOffensive">Whether we should consider the workers as being offensive</param>
     /// <returns>The force of the unit</returns>
-    public static float EvaluateForce(Unit unit) {
+    public static float EvaluateForce(Unit unit, bool areWorkersOffensive = false) {
         // TODO GD For now we purposefully don't handle air units, so we can't kill them
         if (unit.IsFlying) {
             return Value.None;
@@ -57,7 +58,7 @@ public static class UnitEvaluator {
         }
 
         if (Units.Workers.Contains(unit.UnitType)) {
-            if (IsOffensive(unit, unit.Alliance)) {
+            if (areWorkersOffensive || IsOffensive(unit, unit.Alliance)) {
                 return Force.Medium / 4;
             }
 
@@ -136,10 +137,6 @@ public static class UnitEvaluator {
     /// <param name="myAlliance"></param>
     /// <returns></returns>
     private static bool IsOffensive(Unit unit, Alliance myAlliance) {
-        if (unit.Manager is WarManager) {
-            return true;
-        }
-
         var myMain = ExpandAnalyzer.GetExpand(myAlliance, ExpandType.Main);
         var theirMain = ExpandAnalyzer.GetExpand(myAlliance.GetOpposing(), ExpandType.Main);
 

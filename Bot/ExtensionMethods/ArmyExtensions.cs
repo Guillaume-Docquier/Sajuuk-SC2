@@ -7,8 +7,8 @@ using Bot.MapKnowledge;
 namespace Bot.ExtensionMethods;
 
 public static class ArmyExtensions {
-    public static float GetForce(this IEnumerable<Unit> army) {
-        return army.Sum(UnitEvaluator.EvaluateForce);
+    public static float GetForce(this IEnumerable<Unit> army, bool areWorkersOffensive = false) {
+        return army.Sum(soldier => UnitEvaluator.EvaluateForce(soldier, areWorkersOffensive));
     }
 
     public static Vector2 GetCenter(this IEnumerable<Unit> army) {

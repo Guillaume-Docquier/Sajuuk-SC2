@@ -165,7 +165,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
         var enemyForce = GetEnemyForce();
         var draftIndex = 0;
-        while (draftIndex < draftableDrones.Count && _warManager.ManagedUnits.GetForce() < enemyForce) {
+        while (draftIndex < draftableDrones.Count && _warManager.ManagedUnits.GetForce(areWorkersOffensive: true) < enemyForce) {
             _warManager.Assign(draftableDrones[draftIndex]);
             draftIndex++;
         }
@@ -190,7 +190,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
         // This is a small tweak to prevent blocking the build when getting scouted (LOL)
         // TODO GD We need a way to tell that an enemy drone is hostile to better handle this
-        if (enemyForce <= 2) {
+        if (enemyForce <= 1) {
             enemyForce = 0;
         }
 

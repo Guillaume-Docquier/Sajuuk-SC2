@@ -20,13 +20,13 @@ public class RandomScoutingStrategy : IScoutingStrategy {
 
     public IEnumerable<ScoutingTask> Execute() {
         if (Controller.EnemyRace != Race.Random) {
-            _concreteScoutingStrategy = ScoutingStrategyFactory.CreateNew(Controller.EnemyRace);
+            if (_concreteScoutingStrategy == null) {
+                _concreteScoutingStrategy = ScoutingStrategyFactory.CreateNew(Controller.EnemyRace);
 
-            // Cancel our task, we will rely on the concrete scouting strategy now
-            _raceFindingScoutingTask.Cancel();
-        }
+                // Cancel our task, we will rely on the concrete scouting strategy now
+                _raceFindingScoutingTask.Cancel();
+            }
 
-        if (_concreteScoutingStrategy != null) {
             return _concreteScoutingStrategy.Execute();
         }
 
