@@ -23,7 +23,7 @@ public class Program {
     private static readonly IBot Bot = new SajuukBot(Version, scenarios: Scenarios);
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.Moondance;
-    private const Race OpponentRace = Race.Terran;
+    private const Race OpponentRace = Race.Zerg;
     private const Difficulty OpponentDifficulty = Difficulty.Hard;
 
     private const bool RealTime = false;

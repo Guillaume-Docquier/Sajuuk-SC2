@@ -18,6 +18,7 @@ public class TwoBasesRoach : IBuildOrder {
         {
             new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 13),
             new QuantityBuildRequest(BuildType.Expand,      Units.Hatchery,                    atSupply: 16),                    // TODO GD Need to be able to say 1 expand as opposed to 2 hatcheries
+            // TODO GD The build requests are sorted by supply, so the pool gets built before the gas. It doesn't matter, but don't forget
             new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 18, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Build,       Units.SpawningPool,                atSupply: 17, targetQuantity: 1),
             new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 19),
@@ -35,6 +36,11 @@ public class TwoBasesRoach : IBuildOrder {
             new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 50, targetQuantity: 3),
             new TargetBuildRequest  (BuildType.Research,    Upgrades.TunnelingClaws,           atSupply: 50, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Research,    Upgrades.GlialReconstitution,      atSupply: 50, targetQuantity: 1),
+            // TODO GD The build requests are sorted by supply. Because of this, the transition logic works, but if it changes, maybe it'll break
+            // By works I mean they push the upgrades at the end, but they'll still be before the below extractors
+            new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 100, targetQuantity: 4),
+            new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 125, targetQuantity: 5),
+            new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 150, targetQuantity: 6),
         };
 
         foreach (var buildRequest in _buildRequests) {
