@@ -38,6 +38,8 @@ public partial class ScoutManager : Manager {
     }
 
     protected override void DispatchPhase() {
+        ClearCompletedTasks();
+
         foreach (var scoutingTask in _scoutingStrategy.Execute()) {
             _scoutSupervisors.Add(new ScoutSupervisor(scoutingTask));
         }
@@ -50,8 +52,6 @@ public partial class ScoutManager : Manager {
         if (!RegionAnalyzer.IsInitialized) {
             return;
         }
-
-        ClearCompletedTasks();
 
         // TODO GD Consider releasing units
         foreach (var scoutSupervisor in _scoutSupervisors) {
