@@ -52,6 +52,10 @@ public partial class SneakAttackTactic: IWatchUnitsDie, ITactic {
             return false;
         }
 
+        if (!GetPriorityTargetsInOperationRadius(effectiveArmy.GetCenter()).Any()) {
+            return false;
+        }
+
         return _stateMachine.State.IsViable(effectiveArmy);
     }
 
