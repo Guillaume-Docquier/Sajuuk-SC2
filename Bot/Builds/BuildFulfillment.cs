@@ -51,6 +51,8 @@ public class QuantityFulfillment: BuildFulfillment {
 public class TargetFulfillment: BuildFulfillment {
     public TargetFulfillment(BuildRequest buildRequest) : base(buildRequest) {}
 
+    private int _granted = 0;
+
     public override int Fulfilled {
         get {
             if (BuildRequest.BuildType == BuildType.Research) {
@@ -69,6 +71,7 @@ public class TargetFulfillment: BuildFulfillment {
     }
 
     public override void Fulfill(int quantity) {
-        // Do nothing
+        // We don't actually use it, but it is useful to see how many units were requested because of this request
+        _granted++;
     }
 }

@@ -28,16 +28,12 @@ public class SupplyManager : UnitlessManager {
     protected override void ManagementPhase() {
         MaintainOverlords();
 
-        if (ShouldTakeOverOverlordManagement()) {
-            if (ShouldRequestMoreOverlords()) {
-                _overlordsBuildRequest.Requested += OverlordBatchSize;
-            }
+        if (ShouldTakeOverOverlordManagement() && ShouldRequestMoreOverlords()) {
+            // TODO GD Be smarter about the batch size
+            _overlordsBuildRequest.Requested += OverlordBatchSize;
+        }
 
-            _overlordsBuildRequest.Priority = BuildRequestPriority.High;
-        }
-        else {
-            _overlordsBuildRequest.Priority = BuildRequestPriority.Normal;
-        }
+        _overlordsBuildRequest.Priority = BuildRequestPriority.High;
     }
 
     private void MaintainOverlords() {

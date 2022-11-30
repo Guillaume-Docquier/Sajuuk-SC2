@@ -27,20 +27,21 @@ public class TwoBasesRoach : IBuildOrder {
             new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 30),
             new TargetBuildRequest  (BuildType.Train,       Units.Queen,                       atSupply: 30, targetQuantity: 3),
             new TargetBuildRequest  (BuildType.UpgradeInto, Units.Lair,                        atSupply: 33, targetQuantity: 1),
-            new TargetBuildRequest  (BuildType.Build,       Units.RoachWarren,                 atSupply: 37, targetQuantity: 1),
+            new TargetBuildRequest  (BuildType.Build,       Units.RoachWarren,                 atSupply: 33, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Build,       Units.EvolutionChamber,            atSupply: 37, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 37, targetQuantity: 2),
             new TargetBuildRequest  (BuildType.Research,    Upgrades.Burrow,                   atSupply: 40, targetQuantity: 1),
-            new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 44),
+            new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 41),
             new TargetBuildRequest  (BuildType.Research,    Upgrades.ZergMissileWeaponsLevel1, atSupply: 44, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 50, targetQuantity: 3),
             new TargetBuildRequest  (BuildType.Research,    Upgrades.TunnelingClaws,           atSupply: 50, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Research,    Upgrades.GlialReconstitution,      atSupply: 50, targetQuantity: 1),
             // TODO GD The build requests are sorted by supply. Because of this, the transition logic works, but if it changes, maybe it'll break
             // By works I mean they push the upgrades at the end, but they'll still be before the below extractors
-            new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 100, targetQuantity: 4),
-            new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 125, targetQuantity: 5),
-            new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 150, targetQuantity: 6),
+            // TODO GD We should be smarter about gas
+            new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 125, targetQuantity: 4),
+            new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 165, targetQuantity: 5),
+            new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 190, targetQuantity: 6),
         };
 
         foreach (var buildRequest in _buildRequests) {
