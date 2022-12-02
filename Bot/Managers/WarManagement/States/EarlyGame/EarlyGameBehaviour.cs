@@ -101,8 +101,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
             return false;
         }
 
-        var supervisedUnits = DefenseSupervisor.SupervisedUnits;
-        if (supervisedUnits.Any()) {
+        if (DefenseSupervisor.SupervisedUnits.Any()) {
             DefenseSupervisor.Retire();
 
             // We give one tick so that release orders, like stop or unburrow go through

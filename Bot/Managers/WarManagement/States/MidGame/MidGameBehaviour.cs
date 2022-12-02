@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
@@ -8,7 +7,6 @@ using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.MapKnowledge;
-using Bot.Utils;
 using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.States.MidGame;
@@ -19,16 +17,16 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
 
-    private readonly BuildRequest _antiTerranBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Corruptor, targetQuantity: 10, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
     private BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
 
     private readonly MidGameBehaviourDebugger _debugger = new MidGameBehaviourDebugger();
     private readonly WarManager _warManager;
 
+    private bool _hasCleanUpStarted = false;
+
     public Stance Stance { get; private set; } = Stance.Defend;
     public readonly ArmySupervisor AttackSupervisor = new ArmySupervisor();
     public readonly ArmySupervisor DefenseSupervisor = new ArmySupervisor();
-    public readonly ArmySupervisor TerranFinisherSupervisor = new ArmySupervisor();
 
     public IAssigner Assigner { get; }
     public IDispatcher Dispatcher { get; }
@@ -40,7 +38,6 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         _warManager = warManager;
 
         BuildRequests.Add(_armyBuildRequest);
-        TerranFinisherSupervisor.AssignTarget(new Vector2(MapAnalyzer.MaxX / 2f, MapAnalyzer.MaxY / 2f), 999, canHuntTheEnemy: true);
 
         Assigner = new WarManagerAssigner<MidGameBehaviour>(this);
         Dispatcher = new MidGameDispatcher(this);
@@ -48,36 +45,32 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     }
 
     public void RecruitmentPhase() {
+        if (_hasCleanUpStarted) {
+            return;
+        }
+
         _warManager.Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
     }
 
     public void DispatchPhase() {
+        // TODO GD We could probably have this logic in a base class
+        if (_hasCleanUpStarted) {
+            return;
+        }
+
         _warManager.Dispatch(_warManager.ManagedUnits.Where(soldier => soldier.Supervisor == null));
     }
 
     public void ManagementPhase() {
-        if (TheGameIsOurs()) {
-            FinishHim();
-        }
-        else {
-            BigBrainPlay();
+        if (_hasCleanUpStarted) {
+            return;
         }
 
+        BigBrainPlay();
         AdjustBuildRequests();
 
-        if (ShouldFinishOffTerran()) {
-            FinishOffTerran();
-        }
-
-        if (ShouldFreeSomeSupply()) {
-            FreeSomeSupply();
-        }
-        else {
-            AttackSupervisor.OnFrame();
-            DefenseSupervisor.OnFrame();
-        }
-
-        TerranFinisherSupervisor.OnFrame();
+        AttackSupervisor.OnFrame();
+        DefenseSupervisor.OnFrame();
 
         // TODO GD The war manager could do most of that
         _debugger.OwnForce = _warManager.ManagedUnits.GetForce();
@@ -88,48 +81,24 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         _debugger.Debug();
     }
 
-    // TODO GD When we extract finisher from here
     public bool CleanUp() {
-        return true;
-    }
+        _hasCleanUpStarted = true;
 
-    /// <summary>
-    /// Evaluates if we are overwhelming the opponent.
-    /// </summary>
-    /// <returns>True if we can stop being fancy and just finish the opponent</returns>
-    private bool TheGameIsOurs() {
-        if (!Stance.HasFlag(Stance.Finisher) && MapAnalyzer.VisibilityRatio < 0.85) {
+        if (AttackSupervisor.SupervisedUnits.Any()) {
+            AttackSupervisor.Retire();
+
+            // We give one tick so that release orders, like stop or unburrow go through
             return false;
         }
 
-        var ourForce = _warManager.ManagedUnits.GetForce();
-        var enemyForce = GetEnemyForce();
-        if (ourForce < enemyForce * 3) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /// <summary>
-    /// Steamroll the opponent.
-    /// </summary>
-    private void FinishHim() {
-        if (Stance.HasFlag(Stance.Finisher)) {
-            return;
-        }
-
-        var target = _warManager.ManagedUnits.GetCenter();
-        AttackSupervisor.AssignTarget(target, 999, canHuntTheEnemy: true);
-
-        if (Stance.HasFlag(Stance.Defend)) {
+        if (DefenseSupervisor.SupervisedUnits.Any()) {
             DefenseSupervisor.Retire();
+
+            // We give one tick so that release orders, like stop or unburrow go through
+            return false;
         }
 
-        Stance |= Stance.Attack | Stance.Finisher;
-        Stance &= ~Stance.Defend; // Unset the defend flag
-
-        _debugger.Target = target.GetRegion();
+        return true;
     }
 
     /// <summary>
@@ -145,67 +114,6 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         AttackSupervisor.AssignTarget(regionToAttack.Center, regionToDefend.ApproximatedRadius, canHuntTheEnemy: true);
 
         AttackOrDefend(regionToAttack, regionToDefend);
-    }
-
-    /// <summary>
-    /// Some Terran will fly their buildings.
-    /// Check if they are basically dead and we should start dealing with the flying buildings.
-    /// </summary>
-    /// <returns>True if we should start handling flying terran buildings</returns>
-    private bool ShouldFinishOffTerran() {
-        if (Controller.EnemyRace != Race.Terran) {
-            return false;
-        }
-
-        if (!Stance.HasFlag(Stance.Attack)) {
-            return false;
-        }
-
-        if (Controller.Frame < TimeUtils.SecsToFrames(10 * 60)) {
-            return false;
-        }
-
-        if (Controller.Frame % TimeUtils.SecsToFrames(5) != 0) {
-            return false;
-        }
-
-        if (MapAnalyzer.ExplorationRatio < 0.80 || !ExpandAnalyzer.ExpandLocations.All(expandLocation => VisibilityTracker.IsExplored(expandLocation.Position))) {
-            return false;
-        }
-
-        return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Buildings).All(building => building.IsFlying);
-    }
-
-    /// <summary>
-    /// Create anti-air units to deal with terran flying buildings.
-    /// </summary>
-    private void FinishOffTerran() {
-        if (Stance.HasFlag(Stance.TerranFinisher)) {
-            return;
-        }
-
-        BuildRequests.Add(new TargetBuildRequest(BuildType.Build, Units.Spire, targetQuantity: 1, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All));
-        BuildRequests.Add(_antiTerranBuildRequest);
-
-        Stance |= Stance.TerranFinisher;
-        TaggingService.TagGame(TaggingService.Tag.TerranFinisher);
-    }
-
-    /// <summary>
-    /// Orders the army to kill 1 of their own to free some supply
-    /// </summary>
-    private void FreeSomeSupply() {
-        foreach (var supervisedUnit in AttackSupervisor.SupervisedUnits.Where(unit => unit.IsBurrowed)) {
-            supervisedUnit.UseAbility(Abilities.BurrowRoachUp);
-        }
-
-        var unburrowedUnits = AttackSupervisor.SupervisedUnits.Where(unit => !unit.IsBurrowed).ToList();
-        if (unburrowedUnits.Count > 0) {
-            var unitToSacrifice = unburrowedUnits[0];
-            foreach (var unburrowedUnit in unburrowedUnits) {
-                unburrowedUnit.Attack(unitToSacrifice);
-            }
-        }
     }
 
     /// <summary>
@@ -273,16 +181,15 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         var enemyForce = pathToTarget.Sum(region => RegionTracker.GetForce(region, Alliance.Enemy));
 
         if (ourForce > enemyForce * RequiredForceRatioBeforeAttacking || Controller.CurrentSupply >= MaxSupplyBeforeAttacking) {
-            if (Stance.HasFlag(Stance.Defend)) {
+            if (Stance == Stance.Defend) {
                 DefenseSupervisor.Retire();
             }
 
-            Stance |= Stance.Attack;
-            Stance &= ~Stance.Defend; // Unset the defend flag
+            Stance = Stance.Attack;
             _debugger.Target = regionToAttack;
         }
         else {
-            if (Stance.HasFlag(Stance.Attack)) {
+            if (Stance == Stance.Attack) {
                 AttackSupervisor.Retire();
             }
 
@@ -340,22 +247,6 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
         // TODO GD Not sure if this is good
         return Units.Drone;
-    }
-
-    /// <summary>
-    /// Determines if supply should be freed to let the TerranFinisher do its job
-    /// </summary>
-    /// <returns></returns>
-    private bool ShouldFreeSomeSupply() {
-        if (!Stance.HasFlag(Stance.TerranFinisher)) {
-            return false;
-        }
-
-        if (Controller.AvailableSupply >= 2) {
-            return false;
-        }
-
-        return _antiTerranBuildRequest.Fulfillment.Remaining > 0;
     }
 
     /// <summary>

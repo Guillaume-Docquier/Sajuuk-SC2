@@ -5,15 +5,9 @@ public class MidGameDispatcher : Dispatcher<MidGameBehaviour> {
 
     public override void Dispatch(Unit unit) {
         Logger.Debug("({0}) Dispatched {1}", Client, unit);
-        // TODO GD Improve this
-        if (Client.Stance.HasFlag(Stance.Attack)) {
-            if (unit.IsFlying) {
-                // For now we only use flying units when we need to because Terran scums can fly
-                Client.TerranFinisherSupervisor.Assign(unit);
-            }
-            else {
-                Client.AttackSupervisor.Assign(unit);
-            }
+
+        if (Client.Stance == Stance.Attack) {
+            Client.AttackSupervisor.Assign(unit);
         }
         else {
             Client.DefenseSupervisor.Assign(unit);

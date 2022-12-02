@@ -14,6 +14,11 @@ public interface IWarManagerBehaviour {
     public void DispatchPhase();
     public void ManagementPhase();
 
-    // TODO GD This is not pretty, but for simplicity we'll roll with it
+    // TODO GD Put this in a separate interface!
+    /// <summary>
+    /// Do anything you need to clean up anything that was set up by the behaviour.
+    /// Generally, that would be retiring all supervisors
+    /// </summary>
+    /// <returns>True if the cleanup is complete, false if you need more time.</returns>
     public bool CleanUp();
 }

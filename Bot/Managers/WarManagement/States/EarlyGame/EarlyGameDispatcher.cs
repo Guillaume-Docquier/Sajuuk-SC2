@@ -5,6 +5,7 @@ public class EarlyGameDispatcher : Dispatcher<EarlyGameBehaviour> {
 
     public override void Dispatch(Unit unit) {
         Logger.Debug("({0}) Dispatched {1}", Client, unit);
+
         Client.DefenseSupervisor.Assign(unit);
     }
 }

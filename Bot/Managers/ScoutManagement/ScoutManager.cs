@@ -5,11 +5,9 @@ using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.GameSense.RegionTracking;
 using Bot.Managers.ScoutManagement.ScoutingStrategies;
 using Bot.Managers.ScoutManagement.ScoutingSupervision;
 using Bot.MapKnowledge;
-using SC2APIProtocol;
 
 namespace Bot.Managers.ScoutManagement;
 

@@ -1,4 +1,10 @@
-﻿namespace Bot.Managers.WarManagement.States.MidGame;
+﻿using System.Linq;
+using Bot.ExtensionMethods;
+using Bot.GameSense;
+using Bot.Managers.WarManagement.States.Finisher;
+using Bot.MapKnowledge;
+
+namespace Bot.Managers.WarManagement.States.MidGame;
 
 public class MidGameState : WarManagerState {
     private TransitionState _transitionState = TransitionState.NotTransitioning;
@@ -12,34 +18,54 @@ public class MidGameState : WarManagerState {
 
     protected override void Execute() {
         if (_transitionState == TransitionState.NotTransitioning) {
-            if (ShouldTransitionToLateGame()) {
+            if (ShouldTransitionToFinisher()) {
                 _transitionState = TransitionState.Transitioning;
             }
         }
 
         if (_transitionState == TransitionState.Transitioning) {
-            TransitionToLateGame();
+            TransitionToFinisher();
         }
     }
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new MidGameState());
+            StateMachine.TransitionTo(new FinisherState());
             return true;
         }
 
         return false;
     }
 
-    private bool ShouldTransitionToLateGame() {
-        // TODO GD Once we extract finisher state
-        return false;
+    /// <summary>
+    /// Evaluates if we are overwhelming the opponent.
+    /// </summary>
+    /// <returns>True if we can stop being fancy and just finish the opponent</returns>
+    private bool ShouldTransitionToFinisher() {
+        if (MapAnalyzer.VisibilityRatio < 0.85) {
+            return false;
+        }
+
+        var ourForce = Context.ManagedUnits.GetForce();
+        var enemyForce = GetEnemyForce();
+        if (ourForce < enemyForce * 3) {
+            return false;
+        }
+
+        return true;
     }
 
-    private void TransitionToLateGame() {
-        // TODO GD Clean up strategies/states/whatever
+    private void TransitionToFinisher() {
         if (_behaviour.CleanUp()) {
             _transitionState = TransitionState.TransitionComplete;
         }
+    }
+
+    /// <summary>
+    /// Returns the enemy force
+    /// </summary>
+    /// <returns></returns>
+    private static float GetEnemyForce() {
+        return UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits).GetForce();
     }
 }

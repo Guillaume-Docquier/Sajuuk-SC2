@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameData;
-using Bot.Managers.WarManagement;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
 
