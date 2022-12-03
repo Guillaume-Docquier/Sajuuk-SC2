@@ -90,7 +90,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
     /// <param name="scout">The unit to scout with</param>
     private void SoloScout(Unit scout) {
         var coverageScores = ComputeCoverageScores(new List<Unit> { scout })[scout];
-        var cellToExplore = _areaToScout.MinBy(cell => coverageScores[cell]);
+        var cellToExplore = _areaToScout.MaxBy(cell => coverageScores[cell]);
 
         scout.Move(cellToExplore);
         Program.GraphicalDebugger.AddLink(scout.Position, cellToExplore.ToVector3(), Colors.LightBlue);
