@@ -14,7 +14,6 @@ using SC2APIProtocol;
 namespace Bot.Wrapper;
 
 public class GameConnection {
-    private const string Address = "127.0.0.1";
     private readonly ProtobufProxy _proxy = new ProtobufProxy();
 
     private string _starcraftExe;
@@ -58,16 +57,17 @@ public class GameConnection {
     }
 
     public async Task RunLocal(IBot bot, string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime, bool runDataAnalyzersOnly = false) {
-        const int port = 5678;
+        const string localAddress = "127.0.0.1";
+        const int localGamePort = 5678;
 
         Logger.Info("Finding the SC2 executable info");
         FindExecutableInfo();
 
         Logger.Info("Starting SinglePlayer Instance");
-        StartSc2Instance(port);
+        StartSc2Instance(localAddress, localGamePort);
 
-        Logger.Info("Connecting to port: {0}", port);
-        await Connect(port);
+        Logger.Info("Connecting to port: {0}", localGamePort);
+        await Connect(localAddress, localGamePort);
 
         Logger.Info("Creating game on map: {0}", mapFileName);
         await CreateGame(mapFileName, opponentRace, opponentDifficulty, realTime);
@@ -77,13 +77,13 @@ public class GameConnection {
         await Run(bot, playerId, runDataAnalyzersOnly);
     }
 
-    private void StartSc2Instance(int port) {
+    private void StartSc2Instance(string address, int gamePort) {
         var processStartInfo = new ProcessStartInfo(_starcraftExe)
         {
             // TODO GD Make and enum for this
             // DisplayMode 0: Windowed
             // DisplayMode 1: Full screen
-            Arguments = $"-listen {Address} -port {port} -displayMode 1",
+            Arguments = $"-listen {address} -port {gamePort} -displayMode 1",
             WorkingDirectory = Path.Combine(_starcraftDir, "Support64")
         };
 
@@ -94,11 +94,11 @@ public class GameConnection {
         Process.Start(processStartInfo);
     }
 
-    private async Task Connect(int port) {
+    private async Task Connect(string address, int gamePort) {
         const int timeout = 60;
         for (var i = 0; i < timeout * 2; i++) {
             try {
-                await _proxy.Connect(Address, port);
+                await _proxy.Connect(address, gamePort);
                 Logger.Info("--> Connected");
 
                 return;
@@ -152,11 +152,11 @@ public class GameConnection {
 
     public async Task RunLadder(IBot bot, string[] args) {
         var commandLineArgs = new CommandLineArguments(args);
-        await RunLadder(bot, commandLineArgs.GamePort, commandLineArgs.StartPort);
+        await RunLadder(bot, commandLineArgs.LadderServer, commandLineArgs.GamePort, commandLineArgs.StartPort);
     }
 
-    private async Task RunLadder(IBot bot, int gamePort, int startPort) {
-        await Connect(gamePort);
+    private async Task RunLadder(IBot bot, string address, int gamePort, int startPort) {
+        await Connect(address, gamePort);
 
         var playerId = await JoinGameLadder(bot.Race, startPort);
         await Run(bot, playerId);

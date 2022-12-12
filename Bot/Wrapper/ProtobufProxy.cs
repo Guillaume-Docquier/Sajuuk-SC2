@@ -15,13 +15,13 @@ public class ProtobufProxy {
     private const int ConnectTimeout = 20000;
     private const int ReadWriteTimeout = 120000;
 
-    public async Task Connect(string address, int port) {
+    public async Task Connect(string address, int gamePort) {
         _clientSocket = new ClientWebSocket();
         // Disable PING control frames (https://tools.ietf.org/html/rfc6455#section-5.5.2).
         // It seems SC2 built in websocket server does not do PONG but tries to process ping as
         // request and then sends empty response to client.
         _clientSocket.Options.KeepAliveInterval = TimeSpan.FromDays(30);
-        var adr = $"ws://{address}:{port}/sc2api";
+        var adr = $"ws://{address}:{gamePort}/sc2api";
         var uri = new Uri(adr);
         using (var cancellationSource = new CancellationTokenSource()) {
             cancellationSource.CancelAfter(ConnectTimeout);
