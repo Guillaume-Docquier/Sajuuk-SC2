@@ -16,25 +16,12 @@ public partial class ScoutManager {
                 return;
             }
 
-            var ranks = supervisorsInNeed
-                .OrderByDescending(supervisor => supervisor.ScoutingTask.Priority)
-                .Select((supervisor, index) => (supervisor, rank: index + 1))
-                .ToDictionary(tuple => tuple.supervisor, tuple => tuple.rank);
-
-
-            var scoutingSupervisor = supervisorsInNeed
-                .MinBy(supervisor => {
-                    var distanceToTask = supervisor.ScoutingTask.ScoutLocation.DistanceTo(unit);
-
-                    var allowedScouts = supervisor.ScoutingTask.MaxScouts - supervisor.SupervisedUnits.Count;
-                    var crowdMultiplier = allowedScouts <= 0 ? 2f : 1f / allowedScouts;
-
-                    var rankMultiplier = ranks[supervisor] * ranks[supervisor];
-
-                    return distanceToTask * crowdMultiplier * rankMultiplier;
-                })!;
-
-            scoutingSupervisor.Assign(unit);
+            supervisorsInNeed
+                .OrderBy(supervisor => supervisor.SupervisedUnits.Count)
+                .ThenByDescending(supervisor => supervisor.ScoutingTask.Priority)
+                .ThenBy(supervisor => supervisor.ScoutingTask.ScoutLocation.DistanceTo(unit))
+                .First()
+                .Assign(unit);
         }
     }
 }
