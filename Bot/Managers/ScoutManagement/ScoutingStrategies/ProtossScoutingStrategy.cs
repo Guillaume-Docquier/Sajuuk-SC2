@@ -43,7 +43,7 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
 
         // Keep watching
         if (_ownNaturalScoutingTask.IsComplete()) {
-            _ownNaturalScoutingTask = new RegionScoutingTask(_ownNatural.Position, TopPriority, maxScouts: 1);
+            _ownNaturalScoutingTask = new RegionScoutingTask(_ownNatural.Position, priority: TopPriority, maxScouts: 1);
 
             yield return _ownNaturalScoutingTask;
         }
@@ -51,10 +51,10 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
 
     private void Init() {
         _ownNatural = ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural);
-        _ownNaturalScoutingTask = new RegionScoutingTask(_ownNatural.Position, TopPriority, maxScouts: 1);
+        _ownNaturalScoutingTask = new RegionScoutingTask(_ownNatural.Position, priority: TopPriority, maxScouts: 1);
 
         var enemyNatural = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
-        _enemyNaturalScoutingTask = new ExpandScoutingTask(enemyNatural.Position, TopPriority - 1, maxScouts: 1);
+        _enemyNaturalScoutingTask = new ExpandScoutingTask(enemyNatural.Position, priority: TopPriority - 1, maxScouts: 1);
 
         _isInitialized = true;
     }
