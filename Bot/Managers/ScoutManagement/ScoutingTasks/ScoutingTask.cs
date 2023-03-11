@@ -6,6 +6,9 @@ namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 public abstract class ScoutingTask {
     public Vector2 ScoutLocation { get; }
 
+    /**
+     * High priority is more important
+     */
     public int Priority { get; }
 
     public int MaxScouts { get; }
