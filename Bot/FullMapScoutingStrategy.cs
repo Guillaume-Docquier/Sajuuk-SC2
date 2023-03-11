@@ -11,8 +11,8 @@ namespace Bot;
 public class FullMapScoutingStrategy : IScoutingStrategy {
     private bool _isInitialized = false;
 
-    private List<ScoutingTask> _ongoingTasks = new List<ScoutingTask>();
-    private HashSet<Region> _scoutedRegions = new HashSet<Region>();
+    private readonly List<ScoutingTask> _ongoingTasks = new List<ScoutingTask>();
+    private readonly HashSet<Region> _scoutedRegions = new HashSet<Region>();
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
         if (!ExpandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
@@ -22,10 +22,10 @@ public class FullMapScoutingStrategy : IScoutingStrategy {
         if (!_isInitialized) {
             _isInitialized = true;
             var mainBaseRegion = ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).GetRegion();
-            yield return AddTask(new RegionScoutingTask(mainBaseRegion.Center, priority: 0, maxScouts: 999));
+            yield return AddTask(new RegionScoutingTask(mainBaseRegion.Center));
 
-            foreach (var neighbor in mainBaseRegion.Neighbors.Where(neighbor => !_scoutedRegions.Contains(neighbor.Region))) {
-                yield return AddTask(new RegionScoutingTask(neighbor.Region.Center, priority: 0, maxScouts: 999));
+            foreach (var neighborScoutingTask in CreateNeighboringScoutingTasks(mainBaseRegion)) {
+                yield return AddTask(neighborScoutingTask);
             }
 
             yield break;
@@ -35,8 +35,8 @@ public class FullMapScoutingStrategy : IScoutingStrategy {
             _ongoingTasks.Remove(scoutingTask);
 
             var region = scoutingTask.ScoutLocation.GetRegion();
-            foreach (var neighbor in region.Neighbors.Where(neighbor => !_scoutedRegions.Contains(neighbor.Region))) {
-                yield return AddTask(new RegionScoutingTask(neighbor.Region.Center, priority: 0, maxScouts: 999));
+            foreach (var neighborScoutingTask in CreateNeighboringScoutingTasks(region)) {
+                yield return AddTask(neighborScoutingTask);
             }
         }
     }
@@ -46,5 +46,15 @@ public class FullMapScoutingStrategy : IScoutingStrategy {
         _scoutedRegions.Add(scoutingTask.ScoutLocation.GetRegion());
 
         return scoutingTask;
+    }
+
+    private IEnumerable<ScoutingTask> CreateNeighboringScoutingTasks(Region region) {
+        var neighborsToScout = region.Neighbors
+            .Where(neighbor => !neighbor.Region.IsObstructed)
+            .Where(neighbor => !_scoutedRegions.Contains(neighbor.Region));
+
+        foreach (var neighbor in neighborsToScout) {
+            yield return new RegionScoutingTask(neighbor.Region.Center);
+        }
     }
 }

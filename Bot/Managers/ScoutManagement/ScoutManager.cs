@@ -30,7 +30,7 @@ public partial class ScoutManager : Manager {
     }
 
     protected override void RecruitmentPhase() {
-        Assign(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone));
+        Assign(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone).Where(drone => drone.Manager != this));
     }
 
     protected override void DispatchPhase() {
