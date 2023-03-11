@@ -26,13 +26,11 @@ public partial class ScoutManager : Manager {
         Dispatcher = new ScoutManagerDispatcher(this);
         Releaser = new ScoutManagerReleaser(this);
 
-        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(Controller.EnemyRace);
+        _scoutingStrategy = new FullMapScoutingStrategy();
     }
 
     protected override void RecruitmentPhase() {
-        Assign(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Overlord).Where(unit => unit.Manager == null));
-
-        // TODO GD Add some condition to request a Drone / Zergling?
+        Assign(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone));
     }
 
     protected override void DispatchPhase() {

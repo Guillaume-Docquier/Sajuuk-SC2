@@ -22,11 +22,11 @@ public class Program {
     private const string Version = "3_3_2";
     private static readonly IBot Bot = new SajuukBot(Version, scenarios: Scenarios);
 
-    private const string MapFileName = Maps.Season_2022_4.FileNames.Moondance;
+    private const string MapFileName = Maps.Season_2022_4.FileNames.CosmicSapphire;
     private const Race OpponentRace = Race.Terran;
-    private const Difficulty OpponentDifficulty = Difficulty.Hard;
+    private const Difficulty OpponentDifficulty = Difficulty.VeryEasy;
 
-    private const bool RealTime = false;
+    private const bool RealTime = true;
 
     public static GameConnection GameConnection { get; private set; }
     public static bool DebugEnabled { get; private set; }
