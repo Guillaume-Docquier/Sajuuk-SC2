@@ -8,6 +8,7 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.Utils;
 using Bot.VideoClips.Clips;
+using Bot.VideoClips.Clips.RayCastingClips;
 using Bot.Wrapper;
 using SC2APIProtocol;
 

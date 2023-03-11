@@ -8,7 +8,7 @@ using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
 using SC2APIProtocol;
 
-namespace Bot.VideoClips.Clips;
+namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class PerpendicularLinesScanClip : Clip {
     public PerpendicularLinesScanClip(Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {

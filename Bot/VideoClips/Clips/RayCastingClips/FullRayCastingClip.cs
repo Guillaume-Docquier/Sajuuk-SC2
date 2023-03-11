@@ -5,7 +5,7 @@ using Bot.MapKnowledge;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
 
-namespace Bot.VideoClips.Clips;
+namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class FullRayCastingClip : Clip {
     public FullRayCastingClip(Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {

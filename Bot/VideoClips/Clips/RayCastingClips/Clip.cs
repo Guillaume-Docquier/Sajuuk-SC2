@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Bot.VideoClips.Manim.Animations;
 
-namespace Bot.VideoClips.Clips;
+namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public abstract class Clip {
     private readonly List<Animation> _animations = new List<Animation>();

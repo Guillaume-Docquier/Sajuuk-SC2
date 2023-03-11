@@ -7,7 +7,7 @@ using Bot.MapKnowledge;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
 
-namespace Bot.VideoClips.Clips;
+namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class ChokeWallsClip : Clip {
     public ChokeWallsClip(Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
@@ -17,7 +17,7 @@ public class ChokeWallsClip : Clip {
 
         var visibleCells = new HashSet<Vector2>();
         for (var angle = 0; angle < 360; angle += 1) {
-            var rayCastResults = RayCasting.RayCast(sceneLocation, MathUtils.DegToRad(angle), cell => !MapAnalyzer.IsWalkable(cell)).ToList();
+            var rayCastResults = Bot.RayCasting.RayCast(sceneLocation, MathUtils.DegToRad(angle), cell => !MapAnalyzer.IsWalkable(cell)).ToList();
             foreach (var rayCastResult in rayCastResults) {
                 visibleCells.Add(rayCastResult.CornerOfCell.AsWorldGridCenter());
             }

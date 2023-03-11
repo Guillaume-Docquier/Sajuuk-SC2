@@ -6,7 +6,7 @@ using Bot.MapKnowledge;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
 
-namespace Bot.VideoClips.Clips;
+namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class ChokeWidenessClip : Clip {
     public ChokeWidenessClip(Vector2 origin, Vector2 destination, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
