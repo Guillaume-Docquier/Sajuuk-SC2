@@ -4,5 +4,5 @@ using Bot.Managers.ScoutManagement.ScoutingTasks;
 namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 
 public interface IScoutingStrategy {
-    IEnumerable<ScoutingTask> Execute();
+    IEnumerable<ScoutingTask> GetNextScoutingTasks();
 }

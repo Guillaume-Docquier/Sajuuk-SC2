@@ -17,7 +17,7 @@ public class TerranScoutingStrategy : IScoutingStrategy {
 
     private ScoutingTask _enemyNaturalScoutingTask;
 
-    public IEnumerable<ScoutingTask> Execute() {
+    public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
         if (!ExpandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
             yield break;
         }

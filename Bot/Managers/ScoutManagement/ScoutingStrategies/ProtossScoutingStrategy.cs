@@ -19,7 +19,7 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
     private ScoutingTask _ownNaturalScoutingTask;
     private ScoutingTask _enemyNaturalScoutingTask;
 
-    public IEnumerable<ScoutingTask> Execute() {
+    public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
         if (!ExpandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
             yield break;
         }

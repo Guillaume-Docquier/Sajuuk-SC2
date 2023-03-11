@@ -31,7 +31,7 @@ public class ZergScoutingStrategy : IScoutingStrategy {
     private ScoutingTask _thirdScoutingTask;
     private ScoutingTask _fourthScoutingTask;
 
-    public IEnumerable<ScoutingTask> Execute() {
+    public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
         if (!ExpandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
             yield break;
         }

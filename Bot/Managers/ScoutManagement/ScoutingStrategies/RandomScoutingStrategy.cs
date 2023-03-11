@@ -18,7 +18,7 @@ public class RandomScoutingStrategy : IScoutingStrategy {
     private ScoutingTask _raceFindingScoutingTask;
     private bool _isInitialized = false;
 
-    public IEnumerable<ScoutingTask> Execute() {
+    public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
         if (Controller.EnemyRace != Race.Random) {
             if (_concreteScoutingStrategy == null) {
                 _concreteScoutingStrategy = ScoutingStrategyFactory.CreateNew(Controller.EnemyRace);
@@ -27,7 +27,7 @@ public class RandomScoutingStrategy : IScoutingStrategy {
                 _raceFindingScoutingTask.Cancel();
             }
 
-            return _concreteScoutingStrategy.Execute();
+            return _concreteScoutingStrategy.GetNextScoutingTasks();
         }
 
         if (!_isInitialized) {

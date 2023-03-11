@@ -38,7 +38,7 @@ public partial class ScoutManager : Manager {
     protected override void DispatchPhase() {
         ClearCompletedTasks();
 
-        foreach (var scoutingTask in _scoutingStrategy.Execute()) {
+        foreach (var scoutingTask in _scoutingStrategy.GetNextScoutingTasks()) {
             _scoutSupervisors.Add(new ScoutSupervisor(scoutingTask));
         }
 
