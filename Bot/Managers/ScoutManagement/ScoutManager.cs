@@ -73,11 +73,12 @@ public partial class ScoutManager : Manager {
         var unitsThatAreAvoidingDanger = new List<Unit>();
 
         var enemyUnits = UnitsTracker.EnemyUnits.Concat(UnitsTracker.EnemyGhostUnits.Values).ToList();
-        var enemyAntiAir = enemyUnits.Where(enemyUnit => enemyUnit.CanHitAir).ToList();
+        var antiAirEnemies = enemyUnits.Where(enemyUnit => enemyUnit.CanHitAir).ToList();
+        var antiGroundEnemies = enemyUnits.Where(enemyUnit => enemyUnit.CanHitGround).ToList();
         foreach (var unitToPreserve in unitsToPreserve) {
             var enemiesInVicinity = unitToPreserve.IsFlying
-                ? enemyAntiAir.Where(enemy => unitToPreserve.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList()
-                : enemyUnits.Where(enemy => unitToPreserve.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList();
+                ? antiAirEnemies.Where(enemy => unitToPreserve.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList()
+                : antiGroundEnemies.Where(enemy => unitToPreserve.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList();
 
             if (enemiesInVicinity.Count > 0) {
                 var fleeVector = ComputeFleeUnitVector(unitToPreserve, enemiesInVicinity);

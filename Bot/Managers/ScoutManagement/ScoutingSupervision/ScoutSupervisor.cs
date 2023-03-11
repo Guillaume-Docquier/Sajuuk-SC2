@@ -26,16 +26,17 @@ public partial class ScoutSupervisor : Supervisor {
         var scoutsThatCanWork = new HashSet<Unit>(SupervisedUnits);
 
         var enemyUnits = UnitsTracker.EnemyUnits.Concat(UnitsTracker.EnemyGhostUnits.Values).ToList();
-        var enemyAntiAir = enemyUnits.Where(enemyUnit => enemyUnit.CanHitAir).ToList();
-        foreach (var supervisedUnit in SupervisedUnits) {
-            var enemiesInVicinity = supervisedUnit.IsFlying
-                ? enemyAntiAir.Where(enemy => supervisedUnit.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList()
-                : enemyUnits.Where(enemy => supervisedUnit.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList();
+        var antiAirEnemies = enemyUnits.Where(enemyUnit => enemyUnit.CanHitAir).ToList();
+        var antiGroundEnemies = enemyUnits.Where(enemyUnit => enemyUnit.CanHitGround).ToList();
+        foreach (var unitToPreserve in SupervisedUnits) {
+            var enemiesInVicinity = unitToPreserve.IsFlying
+                ? antiAirEnemies.Where(enemy => unitToPreserve.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList()
+                : antiGroundEnemies.Where(enemy => unitToPreserve.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList();
 
             if (enemiesInVicinity.Count > 0) {
-                var fleeVector = ComputeFleeUnitVector(supervisedUnit, enemiesInVicinity);
-                supervisedUnit.MoveInDirection(3 * fleeVector);
-                scoutsThatCanWork.Remove(supervisedUnit);
+                var fleeVector = ComputeFleeUnitVector(unitToPreserve, enemiesInVicinity);
+                unitToPreserve.MoveInDirection(3 * fleeVector);
+                scoutsThatCanWork.Remove(unitToPreserve);
             }
         }
 
