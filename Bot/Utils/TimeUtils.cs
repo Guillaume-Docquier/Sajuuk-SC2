@@ -11,8 +11,8 @@ public static class TimeUtils {
         return (ulong)(FramesPerSecond * seconds);
     }
 
-    public static string GetGameTimeString() {
-        var totalSeconds = (int)(Controller.Frame / FramesPerSecond);
+    public static string GetGameTimeString(uint frame) {
+        var totalSeconds = (int)(frame / FramesPerSecond);
         var minutes = totalSeconds / 60;
         var seconds = totalSeconds % 60;
 

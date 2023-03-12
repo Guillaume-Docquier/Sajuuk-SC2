@@ -40,7 +40,7 @@ public static class Logger {
             Initialize();
         }
 
-        var msg = $"[{DateTime.UtcNow.ToString("HH:mm:ss")} | {TimeUtils.GetGameTimeString()} @ {Controller.Frame,5}] {logLevel,7}: {string.Format(line, parameters)}";
+        var msg = $"[{DateTime.UtcNow:HH:mm:ss} | {TimeUtils.GetGameTimeString(Controller.Frame)} @ {Controller.Frame,5}] {logLevel,7}: {string.Format(line, parameters)}";
 
         _fileStream!.WriteLine(msg);
 
