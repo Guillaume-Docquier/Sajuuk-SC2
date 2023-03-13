@@ -15,6 +15,7 @@ namespace Bot.Debugging;
 
 public class BotDebugger {
     private float _maxMineralRate = 0;
+    private float _maxVespeneRate = 0;
 
     public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus) {
         if (!Program.DebugEnabled) {
@@ -109,12 +110,20 @@ public class BotDebugger {
         }
 
         var scoreDetails = Controller.Observation.Observation.Score.ScoreDetails;
+
         _maxMineralRate = Math.Max(_maxMineralRate, scoreDetails.CollectionRateMinerals);
         Program.GraphicalDebugger.AddTextGroup(new[]
         {
-            $"Max minerals rate: {_maxMineralRate}",
-            $"Minerals rate: {scoreDetails.CollectionRateMinerals}",
+            $"Max minerals rate: {_maxMineralRate, 4}",
+            $"Minerals rate: {scoreDetails.CollectionRateMinerals, 8}",
         }, virtualPos: new Point { X = 0.315f, Y = 0.765f });
+
+        _maxVespeneRate = Math.Max(_maxVespeneRate, scoreDetails.CollectionRateVespene);
+        Program.GraphicalDebugger.AddTextGroup(new[]
+        {
+            $"Max vespene rate: {_maxVespeneRate, 4}",
+            $"Vespene rate: {scoreDetails.CollectionRateVespene, 8}",
+        }, virtualPos: new Point { X = 0.455f, Y = 0.765f });
     }
 
     private static void DebugEnemyGhostUnits() {
