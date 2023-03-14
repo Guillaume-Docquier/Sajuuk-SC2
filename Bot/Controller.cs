@@ -45,6 +45,7 @@ public static class Controller {
 
     private static List<INeedUpdating> ThoseWhoNeedUpdating => new List<INeedUpdating>
     {
+        IncomeTracker.Instance,         // Depends on nothing
         ChatTracker.Instance,           // Depends on nothing
         VisibilityTracker.Instance,     // Depends on nothing
 

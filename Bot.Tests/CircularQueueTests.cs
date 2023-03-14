@@ -4,29 +4,29 @@ public class CircularQueueTests {
     [Fact]
     public void GivenEmptyQueue_WhenEnqueue_ThenAddsToEndOfQueue() {
         // Arrange
-        const int numberOfItemsToQueue = 20;
+        const int numberOfItemsToQueue = 15;
         const int queueSize = 5;
         var circularQueue = new CircularQueue<int>(queueSize);
 
         // Act
-        for (int i = 0; i < numberOfItemsToQueue; i++) {
+        for (var i = 0; i < numberOfItemsToQueue; i++) {
             var valueToAdd = i + 1;
             circularQueue.Enqueue(valueToAdd);
 
             // Assert
-            Assert.Equal(valueToAdd, circularQueue[i]);
+            Assert.Equal(valueToAdd, circularQueue[^1]);
         }
     }
 
     [Fact]
-    public void GivenEmpty_WhenEnqueue_ThenReturnsQueueSize() {
+    public void GivenEmptyQueue_WhenEnqueue_ThenReturnsQueueSize() {
         // Arrange
-        const int numberOfItemsToQueue = 20;
+        const int numberOfItemsToQueue = 15;
         const int queueSize = 5;
         var circularQueue = new CircularQueue<int>(queueSize);
 
         // Act
-        for (int i = 0; i < numberOfItemsToQueue; i++) {
+        for (var i = 0; i < numberOfItemsToQueue; i++) {
             var queueLength = circularQueue.Enqueue(i);
 
             // Assert
@@ -43,70 +43,98 @@ public class CircularQueueTests {
         Assert.Throws<InvalidOperationException>(() => circularQueue.Dequeue());
     }
 
-    [Fact]
-    public void GivenPartiallyFilledQueue_WhenDequeueTooManyTime_ThenThrows() {
-        // Arrange
+    public static IEnumerable<object[]> AnyQueueData() {
+        const int maxNumberOfItemsToQueue = 15;
         const int queueSize = 5;
-        var circularQueue = new CircularQueue<int>(queueSize);
+        for (var numberOfItemsToQueue = 0; numberOfItemsToQueue < maxNumberOfItemsToQueue; numberOfItemsToQueue++) {
+            var queue = new CircularQueue<int>(queueSize);
+            var lastInsertedItems = new List<int>();
+            for (var i = 0; i < numberOfItemsToQueue; i++) {
+                queue.Enqueue(i);
+                if (numberOfItemsToQueue - i <= queueSize) {
+                    lastInsertedItems.Add(i);
+                }
+            }
 
-        // Act
-        for (var i = 0; i < queueSize - 1; i++) {
-            var valueToAdd = i + 1;
-            circularQueue.Enqueue(valueToAdd);
+            yield return new object[] { queue, lastInsertedItems };
         }
+    }
 
-        var numberOfElementsToRemove = circularQueue.Length;
+    [Theory]
+    [MemberData(nameof(AnyQueueData))]
+    public void GivenAnyQueue_WhenDequeueTooManyTimes_ThenThrows(CircularQueue<int> queue, List<int> _) {
+        // Act
+        var numberOfElementsToRemove = queue.Length;
         for (var i = 0; i < numberOfElementsToRemove; i++) {
-            circularQueue.Dequeue();
+            queue.Dequeue();
         }
 
         // Assert
-        Assert.Throws<InvalidOperationException>(() => circularQueue.Dequeue());
+        Assert.Throws<InvalidOperationException>(() => queue.Dequeue());
     }
 
-    [Fact]
-    public void GivenPartiallyFilledQueue_WhenDequeue_ThenDequeuesInInsertionOrder() {
-        // Arrange
-        const int numberOfItemsToQueue = 4;
-        const int queueSize = 5;
-        var circularQueue = new CircularQueue<int>(queueSize);
-
+    [Theory]
+    [MemberData(nameof(AnyQueueData))]
+    public void GivenAnyQueue_WhenDequeue_ThenDequeuesInInsertionOrder(CircularQueue<int> queue, List<int> lastInsertedItems) {
         // Act
-        for (var i = 0; i < numberOfItemsToQueue; i++) {
-            var valueToAdd = i + 1;
-            circularQueue.Enqueue(valueToAdd);
-        }
-
-        var numberOfElementsToRemove = circularQueue.Length;
+        var numberOfElementsToRemove = queue.Length;
+        var removedItems = new List<int>();
         for (var i = 0; i < numberOfElementsToRemove; i++) {
-            var expectedValue = i + 1;
-            var actualValue = circularQueue.Dequeue();
-
-            // Assert
-            Assert.Equal(expectedValue, actualValue);
+            removedItems.Add(queue.Dequeue());
         }
+
+        // Assert
+        Assert.Equal(lastInsertedItems, removedItems);
     }
 
-    [Fact]
-    public void GivenOverflownQueue_WhenDequeue_ThenDequeuesLastInsertedItemsInInsertionOrder() {
-        // Arrange
-        const int numberOfItemsToQueue = 20;
-        const int queueSize = 5;
-        var circularQueue = new CircularQueue<int>(queueSize);
-
+    [Theory]
+    [MemberData(nameof(AnyQueueData))]
+    public void GivenAnyQueue_WhenClear_ThenLengthIsSetToZero(CircularQueue<int> queue, List<int> _) {
         // Act
-        for (var i = 0; i < numberOfItemsToQueue; i++) {
-            var valueToAdd = i + 1;
-            circularQueue.Enqueue(valueToAdd);
+        queue.Clear();
+
+        // Assert
+        Assert.Equal(0, queue.Length);
+    }
+
+    [Theory]
+    [MemberData(nameof(AnyQueueData))]
+    public void GivenAnyQueue_WhenClear_ThenCannotIterate(CircularQueue<int> queue, List<int> _) {
+        // Act
+        queue.Clear();
+
+        // Assert
+        Assert.Empty(queue);
+    }
+
+    [Theory]
+    [MemberData(nameof(AnyQueueData))]
+    public void GivenAnyQueue_WhenEnumerating_ThenReturnsLastInsertedItemsInInsertionOrder(CircularQueue<int> queue, List<int> lastInsertedItems) {
+        // Act
+        var queueItems = queue.ToList();
+
+        // Assert
+        Assert.Equal(lastInsertedItems.Count, queueItems.Count);
+        Assert.Equal(lastInsertedItems, queueItems);
+    }
+
+    [Theory]
+    [MemberData(nameof(AnyQueueData))]
+    public void GivenAnyQueue_WhenIndexing_ThenReturnsLastInsertedItemsInInsertionOrder(CircularQueue<int> queue, List<int> lastInsertedItems) {
+        // Act
+        var queueItems = new List<int>();
+        for (var i = 0; i < lastInsertedItems.Count; i++) {
+            queueItems.Add(queue[i]);
         }
 
-        var numberOfElementsToRemove = circularQueue.Length;
-        for (var i = 0; i < numberOfElementsToRemove; i++) {
-            var expectedValue = numberOfItemsToQueue - (queueSize - i) + 1;
-            var actualValue = circularQueue.Dequeue();
+        // Assert
+        Assert.Equal(lastInsertedItems, queueItems);
+    }
 
-            // Assert
-            Assert.Equal(expectedValue, actualValue);
-        }
+    [Theory]
+    [MemberData(nameof(AnyQueueData))]
+    public void GivenAnyQueue_WhenIndexingOutOfRange_ThenThrows(CircularQueue<int> queue, List<int> _) {
+        // Act & Assert
+        Assert.Throws<IndexOutOfRangeException>(() => queue[queue.Length]);
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.Builds;
@@ -9,14 +8,12 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
 using Bot.MapKnowledge;
+using Bot.UnitModules;
 using SC2APIProtocol;
 
 namespace Bot.Debugging;
 
 public class BotDebugger {
-    private float _maxMineralRate = 0;
-    private float _maxVespeneRate = 0;
-
     public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus) {
         if (!Program.DebugEnabled) {
             return;
@@ -104,26 +101,38 @@ public class BotDebugger {
         }
     }
 
-    private void DebugIncomeRate() {
+    private static void DebugIncomeRate() {
         if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.IncomeRate)) {
             return;
         }
 
-        var scoreDetails = Controller.Observation.Observation.Score.ScoreDetails;
-
-        _maxMineralRate = Math.Max(_maxMineralRate, scoreDetails.CollectionRateMinerals);
         Program.GraphicalDebugger.AddTextGroup(new[]
         {
-            $"Max minerals rate: {_maxMineralRate, 4}",
-            $"Minerals rate: {scoreDetails.CollectionRateMinerals, 8}",
-        }, virtualPos: new Point { X = 0.315f, Y = 0.765f });
+            "Resource income rates - past 30s",
+        }, virtualPos: new Point { X = 0.315f, Y = 0.715f });
 
-        _maxVespeneRate = Math.Max(_maxVespeneRate, scoreDetails.CollectionRateVespene);
+        var activeMiningModules = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone)
+            .Select(UnitModule.Get<MiningModule>)
+            .Where(module => module != null)
+            .ToList();
+
+        var mineralMiners = activeMiningModules.Count(module => module.ResourceType == Resources.ResourceType.Mineral);
         Program.GraphicalDebugger.AddTextGroup(new[]
         {
-            $"Max vespene rate: {_maxVespeneRate, 4}",
-            $"Vespene rate: {scoreDetails.CollectionRateVespene, 8}",
-        }, virtualPos: new Point { X = 0.455f, Y = 0.765f });
+            $"Minerals" + $"{$"({mineralMiners})",6}",
+            $"Max: {IncomeTracker.MaxMineralsCollectionRate, 9:F0}",
+            $"Average: {IncomeTracker.AverageMineralsCollectionRate, 5:F0}",
+            $"Current: {IncomeTracker.CurrentMineralsCollectionRate, 5:F0}",
+        }, virtualPos: new Point { X = 0.315f, Y = 0.740f });
+
+        var vespeneMiners = activeMiningModules.Count(module => module.ResourceType == Resources.ResourceType.Gas);
+        Program.GraphicalDebugger.AddTextGroup(new[]
+        {
+            $"Vespene" + $"{$"({vespeneMiners})",6}",
+            $"Max: {IncomeTracker.MaxVespeneCollectionRate, 8:F0}",
+            $"Average: {IncomeTracker.AverageVespeneCollectionRate, 4:F0}",
+            $"Current: {IncomeTracker.CurrentVespeneCollectionRate, 4:F0}",
+        }, virtualPos: new Point { X = 0.410f, Y = 0.740f });
     }
 
     private static void DebugEnemyGhostUnits() {
