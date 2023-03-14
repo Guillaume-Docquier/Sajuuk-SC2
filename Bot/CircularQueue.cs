@@ -7,8 +7,8 @@ namespace Bot;
 public class CircularQueue<T> : IEnumerable<T> {
     private readonly T[] _queue;
 
-    private int _startIndex = 0;
-    private int _endIndex = 0;
+    private int _dequeueIndex = 0;
+    private int _enqueueIndex = 0;
 
     public int Length { get; private set; } = 0;
 
@@ -21,32 +21,46 @@ public class CircularQueue<T> : IEnumerable<T> {
             throw new InvalidOperationException("Cannot dequeue when the queue is empty.");
         }
 
-        var value = _queue[_startIndex];
+        var value = _queue[_dequeueIndex];
 
-        _queue[_startIndex] = default;
-        _startIndex = CircularIncrement(_startIndex);
+        _queue[_dequeueIndex] = default;
+        _dequeueIndex = CircularIncrement(_dequeueIndex);
         Length--;
 
         return value;
     }
 
     public int Enqueue(T value) {
-        if (Length == _queue.Length && _endIndex == _startIndex) {
-            _startIndex = CircularIncrement(_startIndex);
+        if (Length == _queue.Length && _enqueueIndex == _dequeueIndex) {
+            _dequeueIndex = CircularIncrement(_dequeueIndex);
         }
 
-        _queue[_endIndex] = value;
-        _endIndex = CircularIncrement(_endIndex);
+        _queue[_enqueueIndex] = value;
+        _enqueueIndex = CircularIncrement(_enqueueIndex);
         Length = Math.Min(Length + 1, _queue.Length);
 
         return Length;
     }
 
-    public T this[int index] => _queue[index % _queue.Length];
+    public void Clear() {
+        Length = 0;
+        _dequeueIndex = 0;
+        _enqueueIndex = 0;
+    }
+
+    public T this[int index] {
+        get {
+            if (index >= Length) {
+                throw new IndexOutOfRangeException($"Trying to access element at index {index} in a queue of length {Length}");
+            }
+
+            return _queue[(_dequeueIndex + index) % _queue.Length];
+        }
+    }
 
     public IEnumerator<T> GetEnumerator() {
-        for (var i = 0; i < Length; i++) {
-            yield return _queue[_startIndex + i];
+        for (var index = 0; index < Length; index++) {
+            yield return this[index];
         }
     }
 

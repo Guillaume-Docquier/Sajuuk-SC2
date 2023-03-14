@@ -36,6 +36,14 @@ public static class ResponseGameObservationUtils {
                     },
                     Player = new PlayerRaw(),
                 },
+                Score = new Score
+                {
+                    ScoreDetails = new ScoreDetails
+                    {
+                        CollectionRateMinerals = 0,
+                        CollectionRateVespene = 0,
+                    }
+                }
             }
         };
 
