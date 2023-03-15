@@ -31,9 +31,6 @@ public class SajuukBot: PoliteBot {
         if (Controller.Frame == 0) {
             InitManagers();
         }
-        else if (Controller.Frame == 2016) {
-            Logger.Metric("Collected Minerals: {0}", Controller.Observation.Observation.Score.ScoreDetails.CollectedMinerals);
-        }
 
         _managers.ForEach(manager => manager.OnFrame());
 
