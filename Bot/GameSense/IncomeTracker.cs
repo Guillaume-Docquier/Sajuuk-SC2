@@ -7,6 +7,7 @@ namespace Bot.GameSense;
 public class IncomeTracker : INeedUpdating {
     public static readonly IncomeTracker Instance = new IncomeTracker();
 
+    private const int LogCollectedMineralsFrame = (int)(90 * TimeUtils.FramesPerSecond);
     private readonly CircularQueue<float> _mineralsCollectionRates = new CircularQueue<float>((int)(TimeUtils.FramesPerSecond * 30));
     private readonly CircularQueue<float> _vespeneCollectionRates = new CircularQueue<float>((int)(TimeUtils.FramesPerSecond * 30));
 
@@ -29,6 +30,12 @@ public class IncomeTracker : INeedUpdating {
         var scoreDetails = observation.Observation.Score.ScoreDetails;
         UpdateMineralsCollectionRates(scoreDetails.CollectionRateMinerals);
         UpdateVespeneCollectionRates(scoreDetails.CollectionRateVespene);
+
+        if (Controller.Frame == LogCollectedMineralsFrame) {
+            var mineralsCollected = observation.Observation.Score.ScoreDetails.CollectedMinerals;
+            Logger.Metric("Collected Minerals: {0}", mineralsCollected);
+            TaggingService.TagGame(TaggingService.Tag.Minerals, mineralsCollected);
+        }
     }
 
     private void UpdateMineralsCollectionRates(float currentCollectionRateMinerals) {

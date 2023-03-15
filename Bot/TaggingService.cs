@@ -13,6 +13,7 @@ public static class TaggingService {
         EnemyStrategy,
         Version,
         TerranFinisher,
+        Minerals,
     }
 
     public static void TagGame(Tag tag, params object[] parameters) {
@@ -51,6 +52,7 @@ public static class TaggingService {
             Tag.EnemyStrategy => $"Enemy_{parameters[0]}_{gameTimeString}",
 
             Tag.Version => $"v{parameters[0]}",
+            Tag.Minerals => $"{tag}_{parameters[0]}",
             _ => tag.ToString(),
         };
     }
