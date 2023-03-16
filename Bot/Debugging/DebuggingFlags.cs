@@ -34,6 +34,11 @@ public static class DebuggingFlags {
     public const string IncomeRate = ".income";
 
     /// <summary>
+    /// Enables displaying future spending information on screen
+    /// </summary>
+    public const string Spend = ".spend";
+
+    /// <summary>
     /// Enables displaying ghost units data
     /// </summary>
     public const string GhostUnits = ".ghost";
