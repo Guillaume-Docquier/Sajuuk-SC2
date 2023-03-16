@@ -41,6 +41,10 @@ public class UpgradesManager : UnitlessManager {
 
         foreach (var buildRequest in _buildRequests) {
             buildRequest.Priority = BuildRequestPriority.Medium;
+
+            if (buildRequest.BuildType == BuildType.Research) {
+                buildRequest.BlockCondition = BuildBlockCondition.MissingResources;
+            }
         }
     }
 

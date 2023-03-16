@@ -24,6 +24,7 @@ public class BotDebugger {
         DebugEnemyDetectors();
         DebugUnwalkableAreas();
         DebugIncomeRate();
+        DebugFutureSpending();
         DebugEnemyGhostUnits();
         DebugKnownEnemyUnits();
         DebugMatchupData();
@@ -109,7 +110,7 @@ public class BotDebugger {
         Program.GraphicalDebugger.AddTextGroup(new[]
         {
             "Resource income rates - past 30s",
-        }, virtualPos: new Point { X = 0.315f, Y = 0.715f });
+        }, virtualPos: new Point { X = 0.315f, Y = 0.700f });
 
         var activeMiningModules = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone)
             .Select(UnitModule.Get<MiningModule>)
@@ -123,16 +124,34 @@ public class BotDebugger {
             $"Max: {IncomeTracker.MaxMineralsCollectionRate, 9:F0}",
             $"Average: {IncomeTracker.AverageMineralsCollectionRate, 5:F0}",
             $"Current: {IncomeTracker.CurrentMineralsCollectionRate, 5:F0}",
-        }, virtualPos: new Point { X = 0.315f, Y = 0.740f });
+            $"Expected: {IncomeTracker.ExpectedMineralsCollectionRate, 4:F0}",
+        }, virtualPos: new Point { X = 0.315f, Y = 0.725f });
 
         var vespeneMiners = activeMiningModules.Count(module => module.ResourceType == Resources.ResourceType.Gas);
         Program.GraphicalDebugger.AddTextGroup(new[]
         {
-            $"Vespene" + $"{$"({vespeneMiners})",6}",
-            $"Max: {IncomeTracker.MaxVespeneCollectionRate, 8:F0}",
-            $"Average: {IncomeTracker.AverageVespeneCollectionRate, 4:F0}",
-            $"Current: {IncomeTracker.CurrentVespeneCollectionRate, 4:F0}",
-        }, virtualPos: new Point { X = 0.410f, Y = 0.740f });
+            $"Vespene" + $"{$"({vespeneMiners})",7}",
+            $"Max: {IncomeTracker.MaxVespeneCollectionRate, 9:F0}",
+            $"Average: {IncomeTracker.AverageVespeneCollectionRate, 5:F0}",
+            $"Current: {IncomeTracker.CurrentVespeneCollectionRate, 5:F0}",
+            $"Expected: {IncomeTracker.ExpectedVespeneCollectionRate, 4:F0}",
+        }, virtualPos: new Point { X = 0.410f, Y = 0.725f });
+    }
+
+    private static void DebugFutureSpending() {
+        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Spend)) {
+            return;
+        }
+
+        var mineralsToGasRatio = SpendingTracker.ExpectedFutureMineralsSpending / SpendingTracker.ExpectedFutureVespeneSpending;
+        Program.GraphicalDebugger.AddTextGroup(new[]
+        {
+            "Future spending",
+            $"Minerals: {SpendingTracker.ExpectedFutureMineralsSpending, 8:F0}",
+            $"Gas: {SpendingTracker.ExpectedFutureVespeneSpending, 13:F0}",
+            // SC2 cannot render the infinity character, so we show "INF" instead
+            $"Minerals/Gas: {(SpendingTracker.ExpectedFutureVespeneSpending == 0 ? "INF" : mineralsToGasRatio), 4:F1}",
+        }, virtualPos: new Point { X = 0.505f, Y = 0.740f });
     }
 
     private static void DebugEnemyGhostUnits() {

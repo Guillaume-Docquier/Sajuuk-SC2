@@ -277,7 +277,7 @@ public class ExpandAnalyzer: INeedUpdating {
     /// <param name="resourceCluster">The resource cluster associated with the expand</param>
     /// <returns>True if the resource cluster associated with the expand contains rich resources</returns>
     private static bool IsGoldExpand(IEnumerable<Unit> resourceCluster) {
-        return resourceCluster.Any(resource => Units.GoldMineralFields.Contains(resource.UnitType) || Units.GoldGasGeysers.Contains(resource.UnitType));
+        return resourceCluster.Any(resource => Units.GoldMineralFields.Contains(resource.UnitType) || Units.PurpleGasGeysers.Contains(resource.UnitType));
     }
 
     /// <summary>

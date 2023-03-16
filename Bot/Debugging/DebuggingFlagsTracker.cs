@@ -30,6 +30,7 @@ public class DebuggingFlagsTracker : INeedUpdating {
         _activeDebuggingFlags.Add(DebuggingFlags.BuildOrder);
         _activeDebuggingFlags.Add(DebuggingFlags.MatchupData);
         _activeDebuggingFlags.Add(DebuggingFlags.IncomeRate);
+        _activeDebuggingFlags.Add(DebuggingFlags.Spend);
         _activeDebuggingFlags.Add(DebuggingFlags.EnemyDetectors);
         _activeDebuggingFlags.Add(DebuggingFlags.GhostUnits);
         _activeDebuggingFlags.Add(DebuggingFlags.KnownEnemyUnits);

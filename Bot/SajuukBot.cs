@@ -37,10 +37,14 @@ public class SajuukBot: PoliteBot {
         var managerRequests = GetManagersBuildRequests();
         var buildBlockStatus = AddressManagerRequests(managerRequests);
 
+        var flatManagerRequests = managerRequests
+            .SelectMany(groupedBySupply => groupedBySupply.SelectMany(request => request))
+            .ToList();
+
+        SpendingTracker.UpdateExpectedFutureSpending(flatManagerRequests);
+
         _debugger.Debug(
-            managerRequests
-                .SelectMany(groupedBySupply => groupedBySupply.SelectMany(request => request))
-                .ToList(),
+            flatManagerRequests,
             buildBlockStatus
         );
 
@@ -96,6 +100,7 @@ public class SajuukBot: PoliteBot {
                         }
                         else if (ShouldBlock(buildStep, buildStepResult, out var buildBlockingReason)) {
                             // We must wait to fulfill this one
+                            // TODO GD We can still process other requests that don't overlap with the blocking condition
                             return (buildStep, buildBlockingReason);
                         }
                         else {

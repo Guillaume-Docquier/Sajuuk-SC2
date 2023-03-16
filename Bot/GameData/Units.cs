@@ -700,7 +700,7 @@ public static class Units {
     #region Resources
 
     // Mineral field types seem to differ from map to map
-    public static readonly HashSet<uint> NormalMineralFields = new HashSet<uint>
+    public static readonly HashSet<uint> BlueMineralFields = new HashSet<uint>
     {
         MineralField,
         MineralField750,
@@ -721,10 +721,10 @@ public static class Units {
         PurifierRichMineralField750,
     };
 
-    public static readonly HashSet<uint> MineralFields = new HashSet<uint>(NormalMineralFields.Concat(GoldMineralFields));
+    public static readonly HashSet<uint> MineralFields = new HashSet<uint>(BlueMineralFields.Concat(GoldMineralFields));
 
     // Gas geyser types seem to differ from map to map
-    public static readonly HashSet<uint> NormalGasGeysers = new HashSet<uint>
+    public static readonly HashSet<uint> GreenGasGeysers = new HashSet<uint>
     {
         VespeneGeyser,
         SpacePlatformGeyser,
@@ -734,12 +734,12 @@ public static class Units {
         ShakurasVespeneGeyser,
     };
 
-    public static readonly HashSet<uint> GoldGasGeysers = new HashSet<uint>
+    public static readonly HashSet<uint> PurpleGasGeysers = new HashSet<uint>
     {
         RichVespeneGeyser,
     };
 
-    public static readonly HashSet<uint> GasGeysers = new HashSet<uint>(NormalGasGeysers.Concat(GoldGasGeysers));
+    public static readonly HashSet<uint> GasGeysers = new HashSet<uint>(GreenGasGeysers.Concat(PurpleGasGeysers));
 
     #endregion
 }

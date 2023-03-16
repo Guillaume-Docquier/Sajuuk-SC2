@@ -1,4 +1,6 @@
 ﻿using System.Linq;
+using Bot.GameData;
+using Bot.UnitModules;
 using Bot.Utils;
 using SC2APIProtocol;
 
@@ -14,10 +16,12 @@ public class IncomeTracker : INeedUpdating {
     public static float CurrentMineralsCollectionRate { get; private set; }
     public static float MaxMineralsCollectionRate { get; private set; }
     public static float AverageMineralsCollectionRate { get; private set; }
+    public static float ExpectedMineralsCollectionRate { get; private set; }
 
     public static float CurrentVespeneCollectionRate { get; private set; }
     public static float MaxVespeneCollectionRate { get; private set; }
     public static float AverageVespeneCollectionRate { get; private set; }
+    public static float ExpectedVespeneCollectionRate { get; private set; }
 
     private IncomeTracker() {}
 
@@ -31,11 +35,90 @@ public class IncomeTracker : INeedUpdating {
         UpdateMineralsCollectionRates(scoreDetails.CollectionRateMinerals);
         UpdateVespeneCollectionRates(scoreDetails.CollectionRateVespene);
 
+        CalculateExpectedCollectionRates();
+
         if (Controller.Frame == LogCollectedMineralsFrame) {
             var mineralsCollected = observation.Observation.Score.ScoreDetails.CollectedMinerals;
             Logger.Metric("Collected Minerals: {0}", mineralsCollected);
             TaggingService.TagGame(TaggingService.Tag.Minerals, mineralsCollected);
         }
+    }
+
+    private static void CalculateExpectedCollectionRates() {
+        ExpectedMineralsCollectionRate = 0;
+        ExpectedVespeneCollectionRate = 0;
+
+        ExpectedMineralsCollectionRate += (float)Controller.GetUnits(UnitsTracker.NeutralUnits, Units.BlueMineralFields)
+            .Select(UnitModule.Get<CapacityModule>)
+            .Where(module => module != null)
+            .Sum(module => ComputeExpectedCollectionRate(module, Resources.ResourceType.Mineral));
+
+        ExpectedMineralsCollectionRate += (float)Controller.GetUnits(UnitsTracker.NeutralUnits, Units.GoldMineralFields)
+            .Select(UnitModule.Get<CapacityModule>)
+            .Where(module => module != null)
+            .Sum(module => ComputeExpectedCollectionRate(module, Resources.ResourceType.Mineral, isGold: true));
+
+        ExpectedVespeneCollectionRate += (float)Controller.GetUnits(UnitsTracker.NeutralUnits, Units.GreenGasGeysers)
+            .Select(UnitModule.Get<CapacityModule>)
+            .Select(module => module?.AssignedUnits?.FirstOrDefault())
+            .Where(extractor => extractor != null)
+            .Select(UnitModule.Get<CapacityModule>)
+            .Sum(module => ComputeExpectedCollectionRate(module, Resources.ResourceType.Gas));
+
+        ExpectedVespeneCollectionRate += (float)Controller.GetUnits(UnitsTracker.NeutralUnits, Units.PurpleGasGeysers)
+            .Select(UnitModule.Get<CapacityModule>)
+            .Select(module => module?.AssignedUnits?.FirstOrDefault())
+            .Where(extractor => extractor != null)
+            .Select(UnitModule.Get<CapacityModule>)
+            .Sum(module => ComputeExpectedCollectionRate(module, Resources.ResourceType.Gas, isGold: true));
+    }
+
+    /// <summary>
+    /// <para>
+    /// Computes the expected collection rates based on current drone assignations and empirical data.
+    /// </para>
+    ///
+    /// <para>
+    /// Blue minerals<br/>
+    /// - Empirically, we achieve a max of 122 per patch with 2 drones per patch and speed mining<br/>
+    /// - Empirically, we achieve a max of 146 per patch with 3 drones per patch
+    /// </para>
+    ///
+    /// <para>
+    /// Gold minerals<br/>
+    /// - Workers get 7 minerals per trip instead of 5<br/>
+    /// - This is 40% more income
+    /// </para>
+    ///
+    /// <para>
+    /// Green gas<br/>
+    /// - Empirically, we achieve an average of 162 per gas with 3 drones per gas
+    /// </para>
+    ///
+    /// <para>
+    /// Purple gas<br/>
+    /// - Workers get 8 gas per trip instead of 4<br/>
+    /// - This is 100% more income
+    /// </para>
+    /// </summary>
+    /// <param name="capacityModule">The resource capacity module</param>
+    /// <param name="resourceType">The resource type of the resource</param>
+    /// <param name="isGold">Whether the resource is a gold node (more yield)</param>
+    /// <returns>The expected collection rate given the parameters</returns>
+    private static double ComputeExpectedCollectionRate(CapacityModule capacityModule, Resources.ResourceType resourceType, bool isGold = false) {
+        const double goldMineralsMultiplier = 1.4;
+        const int goldGasMultiplier = 2;
+
+        return (resourceType, capacityModule.AssignedUnits.Count) switch
+        {
+            (Resources.ResourceType.Mineral,   1) => 61  * (isGold ? goldMineralsMultiplier : 1),
+            (Resources.ResourceType.Mineral,   2) => 122 * (isGold ? goldMineralsMultiplier : 1),
+            (Resources.ResourceType.Mineral, >=3) => 146 * (isGold ? goldMineralsMultiplier : 1),
+            (Resources.ResourceType.Gas,       1) => 54  * (isGold ? goldGasMultiplier : 1),
+            (Resources.ResourceType.Gas,       2) => 108 * (isGold ? goldGasMultiplier : 1),
+            (Resources.ResourceType.Gas,     >=3) => 162 * (isGold ? goldGasMultiplier : 1),
+            _ => 0
+        };
     }
 
     private void UpdateMineralsCollectionRates(float currentCollectionRateMinerals) {
