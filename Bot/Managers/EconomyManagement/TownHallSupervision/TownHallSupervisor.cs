@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Bot.Builds;
 using Bot.ExtensionMethods;
@@ -43,6 +44,11 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
 
     public int WorkerCount => _workers.Count;
 
+    // TODO GD Checking that the extractor is operational is annoying
+    public int MaxGasCapacity => Math.Min(WorkerCount, _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor);
+    private int GasWorkerCount => _extractors.Sum(extractor => UnitModule.Get<CapacityModule>(extractor).AssignedUnits.Count);
+    public int GasWorkersCap = 0; // To be set by the manager
+
     public TownHallSupervisor(Unit townHall, Color color) {
         _id = townHall.Tag;
         _color = color;
@@ -69,21 +75,20 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     protected override void Supervise() {
         DrawTownHallInfo();
 
-        HandleDepletedGasses();
-        Assign(DiscoverExtractors(UnitsTracker.NewOwnedUnits));
-
         if (Controller.Frame == 0) {
             SplitInitialWorkers();
-        }
-        else {
-            DispatchWorkers(GetAssignedIdleWorkers());
+            return;
         }
 
-        if (ShouldFillExtractors()) {
-            FillExtractors();
-        }
+        ReleaseDepletedGasses();
+        Assign(DiscoverExtractors(UnitsTracker.NewOwnedUnits));
 
-        RequestExpand();
+        UpdateExtractorCapacities();
+        UpdateGasAssignments();
+
+        DispatchWorkers(GetIdleWorkers());
+
+        RequestExpandIfNeeded();
     }
 
     public override void Retire() {
@@ -116,7 +121,7 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
         }
     }
 
-    private List<Unit> GetAssignedIdleWorkers() {
+    private List<Unit> GetIdleWorkers() {
         return _workers.Where(worker => UnitModule.Get<MiningModule>(worker).AssignedResource == null).ToList();
     }
 
@@ -134,11 +139,11 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     ///
     /// <para>
     /// This code is not optimal, but reuses existing code.<br/>
-    /// On frame 1 we have nothing else to do anyways.
+    /// On frame 0 we have nothing else to do anyways.
     /// </para>
     /// </summary>
     private void SplitInitialWorkers() {
-        var workers = GetAssignedIdleWorkers().ToHashSet();
+        var workers = GetIdleWorkers().ToHashSet();
         while (workers.Count > 0) {
             var farthestWorker = workers.MaxBy(
                 worker => GetClosestMineralWithAvailableCapacity(worker, 1).DistanceTo(worker)
@@ -147,6 +152,57 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
 
             UpdateWorkerMiningAssignment(farthestWorker, closestMineral);
             workers.Remove(farthestWorker);
+        }
+    }
+
+    /// <summary>
+    /// Updates the capacity of the extractors to match the gas workers cap.
+    /// </summary>
+    private void UpdateExtractorCapacities() {
+        var availableCapacity = GasWorkersCap;
+        foreach (var extractor in _extractors.Where(extractor => extractor.IsOperational)) {
+            var capacityModule = UnitModule.Get<CapacityModule>(extractor);
+            var newExtractorCapacity = Math.Min(MaxPerExtractor, availableCapacity);
+
+            capacityModule.MaxCapacity = newExtractorCapacity;
+            availableCapacity -= newExtractorCapacity;
+        }
+    }
+
+    /// <summary>
+    /// Update the drone assignments to satisfy gas requirements.
+    /// </summary>
+    private void UpdateGasAssignments() {
+        foreach (var extractor in _extractors.Where(extractor => extractor.IsOperational)) {
+            var capacityModule = UnitModule.Get<CapacityModule>(extractor);
+
+            if (capacityModule.AvailableCapacity > 0) {
+                FillExtractor(extractor);
+            }
+            else {
+                while (capacityModule.AvailableCapacity < 0) {
+                    var releasedWorker = capacityModule.ReleaseOne();
+                    UpdateWorkerMiningAssignment(releasedWorker, null);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Take drones off of the mineral line and assign them to the given extractor
+    /// </summary>
+    private void FillExtractor(Unit extractor) {
+        var workersToReassign = _workers
+            .Where(worker => UnitModule.Get<MiningModule>(worker).ResourceType == Resources.ResourceType.Mineral)
+            .OrderBy(worker => {
+                var resource = UnitModule.Get<MiningModule>(worker).AssignedResource;
+
+                return UnitModule.Get<CapacityModule>(resource).AvailableCapacity;
+            })
+            .Take(UnitModule.Get<CapacityModule>(extractor).AvailableCapacity);
+
+        foreach (var worker in workersToReassign) {
+            UpdateWorkerMiningAssignment(worker, extractor);
         }
     }
 
@@ -188,62 +244,40 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
             .MinBy(mineral => mineral.DistanceTo(worker));
     }
 
-    private bool ShouldFillExtractors() {
-        return _minerals.Sum(mineral => UnitModule.Get<CapacityModule>(mineral).AssignedUnits.Count) >= 12;
-    }
-
-    /// <summary>
-    /// Force workers to work in extractors if we have enough already mining.
-    /// </summary>
-    private void FillExtractors() {
-        var extractorsToFill = _extractors
-            .Where(extractor => extractor.IsOperational)
-            .Where(extractor => UnitModule.Get<CapacityModule>(extractor).AvailableCapacity > 0);
-
-        foreach (var extractor in extractorsToFill) {
-            var workersToReassign = _workers
-                .Where(worker => UnitModule.Get<MiningModule>(worker).ResourceType == Resources.ResourceType.Mineral)
-                .OrderBy(worker => {
-                    var resource = UnitModule.Get<MiningModule>(worker).AssignedResource;
-
-                    return UnitModule.Get<CapacityModule>(resource).AvailableCapacity;
-                })
-                .Take(UnitModule.Get<CapacityModule>(extractor).AvailableCapacity);
-
-            foreach (var worker in workersToReassign) {
-                UpdateWorkerMiningAssignment(worker, extractor);
-            }
-        }
-    }
-
     /// <summary>
     /// Assigns a worker to a resource and releases the worker from its previously assigned resource, if any.
     /// </summary>
     /// <param name="worker">The worker to update the mining assignment of.</param>
-    /// <param name="assignedResource">The new resource to mine</param>
+    /// <param name="assignedResource">The new resource to mine or null, to idle a worker</param>
     private static void UpdateWorkerMiningAssignment(Unit worker, Unit assignedResource) {
         var miningModule = UnitModule.Get<MiningModule>(worker);
 
         UnitModule.Get<CapacityModule>(miningModule.AssignedResource)?.Release(worker);
-        UnitModule.Get<CapacityModule>(assignedResource).Assign(worker);
+        if (assignedResource != null) {
+            UnitModule.Get<CapacityModule>(assignedResource).Assign(worker);
+        }
 
         miningModule.ReleaseResource();
-        miningModule.AssignResource(assignedResource);
+        if (assignedResource != null) {
+            miningModule.AssignResource(assignedResource);
+        }
+    }
+
+    private void ReleaseDepletedGasses() {
+        foreach (var depletedGas in _gasses.Where(IsGasDepleted)) {
+            Release(depletedGas);
+        }
     }
 
     private static bool IsGasDepleted(Unit gas) {
         return gas.RawUnitData.DisplayType != DisplayType.Snapshot && gas.RawUnitData.VespeneContents <= 0;
     }
 
-    private void HandleDepletedGasses() {
-        foreach (var depletedGas in _gasses.Where(IsGasDepleted)) Release(depletedGas);
-    }
-
     /// <summary>
     /// Requests to build an expand once the remaining minerals reaches a certain threshold.
     /// We can only request an expand if the TownHall is operational and we request a maximum of 1 expand.
     /// </summary>
-    private void RequestExpand() {
+    private void RequestExpandIfNeeded() {
         if (!TownHall.IsOperational || _expandHasBeenRequested) {
             return;
         }
@@ -295,7 +329,7 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     /// <param name="count">The number of workers to free</param>
     /// <returns>The list of freed workers</returns>
     public IEnumerable<Unit> HandOutWorkers(int count) {
-        foreach (var idleWorker in GetAssignedIdleWorkers().Take(count)) {
+        foreach (var idleWorker in GetIdleWorkers().Take(count)) {
             Release(idleWorker);
             yield return idleWorker;
             count -= 1;

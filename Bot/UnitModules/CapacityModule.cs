@@ -8,10 +8,11 @@ public class CapacityModule: UnitModule, IWatchUnitsDie {
     public const string Tag = "CapacityModule";
 
     private readonly Unit _unit;
-    private readonly int _maxCapacity;
+
+    public int MaxCapacity;
     public readonly List<Unit> AssignedUnits = new List<Unit>();
 
-    public int AvailableCapacity => _maxCapacity - AssignedUnits.Count;
+    public int AvailableCapacity => MaxCapacity - AssignedUnits.Count;
 
     public static void Install(Unit unit, int maxCapacity) {
         if (PreInstallCheck(Tag, unit)) {
@@ -21,7 +22,7 @@ public class CapacityModule: UnitModule, IWatchUnitsDie {
 
     private CapacityModule(Unit unit, int maxCapacity) {
         _unit = unit;
-        _maxCapacity = maxCapacity;
+        MaxCapacity = maxCapacity;
     }
 
     protected override void DoExecute() {
@@ -32,7 +33,7 @@ public class CapacityModule: UnitModule, IWatchUnitsDie {
             < 0 => Colors.Red,
         };
 
-        Program.GraphicalDebugger.AddText($"{AssignedUnits.Count}/{_maxCapacity}", color: color, worldPos: _unit.Position.ToPoint(xOffset: -0.2f));
+        Program.GraphicalDebugger.AddText($"{AssignedUnits.Count}/{MaxCapacity}", color: color, worldPos: _unit.Position.ToPoint(xOffset: -0.2f));
     }
 
     public void ReportUnitDeath(Unit deadUnit) {
