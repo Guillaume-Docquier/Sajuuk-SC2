@@ -88,7 +88,6 @@ public class UpgradesManager : UnitlessManager {
         }
 
         if (roachCount >= 27) {
-            _buildRequests.Add(new TargetBuildRequest(BuildType.Build,    Units.Extractor,                   targetQuantity: 4));
             _buildRequests.Add(new TargetBuildRequest(BuildType.Research, Upgrades.ZergMissileWeaponsLevel2, targetQuantity: 1));
             _buildRequests.Add(new TargetBuildRequest(BuildType.Research, Upgrades.ZergGroundArmorsLevel2,   targetQuantity: 1));
             _requestedUpgrades.Add(Upgrades.ZergMissileWeaponsLevel2);

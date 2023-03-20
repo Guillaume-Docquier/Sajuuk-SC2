@@ -31,7 +31,7 @@ public static class TaggingService {
         TagsSent.Add(tag);
     }
 
-    private static bool CanTag(Tag tag) {
+    public static bool CanTag(Tag tag) {
         return tag switch
         {
             Tag.EnemyStrategy => true,

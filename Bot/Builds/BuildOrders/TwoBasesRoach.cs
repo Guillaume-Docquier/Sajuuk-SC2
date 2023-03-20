@@ -36,12 +36,6 @@ public class TwoBasesRoach : IBuildOrder {
             new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 50, targetQuantity: 3),
             new TargetBuildRequest  (BuildType.Research,    Upgrades.TunnelingClaws,           atSupply: 50, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Research,    Upgrades.GlialReconstitution,      atSupply: 50, targetQuantity: 1),
-            // TODO GD The build requests are sorted by supply. Because of this, the transition logic works, but if it changes, maybe it'll break
-            // By works I mean they push the upgrades at the end, but they'll still be before the below extractors
-            // TODO GD We should be smarter about gas
-            new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 125, targetQuantity: 4),
-            new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 165, targetQuantity: 5),
-            new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 190, targetQuantity: 6),
         };
 
         foreach (var buildRequest in _buildRequests) {
