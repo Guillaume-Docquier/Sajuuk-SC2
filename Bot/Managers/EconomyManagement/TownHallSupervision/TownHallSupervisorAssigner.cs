@@ -123,7 +123,7 @@ public partial class TownHallSupervisor {
             _supervisor._gasses.Add(gas);
 
             DebugLocationModule.Install(gas, _supervisor._color);
-            CapacityModule.Install(gas, MaxExtractorsPerGas);
+            CapacityModule.Install(gas, MaxExtractorsPerGas, showDebugInfo: false);
 
             LogAssignment(gas);
         }

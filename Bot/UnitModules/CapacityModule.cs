@@ -8,24 +8,30 @@ public class CapacityModule: UnitModule, IWatchUnitsDie {
     public const string Tag = "CapacityModule";
 
     private readonly Unit _unit;
+    private readonly bool _showDebugInfo;
 
     public int MaxCapacity;
     public readonly List<Unit> AssignedUnits = new List<Unit>();
 
     public int AvailableCapacity => MaxCapacity - AssignedUnits.Count;
 
-    public static void Install(Unit unit, int maxCapacity) {
+    public static void Install(Unit unit, int maxCapacity, bool showDebugInfo = true) {
         if (PreInstallCheck(Tag, unit)) {
-            unit.Modules.Add(Tag, new CapacityModule(unit, maxCapacity));
+            unit.Modules.Add(Tag, new CapacityModule(unit, maxCapacity, showDebugInfo));
         }
     }
 
-    private CapacityModule(Unit unit, int maxCapacity) {
+    private CapacityModule(Unit unit, int maxCapacity, bool showDebugInfo) {
         _unit = unit;
         MaxCapacity = maxCapacity;
+        _showDebugInfo = showDebugInfo;
     }
 
     protected override void DoExecute() {
+        if (!_showDebugInfo) {
+            return;
+        }
+
         var color = AvailableCapacity switch
         {
             > 0 => Colors.Green,
