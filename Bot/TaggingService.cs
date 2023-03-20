@@ -46,7 +46,7 @@ public static class TaggingService {
         {
             Tag.TerranFinisher => $"{tag}_{gameTimeString}",
             Tag.EarlyAttack => $"{tag}_{gameTimeString}",
-            Tag.BuildDone => $"{tag}_{gameTimeString}_Supply_{Controller.CurrentSupply}",
+            Tag.BuildDone => $"{tag}_{gameTimeString}_S{parameters[0]}_M{parameters[1]}_V{parameters[2]}",
 
             // We print "EnemyStrategy" as "Enemy" to have more space for the enemy strategy name, otherwise it gets truncated
             Tag.EnemyStrategy => $"Enemy_{parameters[0]}_{gameTimeString}",
