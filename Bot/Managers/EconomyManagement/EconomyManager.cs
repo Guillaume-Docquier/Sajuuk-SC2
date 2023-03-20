@@ -7,11 +7,16 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.EconomyManagement.TownHallSupervision;
 using Bot.MapKnowledge;
+using Bot.Utils;
 
 namespace Bot.Managers.EconomyManagement;
 
 public sealed partial class EconomyManager: Manager {
     private const int MaxDroneCount = 70;
+
+    private const uint GasDroneCountLoweringDelay = (int)(TimeUtils.FramesPerSecond * 15);
+    private int _requiredDronesInGas = 0;
+    private uint _doNotChangeGasDroneCountBefore = 0;
 
     private readonly HashSet<TownHallSupervisor> _townHallSupervisors = new HashSet<TownHallSupervisor>();
 
@@ -117,6 +122,18 @@ public sealed partial class EconomyManager: Manager {
         var oneDroneInGasIncome = IncomeTracker.ComputeResourceNodeExpectedCollectionRate(Resources.ResourceType.Gas, 1);
 
         var requiredDronesInGas = (int)Math.Ceiling(targetGasIncome / oneDroneInGasIncome);
+
+        // TODO GD This new logic makes no timing difference, but I think we end up with more money (but too much gas)
+        // TODO GD Log the total money when build finishes
+        // TODO GD Compare tunneling claws and glial reconstitution start times
+        // TODO GD Allow expand before 75 supply (we build a macro hatch, lol)
+        if (requiredDronesInGas == _requiredDronesInGas || Controller.Frame < _doNotChangeGasDroneCountBefore) {
+            return;
+        }
+
+        _requiredDronesInGas = requiredDronesInGas;
+        _doNotChangeGasDroneCountBefore = Controller.Frame + GasDroneCountLoweringDelay;
+
         foreach (var townHallSupervisor in _townHallSupervisors) {
             var newGasWorkersCap = Math.Min(requiredDronesInGas, townHallSupervisor.MaxGasCapacity);
 

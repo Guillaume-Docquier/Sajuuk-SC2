@@ -22,7 +22,8 @@ public class BuildManager : UnitlessManager, ISubscriber<EnemyStrategyTransition
         if (!_buildOrderDoneAndTagged) {
             var buildOrderDone = _buildOrder.BuildRequests.All(request => request.Fulfillment.Remaining == 0);
             if (buildOrderDone) {
-                TaggingService.TagGame(TaggingService.Tag.BuildDone);
+                var scoreDetails = Controller.Observation.Observation.Score.ScoreDetails;
+                TaggingService.TagGame(TaggingService.Tag.BuildDone, Controller.CurrentSupply, scoreDetails.CollectedMinerals, scoreDetails.CollectedVespene);
                 _buildOrderDoneAndTagged = true;
             }
         }
