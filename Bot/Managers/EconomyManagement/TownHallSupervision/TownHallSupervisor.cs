@@ -11,10 +11,6 @@ using SC2APIProtocol;
 namespace Bot.Managers.EconomyManagement.TownHallSupervision;
 
 public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
-    private const int MaxPerExtractor = 3;
-    private const int IdealPerMinerals = 2;
-    private const int MaxPerMinerals = 3;
-
     private readonly ulong _id;
     private readonly Color _color;
     public Unit TownHall { get; private set; }
@@ -36,7 +32,7 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     protected override IAssigner Assigner { get; }
     protected override IReleaser Releaser { get; }
 
-    public int IdealCapacity => _minerals.Count * IdealPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor;
+    public int IdealCapacity => _minerals.Count * Resources.IdealDronesPerMinerals + _extractors.Count(extractor => extractor.IsOperational) * Resources.MaxDronesPerExtractor;
     public int IdealAvailableCapacity => IdealCapacity - _workers.Count;
 
     public int SaturatedCapacity => IdealCapacity + _minerals.Count; // Can allow 1 more per mineral patch;
@@ -45,9 +41,8 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     public int WorkerCount => _workers.Count;
 
     // TODO GD Checking that the extractor is operational is annoying
-    public int MaxGasCapacity => Math.Min(WorkerCount, _extractors.Count(extractor => extractor.IsOperational) * MaxPerExtractor);
-    private int GasWorkerCount => _extractors.Sum(extractor => UnitModule.Get<CapacityModule>(extractor).AssignedUnits.Count);
-    public int GasWorkersCap = 0; // To be set by the manager
+    public int MaxGasCapacity => Math.Min(WorkerCount, _extractors.Count(extractor => extractor.IsOperational) * Resources.MaxDronesPerExtractor);
+    public int GasWorkersCap = 0;
 
     public TownHallSupervisor(Unit townHall, Color color) {
         _id = townHall.Tag;
@@ -162,7 +157,7 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
         var availableCapacity = GasWorkersCap;
         foreach (var extractor in _extractors.Where(extractor => extractor.IsOperational)) {
             var capacityModule = UnitModule.Get<CapacityModule>(extractor);
-            var newExtractorCapacity = Math.Min(MaxPerExtractor, availableCapacity);
+            var newExtractorCapacity = Math.Min(Resources.MaxDronesPerExtractor, availableCapacity);
 
             capacityModule.MaxCapacity = newExtractorCapacity;
             availableCapacity -= newExtractorCapacity;

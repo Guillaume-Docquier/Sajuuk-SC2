@@ -10,8 +10,10 @@ public class IncomeTracker : INeedUpdating {
     public static readonly IncomeTracker Instance = new IncomeTracker();
 
     private const int LogCollectedMineralsFrame = (int)(90 * TimeUtils.FramesPerSecond);
-    private readonly CircularQueue<float> _mineralsCollectionRates = new CircularQueue<float>((int)(TimeUtils.FramesPerSecond * 30));
-    private readonly CircularQueue<float> _vespeneCollectionRates = new CircularQueue<float>((int)(TimeUtils.FramesPerSecond * 30));
+    private const int StatisticsRollingWindowSeconds = 30;
+
+    private readonly CircularQueue<float> _mineralsCollectionRates = new CircularQueue<float>((int)(TimeUtils.FramesPerSecond * StatisticsRollingWindowSeconds));
+    private readonly CircularQueue<float> _vespeneCollectionRates = new CircularQueue<float>((int)(TimeUtils.FramesPerSecond * StatisticsRollingWindowSeconds));
 
     public static float CurrentMineralsCollectionRate { get; private set; }
     public static float MaxMineralsCollectionRate { get; private set; }
@@ -37,7 +39,7 @@ public class IncomeTracker : INeedUpdating {
 
         CalculateExpectedCollectionRates();
 
-        if (Controller.Frame == LogCollectedMineralsFrame) {
+        if (TaggingService.CanTag(TaggingService.Tag.Minerals) && Controller.Frame >= LogCollectedMineralsFrame) {
             var mineralsCollected = observation.Observation.Score.ScoreDetails.CollectedMinerals;
             Logger.Metric("Collected Minerals: {0}", mineralsCollected);
             TaggingService.TagGame(TaggingService.Tag.Minerals, mineralsCollected);
@@ -51,26 +53,26 @@ public class IncomeTracker : INeedUpdating {
         ExpectedMineralsCollectionRate += (float)Controller.GetUnits(UnitsTracker.NeutralUnits, Units.BlueMineralFields)
             .Select(UnitModule.Get<CapacityModule>)
             .Where(module => module != null)
-            .Sum(module => ComputeExpectedCollectionRate(module, Resources.ResourceType.Mineral));
+            .Sum(module => ComputeResourceNodeExpectedCollectionRate(Resources.ResourceType.Mineral, module.AssignedUnits.Count));
 
         ExpectedMineralsCollectionRate += (float)Controller.GetUnits(UnitsTracker.NeutralUnits, Units.GoldMineralFields)
             .Select(UnitModule.Get<CapacityModule>)
             .Where(module => module != null)
-            .Sum(module => ComputeExpectedCollectionRate(module, Resources.ResourceType.Mineral, isGold: true));
+            .Sum(module => ComputeResourceNodeExpectedCollectionRate(Resources.ResourceType.Mineral, module.AssignedUnits.Count, isGold: true));
 
         ExpectedVespeneCollectionRate += (float)Controller.GetUnits(UnitsTracker.NeutralUnits, Units.GreenGasGeysers)
             .Select(UnitModule.Get<CapacityModule>)
             .Select(module => module?.AssignedUnits?.FirstOrDefault())
             .Where(extractor => extractor != null)
             .Select(UnitModule.Get<CapacityModule>)
-            .Sum(module => ComputeExpectedCollectionRate(module, Resources.ResourceType.Gas));
+            .Sum(module => ComputeResourceNodeExpectedCollectionRate(Resources.ResourceType.Gas, module.AssignedUnits.Count));
 
         ExpectedVespeneCollectionRate += (float)Controller.GetUnits(UnitsTracker.NeutralUnits, Units.PurpleGasGeysers)
             .Select(UnitModule.Get<CapacityModule>)
             .Select(module => module?.AssignedUnits?.FirstOrDefault())
             .Where(extractor => extractor != null)
             .Select(UnitModule.Get<CapacityModule>)
-            .Sum(module => ComputeExpectedCollectionRate(module, Resources.ResourceType.Gas, isGold: true));
+            .Sum(module => ComputeResourceNodeExpectedCollectionRate(Resources.ResourceType.Gas, module.AssignedUnits.Count, isGold: true));
     }
 
     /// <summary>
@@ -101,15 +103,15 @@ public class IncomeTracker : INeedUpdating {
     /// - This is 100% more income
     /// </para>
     /// </summary>
-    /// <param name="capacityModule">The resource capacity module</param>
     /// <param name="resourceType">The resource type of the resource</param>
+    /// <param name="workerCount">Amount of workers on that resource</param>
     /// <param name="isGold">Whether the resource is a gold node (more yield)</param>
     /// <returns>The expected collection rate given the parameters</returns>
-    private static double ComputeExpectedCollectionRate(CapacityModule capacityModule, Resources.ResourceType resourceType, bool isGold = false) {
+    public static double ComputeResourceNodeExpectedCollectionRate(Resources.ResourceType resourceType, int workerCount, bool isGold = false) {
         const double goldMineralsMultiplier = 1.4;
         const int goldGasMultiplier = 2;
 
-        return (resourceType, capacityModule.AssignedUnits.Count) switch
+        return (resourceType, workerCount) switch
         {
             (Resources.ResourceType.Mineral,   1) => 61  * (isGold ? goldMineralsMultiplier : 1),
             (Resources.ResourceType.Mineral,   2) => 122 * (isGold ? goldMineralsMultiplier : 1),

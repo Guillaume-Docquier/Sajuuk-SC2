@@ -23,6 +23,7 @@ public sealed partial class EconomyManager: Manager {
     private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, quantity: 0, blockCondition: BuildBlockCondition.MissingResources, priority: BuildRequestPriority.High);
     private readonly BuildRequest _macroHatchBuildRequest = new TargetBuildRequest(BuildType.Build, Units.Hatchery, targetQuantity: 0);
     private readonly BuildRequest _queenBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Queen, targetQuantity: 0);
+    private readonly BuildRequest _extractorsBuildRequest = new TargetBuildRequest(BuildType.Build, Units.Extractor, targetQuantity: 0);
     private readonly BuildRequest _dronesBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Drone, targetQuantity: 0);
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
 
@@ -43,6 +44,7 @@ public sealed partial class EconomyManager: Manager {
         _buildRequests.Add(_expandBuildRequest);
         _buildRequests.Add(_macroHatchBuildRequest);
         _buildRequests.Add(_queenBuildRequest);
+        _buildRequests.Add(_extractorsBuildRequest);
         _buildRequests.Add(_dronesBuildRequest);
     }
 
@@ -68,6 +70,7 @@ public sealed partial class EconomyManager: Manager {
     }
 
     protected override void ManagementPhase() {
+        AdjustGasProduction();
         foreach (var townHallSupervisor in _townHallSupervisors) {
             townHallSupervisor.OnFrame();
         }
@@ -80,15 +83,52 @@ public sealed partial class EconomyManager: Manager {
             _macroHatchBuildRequest.Requested += 1;
         }
 
+        AdjustCreepQueensCount();
+
+        _queenBuildRequest.Requested = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).Count() + _creepQueensCount;
+        _dronesBuildRequest.Requested = Math.Min(MaxDroneCount, _townHallSupervisors.Sum(supervisor => !supervisor.TownHall.IsOperational ? 0 : supervisor.SaturatedCapacity));
+    }
+
+    private void AdjustCreepQueensCount() {
         if (Controller.CurrentSupply >= 130) {
             _creepQueensCount = 3;
         }
         else if (Controller.CurrentSupply >= 100) {
             _creepQueensCount = 2;
         }
+    }
 
-        _queenBuildRequest.Requested = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).Count() + _creepQueensCount;
-        _dronesBuildRequest.Requested = Math.Min(MaxDroneCount, _townHallSupervisors.Sum(supervisor => !supervisor.TownHall.IsOperational ? 0 : supervisor.SaturatedCapacity));
+    /// <summary>
+    /// Adjust the gas production based on the expected future spend.
+    /// The goal is to have enough gas so that we're not flooding it, but also not bottle-necked by it.
+    /// </summary>
+    private void AdjustGasProduction() {
+        var totalSpend = SpendingTracker.ExpectedFutureMineralsSpending + SpendingTracker.ExpectedFutureVespeneSpending;
+        var gasSpendRatio = SpendingTracker.ExpectedFutureVespeneSpending / totalSpend;
+
+        var totalIncome = SpendingTracker.ExpectedFutureMineralsSpending + SpendingTracker.ExpectedFutureVespeneSpending;
+
+        // We subtract the available gas to offset any income/spend evaluation error.
+        // If our resource management is perfect, we'll have near 0 gas all the time, so subtracting will have no impact at all.
+        // Otherwise, if we start flooding gas, we'll just diminish our target gas income.
+        // The current implementation won't work if we need more gas than minerals, we'll fix it if it ever happens.
+        var gasFlood = Math.Max(0, Controller.AvailableVespene - Controller.AvailableMinerals);
+        var targetGasIncome = Math.Max(0, totalIncome * gasSpendRatio - gasFlood);
+        var oneDroneInGasIncome = IncomeTracker.ComputeResourceNodeExpectedCollectionRate(Resources.ResourceType.Gas, 1);
+
+        var requiredDronesInGas = (int)Math.Ceiling(targetGasIncome / oneDroneInGasIncome);
+        foreach (var townHallSupervisor in _townHallSupervisors) {
+            var newGasWorkersCap = Math.Min(requiredDronesInGas, townHallSupervisor.MaxGasCapacity);
+
+            townHallSupervisor.GasWorkersCap = newGasWorkersCap;
+            requiredDronesInGas -= newGasWorkersCap;
+        }
+
+        if (requiredDronesInGas > 0) {
+            var operationalExtractors = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Extractor).Count(extractor => extractor.IsOperational);
+            var additionalExtractorsNeeded = (int)Math.Ceiling(requiredDronesInGas / (double)Resources.MaxDronesPerExtractor);
+            _extractorsBuildRequest.Requested = operationalExtractors + additionalExtractorsNeeded;
+        }
     }
 
     // TODO GD This doesn't seem to work very well

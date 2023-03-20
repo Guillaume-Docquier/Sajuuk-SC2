@@ -100,7 +100,7 @@ public partial class TownHallSupervisor {
             _supervisor._extractors.Add(extractor);
 
             DebugLocationModule.Install(extractor, _supervisor._color);
-            CapacityModule.Install(extractor, MaxPerExtractor);
+            CapacityModule.Install(extractor, Resources.MaxDronesPerExtractor);
 
             UnitModule.Get<CapacityModule>(_supervisor._gasses.First(gas => gas.DistanceTo(extractor) < 1)).Assign(extractor); // TODO GD Make this cleaner
 
@@ -113,7 +113,7 @@ public partial class TownHallSupervisor {
             _supervisor._minerals.Add(mineral);
 
             DebugLocationModule.Install(mineral, _supervisor._color);
-            CapacityModule.Install(mineral, MaxPerMinerals);
+            CapacityModule.Install(mineral, Resources.MaxDronesPerMinerals);
 
             LogAssignment(mineral);
         }

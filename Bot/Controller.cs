@@ -355,7 +355,7 @@ public static class Controller {
                 .MaxBy(gas => (gas.Supervisor as TownHallSupervisor)!.WorkerCount); // This is not cute nor clean, but it is efficient and we like that
 
             if (availableGas == null) {
-                Logger.Warning("(Controller) No available gasses for extractor");
+                Logger.Debug("(Controller) No available gasses for extractor");
                 return BuildRequestResult.NoSuitableLocation;
             }
 
