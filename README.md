@@ -27,3 +27,4 @@ Check out [Artificially Intelligent](https://www.youtube.com/channel/UC_KAanPGVo
 - Overlord scouting
 - BuildRequest system with dynamic Priorities and BlockConditions
 - Regions value and force evaluations to decide where to defend and where to attack
+- Automatic gas/minerals balancing
