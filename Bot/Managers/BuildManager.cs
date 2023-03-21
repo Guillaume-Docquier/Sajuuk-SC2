@@ -6,8 +6,9 @@ using Bot.GameSense.EnemyStrategyTracking;
 namespace Bot.Managers;
 
 public class BuildManager : UnitlessManager, ISubscriber<EnemyStrategyTransition> {
-    private bool _buildOrderDoneAndTagged = false;
     private readonly IBuildOrder _buildOrder;
+
+    public bool IsBuildOrderDone { get; private set; } = false;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildOrder.BuildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
@@ -19,12 +20,12 @@ public class BuildManager : UnitlessManager, ISubscriber<EnemyStrategyTransition
     protected override void ManagementPhase() {
         _buildOrder.PruneRequests();
 
-        if (!_buildOrderDoneAndTagged) {
+        if (!IsBuildOrderDone) {
             var buildOrderDone = _buildOrder.BuildRequests.All(request => request.Fulfillment.Remaining == 0);
             if (buildOrderDone) {
                 var scoreDetails = Controller.Observation.Observation.Score.ScoreDetails;
                 TaggingService.TagGame(TaggingService.Tag.BuildDone, Controller.CurrentSupply, scoreDetails.CollectedMinerals, scoreDetails.CollectedVespene);
-                _buildOrderDoneAndTagged = true;
+                IsBuildOrderDone = true;
             }
         }
     }

@@ -13,6 +13,7 @@ namespace Bot.Managers.EconomyManagement;
 
 public sealed partial class EconomyManager: Manager {
     private const int MaxDroneCount = 70;
+    private readonly BuildManager _buildManager;
 
     private const uint GasDroneCountLoweringDelay = (int)(TimeUtils.FramesPerSecond * 15);
     private int _requiredDronesInGas = 0;
@@ -39,7 +40,9 @@ public sealed partial class EconomyManager: Manager {
     protected override IDispatcher Dispatcher { get; }
     protected override IReleaser Releaser { get; }
 
-    public EconomyManager() {
+    public EconomyManager(BuildManager buildManager) {
+        _buildManager = buildManager;
+
         Assigner = new EconomyManagerAssigner(this);
         Dispatcher = new EconomyManagerDispatcher(this);
         Releaser = new EconomyManagerReleaser(this);
@@ -63,7 +66,7 @@ public sealed partial class EconomyManager: Manager {
         var unmanagedIdleWorkers = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Workers)
             .Where(unit => unit.Manager == null)
             // We do this to not select drones that are going to build something
-            // TODO GD This is problematic because we need tosend a stop order whenever we release a drone
+            // TODO GD This is problematic because we need to send a stop order whenever we release a drone
             .Where(unit => !unit.OrdersExceptMining.Any());
 
         Assign(unmanagedIdleWorkers);
@@ -108,7 +111,44 @@ public sealed partial class EconomyManager: Manager {
     /// The goal is to have enough gas so that we're not flooding it, but also not bottle-necked by it.
     /// </summary>
     private void AdjustGasProduction() {
+        // The build order is optimized, take all the gas we can
+        if (!_buildManager.IsBuildOrderDone) {
+            foreach (var townHallSupervisor in _townHallSupervisors) {
+                townHallSupervisor.GasWorkersCap = townHallSupervisor.MaxGasCapacity;
+            }
+
+            return;
+        }
+
+        var requiredDronesInGas = ComputeRequiredGasDroneCount();
+        if (requiredDronesInGas == _requiredDronesInGas || Controller.Frame < _doNotChangeGasDroneCountBefore) {
+            return;
+        }
+
+        var extractorsNeeded = (int)Math.Ceiling(requiredDronesInGas / (double)Resources.MaxDronesPerExtractor);
+        _extractorsBuildRequest.Requested = extractorsNeeded;
+
+        _requiredDronesInGas = requiredDronesInGas;
+        _doNotChangeGasDroneCountBefore = Controller.Frame + GasDroneCountLoweringDelay;
+
+        foreach (var townHallSupervisor in _townHallSupervisors) {
+            var newGasWorkersCap = Math.Min(requiredDronesInGas, townHallSupervisor.MaxGasCapacity);
+
+            townHallSupervisor.GasWorkersCap = newGasWorkersCap;
+            requiredDronesInGas -= newGasWorkersCap;
+        }
+    }
+
+    /// <summary>
+    /// Compute the ideal number of drones that should mine gas based on our future spend and current income.
+    /// </summary>
+    /// <returns>The number of drones that should be sent to gas mining.</returns>
+    private static int ComputeRequiredGasDroneCount() {
         var totalSpend = SpendingTracker.ExpectedFutureMineralsSpending + SpendingTracker.ExpectedFutureVespeneSpending;
+        if (totalSpend == 0) {
+            return 0;
+        }
+
         var gasSpendRatio = SpendingTracker.ExpectedFutureVespeneSpending / totalSpend;
 
         var totalIncome = SpendingTracker.ExpectedFutureMineralsSpending + SpendingTracker.ExpectedFutureVespeneSpending;
@@ -121,31 +161,7 @@ public sealed partial class EconomyManager: Manager {
         var targetGasIncome = Math.Max(0, totalIncome * gasSpendRatio - gasFlood);
         var oneDroneInGasIncome = IncomeTracker.ComputeResourceNodeExpectedCollectionRate(Resources.ResourceType.Gas, 1);
 
-        var requiredDronesInGas = (int)Math.Ceiling(targetGasIncome / oneDroneInGasIncome);
-
-        // TODO GD This new logic makes no timing difference, but I think we end up with more money (but too much gas)
-        // TODO GD Log the total money when build finishes
-        // TODO GD Compare tunneling claws and glial reconstitution start times
-        // TODO GD Allow expand before 75 supply (we build a macro hatch, lol)
-        if (requiredDronesInGas == _requiredDronesInGas || Controller.Frame < _doNotChangeGasDroneCountBefore) {
-            return;
-        }
-
-        _requiredDronesInGas = requiredDronesInGas;
-        _doNotChangeGasDroneCountBefore = Controller.Frame + GasDroneCountLoweringDelay;
-
-        foreach (var townHallSupervisor in _townHallSupervisors) {
-            var newGasWorkersCap = Math.Min(requiredDronesInGas, townHallSupervisor.MaxGasCapacity);
-
-            townHallSupervisor.GasWorkersCap = newGasWorkersCap;
-            requiredDronesInGas -= newGasWorkersCap;
-        }
-
-        if (requiredDronesInGas > 0) {
-            var operationalExtractors = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Extractor).Count(extractor => extractor.IsOperational);
-            var additionalExtractorsNeeded = (int)Math.Ceiling(requiredDronesInGas / (double)Resources.MaxDronesPerExtractor);
-            _extractorsBuildRequest.Requested = operationalExtractors + additionalExtractorsNeeded;
-        }
+        return (int)Math.Ceiling(targetGasIncome / oneDroneInGasIncome);
     }
 
     // TODO GD This doesn't seem to work very well

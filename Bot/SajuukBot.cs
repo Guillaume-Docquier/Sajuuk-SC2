@@ -61,7 +61,7 @@ public class SajuukBot: PoliteBot {
 
         _managers.Add(new SupplyManager(buildManager));
         _managers.Add(new ScoutManager());
-        _managers.Add(new EconomyManager());
+        _managers.Add(new EconomyManager(buildManager));
         _managers.Add(new WarManager());
         _managers.Add(new CreepManager());
         _managers.Add(new UpgradesManager());
