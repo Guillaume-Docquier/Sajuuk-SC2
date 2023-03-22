@@ -15,7 +15,7 @@ public class SupplyManager : UnitlessManager {
     private const int OverlordBatchSize = 4;
 
     private readonly BuildManager _buildManager;
-    private readonly BuildRequest _overlordsBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Overlord, 0);
+    private readonly BuildRequest _overlordsBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Overlord, 0, priority: BuildRequestPriority.High);
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
@@ -32,8 +32,6 @@ public class SupplyManager : UnitlessManager {
             // TODO GD Be smarter about the batch size
             _overlordsBuildRequest.Requested += OverlordBatchSize;
         }
-
-        _overlordsBuildRequest.Priority = BuildRequestPriority.High;
     }
 
     private void MaintainOverlords() {
@@ -46,7 +44,8 @@ public class SupplyManager : UnitlessManager {
     private bool ShouldTakeOverOverlordManagement() {
         return _buildManager.BuildFulfillments
             .Where(buildFulfilment => buildFulfilment.BuildType == BuildType.Train)
-            .All(buildFulfilment => buildFulfilment.UnitOrUpgradeType != Units.Overlord);
+            .Where(buildFulfilment => buildFulfilment.UnitOrUpgradeType == Units.Overlord)
+            .Sum(buildFulfilment => buildFulfilment.Remaining) <= 0;
     }
 
     private bool ShouldRequestMoreOverlords() {

@@ -16,22 +16,22 @@ public class TwoBasesRoach : IBuildOrder {
     public TwoBasesRoach() {
         _buildRequests = new List<BuildRequest>
         {
-            new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 13),
+            new TargetBuildRequest  (BuildType.Train,       Units.Overlord,                    atSupply: 13, targetQuantity: 2),
             new QuantityBuildRequest(BuildType.Expand,      Units.Hatchery,                    atSupply: 16),                    // TODO GD Need to be able to say 1 expand as opposed to 2 hatcheries
             // TODO GD The build requests are sorted by supply, so the pool gets built before the gas. It doesn't matter, but don't forget
             new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 18, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Build,       Units.SpawningPool,                atSupply: 17, targetQuantity: 1),
-            new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 19),
+            new TargetBuildRequest  (BuildType.Train,       Units.Overlord,                    atSupply: 19, targetQuantity: 3),
             new TargetBuildRequest  (BuildType.Train,       Units.Queen,                       atSupply: 22, targetQuantity: 2),
             new QuantityBuildRequest(BuildType.Train,       Units.Zergling,                    atSupply: 24, quantity: 2),
-            new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 30),
+            new TargetBuildRequest  (BuildType.Train,       Units.Overlord,                    atSupply: 30, targetQuantity: 4),
             new TargetBuildRequest  (BuildType.Train,       Units.Queen,                       atSupply: 30, targetQuantity: 3),
             new TargetBuildRequest  (BuildType.UpgradeInto, Units.Lair,                        atSupply: 33, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Build,       Units.RoachWarren,                 atSupply: 33, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Build,       Units.EvolutionChamber,            atSupply: 37, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 37, targetQuantity: 2),
             new TargetBuildRequest  (BuildType.Research,    Upgrades.Burrow,                   atSupply: 40, targetQuantity: 1),
-            new QuantityBuildRequest(BuildType.Train,       Units.Overlord,                    atSupply: 41),
+            new TargetBuildRequest  (BuildType.Train,       Units.Overlord,                    atSupply: 41, targetQuantity: 5),
             new TargetBuildRequest  (BuildType.Research,    Upgrades.ZergMissileWeaponsLevel1, atSupply: 44, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 50, targetQuantity: 3),
             new TargetBuildRequest  (BuildType.Research,    Upgrades.TunnelingClaws,           atSupply: 50, targetQuantity: 1),
