@@ -6,6 +6,7 @@ using Bot.Builds;
 using Bot.Builds.BuildOrders;
 using Bot.Debugging;
 using Bot.ExtensionMethods;
+using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers;
 using Bot.Managers.EconomyManagement;
@@ -36,6 +37,7 @@ public class SajuukBot: PoliteBot {
 
         var managerRequests = GetManagersBuildRequests();
         var buildBlockStatus = AddressManagerRequests(managerRequests);
+        EnsureNoSupplyBlock();
 
         var flatManagerRequests = managerRequests
             .SelectMany(groupedBySupply => groupedBySupply.SelectMany(request => request))
@@ -173,5 +175,21 @@ public class SajuukBot: PoliteBot {
 
         buildBlockingReason = BuildBlockCondition.None;
         return false;
+    }
+
+    private static void EnsureNoSupplyBlock() {
+        if (!Controller.IsSupplyCapped) {
+            return;
+        }
+
+        if (Controller.GetProducersCarryingOrders(Units.Overlord).Any()) {
+            return;
+        }
+
+        if (Controller.GetProducersCarryingOrders(Units.Hatchery).Any()) {
+            return;
+        }
+
+        Controller.ExecuteBuildStep(new QuantityBuildRequest(BuildType.Train, Units.Overlord).Fulfillment);
     }
 }
