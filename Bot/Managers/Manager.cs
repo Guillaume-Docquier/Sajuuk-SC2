@@ -26,6 +26,8 @@ public abstract class Manager: IWatchUnitsDie {
     protected abstract void ManagementPhase();
     protected virtual void EndOfFramePhase() {}
 
+    protected virtual void OnManagedUnitDeath(Unit deadUnit) {}
+
     public void Assign(IEnumerable<Unit> units) {
         foreach (var unit in units) {
             Assign(unit);
@@ -85,6 +87,7 @@ public abstract class Manager: IWatchUnitsDie {
     public void ReportUnitDeath(Unit deadUnit) {
         if (ManagedUnits.Contains(deadUnit)) {
             Release(deadUnit);
+            OnManagedUnitDeath(deadUnit);
         }
         else {
             Logger.Error("({0}) Reported death of {1}, but we don't manage this unit", this, deadUnit);

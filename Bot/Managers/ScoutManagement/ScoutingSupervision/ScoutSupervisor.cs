@@ -44,6 +44,7 @@ public partial class ScoutSupervisor : Supervisor {
     }
 
     public override void Retire() {
+        ScoutingTask.Cancel();
         foreach (var supervisedUnit in SupervisedUnits) {
             Release(supervisedUnit);
         }
