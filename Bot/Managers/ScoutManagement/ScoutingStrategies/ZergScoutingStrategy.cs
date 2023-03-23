@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
@@ -52,6 +53,10 @@ public class ZergScoutingStrategy : IScoutingStrategy {
             _thirdScoutingTask.Cancel();
             _fourthScoutingTask.Cancel();
         }
+
+        if (_naturalScoutingTask.IsComplete()) {
+            _naturalExitVisibilityTask.Priority = _naturalScoutingTask.Priority;
+        }
     }
 
     private void Init() {
@@ -68,13 +73,22 @@ public class ZergScoutingStrategy : IScoutingStrategy {
             .Concat(enemyNaturalExitRegionRamps.SelectMany(region => region.Cells))
             .ToList();
 
-        _naturalExitVisibilityTask = new MaintainVisibilityScoutingTask(cellsToMaintainVisible, priority: TopPriority - 1, enemyNaturalExitRegionRamps.Count);
+        _naturalExitVisibilityTask = new MaintainVisibilityScoutingTask(cellsToMaintainVisible, priority: TopPriority - 3, enemyNaturalExitRegionRamps.Count);
 
         var enemyThirdExpandLocation = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Third);
-        _thirdScoutingTask = new ExpandScoutingTask(enemyThirdExpandLocation.Position, TopPriority - 2, maxScouts: 1, waitForExpand: true);
+        _thirdScoutingTask = new ExpandScoutingTask(enemyThirdExpandLocation.Position, TopPriority - 1, maxScouts: 1, waitForExpand: true);
 
         var enemyFourthExpandLocation = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Fourth);
         _fourthScoutingTask = new ExpandScoutingTask(enemyFourthExpandLocation.Position, TopPriority - 2, maxScouts: 1, waitForExpand: true);
+
+        // We want to route an overlord towards the center of the map sooner than the edge
+        // Most early attacks will route through the center, we want to see them
+        // The expand that's closest to the main is usually towards the center of the map
+        var enemyMainPosition = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).Position;
+        if (_thirdScoutingTask.ScoutLocation.DistanceTo(enemyMainPosition) > _fourthScoutingTask.ScoutLocation.DistanceTo(enemyMainPosition)) {
+            _thirdScoutingTask.Priority--;
+            _fourthScoutingTask.Priority++;
+        }
 
         _isInitialized = true;
     }
