@@ -36,7 +36,7 @@ public static class Controller {
     public static uint MaxSupply { get; private set; }
     public static int AvailableSupply => (int)(MaxSupply - CurrentSupply);
 
-    public static bool IsSupplyCapped => AvailableSupply == 0;
+    public static bool IsSupplyCapped => AvailableSupply <= 0;
 
     public static int AvailableMinerals { get; private set; }
     public static int AvailableVespene { get; private set; }
