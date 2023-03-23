@@ -113,8 +113,12 @@ public sealed partial class EconomyManager: Manager {
     private void AdjustGasProduction() {
         // The build order is optimized, take all the gas we can
         if (!_buildManager.IsBuildOrderDone) {
+            // There can be scenarios where we lose most of our drones early game
+            // When that happens, we must really focus on minerals
+            var hasEnoughDronesForGas = ManagedUnits.Count(unit => unit.UnitType == Units.Drone) >= 10;
+
             foreach (var townHallSupervisor in _townHallSupervisors) {
-                townHallSupervisor.GasWorkersCap = townHallSupervisor.MaxGasCapacity;
+                townHallSupervisor.GasWorkersCap = hasEnoughDronesForGas ? townHallSupervisor.MaxGasCapacity : 0;
             }
 
             return;
