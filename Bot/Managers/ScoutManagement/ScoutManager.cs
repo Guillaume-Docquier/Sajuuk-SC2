@@ -110,4 +110,13 @@ public partial class ScoutManager : Manager {
             _scoutSupervisors.Remove(scoutSupervisor);
         }
     }
+
+    protected override void OnManagedUnitDeath(Unit deadUnit) {
+        // Our logic to protect scouts is bad right now
+        // If we start losing scouts, abort all scouting and recall everyone
+        foreach (var scoutSupervisor in _scoutSupervisors) {
+            scoutSupervisor.Retire();
+            _scoutSupervisors.Remove(scoutSupervisor);
+        }
+    }
 }
