@@ -32,10 +32,6 @@ public class SupplyManager : UnitlessManager {
             // TODO GD Be smarter about the batch size
             _overlordsBuildRequest.Requested += OverlordBatchSize;
         }
-
-        if (IsSupplyCapped()) {
-            _overlordsBuildRequest.Requested += 1;
-        }
     }
 
     private void MaintainOverlords() {
@@ -64,9 +60,5 @@ public class SupplyManager : UnitlessManager {
 
     private int GetRequestedSupportedSupply() {
         return _overlordsBuildRequest.Requested * SupplyPerOverlord + GetSupplyFromHatcheries();
-    }
-
-    private bool IsSupplyCapped() {
-        return _overlordsBuildRequest.Fulfillment.Remaining == 0 && Controller.IsSupplyCapped;
     }
 }
