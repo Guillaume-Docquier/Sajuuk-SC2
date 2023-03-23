@@ -9,7 +9,7 @@ public abstract class ScoutingTask {
     /**
      * High priority is more important
      */
-    public int Priority { get; }
+    public int Priority { get; set; }
 
     public int MaxScouts { get; }
 
