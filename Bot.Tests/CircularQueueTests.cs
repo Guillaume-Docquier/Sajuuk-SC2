@@ -1,4 +1,6 @@
-﻿namespace Bot.Tests;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Bot.Tests;
 
 public class CircularQueueTests {
     [Fact]
@@ -62,6 +64,7 @@ public class CircularQueueTests {
 
     [Theory]
     [MemberData(nameof(AnyQueueData))]
+    [SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters")]
     public void GivenAnyQueue_WhenDequeueTooManyTimes_ThenThrows(CircularQueue<int> queue, List<int> _) {
         // Act
         var numberOfElementsToRemove = queue.Length;
@@ -89,6 +92,7 @@ public class CircularQueueTests {
 
     [Theory]
     [MemberData(nameof(AnyQueueData))]
+    [SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters")]
     public void GivenAnyQueue_WhenClear_ThenLengthIsSetToZero(CircularQueue<int> queue, List<int> _) {
         // Act
         queue.Clear();
@@ -99,6 +103,7 @@ public class CircularQueueTests {
 
     [Theory]
     [MemberData(nameof(AnyQueueData))]
+    [SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters")]
     public void GivenAnyQueue_WhenClear_ThenCannotIterate(CircularQueue<int> queue, List<int> _) {
         // Act
         queue.Clear();
@@ -133,6 +138,7 @@ public class CircularQueueTests {
 
     [Theory]
     [MemberData(nameof(AnyQueueData))]
+    [SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters")]
     public void GivenAnyQueue_WhenIndexingOutOfRange_ThenThrows(CircularQueue<int> queue, List<int> _) {
         // Act & Assert
         Assert.Throws<IndexOutOfRangeException>(() => queue[queue.Length]);
