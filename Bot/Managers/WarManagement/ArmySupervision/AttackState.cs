@@ -28,14 +28,18 @@ public partial class ArmySupervisor {
         private ulong _pathfindingLock = 0;
         private ulong _pathfindingLockDelay = TimeUtils.SecsToFrames(4);
 
-        private readonly IUnitsControl _sneakAttackUnitsControl = new SneakAttackUnitsControl();
+        private readonly List<IUnitsControl> _unitsControls = new List<IUnitsControl>
+        {
+            new DroneKitingUnitsControl(),
+            new SneakAttackUnitsControl(),
+        };
 
         protected override void OnTransition() {
-            _sneakAttackUnitsControl.Reset(null);
+            _unitsControls.ForEach(unitsControl => unitsControl.Reset(null));
         }
 
         protected override bool TryTransitioning() {
-            if (_sneakAttackUnitsControl.IsExecuting()) {
+            if (_unitsControls.Any(unitsControl => unitsControl.IsExecuting())) {
                 return false;
             }
 
@@ -52,13 +56,13 @@ public partial class ArmySupervisor {
 
             DrawArmyData(Context._mainArmy);
 
-            if (_sneakAttackUnitsControl.IsViable(Context._mainArmy)) {
-                _sneakAttackUnitsControl.Execute(Context._mainArmy);
+            IReadOnlySet<Unit> armyToControl = new HashSet<Unit>(Context._mainArmy);
+            foreach (var unitsControl in _unitsControls) {
+                armyToControl = unitsControl.Execute(armyToControl);
             }
-            else {
-                _sneakAttackUnitsControl.Reset(Context._mainArmy);
-                Attack(Context._target, Context._mainArmy);
-            }
+
+            // TODO GD Turn Attack into an IUnitsControl
+            Attack(Context._target, armyToControl);
 
             Rally(Context._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
         }
@@ -83,7 +87,8 @@ public partial class ArmySupervisor {
 
             DrawAttackData(targetToAttack, army);
 
-            var unitsToAttackWith = army.Where(unit => unit.IsIdleOrMovingOrAttacking())
+            // TODO GD "IsIdleOrMovingOrAttacking || IsMineralWalking" is kinda whack because it knows about drone behaviour
+            var unitsToAttackWith = army.Where(unit => unit.IsIdleOrMovingOrAttacking() || unit.IsMineralWalking())
                 .Where(unit => !unit.IsBurrowed)
                 .Where(unit => unit.DistanceTo(targetToAttack) > AcceptableDistanceToTarget)
                 .ToList();

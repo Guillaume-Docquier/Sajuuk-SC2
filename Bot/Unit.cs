@@ -453,6 +453,10 @@ public class Unit: ICanDie, IHavePosition {
         return Orders.Count > 0;
     }
 
+    public bool IsMineralWalking() {
+        return Orders.Any(order => Abilities.Gather.Contains(order.AbilityId) || Abilities.ReturnCargo.Contains(order.AbilityId));
+    }
+
     public override string ToString() {
         if (Alliance == Alliance.Self) {
             return $"{Name}[{Tag}]";

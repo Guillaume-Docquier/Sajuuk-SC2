@@ -11,6 +11,8 @@ public partial class SneakAttackUnitsControl {
         private const float MinimumEngagementArmyThreshold = 0.75f;
         private const float OverwhelmingForceRatio = 4f;
 
+        private const float OperationRadius = TankRange + 3;
+
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
             if (Context._coolDownUntil > Controller.Frame) {
                 return false;
@@ -20,11 +22,9 @@ public partial class SneakAttackUnitsControl {
                 return false;
             }
 
-            // TODO GD Should probably weight this in when doing the other checks instead of returning true
-            var priorityTargets = GetPriorityTargetsInOperationRadius(army.GetCenter());
-            if (priorityTargets.Any()) {
-                // F*ck em up!
-                return true;
+            var priorityTargets = GetPriorityTargetsInOperationRadius(army, OperationRadius);
+            if (!priorityTargets.Any()) {
+                return false;
             }
 
             var enemiesInSightOfTheArmy = GetGroundEnemiesInSight(army).ToList();
@@ -43,7 +43,6 @@ public partial class SneakAttackUnitsControl {
                 .ToList();
 
             var nbSoldiersInRange = army.Count(soldier => enemyMilitaryUnits.Any(soldier.IsInAttackRangeOf));
-
             if (nbSoldiersInRange >= army.Count * MinimumEngagementArmyThreshold) {
                 // We have a pretty good engagement already
                 return false;
@@ -53,7 +52,7 @@ public partial class SneakAttackUnitsControl {
         }
 
         protected override void Execute() {
-            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(Context._armyCenter).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
+            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(Context._army, OperationRadius).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
             if (closestPriorityTarget != null) {
                 Context._targetPosition = closestPriorityTarget.Position.ToVector2();
                 Context._isTargetPriority = true;

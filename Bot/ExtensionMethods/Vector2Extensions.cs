@@ -225,6 +225,16 @@ public static class Vector2Extensions {
     /// <param name="origin">The origin</param>
     /// <param name="destination">The destination to look at</param>
     /// <returns>A normal vector that represents a direction vector from the origin towards the destination</returns>
+    public static Vector2 DirectionTo(this Vector2 origin, Vector3 destination) {
+        return origin.DirectionTo(destination.ToVector2());
+    }
+
+    /// <summary>
+    /// Calculates a normal vector that represents a direction vector from the origin towards the destination
+    /// </summary>
+    /// <param name="origin">The origin</param>
+    /// <param name="destination">The destination to look at</param>
+    /// <returns>A normal vector that represents a direction vector from the origin towards the destination</returns>
     public static Vector2 DirectionTo(this Vector2 origin, Vector2 destination) {
         return Vector2.Normalize(destination - origin);
     }
@@ -253,5 +263,27 @@ public static class Vector2Extensions {
         var direction = origin.DirectionTo(destination);
 
         return origin - direction * distance;
+    }
+
+    /// <summary>
+    /// Calculates the angle from origin to destination with respect to (1, 0).
+    /// The angle is going to be within ]-PI, PI].
+    /// </summary>
+    /// <param name="origin">The origin of the vector</param>
+    /// <param name="destination">The end of the vector</param>
+    /// <returns>The angle in rad between (1, 0) and (origin, destination) within ]-PI, PI]</returns>
+    public static double GetRadAngleTo(this Vector2 origin, Vector3 destination) {
+        return origin.GetRadAngleTo(destination.ToVector2());
+    }
+
+    /// <summary>
+    /// Calculates the angle from origin to destination with respect to (1, 0).
+    /// The angle is going to be within ]-PI, PI].
+    /// </summary>
+    /// <param name="origin">The origin of the vector</param>
+    /// <param name="destination">The end of the vector</param>
+    /// <returns>The angle in rad between (1, 0) and (origin, destination) within ]-PI, PI]</returns>
+    public static double GetRadAngleTo(this Vector2 origin, Vector2 destination) {
+        return Math.Atan2(destination.Y - origin.Y, destination.X - origin.X);
     }
 }

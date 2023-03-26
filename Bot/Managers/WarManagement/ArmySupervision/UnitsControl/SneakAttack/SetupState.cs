@@ -13,10 +13,17 @@ public partial class SneakAttackUnitsControl {
         private const float MinimumArmyThresholdToEngage = 0.80f;
         private const double MinimumIntegrityToEngage = BurrowMicroModule.BurrowDownThreshold + 0.1;
 
+        private const float OperationRadius = TankRange - 5;
+
         private readonly StuckDetector _stuckDetector = new StuckDetector();
 
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
             if (DetectionTracker.IsDetected(army)) {
+                return false;
+            }
+
+            var priorityTargets = GetPriorityTargetsInOperationRadius(army, OperationRadius);
+            if (!priorityTargets.Any()) {
                 return false;
             }
 
@@ -58,7 +65,7 @@ public partial class SneakAttackUnitsControl {
 
         private void ComputeTargetPosition() {
             // Do we need _isTargetPriority at this point? We shouldn't lose sight at this point, right?
-            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(Context._armyCenter)
+            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(Context._army, OperationRadius)
                 .MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
 
             if (closestPriorityTarget != null) {

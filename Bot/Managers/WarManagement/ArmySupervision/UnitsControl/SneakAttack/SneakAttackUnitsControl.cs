@@ -14,7 +14,6 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttack;
 
 public partial class SneakAttackUnitsControl: IWatchUnitsDie, IUnitsControl {
     private const float TankRange = 13;
-    private const float OperationRadius = TankRange + 2;
 
     private readonly StateMachine<SneakAttackUnitsControl, SneakAttackState> _stateMachine;
     private readonly HashSet<Unit> _unitsWithUninstalledModule = new HashSet<Unit>();
@@ -38,7 +37,41 @@ public partial class SneakAttackUnitsControl: IWatchUnitsDie, IUnitsControl {
         _stateMachine = new StateMachine<SneakAttackUnitsControl, SneakAttackState>(this, new InactiveState());
     }
 
-    public bool IsViable(IReadOnlyCollection<Unit> army) {
+    public bool IsExecuting() {
+        return _stateMachine.State is not InactiveState;
+    }
+
+    public IReadOnlySet<Unit> Execute(IReadOnlySet<Unit> army) {
+        var effectiveArmy = Controller.GetUnits(army, Units.Roach).ToList();
+        if (!IsViable(effectiveArmy)) {
+            Reset(army);
+
+            return army;
+        }
+
+        _coolDownUntil = Controller.Frame + TimeUtils.SecsToFrames(5);
+
+        _army = effectiveArmy;
+        if (_army.Count <= 0) {
+            Logger.Error("Trying to execute sneak attack without roaches in the army");
+            return army;
+        }
+
+        _armyCenter = _army.GetCenter();
+
+        UninstallBurrowMicroModules();
+
+        _stateMachine.OnFrame();
+
+        DebugTarget();
+
+        var uncontrolledUnits = new HashSet<Unit>(army);
+        uncontrolledUnits.ExceptWith(_army);
+
+        return uncontrolledUnits;
+    }
+
+    private bool IsViable(IReadOnlyCollection<Unit> army) {
         if (!HasProperTech()) {
             return false;
         }
@@ -47,38 +80,11 @@ public partial class SneakAttackUnitsControl: IWatchUnitsDie, IUnitsControl {
             return false;
         }
 
-        var effectiveArmy = Controller.GetUnits(army, Units.Roach).ToList();
-        if (effectiveArmy.Count <= 0) {
+        if (army.Count <= 0) {
             return false;
         }
 
-        if (!GetPriorityTargetsInOperationRadius(effectiveArmy.GetCenter()).Any()) {
-            return false;
-        }
-
-        return _stateMachine.State.IsViable(effectiveArmy);
-    }
-
-    public bool IsExecuting() {
-        return _stateMachine.State is not InactiveState;
-    }
-
-    public void Execute(IReadOnlyCollection<Unit> army) {
-        _coolDownUntil = Controller.Frame + TimeUtils.SecsToFrames(5);
-
-        _army = army.Where(soldier => soldier.UnitType is Units.Roach or Units.RoachBurrowed).ToList();
-        if (_army.Count <= 0) {
-            Logger.Error("Trying to execute sneak attack without roaches in the army");
-            return;
-        }
-
-        _armyCenter = army.GetCenter();
-
-        UninstallBurrowMicroModules();
-
-        _stateMachine.OnFrame();
-
-        DebugTarget();
+        return _stateMachine.State.IsViable(army);
     }
 
     public void Reset(IReadOnlyCollection<Unit> army) {
@@ -107,6 +113,7 @@ public partial class SneakAttackUnitsControl: IWatchUnitsDie, IUnitsControl {
 
     private static bool IsArmyGettingEngaged(IEnumerable<Unit> army) {
         // TODO GD Track HP loss, EngagedTargetTag is only set on our units
+        // TODO GD We will often get hit by the first tank shell / enemy salvo, take that into account
         return false;
     }
 
@@ -123,8 +130,10 @@ public partial class SneakAttackUnitsControl: IWatchUnitsDie, IUnitsControl {
         }
     }
 
-    private static IEnumerable<Unit> GetPriorityTargetsInOperationRadius(Vector2 armyCenter) {
-        return Controller.GetUnits(UnitsTracker.EnemyUnits, PriorityTargets).Where(enemy => enemy.DistanceTo(armyCenter) <= OperationRadius);
+    private static IEnumerable<Unit> GetPriorityTargetsInOperationRadius(IReadOnlyCollection<Unit> army, float operationRadius) {
+        return Controller
+            .GetUnits(UnitsTracker.EnemyUnits.Concat(UnitsTracker.EnemyGhostUnits.Values), PriorityTargets)
+            .Where(enemy => army.Min(soldier => soldier.DistanceTo(enemy)) <= operationRadius);
     }
 
     private void DebugTarget() {
