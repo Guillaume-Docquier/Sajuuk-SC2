@@ -65,7 +65,7 @@ public partial class ArmySupervisor {
                 .ToList();
 
             if (targetList.Any()) {
-                soldiers.Where(unit => unit.IsIdleOrMovingOrAttacking())
+                soldiers.Where(unit => unit.IsIdle() || unit.IsMoving() || unit.IsAttacking())
                     .Where(unit => !unit.IsBurrowed)
                     .ToList()
                     .ForEach(soldier => {

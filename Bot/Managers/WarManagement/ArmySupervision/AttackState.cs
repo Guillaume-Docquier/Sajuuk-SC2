@@ -87,8 +87,7 @@ public partial class ArmySupervisor {
 
             DrawAttackData(targetToAttack, army);
 
-            // TODO GD "IsIdleOrMovingOrAttacking || IsMineralWalking" is kinda whack because it knows about drone behaviour
-            var unitsToAttackWith = army.Where(unit => unit.IsIdleOrMovingOrAttacking() || unit.IsMineralWalking())
+            var unitsToAttackWith = army.Where(unit => unit.IsIdle() || unit.IsMoving() || unit.IsAttacking() || unit.IsMineralWalking())
                 .Where(unit => !unit.IsBurrowed)
                 .Where(unit => unit.DistanceTo(targetToAttack) > AcceptableDistanceToTarget)
                 .ToList();

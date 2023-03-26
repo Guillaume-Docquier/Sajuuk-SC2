@@ -60,7 +60,7 @@ public partial class SneakAttackUnitsControl {
             BurrowOverlings(Context._army);
 
             if (Context._targetPosition.DistanceTo(Context._armyCenter) > SetupDistance) {
-                foreach (var soldier in Context._army.Where(soldier => soldier.IsIdleOrMovingOrAttacking())) {
+                foreach (var soldier in Context._army.Where(soldier => soldier.IsIdle() || soldier.IsMoving() || soldier.IsAttacking())) {
                     soldier.Move(Context._targetPosition);
                 }
             }
