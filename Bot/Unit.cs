@@ -380,10 +380,6 @@ public class Unit: ICanDie, IHavePosition {
         return true;
     }
 
-    public bool IsIdleOrMovingOrAttacking() {
-        return Orders.All(order => order.AbilityId is Abilities.Move or Abilities.Attack);
-    }
-
     /// <summary>
     /// Checks if an ability already targets a target position given a certain level of precision.
     /// </summary>
@@ -453,8 +449,20 @@ public class Unit: ICanDie, IHavePosition {
         return Orders.Count > 0;
     }
 
+    public bool IsIdle() {
+        return !Orders.Any();
+    }
+
+    public bool IsMoving() {
+        return Orders.Any(order => order.AbilityId == Abilities.Move);
+    }
+
+    public bool IsAttacking() {
+        return Orders.Any(order => order.AbilityId == Abilities.Attack);
+    }
+
     public bool IsMineralWalking() {
-        return Orders.Any(order => Abilities.Gather.Contains(order.AbilityId) || Abilities.ReturnCargo.Contains(order.AbilityId));
+        return Orders.Any(order => Abilities.Gather.Contains(order.AbilityId));
     }
 
     public override string ToString() {
