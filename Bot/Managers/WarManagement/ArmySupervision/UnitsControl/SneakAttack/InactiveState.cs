@@ -4,9 +4,9 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 
-namespace Bot.Managers.WarManagement.ArmySupervision.Tactics.SneakAttack;
+namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttack;
 
-public partial class SneakAttackTactic {
+public partial class SneakAttackUnitsControl {
     public class InactiveState: SneakAttackState {
         private const float MinimumEngagementArmyThreshold = 0.75f;
         private const float OverwhelmingForceRatio = 4f;

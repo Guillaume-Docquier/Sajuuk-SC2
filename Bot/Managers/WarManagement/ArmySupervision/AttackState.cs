@@ -6,11 +6,11 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.Managers.WarManagement.ArmySupervision.Tactics;
+using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
+using Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttack;
 using Bot.MapKnowledge;
 using Bot.StateManagement;
 using Bot.Utils;
-using SneakAttackTactic = Bot.Managers.WarManagement.ArmySupervision.Tactics.SneakAttack.SneakAttackTactic;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;
 
@@ -28,14 +28,14 @@ public partial class ArmySupervisor {
         private ulong _pathfindingLock = 0;
         private ulong _pathfindingLockDelay = TimeUtils.SecsToFrames(4);
 
-        private readonly ITactic _sneakAttackTactic = new SneakAttackTactic();
+        private readonly IUnitsControl _sneakAttackUnitsControl = new SneakAttackUnitsControl();
 
         protected override void OnTransition() {
-            _sneakAttackTactic.Reset(null);
+            _sneakAttackUnitsControl.Reset(null);
         }
 
         protected override bool TryTransitioning() {
-            if (_sneakAttackTactic.IsExecuting()) {
+            if (_sneakAttackUnitsControl.IsExecuting()) {
                 return false;
             }
 
@@ -52,11 +52,11 @@ public partial class ArmySupervisor {
 
             DrawArmyData(Context._mainArmy);
 
-            if (_sneakAttackTactic.IsViable(Context._mainArmy)) {
-                _sneakAttackTactic.Execute(Context._mainArmy);
+            if (_sneakAttackUnitsControl.IsViable(Context._mainArmy)) {
+                _sneakAttackUnitsControl.Execute(Context._mainArmy);
             }
             else {
-                _sneakAttackTactic.Reset(Context._mainArmy);
+                _sneakAttackUnitsControl.Reset(Context._mainArmy);
                 Attack(Context._target, Context._mainArmy);
             }
 
