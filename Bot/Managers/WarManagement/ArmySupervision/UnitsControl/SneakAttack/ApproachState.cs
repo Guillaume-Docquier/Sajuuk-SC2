@@ -9,10 +9,17 @@ public partial class SneakAttackUnitsControl {
     public class ApproachState : SneakAttackState {
         private const float SetupDistance = 1.25f;
 
+        private const float OperationRadius = TankRange + 5;
+
         private readonly StuckDetector _stuckDetector = new StuckDetector();
 
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
             if (DetectionTracker.IsDetected(army)) {
+                return false;
+            }
+
+            var priorityTargets = GetPriorityTargetsInOperationRadius(army, OperationRadius);
+            if (!priorityTargets.Any()) {
                 return false;
             }
 
@@ -29,7 +36,7 @@ public partial class SneakAttackUnitsControl {
                 return;
             }
 
-            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(Context._armyCenter).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
+            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(Context._army, OperationRadius).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
             if (closestPriorityTarget != null) {
                 Context._targetPosition = closestPriorityTarget.Position.ToVector2();
                 Context._isTargetPriority = true;

@@ -76,6 +76,12 @@ public static class Controller {
         ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Reset());
     }
 
+    public static void SetSimulationTime(string reason) {
+        _frameDelayMs = 0;
+
+        Chat($"Simulation time set: {reason}", toTeam: true);
+    }
+
     public static void SetRealTime(string reason) {
         _frameDelayMs = RealTime;
 
