@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using Bot.StateManagement;
 
-namespace Bot.Managers.WarManagement.ArmySupervision.Tactics.SneakAttack;
+namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttack;
 
-public abstract class SneakAttackState: State<SneakAttackTactic> {
+public abstract class SneakAttackState: State<SneakAttackUnitsControl> {
     protected SneakAttackState NextState = null;
 
     public abstract bool IsViable(IReadOnlyCollection<Unit> army);

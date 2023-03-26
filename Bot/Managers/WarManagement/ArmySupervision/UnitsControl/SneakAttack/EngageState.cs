@@ -2,9 +2,9 @@
 using System.Linq;
 using Bot.GameData;
 
-namespace Bot.Managers.WarManagement.ArmySupervision.Tactics.SneakAttack;
+namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttack;
 
-public partial class SneakAttackTactic {
+public partial class SneakAttackUnitsControl {
     public class EngageState : SneakAttackState {
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
             return true;

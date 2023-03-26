@@ -3,9 +3,9 @@ using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 
-namespace Bot.Managers.WarManagement.ArmySupervision.Tactics.SneakAttack;
+namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttack;
 
-public partial class SneakAttackTactic {
+public partial class SneakAttackUnitsControl {
     public class ApproachState : SneakAttackState {
         private const float SetupDistance = 1.25f;
 

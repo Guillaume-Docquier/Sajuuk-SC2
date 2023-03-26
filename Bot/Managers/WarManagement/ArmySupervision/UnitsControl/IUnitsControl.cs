@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace Bot.Managers.WarManagement.ArmySupervision.Tactics;
+namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
-public interface ITactic {
+public interface IUnitsControl {
     bool IsViable(IReadOnlyCollection<Unit> army);
 
     bool IsExecuting();
