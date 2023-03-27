@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapKnowledge;
 using Bot.Utils;
+using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
@@ -53,7 +55,12 @@ public class DroneKitingUnitsControl : IUnitsControl {
                 continue;
             }
 
-            var enemiesToAvoid = potentialEnemiesToAvoid.Where(enemy => enemy.DistanceTo(regimentCenter) <= 5).ToList();
+            var enemiesToAvoid = potentialEnemiesToAvoid
+                .Where(enemy => enemy.DistanceTo(drone.Position) <= 5)
+                .OrderBy(enemy => enemy.DistanceTo(drone.Position))
+                .Take(5)
+                .ToList();
+
             if (!enemiesToAvoid.Any(enemy => enemy.CanHitGround)) {
                 // This tries to handle cases where kiting would decrease the dps because we're hitting things that don't fight back (i.e buildings in construction)
                 continue;
@@ -166,10 +173,24 @@ public class DroneKitingUnitsControl : IUnitsControl {
         var mineralVector = drone.Position.ToVector2().DirectionTo(mineralToWalkTo.exit);
         var mineralAngle = Math.Abs(enemyVector.GetRadAngleTo(mineralVector));
         if (mineralAngle > MathUtils.DegToRad(90)) {
+            DebugMineralWalkAngle(drone, enemiesCenter, mineralToWalkTo.exit, mineralAngle, Colors.Red);
+
             // If the best we got sends us towards the enemy, we don't do it
             return null;
         }
 
+        DebugMineralWalkAngle(drone, enemiesCenter, mineralToWalkTo.exit, mineralAngle, Colors.BrightGreen);
+
         return mineralToWalkTo.unit;
+    }
+
+    private static void DebugMineralWalkAngle(Unit drone, Vector2 enemyCenter, Vector2 mineralExit, double mineralAngle, Color color) {
+        Program.GraphicalDebugger.AddText($"{MathUtils.RadToDeg(mineralAngle):F0} deg", worldPos: drone.Position.ToPoint(zOffset: 2), color: color);
+
+        Program.GraphicalDebugger.AddSphere(mineralExit.ToVector3(zOffset: 2), 0.5f, Colors.Cyan);
+        Program.GraphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), mineralExit.ToVector3(zOffset: 2), Colors.Cyan);
+        Program.GraphicalDebugger.AddSphere(drone.Position.Translate(zTranslation: 2), drone.Radius, color);
+        Program.GraphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), enemyCenter.ToVector3(zOffset: 2), Colors.Magenta);
+        Program.GraphicalDebugger.AddSphere(enemyCenter.ToVector3(zOffset: 2), 0.5f, Colors.Magenta);
     }
 }

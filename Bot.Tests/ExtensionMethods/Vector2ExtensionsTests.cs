@@ -54,55 +54,24 @@ public class Vector2ExtensionsTests {
         Assert.InRange(actual.Y, expected.Y - RotateAroundPrecision, expected.Y + RotateAroundPrecision);
     }
 
-    public static IEnumerable<object[]> Vector2AnglesOrigin() {
+    public static IEnumerable<object[]> Vector2AtAllAngles() {
         var origin = new Vector2(0, 0);
-        var pointToRotate = new Vector2(1, 0);
+        var vector1 = new Vector2(1, 0);
 
-        for (var angle = -360; angle <= 360; angle++) {
+        for (var angle = 0; angle <= 360; angle++) {
             var radAngle = MathUtils.DegToRad(angle);
-            var expectedRadAngle = MathUtils.DegToRad(
-                angle <= -180 ? angle + 360
-                : angle > 180 ? angle - 360
-                : angle
-            );
 
-            yield return new object[] { origin, pointToRotate.RotateAround(origin, radAngle), expectedRadAngle };
+            var absoluteDegAngle = Math.Abs(angle);
+            var expectedDegAngle = absoluteDegAngle > 180 ? 360 - absoluteDegAngle : absoluteDegAngle;
+            var expectedRadAngle = MathUtils.DegToRad(expectedDegAngle);
+
+            yield return new object[] { vector1, vector1.RotateAround(origin, radAngle), expectedRadAngle };
         }
     }
 
     [Theory]
-    [MemberData(nameof(Vector2AnglesOrigin))]
+    [MemberData(nameof(Vector2AtAllAngles))]
     public void GivenTheOriginAndAPosition_WhenGetRadAngleTo_ThenReturnsAngleInRadiansBetweenPiIncludedAndMinusPiExcluded(Vector2 origin, Vector2 destination, double expectedRadAngle) {
-        // Act
-        var actualAngle = origin.GetRadAngleTo(destination);
-
-        // Assert
-        Assert.InRange(actualAngle, expectedRadAngle - AngleToPrecision, expectedRadAngle + AngleToPrecision);
-    }
-
-    public static IEnumerable<object[]> Vector2Angles() {
-        var origin = new Vector2(0, 0);
-        var pointToRotate = new Vector2(1, 0);
-
-        for (var angle = -360; angle <= 360; angle++) {
-            var radAngle = MathUtils.DegToRad(angle);
-            var expectedRadAngle = MathUtils.DegToRad(
-                angle <= -180 ? angle + 360
-                : angle > 180 ? angle - 360
-                : angle
-            );
-
-            var offset = new Vector2(angle, angle);
-            var offsetOrigin = origin + offset;
-            var offsetPointToRotate = pointToRotate + offset;
-
-            yield return new object[] { offsetOrigin, offsetPointToRotate.RotateAround(offsetOrigin, radAngle), expectedRadAngle };
-        }
-    }
-
-    [Theory]
-    [MemberData(nameof(Vector2Angles))]
-    public void GivenTwoPositions_WhenGetRadAngleTo_ThenReturnsAngleInRadiansBetweenPiIncludedAndMinusPiExcluded(Vector2 origin, Vector2 destination, double expectedRadAngle) {
         // Act
         var actualAngle = origin.GetRadAngleTo(destination);
 
