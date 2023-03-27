@@ -36,15 +36,14 @@ public class DroneKitingUnitsControl : IUnitsControl {
             return uncontrolledUnits;
         }
 
-        var regimentCenter = Clustering.GetCenter(dronesThatNeedToKite);
-
-        var candidateMineralFields = GetMineralFieldsToWalkTo(regimentCenter);
+        var candidateMineralFields = GetMineralFieldsToWalkTo(dronesThatNeedToKite.GetRegion());
         if (candidateMineralFields.Count <= 0) {
             return uncontrolledUnits;
         }
 
         // Filter out some enemies for performance
-        var potentialEnemiesToAvoid = UnitsTracker.EnemyUnits.Where(enemy => enemy.DistanceTo(regimentCenter) <= 20).ToList();
+        var regimentCenter = Clustering.GetCenter(dronesThatNeedToKite);
+        var potentialEnemiesToAvoid = UnitsTracker.EnemyUnits.Where(enemy => enemy.DistanceTo(regimentCenter) <= 13).ToList();
         if (potentialEnemiesToAvoid.Count <= 0) {
             return uncontrolledUnits;
         }
@@ -116,35 +115,38 @@ public class DroneKitingUnitsControl : IUnitsControl {
     /// We will return a list of tuples composed of the mineral field and a position representing the exit that the unit would go through when going to that mineral field.
     /// In the case of mineral fields in the same region as the regimentPosition, their exit will be themselves because the unit won't be funneled through an exit.
     /// </summary>
-    /// <param name="regimentPosition">Where the regiment currently is</param>
+    /// <param name="regimentRegion">The region the regiment currently is in</param>
     /// <returns>A list of tuples composed of the mineral field and a position representing the exit that the unit would go through when going to that mineral field.</returns>
-    private static List<(Unit unit, Vector2 exit)> GetMineralFieldsToWalkTo(Vector2 regimentPosition) {
-        var regimentRegion = regimentPosition.GetRegion();
+    private static List<(Unit unit, Vector2 exit)> GetMineralFieldsToWalkTo(Region regimentRegion) {
         var regimentRegionExits = regimentRegion.GetReachableNeighbors();
 
-        return regimentRegionExits.SelectMany(regimentRegionExit => {
-                var expandLocation = GetExpandLocationGoingThroughExit(regimentRegion, regimentRegionExit);
-                if (expandLocation == null) {
-                    return Enumerable.Empty<(Unit, Vector2)>();
-                }
+        var mineralFieldsToWalkTo = new List<(Unit unit, Vector2 exit)>();
 
-                // When the region is the regimentRegion, we return all minerals with their own position as exit.
-                // We keep all minerals because each of them will likely be in a different direction from the unit.
-                if (regimentRegionExit == regimentRegion) {
-                    return expandLocation.ResourceCluster
-                        .Where(resource => Units.MineralFields.Contains(resource.UnitType))
-                        .Select(resource => (resource, resource.Position.ToVector2()));
-                }
+        if (regimentRegion.Type == RegionType.Expand && !regimentRegion.ExpandLocation.IsDepleted) {
+            // When the region is the regimentRegion, we return all minerals with their own position as exit.
+            // We keep all minerals because each of them will likely be in a different direction from the unit.
+            var minerals = regimentRegion.ExpandLocation.ResourceCluster
+                .Where(resource => Units.MineralFields.Contains(resource.UnitType))
+                .Select(resource => (resource, resource.Position.ToVector2()));
 
-                // When the region is not the regimentRegion, it means we'll have to go through an exit to get to the mineral field.
-                // Because of this, all minerals will more or less create the same path to that exit.
-                // The initial movement is going to be hard to accurately determine, so we'll use the center of the exit as an estimation.
-                var resource = expandLocation.ResourceCluster
-                    .First(resource => Units.MineralFields.Contains(resource.UnitType));
+            mineralFieldsToWalkTo.AddRange(minerals);
+        }
 
-                return new List<(Unit, Vector2)> { (resource, regimentRegionExit.Center) };
-            })
-            .ToList();
+        foreach (var regimentRegionExit in regimentRegionExits) {
+            var expandLocation = GetExpandLocationGoingThroughExit(regimentRegion, regimentRegionExit);
+            if (expandLocation == null) {
+                continue;
+            }
+
+            // When the region is not the regimentRegion, it means we'll have to go through an exit to get to the mineral field.
+            // Because of this, all minerals will more or less create the same path to that exit.
+            // The initial movement is going to be hard to accurately determine, so we'll use the center of the exit as an estimation.
+            var mineral = expandLocation.ResourceCluster.First(resource => Units.MineralFields.Contains(resource.UnitType));
+
+            mineralFieldsToWalkTo.Add((mineral, regimentRegionExit.Center));
+        }
+
+        return mineralFieldsToWalkTo;
     }
 
     /// <summary>
