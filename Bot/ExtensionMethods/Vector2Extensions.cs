@@ -266,24 +266,13 @@ public static class Vector2Extensions {
     }
 
     /// <summary>
-    /// Calculates the angle from origin to destination with respect to (1, 0).
+    /// Calculates the angle between two vectors
     /// The angle is going to be within ]-PI, PI].
     /// </summary>
-    /// <param name="origin">The origin of the vector</param>
-    /// <param name="destination">The end of the vector</param>
-    /// <returns>The angle in rad between (1, 0) and (origin, destination) within ]-PI, PI]</returns>
-    public static double GetRadAngleTo(this Vector2 origin, Vector3 destination) {
-        return origin.GetRadAngleTo(destination.ToVector2());
-    }
-
-    /// <summary>
-    /// Calculates the angle from origin to destination with respect to (1, 0).
-    /// The angle is going to be within ]-PI, PI].
-    /// </summary>
-    /// <param name="origin">The origin of the vector</param>
-    /// <param name="destination">The end of the vector</param>
-    /// <returns>The angle in rad between (1, 0) and (origin, destination) within ]-PI, PI]</returns>
-    public static double GetRadAngleTo(this Vector2 origin, Vector2 destination) {
-        return Math.Atan2(destination.Y - origin.Y, destination.X - origin.X);
+    /// <param name="v1">The first vector</param>
+    /// <param name="v2">The second vector</param>
+    /// <returns>The angle in rad between the two vectors within ]-PI, PI]</returns>
+    public static double GetRadAngleTo(this Vector2 v1, Vector2 v2) {
+        return Math.Acos(Vector2.Dot(v1, v2) / (v1.Length() * v2.Length()));
     }
 }
