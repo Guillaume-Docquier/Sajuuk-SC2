@@ -19,9 +19,15 @@ public class DroneKitingUnitsControl : IUnitsControl {
     public IReadOnlySet<Unit> Execute(IReadOnlySet<Unit> army) {
         var uncontrolledUnits = new HashSet<Unit>(army);
 
+        var droneMaximumWeaponCooldown = KnowledgeBase.GetUnitTypeData(Units.Drone).Weapons[0].Speed; // Speed in frames
         var dronesThatNeedToKite = army
             .Where(unit => unit.UnitType == Units.Drone)
-            .Where(drone => drone.RawUnitData.WeaponCooldown > 0)
+            // We mineral walk for a duration of 75% of the weapon cooldown.
+            // This can be tweaked. The rationale is that if we walk for 50% of the cooldown, the back and forth will be the same distance.
+            // However, if we're gradually moving back, then the way back will be shorter and we might be in a fighting situation before our weapons are ready.
+            // On the other hand, if we walk for 100% of the cooldown, our weapons will be ready but we'll be too far to attack.
+            // The ideal value is most likely between 50% and 100%, so I went for 75%
+            .Where(drone => drone.RawUnitData.WeaponCooldown > (1 - 0.75) * droneMaximumWeaponCooldown)
             .ToHashSet();
 
         if (dronesThatNeedToKite.Count == 0) {
@@ -48,8 +54,12 @@ public class DroneKitingUnitsControl : IUnitsControl {
             }
 
             var enemiesToAvoid = potentialEnemiesToAvoid.Where(enemy => enemy.DistanceTo(regimentCenter) <= 5).ToList();
-            var mineralToWalkTo = GetMineralFieldToWalkTo(drone, enemiesToAvoid, candidateMineralFields);
+            if (!enemiesToAvoid.Any(enemy => enemy.CanHitGround)) {
+                // This tries to handle cases where kiting would decrease the dps because we're hitting things that don't fight back (i.e buildings in construction)
+                continue;
+            }
 
+            var mineralToWalkTo = GetMineralFieldToWalkTo(drone, enemiesToAvoid, candidateMineralFields);
             if (mineralToWalkTo != null) {
                 drone.Gather(mineralToWalkTo);
                 uncontrolledUnits.Remove(drone);

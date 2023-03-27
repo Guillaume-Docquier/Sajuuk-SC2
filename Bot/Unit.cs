@@ -39,8 +39,8 @@ public class Unit: ICanDie, IHavePosition {
     public int InitialMineralCount = int.MaxValue;
     public int InitialVespeneCount = int.MaxValue;
 
-    public bool CanHitAir => UnitTypeData.Weapons.Any(weapon => weapon.Type is Weapon.Types.TargetType.Any or Weapon.Types.TargetType.Air);
-    public bool CanHitGround => UnitTypeData.Weapons.Any(weapon => weapon.Type is Weapon.Types.TargetType.Any or Weapon.Types.TargetType.Ground);
+    public bool CanHitAir => IsOperational && UnitTypeData.Weapons.Any(weapon => weapon.Type is Weapon.Types.TargetType.Any or Weapon.Types.TargetType.Air);
+    public bool CanHitGround => IsOperational && UnitTypeData.Weapons.Any(weapon => weapon.Type is Weapon.Types.TargetType.Any or Weapon.Types.TargetType.Ground);
     public bool IsFlying => RawUnitData.IsFlying;
     public bool IsBurrowed => RawUnitData.IsBurrowed;
     public bool IsCloaked => RawUnitData.Cloak == CloakState.Cloaked;
