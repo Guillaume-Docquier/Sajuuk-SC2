@@ -4,6 +4,7 @@ using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
+using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;
@@ -11,26 +12,39 @@ namespace Bot.Managers.WarManagement.ArmySupervision;
 public partial class ArmySupervisor {
     public class DefenseState: State<ArmySupervisor> {
         private const float AcceptableDistanceToTarget = 3;
+        private readonly IUnitsControl _unitsController = new UnitsController();
+
+        protected override void OnTransition() {
+            _unitsController.Reset(null);
+        }
 
         protected override bool TryTransitioning() {
-            if (Context._canHuntTheEnemy) {
-                var remainingUnits = UnitsTracker.EnemyUnits
-                    .Where(unit => !unit.IsCloaked)
-                    .Where(unit => Context.CanHitAirUnits || !unit.IsFlying);
-
-                if (!remainingUnits.Any()) {
-                    StateMachine.TransitionTo(new HuntState());
-                    return true;
-                }
+            if (_unitsController.IsExecuting()) {
+                return false;
             }
 
-            return false;
+            if (!Context._canHuntTheEnemy) {
+                return false;
+            }
+
+            var remainingUnits = UnitsTracker.EnemyUnits
+                .Where(unit => !unit.IsCloaked)
+                .Where(unit => Context.CanHitAirUnits || !unit.IsFlying);
+
+            if (remainingUnits.Any()) {
+                return false;
+            }
+
+            StateMachine.TransitionTo(new HuntState());
+            return true;
         }
 
         protected override void Execute() {
             DrawArmyData(Context._mainArmy);
 
-            Defend(Context._target, Context._mainArmy, Context._blastRadius, Context.CanHitAirUnits);
+            var remainingArmy = _unitsController.Execute(new HashSet<Unit>(Context._mainArmy));
+
+            Defend(Context._target, remainingArmy, Context._blastRadius, Context.CanHitAirUnits);
             Rally(Context._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
         }
 
