@@ -66,10 +66,12 @@ public class DroneKitingUnitsControl : IUnitsControl {
             }
 
             var mineralToWalkTo = GetMineralFieldToWalkTo(drone, enemiesToAvoid, candidateMineralFields);
-            if (mineralToWalkTo != null) {
-                drone.Gather(mineralToWalkTo);
-                uncontrolledUnits.Remove(drone);
+            if (mineralToWalkTo == null) {
+                continue;
             }
+
+            drone.Gather(mineralToWalkTo);
+            uncontrolledUnits.Remove(drone);
         }
 
         return uncontrolledUnits;
@@ -99,7 +101,11 @@ public class DroneKitingUnitsControl : IUnitsControl {
                 return regionToExplore.ExpandLocation;
             }
 
-            foreach (var neighbor in regionToExplore.GetReachableNeighbors().Where(neighbor => !exploredRegions.Contains(neighbor))) {
+            var unexploredNeighbors = regionToExplore
+                .GetReachableNeighbors()
+                .Where(neighbor => !exploredRegions.Contains(neighbor));
+
+            foreach (var neighbor in unexploredNeighbors) {
                 regionsToExplore.Enqueue(neighbor);
             }
         }
@@ -118,8 +124,6 @@ public class DroneKitingUnitsControl : IUnitsControl {
     /// <param name="regimentRegion">The region the regiment currently is in</param>
     /// <returns>A list of tuples composed of the mineral field and a position representing the exit that the unit would go through when going to that mineral field.</returns>
     private static List<(Unit unit, Vector2 exit)> GetMineralFieldsToWalkTo(Region regimentRegion) {
-        var regimentRegionExits = regimentRegion.GetReachableNeighbors();
-
         var mineralFieldsToWalkTo = new List<(Unit unit, Vector2 exit)>();
 
         if (regimentRegion.Type == RegionType.Expand && !regimentRegion.ExpandLocation.IsDepleted) {
@@ -132,6 +136,7 @@ public class DroneKitingUnitsControl : IUnitsControl {
             mineralFieldsToWalkTo.AddRange(minerals);
         }
 
+        var regimentRegionExits = regimentRegion.GetReachableNeighbors();
         foreach (var regimentRegionExit in regimentRegionExits) {
             var expandLocation = GetExpandLocationGoingThroughExit(regimentRegion, regimentRegionExit);
             if (expandLocation == null) {
@@ -139,9 +144,12 @@ public class DroneKitingUnitsControl : IUnitsControl {
             }
 
             // When the region is not the regimentRegion, it means we'll have to go through an exit to get to the mineral field.
-            // Because of this, all minerals will more or less create the same path to that exit.
-            // The initial movement is going to be hard to accurately determine, so we'll use the center of the exit as an estimation.
-            var mineral = expandLocation.ResourceCluster.First(resource => Units.MineralFields.Contains(resource.UnitType));
+            // Because of this, all minerals will more or less create the same path to that exit, so we'll just pick one.
+            // The direction of the drone moving towards that mineral is hard to accurately determine, so we'll use the center of the exit as an estimation.
+            var mineral = expandLocation.ResourceCluster.FirstOrDefault(resource => Units.MineralFields.Contains(resource.UnitType));
+            if (mineral == null) {
+                continue;
+            }
 
             mineralFieldsToWalkTo.Add((mineral, regimentRegionExit.Center));
         }
@@ -161,11 +169,11 @@ public class DroneKitingUnitsControl : IUnitsControl {
             return null;
         }
 
-        // Get the enemy-drone angle
+        // Get the enemy-drone vector
         var enemiesCenter = Clustering.GetCenter(enemiesToAvoid);
         var enemyVector = enemiesCenter.DirectionTo(drone.Position);
 
-        // Find the mineral field with the angle closest to enemy-drone (angle 0 = directly fleeing the enemy
+        // Find the mineral field with the minimum angle to the enemy-drone vector (angle 0 = directly fleeing the enemy
         var mineralToWalkTo = mineralFields.MinBy(mineralField => {
             var mineralVector = drone.Position.ToVector2().DirectionTo(mineralField.exit);
 
