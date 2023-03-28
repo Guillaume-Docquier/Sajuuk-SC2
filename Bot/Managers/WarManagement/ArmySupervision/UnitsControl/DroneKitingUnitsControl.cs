@@ -21,7 +21,7 @@ public class DroneKitingUnitsControl : IUnitsControl {
     public IReadOnlySet<Unit> Execute(IReadOnlySet<Unit> army) {
         var uncontrolledUnits = new HashSet<Unit>(army);
 
-        var droneMaximumWeaponCooldown = KnowledgeBase.GetUnitTypeData(Units.Drone).Weapons[0].Speed; // Speed in frames
+        var droneMaximumWeaponCooldown = KnowledgeBase.GetUnitTypeData(Units.Drone).Weapons[0].Speed * TimeUtils.FramesPerSecond; // Speed is in seconds between attacks
         var dronesThatNeedToKite = army
             .Where(unit => unit.UnitType == Units.Drone)
             // We mineral walk for a duration of 75% of the weapon cooldown.
