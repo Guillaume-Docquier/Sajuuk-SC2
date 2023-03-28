@@ -60,10 +60,6 @@ public partial class ArmySupervisor {
             AssignNewTarget();
         }
 
-        private static bool AllLocationsHaveBeenChecked(Dictionary<Vector3, bool> locations) {
-            return locations.Values.All(isChecked => isChecked);
-        }
-
         private static bool AllLocationsHaveBeenChecked(Dictionary<Vector2, bool> locations) {
             return locations.Values.All(isChecked => isChecked);
         }

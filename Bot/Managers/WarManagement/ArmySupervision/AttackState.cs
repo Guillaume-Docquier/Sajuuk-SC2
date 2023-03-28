@@ -7,7 +7,6 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
-using Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttack;
 using Bot.MapKnowledge;
 using Bot.StateManagement;
 using Bot.Utils;
@@ -28,18 +27,14 @@ public partial class ArmySupervisor {
         private ulong _pathfindingLock = 0;
         private ulong _pathfindingLockDelay = TimeUtils.SecsToFrames(4);
 
-        private readonly List<IUnitsControl> _unitsControls = new List<IUnitsControl>
-        {
-            new DroneKitingUnitsControl(),
-            new SneakAttackUnitsControl(),
-        };
+        private readonly IUnitsControl _unitsController = new UnitsController();
 
         protected override void OnTransition() {
-            _unitsControls.ForEach(unitsControl => unitsControl.Reset(null));
+            _unitsController.Reset(null);
         }
 
         protected override bool TryTransitioning() {
-            if (_unitsControls.Any(unitsControl => unitsControl.IsExecuting())) {
+            if (_unitsController.IsExecuting()) {
                 return false;
             }
 
@@ -56,18 +51,15 @@ public partial class ArmySupervisor {
 
             DrawArmyData(Context._mainArmy);
 
-            IReadOnlySet<Unit> armyToControl = new HashSet<Unit>(Context._mainArmy);
-            foreach (var unitsControl in _unitsControls) {
-                armyToControl = unitsControl.Execute(armyToControl);
-            }
+            var remainingArmy = _unitsController.Execute(new HashSet<Unit>(Context._mainArmy));
 
             // TODO GD Turn Attack into an IUnitsControl
-            Attack(Context._target, armyToControl);
+            Attack(Context._target, remainingArmy);
 
             Rally(Context._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
         }
 
-        private void DrawArmyData(IReadOnlyCollection<Unit> soldiers) {
+        private static void DrawArmyData(IReadOnlyCollection<Unit> soldiers) {
             if (soldiers.Count <= 0) {
                 return;
             }
