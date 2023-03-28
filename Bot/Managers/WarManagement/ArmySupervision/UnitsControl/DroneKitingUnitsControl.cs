@@ -36,7 +36,12 @@ public class DroneKitingUnitsControl : IUnitsControl {
             return uncontrolledUnits;
         }
 
-        var candidateMineralFields = GetMineralFieldsToWalkTo(dronesThatNeedToKite.GetRegion());
+        var regimentRegion = dronesThatNeedToKite.GetRegion();
+        if (regimentRegion == null) {
+            return uncontrolledUnits;
+        }
+
+        var candidateMineralFields = GetMineralFieldsToWalkTo(regimentRegion);
         if (candidateMineralFields.Count <= 0) {
             return uncontrolledUnits;
         }
