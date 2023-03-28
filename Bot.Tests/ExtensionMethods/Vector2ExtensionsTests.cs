@@ -6,7 +6,7 @@ namespace Bot.Tests.ExtensionMethods;
 
 public class Vector2ExtensionsTests {
     private const float RotateAroundPrecision = 0.000002f;
-    private const float AngleToPrecision = 0.00002f;
+    private const float AngleToPrecision = 0.000001f;
 
     public static IEnumerable<object[]> AnglesIn360() {
         for (var angle = 0; angle < 360; angle++) {
