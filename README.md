@@ -12,19 +12,27 @@ Check out [Artificially Intelligent](https://www.youtube.com/channel/UC_KAanPGVo
 
 ## Features
 
-- Roach low life burrow and flee
-- Army burrow sneak attack
-- Creep spreading
-- Macro hatcheries and expansions
+### Economy
 - Perfect worker split
 - Speed mining
+- Macro hatcheries and expansions
+- Automatic gas/minerals balancing
+
+### Unit micro
+- Drone mineral walk kiting
+- Roaches burrow to heal
+- Roaches burrow sneak attack on siege tanks and other long range ground units
+
+### Map knowledge
+- Region analysis including expand locations, ramps and choke points
+- Remembering enemy units in the fog of war
+- Regions value and force evaluations to decide where to defend and where to attack
+
+### Other
+- Creep spreading
 - Replace destroyed buildings
 - Rush countermeasures
 - Automatic upgrades
 - Hunting Terran flying buildings
-- Region analysis including expand locations, ramps and choke points
-- Remembering enemy units in the fog of war
 - Overlord scouting
 - BuildRequest system with dynamic Priorities and BlockConditions
-- Regions value and force evaluations to decide where to defend and where to attack
-- Automatic gas/minerals balancing
