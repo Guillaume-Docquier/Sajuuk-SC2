@@ -1,14 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttack;
+using Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
 public class UnitsController : IUnitsControl {
     private readonly List<IUnitsControl> _unitsControls = new List<IUnitsControl>
     {
-        new DroneKitingUnitsControl(),
-        new SneakAttackUnitsControl(),
+        new MineralWalkKiting(),
+        new SneakAttack(),
     };
 
     public bool IsExecuting() {

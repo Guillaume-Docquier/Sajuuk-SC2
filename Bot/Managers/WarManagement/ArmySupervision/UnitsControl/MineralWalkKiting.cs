@@ -12,7 +12,7 @@ using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
-public class DroneKitingUnitsControl : IUnitsControl {
+public class MineralWalkKiting : IUnitsControl {
     public bool IsExecuting() {
         // No state, we can abort anytime
         return false;

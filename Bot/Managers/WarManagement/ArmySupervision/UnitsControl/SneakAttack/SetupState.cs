@@ -5,9 +5,9 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.UnitModules;
 
-namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttack;
+namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
 
-public partial class SneakAttackUnitsControl {
+public partial class SneakAttack {
     public class SetupState : SneakAttackState {
         private const float EngageDistance = 1f;
         private const float MinimumArmyThresholdToEngage = 0.80f;
