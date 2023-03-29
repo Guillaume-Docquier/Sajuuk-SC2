@@ -10,12 +10,12 @@ using Bot.StateManagement;
 using Bot.UnitModules;
 using Bot.Utils;
 
-namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttack;
+namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
 
-public partial class SneakAttackUnitsControl: IWatchUnitsDie, IUnitsControl {
+public partial class SneakAttack: IWatchUnitsDie, IUnitsControl {
     private const float TankRange = 13;
 
-    private readonly StateMachine<SneakAttackUnitsControl, SneakAttackState> _stateMachine;
+    private readonly StateMachine<SneakAttack, SneakAttackState> _stateMachine;
     private readonly HashSet<Unit> _unitsWithUninstalledModule = new HashSet<Unit>();
     private Vector2 _targetPosition;
     private bool _isTargetPriority = false;
@@ -33,8 +33,8 @@ public partial class SneakAttackUnitsControl: IWatchUnitsDie, IUnitsControl {
         Units.Immortal,
     };
 
-    public SneakAttackUnitsControl() {
-        _stateMachine = new StateMachine<SneakAttackUnitsControl, SneakAttackState>(this, new InactiveState());
+    public SneakAttack() {
+        _stateMachine = new StateMachine<SneakAttack, SneakAttackState>(this, new InactiveState());
     }
 
     public bool IsExecuting() {
