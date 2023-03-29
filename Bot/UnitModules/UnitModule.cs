@@ -34,11 +34,9 @@ public abstract class UnitModule: IUnitModule {
         { typeof(CapacityModule), CapacityModule.Tag },
         { typeof(ChangelingTargetingModule), ChangelingTargetingModule.Tag },
         { typeof(DebugLocationModule), DebugLocationModule.Tag },
-        { typeof(KitingModule), KitingModule.Tag },
         { typeof(MiningModule), MiningModule.Tag },
         { typeof(QueenMicroModule), QueenMicroModule.Tag },
         { typeof(TargetingModule), TargetingModule.Tag },
-        { typeof(TargetNeutralUnitsModule), TargetNeutralUnitsModule.Tag },
         { typeof(TumorCreepSpreadModule), TumorCreepSpreadModule.Tag },
     };
 
