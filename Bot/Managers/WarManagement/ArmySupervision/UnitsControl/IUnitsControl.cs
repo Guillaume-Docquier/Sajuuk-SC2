@@ -13,5 +13,6 @@ public interface IUnitsControl {
     /// <param name="army"></param>
     IReadOnlySet<Unit> Execute(IReadOnlySet<Unit> army);
 
+    // TODO GD We don't actually provide the army when resetting. We should either provide it or remove the param
     void Reset(IReadOnlyCollection<Unit> army);
 }

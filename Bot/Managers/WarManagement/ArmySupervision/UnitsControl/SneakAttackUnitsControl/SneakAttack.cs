@@ -7,16 +7,14 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.StateManagement;
-using Bot.UnitModules;
 using Bot.Utils;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
 
-public partial class SneakAttack: IWatchUnitsDie, IUnitsControl {
+public partial class SneakAttack : IUnitsControl {
     private const float TankRange = 13;
 
     private readonly StateMachine<SneakAttack, SneakAttackState> _stateMachine;
-    private readonly HashSet<Unit> _unitsWithUninstalledModule = new HashSet<Unit>();
     private Vector2 _targetPosition;
     private bool _isTargetPriority = false;
 
@@ -59,8 +57,6 @@ public partial class SneakAttack: IWatchUnitsDie, IUnitsControl {
 
         _armyCenter = _army.GetCenter();
 
-        UninstallBurrowMicroModules();
-
         _stateMachine.OnFrame();
 
         DebugTarget();
@@ -92,19 +88,9 @@ public partial class SneakAttack: IWatchUnitsDie, IUnitsControl {
             return;
         }
 
-        foreach (var roach in _unitsWithUninstalledModule) {
-            BurrowMicroModule.Install(roach);
-            roach.RemoveDeathWatcher(this);
-        }
-
         _targetPosition = default;
-        _unitsWithUninstalledModule.Clear();
 
         _stateMachine.TransitionTo(new InactiveState());
-    }
-
-    public void ReportUnitDeath(Unit deadUnit) {
-        _unitsWithUninstalledModule.Remove(deadUnit);
     }
 
     private static bool HasProperTech() {
@@ -146,14 +132,6 @@ public partial class SneakAttack: IWatchUnitsDie, IUnitsControl {
 
         if (_isTargetPriority) {
             Program.GraphicalDebugger.AddText("!", size: 20, worldPos: _targetPosition.ToVector3().ToPoint());
-        }
-    }
-
-    private void UninstallBurrowMicroModules() {
-        foreach (var roach in _army.Where(roach => !_unitsWithUninstalledModule.Contains(roach))) {
-            roach.AddDeathWatcher(this);
-            _unitsWithUninstalledModule.Add(roach);
-            UnitModule.Uninstall<BurrowMicroModule>(roach);
         }
     }
 }

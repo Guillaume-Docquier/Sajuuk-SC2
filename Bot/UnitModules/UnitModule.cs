@@ -31,7 +31,6 @@ public abstract class UnitModule: IUnitModule {
     private static readonly Dictionary<Type, string> Tags = new Dictionary<Type, string>()
     {
         { typeof(AttackPriorityModule), AttackPriorityModule.Tag },
-        { typeof(BurrowMicroModule), BurrowMicroModule.Tag },
         { typeof(CapacityModule), CapacityModule.Tag },
         { typeof(ChangelingTargetingModule), ChangelingTargetingModule.Tag },
         { typeof(DebugLocationModule), DebugLocationModule.Tag },
