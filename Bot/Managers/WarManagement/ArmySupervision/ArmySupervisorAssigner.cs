@@ -12,12 +12,7 @@ public partial class ArmySupervisor {
         }
 
         public void Assign(Unit unit) {
-            // TODO GD Use a targeting module
             _supervisor.Army.Add(unit);
-
-            if (unit.UnitType is Units.Roach or Units.RoachBurrowed) {
-                BurrowMicroModule.Install(unit);
-            }
 
             AttackPriorityModule.Install(unit);
 

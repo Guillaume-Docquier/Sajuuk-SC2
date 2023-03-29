@@ -11,7 +11,7 @@ public partial class SneakAttack {
     public class SetupState : SneakAttackState {
         private const float EngageDistance = 1f;
         private const float MinimumArmyThresholdToEngage = 0.80f;
-        private const double MinimumIntegrityToEngage = BurrowMicroModule.BurrowDownThreshold + 0.1;
+        private const double MinimumIntegrityToEngage = 0.6;
 
         private const float OperationRadius = TankRange - 5;
 

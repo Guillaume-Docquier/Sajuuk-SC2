@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
@@ -30,7 +31,7 @@ public partial class ArmySupervisor {
         private readonly IUnitsControl _unitsController = new UnitsController();
 
         protected override void OnTransition() {
-            _unitsController.Reset(null);
+            _unitsController.Reset(ImmutableList<Unit>.Empty);
         }
 
         protected override bool TryTransitioning() {
