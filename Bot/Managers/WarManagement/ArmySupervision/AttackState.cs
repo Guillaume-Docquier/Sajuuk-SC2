@@ -16,6 +16,8 @@ namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public partial class ArmySupervisor {
     public class AttackState: State<ArmySupervisor> {
+        private const bool Debug = true;
+
         private const float RocksDestructionRange = 9f;
         private const float AcceptableDistanceToTarget = 3;
         private const float MaxDistanceForPathfinding = 25;
@@ -61,7 +63,7 @@ public partial class ArmySupervisor {
         }
 
         private static void DrawArmyData(IReadOnlyCollection<Unit> soldiers) {
-            if (soldiers.Count <= 0) {
+            if (!Debug || soldiers.Count <= 0) {
                 return;
             }
 
@@ -130,6 +132,10 @@ public partial class ArmySupervisor {
         }
 
         private static void DrawAttackData(Vector2 targetToAttack, IEnumerable<Unit> soldiers) {
+            if (!Debug) {
+                return;
+            }
+
             Program.GraphicalDebugger.AddSphere(targetToAttack.ToVector3(), AcceptableDistanceToTarget, Colors.Red);
             Program.GraphicalDebugger.AddText("Attack", worldPos: targetToAttack.ToVector3().ToPoint());
             foreach (var soldier in soldiers) {
@@ -173,6 +179,10 @@ public partial class ArmySupervisor {
         }
 
         private static void DrawRallyData(Vector2 rallyPoint, IEnumerable<Unit> soldiers) {
+            if (!Debug) {
+                return;
+            }
+
             Program.GraphicalDebugger.AddSphere(rallyPoint.ToVector3(), AcceptableDistanceToTarget, Colors.Blue);
             Program.GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToVector3().ToPoint());
             foreach (var soldier in soldiers) {

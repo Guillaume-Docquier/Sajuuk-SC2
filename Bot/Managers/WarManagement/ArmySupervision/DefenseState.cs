@@ -12,6 +12,8 @@ namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public partial class ArmySupervisor {
     public class DefenseState: State<ArmySupervisor> {
+        private const bool Debug = true;
+
         private const float AcceptableDistanceToTarget = 3;
         private readonly IUnitsControl _unitsController = new UnitsController();
 
@@ -50,7 +52,7 @@ public partial class ArmySupervisor {
         }
 
         private static void DrawArmyData(IReadOnlyCollection<Unit> soldiers) {
-            if (soldiers.Count <= 0) {
+            if (!Debug || soldiers.Count <= 0) {
                 return;
             }
 

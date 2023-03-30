@@ -10,6 +10,7 @@ public class UnitsController : IUnitsControl {
         new MineralWalkKiting(),
         new SneakAttack(),
         new BurrowHealing(),
+        new StutterStep(),
     };
 
     public bool IsExecuting() {

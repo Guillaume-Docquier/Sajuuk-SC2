@@ -5,6 +5,7 @@ using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.MapKnowledge;
+using Bot.Utils;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
@@ -124,13 +125,25 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
         );
     }
 
+    public void AddArrowedLine(Vector3 start, Vector3 end, Color color) {
+        AddLine(start, end, color);
+
+        const float arrowHeadLength = 0.20f;
+        var middlePoint = Vector3.Lerp(start, end, 0.5f);
+
+        AddLine(middlePoint, middlePoint.TranslateTowards(start, arrowHeadLength).Rotate2D(MathUtils.DegToRad(45), origin: middlePoint), color);
+        AddLine(middlePoint, middlePoint.TranslateTowards(start, arrowHeadLength).Rotate2D(MathUtils.DegToRad(-45), origin: middlePoint), color);
+    }
+
     public void AddLink(Unit start, Unit end, Color color) {
-        AddLink(start.Position, end.Position, color);
+        AddSphere(start, color);
+        AddArrowedLine(start.Position, end.Position, color);
+        AddSphere(end, color);
     }
 
     public void AddLink(Vector3 start, Vector3 end, Color color) {
         AddGridSphere(start, color);
-        AddLine(start, end, color);
+        AddArrowedLine(start, end, color);
         AddGridSphere(end, color);
     }
 

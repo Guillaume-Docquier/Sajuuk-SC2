@@ -77,12 +77,20 @@ public static class Controller {
     }
 
     public static void SetSimulationTime(string reason) {
+        if (_frameDelayMs == 0) {
+            return;
+        }
+
         _frameDelayMs = 0;
 
         Chat($"Simulation time set: {reason}", toTeam: true);
     }
 
     public static void SetRealTime(string reason) {
+        if (_frameDelayMs == RealTime) {
+            return;
+        }
+
         _frameDelayMs = RealTime;
 
         Chat($"Real time set: {reason}", toTeam: true);
