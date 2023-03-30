@@ -45,6 +45,12 @@ public class Unit: ICanDie, IHavePosition {
     public bool IsBurrowed => RawUnitData.IsBurrowed;
     public bool IsCloaked => RawUnitData.Cloak == CloakState.Cloaked;
 
+    /// <summary>
+    /// The angle where the unit is facing, in radians.
+    /// 0deg is looking to the left, 90deg is looking up.
+    /// </summary>
+    public float Facing => RawUnitData.Facing;
+
     public float MaxRange { get; private set; }
 
     public ulong DeathDelay = 0;

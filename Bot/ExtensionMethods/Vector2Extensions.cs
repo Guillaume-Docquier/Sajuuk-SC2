@@ -44,10 +44,6 @@ public static class Vector2Extensions {
         }
     }
 
-    public static Vector2 Translate(this Vector2 origin, float xTranslation = 0, float yTranslation = 0) {
-        return new Vector2 { X = origin.X + xTranslation, Y = origin.Y + yTranslation };
-    }
-
     // Center of cells are on .5, e.g: (1.5, 2.5)
     public static Vector2 AsWorldGridCenter(this Vector2 vector) {
         return new Vector2((float)Math.Floor(vector.X) + KnowledgeBase.GameGridCellRadius, (float)Math.Floor(vector.Y) + KnowledgeBase.GameGridCellRadius);
@@ -237,6 +233,23 @@ public static class Vector2Extensions {
     /// <returns>A normal vector that represents a direction vector from the origin towards the destination</returns>
     public static Vector2 DirectionTo(this Vector2 origin, Vector2 destination) {
         return Vector2.Normalize(destination - origin);
+    }
+
+    public static Vector2 Translate(this Vector2 origin, float xTranslation = 0, float yTranslation = 0) {
+        return new Vector2 { X = origin.X + xTranslation, Y = origin.Y + yTranslation };
+    }
+
+    /// <summary>
+    /// Calculates a new vector that is translated by the given distance in the given angle.
+    /// </summary>
+    /// <param name="origin">The origin of the translation</param>
+    /// <param name="radAngle">The angle to translate towards</param>
+    /// <param name="distance">The distance to translate</param>
+    /// <returns>A new Vector2 that is translated towards the radAngle by a certain distance</returns>
+    public static Vector2 TranslateInDirection(this Vector2 origin, float radAngle, float distance) {
+        var translated = origin.Translate(xTranslation: distance);
+
+        return translated.RotateAround(origin, radAngle);
     }
 
     /// <summary>

@@ -110,7 +110,15 @@ public static class Clustering {
         return (clusters, noise);
     }
 
-    public static (List<List<T>> clusters, List<T> noise) DBSCAN<T>(List<T> items, float epsilon, int minPoints) where T: class, IHavePosition {
+    /// <summary>
+    /// <para>A textbook implementation of the DBSCAN clustering algorithm.</para>
+    /// <para>See https://en.wikipedia.org/wiki/DBSCAN</para>
+    /// </summary>
+    /// <param name="items">The IHavePosition items to cluster</param>
+    /// <param name="epsilon">How close an item needs to be to be considered nearby</param>
+    /// <param name="minPoints">How many items need to be nearby to count as a cluster node</param>
+    /// <returns>A list of clusters and the resulting noise</returns>
+    public static (List<List<T>> clusters, List<T> noise) DBSCAN<T>(IReadOnlyCollection<T> items, float epsilon, int minPoints) where T: class, IHavePosition {
         var clusters = new List<List<T>>();
         var labels = new Dictionary<T, DBSCANLabels>();
 

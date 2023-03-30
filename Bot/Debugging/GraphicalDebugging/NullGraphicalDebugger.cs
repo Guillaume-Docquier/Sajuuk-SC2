@@ -33,6 +33,8 @@ public class NullGraphicalDebugger: IGraphicalDebugger {
 
     public void AddLine(Vector3 start, Vector3 end, Color color) {}
 
+    public void AddArrowedLine(Vector3 start, Vector3 end, Color color) {}
+
     public void AddLink(Unit start, Unit end, Color color) {}
 
     public void AddLink(Vector3 start, Vector3 end, Color color) {}
