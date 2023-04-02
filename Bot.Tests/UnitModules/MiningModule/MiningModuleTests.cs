@@ -110,7 +110,7 @@ public class MiningModuleTests: BaseTestClass {
         var module = Bot.UnitModules.UnitModule.Get<Bot.UnitModules.MiningModule>(unit);
 
         // Act
-        module.AssignResource(newResource);
+        module.AssignResource(newResource, releasePreviouslyAssignedResource: false);
 
         // Assert
         Assert.Equal(initialResource, module.AssignedResource);
@@ -130,7 +130,7 @@ public class MiningModuleTests: BaseTestClass {
         var module = Bot.UnitModules.UnitModule.Get<Bot.UnitModules.MiningModule>(unit);
 
         // Act
-        module.ReleaseResource();
+        module.ReleaseResource(updateCapacityModule: false);
 
         // Assert
         Assert.Null(module.AssignedResource);
@@ -151,7 +151,7 @@ public class MiningModuleTests: BaseTestClass {
         var module = Bot.UnitModules.UnitModule.Get<Bot.UnitModules.MiningModule>(unit);
 
         // Act
-        module.ReleaseResource();
+        module.ReleaseResource(updateCapacityModule: false);
         var executed = module.Execute();
 
         // Assert

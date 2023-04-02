@@ -10,7 +10,19 @@ public class CapacityModule: UnitModule, IWatchUnitsDie {
     private readonly Unit _unit;
     private readonly bool _showDebugInfo;
 
-    public int MaxCapacity;
+    private int _maxCapacity;
+    public int MaxCapacity {
+        get => _maxCapacity;
+        set {
+            if (value < 0) {
+                Logger.Error($"Trying to set a negative MaxCapacity: {value}");
+                _maxCapacity = 0;
+            }
+
+            _maxCapacity = value;
+        }
+    }
+
     public readonly List<Unit> AssignedUnits = new List<Unit>();
 
     public int AvailableCapacity => MaxCapacity - AssignedUnits.Count;

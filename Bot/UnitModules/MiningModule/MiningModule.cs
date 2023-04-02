@@ -19,7 +19,7 @@ public class MiningModule: UnitModule {
         _worker = worker;
 
         if (assignedResource != null) {
-            AssignResource(assignedResource);
+            AssignResource(assignedResource, releasePreviouslyAssignedResource: false);
         }
         else {
             Disable();
@@ -30,26 +30,51 @@ public class MiningModule: UnitModule {
         _strategy.Execute();
     }
 
-    public void AssignResource(Unit assignedResource) {
-        if (AssignedResource != null) {
+    /// <summary>
+    /// Assign a new resource to this mining module.
+    /// If releaseAssignedResource is true and there is an assigned resource, it will be released and its capacity module will be updated.
+    /// If the newlyAssignedResource is non null, it will be assigned and its capacity module will be updated.
+    /// </summary>
+    /// <param name="newlyAssignedResource"></param>
+    /// <param name="releasePreviouslyAssignedResource"></param>
+    public void AssignResource(Unit newlyAssignedResource, bool releasePreviouslyAssignedResource) {
+        if (!releasePreviouslyAssignedResource && AssignedResource != null) {
             Logger.Error("MiningModule trying to assign a resource but one is already assigned");
             return;
         }
 
-        ResourceType = Resources.GetResourceType(assignedResource);
-        AssignedResource = assignedResource;
+        if (releasePreviouslyAssignedResource) {
+            ReleaseResource(updateCapacityModule: true);
+        }
+
+        if (newlyAssignedResource == null) {
+            return;
+        }
+
+        Get<CapacityModule>(newlyAssignedResource).Assign(_worker);
+
+        ResourceType = Resources.GetResourceType(newlyAssignedResource);
+        AssignedResource = newlyAssignedResource;
 
         _strategy = ResourceType switch
         {
-            Resources.ResourceType.Gas => new GasMiningStrategy(_worker, assignedResource),
-            Resources.ResourceType.Mineral => new MineralMiningStrategy(_worker, assignedResource),
+            Resources.ResourceType.Gas => new GasMiningStrategy(_worker, newlyAssignedResource),
+            Resources.ResourceType.Mineral => new MineralMiningStrategy(_worker, newlyAssignedResource),
             _ => null
         };
 
         Enable();
     }
 
-    public void ReleaseResource() {
+    /// <summary>
+    /// Release the currently assigned resource of this mining module.
+    /// If it is non null and updateCapacityModule is true, its capacity module will also be updated.
+    /// </summary>
+    public void ReleaseResource(bool updateCapacityModule) {
+        if (updateCapacityModule && AssignedResource != null) {
+            Get<CapacityModule>(AssignedResource).Release(_worker);
+        }
+
         ResourceType = Resources.ResourceType.None;
         AssignedResource = null;
         _strategy = null;

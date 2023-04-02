@@ -66,6 +66,7 @@ public abstract class UnitModule: IUnitModule {
 
     public static T Get<T>(Unit unit) where T: UnitModule {
         if (unit == null) {
+            Logger.Error($"Trying to get the {typeof(T)} module of a unit, but the unit is null");
             return null;
         }
 

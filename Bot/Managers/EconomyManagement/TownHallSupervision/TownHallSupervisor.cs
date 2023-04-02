@@ -42,7 +42,19 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
 
     // TODO GD Checking that the extractor is operational is annoying
     public int MaxGasCapacity => Math.Min(WorkerCount, _extractors.Count(extractor => extractor.IsOperational) * Resources.MaxDronesPerExtractor);
-    public int GasWorkersCap = 0;
+
+    private int _gasWorkersCap = 0;
+    public int GasWorkersCap {
+        get => _gasWorkersCap;
+        set {
+            if (value < 0) {
+                Logger.Error($"Trying to set a negative GasWorkersCap: {value}\n");
+                _gasWorkersCap = 0;
+            }
+
+            _gasWorkersCap = value;
+        }
+    }
 
     public TownHallSupervisor(Unit townHall, Color color) {
         _id = townHall.Tag;
@@ -169,14 +181,14 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     /// </summary>
     private void UpdateGasAssignments() {
         foreach (var extractor in _extractors.Where(extractor => extractor.IsOperational)) {
-            var capacityModule = UnitModule.Get<CapacityModule>(extractor);
+            var extractorCapacityModule = UnitModule.Get<CapacityModule>(extractor);
 
-            if (capacityModule.AvailableCapacity > 0) {
+            if (extractorCapacityModule.AvailableCapacity > 0) {
                 FillExtractor(extractor);
             }
             else {
-                while (capacityModule.AvailableCapacity < 0) {
-                    var releasedWorker = capacityModule.ReleaseOne();
+                while (extractorCapacityModule.AvailableCapacity < 0) {
+                    var releasedWorker = extractorCapacityModule.ReleaseOne();
                     UpdateWorkerMiningAssignment(releasedWorker, null);
                 }
             }
@@ -243,19 +255,13 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     /// Assigns a worker to a resource and releases the worker from its previously assigned resource, if any.
     /// </summary>
     /// <param name="worker">The worker to update the mining assignment of.</param>
-    /// <param name="assignedResource">The new resource to mine or null, to idle a worker</param>
-    private static void UpdateWorkerMiningAssignment(Unit worker, Unit assignedResource) {
-        var miningModule = UnitModule.Get<MiningModule>(worker);
-
-        UnitModule.Get<CapacityModule>(miningModule.AssignedResource)?.Release(worker);
-        if (assignedResource != null) {
-            UnitModule.Get<CapacityModule>(assignedResource).Assign(worker);
+    /// <param name="newlyAssignedResource">The new resource to mine, or null to idle a worker</param>
+    private static void UpdateWorkerMiningAssignment(Unit worker, Unit newlyAssignedResource) {
+        if (worker == null) {
+            throw new ArgumentNullException(nameof(worker));
         }
 
-        miningModule.ReleaseResource();
-        if (assignedResource != null) {
-            miningModule.AssignResource(assignedResource);
-        }
+        UnitModule.Get<MiningModule>(worker).AssignResource(newlyAssignedResource, releasePreviouslyAssignedResource: true);
     }
 
     private void ReleaseDepletedGasses() {

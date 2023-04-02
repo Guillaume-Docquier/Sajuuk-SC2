@@ -3,7 +3,6 @@ using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.UnitModules;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
 
