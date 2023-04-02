@@ -42,13 +42,13 @@ public abstract class UnitModule: IUnitModule {
 
     public static bool PreInstallCheck(string moduleTag, Unit unit) {
         if (unit == null) {
-            Logger.Error("Pre-install: Unit was null when trying to install {0}.", moduleTag);
+            Logger.Error($"Pre-install: Unit was null when trying to install {moduleTag}.");
 
             return false;
         }
 
         if (unit.Modules.Remove(moduleTag)) {
-            Logger.Error("Pre-install: Removed {0} from {1}.", moduleTag, unit);
+            Logger.Error($"Pre-install: Removed {moduleTag} from {unit}.");
         }
 
         return true;

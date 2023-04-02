@@ -1,4 +1,6 @@
-﻿namespace Bot.UnitModules;
+﻿using System;
+
+namespace Bot.UnitModules;
 
 public class MiningModule: UnitModule {
     public const string Tag = "MiningModule";
@@ -65,7 +67,7 @@ public class MiningModule: UnitModule {
         {
             Resources.ResourceType.Gas => new GasMiningStrategy(_worker, newlyAssignedResource),
             Resources.ResourceType.Mineral => new MineralMiningStrategy(_worker, newlyAssignedResource),
-            _ => null
+            _ => throw new ArgumentException("Cannot create strategy because the assigned resource doesn't have a resource type."),
         };
 
         Enable();
@@ -97,7 +99,7 @@ public class MiningModule: UnitModule {
             resourceCapacityModule.Release(_worker);
         }
         else {
-            Logger.Error("({0}) Assigned resource {1} had no capacity module during uninstallation", this, AssignedResource);
+            Logger.Error($"Assigned resource {AssignedResource} had no capacity module during uninstallation");
         }
     }
 
