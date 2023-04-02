@@ -87,7 +87,16 @@ public static class Logger {
 
     public static void Error(string error, params object[] parameters) {
         Console.ForegroundColor = ConsoleColor.Red;
-        WriteLine("ERROR", $"({GetNameOfCallingClass()}) {error}", parameters);
+
+        var stackTrace = string.Join(
+            Environment.NewLine,
+            Environment.StackTrace
+                .Split(Environment.NewLine)
+                .Skip(2) // Skipping the Environment.StackTrace and Logger.Error calls
+                .Take(7)
+        );
+
+        WriteLine("ERROR", $"({GetNameOfCallingClass()}) {error}\n{stackTrace}", parameters);
         Console.ResetColor();
     }
 
