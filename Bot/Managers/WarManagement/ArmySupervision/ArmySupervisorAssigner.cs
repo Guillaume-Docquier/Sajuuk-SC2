@@ -1,5 +1,4 @@
-﻿using Bot.GameData;
-using Bot.UnitModules;
+﻿using Bot.UnitModules;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;
 

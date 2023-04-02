@@ -84,7 +84,9 @@ public partial class TownHallSupervisor {
             UnitModule.Uninstall<DebugLocationModule>(mineral);
             var capacityModule = UnitModule.Uninstall<CapacityModule>(mineral);
 
-            capacityModule.AssignedUnits.ForEach(worker => UnitModule.Get<MiningModule>(worker).ReleaseResource());
+            capacityModule.AssignedUnits.ForEach(worker => {
+                UnitModule.Get<MiningModule>(worker).ReleaseResource(updateCapacityModule: false);
+            });
         }
 
         private void ReleaseGas(Unit gas) {
@@ -110,7 +112,20 @@ public partial class TownHallSupervisor {
 
             // TODO GD Something can be null here, that's odd
             // TODO GD Understand why and fix it
-            capacityModule?.AssignedUnits.ForEach(worker => UnitModule.Get<MiningModule>(worker)?.ReleaseResource());
+            if (capacityModule == null) {
+                Logger.Error($"Null capacity module for extractor at position: {extractor.Position}");
+                return;
+            }
+
+            capacityModule.AssignedUnits.ForEach(worker => {
+                var miningModule = UnitModule.Get<MiningModule>(worker);
+                if (miningModule == null) {
+                    Logger.Error($"Null mining module for worker assigned to extractor at position: {extractor.Position}");
+                    return;
+                }
+
+                miningModule.ReleaseResource(updateCapacityModule: false);
+            });
         }
     }
 }
