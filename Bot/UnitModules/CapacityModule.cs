@@ -27,10 +27,15 @@ public class CapacityModule: UnitModule, IWatchUnitsDie {
 
     public int AvailableCapacity => MaxCapacity - AssignedUnits.Count;
 
-    public static void Install(Unit unit, int maxCapacity, bool showDebugInfo = true) {
-        if (PreInstallCheck(Tag, unit)) {
-            unit.Modules.Add(Tag, new CapacityModule(unit, maxCapacity, showDebugInfo));
+    public static CapacityModule Install(Unit unit, int maxCapacity, bool showDebugInfo = true) {
+        if (!PreInstallCheck(Tag, unit)) {
+            return null;
         }
+
+        var capacityModule = new CapacityModule(unit, maxCapacity, showDebugInfo);
+        unit.Modules.Add(Tag, capacityModule);
+
+        return capacityModule;
     }
 
     private CapacityModule(Unit unit, int maxCapacity, bool showDebugInfo) {

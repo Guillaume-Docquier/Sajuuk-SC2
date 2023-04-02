@@ -9,10 +9,15 @@ public class MiningModule: UnitModule {
     public Resources.ResourceType ResourceType;
     public Unit AssignedResource;
 
-    public static void Install(Unit worker, Unit assignedResource) {
-        if (PreInstallCheck(Tag, worker)) {
-            worker.Modules.Add(Tag, new MiningModule(worker, assignedResource));
+    public static MiningModule Install(Unit worker, Unit assignedResource) {
+        if (!PreInstallCheck(Tag, worker)) {
+            return null;
         }
+
+        var miningModule = new MiningModule(worker, assignedResource);
+        worker.Modules.Add(Tag, miningModule);
+
+        return miningModule;
     }
 
     private MiningModule(Unit worker, Unit assignedResource) {
