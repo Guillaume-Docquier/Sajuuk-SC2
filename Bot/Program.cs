@@ -19,7 +19,7 @@ public class Program {
         //new SpawnStuffScenario(),
     };
 
-    private const string Version = "3_5_1";
+    private const string Version = "3_6_0";
     private static readonly IBot Bot = new SajuukBot(Version, scenarios: Scenarios);
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.Moondance;
