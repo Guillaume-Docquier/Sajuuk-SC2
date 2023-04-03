@@ -18,23 +18,31 @@ public class StutterStep : IUnitsControl {
         }
 
         var pressureGraph = BuildPressureGraph(army.Where(unit => !unit.IsBurrowed).ToList());
-        DebugPressureGraph(pressureGraph, Colors.Red); // Will only be visible if a cycle was broken
+        // We'll print a green graph without cycles on top of the original red graph
+        // The only red lines visible will be those associated with a broken cycle
+        DebugPressureGraph(pressureGraph, Colors.Red);
 
         BreakCycles(pressureGraph);
         DebugPressureGraph(pressureGraph, Colors.Green);
 
         var uncontrolledUnits = new HashSet<Unit>(army);
         foreach (var unitThatShouldMove in GetUnitsThatShouldMove(pressureGraph)) {
-            var text = "OK";
+            var unitStatus = "OK";
             // If you're on cooldown and engaging the enemy, you should push forward
+            // - If you're not on cooldown we'll let you attack
+            // - If you're not engaging an enemy, we'll let the others decide who you should attack
             if (unitThatShouldMove.RawUnitData.WeaponCooldown > 0 && UnitsTracker.UnitsByTag.TryGetValue(unitThatShouldMove.RawUnitData.EngagedTargetTag, out var engagedTarget)) {
-                text = "!";
+                unitStatus = "MOVE";
                 unitThatShouldMove.Move(engagedTarget.Position.ToVector2());
                 uncontrolledUnits.Remove(unitThatShouldMove);
                 Controller.SetRealTime("Stutter!");
             }
 
-            Program.GraphicalDebugger.AddText(text, worldPos: unitThatShouldMove.Position.ToPoint(yOffset: 0.30f));
+            if (unitThatShouldMove.RawUnitData.WeaponCooldown <= 0) {
+                unitStatus = "ATK";
+            }
+
+            Program.GraphicalDebugger.AddText(unitStatus, worldPos: unitThatShouldMove.Position.ToPoint(yOffset: 0.30f));
         }
 
         return uncontrolledUnits;
@@ -42,14 +50,22 @@ public class StutterStep : IUnitsControl {
 
     public void Reset(IReadOnlyCollection<Unit> army) {}
 
-    private static IReadOnlyDictionary<Unit, Pressure> BuildPressureGraph(IReadOnlyCollection<Unit> uncontrolledUnits) {
-        var pressureGraph = uncontrolledUnits.ToDictionary(soldier => soldier, _ => new Pressure());
-        foreach (var soldier in uncontrolledUnits) {
+    /// <summary>
+    /// Build a directed pressure graph to represent units that want to move but that are being blocked by other units.
+    /// We will consider that a unit is blocked by another one if translating the unit forwards would result in a collision with any other unit in the army.
+    /// When a unit is blocked by another one, we will say that it pressures the blocking unit.
+    /// The graph may contain cycles.
+    /// </summary>
+    /// <param name="army">The units to consider</param>
+    /// <returns>The pressure graph</returns>
+    private static IReadOnlyDictionary<Unit, Pressure> BuildPressureGraph(IReadOnlyCollection<Unit> army) {
+        var pressureGraph = army.ToDictionary(soldier => soldier, _ => new Pressure());
+        foreach (var soldier in army) {
             var nextPosition = soldier.Position.ToVector2().TranslateInDirection(soldier.Facing, soldier.Radius * 2);
 
             // TODO GD That's n^2, can we do better?
             // The army is generally small, maybe it doesn't matter
-            var blockingUnits = uncontrolledUnits
+            var blockingUnits = army
                 .Where(otherSoldier => otherSoldier != soldier)
                 .Where(otherSoldier => otherSoldier.DistanceTo(nextPosition) < otherSoldier.Radius + soldier.Radius)
                 .ToList();
@@ -63,10 +79,16 @@ public class StutterStep : IUnitsControl {
         return pressureGraph;
     }
 
+    /// <summary>
+    /// Break cycles in the given pressure graph.
+    /// We will do a depth first traversal of the graph starting from the "root" nodes, that is the units in the front that do not pressure anyone.
+    /// While traversing, we keep track of the current branch and if we visit a member of the branch twice before reaching the end, we cut the last edge.
+    ///
+    /// The pressure graph will be mutated.
+    /// </summary>
+    /// <param name="pressureGraph">The pressure graph to break the cycles of</param>
     private static void BreakCycles(IReadOnlyDictionary<Unit, Pressure> pressureGraph) {
-        // Traverse graph to break cycles starting from roots (units in the front that do not pressure anyone)
         foreach (var (soldier, _) in pressureGraph.Where(kv => !kv.Value.To.Any())) {
-            // Break cycles
             var currentBranchSet = new HashSet<Unit>();
             var currentBranchStack = new Stack<Unit>();
 
@@ -74,7 +96,7 @@ public class StutterStep : IUnitsControl {
             explorationStack.Push(soldier);
 
             // Depth first search
-            // When backtracking (reaching the end of a branch, no pressure from), clear the explored set because there were no cycles
+            // When backtracking (reaching the end of a branch, no pressure from), clear the currentBranchSet because there were no cycles
             var bracktracking = false;
             while (explorationStack.Any()) {
                 var toExplore = explorationStack.Pop();
@@ -111,8 +133,23 @@ public class StutterStep : IUnitsControl {
         }
     }
 
+    /// <summary>
+    /// Get the units that should move based on the pressure graph.
+    /// Starting from the leaf nodes (units in the back that have no pressure on them), we traverse the graph an propagate the move intentions.
+    /// If a unit needs to move, we ask the units that are being pressures on to move as well.
+    /// A unit "needs to move" if all of these are true
+    /// - It has an order that makes it move
+    /// - It is pressuring other units
+    /// - It is not engaging an enemy
+    ///
+    /// A unit will be pressured to move of all of these are true
+    /// - A unit is pressuring it
+    /// - It is engaging an enemy
+    /// - It is on cooldown
+    /// </summary>
+    /// <param name="pressureGraph">The pressure graph to respect</param>
+    /// <returns>The list of units that should move given the pressure graph</returns>
     private static IEnumerable<Unit> GetUnitsThatShouldMove(IReadOnlyDictionary<Unit, Pressure> pressureGraph) {
-        // Compute pressure values starting from leaves (units in the back that have no pressure on them)
         var unitsThatNeedToMove = new HashSet<Unit>();
 
         var explorationQueue = new Queue<(Unit unit, Pressure pressure)>();
@@ -145,6 +182,11 @@ public class StutterStep : IUnitsControl {
         return unitsThatNeedToMove;
     }
 
+    /// <summary>
+    /// Display the pressure graph.
+    /// </summary>
+    /// <param name="pressureGraph">The pressure graph</param>
+    /// <param name="color">The color of the pressure graph</param>
     private static void DebugPressureGraph(IReadOnlyDictionary<Unit, Pressure> pressureGraph, Color color) {
         foreach (var (soldier, pressure) in pressureGraph) {
             foreach (var pressured in pressure.To) {
