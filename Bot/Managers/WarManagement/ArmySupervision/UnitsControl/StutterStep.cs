@@ -22,9 +22,8 @@ public class StutterStep : IUnitsControl {
         }
 
         _debugger.Reset();
-        _debugger.StartTimer("Total");
-        Logger.Debug("StutterStep started");
 
+        _debugger.StartTimer("Total");
         _debugger.StartTimer("Graph");
         var pressureGraph = BuildPressureGraph(army.Where(unit => !unit.IsBurrowed).ToList());
         // We'll print a green graph without cycles on top of the original red graph
@@ -59,7 +58,10 @@ public class StutterStep : IUnitsControl {
         _debugger.StopTimer("Moves");
         _debugger.StopTimer("Total");
 
-        _debugger.LogExecutionTimes("StutterStep done");
+        var totalTime = _debugger.GetExecutionTime("Total");
+        if (totalTime >= 5) {
+            _debugger.LogExecutionTimes("StutterStep");
+        }
 
         return uncontrolledUnits;
     }
