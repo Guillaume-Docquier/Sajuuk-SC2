@@ -10,9 +10,4 @@ public static class StopwatchExtensions {
 
         return Math.Round(1e3 * timeInSeconds, decimals);
     }
-
-    public static void LogPerformance(this Stopwatch stopwatch, string name) {
-        stopwatch.Stop();
-        PerformanceLogger.Log($"{name,-25} {stopwatch.GetElapsedTimeMs(),6:F2} ms");
-    }
 }
