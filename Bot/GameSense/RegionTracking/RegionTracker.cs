@@ -102,7 +102,7 @@ public class RegionTracker : INeedUpdating {
 
     /// <summary>
     /// Gets the defense score of the region.
-    /// The defense score represents valuable defending this region is
+    /// The defense score represents how valuable defending this region is
     /// </summary>
     /// <param name="region">The region to get the defense score of</param>
     /// <returns>The defense score of the given region</returns>
