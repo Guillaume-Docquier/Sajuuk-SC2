@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Bot;
+namespace Bot.DataStructures;
 
 public class CircularQueue<T> : IEnumerable<T> {
     private readonly T[] _queue;
