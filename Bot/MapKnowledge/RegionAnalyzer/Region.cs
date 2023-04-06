@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
+using Bot.Algorithms;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using SC2APIProtocol;

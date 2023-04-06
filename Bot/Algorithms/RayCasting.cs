@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using Bot.ExtensionMethods;
 
-namespace Bot;
+namespace Bot.Algorithms;
 
 public static class RayCasting {
     public struct RayCastResult {

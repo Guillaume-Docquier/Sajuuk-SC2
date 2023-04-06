@@ -4,7 +4,7 @@ using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 
-namespace Bot;
+namespace Bot.Algorithms;
 
 public static class Clustering {
     private const bool DrawEnabled = false; // TODO GD Flag this
