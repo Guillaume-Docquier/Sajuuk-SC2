@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.Algorithms;
 using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.StateManagement;

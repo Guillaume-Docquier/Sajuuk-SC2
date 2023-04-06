@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.Algorithms;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
