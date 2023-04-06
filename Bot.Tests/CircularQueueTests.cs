@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Bot.DataStructures;
 
 namespace Bot.Tests;
 
