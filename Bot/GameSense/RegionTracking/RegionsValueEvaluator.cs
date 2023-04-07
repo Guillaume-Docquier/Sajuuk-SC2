@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.MapKnowledge;
 using Bot.Utils;
@@ -9,244 +8,58 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense.RegionTracking;
 
-public class RegionsValueEvaluator : IRegionsEvaluator {
-    private readonly Alliance _alliance;
-    private readonly bool _hasAbsoluteKnowledge;
-    private readonly float _defaultRegionValue;
-
-    private readonly Dictionary<Region, float> _regionValues = new Dictionary<Region, float>();
-    private readonly Dictionary<Region, float> _normalizedRegionValues = new Dictionary<Region, float>();
-
-    // It would be cool to use the exponential decay everywhere
-    // But that would require tracking the last value update of each region
-    // And we would be doing some fancy (expensive?) exponent operations
-    // But in the end, a good ol' factor works perfectly well, so... maybe some other day
-    private static readonly float RegionDecayRate = 1f - 1f / TimeUtils.SecsToFrames(240);
-
+public class RegionsValueEvaluator : RegionsEvaluator {
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(120);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
-    public RegionsValueEvaluator(Alliance alliance) {
-        _alliance = alliance;
-        _hasAbsoluteKnowledge = alliance == Alliance.Self;
-
-        _defaultRegionValue = _hasAbsoluteKnowledge
-            ? UnitEvaluator.Value.None
-            : UnitEvaluator.Value.Unknown;
-    }
+    public RegionsValueEvaluator(Alliance alliance) : base(alliance, "value") {}
 
     /// <summary>
-    /// Gets the evaluated value of the provided region
+    /// Evaluates the value of each region based on the units within.
+    /// The value decays as the information grows older.
     /// </summary>
-    /// <param name="region">The region to get the evaluated value of</param>
-    /// <param name="normalized">Whether or not to get the normalized value between 0 and 1.</param>
-    /// <returns>The evaluated value of the region</returns>
-    public float GetEvaluation(Region region, bool normalized = false) {
-        if (region == null || !_regionValues.ContainsKey(region)) {
-            Logger.Error("Trying to get the value of an unknown region: {0}. {1} regions are known.", region, _regionValues.Count);
-            return UnitEvaluator.Value.Unknown;
-        }
-
-        if (normalized) {
-            return _normalizedRegionValues[region];
-        }
-
-        return _regionValues[region];
-    }
-
-    /// <summary>
-    /// Initializes the region values of the provided regions
-    /// </summary>
-    public void Init(IEnumerable<Region> regions) {
-        foreach (var region in regions) {
-            _regionValues[region] = _defaultRegionValue;
-        }
-    }
-
-    /// <summary>
-    /// Evaluates the value of each region based on the units and fog of war
-    /// The value decays as the information grows older
-    /// </summary>
-    public void Evaluate() {
-        if (_hasAbsoluteKnowledge) {
-            Init(_regionValues.Keys);
-        }
-
-        // Update based on units
-        var newRegionValues = ComputeUnitsValue();
-
-        // Update based on visibility
-        foreach (var (region, fogOfWarDanger) in ComputeFogOfWarValue()) {
-            if (!newRegionValues.ContainsKey(region)) {
-                newRegionValues[region] = fogOfWarDanger;
-            }
-            else {
-                newRegionValues[region] += fogOfWarDanger;
-            }
-        }
-
-        if (!_hasAbsoluteKnowledge) {
-            var enemySpawnValueCue = GetSpawnValueCue();
-            if (!newRegionValues.ContainsKey(enemySpawnValueCue.Region)) {
-                newRegionValues[enemySpawnValueCue.Region] = enemySpawnValueCue.Value;
-            }
-            else {
-                newRegionValues[enemySpawnValueCue.Region] = Math.Max(enemySpawnValueCue.Value, newRegionValues[enemySpawnValueCue.Region]);
-            }
-        }
-
-        // Update the values
-        foreach (var (region, newRegionValue) in newRegionValues) {
-            if (newRegionValue >= UnitEvaluator.Value.Intriguing) {
-                _regionValues[region] = newRegionValue;
-            }
-            else {
-                // Let NoValue slowly turn into Intriguing
-                _regionValues[region] = Math.Min(_regionValues[region], newRegionValue);
-            }
-        }
-
-        if (!_hasAbsoluteKnowledge) {
-            DriftNoValues();
-        }
-
-        ComputeNormalizedValues();
-    }
-
-    /// <summary>
-    /// For each region, compute the value of the units within
-    /// </summary>
-    /// <returns>A value score for each region</returns>
-    private Dictionary<Region, float> ComputeUnitsValue() {
-        var regionValues = new Dictionary<Region, float>();
-        var unitsToConsider = UnitsTracker.GetUnits(_alliance).Concat(UnitsTracker.GetGhostUnits(_alliance));
-        foreach (var unit in unitsToConsider) {
-            var region = unit.Position.GetRegion();
-            if (region == null) {
-                continue;
-            }
-
-            var value = UnitEvaluator.EvaluateValue(unit) * GetUnitUncertaintyPenalty(unit);
-            if (!regionValues.ContainsKey(region)) {
-                regionValues[region] = value;
-            }
-            else {
-                regionValues[region] += value;
-            }
-        }
-
-        return regionValues;
+    protected override IEnumerable<(Region region, float value)> DoEvaluate(IReadOnlyCollection<Region> regions) {
+        // TODO GD Maybe we want to consider MemorizedUnits as well, but with a special treatment
+        // This would avoid wierd behaviours when units jiggle near the fog of war limit
+        return UnitsTracker.GetUnits(Alliance)
+            .Concat(UnitsTracker.GetGhostUnits(Alliance))
+            // TODO GD Precompute units by region in a tracker
+            .GroupBy(unit => unit.GetRegion())
+            // We might be evaluating regions outside of the provided regions
+            // In reality, regions is all the regions, so it doesn't matter.
+            .Where(unitsInRegion => unitsInRegion.Key != null)
+            .Select(unitsInRegion => {
+                var regionValue = unitsInRegion.Sum(unit => UnitEvaluator.EvaluateValue(unit) * GetUnitUncertaintyPenalty(unit));
+                return (unitsInRegion.Key, regionValue);
+            });
     }
 
     /// <summary>
     /// Penalize the value of units (like ghost units) that have not been seen in a while.
     /// </summary>
-    /// <param name="enemy"></param>
+    /// <param name="unit"></param>
     /// <returns>The value penalty, within ]0, 1]</returns>
-    private static float GetUnitUncertaintyPenalty(Unit enemy) {
+    private static float GetUnitUncertaintyPenalty(Unit unit) {
         // TODO GD Maybe make terran building that can fly uncertain, but not so much
         // Buildings can be considered static
-        if (Units.Buildings.Contains(enemy.UnitType)) {
+        if (Units.Buildings.Contains(unit.UnitType)) {
             return 1;
         }
 
         // Avoid computing decay for nothing
-        if (Controller.Frame == enemy.LastSeen) {
+        if (Controller.Frame == unit.LastSeen) {
             return 1;
         }
 
-        return ExponentialDecayFactor(Controller.Frame - enemy.LastSeen);
-    }
-
-    /// <summary>
-    /// For each region, return some value based on the non-visible portion of the region.
-    /// </summary>
-    /// <returns>The value of each region based on the visible percentage of the region</returns>
-    private Dictionary<Region, float> ComputeFogOfWarValue() {
-        if (_hasAbsoluteKnowledge) {
-            return new Dictionary<Region, float>();
-        }
-
-        // TODO GD This should be cached in the VisibilityTracker, probably
-        var regionVisibility = new Dictionary<Region, int>();
-        foreach (var visibleCell in VisibilityTracker.VisibleCells) {
-            var region = visibleCell.GetRegion();
-            if (region == null) {
-                continue;
-            }
-
-            if (!regionVisibility.ContainsKey(region)) {
-                regionVisibility[region] = 1;
-            }
-            else {
-                regionVisibility[region] += 1;
-            }
-        }
-
-        var fogOfWarValue = new Dictionary<Region, float>();
-        foreach (var (region, visibleCellCount) in regionVisibility) {
-            var percentNotVisible = 1 - (float)visibleCellCount / region.Cells.Count;
-            fogOfWarValue[region] = percentNotVisible * UnitEvaluator.Value.Unknown;
-        }
-
-        return fogOfWarValue;
+        return ExponentialDecayFactor(Controller.Frame - unit.LastSeen);
     }
 
     /// <summary>
     /// Returns the exponential decay factor of a value after some time
     /// </summary>
-    /// <param name="time">The time since decay started</param>
+    /// <param name="age">The time since decay started</param>
     /// <returns>The decay factor</returns>
-    private static float ExponentialDecayFactor(ulong time) {
-        return (float)Math.Exp(-ExponentialDecayConstant * time);
-    }
-
-    /// <summary>
-    /// Gets a value cue for the spawn.
-    /// This is because we know where the enemy is, but the bot doesn't see it.
-    /// </summary>
-    /// <returns></returns>
-    private (Region Region, float Value) GetSpawnValueCue() {
-        var spawnRegion = ExpandAnalyzer.GetExpand(_alliance, ExpandType.Main).GetRegion();
-        var spawnRegionExplorationPercentage = (float)spawnRegion.Cells.Count(VisibilityTracker.IsExplored) / spawnRegion.Cells.Count;
-
-        // No cue if we've explored it
-        if (spawnRegionExplorationPercentage > 0.6) {
-            return (spawnRegion, 0);
-        }
-
-        var value = UnitEvaluator.Value.Jackpot * (1 - spawnRegionExplorationPercentage);
-        return (spawnRegion, value);
-    }
-
-    /// <summary>
-    /// Drifts the NoValue values towards Intriguing to represent uncertainty over time
-    /// </summary>
-    private void DriftNoValues() {
-        foreach (var region in _regionValues.Keys) {
-            if (_regionValues[region] >= UnitEvaluator.Value.Intriguing) {
-                continue;
-            }
-
-            var normalizedTowardsIntriguingValue = _regionValues[region] - UnitEvaluator.Value.Intriguing;
-            var decayedValue = normalizedTowardsIntriguingValue * RegionDecayRate + UnitEvaluator.Value.Intriguing;
-            if (Math.Abs(UnitEvaluator.Value.Intriguing - decayedValue) < 0.05) {
-                decayedValue = UnitEvaluator.Value.Intriguing;
-            }
-
-            _regionValues[region] = decayedValue;
-        }
-    }
-
-    /// <summary>
-    /// Normalizes the region values to put them between 0 and 1.
-    /// </summary>
-    private void ComputeNormalizedValues() {
-        var minValue = _regionValues.Values.Min();
-        var maxValue = _regionValues.Values.Max();
-
-        foreach (var region in _regionValues.Keys) {
-            _normalizedRegionValues[region] = MathUtils.Normalize(_regionValues[region], minValue, maxValue);
-        }
+    private static float ExponentialDecayFactor(ulong age) {
+        return (float)Math.Exp(-ExponentialDecayConstant * age);
     }
 }
