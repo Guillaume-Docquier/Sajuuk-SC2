@@ -30,9 +30,6 @@ public abstract class Supervisor {
 
             Assigner.Assign(unit);
         }
-        else {
-            Logger.Error("({0}) Trying to assign {1} that's already assigned to us", this, unit);
-        }
     }
 
     public void Release(Unit unit) {
@@ -50,5 +47,7 @@ public abstract class Supervisor {
         }
     }
 
+    // TODO GD Retire always means at least releasing all the units
+    // We could abstract this?
     public abstract void Retire();
 }
