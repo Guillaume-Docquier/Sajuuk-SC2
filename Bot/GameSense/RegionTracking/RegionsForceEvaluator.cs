@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.MapKnowledge;
 using Bot.Utils;
@@ -9,136 +8,31 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense.RegionTracking;
 
-public class RegionsForceEvaluator : IRegionsEvaluator {
-    private readonly Alliance _alliance;
-    private readonly bool _hasAbsoluteKnowledge;
-    private readonly float _defaultRegionForce;
-
-    private readonly Dictionary<Region, float> _regionForces = new Dictionary<Region, float>();
-    private readonly Dictionary<Region, float> _normalizedRegionForces = new Dictionary<Region, float>();
-
-    // It would be cool to use the exponential decay everywhere
-    // But that would require tracking the last force update of each region
-    // And we would be doing some fancy (expensive?) exponent operations
-    // But in the end, a good ol' factor works perfectly well, so... maybe some other day
-    private static readonly float RegionDecayRate = 1f - 1f / TimeUtils.SecsToFrames(60);
-
+public class RegionsForceEvaluator : RegionsEvaluator {
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(60);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
-    private static readonly ulong CueHalfLife = TimeUtils.SecsToFrames(15 * 60);
-    private static readonly double CueExponentialDecayConstant = Math.Log(2) / CueHalfLife;
-
-    public RegionsForceEvaluator(Alliance alliance) {
-        _alliance = alliance;
-        _hasAbsoluteKnowledge = alliance == Alliance.Self;
-
-        _defaultRegionForce = _hasAbsoluteKnowledge
-            ? UnitEvaluator.Force.None
-            : UnitEvaluator.Force.Unknown;
-    }
+    public RegionsForceEvaluator(Alliance alliance) : base(alliance, "force") {}
 
     /// <summary>
-    /// Gets the evaluated force of the provided region
-    /// </summary>
-    /// <param name="region">The region to get the evaluated force of</param>
-    /// <param name="normalized">Whether or not to get the normalized value between 0 and 1.</param>
-    /// <returns>The evaluated force of the region</returns>
-    public float GetEvaluation(Region region, bool normalized = false) {
-        if (region == null || !_regionForces.ContainsKey(region)) {
-            Logger.Error("Trying to get the force of an unknown region: {0}. {1} regions are known.", region, _regionForces.Count);
-            return UnitEvaluator.Force.Unknown;
-        }
-
-        if (normalized) {
-            return _normalizedRegionForces[region];
-        }
-
-        return _regionForces[region];
-    }
-
-    /// <summary>
-    /// Initializes the region forces of the provided regions
-    /// </summary>
-    public void Init(IEnumerable<Region> regions) {
-        foreach (var region in regions) {
-            _regionForces[region] = _defaultRegionForce;
-        }
-    }
-
-    /// <summary>
-    /// Evaluates the force of each region based on the units and fog of war
+    /// Evaluates the force of each region based on the units within.
     /// The force decays as the information grows older
     /// </summary>
-    public void Evaluate() {
-        if (_hasAbsoluteKnowledge) {
-            Init(_regionForces.Keys);
-        }
-
-        // Update based on units
-        var newRegionForces = ComputeUnitsForce();
-
-        // Update based on visibility
-        foreach (var (region, fogOfWarDanger) in ComputeFogOfWarDanger()) {
-            if (!newRegionForces.ContainsKey(region)) {
-                newRegionForces[region] = fogOfWarDanger;
-            }
-            else {
-                newRegionForces[region] += fogOfWarDanger;
-            }
-        }
-
-        if (!_hasAbsoluteKnowledge) {
-            var enemySpawnForceCue = GetSpawnForceCue();
-            if (!newRegionForces.ContainsKey(enemySpawnForceCue.Region)) {
-                newRegionForces[enemySpawnForceCue.Region] = enemySpawnForceCue.Force;
-            }
-            else {
-                newRegionForces[enemySpawnForceCue.Region] = Math.Max(enemySpawnForceCue.Force, newRegionForces[enemySpawnForceCue.Region]);
-            }
-        }
-
-        // Update the forces
-        foreach (var (region, newRegionForce) in newRegionForces) {
-            if (newRegionForce >= UnitEvaluator.Force.Neutral) {
-                _regionForces[region] = newRegionForce;
-            }
-            else {
-                // Let Weak slowly turn into Neutral
-                _regionForces[region] = Math.Min(_regionForces[region], newRegionForce);
-            }
-        }
-
-        if (!_hasAbsoluteKnowledge) {
-            DriftWeakForces();
-        }
-
-        ComputeNormalizedForces();
-    }
-
-    /// <summary>
-    /// For each region, compute the force of the units within
-    /// </summary>
-    /// <returns>A force score for each region</returns>
-    private Dictionary<Region, float> ComputeUnitsForce() {
-        var regionForces = new Dictionary<Region, float>();
-        var unitsToConsider = UnitsTracker.GetUnits(_alliance).Concat(UnitsTracker.GetGhostUnits(_alliance));
-        foreach (var unit in unitsToConsider) {
-            var region = unit.Position.GetRegion();
-            if (region == null) {
-                continue;
-            }
-
-            var force = UnitEvaluator.EvaluateForce(unit) * GetUnitUncertaintyPenalty(unit);
-            if (!regionForces.ContainsKey(region)) {
-                regionForces[region] = force;
-            }
-            else {
-                regionForces[region] += force;
-            }
-        }
-
-        return regionForces;
+    ///
+    protected override IEnumerable<(Region region, float value)> DoEvaluate(IReadOnlyCollection<Region> regions) {
+        // TODO GD Maybe we want to consider MemorizedUnits as well, but with a special treatment
+        // This would avoid wierd behaviours when units jiggle near the fog of war limit
+        return UnitsTracker.GetUnits(Alliance)
+            .Concat(UnitsTracker.GetGhostUnits(Alliance))
+            // TODO GD Precompute units by region in a tracker
+            .GroupBy(unit => unit.GetRegion())
+            // We might be evaluating regions outside of the provided regions
+            // In reality, regions is all the regions, so it doesn't matter.
+            .Where(unitsInRegion => unitsInRegion.Key != null)
+            .Select(unitsInRegion => {
+                var regionForce = unitsInRegion.Sum(unit => UnitEvaluator.EvaluateForce(unit) * GetUnitUncertaintyPenalty(unit));
+                return (unitsInRegion.Key, regionValue: regionForce);
+            });
     }
 
     /// <summary>
@@ -158,101 +52,15 @@ public class RegionsForceEvaluator : IRegionsEvaluator {
             return 1;
         }
 
-        return ExponentialDecayFactor(ExponentialDecayConstant, Controller.Frame - enemy.LastSeen);
-    }
-
-    /// <summary>
-    /// For each region, return some danger based on the non-visible portion of the region.
-    /// </summary>
-    /// <returns>The danger level of each region based on the visible percentage of the region</returns>
-    private Dictionary<Region, float> ComputeFogOfWarDanger() {
-        if (_hasAbsoluteKnowledge) {
-            return new Dictionary<Region, float>();
-        }
-
-        var regionVisibility = new Dictionary<Region, int>();
-        foreach (var visibleCell in VisibilityTracker.VisibleCells) {
-            var region = visibleCell.GetRegion();
-            if (region == null) {
-                continue;
-            }
-
-            if (!regionVisibility.ContainsKey(region)) {
-                regionVisibility[region] = 1;
-            }
-            else {
-                regionVisibility[region] += 1;
-            }
-        }
-
-        var fogOfWarDanger = new Dictionary<Region, float>();
-        foreach (var (region, visibleCellCount) in regionVisibility) {
-            var percentNotVisible = 1 - (float)visibleCellCount / region.Cells.Count;
-            fogOfWarDanger[region] = percentNotVisible * UnitEvaluator.Force.Unknown;
-        }
-
-        return fogOfWarDanger;
+        return ExponentialDecayFactor(Controller.Frame - enemy.LastSeen);
     }
 
     /// <summary>
     /// Returns the exponential decay factor of a value after some time
     /// </summary>
-    /// <param name="decayConstant">The decay constant representing the half life</param>
-    /// <param name="time">The time since decay started</param>
+    /// <param name="age">The time since decay started</param>
     /// <returns>The decay factor</returns>
-    private static float ExponentialDecayFactor(double decayConstant, ulong time) {
-        return (float)Math.Exp(-decayConstant * time);
-    }
-
-    /// <summary>
-    /// Gets a force cue for the spawn.
-    /// This is because we know where the enemy is, but the bot doesn't see it.
-    /// </summary>
-    /// <returns></returns>
-    private (Region Region, float Force) GetSpawnForceCue() {
-        var spawnRegion = ExpandAnalyzer.GetExpand(_alliance, ExpandType.Main).GetRegion();
-        var spawnRegionExplorationPercentage = (float)spawnRegion.Cells.Count(VisibilityTracker.IsExplored) / spawnRegion.Cells.Count;
-
-        // No cue if we've explored it
-        if (spawnRegionExplorationPercentage > 0.6) {
-            return (spawnRegion, 0);
-        }
-
-        var force = UnitEvaluator.Force.Lethal * (1 - spawnRegionExplorationPercentage);
-        var decayFactor = ExponentialDecayFactor(CueExponentialDecayConstant, Controller.Frame);
-
-        return (spawnRegion, force * decayFactor);
-    }
-
-    /// <summary>
-    /// Drifts the Weak forces towards Neutral to represent uncertainty over time
-    /// </summary>
-    private void DriftWeakForces() {
-        foreach (var region in _regionForces.Keys) {
-            if (_regionForces[region] >= UnitEvaluator.Force.Neutral) {
-                continue;
-            }
-
-            var normalizedTowardsNeutralForce = _regionForces[region] - UnitEvaluator.Force.Neutral;
-            var decayedForce = normalizedTowardsNeutralForce * RegionDecayRate + UnitEvaluator.Force.Neutral;
-            if (Math.Abs(UnitEvaluator.Force.Neutral - decayedForce) < 0.05) {
-                decayedForce = UnitEvaluator.Force.Neutral;
-            }
-
-            _regionForces[region] = decayedForce;
-        }
-    }
-
-    /// <summary>
-    /// Normalizes the region forces to put them between 0 and 1.
-    /// </summary>
-    /// <returns>A new dictionary with the forces normalized</returns>
-    private void ComputeNormalizedForces() {
-        var minForce = _regionForces.Values.Min();
-        var maxForce = _regionForces.Values.Max();
-
-        foreach (var region in _regionForces.Keys) {
-            _normalizedRegionForces[region] = MathUtils.Normalize(_regionForces[region], minForce, maxForce);
-        }
+    private static float ExponentialDecayFactor(ulong age) {
+        return (float)Math.Exp(-ExponentialDecayConstant * age);
     }
 }
