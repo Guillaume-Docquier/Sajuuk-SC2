@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.Algorithms;
 using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
@@ -11,22 +12,39 @@ using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.States.MidGame;
 
+/*
+ * Ok, we're changing this
+ * The war manager does not decide what is dangerous
+ * It uses danger values that other systems can tweak (i.e predicting future threats)
+ * The war manager just allocates the army to respond to the perceived threats (but it doesn't perceive them!)
+ *
+ * If we're stronger, attack the enemy head on
+ * - Dispatch enough forces to handle threats in decreasing order
+ * If we're weaker, contain the enemy
+ * - Dispatch enough forces to handle threats in increasing order?
+ *
+ * If we have extra forces, dispatch harass groups
+ *
+ * We'll have to tweak what 'force' is
+ * We'll have to include the minerals/gas to consider value
+ *
+ * Concepts
+ * Army Strength: How strong an army is. This is almost purely related to army composition and size
+ * Army Threat: How much damage the army is about to cause. A strong army stuck in a corner is not dangerous
+ * Eco Damage: How much Non-army stuff is worth. This can be used to evaluate an Army Threat or the Unit Impact of a counter attack
+ * Goal Value: The combination of army threat and eco damage
+ * Unit Impact: The combination of goal value and distance
+ */
+
 public class MidGameBehaviour : IWarManagerBehaviour {
-    private const float RequiredForceRatioBeforeAttacking = 1.5f;
-    private const float MaxSupplyBeforeAttacking = 175;
-
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
-
-    private BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
 
     private readonly MidGameBehaviourDebugger _debugger = new MidGameBehaviourDebugger();
     private readonly WarManager _warManager;
+    private readonly Dictionary<Region, RegionalArmySupervisor> _supervisors;
 
+    private BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
     private bool _hasCleanUpStarted = false;
-
-    public Stance Stance { get; private set; } = Stance.Defend;
-    public readonly ArmySupervisor AttackSupervisor = new ArmySupervisor();
-    public readonly ArmySupervisor DefenseSupervisor = new ArmySupervisor();
 
     public IAssigner Assigner { get; }
     public IDispatcher Dispatcher { get; }
@@ -36,11 +54,15 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     public MidGameBehaviour(WarManager warManager) {
         _warManager = warManager;
+        _supervisors = RegionAnalyzer.Regions.ToDictionary(region => region, region => new RegionalArmySupervisor(region));
 
         BuildRequests.Add(_armyBuildRequest);
 
         Assigner = new WarManagerAssigner<MidGameBehaviour>(this);
+
+        // TODO GD We don't need that shit in all managers
         Dispatcher = new MidGameDispatcher(this);
+
         Releaser = new WarManagerReleaser<MidGameBehaviour>(this);
     }
 
@@ -53,12 +75,18 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     }
 
     public void DispatchPhase() {
-        // TODO GD We could probably have this logic in a base class
         if (_hasCleanUpStarted) {
             return;
         }
 
-        _warManager.Dispatch(_warManager.ManagedUnits.Where(soldier => soldier.Supervisor == null));
+        var regionsReach = ComputeRegionsReach(RegionAnalyzer.Regions);
+
+        // TODO GD Do two (or more?) rounds to cancel goals that can't be achieved. Reassign to achievable goals
+        // TODO GD Don't assign yet?
+        foreach (var availableUnit in GetAvailableUnits()) {
+            var mostImpactfulRegion = GetMostImpactfulRegion(availableUnit, regionsReach[availableUnit.GetRegion()]);
+            _supervisors[mostImpactfulRegion].Assign(availableUnit);
+        }
     }
 
     public void ManagementPhase() {
@@ -66,16 +94,17 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             return;
         }
 
-        BigBrainPlay();
+        // TODO GD We need a way to tell some supervisors to disengage because we want their units
+
         AdjustBuildRequests();
 
-        AttackSupervisor.OnFrame();
-        DefenseSupervisor.OnFrame();
+        foreach (var supervisor in _supervisors.Values) {
+            supervisor.OnFrame();
+        }
 
         // TODO GD The war manager could do most of that
         _debugger.OwnForce = _warManager.ManagedUnits.GetForce();
-        _debugger.EnemyForce = GetEnemyForce();
-        _debugger.CurrentStance = Stance;
+        _debugger.EnemyForce = GetTotalEnemyForce();
         _debugger.BuildPriority = BuildRequests.FirstOrDefault()?.Priority ?? BuildRequestPriority.Low;
         _debugger.BuildBlockCondition = BuildRequests.FirstOrDefault()?.BlockCondition ?? BuildBlockCondition.None;
         _debugger.Debug();
@@ -84,118 +113,46 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     public bool CleanUp() {
         _hasCleanUpStarted = true;
 
-        if (AttackSupervisor.SupervisedUnits.Any()) {
-            AttackSupervisor.Retire();
-
-            // We give one tick so that release orders, like stop or unburrow go through
-            return false;
+        if (!_supervisors.Values.Any(supervisor => supervisor.SupervisedUnits.Any())) {
+            return true;
         }
 
-        if (DefenseSupervisor.SupervisedUnits.Any()) {
-            DefenseSupervisor.Retire();
-
-            // We give one tick so that release orders, like stop or unburrow go through
-            return false;
+        foreach (var supervisor in _supervisors.Values) {
+            supervisor.Retire();
         }
 
-        return true;
+        // Retire might take a few frames
+        return false;
     }
 
     /// <summary>
-    /// Decide between attack and defense and pick good targets based on current map control.
+    /// Gets all units that can be reassigned right now.
     /// </summary>
-    private void BigBrainPlay() {
-        // Determine regions to defend
-        var regionToDefend = GetRegionToDefend();
-        DefenseSupervisor.AssignTarget(regionToDefend.Center, regionToDefend.ApproximatedRadius, canHuntTheEnemy: false);
-
-        // Determine regions to attack
-        var regionToAttack = GetRegionToAttack();
-        AttackSupervisor.AssignTarget(regionToAttack.Center, regionToDefend.ApproximatedRadius, canHuntTheEnemy: true);
-
-        AttackOrDefend(regionToAttack, regionToDefend);
+    /// <returns>All the units that can be reassigned.</returns>
+    private IEnumerable<Unit> GetAvailableUnits() {
+        return _supervisors.Values
+            .SelectMany(supervisor => supervisor.GetReleasableUnits())
+            .Concat(_warManager.ManagedUnits.Where(unit => unit.Manager == null));
     }
 
     /// <summary>
-    /// Determines which region to defend next
+    /// Get the region from reachableRegions where the given unit will have to most impact.
     /// </summary>
-    /// <returns>The region to defend next</returns>
-    private static Region GetRegionToDefend() {
-        // TODO GD We sometimes try to defend a position that's behind the enemy army while we are losing
-        return RegionAnalyzer.Regions.MaxBy(region => RegionTracker.GetDefenseScore(region))!;
-    }
+    /// <param name="unit">The unit that wants to have an impact.</param>
+    /// <param name="reachableRegions">The regions where the unit is allowed to have an impact.</param>
+    /// <returns>The region from reachableRegions where the given unit will have to most impact.</returns>
+    private static Region GetMostImpactfulRegion(Unit unit, IReadOnlyCollection<Region> reachableRegions) {
+        var unitRegion = unit.GetRegion();
+        var regionsToAvoid = RegionAnalyzer.Regions.Except(reachableRegions).ToHashSet();
 
-    /// <summary>
-    /// Determines which region to attack next
-    /// </summary>
-    /// <returns>The region to attack next</returns>
-    private static Region GetRegionToAttack() {
-        var valuableEnemyRegions = RegionAnalyzer.Regions
-            .Where(region => RegionTracker.GetValue(region, Alliance.Enemy) > UnitEvaluator.Value.Intriguing)
-            .ToList();
+        return reachableRegions.MaxBy(reachableRegion => {
+            var regionThreat = RegionTracker.GetThreat(reachableRegion, Alliance.Enemy);
+            var regionValue = RegionTracker.GetValue(reachableRegion, Alliance.Enemy);
 
-        if (!valuableEnemyRegions.Any()) {
-            valuableEnemyRegions = RegionAnalyzer.Regions;
-        }
+            var distance = Pathfinder.FindPath(unitRegion, reachableRegion, regionsToAvoid).GetPathDistance();
 
-        // TODO GD Checking only the region's force doesn't take into account that maybe we are forced to go through more enemies to get to our target.
-        // TODO GD Maybe consider forces in regions adjacent to the path?
-        // TODO GD Also consider the distance to the region to simulate commitment? Or only change target if significant value change
-        var regionToAttack = valuableEnemyRegions
-            .MaxBy(region => RegionTracker.GetValue(region, Alliance.Enemy) / RegionTracker.GetForce(region, Alliance.Enemy))!;
-
-        return regionToAttack;
-    }
-
-    /// <summary>
-    /// Determines if we should attack the given region or defend our home.
-    /// </summary>
-    /// <param name="regionToAttack">The region that we would attack</param>
-    /// <param name="regionToDefend">The region that we would defend</param>
-    private void AttackOrDefend(Region regionToAttack, Region regionToDefend) {
-        if (regionToAttack.IsObstructed) {
-            Logger.Error("Trying to attack an obstructed region");
-            return;
-        }
-
-        if (_warManager.ManagedUnits.Count == 0) {
-            // TODO GD Should we do stuff here?
-            return;
-        }
-
-        var armyRegion = _warManager.ManagedUnits.GetRegion();
-        if (armyRegion == null) {
-            Logger.Error("AttackOrDefend could not find the region of its army of size {0}", _warManager.ManagedUnits.Count);
-            return;
-        }
-
-        var pathToTarget = Pathfinder.FindPath(armyRegion, regionToAttack);
-        if (pathToTarget == null) {
-            Logger.Error("AttackOrDefend could not find a path from the army to its target {0} -> {1}", armyRegion, regionToAttack);
-            return;
-        }
-
-        var ourForce = _warManager.ManagedUnits.GetForce();
-
-        // TODO GD Maybe consider units near the path as well?
-        var enemyForce = pathToTarget.Sum(region => RegionTracker.GetForce(region, Alliance.Enemy));
-
-        if (ourForce > enemyForce * RequiredForceRatioBeforeAttacking || Controller.CurrentSupply >= MaxSupplyBeforeAttacking) {
-            if (Stance == Stance.Defend) {
-                DefenseSupervisor.Retire();
-            }
-
-            Stance = Stance.Attack;
-            _debugger.Target = regionToAttack;
-        }
-        else {
-            if (Stance == Stance.Attack) {
-                AttackSupervisor.Retire();
-            }
-
-            Stance = Stance.Defend;
-            _debugger.Target = regionToDefend;
-        }
+            return (regionThreat + regionValue) / (distance + 1f); // Add 1 to ensure non zero division
+        });
     }
 
     /// <summary>
@@ -213,7 +170,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         // TODO GD Consider units in production too
         var ourForce = _warManager.ManagedUnits.GetForce();
         // TODO GD Exclude buildings?
-        var enemyForce = GetEnemyForce();
+        var enemyForce = GetTotalEnemyForce();
 
         if (ourForce * 1.5 < enemyForce) {
             _armyBuildRequest.BlockCondition = BuildBlockCondition.MissingMinerals | BuildBlockCondition.MissingProducer | BuildBlockCondition.MissingTech;
@@ -241,6 +198,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             return Units.Roach;
         }
 
+        // This will include spawning pool in progress. We'll want to start saving larvae for drones
         if (Controller.GetUnits(UnitsTracker.OwnedUnits, Units.SpawningPool).Any()) {
             return Units.Zergling;
         }
@@ -250,10 +208,37 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     }
 
     /// <summary>
-    /// Returns the enemy force
+    /// Returns the total enemy force.
     /// </summary>
-    /// <returns></returns>
-    private static float GetEnemyForce() {
+    /// <returns>The total enemy force.</returns>
+    private static float GetTotalEnemyForce() {
         return UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits).GetForce();
+    }
+
+    /// <summary>
+    /// Computes the reach of each of the provided region.
+    /// A region is reachable if there's a path to it that doesn't go through a dangerous region.
+    /// </summary>
+    /// <param name="regions">The regions to compute the reach of.</param>
+    /// <returns></returns>
+    private static Dictionary<Region, List<Region>> ComputeRegionsReach(List<Region> regions) {
+        var reach = new Dictionary<Region, List<Region>>();
+        foreach (var startingRegion in regions) {
+            // TODO GD We can greatly optimize this by using dynamic programming
+            reach[startingRegion] = TreeSearch.BreathFirstSearch(
+                startingRegion,
+                region => region.GetReachableNeighbors(),
+                region => RegionTracker.GetForce(region, Alliance.Enemy) > 0
+            ).ToList();
+        }
+
+        return reach;
+    }
+
+    // We don't use it
+    private class MidGameDispatcher : Dispatcher<MidGameBehaviour> {
+        public MidGameDispatcher(MidGameBehaviour client) : base(client) {}
+
+        public override void Dispatch(Unit unit) {}
     }
 }

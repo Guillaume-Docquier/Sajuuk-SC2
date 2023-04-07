@@ -5,7 +5,6 @@ using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.MapKnowledge;
-using Bot.Utils;
 using SC2APIProtocol;
 
 namespace Bot.GameSense.RegionTracking;
@@ -15,10 +14,9 @@ public class RegionTracker : INeedUpdating {
 
     private bool _isInitialized = false;
 
-    // TODO GD Make this pretty
     private IEnumerable<IRegionsEvaluator> Evaluators => _regionForceEvaluators.Values
         .Concat(_regionValueEvaluators.Values)
-        .Concat(new[] { _regionDefenseEvaluator });
+        .Concat(_regionThreatEvaluators.Values); // Threat depends on forces and values
 
     private readonly Dictionary<Alliance, IRegionsEvaluator> _regionForceEvaluators = new Dictionary<Alliance, IRegionsEvaluator>
     {
@@ -32,7 +30,11 @@ public class RegionTracker : INeedUpdating {
         { Alliance.Enemy, new RegionsValueEvaluator(Alliance.Enemy) },
     };
 
-    private readonly IRegionsEvaluator _regionDefenseEvaluator = new RegionDefenseEvaluator();
+    private readonly Dictionary<Alliance, IRegionsEvaluator> _regionThreatEvaluators = new Dictionary<Alliance, IRegionsEvaluator>
+    {
+        { Alliance.Self, new RegionsThreatEvaluator(Alliance.Self) },
+        { Alliance.Enemy, new RegionsThreatEvaluator(Alliance.Enemy) },
+    };
 
     private static readonly List<Color> RegionColors = new List<Color>
     {
@@ -68,7 +70,7 @@ public class RegionTracker : INeedUpdating {
     /// <returns>The force of the region</returns>
     public static float GetForce(Region region, Alliance alliance, bool normalized = false) {
         if (!Instance._regionForceEvaluators.ContainsKey(alliance)) {
-            Logger.Error("Cannot get force for alliance {0}. We don't track that", alliance);
+            Logger.Error($"Cannot get force for alliance {alliance}. We don't track that");
         }
 
         return Instance._regionForceEvaluators[alliance].GetEvaluation(region, normalized);
@@ -94,20 +96,38 @@ public class RegionTracker : INeedUpdating {
     /// <returns>The value of the region</returns>
     public static float GetValue(Region region, Alliance alliance, bool normalized = false) {
         if (!Instance._regionValueEvaluators.ContainsKey(alliance)) {
-            Logger.Error("Cannot get value for alliance {0}. We don't track that", alliance);
+            Logger.Error($"Cannot get value for alliance {alliance}. We don't track that");
         }
 
         return Instance._regionValueEvaluators[alliance].GetEvaluation(region, normalized);
     }
 
     /// <summary>
-    /// Gets the defense score of the region.
-    /// The defense score represents how valuable defending this region is
+    /// Gets the threat associated with the region of a given position.
+    /// The threat is relative to the army strength, nearby base values and distance to those bases.
     /// </summary>
-    /// <param name="region">The region to get the defense score of</param>
-    /// <returns>The defense score of the given region</returns>
-    public static float GetDefenseScore(Region region) {
-        return Instance._regionDefenseEvaluator.GetEvaluation(region);
+    /// <param name="position">The position to get the threat of</param>
+    /// <param name="alliance">The alliance to get the threat of</param>
+    /// <param name="normalized">Whether or not to get the normalized threat between 0 and 1</param>
+    /// <returns>The threat of the position's region</returns>
+    public static float GetThreat(Vector2 position, Alliance alliance, bool normalized = false) {
+        return GetForce(position.GetRegion(), alliance, normalized);
+    }
+
+    /// <summary>
+    /// Gets the threat of a region.
+    /// The threat is relative to the army strength, nearby base values and distance to those bases.
+    /// </summary>
+    /// <param name="region">The region to get the threat of</param>
+    /// <param name="alliance">The alliance to get the threat of</param>
+    /// <param name="normalized">Whether or not to get the normalized threat between 0 and 1</param>
+    /// <returns>The threat of the region</returns>
+    public static float GetThreat(Region region, Alliance alliance, bool normalized = false) {
+        if (!Instance._regionThreatEvaluators.ContainsKey(alliance)) {
+            Logger.Error($"Cannot get threat for alliance {alliance}. We don't track that");
+        }
+
+        return Instance._regionThreatEvaluators[alliance].GetEvaluation(region, normalized);
     }
 
     public void Reset() {
@@ -126,7 +146,6 @@ public class RegionTracker : INeedUpdating {
         UpdateEvaluations();
 
         DrawRegionsSummary();
-        DrawRegionDefenseScores();
     }
 
     private void InitEvaluators() {
@@ -192,7 +211,7 @@ public class RegionTracker : INeedUpdating {
             >= UnitEvaluator.Force.Strong => "Strong",
             >= UnitEvaluator.Force.Medium => "Medium",
             >= UnitEvaluator.Force.Neutral => "Neutral",
-            _ => "Weak"
+            _ => "Weak",
         };
     }
 
@@ -212,38 +231,8 @@ public class RegionTracker : INeedUpdating {
             >= UnitEvaluator.Value.Prized => "Prized",
             >= UnitEvaluator.Value.Valuable => "Valuable",
             >= UnitEvaluator.Value.Intriguing => "Intriguing",
-            _ => "No Value"
+            _ => "No Value",
         };
-    }
-
-    private static void DrawRegionDefenseScores() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Defense)) {
-            return;
-        }
-
-        var allScores = RegionAnalyzer.Regions.Select(GetDefenseScore).ToList();
-        var minScore = allScores.Min();
-        var maxScore = allScores.Max();
-
-        foreach (var region in RegionAnalyzer.Regions) {
-            var defenseScore = GetDefenseScore(region);
-            var normalizedDefenseScore = MathUtils.Normalize(defenseScore, minScore, maxScore);
-            var color = Colors.Gradient(Colors.DarkGrey, Colors.BrightGreen, normalizedDefenseScore);
-
-            if (region.Type == RegionType.Ramp) {
-                foreach (var cell in region.Cells) {
-                    // Spheres are more visible then squares for ramps
-                    Program.GraphicalDebugger.AddGridSphere(cell.ToVector3(), color);
-                }
-            }
-            else {
-                foreach (var cell in region.Cells) {
-                    Program.GraphicalDebugger.AddGridSquare(cell.ToVector3(), color);
-                }
-            }
-
-            DrawRegionMarker(region, Colors.Green, new []{ $"Defense score: {defenseScore,4:F2} ({normalizedDefenseScore,5:P2})" }, textXOffset: -2f);
-        }
     }
 
     private static void DrawRegionMarker(Region region, Color regionColor, string[] texts, float textXOffset = 0f) {
