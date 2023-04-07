@@ -24,6 +24,10 @@ public static class MathUtils {
     }
 
     public static float Normalize(float number, float min, float max) {
+        if (max - min < 0.00001f) {
+            return min;
+        }
+
         return (number - min) / (max - min);
     }
 
