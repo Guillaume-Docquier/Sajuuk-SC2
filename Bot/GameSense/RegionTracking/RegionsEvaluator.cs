@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Bot.MapKnowledge;
-using Bot.Utils;
 using SC2APIProtocol;
 
 namespace Bot.GameSense.RegionTracking;
@@ -14,14 +13,14 @@ public abstract class RegionsEvaluator : IRegionsEvaluator {
     private readonly string _evaluatedPropertyName;
     private readonly Dictionary<Region, float> _evaluations = new Dictionary<Region, float>();
     private readonly Dictionary<Region, float> _normalizedEvaluations = new Dictionary<Region, float>();
-    
+
     protected readonly Alliance Alliance;
 
     protected RegionsEvaluator(Alliance alliance, string evaluatedPropertyName) {
         Alliance = alliance;
         _evaluatedPropertyName = evaluatedPropertyName;
     }
-    
+
     /// <summary>
     /// Gets the evaluated property of the provided region.
     /// </summary>
@@ -52,23 +51,24 @@ public abstract class RegionsEvaluator : IRegionsEvaluator {
         foreach (var (region, evaluation) in DoEvaluate(_evaluations.Keys)) {
             _evaluations[region] = evaluation;
         }
-        
+
         NormalizeEvaluations();
     }
-    
+
     protected abstract IEnumerable<(Region region, float value)> DoEvaluate(IReadOnlyCollection<Region> regions);
 
     /// <summary>
     /// Normalize all the evaluations to a value between 0 and 1.
     /// The normalized evaluation is its proportion of the total of all evaluations.
     /// i.e a normalized threat of 1 means 100% of all threats.
+    /// If all evaluations are 0, normalized evaluations will all be 0.
     /// </summary>
     private void NormalizeEvaluations() {
         var totalValue = _evaluations.Values.Sum();
 
         foreach (var region in _evaluations.Keys) {
-            // We assume values between [0, inf[
-            _normalizedEvaluations[region] = MathUtils.Normalize(_evaluations[region], 0, totalValue);
+            // We assume all evaluations are positive
+            _normalizedEvaluations[region] = totalValue == 0 ? 0 : _evaluations[region] / totalValue;
         }
     }
 }
