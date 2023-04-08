@@ -2,7 +2,7 @@
 using Bot.Algorithms;
 using Bot.ExtensionMethods;
 
-namespace Bot.Tests;
+namespace Bot.Tests.Algorithms;
 
 public class RayCastingTests {
     public static IEnumerable<object[]> StraightLines() {
