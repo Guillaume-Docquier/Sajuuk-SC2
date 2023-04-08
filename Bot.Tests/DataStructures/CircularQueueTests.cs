@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Bot.DataStructures;
 
-namespace Bot.Tests;
+namespace Bot.Tests.DataStructures;
 
 public class CircularQueueTests {
     [Fact]
