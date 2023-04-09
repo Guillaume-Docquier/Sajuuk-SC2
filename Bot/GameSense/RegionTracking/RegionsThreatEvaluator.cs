@@ -57,7 +57,7 @@ public class RegionsThreatEvaluator : RegionsEvaluator {
         var reach = new Dictionary<Region, List<Region>>();
         foreach (var startingRegion in regions) {
             // TODO GD We can greatly optimize this by using dynamic programming
-            reach[startingRegion] = TreeSearch.BreathFirstSearch(
+            reach[startingRegion] = TreeSearch.BreadthFirstSearch(
                 startingRegion,
                 region => region.GetReachableNeighbors(),
                 region => RegionTracker.GetValue(region, Alliance.Enemy) > 0

@@ -10,21 +10,21 @@ public static class TreeSearch {
     /// </summary>
     /// <param name="startingNode">The node to start the search from.</param>
     /// <param name="getNodeNeighbors">A functor that should return all the neighbors to explore of a given node.</param>
-    /// <param name="isTerminalNode">A functor that determines if we should stop exploring the given node.</param>
+    /// <param name="isTerminalNode">A predicate that determines if we should stop exploring the given node.</param>
     /// <typeparam name="TNode">The type of the node</typeparam>
     /// <returns>The list of all the target nodes.</returns>
-    public static IEnumerable<TNode> BreathFirstSearch<TNode>(
+    public static IEnumerable<TNode> BreadthFirstSearch<TNode>(
         TNode startingNode,
         Func<TNode, IEnumerable<TNode>> getNodeNeighbors,
-        Func<TNode, bool> isTerminalNode
+        Predicate<TNode> isTerminalNode
     ) {
-        var explored = new HashSet<TNode>();
         var explorationQueue = new Queue<TNode>();
         explorationQueue.Enqueue(startingNode);
 
+        var explored = new HashSet<TNode> { startingNode };
+
         while (explorationQueue.Any()) {
             var node = explorationQueue.Dequeue();
-            explored.Add(node);
 
             yield return node;
 
@@ -36,6 +36,7 @@ public static class TreeSearch {
                 .Where(neighbor => !explored.Contains(neighbor));
 
             foreach (var nodeNeighbor in nodeNeighbors) {
+                explored.Add(nodeNeighbor);
                 explorationQueue.Enqueue(nodeNeighbor);
             }
         }
@@ -46,21 +47,21 @@ public static class TreeSearch {
     /// </summary>
     /// <param name="startingNode">The node to start the search from.</param>
     /// <param name="getNodeNeighbors">A functor that should return all the neighbors to explore of a given node.</param>
-    /// <param name="isTerminalNode">A functor that determines if we should stop exploring the given node.</param>
+    /// <param name="isTerminalNode">A predicate that determines if we should stop exploring the given node.</param>
     /// <typeparam name="TNode">The type of the node</typeparam>
     /// <returns>The list of all the target nodes.</returns>
     public static IEnumerable<TNode> DepthFirstSearch<TNode>(
         TNode startingNode,
         Func<TNode, IEnumerable<TNode>> getNodeNeighbors,
-        Func<TNode, bool> isTerminalNode
+        Predicate<TNode> isTerminalNode
     ) {
-        var explored = new HashSet<TNode>();
         var explorationStack = new Stack<TNode>();
         explorationStack.Push(startingNode);
 
+        var explored = new HashSet<TNode> { startingNode };
+
         while (explorationStack.Any()) {
             var node = explorationStack.Pop();
-            explored.Add(node);
 
             yield return node;
 
@@ -72,6 +73,7 @@ public static class TreeSearch {
                 .Where(neighbor => !explored.Contains(neighbor));
 
             foreach (var nodeNeighbor in nodeNeighbors) {
+                explored.Add(nodeNeighbor);
                 explorationStack.Push(nodeNeighbor);
             }
         }
