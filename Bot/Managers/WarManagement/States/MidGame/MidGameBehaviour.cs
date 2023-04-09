@@ -225,7 +225,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         var reach = new Dictionary<Region, List<Region>>();
         foreach (var startingRegion in regions) {
             // TODO GD We can greatly optimize this by using dynamic programming
-            reach[startingRegion] = TreeSearch.BreathFirstSearch(
+            reach[startingRegion] = TreeSearch.BreadthFirstSearch(
                 startingRegion,
                 region => region.GetReachableNeighbors(),
                 region => RegionTracker.GetForce(region, Alliance.Enemy) > 0
