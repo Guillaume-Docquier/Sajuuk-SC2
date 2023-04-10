@@ -17,7 +17,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
     private readonly EarlyGameBehaviourDebugger _debugger = new EarlyGameBehaviourDebugger();
     private readonly WarManager _warManager;
-    private readonly HashSet<Region> _startingRegions;
+    private readonly HashSet<IRegion> _startingRegions;
     private BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
 
     private bool _rushTagged = false;
@@ -111,7 +111,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         return true;
     }
 
-    private Region GetRegionToDefend() {
+    private IRegion GetRegionToDefend() {
         if (GetEnemyForce(_startingRegions) == 0) {
             var enemyMain = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).GetRegion();
             return _startingRegions.MinBy(region => Pathfinder.FindPath(region, enemyMain).GetPathDistance());
@@ -231,7 +231,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     /// Returns the enemy force, filtering by the provided regions, if any.
     /// </summary>
     /// <returns>The enemy force</returns>
-    private static float GetEnemyForce(IReadOnlySet<Region> regionsFilter = null) {
+    private static float GetEnemyForce(IReadOnlySet<IRegion> regionsFilter = null) {
         var enemyUnits = UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits);
         if (regionsFilter != null) {
             enemyUnits = enemyUnits.Where(enemy => regionsFilter.Contains(enemy.GetRegion()));

@@ -60,7 +60,7 @@ public static class Vector2Extensions {
     /// </summary>
     /// <param name="position">The position to get the Region of</param>
     /// <returns>The Region of the given position</returns>
-    public static Region GetRegion(this Vector2 position) {
+    public static IRegion GetRegion(this Vector2 position) {
         return RegionAnalyzer.GetRegion(position);
     }
 

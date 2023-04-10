@@ -56,7 +56,7 @@ public class ExpandLocation : IWatchUnitsDie {
         // TODO
     }
 
-    public Region GetRegion() {
+    public IRegion GetRegion() {
         return Position.GetRegion();
     }
 }

@@ -8,7 +8,7 @@ using Bot.ExtensionMethods;
 namespace Bot.MapKnowledge;
 
 using CellPath = List<Vector2>;
-using RegionPath = List<Region>;
+using IRegionPath = List<IRegion>;
 
 public static class Pathfinder {
     private const bool DrawEnabled = false; // TODO GD Flag this
@@ -22,7 +22,7 @@ public static class Pathfinder {
     /// A multi-level cache for region pathfinding
     /// Used to store paths based on different sets of blocked regions (common use case)
     /// </summary>
-    private static readonly Dictionary<string, Dictionary<Region, Dictionary<Region, RegionPath>>> RegionPathsMemory = new ();
+    private static readonly Dictionary<string, Dictionary<IRegion, Dictionary<IRegion, IRegionPath>>> RegionPathsMemory = new ();
 
     /// <summary>
     /// <para>Finds a path between the origin and destination.</para>
@@ -70,12 +70,12 @@ public static class Pathfinder {
     /// <param name="destination">The destination region.</param>
     /// <param name="excludedRegions">Regions that should be omitted from pathfinding</param>
     /// <returns>The requested path, or null if the destination is unreachable from the origin.</returns>
-    public static RegionPath FindPath(Region origin, Region destination, HashSet<Region> excludedRegions = null) {
+    public static IRegionPath FindPath(IRegion origin, IRegion destination, HashSet<IRegion> excludedRegions = null) {
         if (origin == destination) {
-            return new RegionPath();
+            return new IRegionPath();
         }
 
-        excludedRegions ??= new HashSet<Region>();
+        excludedRegions ??= new HashSet<IRegion>();
         var regionMemoryKey = GetRegionMemoryKey(excludedRegions);
         var regionMemory = GetRegionMemory(RegionPathsMemory, regionMemoryKey);
 
@@ -116,7 +116,7 @@ public static class Pathfinder {
     /// </summary>
     /// <param name="blockedRegions">The blocked regions</param>
     /// <returns>A unique key for a unique set of blocked regions</returns>
-    private static string GetRegionMemoryKey(IReadOnlyCollection<Region> blockedRegions) {
+    private static string GetRegionMemoryKey(IReadOnlyCollection<IRegion> blockedRegions) {
         if (blockedRegions.Count == 0) {
             return "NO-BLOCKERS";
         }
@@ -254,9 +254,9 @@ public static class Pathfinder {
         memory[destination][origin] = path == null ? null : Enumerable.Reverse(path).ToList();
     }
 
-    private static Dictionary<Region, Dictionary<Region, RegionPath>> GetRegionMemory(IDictionary<string, Dictionary<Region, Dictionary<Region, RegionPath>>> memory, string key) {
+    private static Dictionary<IRegion, Dictionary<IRegion, IRegionPath>> GetRegionMemory(IDictionary<string, Dictionary<IRegion, Dictionary<IRegion, IRegionPath>>> memory, string key) {
         if (!memory.ContainsKey(key)) {
-            memory[key] = new Dictionary<Region, Dictionary<Region, RegionPath>>();
+            memory[key] = new Dictionary<IRegion, Dictionary<IRegion, IRegionPath>>();
         }
 
         return memory[key];

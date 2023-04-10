@@ -8,7 +8,7 @@ namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public class RegionalArmySupervisor : Supervisor {
     private readonly IUnitsControl _unitsController = new UnitsController();
-    private readonly Region _assignedRegion;
+    private readonly IRegion _assignedRegion;
 
     // TODO GD Rework assigner/releaser. It's not helpful at all
     protected override IAssigner Assigner { get; } = new DummyAssigner();
@@ -16,7 +16,7 @@ public class RegionalArmySupervisor : Supervisor {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
-    public RegionalArmySupervisor(Region assignedRegion) {
+    public RegionalArmySupervisor(IRegion assignedRegion) {
         _assignedRegion = assignedRegion;
     }
 

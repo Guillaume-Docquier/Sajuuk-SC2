@@ -4,9 +4,9 @@ using Bot.MapKnowledge;
 namespace Bot.GameSense.RegionTracking;
 
 public interface IRegionsEvaluator {
-    void Init(IEnumerable<Region> regions);
+    void Init(IEnumerable<IRegion> regions);
 
-    void Evaluate();
+    void UpdateEvaluations();
 
-    float GetEvaluation(Region region, bool normalized = false);
+    float GetEvaluation(IRegion region, bool normalized = false);
 }

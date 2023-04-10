@@ -4,10 +4,10 @@ using System.Numerics;
 namespace Bot.MapKnowledge;
 
 public class NeighboringRegion {
-    public Region Region { get; }
+    public IRegion Region { get; }
     public HashSet<Vector2> Frontier { get; }
 
-    public NeighboringRegion(Region region, HashSet<Vector2> frontier) {
+    public NeighboringRegion(IRegion region, HashSet<Vector2> frontier) {
         Region = region;
         Frontier = frontier;
     }

@@ -11,7 +11,7 @@ public class EarlyGameBehaviourDebugger {
     public float OwnForce { get; set; }
     public float EnemyForce { get; set; }
     public Stance CurrentStance { get; set; }
-    public Region Target { get; set; }
+    public IRegion Target { get; set; }
 
     public BuildRequestPriority BuildPriority { get; set; }
     public BuildBlockCondition BuildBlockCondition { get; set; }

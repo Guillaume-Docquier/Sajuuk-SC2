@@ -73,7 +73,7 @@ public static class RegionDataStore {
             return;
         }
 
-        var regionsColors = new Dictionary<Region, Color>();
+        var regionsColors = new Dictionary<IRegion, Color>();
         foreach (var region in regions) {
             regionsColors[region] = Color.Cyan;
         }
