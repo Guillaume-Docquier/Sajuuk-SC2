@@ -132,7 +132,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     private IEnumerable<Unit> GetAvailableUnits() {
         return _supervisors.Values
             .SelectMany(supervisor => supervisor.GetReleasableUnits())
-            .Concat(_warManager.ManagedUnits.Where(unit => unit.Manager == null));
+            .Concat(_warManager.ManagedUnits.Where(unit => unit.Supervisor == null));
     }
 
     /// <summary>
