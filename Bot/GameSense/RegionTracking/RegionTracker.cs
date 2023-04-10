@@ -178,6 +178,7 @@ public class RegionTracker : INeedUpdating {
                 $"R{regionIndex} ({regionTypeText}) {obstructedText}",
                 $"Self:  {GetForceLabel(region, Alliance.Self),-7} ({GetForce(region, Alliance.Self),5:F2}) | {GetValueLabel(region, Alliance.Self),-10} ({GetValue(region, Alliance.Self),5:F2})",
                 $"Enemy: {GetForceLabel(region, Alliance.Enemy),-7} ({GetForce(region, Alliance.Enemy),5:F2}) | {GetValueLabel(region, Alliance.Enemy),-10} ({GetValue(region, Alliance.Enemy),5:F2})",
+                $"Threat: {GetThreat(region, Alliance.Enemy),5:F2} ({GetThreat(region, Alliance.Enemy, normalized: true):P0})",
             }, textXOffset: -3f);
 
             regionIndex++;
@@ -191,7 +192,7 @@ public class RegionTracker : INeedUpdating {
     /// <param name="region">The region to get the label for</param>
     /// <param name="alliance">The alliance to consider the force of</param>
     /// <returns>A string that describes the force of the region</returns>
-    private static string GetForceLabel(Region region, Alliance alliance) {
+    private static string GetForceLabel(IRegion region, Alliance alliance) {
         var force = GetForce(region, alliance);
 
         return force switch
@@ -211,7 +212,7 @@ public class RegionTracker : INeedUpdating {
     /// <param name="region">The region to get the label for</param>
     /// <param name="alliance">The alliance to consider the value of</param>
     /// <returns>A string that describes the value of the region</returns>
-    private static string GetValueLabel(Region region, Alliance alliance) {
+    private static string GetValueLabel(IRegion region, Alliance alliance) {
         var value = GetValue(region, alliance);
 
         return value switch
@@ -224,7 +225,7 @@ public class RegionTracker : INeedUpdating {
         };
     }
 
-    private static void DrawRegionMarker(Region region, Color regionColor, string[] texts, float textXOffset = 0f) {
+    private static void DrawRegionMarker(IRegion region, Color regionColor, IEnumerable<string> texts, float textXOffset = 0f) {
         const int zOffset = 5;
         var offsetRegionCenter = region.Center.ToVector3(zOffset: zOffset);
 
