@@ -129,7 +129,7 @@ public class MineralWalkKiting : IUnitsControl {
     /// </summary>
     /// <param name="regimentRegion">The region the regiment currently is in</param>
     /// <returns>A list of tuples composed of the mineral field and a position representing the exit that the unit would go through when going to that mineral field.</returns>
-    private static List<(Unit unit, Vector2 exit)> GetMineralFieldsToWalkTo(Region regimentRegion) {
+    private static List<(Unit unit, Vector2 exit)> GetMineralFieldsToWalkTo(IRegion regimentRegion) {
         var mineralFieldsToWalkTo = new List<(Unit unit, Vector2 exit)>();
 
         if (regimentRegion.Type == RegionType.Expand && !regimentRegion.ExpandLocation.IsDepleted) {

@@ -31,7 +31,7 @@ public static class ArmyExtensions {
     /// <param name="army">The army to find the region of</param>
     /// <param name="includeObstructed">Whether or not to include obstructed units</param>
     /// <returns>The region most occupied by this army or null.</returns>
-    public static Region GetRegion(this IEnumerable<Unit> army, bool includeObstructed = false) {
+    public static IRegion GetRegion(this IEnumerable<Unit> army, bool includeObstructed = false) {
         var potentialRegions = army
             .Select(soldier => soldier.GetRegion())
             .Where(region => region != null)

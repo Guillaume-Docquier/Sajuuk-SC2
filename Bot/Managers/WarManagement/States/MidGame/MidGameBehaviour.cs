@@ -80,10 +80,12 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         }
 
         var regionsReach = ComputeRegionsReach(RegionAnalyzer.Regions);
+        var availableUnits = GetAvailableUnits().ToList();
 
         // TODO GD Do two (or more?) rounds to cancel goals that can't be achieved. Reassign to achievable goals
         // TODO GD Don't assign yet?
-        foreach (var availableUnit in GetAvailableUnits()) {
+        // TODO GD I fear we might lose units in a region-less void
+        foreach (var availableUnit in availableUnits.Where(unit => unit.GetRegion() != null)) {
             var mostImpactfulRegion = GetMostImpactfulRegion(availableUnit, regionsReach[availableUnit.GetRegion()]);
             _supervisors[mostImpactfulRegion].Assign(availableUnit);
         }

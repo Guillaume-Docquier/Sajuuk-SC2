@@ -23,19 +23,25 @@ public class RegionsForceEvaluator : RegionsEvaluator {
     /// </summary>
     ///
     protected override IEnumerable<(IRegion region, float evaluation)> DoUpdateEvaluations(IReadOnlyCollection<IRegion> regions) {
+        // TODO GD Precompute units by region in a tracker
+        var unitsByRegion = UnitsTracker.GetUnits(_alliance)
+            .Concat(UnitsTracker.GetGhostUnits(_alliance))
+            .GroupBy(unit => unit.GetRegion())
+            .Where(unitsInRegion => unitsInRegion.Key != null)
+            .ToDictionary(unitsInRegion => unitsInRegion.Key, unitsInRegion => unitsInRegion);
+
         // TODO GD Maybe we want to consider MemorizedUnits as well, but with a special treatment
         // This would avoid wierd behaviours when units jiggle near the fog of war limit
-        return UnitsTracker.GetUnits(_alliance)
-            .Concat(UnitsTracker.GetGhostUnits(_alliance))
-            // TODO GD Precompute units by region in a tracker
-            .GroupBy(unit => unit.GetRegion())
-            // We might be evaluating regions outside of the provided regions
-            // In reality, regions is all the regions, so it doesn't matter.
-            .Where(unitsInRegion => unitsInRegion.Key != null)
-            .Select(unitsInRegion => {
-                var regionForce = unitsInRegion.Sum(unit => UnitEvaluator.EvaluateForce(unit) * GetUnitUncertaintyPenalty(unit));
-                return (unitsInRegion.Key as IRegion, regionValue: regionForce);
-            });
+        foreach (var region in regions) {
+            if (!unitsByRegion.ContainsKey(region)) {
+                yield return (region, 0);
+                continue;
+            }
+
+            var forceEvaluation = unitsByRegion[region].Sum(unit => UnitEvaluator.EvaluateForce(unit) * GetUnitUncertaintyPenalty(unit));
+
+            yield return (region, forceEvaluation);
+        }
     }
 
     /// <summary>
