@@ -41,7 +41,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     private readonly MidGameBehaviourDebugger _debugger = new MidGameBehaviourDebugger();
     private readonly WarManager _warManager;
-    private readonly Dictionary<Region, RegionalArmySupervisor> _supervisors;
+    private readonly Dictionary<IRegion, RegionalArmySupervisor> _supervisors;
 
     private BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
     private bool _hasCleanUpStarted = false;
@@ -54,7 +54,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     public MidGameBehaviour(WarManager warManager) {
         _warManager = warManager;
-        _supervisors = RegionAnalyzer.Regions.ToDictionary(region => region, region => new RegionalArmySupervisor(region));
+        _supervisors = RegionAnalyzer.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(region));
 
         BuildRequests.Add(_armyBuildRequest);
 
@@ -141,7 +141,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// <param name="unit">The unit that wants to have an impact.</param>
     /// <param name="reachableRegions">The regions where the unit is allowed to have an impact.</param>
     /// <returns>The region from reachableRegions where the given unit will have to most impact.</returns>
-    private static Region GetMostImpactfulRegion(Unit unit, IReadOnlyCollection<Region> reachableRegions) {
+    private static IRegion GetMostImpactfulRegion(Unit unit, IReadOnlyCollection<IRegion> reachableRegions) {
         var unitRegion = unit.GetRegion();
         var regionsToAvoid = RegionAnalyzer.Regions.Except(reachableRegions).ToHashSet();
 
@@ -221,8 +221,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// </summary>
     /// <param name="regions">The regions to compute the reach of.</param>
     /// <returns></returns>
-    private static Dictionary<Region, List<Region>> ComputeRegionsReach(List<Region> regions) {
-        var reach = new Dictionary<Region, List<Region>>();
+    private static Dictionary<IRegion, List<IRegion>> ComputeRegionsReach(IEnumerable<IRegion> regions) {
+        var reach = new Dictionary<IRegion, List<IRegion>>();
         foreach (var startingRegion in regions) {
             // TODO GD We can greatly optimize this by using dynamic programming
             reach[startingRegion] = TreeSearch.BreadthFirstSearch(

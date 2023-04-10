@@ -17,8 +17,8 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
     private static ExpandLocation _enemyMain;
     private static ExpandLocation _enemyNatural;
 
-    private static Region _enemyMainRegion;
-    private static Region _enemyNaturalRegion;
+    private static IRegion _enemyMainRegion;
+    private static IRegion _enemyNaturalRegion;
 
     private readonly ulong _vulnerabilityWindow = TimeUtils.SecsToFrames(4 * 60);
 

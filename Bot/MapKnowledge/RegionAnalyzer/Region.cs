@@ -10,7 +10,7 @@ using SC2APIProtocol;
 
 namespace Bot.MapKnowledge;
 
-public class Region {
+public class Region : IRegion {
     private static readonly List<Color> RegionColors = new List<Color>
     {
         Colors.Cyan,
@@ -130,7 +130,7 @@ public class Region {
         // Get a random color that's not the same as our neighbors
         var rng = new Random();
         var color = RegionColors[rng.Next(RegionColors.Count)];
-        var neighborColors = GetReachableNeighbors()
+        var neighborColors = GetReachableRegions()
             .Where(neighbor => neighbor.Color != default)
             .Select(neighbor => neighbor.Color)
             .ToHashSet();
@@ -160,7 +160,11 @@ public class Region {
     /// Gets the neighboring regions that can be reached from this region
     /// </summary>
     /// <returns>The neighboring regions that can be reached from this region</returns>
-    public IEnumerable<Region> GetReachableNeighbors() {
+    public IEnumerable<IRegion> GetReachableNeighbors() {
+        return GetReachableRegions();
+    }
+
+    private IEnumerable<IRegion> GetReachableRegions() {
         return Neighbors
             .Select(neighbor => neighbor.Region)
             .Where(neighbor => !neighbor.IsObstructed);

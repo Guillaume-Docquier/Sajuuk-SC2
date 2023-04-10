@@ -1,7 +1,6 @@
 using System.Numerics;
 using Bot.GameSense.RegionTracking;
 using Bot.MapKnowledge;
-using SC2APIProtocol;
 
 namespace Bot.Tests.GameSense.RegionTracking;
 
@@ -11,7 +10,7 @@ public class RegionsEvaluatorTests {
     [InlineData(false)]
     public void GivenMultipleRegions_WhenInit_ThenAllEvaluationsAreInitializedWithZero(bool normalized) {
         // Arrange
-        var regionsEvaluator = new TestRegionsEvaluator(Alliance.Self, "test");
+        var regionsEvaluator = new TestRegionsEvaluator();
         var regions = new Region[]
         {
             new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false),
@@ -33,16 +32,16 @@ public class RegionsEvaluatorTests {
     [InlineData(false)]
     public void GivenAnUnknownRegion_WhenGetEvaluation_ThenReturnsZero(bool normalized) {
         // Arrange
-        var evaluations = new Dictionary<Region, float>
+        var evaluations = new Dictionary<IRegion, float>
         {
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 1 },
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 2 },
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 3 },
         };
-        var regionsEvaluator = new TestRegionsEvaluator(evaluations, Alliance.Self, "test");
+        var regionsEvaluator = new TestRegionsEvaluator(evaluations);
 
         regionsEvaluator.Init(evaluations.Keys);
-        regionsEvaluator.Evaluate();
+        regionsEvaluator.UpdateEvaluations();
 
         // Act
         var unknownRegion = new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false);
@@ -53,20 +52,20 @@ public class RegionsEvaluatorTests {
     }
 
     [Fact]
-    public void GivenInit_WhenEvaluate_ThenEvaluationsAreUpdated() {
+    public void GivenInit_WhenUpdateEvaluations_ThenEvaluationsAreUpdated() {
         // Arrange
-        var evaluations = new Dictionary<Region, float>
+        var evaluations = new Dictionary<IRegion, float>
         {
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 1 },
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 2 },
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 3 },
         };
-        var regionsEvaluator = new TestRegionsEvaluator(evaluations, Alliance.Self, "test");
+        var regionsEvaluator = new TestRegionsEvaluator(evaluations);
 
         regionsEvaluator.Init(evaluations.Keys);
 
         // Act
-        regionsEvaluator.Evaluate();
+        regionsEvaluator.UpdateEvaluations();
 
         //Assert
         foreach (var region in evaluations.Keys) {
@@ -75,21 +74,21 @@ public class RegionsEvaluatorTests {
     }
 
     [Fact]
-    public void GivenNonZeroEvaluations_WhenEvaluate_ThenNormalizedEvaluationsAreUpdated() {
+    public void GivenNonZeroEvaluations_WhenUpdateEvaluations_ThenNormalizedEvaluationsAreUpdated() {
         // Arrange
-        var evaluations = new Dictionary<Region, float>
+        var evaluations = new Dictionary<IRegion, float>
         {
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 1 },
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 2 },
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 3 },
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 4 },
         };
-        var regionsEvaluator = new TestRegionsEvaluator(evaluations, Alliance.Self, "test");
+        var regionsEvaluator = new TestRegionsEvaluator(evaluations);
 
         regionsEvaluator.Init(evaluations.Keys);
 
         // Act
-        regionsEvaluator.Evaluate();
+        regionsEvaluator.UpdateEvaluations();
 
         //Assert
         var totalEvaluations = evaluations.Values.Sum();
@@ -99,21 +98,21 @@ public class RegionsEvaluatorTests {
     }
 
     [Fact]
-    public void GivenAllZeroEvaluations_WhenEvaluate_ThenNormalizedEvaluationsAreAllZero() {
+    public void GivenAllZeroEvaluations_WhenUpdateEvaluations_ThenNormalizedEvaluationsAreAllZero() {
         // Arrange
-        var evaluations = new Dictionary<Region, float>
+        var evaluations = new Dictionary<IRegion, float>
         {
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 0 },
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 0 },
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 0 },
             { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 0 },
         };
-        var regionsEvaluator = new TestRegionsEvaluator(evaluations, Alliance.Self, "test");
+        var regionsEvaluator = new TestRegionsEvaluator(evaluations);
 
         regionsEvaluator.Init(evaluations.Keys);
 
         // Act
-        regionsEvaluator.Evaluate();
+        regionsEvaluator.UpdateEvaluations();
 
         //Assert
         foreach (var region in evaluations.Keys) {
@@ -122,19 +121,19 @@ public class RegionsEvaluatorTests {
     }
 
     private class TestRegionsEvaluator : RegionsEvaluator {
-        private readonly Dictionary<Region, float>? _evaluations;
+        private readonly Dictionary<IRegion, float>? _evaluations;
 
-        public TestRegionsEvaluator(Alliance alliance, string evaluatedPropertyName)
-            : base(alliance, evaluatedPropertyName) {
+        public TestRegionsEvaluator()
+            : base("test") {
             _evaluations = null;
         }
 
-        public TestRegionsEvaluator(Dictionary<Region, float> evaluations, Alliance alliance, string evaluatedPropertyName)
-            : base(alliance, evaluatedPropertyName) {
+        public TestRegionsEvaluator(Dictionary<IRegion, float> evaluations)
+            : base("test") {
             _evaluations = evaluations;
         }
 
-        protected override IEnumerable<(Region region, float value)> DoEvaluate(IReadOnlyCollection<Region> regions) {
+        protected override IEnumerable<(IRegion region, float evaluation)> DoUpdateEvaluations(IReadOnlyCollection<IRegion> regions) {
             return regions.Select(region => (region, _evaluations == null ? 0 : _evaluations[region]));
         }
     }

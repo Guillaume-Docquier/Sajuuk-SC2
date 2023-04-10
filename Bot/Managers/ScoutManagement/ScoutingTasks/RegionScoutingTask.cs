@@ -8,7 +8,7 @@ using Bot.MapKnowledge;
 namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 
 public class RegionScoutingTask : ScoutingTask {
-    private readonly Region _region;
+    private readonly IRegion _region;
     private readonly HashSet<Vector2> _cellsToExplore;
     private bool _isCancelled = false;
 

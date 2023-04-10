@@ -9,21 +9,24 @@ using SC2APIProtocol;
 namespace Bot.GameSense.RegionTracking;
 
 public class RegionsForceEvaluator : RegionsEvaluator {
+    private readonly Alliance _alliance;
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(60);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
-    public RegionsForceEvaluator(Alliance alliance) : base(alliance, "force") {}
+    public RegionsForceEvaluator(Alliance alliance) : base("force") {
+        _alliance = alliance;
+    }
 
     /// <summary>
     /// Evaluates the force of each region based on the units within.
     /// The force decays as the information grows older
     /// </summary>
     ///
-    protected override IEnumerable<(Region region, float value)> DoEvaluate(IReadOnlyCollection<Region> regions) {
+    protected override IEnumerable<(IRegion region, float evaluation)> DoUpdateEvaluations(IReadOnlyCollection<IRegion> regions) {
         // TODO GD Maybe we want to consider MemorizedUnits as well, but with a special treatment
         // This would avoid wierd behaviours when units jiggle near the fog of war limit
-        return UnitsTracker.GetUnits(Alliance)
-            .Concat(UnitsTracker.GetGhostUnits(Alliance))
+        return UnitsTracker.GetUnits(_alliance)
+            .Concat(UnitsTracker.GetGhostUnits(_alliance))
             // TODO GD Precompute units by region in a tracker
             .GroupBy(unit => unit.GetRegion())
             // We might be evaluating regions outside of the provided regions
@@ -31,7 +34,7 @@ public class RegionsForceEvaluator : RegionsEvaluator {
             .Where(unitsInRegion => unitsInRegion.Key != null)
             .Select(unitsInRegion => {
                 var regionForce = unitsInRegion.Sum(unit => UnitEvaluator.EvaluateForce(unit) * GetUnitUncertaintyPenalty(unit));
-                return (unitsInRegion.Key, regionValue: regionForce);
+                return (unitsInRegion.Key as IRegion, regionValue: regionForce);
             });
     }
 

@@ -15,26 +15,12 @@ public class RegionTracker : INeedUpdating {
     private bool _isInitialized = false;
 
     private IEnumerable<IRegionsEvaluator> Evaluators => _regionForceEvaluators.Values
-        .Concat(_regionValueEvaluators.Values)
-        .Concat(_regionThreatEvaluators.Values); // Threat depends on forces and values
+        .Concat<IRegionsEvaluator>(_regionValueEvaluators.Values)
+        .Concat(_regionThreatEvaluators.Values);
 
-    private readonly Dictionary<Alliance, IRegionsEvaluator> _regionForceEvaluators = new Dictionary<Alliance, IRegionsEvaluator>
-    {
-        { Alliance.Self, new RegionsForceEvaluator(Alliance.Self) },
-        { Alliance.Enemy, new RegionsForceEvaluator(Alliance.Enemy) },
-    };
-
-    private readonly Dictionary<Alliance, IRegionsEvaluator> _regionValueEvaluators = new Dictionary<Alliance, IRegionsEvaluator>
-    {
-        { Alliance.Self, new RegionsValueEvaluator(Alliance.Self) },
-        { Alliance.Enemy, new RegionsValueEvaluator(Alliance.Enemy) },
-    };
-
-    private readonly Dictionary<Alliance, IRegionsEvaluator> _regionThreatEvaluators = new Dictionary<Alliance, IRegionsEvaluator>
-    {
-        { Alliance.Self, new RegionsThreatEvaluator(Alliance.Self) },
-        { Alliance.Enemy, new RegionsThreatEvaluator(Alliance.Enemy) },
-    };
+    private readonly Dictionary<Alliance, RegionsForceEvaluator> _regionForceEvaluators = new Dictionary<Alliance, RegionsForceEvaluator>();
+    private readonly Dictionary<Alliance, RegionsValueEvaluator> _regionValueEvaluators = new Dictionary<Alliance, RegionsValueEvaluator>();
+    private readonly Dictionary<Alliance, RegionsThreatEvaluator> _regionThreatEvaluators = new Dictionary<Alliance, RegionsThreatEvaluator>();
 
     private static readonly List<Color> RegionColors = new List<Color>
     {
@@ -48,7 +34,18 @@ public class RegionTracker : INeedUpdating {
         Colors.LightRed,
     };
 
-    private RegionTracker() {}
+    private RegionTracker() {
+        _regionForceEvaluators[Alliance.Self] = new RegionsForceEvaluator(Alliance.Self);
+        _regionForceEvaluators[Alliance.Enemy] = new RegionsForceEvaluator(Alliance.Enemy);
+
+        _regionValueEvaluators[Alliance.Self] = new RegionsValueEvaluator(Alliance.Self);
+        _regionValueEvaluators[Alliance.Enemy] = new RegionsValueEvaluator(Alliance.Enemy);
+
+        _regionThreatEvaluators[Alliance.Enemy] = new RegionsThreatEvaluator(
+            _regionForceEvaluators[Alliance.Enemy],
+            _regionValueEvaluators[Alliance.Self]
+        );
+    }
 
     /// <summary>
     /// Gets the force associated with the region of a given position
@@ -68,7 +65,7 @@ public class RegionTracker : INeedUpdating {
     /// <param name="alliance">The alliance to get the force of</param>
     /// <param name="normalized">Whether or not to get the normalized force between 0 and 1</param>
     /// <returns>The force of the region</returns>
-    public static float GetForce(Region region, Alliance alliance, bool normalized = false) {
+    public static float GetForce(IRegion region, Alliance alliance, bool normalized = false) {
         if (!Instance._regionForceEvaluators.ContainsKey(alliance)) {
             Logger.Error($"Cannot get force for alliance {alliance}. We don't track that");
         }
@@ -94,7 +91,7 @@ public class RegionTracker : INeedUpdating {
     /// <param name="alliance">The alliance to get the value of</param>
     /// <param name="normalized">Whether or not to get the normalized value between 0 and 1</param>
     /// <returns>The value of the region</returns>
-    public static float GetValue(Region region, Alliance alliance, bool normalized = false) {
+    public static float GetValue(IRegion region, Alliance alliance, bool normalized = false) {
         if (!Instance._regionValueEvaluators.ContainsKey(alliance)) {
             Logger.Error($"Cannot get value for alliance {alliance}. We don't track that");
         }
@@ -122,7 +119,7 @@ public class RegionTracker : INeedUpdating {
     /// <param name="alliance">The alliance to get the threat of</param>
     /// <param name="normalized">Whether or not to get the normalized threat between 0 and 1</param>
     /// <returns>The threat of the region</returns>
-    public static float GetThreat(Region region, Alliance alliance, bool normalized = false) {
+    public static float GetThreat(IRegion region, Alliance alliance, bool normalized = false) {
         if (!Instance._regionThreatEvaluators.ContainsKey(alliance)) {
             Logger.Error($"Cannot get threat for alliance {alliance}. We don't track that");
         }
@@ -143,8 +140,6 @@ public class RegionTracker : INeedUpdating {
             InitEvaluators();
         }
 
-        UpdateEvaluations();
-
         DrawRegionsSummary();
     }
 
@@ -154,12 +149,6 @@ public class RegionTracker : INeedUpdating {
         }
 
         _isInitialized = true;
-    }
-
-    private void UpdateEvaluations() {
-        foreach (var evaluator in Evaluators) {
-            evaluator.Evaluate();
-        }
     }
 
     /// <summary>

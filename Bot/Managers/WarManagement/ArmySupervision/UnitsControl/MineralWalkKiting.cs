@@ -94,9 +94,9 @@ public class MineralWalkKiting : IUnitsControl {
     /// <param name="origin">The origin of the exit</param>
     /// <param name="exit">The exit to go through</param>
     /// <returns>An expand whose path from the origin goes through the exit, or null if none.</returns>
-    private static ExpandLocation GetExpandLocationGoingThroughExit(Region origin, Region exit) {
-        var exploredRegions = new HashSet<Region> { origin };
-        var regionsToExplore = new Queue<Region>();
+    private static ExpandLocation GetExpandLocationGoingThroughExit(IRegion origin, IRegion exit) {
+        var exploredRegions = new HashSet<IRegion> { origin };
+        var regionsToExplore = new Queue<IRegion>();
         regionsToExplore.Enqueue(exit);
 
         while (regionsToExplore.Count > 0) {
