@@ -110,7 +110,7 @@ public class TreeSearchTests {
         // |   |   |   |
         // ↓   |   ↓   ↓
         // 5←-----→3←-→4
-        var directedGraph = new Dictionary<int, (bool isTerminal, List<int> neighbors)>
+        var graph = new Dictionary<int, (bool isTerminal, List<int> neighbors)>
         {
             { 1, (false, new List<int> { 2, 3 }) },
             { 2, (false, new List<int> { 1, 4 }) },
@@ -123,8 +123,8 @@ public class TreeSearchTests {
         // Act
         var results = TreeSearch.BreadthFirstSearch(
             startingNode,
-            node => directedGraph[node].neighbors,
-            node => directedGraph[node].isTerminal
+            node => graph[node].neighbors,
+            node => graph[node].isTerminal
         ).ToList();
 
         // Assert
@@ -174,7 +174,7 @@ public class TreeSearchTests {
         // |   |   |   |
         // ↓   |   ↓   ↓
         // 5←-----→3←-→4
-        var directedGraph = new Dictionary<int, (bool isTerminal, List<int> neighbors)>
+        var graph = new Dictionary<int, (bool isTerminal, List<int> neighbors)>
         {
             { 1, (false, new List<int> { 2, 3 }) },
             { 2, (false, new List<int> { 1, 4 }) },
@@ -187,8 +187,8 @@ public class TreeSearchTests {
         // Act
         var results = TreeSearch.BreadthFirstSearch(
             startingNode,
-            node => directedGraph[node].neighbors,
-            node => directedGraph[node].isTerminal
+            node => graph[node].neighbors,
+            node => graph[node].isTerminal
         ).ToList();
 
         // Assert
@@ -302,7 +302,7 @@ public class TreeSearchTests {
         // |   |   |   |
         // ↓   |   ↓   ↓
         // 5←-----→3←-→4
-        var directedGraph = new Dictionary<int, (bool isTerminal, List<int> neighbors)>
+        var graph = new Dictionary<int, (bool isTerminal, List<int> neighbors)>
         {
             { 1, (false, new List<int> { 2, 3 }) },
             { 2, (false, new List<int> { 1, 4 }) },
@@ -315,8 +315,8 @@ public class TreeSearchTests {
         // Act
         var results = TreeSearch.DepthFirstSearch(
             startingNode,
-            node => directedGraph[node].neighbors,
-            node => directedGraph[node].isTerminal
+            node => graph[node].neighbors,
+            node => graph[node].isTerminal
         ).ToList();
 
         // Assert
@@ -366,7 +366,7 @@ public class TreeSearchTests {
         // |   |   |   |
         // ↓   |   ↓   ↓
         // 5←-----→3←-→4
-        var directedGraph = new Dictionary<int, (bool isTerminal, List<int> neighbors)>
+        var graph = new Dictionary<int, (bool isTerminal, List<int> neighbors)>
         {
             { 1, (false, new List<int> { 2, 3 }) },
             { 2, (false, new List<int> { 1, 4 }) },
@@ -379,8 +379,8 @@ public class TreeSearchTests {
         // Act
         var results = TreeSearch.DepthFirstSearch(
             startingNode,
-            node => directedGraph[node].neighbors,
-            node => directedGraph[node].isTerminal
+            node => graph[node].neighbors,
+            node => graph[node].isTerminal
         ).ToList();
 
         // Assert
