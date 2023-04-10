@@ -41,7 +41,7 @@ public class RegionalArmySupervisor : Supervisor {
     public IEnumerable<Unit> GetReleasableUnits() {
         // TODO GD Implement this for real
         // Units not necessary to a current fight can be released
-        return Enumerable.Empty<Unit>();
+        return SupervisedUnits;
     }
 
     private class DummyAssigner : IAssigner { public void Assign(Unit unit) {} }

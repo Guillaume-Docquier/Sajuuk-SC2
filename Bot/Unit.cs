@@ -150,7 +150,7 @@ public class Unit: ICanDie, IHavePosition {
         return Position.ToVector2().DistanceTo(location);
     }
 
-    public Region GetRegion() {
+    public IRegion GetRegion() {
         return Position.GetRegion();
     }
 
