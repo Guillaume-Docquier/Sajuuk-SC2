@@ -26,49 +26,27 @@ public class RegionsThreatEvaluator : RegionsEvaluator {
     /// <param name="regions"></param>
     /// <returns></returns>
     protected override IEnumerable<(IRegion region, float evaluation)> DoUpdateEvaluations(IReadOnlyCollection<IRegion> regions) {
-        var reach = ComputeRegionsValueReach(regions);
+        var valuableRegions = regions.Where(region => _opponentValueEvaluator.GetEvaluation(region) > 0).ToList();
 
         foreach (var region in regions) {
-            var force = _forceEvaluator.GetEvaluation(region, normalized: true);
-            if (force == 0) {
+            var normalizedForce = _forceEvaluator.GetEvaluation(region, normalized: true);
+            if (normalizedForce == 0) {
                 yield return (region, 0);
             }
 
-            // TODO GD Change pathfinder signature to allow specifying reachable regions instead of blocked regions
-            var unreachableRegions = regions.Except(reach[region]).ToHashSet();
-            var threatenedValueModifier = reach[region]
-                .Where(reachableRegion => _opponentValueEvaluator.GetEvaluation(reachableRegion) > 0)
+            var threatenedValueModifier = valuableRegions
                 // Pathfinding far regions first will leverage the pathfinding cache
                 .OrderByDescending(valuableReachableRegion => valuableReachableRegion.Center.DistanceTo(region.Center))
                 .Sum(valuableReachableRegion => {
-                    var value = _opponentValueEvaluator.GetEvaluation(valuableReachableRegion, normalized: true);
+                    var normalizedValue = _opponentValueEvaluator.GetEvaluation(valuableReachableRegion, normalized: true);
                     // TODO GD Maybe we need to reduce the distance to give more value to far value
-                    var distance = Pathfinder.FindPath(region, valuableReachableRegion, unreachableRegions).GetPathDistance();
+                    var distance = Pathfinder.FindPath(region, valuableReachableRegion).GetPathDistance();
 
-                    return value / (distance + 1f);
+                    // ]0, 1]
+                    return normalizedValue / (distance + 1f);
                 });
 
-            yield return (region, force * threatenedValueModifier);
+            yield return (region, normalizedForce * threatenedValueModifier);
         }
-    }
-
-    /// <summary>
-    /// Computes the reach of each of the provided region.
-    /// A region is reachable if there's a path to it that doesn't go through a valuable region.
-    /// </summary>
-    /// <param name="regions">The regions to compute the reach of.</param>
-    /// <returns>Each region and the list of their reachable regions</returns>
-    private Dictionary<IRegion, List<IRegion>> ComputeRegionsValueReach(IEnumerable<IRegion> regions) {
-        var reach = new Dictionary<IRegion, List<IRegion>>();
-        foreach (var startingRegion in regions) {
-            // TODO GD We can greatly optimize this by using dynamic programming
-            reach[startingRegion] = TreeSearch.BreadthFirstSearch(
-                startingRegion,
-                region => region.GetReachableNeighbors(),
-                region => _opponentValueEvaluator.GetEvaluation(region) > 0
-            ).ToList();
-        }
-
-        return reach;
     }
 }
