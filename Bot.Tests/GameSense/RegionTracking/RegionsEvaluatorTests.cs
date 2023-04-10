@@ -4,6 +4,7 @@ using Bot.MapKnowledge;
 
 namespace Bot.Tests.GameSense.RegionTracking;
 
+// TODO GD Test that it updates automatically and once per frame
 public class RegionsEvaluatorTests {
     [Theory]
     [InlineData(true)]
