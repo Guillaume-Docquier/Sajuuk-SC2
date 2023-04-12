@@ -6,6 +6,8 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
+using Bot.Managers.ScoutManagement.ScoutingSupervision;
+using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
@@ -41,7 +43,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     private readonly MidGameBehaviourDebugger _debugger = new MidGameBehaviourDebugger();
     private readonly WarManager _warManager;
-    private readonly Dictionary<IRegion, RegionalArmySupervisor> _supervisors;
+    private readonly Dictionary<IRegion, RegionalArmySupervisor> _armySupervisors;
+    private readonly List<ScoutSupervisor> _scoutSupervisors = new List<ScoutSupervisor>();
 
     private BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
     private bool _hasCleanUpStarted = false;
@@ -54,7 +57,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     public MidGameBehaviour(WarManager warManager) {
         _warManager = warManager;
-        _supervisors = RegionAnalyzer.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(region));
+        _armySupervisors = RegionAnalyzer.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(region));
 
         BuildRequests.Add(_armyBuildRequest);
 
@@ -79,16 +82,17 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             return;
         }
 
-        var regionsReach = ComputeRegionsReach(RegionAnalyzer.Regions);
-        var availableUnits = GetAvailableUnits().ToList();
+        if (!_armySupervisors.Any(kv => IsAGoal(kv.Key))) {
+            Scout();
 
-        // TODO GD Do two (or more?) rounds to cancel goals that can't be achieved. Reassign to achievable goals
-        // TODO GD Don't assign yet?
-        // TODO GD I fear we might lose units in a region-less void
-        foreach (var availableUnit in availableUnits.Where(unit => unit.GetRegion() != null)) {
-            var mostImpactfulRegion = GetMostImpactfulRegion(availableUnit, regionsReach[availableUnit.GetRegion()]);
-            _supervisors[mostImpactfulRegion].Assign(availableUnit);
+            return;
         }
+
+        CancelScouting();
+
+        AllocateUnitsToMaximizeImpact();
+        ReleaseUnitsFromUnachievableGoals();
+        RecallUnsupervisedUnits();
     }
 
     public void ManagementPhase() {
@@ -100,7 +104,11 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
         AdjustBuildRequests();
 
-        foreach (var supervisor in _supervisors.Values) {
+        foreach (var supervisor in _armySupervisors.Values) {
+            supervisor.OnFrame();
+        }
+
+        foreach (var supervisor in _scoutSupervisors) {
             supervisor.OnFrame();
         }
 
@@ -115,11 +123,17 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     public bool CleanUp() {
         _hasCleanUpStarted = true;
 
-        if (!_supervisors.Values.Any(supervisor => supervisor.SupervisedUnits.Any())) {
+        if (_warManager.ManagedUnits.All(unit => unit.Supervisor == null)) {
+            _scoutSupervisors.Clear();
+
             return true;
         }
 
-        foreach (var supervisor in _supervisors.Values) {
+        foreach (var supervisor in _armySupervisors.Values) {
+            supervisor.Retire();
+        }
+
+        foreach (var supervisor in _scoutSupervisors) {
             supervisor.Retire();
         }
 
@@ -127,12 +141,73 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         return false;
     }
 
+    private void Scout() {
+        if (!_scoutSupervisors.Any()) {
+            foreach (var (_, armySupervisor) in _armySupervisors) {
+                armySupervisor.Retire();
+            }
+
+            InitializeScoutingTasks();
+        }
+
+        AssignScouts();
+        RecallUnsupervisedUnits();
+    }
+
+    private void InitializeScoutingTasks() {
+        var expandsToScout = ExpandAnalyzer.ExpandLocations
+            .Where(expandLocation => !VisibilityTracker.IsVisible(expandLocation.Position));
+
+        foreach (var expandToScout in expandsToScout) {
+            var scoutingTask = new ExpandScoutingTask(expandToScout.Position, priority: 0, maxScouts: 1);
+            var scoutingSupervisor = new ScoutSupervisor(scoutingTask);
+
+            var scout = _warManager.ManagedUnits
+                .Where(unit => unit.Supervisor == null)
+                .MinBy(unit => unit.DistanceTo(expandToScout.Position));
+
+            scoutingSupervisor.Assign(scout);
+
+            _scoutSupervisors.Add(scoutingSupervisor);
+        }
+    }
+
+    private void AssignScouts() {
+        // TODO GD Improve the scout supervisor api, we should not need to use the task like that
+        foreach (var scoutingSupervisor in _scoutSupervisors.Where(supervisor => supervisor.ScoutingTask.MaxScouts < supervisor.SupervisedUnits.Count)) {
+            var scout = _warManager.ManagedUnits
+                .Where(unit => unit.Supervisor is not ScoutSupervisor) // TODO GD That stinks?
+                .MinBy(unit => unit.DistanceTo(scoutingSupervisor.ScoutingTask.ScoutLocation));
+
+            scoutingSupervisor.Assign(scout);
+        }
+    }
+
+    private void CancelScouting() {
+        foreach (var scoutSupervisor in _scoutSupervisors) {
+            scoutSupervisor.ScoutingTask.Cancel();
+            scoutSupervisor.Retire();
+        }
+
+        _scoutSupervisors.Clear();
+    }
+
+    private void AllocateUnitsToMaximizeImpact() {
+        var regionsReach = ComputeRegionsReach(RegionAnalyzer.Regions);
+        var availableUnits = GetAvailableUnits().ToList();
+
+        foreach (var availableUnit in availableUnits.Where(unit => unit.GetRegion() != null)) {
+            var mostImpactfulRegion = GetMostImpactfulRegion(availableUnit, regionsReach[availableUnit.GetRegion()]);
+            _armySupervisors[mostImpactfulRegion].Assign(availableUnit);
+        }
+    }
+
     /// <summary>
     /// Gets all units that can be reassigned right now.
     /// </summary>
     /// <returns>All the units that can be reassigned.</returns>
     private IEnumerable<Unit> GetAvailableUnits() {
-        return _supervisors.Values
+        return _armySupervisors.Values
             .SelectMany(supervisor => supervisor.GetReleasableUnits())
             .Concat(_warManager.ManagedUnits.Where(unit => unit.Supervisor == null));
     }
@@ -155,6 +230,52 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
             return (regionThreat + regionValue) / (distance + 1f); // Add 1 to ensure non zero division
         });
+    }
+
+    private void ReleaseUnitsFromUnachievableGoals() {
+        foreach (var (region, supervisor) in _armySupervisors) {
+            var hasEnoughForce = supervisor.SupervisedUnits.GetForce() >= RegionTracker.GetForce(region, Alliance.Enemy) * 2;
+            if (IsAGoal(region) && hasEnoughForce) {
+                continue;
+            }
+
+            foreach (var releasableUnit in supervisor.GetReleasableUnits()) {
+                releasableUnit.Supervisor.Release(releasableUnit);
+            }
+        }
+    }
+
+    private static bool IsAGoal(IRegion region) {
+        var thereIsAThreat = RegionTracker.GetThreat(region, Alliance.Enemy) > 0;
+        var thereIsValue = RegionTracker.GetValue(region, Alliance.Enemy) > 0;
+
+        return thereIsAThreat || thereIsValue;
+    }
+
+    private void RecallUnsupervisedUnits() {
+        var safeRegions = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
+            .Select(townHall => townHall.GetRegion())
+            .ToHashSet();
+
+        var ourMainRegion = ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).GetRegion();
+        var enemyMainRegion = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).GetRegion();
+        foreach (var unsupervisedUnit in _warManager.ManagedUnits.Where(unit => unit.Supervisor == null)) {
+            // TODO GD We should make sure that units have a region, this is error prone
+            var unitRegion = unsupervisedUnit.GetRegion();
+            if (unitRegion == null) {
+                unsupervisedUnit.Move(ourMainRegion.Center);
+                continue;
+            }
+
+            var regionToGoTo = safeRegions.MinBy(safeRegion => {
+                var safeToDangerDistance = Pathfinder.FindPath(safeRegion, enemyMainRegion).GetPathDistance();
+                var unitToSafeDistance =  Pathfinder.FindPath(unitRegion, safeRegion).GetPathDistance();
+
+                return unitToSafeDistance + safeToDangerDistance;
+            });
+
+            _armySupervisors[regionToGoTo].Assign(unsupervisedUnit);
+        }
     }
 
     /// <summary>
