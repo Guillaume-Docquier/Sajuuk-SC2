@@ -96,9 +96,25 @@ public class Unit: ICanDie, IHavePosition {
 
     public readonly Dictionary<string, IUnitModule> Modules = new Dictionary<string, IUnitModule>();
 
-    public float Integrity => (RawUnitData.Health + RawUnitData.Shield) / (RawUnitData.HealthMax + RawUnitData.ShieldMax);
-    public float HitPoints => RawUnitData.Health + RawUnitData.Shield;
+    /// <summary>
+    /// The current health + shields
+    /// </summary>
+    public float HitPoints;
 
+    /// <summary>
+    /// The max health + shields
+    /// </summary>
+    public float MaxHitPoints;
+
+    /// <summary>
+    /// The % of remaining hit points.
+    /// 0% means the unit is dead.
+    /// </summary>
+    public float Integrity;
+
+    /// <summary>
+    /// Whether the unit is completely built.
+    /// </summary>
     public bool IsOperational => _buildProgress >= 1;
 
     // Units inside extractors are not available. We keep them in memory but they're not in the game for some time
@@ -140,7 +156,12 @@ public class Unit: ICanDie, IHavePosition {
         IsVisible = unit.DisplayType == DisplayType.Visible; // TODO GD This is not actually visible as in cloaked
         LastSeen = frame;
         Buffs = new HashSet<uint>(unit.BuffIds);
+
         WeaponCooldownPercent = RawUnitData.WeaponCooldown / _maxWeaponCooldownFrames;
+
+        HitPoints = RawUnitData.Health + RawUnitData.Shield;
+        MaxHitPoints = RawUnitData.HealthMax + RawUnitData.ShieldMax;
+        Integrity = HitPoints / MaxHitPoints;
 
         // Snapshot minerals/gas don't have contents
         if (IsVisible && InitialMineralCount == int.MaxValue) {

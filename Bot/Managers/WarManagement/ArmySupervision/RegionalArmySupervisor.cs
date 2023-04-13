@@ -111,7 +111,7 @@ public class RegionalArmySupervisor : Supervisor {
                 }
 
                 var nextRegion = path
-                    .Skip(1) // TODO GD Does the path include the starting region?
+                    .Skip(1)
                     .First();
 
                 unhandledUnit.AttackMove(nextRegion.Center);
