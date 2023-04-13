@@ -8,17 +8,14 @@ using Bot.Managers.ScoutManagement.ScoutingTasks;
 
 namespace Bot.Managers.ScoutManagement.ScoutingSupervision;
 
-public partial class ScoutSupervisor : Supervisor {
+public class ScoutSupervisor : Supervisor {
     public readonly ScoutingTask ScoutingTask;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
-    protected override IAssigner Assigner { get; }
-    protected override IReleaser Releaser { get; }
+    protected override IAssigner Assigner { get; } = new DummyAssigner();
+    protected override IReleaser Releaser { get; } = new DummyReleaser();
 
     public ScoutSupervisor(ScoutingTask scoutingTask) {
-        Assigner = new ScoutSupervisorAssigner(this);
-        Releaser = new ScoutSupervisorReleaser(this);
-
         ScoutingTask = scoutingTask;
     }
 
@@ -62,4 +59,7 @@ public partial class ScoutSupervisor : Supervisor {
 
         return Vector2.Normalize(new Vector2(fleeX, fleeY));
     }
+
+    private class DummyAssigner : IAssigner { public void Assign(Unit unit) {} }
+    private class DummyReleaser : IReleaser { public void Release(Unit unit) {} }
 }
