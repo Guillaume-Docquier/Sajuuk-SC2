@@ -33,9 +33,18 @@ public static class UnitEvaluator {
     /// <param name="areWorkersOffensive">Whether we should consider the workers as being offensive</param>
     /// <returns>The force of the unit</returns>
     public static float EvaluateForce(Unit unit, bool areWorkersOffensive = false) {
+        // TODO GD Review this
+        // 1 when not yet operational because buildings are tricky since their HP goes up
+        // But it'll bad for warping units
+        var integrityFactor = unit.IsOperational ? unit.Integrity : 1;
+
+        return GetUnitForce(unit, areWorkersOffensive) * integrityFactor;
+    }
+
+    private static float GetUnitForce(Unit unit, bool areWorkersOffensive = false) {
         // TODO GD For now we purposefully don't handle air units, so we can't kill them
         if (unit.IsFlying) {
-            return Value.None;
+            return Force.None;
         }
 
         // TODO GD This should be more nuanced, a lone dropship is more dangerous than a dropship with a visible army
@@ -44,7 +53,7 @@ public static class UnitEvaluator {
         }
 
         if (Units.CreepTumors.Contains(unit.UnitType)) {
-            return Force.Medium / 64;
+            return Force.None;
         }
 
         if (Units.Military.Contains(unit.UnitType)) {

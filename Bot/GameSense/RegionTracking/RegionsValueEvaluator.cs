@@ -11,7 +11,7 @@ namespace Bot.GameSense.RegionTracking;
 public class RegionsValueEvaluator : RegionsEvaluator {
     private readonly Alliance _alliance;
 
-    private static readonly ulong HalfLife = TimeUtils.SecsToFrames(120);
+    private static readonly ulong HalfLife = TimeUtils.SecsToFrames(240);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
     public RegionsValueEvaluator(Alliance alliance) : base("value") {
