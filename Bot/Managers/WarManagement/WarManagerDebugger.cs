@@ -7,7 +7,19 @@ namespace Bot.Managers.WarManagement;
 public class WarManagerDebugger {
     public void Debug(HashSet<Unit> army) {
         foreach (var soldier in army) {
-            Program.GraphicalDebugger.AddText("W", worldPos: soldier.Position.ToPoint(), color: Colors.Red);
+            var text = "";
+            if (soldier.WeaponCooldownPercent > 0) {
+                text += ".";
+            }
+            else {
+                text += "W";
+            }
+
+            if (soldier.RawUnitData.HasEngagedTargetTag) {
+                text += "!";
+            }
+
+            Program.GraphicalDebugger.AddText(text, worldPos: soldier.Position.ToPoint(), color: Colors.Red);
         }
     }
 }

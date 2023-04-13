@@ -7,6 +7,7 @@ using Bot.GameSense;
 using Bot.Managers;
 using Bot.MapKnowledge;
 using Bot.UnitModules;
+using Bot.Utils;
 using Bot.Wrapper;
 using Google.Protobuf.Collections;
 using SC2APIProtocol;
@@ -44,6 +45,12 @@ public class Unit: ICanDie, IHavePosition {
     public bool IsFlying => RawUnitData.IsFlying;
     public bool IsBurrowed => RawUnitData.IsBurrowed;
     public bool IsCloaked => RawUnitData.Cloak == CloakState.Cloaked;
+    /// <summary>
+    /// Represents the % of cooldown remaining.
+    /// 0% means the unit can attack.
+    /// </summary>
+    public double WeaponCooldownPercent;
+    private double _maxWeaponCooldownFrames;
 
     /// <summary>
     /// The angle where the unit is facing, in radians.
@@ -116,6 +123,9 @@ public class Unit: ICanDie, IHavePosition {
 
             var weapons = UnitTypeData.Weapons.Concat(AliasUnitTypeData?.Weapons ?? Enumerable.Empty<Weapon>()).ToList();
             MaxRange = weapons.Count <= 0 ? 0 : weapons.Max(weapon => weapon.Range);
+
+            // Weapon speed is in seconds between attacks
+            _maxWeaponCooldownFrames = KnowledgeBase.GetUnitTypeData(Units.Drone).Weapons[0].Speed * TimeUtils.FramesPerSecond;
         }
 
         Name = UnitTypeData.Name;
@@ -130,6 +140,7 @@ public class Unit: ICanDie, IHavePosition {
         IsVisible = unit.DisplayType == DisplayType.Visible; // TODO GD This is not actually visible as in cloaked
         LastSeen = frame;
         Buffs = new HashSet<uint>(unit.BuffIds);
+        WeaponCooldownPercent = RawUnitData.WeaponCooldown / _maxWeaponCooldownFrames;
 
         // Snapshot minerals/gas don't have contents
         if (IsVisible && InitialMineralCount == int.MaxValue) {

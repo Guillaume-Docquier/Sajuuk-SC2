@@ -22,15 +22,15 @@ public class MineralWalkKiting : IUnitsControl {
     public IReadOnlySet<Unit> Execute(IReadOnlySet<Unit> army) {
         var uncontrolledUnits = new HashSet<Unit>(army);
 
-        var droneMaximumWeaponCooldown = KnowledgeBase.GetUnitTypeData(Units.Drone).Weapons[0].Speed * TimeUtils.FramesPerSecond; // Speed is in seconds between attacks
         var dronesThatNeedToKite = army
             .Where(unit => unit.UnitType == Units.Drone)
             // We mineral walk for a duration of 75% of the weapon cooldown.
+            // In other words, when our weapon cooldown is above 25%, we keep kiting.
             // This can be tweaked. The rationale is that if we walk for 50% of the cooldown, the back and forth will be the same distance.
             // However, if we're gradually moving back, then the way back will be shorter and we might be in a fighting situation before our weapons are ready.
             // On the other hand, if we walk for 100% of the cooldown, our weapons will be ready but we'll be too far to attack.
             // The ideal value is most likely between 50% and 100%, so I went for 75%
-            .Where(drone => drone.RawUnitData.WeaponCooldown > (1 - 0.75) * droneMaximumWeaponCooldown)
+            .Where(drone => drone.WeaponCooldownPercent > 0.25)
             .ToHashSet();
 
         if (dronesThatNeedToKite.Count == 0) {
