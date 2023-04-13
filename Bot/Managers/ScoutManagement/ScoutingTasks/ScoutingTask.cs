@@ -13,7 +13,7 @@ public abstract class ScoutingTask {
 
     public int MaxScouts { get; }
 
-    public ScoutingTask(Vector2 scoutLocation, int priority, int maxScouts) {
+    protected ScoutingTask(Vector2 scoutLocation, int priority, int maxScouts) {
         ScoutLocation = scoutLocation;
         Priority = priority;
         MaxScouts = maxScouts;

@@ -58,6 +58,7 @@ public class RegionalArmySupervisor : Supervisor {
         // TODO GD We can improve target selection
         var target = targetRegion.Center;
         var targetUnits = UnitsTracker.EnemyUnits
+            .Concat(UnitsTracker.EnemyGhostUnits.Values)
             .Where(unit => !unit.IsFlying) // TODO GD Bad hardcode, lazy me
             .Where(unit => unit.GetRegion() == targetRegion)
             .ToList();

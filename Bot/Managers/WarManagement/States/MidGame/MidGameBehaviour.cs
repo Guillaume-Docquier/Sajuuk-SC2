@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Bot.Algorithms;
 using Bot.Builds;
@@ -39,12 +40,13 @@ namespace Bot.Managers.WarManagement.States.MidGame;
  */
 
 public class MidGameBehaviour : IWarManagerBehaviour {
+    private static readonly Random Rng = new Random();
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
 
     private readonly MidGameBehaviourDebugger _debugger = new MidGameBehaviourDebugger();
     private readonly WarManager _warManager;
     private readonly Dictionary<IRegion, RegionalArmySupervisor> _armySupervisors;
-    private readonly List<ScoutSupervisor> _scoutSupervisors = new List<ScoutSupervisor>();
+    private readonly HashSet<ScoutSupervisor> _scoutSupervisors = new HashSet<ScoutSupervisor>();
 
     private BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
     private bool _hasCleanUpStarted = false;
@@ -90,8 +92,11 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
         CancelScouting();
 
-        AllocateUnitsToMaximizeImpact();
-        ReleaseUnitsFromUnachievableGoals();
+        var plannedUnitsAllocation = PlanUnitsAllocationToMaximizeImpact(GetAvailableUnits());
+        // TODO GD Reassign released units until they're all assigned?
+        ReleaseUnitsFromUnachievableGoals(plannedUnitsAllocation);
+        PerformAllocation(plannedUnitsAllocation);
+
         RecallUnsupervisedUnits();
     }
 
@@ -108,8 +113,14 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             supervisor.OnFrame();
         }
 
-        foreach (var supervisor in _scoutSupervisors) {
-            supervisor.OnFrame();
+        foreach (var supervisor in _scoutSupervisors.ToList()) {
+            if (supervisor.ScoutingTask.IsComplete()) {
+                supervisor.Retire();
+                _scoutSupervisors.Remove(supervisor);
+            }
+            else {
+                supervisor.OnFrame();
+            }
         }
 
         // TODO GD The war manager could do most of that
@@ -162,24 +173,57 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             var scoutingTask = new ExpandScoutingTask(expandToScout.Position, priority: 0, maxScouts: 1);
             var scoutingSupervisor = new ScoutSupervisor(scoutingTask);
 
-            var scout = _warManager.ManagedUnits
-                .Where(unit => unit.Supervisor == null)
-                .MinBy(unit => unit.DistanceTo(expandToScout.Position));
-
-            scoutingSupervisor.Assign(scout);
-
             _scoutSupervisors.Add(scoutingSupervisor);
         }
     }
 
     private void AssignScouts() {
+        var unsupervisedUnits = _warManager.ManagedUnits
+            .Where(unit => unit.Supervisor is not ScoutSupervisor) // TODO GD Does that stink?
+            .ToHashSet();
+
         // TODO GD Improve the scout supervisor api, we should not need to use the task like that
-        foreach (var scoutingSupervisor in _scoutSupervisors.Where(supervisor => supervisor.ScoutingTask.MaxScouts < supervisor.SupervisedUnits.Count)) {
-            var scout = _warManager.ManagedUnits
-                .Where(unit => unit.Supervisor is not ScoutSupervisor) // TODO GD That stinks?
-                .MinBy(unit => unit.DistanceTo(scoutingSupervisor.ScoutingTask.ScoutLocation));
+        foreach (var scoutingSupervisor in _scoutSupervisors.Where(supervisor => supervisor.SupervisedUnits.Count < supervisor.ScoutingTask.MaxScouts)) {
+            var scout = unsupervisedUnits.MinBy(unit => unit.DistanceTo(scoutingSupervisor.ScoutingTask.ScoutLocation));
+
+            if (scout == null) {
+                // No more unsupervised units
+                return;
+            }
 
             scoutingSupervisor.Assign(scout);
+            unsupervisedUnits.Remove(scout);
+        }
+
+        // Randomly distribute unsupervised units to scouting tasks based on distances.
+        // A close task will have a higher chance to be picked than a far task.
+        // The intuition is that this method, while not exact, will more or less distribute units properly.
+        // However, it is fast to compute because it requires a single pass on the unit list.
+        foreach (var unsupervisedUnit in unsupervisedUnits) {
+            var assignmentDistances = _scoutSupervisors
+                .Select(supervisor => (supervisor, distance: supervisor.ScoutingTask.ScoutLocation.DistanceTo(unsupervisedUnit)))
+                .ToList();
+
+            var totalDistance = assignmentDistances.Sum(assignment => assignment.distance);
+
+            var assignmentProbabilities = assignmentDistances
+                .Select(assignment => (assignment.supervisor, probability: 1f - assignment.distance / totalDistance))
+                .ToList();
+
+            // Weighted random implementation
+            var roll = Rng.NextSingle();
+            var lowBound = 1f;
+            foreach (var (supervisor, probability) in assignmentProbabilities) {
+                lowBound -= probability;
+
+                if (roll >= lowBound) {
+                    supervisor.Assign(unsupervisedUnit);
+                    return;
+                }
+            }
+
+            // Just in case a rounding error occurred
+            assignmentProbabilities[^1].supervisor.Assign(unsupervisedUnit);
         }
     }
 
@@ -192,14 +236,16 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         _scoutSupervisors.Clear();
     }
 
-    private void AllocateUnitsToMaximizeImpact() {
+    private static Dictionary<IRegion, List<Unit>> PlanUnitsAllocationToMaximizeImpact(IEnumerable<Unit> availableUnits) {
         var regionsReach = ComputeRegionsReach(RegionAnalyzer.Regions);
-        var availableUnits = GetAvailableUnits().ToList();
 
+        var allocations = RegionAnalyzer.Regions.ToDictionary(region => region as IRegion, _ => new List<Unit>());
         foreach (var availableUnit in availableUnits.Where(unit => unit.GetRegion() != null)) {
             var mostImpactfulRegion = GetMostImpactfulRegion(availableUnit, regionsReach[availableUnit.GetRegion()]);
-            _armySupervisors[mostImpactfulRegion].Assign(availableUnit);
+            allocations[mostImpactfulRegion].Add(availableUnit);
         }
+
+        return allocations;
     }
 
     /// <summary>
@@ -232,16 +278,14 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         });
     }
 
-    private void ReleaseUnitsFromUnachievableGoals() {
-        foreach (var (region, supervisor) in _armySupervisors) {
-            var hasEnoughForce = supervisor.SupervisedUnits.GetForce() >= RegionTracker.GetForce(region, Alliance.Enemy) * 2;
+    private static void ReleaseUnitsFromUnachievableGoals(Dictionary<IRegion, List<Unit>> plannedUnitsAllocation) {
+        foreach (var (region, army) in plannedUnitsAllocation) {
+            var hasEnoughForce = army.GetForce() >= RegionTracker.GetForce(region, Alliance.Enemy) * 2;
             if (IsAGoal(region) && hasEnoughForce) {
                 continue;
             }
 
-            foreach (var releasableUnit in supervisor.GetReleasableUnits()) {
-                releasableUnit.Supervisor.Release(releasableUnit);
-            }
+            plannedUnitsAllocation.Remove(region);
         }
     }
 
@@ -250,6 +294,12 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         var thereIsValue = RegionTracker.GetValue(region, Alliance.Enemy) > 0;
 
         return thereIsAThreat || thereIsValue;
+    }
+
+    private void PerformAllocation(Dictionary<IRegion, List<Unit>> plannedUnitsAllocation) {
+        foreach (var (region, army) in plannedUnitsAllocation) {
+            _armySupervisors[region].Assign(army);
+        }
     }
 
     private void RecallUnsupervisedUnits() {
