@@ -3,7 +3,6 @@ using System.Linq;
 using Bot.Algorithms;
 using Bot.Builds;
 using Bot.ExtensionMethods;
-using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
@@ -16,32 +15,27 @@ public class RegionalArmySupervisor : Supervisor {
     private readonly IUnitsControl _unitsController = new UnitsController();
     private readonly IRegion _targetRegion;
 
-    // TODO GD Rework assigner/releaser. It's not helpful at all
-    protected override IAssigner Assigner { get; } = new DummyAssigner();
-    protected override IReleaser Releaser { get; } = new DummyReleaser();
-
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
     public RegionalArmySupervisor(IRegion targetRegion) {
         _targetRegion = targetRegion;
     }
 
+    // TODO GD We tend to jiggle instead of fighting and that causes unnecessary losses
     protected override void Supervise() {
         if (!SupervisedUnits.Any()) {
             return;
         }
 
-        var approachRegions = _targetRegion.GetReachableNeighbors().ToHashSet();
-        // TODO GD Sometimes, units are in position outside of approach regions because they are avoiding the enemy. The should be included
-        var unitsInPosition = GetUnitsInPosition(SupervisedUnits, _targetRegion, approachRegions);
         var enemyArmy = GetEnemyArmy(_targetRegion).ToList();
+        var unitsInPosition = GetUnitsInPosition(SupervisedUnits, _targetRegion, enemyArmy);
 
         if (unitsInPosition.GetForce() >= enemyArmy.GetForce()) {
             Attack(unitsInPosition, _targetRegion, enemyArmy);
-            MoveIntoPosition(SupervisedUnits.Except(unitsInPosition).ToList(), approachRegions, enemyArmy);
+            MoveIntoPosition(SupervisedUnits.Except(unitsInPosition).ToList(), _targetRegion, enemyArmy);
         }
         else {
-            MoveIntoPosition(SupervisedUnits, approachRegions, enemyArmy);
+            MoveIntoPosition(SupervisedUnits, _targetRegion, enemyArmy);
         }
     }
 
@@ -69,9 +63,10 @@ public class RegionalArmySupervisor : Supervisor {
     /// Units will avoid engaging the enemy.
     /// </summary>
     /// <param name="units">The units to move</param>
-    /// <param name="approachRegions">The regions in strike range of the global objective</param>
+    /// <param name="targetRegion">The region to go to</param>
     /// <param name="enemyArmy">The enemy units to get in range of but avoid engaging</param>
-    private static void MoveIntoPosition(IReadOnlyCollection<Unit> units, IReadOnlyCollection<IRegion> approachRegions, IReadOnlyCollection<Unit> enemyArmy) {
+    private static void MoveIntoPosition(IReadOnlyCollection<Unit> units, IRegion targetRegion, IReadOnlyCollection<Unit> enemyArmy) {
+        var approachRegions = targetRegion.GetReachableNeighbors().ToList();
         var regionsOutOfReach = ComputeBlockedRegionsMap(units);
 
         var unitGroups = units
@@ -87,7 +82,7 @@ public class RegionalArmySupervisor : Supervisor {
             }));
 
         foreach (var unitGroup in unitGroups) {
-            MoveTowards(unitGroup, unitGroup.Key, regionsOutOfReach, enemyArmy);
+            MoveTowards(unitGroup, targetRegion, unitGroup.Key, regionsOutOfReach, enemyArmy);
         }
     }
 
@@ -97,28 +92,30 @@ public class RegionalArmySupervisor : Supervisor {
     /// </summary>
     /// <param name="units">The units to move</param>
     /// <param name="targetRegion">The region to go to</param>
+    /// <param name="approachRegion">The region to go though to get to the target region</param>
     /// <param name="blockedRegions">The regions to avoid going through</param>
     /// <param name="enemyArmy">The enemy units to get in range of but avoid engaging</param>
-    private static void MoveTowards(IEnumerable<Unit> units, IRegion targetRegion, IDictionary<IRegion, HashSet<IRegion>> blockedRegions, IReadOnlyCollection<Unit> enemyArmy) {
+    private static void MoveTowards(IEnumerable<Unit> units, IRegion targetRegion, IRegion approachRegion, IDictionary<IRegion, HashSet<IRegion>> blockedRegions, IReadOnlyCollection<Unit> enemyArmy) {
         foreach (var unit in units) {
             var closestEnemy = enemyArmy.MinBy(enemy => enemy.DistanceTo(unit) - enemy.MaxRange);
-            if (closestEnemy != null && closestEnemy.DistanceTo(unit) < closestEnemy.MaxRange * 2) {
+            // TODO GD You know what they say about magic numbers!
+            if (closestEnemy != null && closestEnemy.DistanceTo(unit) < closestEnemy.MaxRange + 3) {
                 // TODO GD We should avoid cornering ourselves, maybe we should go towards a region exit?
-                unit.MoveAwayFrom(closestEnemy.Position.ToVector2(), closestEnemy.MaxRange * 2);
+                unit.MoveAwayFrom(closestEnemy.Position.ToVector2(), closestEnemy.MaxRange + 3);
                 continue;
             }
 
             var unitRegion = unit.GetRegion();
 
-            if (unitRegion == targetRegion) {
+            if (unitRegion == approachRegion) {
                 unit.Move(targetRegion.Center);
                 continue;
             }
 
-            var path = Pathfinder.FindPath(unitRegion, targetRegion, blockedRegions[unitRegion]);
+            var path = Pathfinder.FindPath(unitRegion, approachRegion, blockedRegions[unitRegion]);
             if (path == null) {
                 // Trying to gracefully handle a case that I don't think should happen
-                unit.Move(targetRegion.Center);
+                unit.Move(approachRegion.Center);
                 continue;
             }
 
@@ -134,15 +131,22 @@ public class RegionalArmySupervisor : Supervisor {
     /// Gets all the units that are in position and ready to attack the target region.
     /// </summary>
     /// <param name="supervisedUnits">The units to consider</param>
-    /// <param name="targetRegion"></param>
-    /// <param name="approachRegions"></param>
+    /// <param name="targetRegion">The region to strike</param>
+    /// <param name="enemyArmy">The enemy army to strike</param>
     /// <returns></returns>
-    private static HashSet<Unit> GetUnitsInPosition(IEnumerable<Unit> supervisedUnits, IRegion targetRegion, IReadOnlySet<IRegion> approachRegions) {
+    private static HashSet<Unit> GetUnitsInPosition(IEnumerable<Unit> supervisedUnits, IRegion targetRegion, IReadOnlyCollection<Unit> enemyArmy) {
         return supervisedUnits
             .Where(unit => {
-                var unitRegion = unit.GetRegion();
+                if (unit.GetRegion() == targetRegion) {
+                    return true;
+                }
 
-                return unitRegion == targetRegion || approachRegions.Contains(unitRegion);
+                // TODO GD We do this computation twice per frame, cache it!
+                var closestEnemy = enemyArmy.MinBy(enemy => enemy.DistanceTo(unit) - enemy.MaxRange);
+
+                // TODO GD We defined the striking distance as 2 * the max range of the closest enemy
+                // TODO GD We add 2 as a buffer in case units clump up. We should be able to handle this better, but it should work for now
+                return closestEnemy != null && closestEnemy.DistanceTo(unit) < (closestEnemy.MaxRange + 3) + 2;
             })
             .ToHashSet();
     }
@@ -165,18 +169,6 @@ public class RegionalArmySupervisor : Supervisor {
             .Where(cluster => cluster.Any(unit => unit.GetRegion() == targetRegion))
             .SelectMany(cluster => cluster)
             .Concat(clusteringResult.noise.Where(unit => unit.GetRegion() == targetRegion));
-    }
-
-    public override void Retire() {
-        foreach (var supervisedUnit in SupervisedUnits) {
-            Release(supervisedUnit);
-        }
-    }
-
-    public IEnumerable<Unit> GetReleasableUnits() {
-        // TODO GD Implement this for real
-        // Units not necessary to a current fight can be released
-        return SupervisedUnits;
     }
 
     /// <summary>
@@ -218,6 +210,22 @@ public class RegionalArmySupervisor : Supervisor {
 
         return reach;
     }
+
+    public override void Retire() {
+        foreach (var supervisedUnit in SupervisedUnits) {
+            Release(supervisedUnit);
+        }
+    }
+
+    public IEnumerable<Unit> GetReleasableUnits() {
+        // TODO GD Implement this for real
+        // Units not necessary to a current fight can be released
+        return SupervisedUnits;
+    }
+
+    // TODO GD Rework assigner/releaser. It's not helpful at all
+    protected override IAssigner Assigner { get; } = new DummyAssigner();
+    protected override IReleaser Releaser { get; } = new DummyReleaser();
 
     private class DummyAssigner : IAssigner { public void Assign(Unit unit) {} }
     private class DummyReleaser : IReleaser { public void Release(Unit unit) {} }
