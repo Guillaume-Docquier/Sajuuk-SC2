@@ -13,7 +13,7 @@ namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public class RegionalArmySupervisor : Supervisor {
     private readonly IUnitsControl _unitsController = new UnitsController();
-    private readonly IRegion _assignedRegion;
+    private readonly IRegion _targetRegion;
 
     // TODO GD Rework assigner/releaser. It's not helpful at all
     protected override IAssigner Assigner { get; } = new DummyAssigner();
@@ -21,40 +21,35 @@ public class RegionalArmySupervisor : Supervisor {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
-    public RegionalArmySupervisor(IRegion assignedRegion) {
-        _assignedRegion = assignedRegion;
+    public RegionalArmySupervisor(IRegion targetRegion) {
+        _targetRegion = targetRegion;
     }
 
+    // TODO Use clustering to determine the real size of enemy threat even if they're outside the assigned region
     protected override void Supervise() {
         if (!SupervisedUnits.Any()) {
             return;
         }
 
-        var assignedRegionForce = RegionTracker.GetForce(_assignedRegion, Alliance.Enemy);
-        var regionsWithUnitPresence = SupervisedUnits
+        var regionsWithFriendlyUnitPresence = SupervisedUnits
             .Select(unit => unit.GetRegion())
             .Where(region => region != null)
             .ToHashSet();
 
-        var targetRegions = _assignedRegion.GetReachableNeighbors().ToHashSet();
-        var unitsInPosition = SupervisedUnits
-            .Where(unit => {
-                var unitRegion = unit.GetRegion();
+        var approachRegions = _targetRegion.GetReachableNeighbors().ToHashSet();
+        var unitsInPosition = GetUnitsInPosition(SupervisedUnits, _targetRegion, approachRegions);
 
-                return unitRegion == _assignedRegion || targetRegions.Contains(unitRegion);
-            })
-            .ToHashSet();
-
+        var assignedRegionForce = RegionTracker.GetForce(_targetRegion, Alliance.Enemy);
         if (unitsInPosition.GetForce() >= assignedRegionForce) {
-            Attack(_assignedRegion, unitsInPosition);
-            MoveIntoPosition(regionsWithUnitPresence, targetRegions, SupervisedUnits.Except(unitsInPosition));
+            Attack(unitsInPosition, _targetRegion);
+            MoveIntoPosition(SupervisedUnits.Except(unitsInPosition), approachRegions, regionsWithFriendlyUnitPresence);
         }
         else {
-            MoveIntoPosition(regionsWithUnitPresence, targetRegions, SupervisedUnits);
+            MoveIntoPosition(SupervisedUnits, approachRegions, regionsWithFriendlyUnitPresence);
         }
     }
 
-    private void Attack(IRegion targetRegion, IReadOnlySet<Unit> units) {
+    private void Attack(IReadOnlySet<Unit> units, IRegion targetRegion) {
         // TODO GD We can improve target selection
         var target = targetRegion.Center;
         var targetUnits = UnitsTracker.EnemyUnits
@@ -73,50 +68,62 @@ public class RegionalArmySupervisor : Supervisor {
         }
     }
 
-    private void MoveIntoPosition(IReadOnlyCollection<IRegion> regionsWithUnitPresence, IReadOnlyCollection<IRegion> targetRegions, IEnumerable<Unit> units) {
-        var reachableRegions = ComputeRegionsReach(regionsWithUnitPresence);
-        var regionsOutOfReach = regionsWithUnitPresence.ToDictionary(
+    private static void MoveIntoPosition(IEnumerable<Unit> units, IReadOnlyCollection<IRegion> approachRegions, IReadOnlyCollection<IRegion> regionsWithFriendlyUnitPresence) {
+        var reachableRegions = ComputeRegionsReach(regionsWithFriendlyUnitPresence);
+        var regionsOutOfReach = regionsWithFriendlyUnitPresence.ToDictionary(
             region => region,
             region => RegionAnalyzer.Regions.Except(reachableRegions[region]).ToHashSet()
         );
 
         var unitGroups = units
             .Where(unit => unit.GetRegion() != null)
-            .GroupBy(unit => targetRegions.MinBy(targetRegion => {
+            .GroupBy(unit => approachRegions.MinBy(approachRegion => {
                 var unitRegion = unit.GetRegion();
-                var regionsToAvoid = regionsOutOfReach[unitRegion];
-                if (regionsToAvoid.Contains(targetRegion)) {
+                var blockedRegions = regionsOutOfReach[unitRegion];
+                if (blockedRegions.Contains(approachRegion)) {
                     return float.MaxValue;
                 }
 
-                return Pathfinder.FindPath(unitRegion, targetRegion, regionsToAvoid).GetPathDistance();
+                return Pathfinder.FindPath(unitRegion, approachRegion, blockedRegions).GetPathDistance();
             }));
 
         foreach (var unitGroup in unitGroups) {
-            var unhandledUnits = _unitsController.Execute(unitGroup.ToHashSet());
-            foreach (var unhandledUnit in unhandledUnits) {
-                var unitRegion = unhandledUnit.GetRegion();
-                var regionsToAvoid = regionsOutOfReach[unitRegion];
-
-                if (unitRegion == unitGroup.Key) {
-                    unhandledUnit.AttackMove(unitGroup.Key.Center);
-                    continue;
-                }
-
-                var path = Pathfinder.FindPath(unitRegion, unitGroup.Key, regionsToAvoid);
-                if (path == null) {
-                    // Trying to gracefully handle a case that I don't think should happen
-                    unhandledUnit.AttackMove(unitGroup.Key.Center);
-                    continue;
-                }
-
-                var nextRegion = path
-                    .Skip(1)
-                    .First();
-
-                unhandledUnit.AttackMove(nextRegion.Center);
-            }
+            MoveTowards(unitGroup.Key, unitGroup, regionsOutOfReach);
         }
+    }
+
+    private static void MoveTowards(IRegion targetRegion, IEnumerable<Unit> units, IDictionary<IRegion, HashSet<IRegion>> blockedRegions) {
+        foreach (var unit in units) {
+            var unitRegion = unit.GetRegion();
+
+            if (unitRegion == targetRegion) {
+                unit.Move(targetRegion.Center);
+                continue;
+            }
+
+            var path = Pathfinder.FindPath(unitRegion, targetRegion, blockedRegions[unitRegion]);
+            if (path == null) {
+                // Trying to gracefully handle a case that I don't think should happen
+                unit.Move(targetRegion.Center);
+                continue;
+            }
+
+            var nextRegion = path
+                .Skip(1)
+                .First();
+
+            unit.Move(nextRegion.Center);
+        }
+    }
+
+    private static HashSet<Unit> GetUnitsInPosition(IEnumerable<Unit> supervisedUnits, IRegion targetRegion, IReadOnlySet<IRegion> approachRegions) {
+        return supervisedUnits
+            .Where(unit => {
+                var unitRegion = unit.GetRegion();
+
+                return unitRegion == targetRegion || approachRegions.Contains(unitRegion);
+            })
+            .ToHashSet();
     }
 
     public override void Retire() {
