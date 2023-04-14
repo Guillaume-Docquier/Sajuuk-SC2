@@ -159,9 +159,13 @@ public class Unit: ICanDie, IHavePosition {
 
         WeaponCooldownPercent = RawUnitData.WeaponCooldown / _maxWeaponCooldownFrames;
 
-        HitPoints = RawUnitData.Health + RawUnitData.Shield;
-        MaxHitPoints = RawUnitData.HealthMax + RawUnitData.ShieldMax;
-        Integrity = HitPoints / MaxHitPoints;
+        // It looks like snapshotted units don't have HP data
+        // We won't update in that case, so that we remember what was last seen
+        if (RawUnitData.HealthMax + RawUnitData.ShieldMax > 0) {
+            HitPoints = RawUnitData.Health + RawUnitData.Shield;
+            MaxHitPoints = RawUnitData.HealthMax + RawUnitData.ShieldMax;
+            Integrity = HitPoints / MaxHitPoints;
+        }
 
         // Snapshot minerals/gas don't have contents
         if (IsVisible && InitialMineralCount == int.MaxValue) {
