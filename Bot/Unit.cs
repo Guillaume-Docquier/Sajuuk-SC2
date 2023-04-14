@@ -216,6 +216,15 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     /// <summary>
+    /// Send the order to move away from a target position by a certain distance
+    /// </summary>
+    /// <param name="target">The target position to move away from</param>
+    /// <param name="distance">The step distance</param>
+    public void MoveAwayFrom(Vector2 target, float distance) {
+        Move(Position.ToVector2().TranslateAwayFrom(target, distance), distance / 2);
+    }
+
+    /// <summary>
     /// Send the order to move to a target position.
     /// If the unit already has a move order to that target, given the precision, no order will be sent.
     /// You can override this check with allowSpam = true.
