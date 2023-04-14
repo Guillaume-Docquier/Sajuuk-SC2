@@ -3,6 +3,7 @@ using System.Linq;
 using Bot.Algorithms;
 using Bot.Builds;
 using Bot.ExtensionMethods;
+using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
@@ -25,7 +26,6 @@ public class RegionalArmySupervisor : Supervisor {
         _targetRegion = targetRegion;
     }
 
-    // TODO Use clustering to determine the real size of enemy threat even if they're outside the assigned region
     protected override void Supervise() {
         if (!SupervisedUnits.Any()) {
             return;
@@ -39,8 +39,8 @@ public class RegionalArmySupervisor : Supervisor {
         var approachRegions = _targetRegion.GetReachableNeighbors().ToHashSet();
         var unitsInPosition = GetUnitsInPosition(SupervisedUnits, _targetRegion, approachRegions);
 
-        var assignedRegionForce = RegionTracker.GetForce(_targetRegion, Alliance.Enemy);
-        if (unitsInPosition.GetForce() >= assignedRegionForce) {
+        var enemyArmy = GetEnemyArmy(_targetRegion).ToList();
+        if (unitsInPosition.GetForce() >= enemyArmy.GetForce()) {
             Attack(unitsInPosition, _targetRegion);
             MoveIntoPosition(SupervisedUnits.Except(unitsInPosition), approachRegions, regionsWithFriendlyUnitPresence);
         }
@@ -49,6 +49,11 @@ public class RegionalArmySupervisor : Supervisor {
         }
     }
 
+    /// <summary>
+    /// Attacks the target region.
+    /// </summary>
+    /// <param name="units">The units that must attack</param>
+    /// <param name="targetRegion">The region to attack</param>
     private void Attack(IReadOnlySet<Unit> units, IRegion targetRegion) {
         // TODO GD We can improve target selection
         var target = targetRegion.Center;
@@ -68,6 +73,12 @@ public class RegionalArmySupervisor : Supervisor {
         }
     }
 
+    /// <summary>
+    /// Moves units into strike range by using the given approach regions.
+    /// </summary>
+    /// <param name="units">The units to move</param>
+    /// <param name="approachRegions">The regions in strike range of the global objective</param>
+    /// <param name="regionsWithFriendlyUnitPresence">Regions with friendly unit presence used to calculate regions to avoid</param>
     private static void MoveIntoPosition(IEnumerable<Unit> units, IReadOnlyCollection<IRegion> approachRegions, IReadOnlyCollection<IRegion> regionsWithFriendlyUnitPresence) {
         var reachableRegions = ComputeRegionsReach(regionsWithFriendlyUnitPresence);
         var regionsOutOfReach = regionsWithFriendlyUnitPresence.ToDictionary(
@@ -88,11 +99,17 @@ public class RegionalArmySupervisor : Supervisor {
             }));
 
         foreach (var unitGroup in unitGroups) {
-            MoveTowards(unitGroup.Key, unitGroup, regionsOutOfReach);
+            MoveTowards(unitGroup, unitGroup.Key, regionsOutOfReach);
         }
     }
 
-    private static void MoveTowards(IRegion targetRegion, IEnumerable<Unit> units, IDictionary<IRegion, HashSet<IRegion>> blockedRegions) {
+    /// <summary>
+    /// Moves towards the target region by following a path that avoids certain regions.
+    /// </summary>
+    /// <param name="units">The units to move</param>
+    /// <param name="targetRegion">The region to go to</param>
+    /// <param name="blockedRegions">The regions to avoid going through</param>
+    private static void MoveTowards(IEnumerable<Unit> units, IRegion targetRegion, IDictionary<IRegion, HashSet<IRegion>> blockedRegions) {
         foreach (var unit in units) {
             var unitRegion = unit.GetRegion();
 
@@ -116,6 +133,13 @@ public class RegionalArmySupervisor : Supervisor {
         }
     }
 
+    /// <summary>
+    /// Gets all the units that are in position and ready to attack the target region.
+    /// </summary>
+    /// <param name="supervisedUnits">The units to consider</param>
+    /// <param name="targetRegion"></param>
+    /// <param name="approachRegions"></param>
+    /// <returns></returns>
     private static HashSet<Unit> GetUnitsInPosition(IEnumerable<Unit> supervisedUnits, IRegion targetRegion, IReadOnlySet<IRegion> approachRegions) {
         return supervisedUnits
             .Where(unit => {
@@ -124,6 +148,22 @@ public class RegionalArmySupervisor : Supervisor {
                 return unitRegion == targetRegion || approachRegions.Contains(unitRegion);
             })
             .ToHashSet();
+    }
+
+    /// <summary>
+    /// Gets the enemy units that need to be defeated.
+    /// This includes all units that are in a cluster where one member is in the target region.
+    /// </summary>
+    /// <param name="targetRegion">The target region.</param>
+    /// <returns>The enemy units to defeat</returns>
+    private static IEnumerable<Unit> GetEnemyArmy(IRegion targetRegion) {
+        var enemies = UnitsTracker.EnemyUnits.Concat(UnitsTracker.EnemyGhostUnits.Values).ToList();
+        var clusteringResult = Clustering.DBSCAN(enemies, 2, 3);
+
+        return clusteringResult.clusters
+            .Where(cluster => cluster.Any(unit => unit.GetRegion() == targetRegion))
+            .SelectMany(cluster => cluster)
+            .Concat(clusteringResult.noise.Where(unit => unit.GetRegion() == targetRegion));
     }
 
     public override void Retire() {
