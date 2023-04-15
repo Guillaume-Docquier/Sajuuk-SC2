@@ -4,13 +4,13 @@ public class StateMachine<TContext> where TContext : class {
     protected State<TContext> State;
     private readonly TContext _context;
 
-    public StateMachine(TContext context, State<TContext> state) {
+    public StateMachine(TContext context, State<TContext> initialState) {
         _context = context;
 
-        State = state;
+        State = initialState;
         State.SetStateMachine(this);
         State.SetContext(_context);
-        Logger.Info("{0} state machine initialized with state {1}", _context.GetType().Name, state.GetType().Name);
+        Logger.Info($"{_context.GetType().Name} state machine initialized with state {initialState.GetType().Name}");
     }
 
     public void OnFrame() {
