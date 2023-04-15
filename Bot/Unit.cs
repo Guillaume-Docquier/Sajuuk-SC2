@@ -220,7 +220,7 @@ public class Unit: ICanDie, IHavePosition {
     /// </summary>
     /// <param name="target">The target position to move away from</param>
     /// <param name="distance">The step distance</param>
-    public void MoveAwayFrom(Vector2 target, float distance) {
+    public void MoveAwayFrom(Vector2 target, float distance = 1f) {
         Move(Position.ToVector2().TranslateAwayFrom(target, distance), distance / 2);
     }
 

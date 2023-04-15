@@ -9,7 +9,7 @@ using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.ScoutManagement.ScoutingSupervision;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
-using Bot.Managers.WarManagement.ArmySupervision;
+using Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
 
@@ -254,6 +254,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// <returns>All the units that can be reassigned.</returns>
     private IEnumerable<Unit> GetAvailableUnits() {
         return _armySupervisors.Values
+            .Where(supervisor => supervisor.SupervisedUnits.Any())
             .SelectMany(supervisor => supervisor.GetReleasableUnits())
             .Concat(_warManager.ManagedUnits.Where(unit => unit.Supervisor == null));
     }

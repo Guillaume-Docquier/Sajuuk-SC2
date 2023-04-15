@@ -19,7 +19,7 @@ public class WarManagerDebugger {
                 text += "!";
             }
 
-            Program.GraphicalDebugger.AddText(text, worldPos: soldier.Position.ToPoint(), color: Colors.Red);
+            Program.GraphicalDebugger.AddText(text, worldPos: soldier.Position.ToPoint(yOffset: 0.17f), color: Colors.Red);
         }
     }
 }

@@ -226,7 +226,7 @@ public class StutterStep : IUnitsControl {
             return;
         }
 
-        Program.GraphicalDebugger.AddText(unitStatus, worldPos: unit.Position.ToPoint(yOffset: 0.30f));
+        Program.GraphicalDebugger.AddText(unitStatus, worldPos: unit.Position.ToPoint(yOffset: 0.51f));
     }
 }
 
