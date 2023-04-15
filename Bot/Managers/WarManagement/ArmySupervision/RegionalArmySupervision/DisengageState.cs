@@ -8,6 +8,8 @@ using Bot.MapKnowledge;
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class DisengageState : RegionalArmySupervisionState {
+    public const float SafetyDistance = 5;
+
     private IReadOnlyCollection<Unit> _unitsInSafePosition = new List<Unit>();
 
     /// <summary>
@@ -53,8 +55,7 @@ public class DisengageState : RegionalArmySupervisionState {
                 // TODO GD We do this computation twice per frame, cache it!
                 var closestEnemy = enemyArmy.MinBy(enemy => enemy.DistanceTo(unit) - enemy.MaxRange);
 
-                // TODO GD We defined the striking distance as 3 + the max range of the closest enemy
-                return closestEnemy == null || closestEnemy.DistanceTo(unit) >= closestEnemy.MaxRange + 3;
+                return closestEnemy == null || closestEnemy.DistanceTo(unit) >= closestEnemy.MaxRange + SafetyDistance;
             })
             .ToHashSet();
     }
