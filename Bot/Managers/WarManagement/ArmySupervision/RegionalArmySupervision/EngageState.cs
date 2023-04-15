@@ -27,12 +27,12 @@ public class EngageState : RegionalArmySupervisionState {
     protected override bool TryTransitioning() {
         // TODO GD We should consider if retreating is even possible
         // TODO GD Sometimes you have to commit
-        if (_unitsReadyToAttack.GetForce() * 0.75 >= EnemyArmy.GetForce()) {
-            return false;
+        if (_unitsReadyToAttack.GetForce() < EnemyArmy.GetForce() * 0.75) {
+            StateMachine.TransitionTo(new ApproachState());
+            return true;
         }
 
-        StateMachine.TransitionTo(new ApproachState());
-        return true;
+        return false;
     }
 
     /// <summary>
@@ -61,9 +61,7 @@ public class EngageState : RegionalArmySupervisionState {
 
                 var closestEnemy = enemyArmy.MinBy(enemy => enemy.DistanceTo(unit) - enemy.MaxRange);
 
-                // TODO GD We defined the striking distance as 3 + the max range of the closest enemy
-                // TODO GD We add 2 as a buffer in case units clump up. We should be able to handle this better, but it should work for now
-                return closestEnemy != null && closestEnemy.DistanceTo(unit) < (closestEnemy.MaxRange + 3) + 2;
+                return closestEnemy != null && closestEnemy.DistanceTo(unit) < closestEnemy.MaxRange + ApproachState.SafetyDistance + ApproachState.SafetyDistanceTolerance;
             })
             .ToHashSet();
     }

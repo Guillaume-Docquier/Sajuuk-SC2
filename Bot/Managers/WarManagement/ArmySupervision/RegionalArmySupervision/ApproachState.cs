@@ -6,6 +6,9 @@ using Bot.MapKnowledge;
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class ApproachState : RegionalArmySupervisionState {
+    public const float SafetyDistance = 5;
+    public const float SafetyDistanceTolerance = SafetyDistance / 2;
+
     /// <summary>
     /// Move all units into striking position to prepare for an assault.
     /// Units will only route through safe regions and stay at a safe distance of enemies in the target region.
@@ -20,12 +23,13 @@ public class ApproachState : RegionalArmySupervisionState {
     /// <returns>True if the transition happened, false otherwise</returns>
     protected override bool TryTransitioning() {
         var unitsInStrikingPosition = GetUnitsInStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy);
-        if (unitsInStrikingPosition.GetForce() < EnemyArmy.GetForce()) {
-            return false;
+        // TODO GD If maxed out, we have to trade
+        if (unitsInStrikingPosition.GetForce() >= EnemyArmy.GetForce() * 1.25) {
+            StateMachine.TransitionTo(new EngageState());
+            return true;
         }
 
-        StateMachine.TransitionTo(new EngageState());
-        return true;
+        return false;
     }
 
     /// <summary>
@@ -53,9 +57,7 @@ public class ApproachState : RegionalArmySupervisionState {
                 // TODO GD We do this computation twice per frame, cache it!
                 var closestEnemy = enemyArmy.MinBy(enemy => enemy.DistanceTo(unit) - enemy.MaxRange);
 
-                // TODO GD We defined the striking distance as 2 * the max range of the closest enemy
-                // TODO GD We add 2 as a buffer in case units clump up. We should be able to handle this better, but it should work for now
-                return closestEnemy != null && closestEnemy.DistanceTo(unit) < (closestEnemy.MaxRange + 3) + 2;
+                return closestEnemy != null && closestEnemy.DistanceTo(unit) < closestEnemy.MaxRange + SafetyDistance + SafetyDistanceTolerance;
             })
             .ToHashSet();
     }
@@ -108,10 +110,9 @@ public class ApproachState : RegionalArmySupervisionState {
         foreach (var unit in units) {
             // TODO GD We do this computation twice per frame, cache it!
             var closestEnemy = enemyArmy.MinBy(enemy => enemy.DistanceTo(unit) - enemy.MaxRange);
-            // TODO GD You know what they say about magic numbers!
-            if (closestEnemy != null && closestEnemy.DistanceTo(unit) < closestEnemy.MaxRange + 3) {
+            if (closestEnemy != null && closestEnemy.DistanceTo(unit) < closestEnemy.MaxRange + SafetyDistance) {
                 // TODO GD We should avoid cornering ourselves, maybe we should go towards a region exit?
-                unit.MoveAwayFrom(closestEnemy.Position.ToVector2(), closestEnemy.MaxRange + 3);
+                unit.MoveAwayFrom(closestEnemy.Position.ToVector2());
                 continue;
             }
 
