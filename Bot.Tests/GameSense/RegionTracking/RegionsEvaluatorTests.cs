@@ -14,9 +14,9 @@ public class RegionsEvaluatorTests {
         var regionsEvaluator = new TestRegionsEvaluator();
         var regions = new Region[]
         {
-            new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false),
-            new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false),
-            new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false),
+            new Region(new HashSet<Vector2>(), new Vector2(1, 0), RegionType.Expand, isObstructed: false),
+            new Region(new HashSet<Vector2>(), new Vector2(2, 0), RegionType.Expand, isObstructed: false),
+            new Region(new HashSet<Vector2>(), new Vector2(3, 0), RegionType.Expand, isObstructed: false),
         };
 
         // Act
@@ -35,9 +35,9 @@ public class RegionsEvaluatorTests {
         // Arrange
         var evaluations = new Dictionary<IRegion, float>
         {
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 1 },
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 2 },
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 3 },
+            { new Region(new HashSet<Vector2>(), new Vector2(1, 0), RegionType.Expand, isObstructed: false), 1 },
+            { new Region(new HashSet<Vector2>(), new Vector2(2, 0), RegionType.Expand, isObstructed: false), 2 },
+            { new Region(new HashSet<Vector2>(), new Vector2(3, 0), RegionType.Expand, isObstructed: false), 3 },
         };
         var regionsEvaluator = new TestRegionsEvaluator(evaluations);
 
@@ -57,9 +57,9 @@ public class RegionsEvaluatorTests {
         // Arrange
         var evaluations = new Dictionary<IRegion, float>
         {
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 1 },
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 2 },
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 3 },
+            { new Region(new HashSet<Vector2>(), new Vector2(1, 0), RegionType.Expand, isObstructed: false), 1 },
+            { new Region(new HashSet<Vector2>(), new Vector2(2, 0), RegionType.Expand, isObstructed: false), 2 },
+            { new Region(new HashSet<Vector2>(), new Vector2(3, 0), RegionType.Expand, isObstructed: false), 3 },
         };
         var regionsEvaluator = new TestRegionsEvaluator(evaluations);
 
@@ -79,10 +79,10 @@ public class RegionsEvaluatorTests {
         // Arrange
         var evaluations = new Dictionary<IRegion, float>
         {
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 1 },
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 2 },
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 3 },
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 4 },
+            { new Region(new HashSet<Vector2>(), new Vector2(1, 0), RegionType.Expand, isObstructed: false), 1 },
+            { new Region(new HashSet<Vector2>(), new Vector2(2, 0), RegionType.Expand, isObstructed: false), 2 },
+            { new Region(new HashSet<Vector2>(), new Vector2(3, 0), RegionType.Expand, isObstructed: false), 3 },
+            { new Region(new HashSet<Vector2>(), new Vector2(4, 0), RegionType.Expand, isObstructed: false), 4 },
         };
         var regionsEvaluator = new TestRegionsEvaluator(evaluations);
 
@@ -103,10 +103,10 @@ public class RegionsEvaluatorTests {
         // Arrange
         var evaluations = new Dictionary<IRegion, float>
         {
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 0 },
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 0 },
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 0 },
-            { new Region(new HashSet<Vector2>(), new Vector2(), RegionType.Expand, isObstructed: false), 0 },
+            { new Region(new HashSet<Vector2>(), new Vector2(1, 0), RegionType.Expand, isObstructed: false), 0 },
+            { new Region(new HashSet<Vector2>(), new Vector2(2, 0), RegionType.Expand, isObstructed: false), 0 },
+            { new Region(new HashSet<Vector2>(), new Vector2(3, 0), RegionType.Expand, isObstructed: false), 0 },
+            { new Region(new HashSet<Vector2>(), new Vector2(4, 0), RegionType.Expand, isObstructed: false), 0 },
         };
         var regionsEvaluator = new TestRegionsEvaluator(evaluations);
 
