@@ -13,6 +13,8 @@ using Bot.StateManagement;
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class RegionalArmySupervisor : Supervisor {
+    private const bool Debug = false;
+
     private readonly IUnitsControl _unitsController = new UnitsController();
     private readonly IRegion _targetRegion;
     private readonly StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState> _stateMachine;
@@ -60,6 +62,10 @@ public class RegionalArmySupervisor : Supervisor {
     }
 
     private void DebugUnits() {
+        if (!Debug) {
+            return;
+        }
+
         var stateSymbol = _stateMachine.State switch
         {
             ApproachState => "MOVE",
