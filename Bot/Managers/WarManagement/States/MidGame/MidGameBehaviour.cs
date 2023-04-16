@@ -94,7 +94,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
         var plannedUnitsAllocation = PlanUnitsAllocationToMaximizeImpact(GetAvailableUnits());
         // TODO GD Reassign released units until they're all assigned?
-        ReleaseUnitsFromUnachievableGoals(plannedUnitsAllocation);
+        // ReleaseUnitsFromUnachievableGoals(plannedUnitsAllocation);
         PerformAllocation(plannedUnitsAllocation);
 
         RecallUnsupervisedUnits();
