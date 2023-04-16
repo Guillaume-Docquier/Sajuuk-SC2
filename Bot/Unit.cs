@@ -187,7 +187,15 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     public IRegion GetRegion() {
-        return Position.GetRegion();
+        var unitRegion = Position.GetRegion();
+        if (unitRegion != null) {
+            return unitRegion;
+        }
+
+        return MapAnalyzer.BuildSearchGrid(Position, gridRadius: 3)
+            .Where(cell => MapAnalyzer.IsWalkable(cell))
+            .Select(cell => cell.GetRegion())
+            .FirstOrDefault(region => region != null);
     }
 
     // TODO GD Make sure to cancel any other order and prevent orders to be added for this frame

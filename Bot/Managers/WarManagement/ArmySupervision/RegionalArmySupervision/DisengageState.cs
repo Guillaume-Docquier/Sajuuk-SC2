@@ -1,14 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.ExtensionMethods;
-using Bot.GameData;
-using Bot.GameSense;
+using Bot.GameSense.RegionTracking;
 using Bot.MapKnowledge;
+using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class DisengageState : RegionalArmySupervisionState {
-    public const float SafetyDistance = 5;
+    private const float SafetyDistance = 5;
+    private const float SafetyDistanceTolerance = SafetyDistance / 2;
 
     private IReadOnlyCollection<Unit> _unitsInSafePosition = new List<Unit>();
 
@@ -17,8 +18,11 @@ public class DisengageState : RegionalArmySupervisionState {
     /// Units will only route through safe regions and stay at a safe distance of enemies in the target region.
     /// </summary>
     protected override void Execute() {
-        // TODO GD Split into two groups, units that must evacuate, and units that must rally
-        MoveIntoSafePosition(SupervisedUnits, TargetRegion, EnemyArmy);
+        _unitsInSafePosition = GetUnitsInSafePosition(SupervisedUnits, EnemyArmy);
+        var unitsInDanger = SupervisedUnits.Except(_unitsInSafePosition).ToList();
+
+        ApproachState.MoveIntoStrikingPosition(_unitsInSafePosition, TargetRegion, EnemyArmy, SafetyDistance + SafetyDistanceTolerance);
+        MoveIntoSafePosition(unitsInDanger, EnemyArmy);
     }
 
     /// <summary>
@@ -26,7 +30,6 @@ public class DisengageState : RegionalArmySupervisionState {
     /// </summary>
     /// <returns>True if the transition happened, false otherwise</returns>
     protected override bool TryTransitioning() {
-        _unitsInSafePosition = GetUnitsInSafePosition(SupervisedUnits, EnemyArmy);
         if (_unitsInSafePosition.Count < SupervisedUnits.Count) {
             return false;
         }
@@ -49,105 +52,53 @@ public class DisengageState : RegionalArmySupervisionState {
     /// <param name="supervisedUnits">The units to consider</param>
     /// <param name="enemyArmy">The enemy army to strike</param>
     /// <returns>The units that are in a safe position</returns>
-    private static HashSet<Unit> GetUnitsInSafePosition(IEnumerable<Unit> supervisedUnits, IReadOnlyCollection<Unit> enemyArmy) {
-        return supervisedUnits
-            .Where(unit => {
-                // TODO GD We do this computation twice per frame, cache it!
-                var closestEnemy = enemyArmy.MinBy(enemy => enemy.DistanceTo(unit) - enemy.MaxRange);
+    private static IReadOnlyCollection<Unit> GetUnitsInSafePosition(IReadOnlyCollection<Unit> supervisedUnits, IReadOnlyCollection<Unit> enemyArmy) {
+        if (!enemyArmy.Any()) {
+            return supervisedUnits;
+        }
 
-                return closestEnemy == null || closestEnemy.DistanceTo(unit) >= closestEnemy.MaxRange + SafetyDistance;
-            })
-            .ToHashSet();
+        return supervisedUnits
+            .Where(unit => RegionTracker.GetForce(unit.GetRegion(), Alliance.Enemy) <= 0)
+            .ToList();
     }
 
     /// <summary>
-    /// Moves units out of the region to evacuate at a safe distance of any danger.
-    /// Units will avoid engaging the enemy.
+    /// Moves units out of their current region by targeting the safest exit.
     /// </summary>
     /// <param name="units">The units to move</param>
-    /// <param name="regionToEvacuate">The region to evacuate</param>
     /// <param name="enemyArmy">The enemy units to get out of range of</param>
-    private static void MoveIntoSafePosition(IReadOnlyCollection<Unit> units, IRegion regionToEvacuate, IReadOnlyCollection<Unit> enemyArmy) {
-        var approachRegions = regionToEvacuate.GetReachableNeighbors().ToList();
-
-        var regionToGetTheReachOf = units
-            .Select(unit => unit.GetRegion())
-            .Where(region => region != null)
-            .Concat(approachRegions)
-            .ToHashSet();
-
-        // TODO Merge both in one
-        var regionsOutOfReach = ComputeBlockedRegionsMap(regionToGetTheReachOf);
-        var regionsInReach = ComputeRegionsReach(regionToGetTheReachOf);
-
-        var safeRegions = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
-            .Select(townHall => townHall.GetRegion())
-            .ToHashSet();
-
-        // TODO GD If there's no viable exit, we should fight instead of fleeing
-        approachRegions = approachRegions
-            .Where(approachRegion => safeRegions.Any(ourBase => regionsInReach[approachRegion].Contains(ourBase)))
-            .ToList();
-
+    private static void MoveIntoSafePosition(IReadOnlyCollection<Unit> units, IReadOnlyCollection<Unit> enemyArmy) {
         var unitGroups = units
             .Where(unit => unit.GetRegion() != null)
-            .GroupBy(unit => approachRegions.MinBy(approachRegion => {
-                var unitRegion = unit.GetRegion();
-                var blockedRegions = regionsOutOfReach[unitRegion];
+            .GroupBy(unit => unit.GetRegion()
+                .Neighbors
+                .Where(neighbor => !neighbor.Region.IsObstructed)
+                .MinBy(reachableNeighbor => {
+                    var unitDistanceToNeighbor = reachableNeighbor.Frontier.Min(cell => cell.DistanceTo(unit));
+                    var enemyDistanceToNeighbor = reachableNeighbor.Frontier.Min(cell => enemyArmy.Min(enemy => cell.DistanceTo(enemy)));
+                    var enemyForce = RegionTracker.GetForce(reachableNeighbor.Region, Alliance.Enemy);
 
-                return Pathfinder.FindPath(unitRegion, approachRegion, blockedRegions.Except(new [] { approachRegion }).ToHashSet()).GetPathDistance();
-            }));
+                    return unitDistanceToNeighbor / (enemyDistanceToNeighbor + 1) * (enemyForce + 1);
+                })
+                ?.Region
+            );
 
         foreach (var unitGroup in unitGroups) {
-            if (unitGroup.Key == null) {
-                var stop = 1;
-            }
-
-            MoveTowards(unitGroup, unitGroup.Key, regionToEvacuate, regionsOutOfReach, enemyArmy);
+            MoveTowards(unitGroup, unitGroup.Key, enemyArmy);
         }
     }
 
     /// <summary>
-    /// Moves towards the safe region by following a path that avoids certain regions.
+    /// Moves towards the safe region.
     /// Units will avoid engaging the enemy.
     /// </summary>
     /// <param name="units">The units to move</param>
-    /// <param name="regionToEvacuate">The region to go to</param>
     /// <param name="safeRegion">The safe region to get to</param>
-    /// <param name="blockedRegions">The regions to avoid going through</param>
     /// <param name="enemyArmy">The enemy units to get in range of but avoid engaging</param>
-    private static void MoveTowards(IEnumerable<Unit> units, IRegion safeRegion, IRegion regionToEvacuate, IDictionary<IRegion, HashSet<IRegion>> blockedRegions, IReadOnlyCollection<Unit> enemyArmy) {
+    private static void MoveTowards(IEnumerable<Unit> units, IRegion safeRegion, IReadOnlyCollection<Unit> enemyArmy) {
         foreach (var unit in units) {
-            var unitRegion = unit.GetRegion();
-            if (unitRegion == regionToEvacuate) {
-                unit.Move(safeRegion.Center);
-                continue;
-            }
-
-            // TODO GD We do this computation twice per frame, cache it!
-            var closestEnemy = enemyArmy.MinBy(enemy => enemy.DistanceTo(unit) - enemy.MaxRange);
-            // TODO GD You know what they say about magic numbers!
-            if (closestEnemy != null && closestEnemy.DistanceTo(unit) < closestEnemy.MaxRange + 3) {
-                unit.MoveAwayFrom(closestEnemy.Position.ToVector2());
-                continue;
-            }
-
-            if (unitRegion == safeRegion) {
-                continue;
-            }
-
-            var path = Pathfinder.FindPath(unitRegion, safeRegion, blockedRegions[unitRegion]);
-            if (path == null) {
-                // Trying to gracefully handle a case that I don't think should happen
-                unit.Move(safeRegion.Center);
-                continue;
-            }
-
-            var nextRegion = path
-                .Skip(1)
-                .First();
-
-            unit.Move(nextRegion.Center);
+            // TODO GD Kite away
+            unit.Move(safeRegion.Center);
         }
     }
 }

@@ -28,7 +28,7 @@ public class EngageState : RegionalArmySupervisionState {
         // TODO GD We should consider if retreating is even possible
         // TODO GD Sometimes you have to commit
         if (_unitsReadyToAttack.GetForce() < EnemyArmy.GetForce() * 0.75) {
-            StateMachine.TransitionTo(new ApproachState());
+            StateMachine.TransitionTo(new DisengageState());
             return true;
         }
 

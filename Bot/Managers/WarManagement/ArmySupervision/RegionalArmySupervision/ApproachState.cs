@@ -14,7 +14,7 @@ public class ApproachState : RegionalArmySupervisionState {
     /// Units will only route through safe regions and stay at a safe distance of enemies in the target region.
     /// </summary>
     protected override void Execute() {
-        MoveIntoStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy);
+        MoveIntoStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy, SafetyDistance);
     }
 
     /// <summary>
@@ -69,7 +69,8 @@ public class ApproachState : RegionalArmySupervisionState {
     /// <param name="units">The units to move</param>
     /// <param name="targetRegion">The region to go to</param>
     /// <param name="enemyArmy">The enemy units to get in range of but avoid engaging</param>
-    private static void MoveIntoStrikingPosition(IReadOnlyCollection<Unit> units, IRegion targetRegion, IReadOnlyCollection<Unit> enemyArmy) {
+    /// <param name="safetyDistance">A safety distance to keep between the enemy</param>
+    public static void MoveIntoStrikingPosition(IReadOnlyCollection<Unit> units, IRegion targetRegion, IReadOnlyCollection<Unit> enemyArmy, float safetyDistance) {
         var approachRegions = targetRegion.GetReachableNeighbors().ToList();
 
         var regionsWithFriendlyUnitPresence = units
@@ -92,7 +93,7 @@ public class ApproachState : RegionalArmySupervisionState {
             }));
 
         foreach (var unitGroup in unitGroups) {
-            MoveTowards(unitGroup, targetRegion, unitGroup.Key, regionsOutOfReach, enemyArmy);
+            MoveTowards(unitGroup, targetRegion, unitGroup.Key, regionsOutOfReach, enemyArmy, safetyDistance);
         }
     }
 
@@ -106,11 +107,19 @@ public class ApproachState : RegionalArmySupervisionState {
     /// <param name="approachRegion">The region to go through before going towards the target region</param>
     /// <param name="blockedRegions">The regions to avoid going through</param>
     /// <param name="enemyArmy">The enemy units to get in range of but avoid engaging</param>
-    private static void MoveTowards(IEnumerable<Unit> units, IRegion targetRegion, IRegion approachRegion, IDictionary<IRegion, HashSet<IRegion>> blockedRegions, IReadOnlyCollection<Unit> enemyArmy) {
+    /// <param name="safetyDistance">A safety distance to keep between the enemy</param>
+    private static void MoveTowards(
+        IEnumerable<Unit> units,
+        IRegion targetRegion,
+        IRegion approachRegion,
+        IDictionary<IRegion, HashSet<IRegion>> blockedRegions,
+        IReadOnlyCollection<Unit> enemyArmy,
+        float safetyDistance
+    ) {
         foreach (var unit in units) {
             // TODO GD We do this computation twice per frame, cache it!
             var closestEnemy = enemyArmy.MinBy(enemy => enemy.DistanceTo(unit) - enemy.MaxRange);
-            if (closestEnemy != null && closestEnemy.DistanceTo(unit) < closestEnemy.MaxRange + SafetyDistance) {
+            if (closestEnemy != null && closestEnemy.DistanceTo(unit) < closestEnemy.MaxRange + safetyDistance) {
                 // TODO GD We should avoid cornering ourselves, maybe we should go towards a region exit?
                 unit.MoveAwayFrom(closestEnemy.Position.ToVector2());
                 continue;
