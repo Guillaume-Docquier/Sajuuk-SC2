@@ -40,16 +40,14 @@ public class StutterStep : IUnitsControl {
         var uncontrolledUnits = new HashSet<Unit>(army);
         foreach (var unitThatShouldMove in GetUnitsThatShouldMove(pressureGraph)) {
             var unitStatus = "OK";
-            // If you're on cooldown and engaging the enemy, you should push forward
-            // - If you're not on cooldown we'll let you attack
-            // - If you're not engaging an enemy, we'll let the others decide who you should attack
-            if (unitThatShouldMove.RawUnitData.WeaponCooldown > 0 && UnitsTracker.UnitsByTag.TryGetValue(unitThatShouldMove.RawUnitData.EngagedTargetTag, out var engagedTarget)) {
-                unitStatus = "MOVE";
-                unitThatShouldMove.Move(engagedTarget.Position.ToVector2());
+
+            if (unitThatShouldMove.IsEngagingTheEnemy && !unitThatShouldMove.IsReadyToAttack) {
+                unitStatus = "PUSH";
+                unitThatShouldMove.Move(unitThatShouldMove.EngagedTarget.Position.ToVector2());
                 uncontrolledUnits.Remove(unitThatShouldMove);
             }
 
-            if (unitThatShouldMove.RawUnitData.WeaponCooldown <= 0) {
+            if (unitThatShouldMove.IsReadyToAttack) {
                 unitStatus = "ATK";
             }
 
@@ -116,17 +114,17 @@ public class StutterStep : IUnitsControl {
 
             // Depth first search
             // When backtracking (reaching the end of a branch, no pressure from), clear the currentBranchSet because there were no cycles
-            var bracktracking = false;
+            var backtracking = false;
             while (explorationStack.Any()) {
                 var toExplore = explorationStack.Pop();
 
-                if (bracktracking) {
+                if (backtracking) {
                     while (!pressureGraph[currentBranchStack.Peek()].From.Contains(toExplore)) {
                         fullyCleared.Add(currentBranchStack.Pop());
                     }
 
                     currentBranchSet = currentBranchStack.ToHashSet();
-                    bracktracking = false;
+                    backtracking = false;
                 }
 
                 currentBranchSet.Add(toExplore);
@@ -138,7 +136,7 @@ public class StutterStep : IUnitsControl {
                         // Cycle, break it and backtrack
                         pressureGraph[pressureFrom].To.Remove(toExplore);
                         pressureGraph[toExplore].From.Remove(pressureFrom);
-                        bracktracking = true;
+                        backtracking = true;
                     }
                     else if (!fullyCleared.Contains(pressureFrom)) {
                         leafNode = false;
@@ -149,7 +147,7 @@ public class StutterStep : IUnitsControl {
                 // Leaf node, no cycle, let's backtrack
                 if (leafNode) {
                     fullyCleared.Add(toExplore);
-                    bracktracking = true;
+                    backtracking = true;
                 }
             }
         }
@@ -183,13 +181,15 @@ public class StutterStep : IUnitsControl {
             var (soldier, pressure) = explorationQueue.Dequeue();
             var shouldMove = false;
 
-            // You need to move if you're attacking but not engaging
+            // You need to move if you want to attack but you cannot
             // TODO GD More orders can probably cause you to want to move
-            shouldMove |= pressure.To.Any() && (soldier.IsMoving() || soldier.IsAttacking()) && !UnitsTracker.UnitsByTag.ContainsKey(soldier.RawUnitData.EngagedTargetTag);
+            shouldMove |= pressure.To.Any() && (soldier.IsMoving() || soldier.IsAttacking()) && !soldier.IsFightingTheEnemy;
 
             // You need to move if you're pressured and engaging but on cooldown
             // TODO GD Maybe you should be considered moving regardless of cooldown (we just won't ask you to move, but the move propagation will happen)
-            shouldMove |= pressure.From.Any() && UnitsTracker.UnitsByTag.ContainsKey(soldier.RawUnitData.EngagedTargetTag) && soldier.RawUnitData.WeaponCooldown > 0;
+            shouldMove |= pressure.From.Any() && soldier.IsEngagingTheEnemy && !soldier.IsReadyToAttack;
+
+            Program.GraphicalDebugger.AddText($"{shouldMove}", worldPos: soldier.Position.ToPoint(yOffset: -0.51f), color: Colors.Yellow);
 
             if (!shouldMove) {
                 continue;
@@ -215,6 +215,11 @@ public class StutterStep : IUnitsControl {
         }
 
         foreach (var (soldier, pressure) in pressureGraph) {
+            if (color == Colors.Green) {
+                // Hacky but whatever
+                Program.GraphicalDebugger.AddText($"{pressure.To.Count}-{pressure.From.Count}", worldPos: soldier.Position.ToPoint(yOffset: -0.17f), color: Colors.Yellow);
+            }
+
             foreach (var pressured in pressure.To) {
                 Program.GraphicalDebugger.AddArrowedLine(soldier.Position.Translate(zTranslation: 1), pressured.Position.Translate(zTranslation: 1), color);
             }

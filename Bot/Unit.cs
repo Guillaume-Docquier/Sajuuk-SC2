@@ -37,6 +37,7 @@ public class Unit: ICanDie, IHavePosition {
     public bool IsVisible;
     public ulong LastSeen;
     public HashSet<uint> Buffs;
+
     public int InitialMineralCount = int.MaxValue;
     public int InitialVespeneCount = int.MaxValue;
 
@@ -45,12 +46,36 @@ public class Unit: ICanDie, IHavePosition {
     public bool IsFlying => RawUnitData.IsFlying;
     public bool IsBurrowed => RawUnitData.IsBurrowed;
     public bool IsCloaked => RawUnitData.Cloak == CloakState.Cloaked;
+
+    /// <summary>
+    /// The currently engaged target, or null if none.
+    /// </summary>
+    public Unit EngagedTarget => UnitsTracker.UnitsByTag.TryGetValue(RawUnitData.EngagedTargetTag, out var engagedTarget) ? engagedTarget : null;
+    /// <summary>
+    /// Whether the unit has a target.
+    /// False does not mean that an enemy is not engaging the unit, it only means that the unit is not currently fighting back.
+    /// </summary>
+    public bool IsEngagingTheEnemy => EngagedTarget != null;
+    /// <summary>
+    /// Whether the unit has a target and is in range of the target.
+    /// False does not mean that an enemy is not engaging the unit, it only means that the unit is not currently fighting back.
+    /// </summary>
+    public bool IsFightingTheEnemy => IsEngagingTheEnemy && IsInAttackRangeOf(EngagedTarget);
+
+    /// <summary>
+    /// Whether the unit has offensive weapons.
+    /// </summary>
+    public bool HasWeapons;
     /// <summary>
     /// Represents the % of cooldown remaining.
     /// 0% means the unit can attack.
     /// </summary>
     public double WeaponCooldownPercent;
     private double _maxWeaponCooldownFrames;
+    /// <summary>
+    /// Whether the unit can use an attack right now.
+    /// </summary>
+    public bool IsReadyToAttack;
 
     /// <summary>
     /// The angle where the unit is facing, in radians.
@@ -100,12 +125,10 @@ public class Unit: ICanDie, IHavePosition {
     /// The current health + shields
     /// </summary>
     public float HitPoints;
-
     /// <summary>
     /// The max health + shields
     /// </summary>
     public float MaxHitPoints;
-
     /// <summary>
     /// The % of remaining hit points.
     /// 0% means the unit is dead.
@@ -138,10 +161,16 @@ public class Unit: ICanDie, IHavePosition {
             AliasUnitTypeData = UnitTypeData.HasUnitAlias ? KnowledgeBase.GetUnitTypeData(UnitTypeData.UnitAlias) : null;
 
             var weapons = UnitTypeData.Weapons.Concat(AliasUnitTypeData?.Weapons ?? Enumerable.Empty<Weapon>()).ToList();
-            MaxRange = weapons.Count <= 0 ? 0 : weapons.Max(weapon => weapon.Range);
+
+            HasWeapons = weapons.Count > 0;
+            MaxRange = HasWeapons
+                ? weapons.Max(weapon => weapon.Range)
+                : 0;
 
             // Weapon speed is in seconds between attacks
-            _maxWeaponCooldownFrames = KnowledgeBase.GetUnitTypeData(Units.Drone).Weapons[0].Speed * TimeUtils.FramesPerSecond;
+            _maxWeaponCooldownFrames = HasWeapons
+                ? weapons[0].Speed * TimeUtils.FramesPerSecond
+                : float.MaxValue;
         }
 
         Name = UnitTypeData.Name;
@@ -157,7 +186,11 @@ public class Unit: ICanDie, IHavePosition {
         LastSeen = frame;
         Buffs = new HashSet<uint>(unit.BuffIds);
 
-        WeaponCooldownPercent = RawUnitData.WeaponCooldown / _maxWeaponCooldownFrames;
+        WeaponCooldownPercent = HasWeapons
+            ? RawUnitData.WeaponCooldown / _maxWeaponCooldownFrames
+            : 1;
+
+        IsReadyToAttack = WeaponCooldownPercent <= 0;
 
         // It looks like snapshotted units don't have HP data
         // We won't update in that case, so that we remember what was last seen
