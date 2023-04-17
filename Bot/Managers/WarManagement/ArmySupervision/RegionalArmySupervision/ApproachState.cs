@@ -40,6 +40,10 @@ public class ApproachState : RegionalArmySupervisionState {
         return SupervisedUnits;
     }
 
+    public override void Release(Unit unit) {
+        // Nothing to do
+    }
+
     /// <summary>
     /// Gets all the units that are in position and ready to attack the target region.
     /// </summary>

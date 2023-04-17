@@ -23,6 +23,7 @@ public class RegionalArmySupervisor : Supervisor {
 
     public RegionalArmySupervisor(IRegion targetRegion) {
         _targetRegion = targetRegion;
+        Releaser = new RegionalArmySupervisorReleaser(this);
         _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState());
     }
 
@@ -89,10 +90,19 @@ public class RegionalArmySupervisor : Supervisor {
         return _stateMachine.State.GetReleasableUnits();
     }
 
+    public override string ToString() {
+        return $"RegionalArmySupervisor[{_targetRegion.Id}]";
+    }
+
     // TODO GD Rework assigner/releaser. It's not helpful at all
     protected override IAssigner Assigner { get; } = new DummyAssigner();
-    protected override IReleaser Releaser { get; } = new DummyReleaser();
+    protected override IReleaser Releaser { get; }
 
     private class DummyAssigner : IAssigner { public void Assign(Unit unit) {} }
-    private class DummyReleaser : IReleaser { public void Release(Unit unit) {} }
+    private class RegionalArmySupervisorReleaser : Releaser<RegionalArmySupervisor> {
+        public RegionalArmySupervisorReleaser(RegionalArmySupervisor client) : base(client) {}
+        public override void Release(Unit unit) {
+            Client._stateMachine.State.Release(unit);
+        }
+    }
 }
