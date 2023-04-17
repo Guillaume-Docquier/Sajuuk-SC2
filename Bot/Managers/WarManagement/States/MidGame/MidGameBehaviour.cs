@@ -92,7 +92,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
         CancelScouting();
 
-        var plannedUnitsAllocation = PlanUnitsAllocationToMaximizeImpact(GetAvailableUnits());
+        var availableUnits = GetAvailableUnits();
+        var plannedUnitsAllocation = PlanUnitsAllocationToMaximizeImpact(availableUnits);
         // TODO GD Reassign released units until they're all assigned?
         // ReleaseUnitsFromUnachievableGoals(plannedUnitsAllocation);
         PerformAllocation(plannedUnitsAllocation);

@@ -11,7 +11,7 @@ public class DisengageState : RegionalArmySupervisionState {
     private const float SafetyDistance = 5;
     private const float SafetyDistanceTolerance = SafetyDistance / 2;
 
-    private IReadOnlyCollection<Unit> _unitsInSafePosition = new List<Unit>();
+    private HashSet<Unit> _unitsInSafePosition = new HashSet<Unit>();
 
     /// <summary>
     /// Evacuate units from the target region and keep rallying other units to a safe position.
@@ -46,20 +46,24 @@ public class DisengageState : RegionalArmySupervisionState {
         return _unitsInSafePosition;
     }
 
+    public override void Release(Unit unit) {
+        _unitsInSafePosition.Remove(unit);
+    }
+
     /// <summary>
     /// Gets all the units that are in a safe position
     /// </summary>
     /// <param name="supervisedUnits">The units to consider</param>
     /// <param name="enemyArmy">The enemy army to strike</param>
     /// <returns>The units that are in a safe position</returns>
-    private static IReadOnlyCollection<Unit> GetUnitsInSafePosition(IReadOnlyCollection<Unit> supervisedUnits, IReadOnlyCollection<Unit> enemyArmy) {
+    private static HashSet<Unit> GetUnitsInSafePosition(HashSet<Unit> supervisedUnits, IReadOnlyCollection<Unit> enemyArmy) {
         if (!enemyArmy.Any()) {
             return supervisedUnits;
         }
 
         return supervisedUnits
             .Where(unit => RegionTracker.GetForce(unit.GetRegion(), Alliance.Enemy) <= 0)
-            .ToList();
+            .ToHashSet();
     }
 
     /// <summary>

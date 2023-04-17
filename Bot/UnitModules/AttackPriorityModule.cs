@@ -34,6 +34,10 @@ public class AttackPriorityModule: UnitModule {
             return;
         }
 
+        if (!_unit.IsReadyToAttack) {
+            return;
+        }
+
         if (_unit.Orders.All(order => order.AbilityId != Abilities.Attack)) {
             return;
         }

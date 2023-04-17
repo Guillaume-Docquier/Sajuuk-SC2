@@ -7,7 +7,7 @@ using Bot.MapKnowledge;
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class EngageState : RegionalArmySupervisionState {
-    private IReadOnlySet<Unit> _unitsReadyToAttack = new HashSet<Unit>();
+    private HashSet<Unit> _unitsReadyToAttack = new HashSet<Unit>();
 
     /// <summary>
     /// Attack the target region with units that are ready to fight.
@@ -43,6 +43,10 @@ public class EngageState : RegionalArmySupervisionState {
         return EnemyArmy.GetForce() == 0
             ? SupervisedUnits
             : SupervisedUnits.Except(_unitsReadyToAttack);
+    }
+
+    public override void Release(Unit unit) {
+        _unitsReadyToAttack.Remove(unit);
     }
 
     /// <summary>

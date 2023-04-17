@@ -8,5 +8,6 @@ public class WarManagerAssigner<T>: Assigner<T> {
     public override void Assign(Unit unit) {
         Logger.Debug("({0}) Assigned {1}", Client, unit);
         ChangelingTargetingModule.Install(unit);
+        AttackPriorityModule.Install(unit);
     }
 }

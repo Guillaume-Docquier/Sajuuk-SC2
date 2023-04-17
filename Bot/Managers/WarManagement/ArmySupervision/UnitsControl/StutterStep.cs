@@ -39,19 +39,12 @@ public class StutterStep : IUnitsControl {
         _debugger.StartTimer("Moves");
         var uncontrolledUnits = new HashSet<Unit>(army);
         foreach (var unitThatShouldMove in GetUnitsThatShouldMove(pressureGraph)) {
-            var unitStatus = "OK";
-
-            if (unitThatShouldMove.IsEngagingTheEnemy && !unitThatShouldMove.IsReadyToAttack) {
-                unitStatus = "PUSH";
+            if (unitThatShouldMove.IsEngagingTheEnemy) {
                 unitThatShouldMove.Move(unitThatShouldMove.EngagedTarget.Position.ToVector2());
                 uncontrolledUnits.Remove(unitThatShouldMove);
             }
 
-            if (unitThatShouldMove.IsReadyToAttack) {
-                unitStatus = "ATK";
-            }
-
-            DebugUnitStatus(unitThatShouldMove, unitStatus);
+            DebugUnitMove(unitThatShouldMove);
         }
         _debugger.StopTimer("Moves");
         _debugger.StopTimer("Total");
@@ -156,49 +149,67 @@ public class StutterStep : IUnitsControl {
     /// <summary>
     /// Get the units that should move based on the pressure graph.
     /// Starting from the leaf nodes (units in the back that have no pressure on them), we traverse the graph an propagate the move intentions.
-    /// If a unit needs to move, we ask the units that are being pressures on to move as well.
-    /// A unit "needs to move" if all of these are true
-    /// - It has an order that makes it move
-    /// - It is pressuring other units
-    /// - It is not engaging an enemy
+    /// If a unit needs to move, we ask the units that are being pressured to move as well.
+    /// A unit needs to move if:
+    /// - The unit has pressure on it and cannot attack (is free to move)
+    /// - The unit doesn't have pressure on it but is not in attack range
     ///
-    /// A unit will be pressured to move of all of these are true
-    /// - A unit is pressuring it
-    /// - It is engaging an enemy
-    /// - It is on cooldown
+    /// The pressure graph will be altered by this method by removing pressure from units that do not need to move.
     /// </summary>
     /// <param name="pressureGraph">The pressure graph to respect</param>
     /// <returns>The list of units that should move given the pressure graph</returns>
     private static IEnumerable<Unit> GetUnitsThatShouldMove(IReadOnlyDictionary<Unit, Pressure> pressureGraph) {
+        var checkedUnits = new HashSet<Unit>();
         var unitsThatNeedToMove = new HashSet<Unit>();
 
-        var explorationQueue = new Queue<(Unit unit, Pressure pressure)>();
-        foreach (var (unit, pressure) in pressureGraph.Where(kv => !kv.Value.From.Any())) {
-            explorationQueue.Enqueue((unit, pressure));
+        var explorationQueue = new Queue<Unit>();
+        // We start with units in the back that are being body blocked
+        foreach (var (unit, _) in pressureGraph.Where(kv => !kv.Value.From.Any() && kv.Value.To.Any())) {
+            explorationQueue.Enqueue(unit);
         }
 
         while (explorationQueue.Any()) {
-            var (soldier, pressure) = explorationQueue.Dequeue();
-            var shouldMove = false;
+            var soldier = explorationQueue.Dequeue();
+            var pressure = pressureGraph[soldier];
 
-            // You need to move if you want to attack but you cannot
-            // TODO GD More orders can probably cause you to want to move
-            shouldMove |= pressure.To.Any() && (soldier.IsMoving() || soldier.IsAttacking()) && !soldier.IsFightingTheEnemy;
+            // TODO GD We don't break cycles properly, A->B->A can exist
+            // If not all pressurers have been checked, wait
+            //if (!pressure.From.All(pressurer => checkedUnits.Contains(pressurer))) {
+            //    // This is fine because the pressure graph is a directed acyclic graph
+            //    explorationQueue.Enqueue(soldier);
+            //    continue;
+            //}
 
-            // You need to move if you're pressured and engaging but on cooldown
-            // TODO GD Maybe you should be considered moving regardless of cooldown (we just won't ask you to move, but the move propagation will happen)
-            shouldMove |= pressure.From.Any() && soldier.IsEngagingTheEnemy && !soldier.IsReadyToAttack;
-
-            Program.GraphicalDebugger.AddText($"{shouldMove}", worldPos: soldier.Position.ToPoint(yOffset: -0.51f), color: Colors.Yellow);
-
-            if (!shouldMove) {
-                continue;
+            bool shouldMove;
+            if (!pressure.From.Any()) {
+                // Units in the back should want to move forward if they're not in attack range
+                shouldMove = !soldier.IsFightingTheEnemy;
+            }
+            else {
+                // If you have pressure on you, move unless you're ready to attack
+                shouldMove = !soldier.IsReadyToAttack;
             }
 
-            unitsThatNeedToMove.Add(soldier);
-            foreach (var pressured in pressure.To.Where(pressured => !unitsThatNeedToMove.Contains(pressured))) {
-                explorationQueue.Enqueue((pressured, pressureGraph[pressured]));
+            DebugUnitMoveCheck(soldier, shouldMove);
+
+            if (shouldMove) {
+                unitsThatNeedToMove.Add(soldier);
             }
+
+            // Propagate the move signal forward
+            foreach (var pressured in pressure.To) {
+                if (!shouldMove) {
+                    // We we shouldn't move, remove the pressure
+                    pressureGraph[soldier].To.Remove(pressured);
+                    pressureGraph[pressured].From.Remove(soldier);
+                }
+
+                if (!unitsThatNeedToMove.Contains(pressured)) {
+                    explorationQueue.Enqueue(pressured);
+                }
+            }
+
+            checkedUnits.Add(soldier);
         }
 
         return unitsThatNeedToMove;
@@ -215,8 +226,8 @@ public class StutterStep : IUnitsControl {
         }
 
         foreach (var (soldier, pressure) in pressureGraph) {
-            if (color == Colors.Green) {
-                // Hacky but whatever
+            // Hacky but whatever
+            if (color.Equals(Colors.Green)) {
                 Program.GraphicalDebugger.AddText($"{pressure.To.Count}-{pressure.From.Count}", worldPos: soldier.Position.ToPoint(yOffset: -0.17f), color: Colors.Yellow);
             }
 
@@ -226,12 +237,20 @@ public class StutterStep : IUnitsControl {
         }
     }
 
-    private static void DebugUnitStatus(Unit unit, string unitStatus) {
+    private static void DebugUnitMove(Unit unit) {
         if (!Debug) {
             return;
         }
 
-        Program.GraphicalDebugger.AddText(unitStatus, worldPos: unit.Position.ToPoint(yOffset: 0.51f));
+        Program.GraphicalDebugger.AddText("PUSH", worldPos: unit.Position.ToPoint(yOffset: 0.51f));
+    }
+
+    private static void DebugUnitMoveCheck(Unit unit, bool shouldMove) {
+        if (!Debug) {
+            return;
+        }
+
+        Program.GraphicalDebugger.AddText($"{shouldMove}", worldPos: unit.Position.ToPoint(yOffset: -0.51f), color: Colors.Yellow);
     }
 }
 

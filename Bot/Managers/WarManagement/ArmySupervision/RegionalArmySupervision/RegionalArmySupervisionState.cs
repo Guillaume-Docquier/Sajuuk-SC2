@@ -11,7 +11,7 @@ namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public abstract class RegionalArmySupervisionState : State<RegionalArmySupervisor> {
     public IReadOnlyCollection<Unit> EnemyArmy { protected get; set; } = new List<Unit>();
-    public IReadOnlyCollection<Unit> SupervisedUnits { protected get; set; } = new List<Unit>();
+    public HashSet<Unit> SupervisedUnits { protected get; set; } = new HashSet<Unit>();
     public IRegion TargetRegion { protected get; set; }
     public IUnitsControl UnitsController { protected get; set; }
 
@@ -20,6 +20,12 @@ public abstract class RegionalArmySupervisionState : State<RegionalArmySuperviso
     /// </summary>
     /// <returns>The units that can be released.</returns>
     public abstract IEnumerable<Unit> GetReleasableUnits();
+
+    /// <summary>
+    /// Releases a unit.
+    /// You should remove the unit from any internal state that you own.
+    /// </summary>
+    public abstract void Release(Unit unit);
 
     /// <summary>
     /// For each region, compute the regions that should be avoided.
