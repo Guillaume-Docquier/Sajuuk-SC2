@@ -440,11 +440,11 @@ public class RegionsThreatEvaluatorTests {
         public Color Color { get; } = new Color();
         public Vector2 Center { get; }
         public HashSet<Vector2> Cells { get; } = new HashSet<Vector2>();
-        public float ApproximatedRadius { get; } = 0;
-        public RegionType Type { get; } = RegionType.Expand;
+        public float ApproximatedRadius => 0;
+        public RegionType Type => RegionType.Expand;
         public HashSet<NeighboringRegion> Neighbors { get; } = new HashSet<NeighboringRegion>();
         public bool IsObstructed { get; }
-        public ExpandLocation ExpandLocation { get; } = default;
+        public ExpandLocation? ExpandLocation => default;
 
         public TestRegion(int id, Vector2 center, bool isObstructed = false) {
             Id = id;
