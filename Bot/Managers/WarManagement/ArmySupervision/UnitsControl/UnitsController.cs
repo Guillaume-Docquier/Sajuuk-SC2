@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
+using Bot.Managers.WarManagement.ArmySupervision.UnitsControl.StutterStepUnitsControl;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
