@@ -77,8 +77,8 @@ public partial class ScoutManager : Manager {
         var antiGroundEnemies = enemyUnits.Where(enemyUnit => enemyUnit.CanHitGround).ToList();
         foreach (var unitToPreserve in unitsToPreserve) {
             var enemiesInVicinity = unitToPreserve.IsFlying
-                ? antiAirEnemies.Where(enemy => unitToPreserve.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList()
-                : antiGroundEnemies.Where(enemy => unitToPreserve.IsInSightRangeOf(enemy, extraRange: -1.5f)).ToList();
+                ? antiAirEnemies.Where(enemy => unitToPreserve.IsInSightRangeOf(enemy)).ToList()
+                : antiGroundEnemies.Where(enemy => unitToPreserve.IsInSightRangeOf(enemy)).ToList();
 
             if (enemiesInVicinity.Count > 0) {
                 var fleeVector = ComputeFleeUnitVector(unitToPreserve, enemiesInVicinity);

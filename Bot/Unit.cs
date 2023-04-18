@@ -517,24 +517,42 @@ public class Unit: ICanDie, IHavePosition {
         return false;
     }
 
-    public bool IsInAttackRangeOf(Unit enemy) {
-        return IsInAttackRangeOf(enemy.Position.ToVector2());
+    /// <summary>
+    /// Determines if the unit is in attack range of another unit based on their hit boxes and distance.
+    /// </summary>
+    /// <param name="otherUnit">The unit to attack</param>
+    /// <returns>True if the unit is in attack range of the other unit</returns>
+    public bool IsInAttackRangeOf(Unit otherUnit) {
+        return DistanceTo(otherUnit) <= otherUnit.Radius + MaxRange + Radius;
     }
 
-    public bool IsInAttackRangeOf(Unit enemy, float extraRange) {
-        return IsInAttackRangeOf(enemy.Position.ToVector2(), extraRange);
+    /// <summary>
+    /// Determines if the unit is in attack range of another unit based on their hit boxes and distance.
+    /// If you can, you should use IsInAttackRangeOf(Unit) instead because considering the other unit's hit box can make a big difference.
+    /// </summary>
+    /// <param name="position">The position to attack</param>
+    /// <returns>True if the unit is in attack range of the other unit</returns>
+    public bool IsInAttackRangeOf(Vector2 position) {
+        return DistanceTo(position) <= MaxRange + Radius;
     }
 
-    public bool IsInAttackRangeOf(Vector2 position, float extraRange = 0) {
-        return DistanceTo(position) <= MaxRange + extraRange;
+    /// <summary>
+    /// Determines if the unit is in sight range of another unit based on their hit boxes and distance.
+    /// </summary>
+    /// <param name="otherUnit">The unit to see</param>
+    /// <returns>True if the unit is in sight range of the other unit</returns>
+    public bool IsInSightRangeOf(Unit otherUnit) {
+        return DistanceTo(otherUnit) <= otherUnit.Radius + UnitTypeData.SightRange + Radius;
     }
 
-    public bool IsInSightRangeOf(Unit enemy, float extraRange) {
-        return IsInSightRangeOf(enemy.Position.ToVector2(), extraRange);
-    }
-
-    public bool IsInSightRangeOf(Vector2 position, float extraRange = 0) {
-        return DistanceTo(position) <= UnitTypeData.SightRange;
+    /// <summary>
+    /// Determines if the unit is in attack range of another unit based on their hit boxes and distance.
+    /// If you can, you should use IsInSightRangeOf(Unit) instead because considering the other unit's hit box can make a big difference.
+    /// </summary>
+    /// <param name="position">The position to attack</param>
+    /// <returns>True if the unit is in sight range of the other unit</returns>
+    public bool IsInSightRangeOf(Vector2 position) {
+        return DistanceTo(position) <= UnitTypeData.SightRange + Radius;
     }
 
     public bool HasOrders() {
