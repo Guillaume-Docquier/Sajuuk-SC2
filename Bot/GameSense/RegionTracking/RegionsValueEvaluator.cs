@@ -14,7 +14,7 @@ public class RegionsValueEvaluator : RegionsEvaluator {
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(240);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
-    public RegionsValueEvaluator(Alliance alliance) : base("value") {
+    public RegionsValueEvaluator(Alliance alliance, Func<uint> getCurrentFrame) : base("value", getCurrentFrame) {
         _alliance = alliance;
     }
 
