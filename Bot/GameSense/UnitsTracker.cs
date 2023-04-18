@@ -116,7 +116,7 @@ public class UnitsTracker: INeedUpdating {
             .Select(unit => (unit.Name, unit.UnitType))
             .ToList();
 
-        Logger.Metric("Unknown Neutral Units: [{0}]", string.Join(", ", unknownNeutralUnits));
+        Logger.Metric($"Unknown Neutral Units: [{string.Join(", ", unknownNeutralUnits)}]");
     }
 
     private static void HandleNewUnit(SC2APIProtocol.Unit newRawUnit, ulong currentFrame) {

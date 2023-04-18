@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Bot.MapKnowledge;
@@ -5,21 +6,24 @@ using Bot.MapKnowledge;
 namespace Bot.GameSense.RegionTracking;
 
 public abstract class RegionsEvaluator : IRegionsEvaluator {
-    private readonly List<IRegionsEvaluator> _dependencies;
     private readonly string _evaluatedPropertyName;
+    private readonly Func<uint> _getCurrentFrame;
+    private readonly List<IRegionsEvaluator> _dependencies;
     private readonly Dictionary<IRegion, float> _evaluations = new Dictionary<IRegion, float>();
     private readonly Dictionary<IRegion, float> _normalizedEvaluations = new Dictionary<IRegion, float>();
 
     private ulong _lastEvaluation = 0;
 
-    /// <param name="dependencies">Any dependency upon which the evaluator relies on, that need to be updated beforehand.</param>
     /// <param name="evaluatedPropertyName">A string that describes what this evaluator is evaluating used for logging purposes.</param>
-    protected RegionsEvaluator(string evaluatedPropertyName, List<IRegionsEvaluator> dependencies = null) {
+    /// <param name="getCurrentFrame">A functor to get the current frame</param>
+    /// <param name="dependencies">Any dependency upon which the evaluator relies on, that need to be updated beforehand.</param>
+    protected RegionsEvaluator(string evaluatedPropertyName, Func<uint> getCurrentFrame, List<IRegionsEvaluator> dependencies = null) {
+        _evaluatedPropertyName = evaluatedPropertyName;
+        _getCurrentFrame = getCurrentFrame;
         // TODO GD We should be able to specify INeedUpdating, like the RegionsTracker
         // TODO GD They should all have the "once per frame update" logic and "update my dependencies before myself" logic
         // TODO GD Although, with a high dependency count, we'll do a lot of redundant if checks, but maybe that's worth it?
         _dependencies = dependencies ?? new List<IRegionsEvaluator>();
-        _evaluatedPropertyName = evaluatedPropertyName;
     }
 
     /// <summary>
@@ -55,7 +59,7 @@ public abstract class RegionsEvaluator : IRegionsEvaluator {
             return;
         }
 
-        _lastEvaluation = Controller.Frame;
+        _lastEvaluation = _getCurrentFrame();
         _dependencies.ForEach(dependency => dependency.UpdateEvaluations());
 
         foreach (var (region, evaluation) in DoUpdateEvaluations(_evaluations.Keys)) {
@@ -83,6 +87,6 @@ public abstract class RegionsEvaluator : IRegionsEvaluator {
     }
 
     private bool IsUpToDate() {
-        return _lastEvaluation >= Controller.Frame;
+        return _lastEvaluation >= _getCurrentFrame();
     }
 }

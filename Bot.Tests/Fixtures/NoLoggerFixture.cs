@@ -1,8 +1,8 @@
 ﻿namespace Bot.Tests.Fixtures;
 
 // ReSharper disable once ClassNeverInstantiated.Global
-public class LoggerFixture {
-    public LoggerFixture() {
+public class NoLoggerFixture {
+    public NoLoggerFixture() {
         Logger.Disable();
     }
 }

@@ -1,11 +1,14 @@
 ﻿using System.Numerics;
 using Bot.GameSense.RegionTracking;
 using Bot.MapKnowledge;
+using Bot.Tests.Fixtures;
 using SC2APIProtocol;
 
 namespace Bot.Tests.GameSense.RegionTracking;
 
-public class RegionsThreatEvaluatorTests {
+public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
+    private static readonly Func<uint> GetCurrentFrame = () => 1;
+
     [Fact]
     public void GivenNoForcesAndNoValues_WhenUpdateEvaluations_ThenAllEvaluationsAreZero() {
         // Arrange
@@ -32,7 +35,7 @@ public class RegionsThreatEvaluatorTests {
 
         var enemyForceEvaluator = new TestRegionsForceEvaluator();
         var selfValueEvaluator = new TestRegionsValueEvaluator();
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator);
+        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
@@ -92,7 +95,7 @@ public class RegionsThreatEvaluatorTests {
             { region6, 0 },
         };
         var selfValueEvaluator = new TestRegionsValueEvaluator(valueEvaluations);
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator);
+        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
@@ -147,7 +150,7 @@ public class RegionsThreatEvaluatorTests {
         };
         var enemyForceEvaluator = new TestRegionsForceEvaluator(forceEvaluations);
         var selfValueEvaluator = new TestRegionsValueEvaluator();
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator);
+        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
@@ -207,7 +210,7 @@ public class RegionsThreatEvaluatorTests {
             { region6, 0 },
         };
         var selfValueEvaluator = new TestRegionsValueEvaluator(valueEvaluations);
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator);
+        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
@@ -266,7 +269,7 @@ public class RegionsThreatEvaluatorTests {
             { region6, 0 },
         };
         var selfValueEvaluator = new TestRegionsValueEvaluator(valueEvaluations);
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator);
+        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
@@ -325,7 +328,7 @@ public class RegionsThreatEvaluatorTests {
             { region6, 0 },
         };
         var selfValueEvaluator = new TestRegionsValueEvaluator(valueEvaluations);
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator);
+        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
@@ -384,7 +387,7 @@ public class RegionsThreatEvaluatorTests {
             { region6, 0 },
         };
         var selfValueEvaluator = new TestRegionsValueEvaluator(valueEvaluations);
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator);
+        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
@@ -403,12 +406,12 @@ public class RegionsThreatEvaluatorTests {
         private readonly Dictionary<IRegion, float>? _evaluations;
 
         public TestRegionsForceEvaluator()
-            : base(Alliance.Enemy) {
+            : base(Alliance.Enemy, GetCurrentFrame) {
             _evaluations = null;
         }
 
         public TestRegionsForceEvaluator(Dictionary<IRegion, float> evaluations)
-            : base(Alliance.Enemy) {
+            : base(Alliance.Enemy, GetCurrentFrame) {
             _evaluations = evaluations;
         }
 
@@ -421,12 +424,12 @@ public class RegionsThreatEvaluatorTests {
         private readonly Dictionary<IRegion, float>? _evaluations;
 
         public TestRegionsValueEvaluator()
-            : base(Alliance.Self) {
+            : base(Alliance.Self, GetCurrentFrame) {
             _evaluations = null;
         }
 
         public TestRegionsValueEvaluator(Dictionary<IRegion, float> evaluations)
-            : base(Alliance.Self) {
+            : base(Alliance.Self, GetCurrentFrame) {
             _evaluations = evaluations;
         }
 

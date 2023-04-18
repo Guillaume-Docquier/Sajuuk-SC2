@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.MapKnowledge;
@@ -9,8 +10,8 @@ public class RegionsThreatEvaluator : RegionsEvaluator {
     private readonly IRegionsEvaluator _forceEvaluator;
     private readonly IRegionsEvaluator _opponentValueEvaluator;
 
-    public RegionsThreatEvaluator(RegionsForceEvaluator forceEvaluator, RegionsValueEvaluator opponentValueEvaluator)
-        : base("threat", new List<IRegionsEvaluator> { forceEvaluator, opponentValueEvaluator }) {
+    public RegionsThreatEvaluator(RegionsForceEvaluator forceEvaluator, RegionsValueEvaluator opponentValueEvaluator, Func<uint> getCurrentFrame)
+        : base("threat", getCurrentFrame, new List<IRegionsEvaluator> { forceEvaluator, opponentValueEvaluator }) {
         _forceEvaluator = forceEvaluator;
         _opponentValueEvaluator = opponentValueEvaluator;
     }

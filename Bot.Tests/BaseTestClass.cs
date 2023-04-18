@@ -10,7 +10,7 @@ namespace Bot.Tests;
 // This is notably caused by the Controller and its friends WhoNeedUpdating
 [Collection("Sequential")]
 public class BaseTestClass :
-    IClassFixture<LoggerFixture>,
+    IClassFixture<NoLoggerFixture>,
     IClassFixture<KnowledgeBaseFixture>,
     IClassFixture<GraphicalDebuggerFixture>,
     IDisposable {

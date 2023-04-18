@@ -35,15 +35,16 @@ public class RegionTracker : INeedUpdating {
     };
 
     private RegionTracker() {
-        _regionForceEvaluators[Alliance.Self] = new RegionsForceEvaluator(Alliance.Self);
-        _regionForceEvaluators[Alliance.Enemy] = new RegionsForceEvaluator(Alliance.Enemy);
+        _regionForceEvaluators[Alliance.Self] = new RegionsForceEvaluator(Alliance.Self, () => Controller.Frame);
+        _regionForceEvaluators[Alliance.Enemy] = new RegionsForceEvaluator(Alliance.Enemy, () => Controller.Frame);
 
-        _regionValueEvaluators[Alliance.Self] = new RegionsValueEvaluator(Alliance.Self);
-        _regionValueEvaluators[Alliance.Enemy] = new RegionsValueEvaluator(Alliance.Enemy);
+        _regionValueEvaluators[Alliance.Self] = new RegionsValueEvaluator(Alliance.Self, () => Controller.Frame);
+        _regionValueEvaluators[Alliance.Enemy] = new RegionsValueEvaluator(Alliance.Enemy, () => Controller.Frame);
 
         _regionThreatEvaluators[Alliance.Enemy] = new RegionsThreatEvaluator(
             _regionForceEvaluators[Alliance.Enemy],
-            _regionValueEvaluators[Alliance.Self]
+            _regionValueEvaluators[Alliance.Self],
+            () => Controller.Frame
         );
     }
 
