@@ -1,18 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
-using Bot.Managers.WarManagement.ArmySupervision.UnitsControl.StutterStepUnitsControl;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
-public class UnitsController : IUnitsControl {
-    private readonly List<IUnitsControl> _unitsControls = new List<IUnitsControl>
-    {
-        new MineralWalkKiting(),
-        new SneakAttack(),
-        new BurrowHealing(),
-        new StutterStep(),
-    };
+public abstract class AggregateUnitsControl : IUnitsControl {
+    private readonly List<IUnitsControl> _unitsControls;
+
+    protected AggregateUnitsControl(List<IUnitsControl> unitsControls) {
+        _unitsControls = unitsControls;
+    }
 
     public bool IsExecuting() {
         return _unitsControls.Any(unitsControl => unitsControl.IsExecuting());

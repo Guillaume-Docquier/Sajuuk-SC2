@@ -15,7 +15,7 @@ public partial class ArmySupervisor {
         private const bool Debug = true;
 
         private const float AcceptableDistanceToTarget = 3;
-        private readonly IUnitsControl _unitsController = new UnitsController();
+        private readonly IUnitsControl _unitsController = new OffensiveUnitsControl();
 
         protected override void OnTransition() {
             _unitsController.Reset(ImmutableList<Unit>.Empty);

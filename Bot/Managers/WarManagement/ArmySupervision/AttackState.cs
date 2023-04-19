@@ -30,7 +30,7 @@ public partial class ArmySupervisor {
         private ulong _pathfindingLock = 0;
         private ulong _pathfindingLockDelay = TimeUtils.SecsToFrames(4);
 
-        private readonly IUnitsControl _unitsController = new UnitsController();
+        private readonly IUnitsControl _unitsController = new OffensiveUnitsControl();
 
         protected override void OnTransition() {
             _unitsController.Reset(ImmutableList<Unit>.Empty);

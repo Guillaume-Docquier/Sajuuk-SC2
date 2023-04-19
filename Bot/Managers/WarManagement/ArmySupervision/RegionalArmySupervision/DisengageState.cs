@@ -2,6 +2,7 @@
 using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameSense.RegionTracking;
+using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
 
@@ -10,6 +11,8 @@ namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 public class DisengageState : RegionalArmySupervisionState {
     private const float SafetyDistance = 5;
     private const float SafetyDistanceTolerance = SafetyDistance / 2;
+
+    private readonly IUnitsControl _fleeKiting = new DisengagementKiting();
 
     private HashSet<Unit> _unitsInSafePosition = new HashSet<Unit>();
 
@@ -21,8 +24,8 @@ public class DisengageState : RegionalArmySupervisionState {
         _unitsInSafePosition = GetUnitsInSafePosition(SupervisedUnits, EnemyArmy);
         var unitsInDanger = SupervisedUnits.Except(_unitsInSafePosition).ToList();
 
-        ApproachState.MoveIntoStrikingPosition(_unitsInSafePosition, TargetRegion, EnemyArmy, SafetyDistance + SafetyDistanceTolerance);
-        MoveIntoSafePosition(unitsInDanger, EnemyArmy);
+        ApproachState.MoveIntoStrikingPosition(_unitsInSafePosition, TargetRegion, EnemyArmy, SafetyDistance + SafetyDistanceTolerance, DefensiveUnitsController);
+        MoveIntoSafePosition(unitsInDanger, EnemyArmy, _fleeKiting);
     }
 
     /// <summary>
@@ -71,7 +74,8 @@ public class DisengageState : RegionalArmySupervisionState {
     /// </summary>
     /// <param name="units">The units to move</param>
     /// <param name="enemyArmy">The enemy units to get out of range of</param>
-    private static void MoveIntoSafePosition(IReadOnlyCollection<Unit> units, IReadOnlyCollection<Unit> enemyArmy) {
+    /// <param name="unitsController">The units controller</param>
+    private static void MoveIntoSafePosition(IReadOnlyCollection<Unit> units, IReadOnlyCollection<Unit> enemyArmy, IUnitsControl unitsController) {
         var unitGroups = units
             .Where(unit => unit.GetRegion() != null)
             .GroupBy(unit => unit.GetRegion()
@@ -88,7 +92,7 @@ public class DisengageState : RegionalArmySupervisionState {
             );
 
         foreach (var unitGroup in unitGroups) {
-            MoveTowards(unitGroup, unitGroup.Key, enemyArmy);
+            MoveTowards(unitGroup, unitGroup.Key, unitsController);
         }
     }
 
@@ -98,10 +102,10 @@ public class DisengageState : RegionalArmySupervisionState {
     /// </summary>
     /// <param name="units">The units to move</param>
     /// <param name="safeRegion">The safe region to get to</param>
-    /// <param name="enemyArmy">The enemy units to get in range of but avoid engaging</param>
-    private static void MoveTowards(IEnumerable<Unit> units, IRegion safeRegion, IReadOnlyCollection<Unit> enemyArmy) {
-        foreach (var unit in units) {
-            // TODO GD Kite away
+    /// <param name="unitsController">The units controller</param>
+    private static void MoveTowards(IEnumerable<Unit> units, IRegion safeRegion, IUnitsControl unitsController) {
+        var uncontrolledUnits = unitsController.Execute(units.ToHashSet());
+        foreach (var unit in uncontrolledUnits) {
             unit.Move(safeRegion.Center);
         }
     }

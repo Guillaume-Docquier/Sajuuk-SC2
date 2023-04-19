@@ -16,7 +16,7 @@ public class EngageState : RegionalArmySupervisionState {
     protected override void Execute() {
         _unitsReadyToAttack = GetUnitsReadyToAttack(SupervisedUnits, TargetRegion, EnemyArmy);
 
-        Attack(_unitsReadyToAttack, TargetRegion, EnemyArmy, UnitsController);
+        Attack(_unitsReadyToAttack, TargetRegion, EnemyArmy, OffensiveUnitsController);
         JoinTheFight(SupervisedUnits.Except(_unitsReadyToAttack).ToList(), TargetRegion, EnemyArmy);
     }
 

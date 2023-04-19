@@ -41,8 +41,15 @@ public class Unit: ICanDie, IHavePosition {
     public int InitialMineralCount = int.MaxValue;
     public int InitialVespeneCount = int.MaxValue;
 
-    public bool CanHitAir => IsOperational && UnitTypeData.Weapons.Any(weapon => weapon.Type is Weapon.Types.TargetType.Any or Weapon.Types.TargetType.Air);
-    public bool CanHitGround => IsOperational && UnitTypeData.Weapons.Any(weapon => weapon.Type is Weapon.Types.TargetType.Any or Weapon.Types.TargetType.Ground);
+    /// <summary>
+    /// Whether this unit can hit air units
+    /// </summary>
+    public bool CanHitAir;
+    /// <summary>
+    /// Whether this unit can hit ground units
+    /// </summary>
+    public bool CanHitGround;
+
     public bool IsFlying => RawUnitData.IsFlying;
     public bool IsBurrowed => RawUnitData.IsBurrowed;
     public bool IsCloaked => RawUnitData.Cloak == CloakState.Cloaked;
@@ -155,36 +162,27 @@ public class Unit: ICanDie, IHavePosition {
         var unitTypeChanged = unit.UnitType != UnitType;
 
         RawUnitData = unit;
+        _buildProgress = unit.BuildProgress;
 
-        if (unitTypeChanged) {
-            UnitTypeData = KnowledgeBase.GetUnitTypeData(unit.UnitType);
-            AliasUnitTypeData = UnitTypeData.HasUnitAlias ? KnowledgeBase.GetUnitTypeData(UnitTypeData.UnitAlias) : null;
-
-            var weapons = UnitTypeData.Weapons.Concat(AliasUnitTypeData?.Weapons ?? Enumerable.Empty<Weapon>()).ToList();
-
-            HasWeapons = weapons.Count > 0;
-            MaxRange = HasWeapons
-                ? weapons.Max(weapon => weapon.Range)
-                : 0;
-
-            // Weapon speed is in seconds between attacks
-            _maxWeaponCooldownFrames = HasWeapons
-                ? weapons[0].Speed * TimeUtils.FramesPerSecond
-                : float.MaxValue;
-        }
-
-        Name = UnitTypeData.Name;
         Tag = unit.Tag;
         UnitType = unit.UnitType;
-        FoodRequired = UnitTypeData.FoodRequired;
         Radius = unit.Radius;
         Alliance = unit.Alliance;
         Position = unit.Pos.ToVector3();
-        _buildProgress = unit.BuildProgress;
         Orders = unit.Orders;
         IsVisible = unit.DisplayType == DisplayType.Visible; // TODO GD This is not actually visible as in cloaked
         LastSeen = frame;
         Buffs = new HashSet<uint>(unit.BuffIds);
+
+        if (unitTypeChanged) {
+            UnitTypeData = KnowledgeBase.GetUnitTypeData(unit.UnitType);
+            Name = UnitTypeData.Name;
+            FoodRequired = UnitTypeData.FoodRequired;
+
+            AliasUnitTypeData = UnitTypeData.HasUnitAlias ? KnowledgeBase.GetUnitTypeData(UnitTypeData.UnitAlias) : null;
+
+            UpdateWeaponsData(UnitTypeData.Weapons.ToList());
+        }
 
         WeaponCooldownPercent = HasWeapons
             ? RawUnitData.WeaponCooldown / _maxWeaponCooldownFrames
@@ -205,6 +203,22 @@ public class Unit: ICanDie, IHavePosition {
             InitialMineralCount = RawUnitData.MineralContents;
             InitialVespeneCount = RawUnitData.VespeneContents;
         }
+    }
+
+    private void UpdateWeaponsData(IReadOnlyList<Weapon> weapons) {
+        HasWeapons = weapons.Count > 0;
+        MaxRange = HasWeapons
+            ? weapons.Max(weapon => weapon.Range)
+            : 0;
+
+        // Weapon speed is in seconds between attacks
+        _maxWeaponCooldownFrames = HasWeapons
+            // TODO GD Not sure how to handle multiple weapons
+            ? weapons[0].Speed * TimeUtils.FramesPerSecond
+            : float.MaxValue;
+
+        CanHitAir = IsOperational && weapons.Any(weapon => weapon.Type is Weapon.Types.TargetType.Any or Weapon.Types.TargetType.Air);
+        CanHitGround = IsOperational && weapons.Any(weapon => weapon.Type is Weapon.Types.TargetType.Any or Weapon.Types.TargetType.Ground);
     }
 
     public double DistanceTo(Unit otherUnit) {
@@ -515,6 +529,19 @@ public class Unit: ICanDie, IHavePosition {
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Whether the unit has the capacity to attack the other unit based on its weapon types and if the other unit is flying or grounded.
+    /// </summary>
+    /// <param name="otherUnit">The unit to attack</param>
+    /// <returns>True if the unit has the proper weapons to attack the other unit.</returns>
+    public bool CanAttack(Unit otherUnit) {
+        if (otherUnit.IsFlying) {
+            return CanHitAir;
+        }
+
+        return CanHitGround;
     }
 
     /// <summary>
