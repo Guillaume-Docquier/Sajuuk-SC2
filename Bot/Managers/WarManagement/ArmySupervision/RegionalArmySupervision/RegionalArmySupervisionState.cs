@@ -13,7 +13,8 @@ public abstract class RegionalArmySupervisionState : State<RegionalArmySuperviso
     public IReadOnlyCollection<Unit> EnemyArmy { protected get; set; } = new List<Unit>();
     public HashSet<Unit> SupervisedUnits { protected get; set; } = new HashSet<Unit>();
     public IRegion TargetRegion { protected get; set; }
-    public IUnitsControl UnitsController { protected get; set; }
+    public IUnitsControl OffensiveUnitsController { protected get; set; }
+    public IUnitsControl DefensiveUnitsController { protected get; set; }
 
     /// <summary>
     /// Gets the units that can be released.

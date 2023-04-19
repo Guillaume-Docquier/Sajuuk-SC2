@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.ExtensionMethods;
+using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.MapKnowledge;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
@@ -14,7 +15,7 @@ public class ApproachState : RegionalArmySupervisionState {
     /// Units will only route through safe regions and stay at a safe distance of enemies in the target region.
     /// </summary>
     protected override void Execute() {
-        MoveIntoStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy, SafetyDistance);
+        MoveIntoStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy, SafetyDistance, DefensiveUnitsController);
     }
 
     /// <summary>
@@ -74,7 +75,14 @@ public class ApproachState : RegionalArmySupervisionState {
     /// <param name="targetRegion">The region to go to</param>
     /// <param name="enemyArmy">The enemy units to get in range of but avoid engaging</param>
     /// <param name="safetyDistance">A safety distance to keep between the enemy</param>
-    public static void MoveIntoStrikingPosition(IReadOnlyCollection<Unit> units, IRegion targetRegion, IReadOnlyCollection<Unit> enemyArmy, float safetyDistance) {
+    /// <param name="unitsController">The units controller</param>
+    public static void MoveIntoStrikingPosition(
+        IReadOnlyCollection<Unit> units,
+        IRegion targetRegion,
+        IReadOnlyCollection<Unit> enemyArmy,
+        float safetyDistance,
+        IUnitsControl unitsController
+    ) {
         var approachRegions = targetRegion.GetReachableNeighbors().ToList();
 
         var regionsWithFriendlyUnitPresence = units
@@ -97,7 +105,7 @@ public class ApproachState : RegionalArmySupervisionState {
             }));
 
         foreach (var unitGroup in unitGroups) {
-            MoveTowards(unitGroup, targetRegion, unitGroup.Key, regionsOutOfReach, enemyArmy, safetyDistance);
+            MoveTowards(unitGroup, targetRegion, unitGroup.Key, regionsOutOfReach, enemyArmy, safetyDistance, unitsController);
         }
     }
 
@@ -112,15 +120,18 @@ public class ApproachState : RegionalArmySupervisionState {
     /// <param name="blockedRegions">The regions to avoid going through</param>
     /// <param name="enemyArmy">The enemy units to get in range of but avoid engaging</param>
     /// <param name="safetyDistance">A safety distance to keep between the enemy</param>
+    /// <param name="unitsController">The units controller</param>
     private static void MoveTowards(
         IEnumerable<Unit> units,
         IRegion targetRegion,
         IRegion approachRegion,
         IDictionary<IRegion, HashSet<IRegion>> blockedRegions,
         IReadOnlyCollection<Unit> enemyArmy,
-        float safetyDistance
+        float safetyDistance,
+        IUnitsControl unitsController
     ) {
-        foreach (var unit in units) {
+        var uncontrolledUnits = unitsController.Execute(units.ToHashSet());
+        foreach (var unit in uncontrolledUnits) {
             // TODO GD We do this computation twice per frame, cache it!
             var closestEnemy = enemyArmy.MinBy(enemy => enemy.DistanceTo(unit) - enemy.MaxRange);
             if (closestEnemy != null && closestEnemy.DistanceTo(unit) < closestEnemy.MaxRange + safetyDistance) {

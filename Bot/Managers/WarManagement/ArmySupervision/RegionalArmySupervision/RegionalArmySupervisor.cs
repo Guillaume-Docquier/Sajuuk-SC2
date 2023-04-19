@@ -15,7 +15,8 @@ namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 public class RegionalArmySupervisor : Supervisor {
     private const bool Debug = false;
 
-    private readonly IUnitsControl _unitsController = new UnitsController();
+    private readonly IUnitsControl _offensiveUnitsController = new OffensiveUnitsControl();
+    private readonly IUnitsControl _defensiveUnitsController = new DefensiveUnitsControl();
     private readonly IRegion _targetRegion;
     private readonly StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState> _stateMachine;
 
@@ -35,7 +36,10 @@ public class RegionalArmySupervisor : Supervisor {
         _stateMachine.State.EnemyArmy = GetEnemyArmy(_targetRegion).ToList();
         _stateMachine.State.SupervisedUnits = SupervisedUnits;
         _stateMachine.State.TargetRegion = _targetRegion;
-        _stateMachine.State.UnitsController = _unitsController;
+        // TODO GD If states were not re-created all the time, we would be able to provide ...
+        // TODO GD ... IUnitsControls at creation time, rather than anonymously every frame
+        _stateMachine.State.OffensiveUnitsController = _offensiveUnitsController;
+        _stateMachine.State.DefensiveUnitsController = _defensiveUnitsController;
 
         _stateMachine.OnFrame();
 
@@ -57,6 +61,7 @@ public class RegionalArmySupervisor : Supervisor {
         var clusteringResult = Clustering.DBSCAN(enemies, 2, 3);
 
         return clusteringResult.clusters
+            // TODO GD We should also consider any unit in range of the region (like siege tanks up a ramp)
             .Where(cluster => cluster.Any(unit => unit.GetRegion() == targetRegion))
             .SelectMany(cluster => cluster)
             .Concat(clusteringResult.noise.Where(unit => unit.GetRegion() == targetRegion));
