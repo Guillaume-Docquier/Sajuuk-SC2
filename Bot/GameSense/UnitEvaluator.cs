@@ -111,7 +111,8 @@ public static class UnitEvaluator {
         }
 
         if (Units.CreepTumors.Contains(unit.UnitType)) {
-            return Value.Intriguing / 32;
+            // Clearing creep can be good, but it should be very marginal
+            return Value.Intriguing / 128;
         }
 
         if (Units.Workers.Contains(unit.UnitType) && !IsOffensive(unit, unit.Alliance)) {
