@@ -36,11 +36,16 @@ public class RegionsThreatEvaluator : RegionsEvaluator {
 
             var threatenedValueModifier = valuableRegions
                 // Pathfinding far regions first will leverage the pathfinding cache
-                .OrderByDescending(valuableReachableRegion => valuableReachableRegion.Center.DistanceTo(region.Center))
-                .Sum(valuableReachableRegion => {
-                    var normalizedValue = _opponentValueEvaluator.GetEvaluation(valuableReachableRegion, normalized: true);
+                .OrderByDescending(valuableRegion => valuableRegion.Center.DistanceTo(region.Center))
+                .Sum(valuableRegion => {
+                    var normalizedValue = _opponentValueEvaluator.GetEvaluation(valuableRegion, normalized: true);
+                    var path = Pathfinder.FindPath(region, valuableRegion);
+                    if (path == null) {
+                        return 0;
+                    }
+
                     // TODO GD Maybe we need to reduce the distance to give more value to far value
-                    var distance = Pathfinder.FindPath(region, valuableReachableRegion).GetPathDistance();
+                    var distance = path.GetPathDistance();
 
                     // ]0, 1]
                     return normalizedValue / (distance + 1f);
