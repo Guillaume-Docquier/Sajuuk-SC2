@@ -99,7 +99,7 @@ public class RegionalArmySupervisor : Supervisor {
         return $"RegionalArmySupervisor[{_targetRegion.Id}]";
     }
 
-    // TODO GD Rework assigner/releaser. It's not helpful at all
+    // TODO GD Rework assigner/dispatcher/releaser. It's not very helpful
     protected override IAssigner Assigner { get; } = new DummyAssigner();
     protected override IReleaser Releaser { get; }
 

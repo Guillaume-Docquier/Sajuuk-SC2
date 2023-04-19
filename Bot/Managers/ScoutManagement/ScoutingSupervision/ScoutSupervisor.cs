@@ -12,8 +12,6 @@ public class ScoutSupervisor : Supervisor {
     public readonly ScoutingTask ScoutingTask;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
-    protected override IAssigner Assigner { get; } = new DummyAssigner();
-    protected override IReleaser Releaser { get; } = new DummyReleaser();
 
     public ScoutSupervisor(ScoutingTask scoutingTask) {
         ScoutingTask = scoutingTask;
@@ -60,6 +58,9 @@ public class ScoutSupervisor : Supervisor {
         return Vector2.Normalize(new Vector2(fleeX, fleeY));
     }
 
+    // TODO GD Rework assigner/dispatcher/releaser. It's not very helpful
+    protected override IAssigner Assigner { get; } = new DummyAssigner();
+    protected override IReleaser Releaser { get; } = new DummyReleaser();
     private class DummyAssigner : IAssigner { public void Assign(Unit unit) {} }
     private class DummyReleaser : IReleaser { public void Release(Unit unit) {} }
 }

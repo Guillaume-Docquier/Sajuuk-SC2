@@ -16,27 +16,12 @@ using SC2APIProtocol;
 namespace Bot.Managers.WarManagement.States.MidGame;
 
 /*
- * Ok, we're changing this
- * The war manager does not decide what is dangerous
- * It uses danger values that other systems can tweak (i.e predicting future threats)
- * The war manager just allocates the army to respond to the perceived threats (but it doesn't perceive them!)
- *
- * If we're stronger, attack the enemy head on
- * - Dispatch enough forces to handle threats in decreasing order
- * If we're weaker, contain the enemy
- * - Dispatch enough forces to handle threats in increasing order?
- *
- * If we have extra forces, dispatch harass groups
- *
- * We'll have to tweak what 'force' is
- * We'll have to include the minerals/gas to consider value
- *
  * Concepts
  * Army Strength: How strong an army is. This is almost purely related to army composition and size
  * Army Threat: How much damage the army is about to cause. A strong army stuck in a corner is not dangerous
  * Eco Damage: How much Non-army stuff is worth. This can be used to evaluate an Army Threat or the Unit Impact of a counter attack
  * Goal Value: The combination of army threat and eco damage
- * Unit Impact: The combination of goal value and distance
+ * Unit Impact: The combination of goal value and distance to goal
  */
 
 public class MidGameBehaviour : IWarManagerBehaviour {
@@ -52,7 +37,6 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     private bool _hasCleanUpStarted = false;
 
     public IAssigner Assigner { get; }
-    public IDispatcher Dispatcher { get; }
     public IReleaser Releaser { get; }
 
     public List<BuildRequest> BuildRequests { get; } = new List<BuildRequest>();
@@ -64,10 +48,6 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         BuildRequests.Add(_armyBuildRequest);
 
         Assigner = new WarManagerAssigner<MidGameBehaviour>(this);
-
-        // TODO GD We don't need that shit in all managers
-        Dispatcher = new MidGameDispatcher(this);
-
         Releaser = new WarManagerReleaser<MidGameBehaviour>(this);
     }
 
@@ -410,10 +390,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         return reach;
     }
 
-    // We don't use it
-    private class MidGameDispatcher : Dispatcher<MidGameBehaviour> {
-        public MidGameDispatcher(MidGameBehaviour client) : base(client) {}
-
-        public override void Dispatch(Unit unit) {}
-    }
+    // TODO GD Rework assigner/dispatcher/releaser. It's not very helpful
+    public IDispatcher Dispatcher { get; } = new DummyDispatcher();
+    private class DummyDispatcher : IDispatcher { public void Dispatch(Unit unit) {} }
 }
