@@ -22,6 +22,12 @@ Check out [Artificially Intelligent](https://www.youtube.com/channel/UC_KAanPGVo
 - Drone mineral walk kiting
 - Roaches burrow to heal
 - Roaches burrow sneak attack on siege tanks and other long range ground units
+- Stutter step
+- Disengagement kiting
+
+### War tactics
+- Dynamic dispatching of units towards most impactful goals
+- Flanks and concaves
 
 ### Map knowledge
 - Region analysis including expand locations, ramps and choke points
