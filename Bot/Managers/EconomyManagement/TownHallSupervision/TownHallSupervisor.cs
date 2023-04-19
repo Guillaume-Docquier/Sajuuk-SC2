@@ -51,8 +51,9 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
                 Logger.Error($"Trying to set a negative GasWorkersCap: {value}\n");
                 _gasWorkersCap = 0;
             }
-
-            _gasWorkersCap = value;
+            else {
+                _gasWorkersCap = value;
+            }
         }
     }
 

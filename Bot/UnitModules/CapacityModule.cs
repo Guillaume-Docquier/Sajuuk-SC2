@@ -18,8 +18,9 @@ public class CapacityModule: UnitModule, IWatchUnitsDie {
                 Logger.Error($"Trying to set a negative MaxCapacity: {value}");
                 _maxCapacity = 0;
             }
-
-            _maxCapacity = value;
+            else {
+                _maxCapacity = value;
+            }
         }
     }
 
