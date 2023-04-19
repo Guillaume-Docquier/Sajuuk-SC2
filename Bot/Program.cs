@@ -22,9 +22,9 @@ public class Program {
     private const string Version = "4_0_0";
     private static readonly IBot Bot = new SajuukBot(Version, scenarios: Scenarios);
 
-    private const string MapFileName = Maps.Season_2022_4.FileNames.Moondance;
+    private const string MapFileName = Maps.Season_2022_4.FileNames.Berlingrad;
     private const Race OpponentRace = Race.Terran;
-    private const Difficulty OpponentDifficulty = Difficulty.CheatInsane;
+    private const Difficulty OpponentDifficulty = Difficulty.VeryEasy;
 
     private const bool RealTime = false;
 

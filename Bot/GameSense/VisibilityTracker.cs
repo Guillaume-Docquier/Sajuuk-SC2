@@ -76,7 +76,7 @@ public class VisibilityTracker: INeedUpdating {
     }
 
     public static bool IsVisible(Vector2 location) {
-        return _visibilityMap[(int)location.X][(int)location.Y] == Visibility.Visible;
+        return VisibilityMap[(int)location.X][(int)location.Y] is Visibility.Visible;
     }
 
     // TODO GD We could be smarter and check for the building footprint!
