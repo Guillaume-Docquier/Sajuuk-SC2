@@ -24,6 +24,7 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     private bool _expandHasBeenRequested = false;
     private readonly int _initialMineralsSum;
 
+    // TODO GD atSupply for expands depends on the build order, maybe only after the BO is finished instead?
     private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, atSupply: 75, quantity: 0, blockCondition: BuildBlockCondition.MissingResources, priority: BuildRequestPriority.High);
     private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>();
 
