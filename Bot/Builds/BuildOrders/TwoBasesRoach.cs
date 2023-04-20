@@ -18,7 +18,7 @@ public class TwoBasesRoach : IBuildOrder {
         {
             new TargetBuildRequest  (BuildType.Train,       Units.Overlord,                    atSupply: 13, targetQuantity: 2),
             new QuantityBuildRequest(BuildType.Expand,      Units.Hatchery,                    atSupply: 16),                    // TODO GD Need to be able to say 1 expand as opposed to 2 hatcheries
-            // TODO GD The build requests are sorted by supply, so the pool gets built before the gas. It doesn't matter, but don't forget
+            // TODO GD The build requests are sorted by supply, so the pool actually gets built before the gas.
             new TargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 18, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Build,       Units.SpawningPool,                atSupply: 17, targetQuantity: 1),
             new TargetBuildRequest  (BuildType.Train,       Units.Overlord,                    atSupply: 19, targetQuantity: 3),
@@ -74,8 +74,10 @@ public class TwoBasesRoach : IBuildOrder {
         var lair = _buildRequests.Where(request => request.BuildType == BuildType.UpgradeInto && request.UnitOrUpgradeType == Units.Lair);
         var upgrades = _buildRequests.Where(request => request.BuildType == BuildType.Research);
         var stepsToPushBack = evos.Concat(lair).Concat(upgrades).ToList();
+
+        var atMaxSupply = _buildRequests.Max(request => request.AtSupply);
         foreach (var buildRequest in stepsToPushBack) {
-            buildRequest.AtSupply = 50;
+            buildRequest.AtSupply = atMaxSupply;
         }
 
         _buildRequests = _buildRequests
@@ -92,10 +94,11 @@ public class TwoBasesRoach : IBuildOrder {
         var evos = _buildRequests.Where(request => request.BuildType == BuildType.Build && request.UnitOrUpgradeType == Units.EvolutionChamber);
         var lair = _buildRequests.Where(request => request.BuildType == BuildType.UpgradeInto && request.UnitOrUpgradeType == Units.Lair);
         var upgrades = _buildRequests.Where(request => request.BuildType == BuildType.Research);
-
         var stepsToPushBack = evos.Concat(lair).Concat(upgrades).ToList();
+
+        var atMaxSupply = _buildRequests.Max(request => request.AtSupply);
         foreach (var buildRequest in stepsToPushBack) {
-            buildRequest.AtSupply = 50;
+            buildRequest.AtSupply = atMaxSupply;
         }
 
         _buildRequests = _buildRequests
