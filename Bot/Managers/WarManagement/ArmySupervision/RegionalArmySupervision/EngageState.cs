@@ -40,7 +40,7 @@ public class EngageState : RegionalArmySupervisionState {
     /// </summary>
     /// <returns>The units that can be released</returns>
     public override IEnumerable<Unit> GetReleasableUnits() {
-        return EnemyArmy.GetForce() == 0
+        return EnemyArmy.Where(enemy => !enemy.IsCloaked).GetForce() == 0
             ? SupervisedUnits
             : SupervisedUnits.Except(_unitsReadyToAttack);
     }
@@ -80,8 +80,13 @@ public class EngageState : RegionalArmySupervisionState {
     private static void Attack(IReadOnlySet<Unit> units, IRegion targetRegion, IReadOnlyCollection<Unit> enemyArmy, IUnitsControl unitsController) {
         // TODO GD We can improve target selection
         var target = targetRegion.Center;
-        if (enemyArmy.Any()) {
-            target = enemyArmy.MinBy(unit => unit.DistanceTo(targetRegion.Center)).Position.ToVector2();
+
+        var closestVisibleEnemy = enemyArmy
+            .Where(enemy => !enemy.IsCloaked)
+            .MinBy(unit => unit.DistanceTo(targetRegion.Center));
+
+        if (closestVisibleEnemy != null) {
+            target = closestVisibleEnemy.Position.ToVector2();
         }
 
         var unhandledUnits = unitsController.Execute(units);

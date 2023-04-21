@@ -251,6 +251,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         var regionsToAvoid = RegionAnalyzer.Regions.Except(reachableRegions).ToHashSet();
 
         return reachableRegions.MaxBy(reachableRegion => {
+            // TODO GD This doesn't take into account if the unit can address the threat (grounds vs flying, cloaked, etc)
             var regionThreat = RegionTracker.GetThreat(reachableRegion, Alliance.Enemy);
             var regionValue = RegionTracker.GetValue(reachableRegion, Alliance.Enemy);
 

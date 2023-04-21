@@ -537,6 +537,10 @@ public class Unit: ICanDie, IHavePosition {
     /// <param name="otherUnit">The unit to attack</param>
     /// <returns>True if the unit has the proper weapons to attack the other unit.</returns>
     public bool CanAttack(Unit otherUnit) {
+        if (otherUnit.IsCloaked) {
+            return false;
+        }
+
         if (otherUnit.IsFlying) {
             return CanHitAir;
         }
