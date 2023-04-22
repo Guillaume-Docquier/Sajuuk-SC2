@@ -121,20 +121,20 @@ public class BotDebugger {
         Program.GraphicalDebugger.AddTextGroup(new[]
         {
             $"Minerals" + $"{$"({mineralMiners})",6}",
-            $"Max: {IncomeTracker.MaxMineralsCollectionRate, 9:F0}",
-            $"Average: {IncomeTracker.AverageMineralsCollectionRate, 5:F0}",
-            $"Current: {IncomeTracker.CurrentMineralsCollectionRate, 5:F0}",
-            $"Expected: {IncomeTracker.ExpectedMineralsCollectionRate, 4:F0}",
+            $"Max: {IncomeTracker.Instance.MaxMineralsCollectionRate, 9:F0}",
+            $"Average: {IncomeTracker.Instance.AverageMineralsCollectionRate, 5:F0}",
+            $"Current: {IncomeTracker.Instance.CurrentMineralsCollectionRate, 5:F0}",
+            $"Expected: {IncomeTracker.Instance.ExpectedMineralsCollectionRate, 4:F0}",
         }, virtualPos: new Point { X = 0.315f, Y = 0.725f });
 
         var vespeneMiners = activeMiningModules.Count(module => module.ResourceType == Resources.ResourceType.Gas);
         Program.GraphicalDebugger.AddTextGroup(new[]
         {
             $"Vespene" + $"{$"({vespeneMiners})",7}",
-            $"Max: {IncomeTracker.MaxVespeneCollectionRate, 9:F0}",
-            $"Average: {IncomeTracker.AverageVespeneCollectionRate, 5:F0}",
-            $"Current: {IncomeTracker.CurrentVespeneCollectionRate, 5:F0}",
-            $"Expected: {IncomeTracker.ExpectedVespeneCollectionRate, 4:F0}",
+            $"Max: {IncomeTracker.Instance.MaxVespeneCollectionRate, 9:F0}",
+            $"Average: {IncomeTracker.Instance.AverageVespeneCollectionRate, 5:F0}",
+            $"Current: {IncomeTracker.Instance.CurrentVespeneCollectionRate, 5:F0}",
+            $"Expected: {IncomeTracker.Instance.ExpectedVespeneCollectionRate, 4:F0}",
         }, virtualPos: new Point { X = 0.410f, Y = 0.725f });
     }
 
@@ -143,14 +143,14 @@ public class BotDebugger {
             return;
         }
 
-        var mineralsToGasRatio = SpendingTracker.ExpectedFutureMineralsSpending / SpendingTracker.ExpectedFutureVespeneSpending;
+        var mineralsToGasRatio = SpendingTracker.Instance.ExpectedFutureMineralsSpending / SpendingTracker.Instance.ExpectedFutureVespeneSpending;
         Program.GraphicalDebugger.AddTextGroup(new[]
         {
             "Future spending",
-            $"Minerals: {SpendingTracker.ExpectedFutureMineralsSpending, 8:F0}",
-            $"Gas: {SpendingTracker.ExpectedFutureVespeneSpending, 13:F0}",
+            $"Minerals: {SpendingTracker.Instance.ExpectedFutureMineralsSpending, 8:F0}",
+            $"Gas: {SpendingTracker.Instance.ExpectedFutureVespeneSpending, 13:F0}",
             // SC2 cannot render the infinity character, so we show "INF" instead
-            $"Minerals/Gas: {(SpendingTracker.ExpectedFutureVespeneSpending == 0 ? "INF" : mineralsToGasRatio), 4:F1}",
+            $"Minerals/Gas: {(SpendingTracker.Instance.ExpectedFutureVespeneSpending == 0 ? "INF" : mineralsToGasRatio), 4:F1}",
         }, virtualPos: new Point { X = 0.505f, Y = 0.740f });
     }
 
@@ -199,8 +199,8 @@ public class BotDebugger {
         // TODO GD Add creep coverage
         var matchupTexts = new List<string>
         {
-            $"Enemy: {Controller.EnemyRace} / Visible: {MapAnalyzer.VisibilityRatio,3:P0} / Explored: {MapAnalyzer.ExplorationRatio,3:P0}",
-            $"Strategy: {EnemyStrategyTracker.EnemyStrategy}"
+            $"Enemy: {EnemyRaceTracker.Instance.EnemyRace} / Visible: {MapAnalyzer.VisibilityRatio,3:P0} / Explored: {MapAnalyzer.ExplorationRatio,3:P0}",
+            $"Strategy: {EnemyStrategyTracker.Instance.CurrentEnemyStrategy}"
         };
 
         Program.GraphicalDebugger.AddTextGroup(matchupTexts, virtualPos: new Point { X = 0.50f, Y = 0.02f });

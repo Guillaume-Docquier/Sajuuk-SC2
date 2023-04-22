@@ -5,13 +5,15 @@ using Bot.GameData;
 
 namespace Bot.GameSense;
 
-// This doesn't need to be a global static class
+// This doesn't need to be a global singleton-like class
 // It could be created by Sajuuk and given to the EconomyManager
 // But at the same time, we don't want two of these
 // Soooo... yeah, whatever!
-public static class SpendingTracker {
-    public static float ExpectedFutureMineralsSpending { get; private set; }
-    public static float ExpectedFutureVespeneSpending { get; private set; }
+public class SpendingTracker {
+    public static readonly SpendingTracker Instance = new SpendingTracker();
+
+    public float ExpectedFutureMineralsSpending { get; private set; }
+    public float ExpectedFutureVespeneSpending { get; private set; }
 
     /// <summary>
     /// Update the expected future spending.
@@ -21,14 +23,14 @@ public static class SpendingTracker {
     /// This effectively prioritizes expenses that will happen soon.
     /// </summary>
     /// <param name="futureBuildRequests"></param>
-    public static void UpdateExpectedFutureSpending(List<BuildFulfillment> futureBuildRequests) {
+    public void UpdateExpectedFutureSpending(List<BuildFulfillment> futureBuildRequests) {
         ExpectedFutureMineralsSpending = 0;
         ExpectedFutureVespeneSpending = 0;
 
         // TODO GD The list is sorted by priority, then supply, with "atSupply: 0" being last
         // Because of this, if there's a lot of things planned for the future, we won't be counting "atSupply: 0" build requests, but in reality we'll execute them before
         // We could (should) adjust the logic accordingly
-        var spendingLimit = IncomeTracker.ExpectedMineralsCollectionRate + IncomeTracker.ExpectedVespeneCollectionRate;
+        var spendingLimit = IncomeTracker.Instance.ExpectedMineralsCollectionRate + IncomeTracker.Instance.ExpectedVespeneCollectionRate;
         foreach (var buildRequest in futureBuildRequests) {
             var mineralSpending = 0f;
             var vespeneSpending = 0f;

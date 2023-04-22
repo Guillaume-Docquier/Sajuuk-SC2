@@ -26,7 +26,7 @@ public partial class ScoutManager : Manager {
         Dispatcher = new ScoutManagerDispatcher(this);
         Releaser = new ScoutManagerReleaser(this);
 
-        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(Controller.EnemyRace);
+        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(EnemyRaceTracker.Instance.EnemyRace);
     }
 
     protected override void RecruitmentPhase() {

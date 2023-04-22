@@ -4,6 +4,7 @@ using Bot.Builds;
 using Bot.Managers.WarManagement.States;
 using Bot.Managers.WarManagement.States.EarlyGame;
 using Bot.StateManagement;
+using Bot.Tagging;
 
 namespace Bot.Managers.WarManagement;
 
@@ -28,8 +29,8 @@ public class WarManager: Manager {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _stateMachine.State.Behaviour.BuildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
-    public WarManager() {
-        _stateMachine = new StateMachine<WarManager, WarManagerState>(this, new EarlyGameState());
+    public WarManager(ITaggingService taggingService) {
+        _stateMachine = new StateMachine<WarManager, WarManagerState>(this, new EarlyGameState(taggingService));
     }
 
     public override string ToString() {

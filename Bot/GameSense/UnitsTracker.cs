@@ -66,7 +66,7 @@ public class UnitsTracker: INeedUpdating {
         EnemyUnits.Clear();
     }
 
-    public void Update(ResponseObservation observation) {
+    public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         var unitsAsReportedByTheApi = observation.Observation.RawData.Units.ToList();
         var currentFrame = observation.Observation.GameLoop;
 

@@ -5,6 +5,7 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapKnowledge;
 using Bot.Scenarios;
+using Bot.Tagging;
 using Bot.Utils;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -12,6 +13,8 @@ using SC2APIProtocol;
 namespace Bot;
 
 public abstract class PoliteBot: IBot {
+    protected readonly ITaggingService TaggingService;
+
     private readonly string _version;
     private readonly List<IScenario> _scenarios;
     private bool _greetDone = false;
@@ -21,9 +24,11 @@ public abstract class PoliteBot: IBot {
 
     public abstract Race Race { get; }
 
-    public PoliteBot(string version, List<IScenario> scenarios = null) {
+    protected PoliteBot(string version, List<IScenario> scenarios, ITaggingService taggingService) {
         _version = version;
-        _scenarios = scenarios ?? new List<IScenario>();
+        _scenarios = scenarios;
+
+        TaggingService = taggingService;
     }
 
     public async Task OnFrame() {
@@ -47,8 +52,7 @@ public abstract class PoliteBot: IBot {
         if (!_greetDone && Controller.Frame >= TimeUtils.SecsToFrames(1)) {
             Controller.Chat($"Hi, my name is {Name}");
             Controller.Chat("I wish you good luck and good fun!");
-            TaggingService.TagGame(TaggingService.Tag.Version, _version);
-
+            TaggingService.TagVersion(_version);
             _greetDone = true;
         }
     }

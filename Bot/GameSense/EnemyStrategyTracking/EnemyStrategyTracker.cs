@@ -1,26 +1,32 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.Tagging;
 using SC2APIProtocol;
 
 namespace Bot.GameSense.EnemyStrategyTracking;
 
 public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTransition> {
-    public static EnemyStrategyTracker Instance { get; private set; } = new EnemyStrategyTracker();
+    public static EnemyStrategyTracker Instance { get; private set; } = new EnemyStrategyTracker(TaggingService.Instance);
+
+    private readonly ITaggingService _taggingService;
     private readonly HashSet<ISubscriber<EnemyStrategyTransition>> _subscribers = new HashSet<ISubscriber<EnemyStrategyTransition>>();
 
-    private EnemyStrategy _enemyStrategy = EnemyStrategy.Unknown;
     private IStrategyInterpreter _strategyInterpreter;
 
-    public static EnemyStrategy EnemyStrategy => Instance._enemyStrategy;
+    public EnemyStrategy CurrentEnemyStrategy { get; private set; } = EnemyStrategy.Unknown;
 
-    private EnemyStrategyTracker() {}
-
-    public void Reset() {
-        Instance = new EnemyStrategyTracker();
+    private EnemyStrategyTracker(ITaggingService taggingService) {
+        _taggingService = taggingService;
     }
 
-    public void Update(ResponseObservation observation) {
-        _strategyInterpreter ??= Controller.EnemyRace switch
+    public void Reset() {
+        _subscribers.Clear();
+        _strategyInterpreter = null;
+        CurrentEnemyStrategy = EnemyStrategy.Unknown;
+    }
+
+    public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
+        _strategyInterpreter ??= EnemyRaceTracker.Instance.EnemyRace switch
         {
             Race.Terran => new TerranStrategyInterpreter(),
             Race.Zerg => new ZergStrategyInterpreter(),
@@ -28,22 +34,26 @@ public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTrans
             _ => null,
         };
 
-        if (_strategyInterpreter != null) {
-            var knownEnemyUnits = UnitsTracker.EnemyUnits.Concat(UnitsTracker.EnemyMemorizedUnits.Values).ToList();
-            var newEnemyStrategy = _strategyInterpreter.Interpret(knownEnemyUnits);
-            if (newEnemyStrategy != EnemyStrategy.Unknown && _enemyStrategy != newEnemyStrategy) {
-                var transition = new EnemyStrategyTransition
-                {
-                    PreviousStrategy = _enemyStrategy,
-                    CurrentStrategy = newEnemyStrategy
-                };
-
-                _enemyStrategy = newEnemyStrategy;
-                TaggingService.TagGame(TaggingService.Tag.EnemyStrategy, _enemyStrategy);
-
-                NotifyOfStrategyChanged(transition);
-            }
+        if (_strategyInterpreter == null) {
+            return;
         }
+
+        var knownEnemyUnits = UnitsTracker.EnemyUnits.Concat(UnitsTracker.EnemyMemorizedUnits.Values).ToList();
+        var newEnemyStrategy = _strategyInterpreter.Interpret(knownEnemyUnits);
+        if (newEnemyStrategy == EnemyStrategy.Unknown || CurrentEnemyStrategy == newEnemyStrategy) {
+            return;
+        }
+
+        var transition = new EnemyStrategyTransition
+        {
+            PreviousStrategy = CurrentEnemyStrategy,
+            CurrentStrategy = newEnemyStrategy
+        };
+
+        CurrentEnemyStrategy = newEnemyStrategy;
+        _taggingService.TagEnemyStrategy(CurrentEnemyStrategy.ToString());
+
+        NotifyOfStrategyChanged(transition);
     }
 
     private void NotifyOfStrategyChanged(EnemyStrategyTransition transition) {

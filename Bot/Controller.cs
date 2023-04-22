@@ -27,7 +27,6 @@ public static class Controller {
     public const float ExpandIsTakenRadius = 4f;
 
     public static ResponseGameInfo GameInfo { get; private set; }
-    public static Race EnemyRace { get; private set; }
     public static ResponseObservation Observation { get; private set; }
 
     public static uint Frame { get; private set; } = uint.MaxValue;
@@ -46,6 +45,7 @@ public static class Controller {
     // TODO GD I'm sure we could figure out the dependency graph automatically
     private static List<INeedUpdating> ThoseWhoNeedUpdating => new List<INeedUpdating>
     {
+        EnemyRaceTracker.Instance,      // Depends on nothing
         ChatTracker.Instance,           // Depends on nothing
         VisibilityTracker.Instance,     // Depends on nothing
 
@@ -70,7 +70,6 @@ public static class Controller {
 
         GameInfo = null;
         Observation = null;
-        EnemyRace = default;
 
         _frameDelayMs = 0;
         ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Reset());
@@ -96,28 +95,6 @@ public static class Controller {
         Chat($"Real time set: {reason}", toTeam: true);
     }
 
-    private static void UpdateEnemyRace() {
-        if (EnemyRace == default) {
-            EnemyRace = GameInfo.PlayerInfo
-                .Where(playerInfo => playerInfo.Type != PlayerType.Observer)
-                .First(playerInfo => playerInfo.PlayerId != Observation.Observation.PlayerCommon.PlayerId)
-                .RaceRequested;
-        }
-
-        if (EnemyRace == Race.Random) {
-            var enemyUnits = UnitsTracker.EnemyUnits;
-            if (enemyUnits.Any(worker => Units.AllTerranUnits.Contains(worker.UnitType))) {
-                EnemyRace = Race.Terran;
-            }
-            else if (enemyUnits.Any(worker => Units.AllProtossUnits.Contains(worker.UnitType))) {
-                EnemyRace = Race.Protoss;
-            }
-            else if (enemyUnits.Any(worker => Units.AllZergUnits.Contains(worker.UnitType))) {
-                EnemyRace = Race.Zerg;
-            }
-        }
-    }
-
     public static void NewFrame(ResponseGameInfo gameInfo, ResponseObservation observation) {
         Actions.Clear();
 
@@ -129,10 +106,8 @@ public static class Controller {
             Environment.Exit(0);
         }
 
-        UpdateEnemyRace();
-
         foreach (var needsUpdating in ThoseWhoNeedUpdating) {
-            needsUpdating.Update(Observation);
+            needsUpdating.Update(Observation, GameInfo);
         }
 
         CurrentSupply = Observation.Observation.PlayerCommon.FoodUsed;

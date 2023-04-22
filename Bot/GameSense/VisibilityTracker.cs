@@ -62,7 +62,7 @@ public class VisibilityTracker: INeedUpdating {
         _exploredCells = null;
     }
 
-    public void Update(ResponseObservation observation) {
+    public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         _rawVisibilityMap = observation.Observation.RawData.MapState.Visibility;
     }
 

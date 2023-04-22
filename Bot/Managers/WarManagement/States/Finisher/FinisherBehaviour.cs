@@ -6,6 +6,7 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.MapKnowledge;
+using Bot.Tagging;
 using Bot.Utils;
 using SC2APIProtocol;
 
@@ -21,6 +22,8 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     private readonly FinisherBehaviourDebugger _debugger = new FinisherBehaviourDebugger();
     private readonly WarManager _warManager;
 
+    private readonly ITaggingService _taggingService;
+
     private bool _isTerranFinisherInitiated = false;
 
     public IAssigner Assigner { get; }
@@ -34,8 +37,10 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     public readonly ArmySupervisor AttackSupervisor = new ArmySupervisor();
     public readonly ArmySupervisor TerranFinisherSupervisor = new ArmySupervisor();
 
-    public FinisherBehaviour(WarManager warManager) {
+    public FinisherBehaviour(WarManager warManager, ITaggingService taggingService) {
         _warManager = warManager;
+        _taggingService = taggingService;
+
         BuildRequests.Add(_armyBuildRequest);
 
         Assigner = new WarManagerAssigner<FinisherBehaviour>(this);
@@ -84,7 +89,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     /// </summary>
     /// <returns>True if we should start handling flying terran buildings</returns>
     private static bool ShouldFinishOffTerran() {
-        if (Controller.EnemyRace != Race.Terran) {
+        if (EnemyRaceTracker.Instance.EnemyRace != Race.Terran) {
             return false;
         }
 
@@ -117,7 +122,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         BuildRequests.Add(_corruptorsBuildRequest);
 
         _isTerranFinisherInitiated = true;
-        TaggingService.TagGame(TaggingService.Tag.TerranFinisher);
+        _taggingService.TagTerranFinisher();
     }
 
     /// <summary>

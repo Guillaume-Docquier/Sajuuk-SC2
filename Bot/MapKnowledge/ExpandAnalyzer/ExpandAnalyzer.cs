@@ -35,7 +35,7 @@ public class ExpandAnalyzer: INeedUpdating {
         Instance = new ExpandAnalyzer();
     }
 
-    public void Update(ResponseObservation observation) {
+    public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         if (_isInitialized) {
             return;
         }
