@@ -1,14 +1,20 @@
 ﻿using Bot.GameData;
 using Bot.GameSense;
-using Bot.Tests.Mocks;
+using Bot.Tagging;
+using Moq;
 
 namespace Bot.Tests.Managers.WarManagement;
 
 public class WarManagerTests : BaseTestClass {
+    private readonly Mock<ITaggingService> _taggingServiceMock;
+    public WarManagerTests() {
+        _taggingServiceMock = new Mock<ITaggingService>();
+    }
+
     [Fact]
     public void GivenUnManagedUnit_WhenOnFrame_ManagesMilitaryUnits() {
         // Arrange
-        var manager = new Bot.Managers.WarManagement.WarManager(new DummyTaggingService());
+        var manager = new Bot.Managers.WarManagement.WarManager(_taggingServiceMock.Object);
 
         var militaryUnits = Units.ZergMilitary
             .Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed })
@@ -34,7 +40,7 @@ public class WarManagerTests : BaseTestClass {
     [Fact(Skip = "Not yet implemented")]
     public void GivenUnManagedUnit_WhenOnFrame_DoesNotManageNonMilitaryUnits() {
         // Arrange
-        var manager = new Bot.Managers.WarManagement.WarManager(new DummyTaggingService());
+        var manager = new Bot.Managers.WarManagement.WarManager(_taggingServiceMock.Object);
         // TODO UnitsTracker
 
         // Act

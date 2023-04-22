@@ -2,7 +2,7 @@
 using Bot.GameSense;
 using Bot.Tagging;
 using Bot.Tests.Fixtures;
-using Bot.Tests.Mocks;
+using Moq;
 using SC2APIProtocol;
 
 namespace Bot.Tests.GameSense;
@@ -10,8 +10,11 @@ namespace Bot.Tests.GameSense;
 // This is because we play with the global UnitsTracker.Instance
 [Collection("Sequential")]
 public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDisposable {
+    private readonly Mock<ITaggingService> _taggingServiceMock;
+
     public EnemyRaceTrackerTests() {
         UnitsTracker.Instance.Reset(); // TODO GD Review the test setup, right now the ResponseGameObservationUtils depend on the UnitsTracker.Instance
+        _taggingServiceMock = new Mock<ITaggingService>();
     }
 
     public void Dispose() {
@@ -27,7 +30,7 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
-        var enemyRaceTracker = new EnemyRaceTracker(new DummyTaggingService());
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
 
         // Act
         enemyRaceTracker.Update(observation, gameInfo);
@@ -45,7 +48,7 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
-        var enemyRaceTracker = new EnemyRaceTracker(new DummyTaggingService());
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
 
         // Act
         enemyRaceTracker.Update(observation, gameInfo);
@@ -59,7 +62,7 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
-        var enemyRaceTracker = new EnemyRaceTracker(new DummyTaggingService());
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
         enemyRaceTracker.Update(observation, gameInfo);
 
         // Act
@@ -84,7 +87,7 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: units);
 
-        var enemyRaceTracker = new EnemyRaceTracker(new DummyTaggingService());
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
         UnitsTracker.Instance.Update(observation, gameInfo);
 
         // Act
@@ -101,7 +104,7 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: units);
 
-        var enemyRaceTracker = new EnemyRaceTracker(new DummyTaggingService());
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
         enemyRaceTracker.Update(observation, gameInfo);
         UnitsTracker.Instance.Update(observation, gameInfo);
 
@@ -119,7 +122,7 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: units);
 
-        var enemyRaceTracker = new EnemyRaceTracker(new DummyTaggingService());
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
         enemyRaceTracker.Update(observation, gameInfo); // Race.Random
         UnitsTracker.Instance.Update(observation, gameInfo);
         enemyRaceTracker.Update(observation, gameInfo); // expectedRace
@@ -138,19 +141,18 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
     [InlineData(Race.Protoss, Race.Protoss)]
     [InlineData(Race.Zerg, Race.Zerg)]
     [InlineData(Race.Random, Race.Random)]
-    public void GivenPlayerRaces_WhenUpdate_TagsEnemyRace(Race playerRace, Race enemyRace) {
+    public void GivenPlayerRaces_WhenUpdate_TagsEnemyRaceOnce(Race playerRace, Race enemyRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
-        var taggingService = new TestTaggingService();
-        var enemyRaceTracker = new EnemyRaceTracker(taggingService);
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
 
         // Act
         enemyRaceTracker.Update(observation, gameInfo);
 
         // Assert
-        Assert.Single(taggingService.RacesTagged);
-        Assert.Equal(enemyRace, taggingService.RacesTagged[0]);
+        _taggingServiceMock.Verify(taggingService => taggingService.TagEnemyRace(It.IsAny<Race>()), Times.Once);
+        _taggingServiceMock.Verify(taggingService => taggingService.TagEnemyRace(enemyRace), Times.Once);
     }
 
     [Theory]
@@ -158,98 +160,63 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
     [InlineData(Race.Protoss, Race.Protoss)]
     [InlineData(Race.Zerg, Race.Zerg)]
     [InlineData(Race.Random, Race.Random)]
-    public void GivenPlayerRaces_WhenMultipleUpdates_TagsEnemyRaceOnlyOnce(Race playerRace, Race enemyRace) {
+    public void GivenEnemyRace_WhenFurtherUpdates_TagsNothing(Race playerRace, Race enemyRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
-        var taggingService = new TestTaggingService();
-        var enemyRaceTracker = new EnemyRaceTracker(taggingService);
+
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
+        enemyRaceTracker.Update(observation, gameInfo);
 
         // Act
-        enemyRaceTracker.Update(observation, gameInfo);
+        _taggingServiceMock.Reset();
         enemyRaceTracker.Update(observation, gameInfo);
         enemyRaceTracker.Update(observation, gameInfo);
         enemyRaceTracker.Update(observation, gameInfo);
 
         // Assert
-        Assert.Single(taggingService.RacesTagged);
-        Assert.Equal(enemyRace, taggingService.RacesTagged[0]);
+        _taggingServiceMock.Verify(taggingService => taggingService.TagEnemyRace(It.IsAny<Race>()), Times.Never);
     }
 
     [Theory]
     [MemberData(nameof(EnemyRandomRaceAndVisibleUnitsTestData))]
-    public void GivenEnemyRandomRaceAndVisibleUnits_WhenUpdate_ThenTagsRandomAndActualRace(IEnumerable<Unit> units, Race expectedRace) {
+    public void GivenEnemyRandomRaceAndVisibleUnits_WhenUpdate_ThenTagsActualRaceOnce(IEnumerable<Unit> units, Race expectedRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: units);
 
-        var taggingService = new TestTaggingService();
-        var enemyRaceTracker = new EnemyRaceTracker(taggingService);
-
-        // Act
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
         enemyRaceTracker.Update(observation, gameInfo);
         UnitsTracker.Instance.Update(observation, gameInfo);
+
+        // Act
+        _taggingServiceMock.Reset();
         enemyRaceTracker.Update(observation, gameInfo);
 
         // Assert
-        Assert.Equal(new List<Race> { Race.Random, expectedRace }, taggingService.RacesTagged);
+        _taggingServiceMock.Verify(taggingService => taggingService.TagEnemyRace(It.IsAny<Race>()), Times.Once);
+        _taggingServiceMock.Verify(taggingService => taggingService.TagEnemyRace(expectedRace), Times.Once);
     }
 
     [Theory]
     [MemberData(nameof(EnemyRandomRaceAndVisibleUnitsTestData))]
-    public void GivenEnemyRandomRaceAndVisibleUnits_WhenMultipleUpdates_ThenTagsRandomAndActualRaceOnce(IEnumerable<Unit> units, Race expectedRace) {
+    public void GivenEnemyResolvedRandomRaceAndVisibleUnits_WhenFurtherUpdates_ThenTagsNothing(IEnumerable<Unit> units, Race expectedRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: units);
 
-        var taggingService = new TestTaggingService();
-        var enemyRaceTracker = new EnemyRaceTracker(taggingService);
-
-        // Act
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
         enemyRaceTracker.Update(observation, gameInfo);
         UnitsTracker.Instance.Update(observation, gameInfo);
         enemyRaceTracker.Update(observation, gameInfo);
+
+        // Act
+        _taggingServiceMock.Reset();
         enemyRaceTracker.Update(observation, gameInfo);
         enemyRaceTracker.Update(observation, gameInfo);
         enemyRaceTracker.Update(observation, gameInfo);
 
         // Assert
-        Assert.Equal(new List<Race> { Race.Random, expectedRace }, taggingService.RacesTagged);
-    }
-
-    private class TestTaggingService : ITaggingService {
-        public readonly List<Race> RacesTagged = new List<Race>();
-
-        public bool HasTagged(Tag tag) {
-            return false;
-        }
-
-        public void TagEarlyAttack() {
-            throw new NotImplementedException();
-        }
-
-        public void TagTerranFinisher() {
-            throw new NotImplementedException();
-        }
-
-        public void TagBuildDone(uint supply, float collectedMinerals, float collectedVespene) {
-            throw new NotImplementedException();
-        }
-
-        public void TagEnemyStrategy(string enemyStrategy) {
-            throw new NotImplementedException();
-        }
-
-        public void TagVersion(string version) {
-            throw new NotImplementedException();
-        }
-
-        public void TagMinerals(float collectedMinerals) {
-            throw new NotImplementedException();
-        }
-
-        public void TagEnemyRace(Race actualEnemyRace) {
-            RacesTagged.Add(actualEnemyRace);
-        }
+        _taggingServiceMock.Verify(taggingService => taggingService.TagEnemyRace(It.IsAny<Race>()), Times.Never);
     }
 }
