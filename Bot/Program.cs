@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.MapKnowledge;
 using Bot.Scenarios;
+using Bot.Tagging;
 using Bot.VideoClips;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -20,10 +21,10 @@ public class Program {
     };
 
     private const string Version = "4_0_4";
-    private static readonly IBot Bot = new SajuukBot(Version, scenarios: Scenarios);
+    private static readonly IBot Bot = CreateSajuuk(Version, Scenarios);
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.Berlingrad;
-    private const Race OpponentRace = Race.Terran;
+    private const Race OpponentRace = Race.Random;
     private const Difficulty OpponentDifficulty = Difficulty.VeryEasy;
 
     private const bool RealTime = false;
@@ -74,7 +75,7 @@ public class Program {
             GraphicalDebugger = new NullGraphicalDebugger();
 
             GameConnection = new GameConnection();
-            GameConnection.RunLocal(new SajuukBot(Version, scenarios: Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
+            GameConnection.RunLocal(CreateSajuuk(Version, Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
         }
     }
 
@@ -102,5 +103,13 @@ public class Program {
 
         GameConnection = new GameConnection();
         GameConnection.RunLadder(Bot, args).Wait();
+    }
+
+    private static IBot CreateSajuuk(string version, List<IScenario> scenarios) {
+        return new SajuukBot(
+            version,
+            scenarios,
+            TaggingService.Instance
+        );
     }
 }

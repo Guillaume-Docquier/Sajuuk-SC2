@@ -16,7 +16,7 @@ public class ChatTracker : INeedUpdating {
         NewEnemyChat.Clear();
     }
 
-    public void Update(ResponseObservation observation) {
+    public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         Reset();
 
         var playerId = observation.Observation.PlayerCommon.PlayerId;

@@ -132,7 +132,7 @@ public class RegionTracker : INeedUpdating {
         Instance = new RegionTracker();
     }
 
-    public void Update(ResponseObservation observation) {
+    public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         if (!RegionAnalyzer.IsInitialized) {
             return;
         }

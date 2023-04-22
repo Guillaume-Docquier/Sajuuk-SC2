@@ -148,14 +148,14 @@ public sealed partial class EconomyManager: Manager {
     /// </summary>
     /// <returns>The number of drones that should be sent to gas mining.</returns>
     private static int ComputeRequiredGasDroneCount() {
-        var totalSpend = SpendingTracker.ExpectedFutureMineralsSpending + SpendingTracker.ExpectedFutureVespeneSpending;
+        var totalSpend = SpendingTracker.Instance.ExpectedFutureMineralsSpending + SpendingTracker.Instance.ExpectedFutureVespeneSpending;
         if (totalSpend == 0) {
             return 0;
         }
 
-        var gasSpendRatio = SpendingTracker.ExpectedFutureVespeneSpending / totalSpend;
+        var gasSpendRatio = SpendingTracker.Instance.ExpectedFutureVespeneSpending / totalSpend;
 
-        var totalIncome = SpendingTracker.ExpectedFutureMineralsSpending + SpendingTracker.ExpectedFutureVespeneSpending;
+        var totalIncome = SpendingTracker.Instance.ExpectedFutureMineralsSpending + SpendingTracker.Instance.ExpectedFutureVespeneSpending;
 
         // We subtract the available gas to offset any income/spend evaluation error.
         // If our resource management is perfect, we'll have near 0 gas all the time, so subtracting will have no impact at all.

@@ -24,7 +24,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
         _ongoingBuildingOrders.Clear();
     }
 
-    public void Update(ResponseObservation observation) {
+    public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         foreach (var reservedBuildingCell in _reservedBuildingCells.Keys) {
             Program.GraphicalDebugger.AddGridSquare(reservedBuildingCell.ToVector3(), Colors.Yellow);
         }

@@ -36,7 +36,7 @@ public class RegionAnalyzer: INeedUpdating {
     /// <para>Analyzes the map to find ramps and do region decomposition</para>
     /// <para>There should be at least 1 region per expand location and regions are always separated by ramps or choke points.</para>
     /// </summary>
-    public void Update(ResponseObservation observation) {
+    public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         if (!ExpandAnalyzer.IsInitialized) {
             return;
         }

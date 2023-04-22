@@ -1,19 +1,12 @@
 ﻿using Bot.GameData;
+using Bot.GameSense;
 using Bot.Tests.Fixtures;
+using Bot.Tests.Mocks;
 using SC2APIProtocol;
 
-namespace Bot.Tests;
+namespace Bot.Tests.GameSense;
 
-[Collection("Sequential")]
-public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IClassFixture<GraphicalDebuggerFixture>, IDisposable {
-    public ControllerTests() {
-        Controller.Reset();
-    }
-
-    public void Dispose() {
-        Controller.Reset();
-    }
-
+public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture> {
     [Theory]
     [InlineData(Race.Zerg, Race.Terran)]
     [InlineData(Race.Terran, Race.Protoss)]
@@ -22,12 +15,13 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IClassFixtur
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
+        var enemyRaceTracker = new EnemyRaceTracker(new DummyTaggingService());
 
         // Act
-        Controller.NewFrame(gameInfo, observation);
+        enemyRaceTracker.Update(observation, gameInfo);
 
         // Assert
-        Assert.Equal(enemyRace, Controller.EnemyRace);
+        Assert.Equal(enemyRace, enemyRaceTracker.EnemyRace);
     }
 
     [Theory]
@@ -38,12 +32,13 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IClassFixtur
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
+        var enemyRaceTracker = new EnemyRaceTracker(new DummyTaggingService());
 
         // Act
-        Controller.NewFrame(gameInfo, observation);
+        enemyRaceTracker.Update(observation, gameInfo);
 
         // Assert
-        Assert.Equal(enemyRace, Controller.EnemyRace);
+        Assert.Equal(enemyRace, enemyRaceTracker.EnemyRace);
     }
 
     [Fact]
@@ -51,12 +46,13 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IClassFixtur
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
+        var enemyRaceTracker = new EnemyRaceTracker(new DummyTaggingService());
 
         // Act
-        Controller.NewFrame(gameInfo, observation);
+        enemyRaceTracker.Update(observation, gameInfo);
 
         // Assert
-        Assert.Equal(Race.Random, Controller.EnemyRace);
+        Assert.Equal(Race.Random, enemyRaceTracker.EnemyRace);
     }
 
     public static IEnumerable<object[]> EnemyRandomRaceAndVisibleUnitsTestData() {
@@ -71,17 +67,18 @@ public class ControllerTests : IClassFixture<KnowledgeBaseFixture>, IClassFixtur
     [MemberData(nameof(EnemyRandomRaceAndVisibleUnitsTestData))]
     public void GivenEnemyRandomRaceAndVisibleUnits_WhenNewGameInfo_ThenResolvesEnemyRace(IEnumerable<Unit> units, Race expectedRace) {
         // Arrange
+        UnitsTracker.Instance.Reset(); // TODO GD Review the test setup, right now the ResponseGameObservationUtils depend on the UnitsTracker.Instance
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
         var observation = ResponseGameObservationUtils.CreateResponseObservation(units: units);
 
-        // Because of dependencies issues, the random race resolver only works after the initial update
-        // TODO GD Make the race resolver a Tracker instead of being in the controller
-        Controller.NewFrame(gameInfo, observation);
+        var enemyRaceTracker = new EnemyRaceTracker(new DummyTaggingService());
+        enemyRaceTracker.Update(observation, gameInfo);
+        UnitsTracker.Instance.Update(observation, gameInfo);
 
         // Act
-        Controller.NewFrame(gameInfo, observation);
+        enemyRaceTracker.Update(observation, gameInfo);
 
         // Assert
-        Assert.Equal(expectedRace, Controller.EnemyRace);
+        Assert.Equal(expectedRace, enemyRaceTracker.EnemyRace);
     }
 }

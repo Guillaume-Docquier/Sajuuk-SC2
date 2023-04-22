@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Bot.DataStructures;
 using Bot.GameData;
+using Bot.Tagging;
 using Bot.UnitModules;
 using Bot.Utils;
 using SC2APIProtocol;
@@ -8,46 +9,49 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class IncomeTracker : INeedUpdating {
-    public static readonly IncomeTracker Instance = new IncomeTracker();
+    public static readonly IncomeTracker Instance = new IncomeTracker(TaggingService.Instance);
 
     private const int LogCollectedMineralsFrame = (int)(90 * TimeUtils.FramesPerSecond);
     private const int StatisticsRollingWindowSeconds = 30;
 
     private readonly CircularQueue<float> _mineralsCollectionRates = new CircularQueue<float>((int)(TimeUtils.FramesPerSecond * StatisticsRollingWindowSeconds));
     private readonly CircularQueue<float> _vespeneCollectionRates = new CircularQueue<float>((int)(TimeUtils.FramesPerSecond * StatisticsRollingWindowSeconds));
+    private readonly ITaggingService _taggingService;
 
-    public static float CurrentMineralsCollectionRate { get; private set; }
-    public static float MaxMineralsCollectionRate { get; private set; }
-    public static float AverageMineralsCollectionRate { get; private set; }
-    public static float ExpectedMineralsCollectionRate { get; private set; }
+    public float CurrentMineralsCollectionRate { get; private set; }
+    public float MaxMineralsCollectionRate { get; private set; }
+    public float AverageMineralsCollectionRate { get; private set; }
+    public float ExpectedMineralsCollectionRate { get; private set; }
 
-    public static float CurrentVespeneCollectionRate { get; private set; }
-    public static float MaxVespeneCollectionRate { get; private set; }
-    public static float AverageVespeneCollectionRate { get; private set; }
-    public static float ExpectedVespeneCollectionRate { get; private set; }
+    public float CurrentVespeneCollectionRate { get; private set; }
+    public float MaxVespeneCollectionRate { get; private set; }
+    public float AverageVespeneCollectionRate { get; private set; }
+    public float ExpectedVespeneCollectionRate { get; private set; }
 
-    private IncomeTracker() {}
+    private IncomeTracker(ITaggingService taggingService) {
+        _taggingService = taggingService;
+    }
 
     public void Reset() {
         _mineralsCollectionRates.Clear();
         _vespeneCollectionRates.Clear();
     }
 
-    public void Update(ResponseObservation observation) {
+    public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         var scoreDetails = observation.Observation.Score.ScoreDetails;
         UpdateMineralsCollectionRates(scoreDetails.CollectionRateMinerals);
         UpdateVespeneCollectionRates(scoreDetails.CollectionRateVespene);
 
         CalculateExpectedCollectionRates();
 
-        if (TaggingService.CanTag(TaggingService.Tag.Minerals) && Controller.Frame >= LogCollectedMineralsFrame) {
+        if (!_taggingService.HasTagged(Tag.Minerals) && Controller.Frame >= LogCollectedMineralsFrame) {
             var mineralsCollected = observation.Observation.Score.ScoreDetails.CollectedMinerals;
             Logger.Metric("Collected Minerals: {0}", mineralsCollected);
-            TaggingService.TagGame(TaggingService.Tag.Minerals, mineralsCollected);
+            _taggingService.TagMinerals(mineralsCollected);
         }
     }
 
-    private static void CalculateExpectedCollectionRates() {
+    private void CalculateExpectedCollectionRates() {
         ExpectedMineralsCollectionRate = 0;
         ExpectedVespeneCollectionRate = 0;
 

@@ -3,13 +3,20 @@ using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Managers.WarManagement.States.Finisher;
 using Bot.MapKnowledge;
+using Bot.Tagging;
 
 namespace Bot.Managers.WarManagement.States.MidGame;
 
 public class MidGameState : WarManagerState {
-    private TransitionState _transitionState = TransitionState.NotTransitioning;
+    private readonly ITaggingService _taggingService;
 
+    private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
+
+    public MidGameState(ITaggingService taggingService) {
+        _taggingService = taggingService;
+    }
+
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
@@ -30,7 +37,7 @@ public class MidGameState : WarManagerState {
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new FinisherState());
+            StateMachine.TransitionTo(new FinisherState(_taggingService));
             return true;
         }
 

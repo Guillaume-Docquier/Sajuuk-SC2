@@ -75,7 +75,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         _walkableCells.Clear();
     }
 
-    public void Update(ResponseObservation observation) {
+    public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         if (IsInitialized) {
             _currentWalkMap = ParseWalkMap();
             return;

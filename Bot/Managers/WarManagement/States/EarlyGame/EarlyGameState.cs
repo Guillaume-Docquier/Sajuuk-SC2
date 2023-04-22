@@ -1,17 +1,24 @@
-﻿using Bot.Utils;
+﻿using Bot.Tagging;
+using Bot.Utils;
 
 namespace Bot.Managers.WarManagement.States.EarlyGame;
 
 public class EarlyGameState : WarManagerState {
     private const int EarlyGameEndInSeconds = (int)(5 * 60);
 
-    private TransitionState _transitionState = TransitionState.NotTransitioning;
+    private readonly ITaggingService _taggingService;
 
+    private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
+
+    public EarlyGameState(ITaggingService taggingService) {
+        _taggingService = taggingService;
+    }
+
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new EarlyGameBehaviour(Context);
+        _behaviour = new EarlyGameBehaviour(Context, _taggingService);
     }
 
     protected override void Execute() {
@@ -28,7 +35,7 @@ public class EarlyGameState : WarManagerState {
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new MidGame.MidGameState());
+            StateMachine.TransitionTo(new MidGame.MidGameState(_taggingService));
             return true;
         }
 

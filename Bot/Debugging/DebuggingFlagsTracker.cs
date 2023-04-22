@@ -38,7 +38,7 @@ public class DebuggingFlagsTracker : INeedUpdating {
         _activeDebuggingFlags.Add(DebuggingFlags.WarManager);
     }
 
-    public void Update(ResponseObservation observation) {
+    public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         if (!Program.DebugEnabled) {
             return;
         }

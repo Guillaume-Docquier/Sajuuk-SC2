@@ -13,6 +13,7 @@ using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
 using Bot.Managers.WarManagement;
 using Bot.Scenarios;
+using Bot.Tagging;
 using SC2APIProtocol;
 
 namespace Bot;
@@ -26,7 +27,7 @@ public class SajuukBot: PoliteBot {
 
     private readonly BotDebugger _debugger = new BotDebugger();
 
-    public SajuukBot(string version, List<IScenario> scenarios = null) : base(version, scenarios) {}
+    public SajuukBot(string version, List<IScenario> scenarios, ITaggingService taggingService) : base(version, scenarios, taggingService) {}
 
     protected override Task DoOnFrame() {
         if (Controller.Frame == 0) {
@@ -43,7 +44,7 @@ public class SajuukBot: PoliteBot {
             .SelectMany(groupedBySupply => groupedBySupply.SelectMany(request => request))
             .ToList();
 
-        SpendingTracker.UpdateExpectedFutureSpending(flatManagerRequests);
+        SpendingTracker.Instance.UpdateExpectedFutureSpending(flatManagerRequests);
 
         _debugger.Debug(
             flatManagerRequests,
@@ -58,13 +59,13 @@ public class SajuukBot: PoliteBot {
     }
 
     private void InitManagers() {
-        var buildManager = new BuildManager(new TwoBasesRoach());
+        var buildManager = new BuildManager(new TwoBasesRoach(), TaggingService);
         _managers.Add(buildManager);
 
         _managers.Add(new SupplyManager(buildManager));
         _managers.Add(new ScoutManager());
         _managers.Add(new EconomyManager(buildManager));
-        _managers.Add(new WarManager());
+        _managers.Add(new WarManager(TaggingService));
         _managers.Add(new CreepManager());
         _managers.Add(new UpgradesManager());
     }

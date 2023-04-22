@@ -8,6 +8,7 @@ using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.Managers.WarManagement.States.MidGame;
 using Bot.MapKnowledge;
+using Bot.Tagging;
 using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.States.EarlyGame;
@@ -18,6 +19,9 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     private readonly EarlyGameBehaviourDebugger _debugger = new EarlyGameBehaviourDebugger();
     private readonly WarManager _warManager;
     private readonly HashSet<IRegion> _startingRegions;
+
+    private readonly ITaggingService _taggingService;
+
     private BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
 
     private bool _rushTagged = false;
@@ -32,8 +36,10 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
     public List<BuildRequest> BuildRequests { get; } = new List<BuildRequest>();
 
-    public EarlyGameBehaviour(WarManager warManager) {
+    public EarlyGameBehaviour(WarManager warManager, ITaggingService taggingService) {
         _warManager = warManager;
+        _taggingService = taggingService;
+
         BuildRequests.Add(_armyBuildRequest);
 
         Assigner = new WarManagerAssigner<EarlyGameBehaviour>(this);
@@ -136,7 +142,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         }
 
         if (!_rushTagged) {
-            TaggingService.TagGame(TaggingService.Tag.EarlyAttack);
+            _taggingService.TagEarlyAttack();
             _rushTagged = true;
         }
 

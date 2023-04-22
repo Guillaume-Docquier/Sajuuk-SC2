@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
@@ -19,9 +20,9 @@ public class RandomScoutingStrategy : IScoutingStrategy {
     private bool _isInitialized = false;
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
-        if (Controller.EnemyRace != Race.Random) {
+        if (EnemyRaceTracker.Instance.EnemyRace != Race.Random) {
             if (_concreteScoutingStrategy == null) {
-                _concreteScoutingStrategy = ScoutingStrategyFactory.CreateNew(Controller.EnemyRace);
+                _concreteScoutingStrategy = ScoutingStrategyFactory.CreateNew(EnemyRaceTracker.Instance.EnemyRace);
 
                 // Cancel our task, we will rely on the concrete scouting strategy now
                 _raceFindingScoutingTask.Cancel();
