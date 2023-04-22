@@ -6,14 +6,18 @@ using SC2APIProtocol;
 namespace Bot.Debugging;
 
 public class DebuggingFlagsTracker : INeedUpdating {
-    public static readonly DebuggingFlagsTracker Instance = new DebuggingFlagsTracker();
+    public static readonly DebuggingFlagsTracker Instance = new DebuggingFlagsTracker(ChatTracker.Instance);
+
+    private readonly IChatTracker _chatTracker;
 
     private readonly HashSet<string> _activeDebuggingFlags = new HashSet<string>();
 
     private static IReadOnlySet<string> AllDebuggingFlags { get; } = DebuggingFlags.GetAll();
     private static IReadOnlySet<string> AllDebuggingCommands { get; } = DebuggingCommands.GetAll();
 
-    private DebuggingFlagsTracker() {
+    private DebuggingFlagsTracker(IChatTracker chatTracker) {
+        _chatTracker = chatTracker;
+
         if (Program.DebugEnabled) {
             Reset();
         }
@@ -43,7 +47,7 @@ public class DebuggingFlagsTracker : INeedUpdating {
             return;
         }
 
-        var messages = ChatTracker.NewBotChat.SelectMany(chatReceived => chatReceived.Message.Split(" "));
+        var messages = _chatTracker.NewBotChat.SelectMany(chatReceived => chatReceived.Message.Split(" "));
         foreach (var message in messages) {
             HandleMessage(message);
         }

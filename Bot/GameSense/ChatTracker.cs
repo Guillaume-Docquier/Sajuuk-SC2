@@ -3,11 +3,12 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
-public class ChatTracker : INeedUpdating {
+public class ChatTracker : IChatTracker, INeedUpdating {
+    // DI: ✔️ The only usages are for static instance creations
     public static readonly ChatTracker Instance = new ChatTracker();
 
-    public static readonly List<ChatReceived> NewBotChat = new List<ChatReceived>();
-    public static readonly List<ChatReceived> NewEnemyChat = new List<ChatReceived>();
+    public List<ChatReceived> NewBotChat { get; } = new List<ChatReceived>();
+    public List<ChatReceived> NewEnemyChat { get; } = new List<ChatReceived>();
 
     private ChatTracker() {}
 
