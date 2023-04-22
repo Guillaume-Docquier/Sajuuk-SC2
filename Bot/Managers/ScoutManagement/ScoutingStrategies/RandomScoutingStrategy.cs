@@ -14,15 +14,20 @@ namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 public class RandomScoutingStrategy : IScoutingStrategy {
     private const int TopPriority = 100;
 
-    private IScoutingStrategy _concreteScoutingStrategy;
+    private readonly IEnemyRaceTracker _enemyRaceTracker;
 
+    private IScoutingStrategy _concreteScoutingStrategy;
     private ScoutingTask _raceFindingScoutingTask;
     private bool _isInitialized = false;
 
+    public RandomScoutingStrategy(IEnemyRaceTracker enemyRaceTracker) {
+        _enemyRaceTracker = enemyRaceTracker;
+    }
+
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
-        if (EnemyRaceTracker.Instance.EnemyRace != Race.Random) {
+        if (_enemyRaceTracker.EnemyRace != Race.Random) {
             if (_concreteScoutingStrategy == null) {
-                _concreteScoutingStrategy = ScoutingStrategyFactory.CreateNew(EnemyRaceTracker.Instance.EnemyRace);
+                _concreteScoutingStrategy = ScoutingStrategyFactory.CreateNew(_enemyRaceTracker);
 
                 // Cancel our task, we will rely on the concrete scouting strategy now
                 _raceFindingScoutingTask.Cancel();

@@ -14,7 +14,7 @@ using SC2APIProtocol;
 namespace Bot.Debugging;
 
 public class BotDebugger {
-    public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus) {
+    public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus, Race enemyRace) {
         if (!Program.DebugEnabled) {
             return;
         }
@@ -27,7 +27,7 @@ public class BotDebugger {
         DebugFutureSpending();
         DebugEnemyGhostUnits();
         DebugKnownEnemyUnits();
-        DebugMatchupData();
+        DebugMatchupData(enemyRace);
         DebugExploration();
         DebugUnitAndEffectNames();
         DebugCoordinates();
@@ -191,7 +191,7 @@ public class BotDebugger {
         Program.GraphicalDebugger.AddTextGroup(textGroup, virtualPos: new Point { X = 0.83f, Y = 0.20f });
     }
 
-    private static void DebugMatchupData() {
+    private static void DebugMatchupData(Race enemyRace) {
         if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.MatchupData)) {
             return;
         }
@@ -199,7 +199,7 @@ public class BotDebugger {
         // TODO GD Add creep coverage
         var matchupTexts = new List<string>
         {
-            $"Enemy: {EnemyRaceTracker.Instance.EnemyRace} / Visible: {MapAnalyzer.VisibilityRatio,3:P0} / Explored: {MapAnalyzer.ExplorationRatio,3:P0}",
+            $"Enemy: {enemyRace} / Visible: {MapAnalyzer.VisibilityRatio,3:P0} / Explored: {MapAnalyzer.ExplorationRatio,3:P0}",
             $"Strategy: {EnemyStrategyTracker.Instance.CurrentEnemyStrategy}"
         };
 

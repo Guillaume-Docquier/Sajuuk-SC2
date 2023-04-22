@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Bot.Debugging.GraphicalDebugging;
+using Bot.GameSense;
 using Bot.MapKnowledge;
 using Bot.Scenarios;
 using Bot.Tagging;
@@ -109,7 +110,8 @@ public class Program {
         return new SajuukBot(
             version,
             scenarios,
-            TaggingService.Instance
+            TaggingService.Instance,
+            EnemyRaceTracker.Instance
         );
     }
 }

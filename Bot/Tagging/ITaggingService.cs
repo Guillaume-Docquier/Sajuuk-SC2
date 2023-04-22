@@ -1,5 +1,4 @@
-﻿using Bot.GameSense.EnemyStrategyTracking;
-using SC2APIProtocol;
+﻿using SC2APIProtocol;
 
 namespace Bot.Tagging;
 

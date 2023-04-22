@@ -7,6 +7,7 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class EnemyRaceTracker : IEnemyRaceTracker, INeedUpdating {
+    // DI: ✔️ The only usages are for static instance creations
     public static readonly EnemyRaceTracker Instance = new EnemyRaceTracker(TaggingService.Instance);
 
     private readonly ITaggingService _taggingService;

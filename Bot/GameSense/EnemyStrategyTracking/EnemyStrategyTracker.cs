@@ -6,17 +6,20 @@ using SC2APIProtocol;
 namespace Bot.GameSense.EnemyStrategyTracking;
 
 public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTransition> {
-    public static EnemyStrategyTracker Instance { get; private set; } = new EnemyStrategyTracker(TaggingService.Instance);
+    public static EnemyStrategyTracker Instance { get; private set; } = new EnemyStrategyTracker(TaggingService.Instance, EnemyRaceTracker.Instance);
 
     private readonly ITaggingService _taggingService;
+    private readonly IEnemyRaceTracker _enemyRaceTracker;
+
     private readonly HashSet<ISubscriber<EnemyStrategyTransition>> _subscribers = new HashSet<ISubscriber<EnemyStrategyTransition>>();
 
     private IStrategyInterpreter _strategyInterpreter;
 
     public EnemyStrategy CurrentEnemyStrategy { get; private set; } = EnemyStrategy.Unknown;
 
-    private EnemyStrategyTracker(ITaggingService taggingService) {
+    private EnemyStrategyTracker(ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker) {
         _taggingService = taggingService;
+        _enemyRaceTracker = enemyRaceTracker;
     }
 
     public void Reset() {
@@ -26,7 +29,7 @@ public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTrans
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
-        _strategyInterpreter ??= EnemyRaceTracker.Instance.EnemyRace switch
+        _strategyInterpreter ??= _enemyRaceTracker.EnemyRace switch
         {
             Race.Terran => new TerranStrategyInterpreter(),
             Race.Zerg => new ZergStrategyInterpreter(),

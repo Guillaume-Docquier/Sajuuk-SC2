@@ -21,13 +21,17 @@ namespace Bot;
 public class SajuukBot: PoliteBot {
     private readonly List<Manager> _managers = new List<Manager>();
 
-    public override string Name => "Sajuuk";
-
-    public override Race Race => Race.Zerg;
+    private readonly IEnemyRaceTracker _enemyRaceTracker;
 
     private readonly BotDebugger _debugger = new BotDebugger();
 
-    public SajuukBot(string version, List<IScenario> scenarios, ITaggingService taggingService) : base(version, scenarios, taggingService) {}
+    public override string Name => "Sajuuk";
+    public override Race Race => Race.Zerg;
+
+    public SajuukBot(string version, List<IScenario> scenarios, ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker)
+        : base(version, scenarios, taggingService) {
+        _enemyRaceTracker = enemyRaceTracker;
+    }
 
     protected override Task DoOnFrame() {
         if (Controller.Frame == 0) {
@@ -48,7 +52,8 @@ public class SajuukBot: PoliteBot {
 
         _debugger.Debug(
             flatManagerRequests,
-            buildBlockStatus
+            buildBlockStatus,
+            _enemyRaceTracker.EnemyRace
         );
 
         foreach (var unit in UnitsTracker.UnitsByTag.Values) {
@@ -63,9 +68,9 @@ public class SajuukBot: PoliteBot {
         _managers.Add(buildManager);
 
         _managers.Add(new SupplyManager(buildManager));
-        _managers.Add(new ScoutManager());
+        _managers.Add(new ScoutManager(_enemyRaceTracker));
         _managers.Add(new EconomyManager(buildManager));
-        _managers.Add(new WarManager(TaggingService));
+        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker));
         _managers.Add(new CreepManager());
         _managers.Add(new UpgradesManager());
     }

@@ -21,12 +21,12 @@ public partial class ScoutManager : Manager {
     private readonly IScoutingStrategy _scoutingStrategy;
     private readonly HashSet<ScoutSupervisor> _scoutSupervisors = new HashSet<ScoutSupervisor>();
 
-    public ScoutManager() {
+    public ScoutManager(IEnemyRaceTracker enemyRaceTracker) {
         Assigner = new ScoutManagerAssigner(this);
         Dispatcher = new ScoutManagerDispatcher(this);
         Releaser = new ScoutManagerReleaser(this);
 
-        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(EnemyRaceTracker.Instance.EnemyRace);
+        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker);
     }
 
     protected override void RecruitmentPhase() {

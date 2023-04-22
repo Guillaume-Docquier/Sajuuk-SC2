@@ -9,12 +9,14 @@ namespace Bot.Managers.WarManagement.States.MidGame;
 
 public class MidGameState : WarManagerState {
     private readonly ITaggingService _taggingService;
+    private readonly IEnemyRaceTracker _enemyRaceTracker;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
 
-    public MidGameState(ITaggingService taggingService) {
+    public MidGameState(ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker) {
         _taggingService = taggingService;
+        _enemyRaceTracker = enemyRaceTracker;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
@@ -37,7 +39,7 @@ public class MidGameState : WarManagerState {
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new FinisherState(_taggingService));
+            StateMachine.TransitionTo(new FinisherState(_taggingService, _enemyRaceTracker));
             return true;
         }
 

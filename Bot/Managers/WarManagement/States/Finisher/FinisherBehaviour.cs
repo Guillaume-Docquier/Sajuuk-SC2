@@ -19,10 +19,11 @@ namespace Bot.Managers.WarManagement.States.Finisher;
 public class FinisherBehaviour : IWarManagerBehaviour {
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
 
+    private readonly ITaggingService _taggingService;
+    private readonly IEnemyRaceTracker _enemyRaceTracker;
+
     private readonly FinisherBehaviourDebugger _debugger = new FinisherBehaviourDebugger();
     private readonly WarManager _warManager;
-
-    private readonly ITaggingService _taggingService;
 
     private bool _isTerranFinisherInitiated = false;
 
@@ -37,9 +38,10 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     public readonly ArmySupervisor AttackSupervisor = new ArmySupervisor();
     public readonly ArmySupervisor TerranFinisherSupervisor = new ArmySupervisor();
 
-    public FinisherBehaviour(WarManager warManager, ITaggingService taggingService) {
+    public FinisherBehaviour(WarManager warManager, ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker) {
         _warManager = warManager;
         _taggingService = taggingService;
+        _enemyRaceTracker = enemyRaceTracker;
 
         BuildRequests.Add(_armyBuildRequest);
 
@@ -61,7 +63,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     }
 
     public void ManagementPhase() {
-        if (ShouldFinishOffTerran()) {
+        if (ShouldFinishOffTerran(_enemyRaceTracker.EnemyRace)) {
             FinishOffTerran();
         }
 
@@ -88,8 +90,8 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     /// Check if they are basically dead and we should start dealing with the flying buildings.
     /// </summary>
     /// <returns>True if we should start handling flying terran buildings</returns>
-    private static bool ShouldFinishOffTerran() {
-        if (EnemyRaceTracker.Instance.EnemyRace != Race.Terran) {
+    private static bool ShouldFinishOffTerran(Race enemyRace) {
+        if (enemyRace != Race.Terran) {
             return false;
         }
 

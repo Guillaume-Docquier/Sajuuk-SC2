@@ -6,6 +6,7 @@ using SC2APIProtocol;
 namespace Bot.Tagging;
 
 public class TaggingService : ITaggingService {
+    // DI: ✔️ The only usages are for static instance creations
     public static readonly TaggingService Instance = new TaggingService(() => Controller.Frame);
 
     private const int MaximumTagLength = 32;
