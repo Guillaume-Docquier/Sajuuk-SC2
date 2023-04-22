@@ -45,13 +45,13 @@ public static class Controller {
     // TODO GD I'm sure we could figure out the dependency graph automatically
     private static List<INeedUpdating> ThoseWhoNeedUpdating => new List<INeedUpdating>
     {
-        EnemyRaceTracker.Instance,      // Depends on nothing
         ChatTracker.Instance,           // Depends on nothing
         VisibilityTracker.Instance,     // Depends on nothing
 
         UnitsTracker.Instance,          // Depends on VisibilityTracker
         DebuggingFlagsTracker.Instance, // Depends on ChatTracker
 
+        EnemyRaceTracker.Instance,      // Depends on UnitsTracker
         IncomeTracker.Instance,         // Depends on UnitsTracker
         MapAnalyzer.Instance,           // Depends on UnitsTracker and VisibilityTracker
 
@@ -60,7 +60,7 @@ public static class Controller {
         ExpandAnalyzer.Instance,        // Depends on UnitsTracker and MapAnalyzer
         RegionAnalyzer.Instance,        // Depends on ExpandAnalyzer and MapAnalyzer
 
-        EnemyStrategyTracker.Instance,  // Depends on UnitsTracker, ExpandAnalyzer and RegionAnalyzer
+        EnemyStrategyTracker.Instance,  // Depends on UnitsTracker, EnemyRaceTracker, ExpandAnalyzer and RegionAnalyzer
         RegionTracker.Instance,         // Depends on VisibilityTracker, UnitsTracker, MapAnalyzer and RegionAnalyzer
     };
 
