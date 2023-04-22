@@ -26,7 +26,8 @@ public class EnemyRaceTracker : IEnemyRaceTracker, INeedUpdating {
             EnemyRace = GetStartingRace(gameInfo.PlayerInfo, observation.Observation.PlayerCommon.PlayerId);
             _taggingService.TagEnemyRace(EnemyRace);
         }
-        else if (EnemyRace == Race.Random) {
+
+        if (EnemyRace == Race.Random) {
             var realRace = GetRealRace(UnitsTracker.EnemyUnits);
             if (realRace != Race.NoRace) {
                 EnemyRace = realRace;
