@@ -18,6 +18,8 @@ public partial class ArmySupervisor {
     public class AttackState: State<ArmySupervisor> {
         private const bool Debug = true;
 
+        private readonly IVisibilityTracker _visibilityTracker;
+
         private const float RocksDestructionRange = 9f;
         private const float AcceptableDistanceToTarget = 3;
         private const float MaxDistanceForPathfinding = 25;
@@ -32,6 +34,10 @@ public partial class ArmySupervisor {
 
         private readonly IUnitsControl _unitsController = new OffensiveUnitsControl();
 
+        public AttackState(IVisibilityTracker visibilityTracker) {
+            _visibilityTracker = visibilityTracker;
+        }
+
         protected override void OnTransition() {
             _unitsController.Reset(ImmutableList<Unit>.Empty);
         }
@@ -42,7 +48,7 @@ public partial class ArmySupervisor {
             }
 
             if (Context._mainArmy.GetCenter().DistanceTo(Context._target) < AcceptableDistanceToTarget) {
-                StateMachine.TransitionTo(new DefenseState());
+                StateMachine.TransitionTo(new DefenseState(_visibilityTracker));
                 return true;
             }
 

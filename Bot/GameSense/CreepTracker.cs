@@ -10,7 +10,9 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class CreepTracker: INeedUpdating {
-    public static readonly CreepTracker Instance = new CreepTracker();
+    public static readonly CreepTracker Instance = new CreepTracker(VisibilityTracker.Instance);
+
+    private readonly IVisibilityTracker _visibilityTracker;
 
     private static ulong _creepMapLastGeneratedAt = ulong.MaxValue;
     private static List<List<bool>> _creepMap;
@@ -23,7 +25,9 @@ public class CreepTracker: INeedUpdating {
     private static int _maxX;
     private static int _maxY;
 
-    private CreepTracker() {}
+    private CreepTracker(IVisibilityTracker visibilityTracker) {
+        _visibilityTracker = visibilityTracker;
+    }
 
     public void Reset() {}
 
@@ -49,7 +53,7 @@ public class CreepTracker: INeedUpdating {
         return _creepMap[(int)position.X][(int)position.Y];
     }
 
-    public static List<Vector2> GetCreepFrontier() {
+    public List<Vector2> GetCreepFrontier() {
         if (_creepFrontierLastGeneratedAt != Controller.Frame) {
             GenerateCreepFrontier();
         }
@@ -57,7 +61,7 @@ public class CreepTracker: INeedUpdating {
         return _creepFrontier;
     }
 
-    private static void GenerateCreepFrontier() {
+    private void GenerateCreepFrontier() {
         // TODO GD At this point, we don't need to calculate the frontier until a hatch or creep tumor dies
         if (MapAnalyzer.WalkableCells.All(HasCreep)) {
             _creepFrontier = new List<Vector2>();
@@ -68,7 +72,7 @@ public class CreepTracker: INeedUpdating {
 
         var creepTumors = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.CreepTumor).ToList();
         _creepFrontier = MapAnalyzer.WalkableCells
-            .Where(VisibilityTracker.IsVisible)
+            .Where(_visibilityTracker.IsVisible)
             .Where(HasCreep)
             .Where(IsFrontier)
             .Where(frontierCell => !IsTooCrowded(frontierCell, creepTumors))
@@ -77,11 +81,11 @@ public class CreepTracker: INeedUpdating {
         _creepFrontierLastGeneratedAt = Controller.Frame;
     }
 
-    private static bool IsFrontier(Vector2 position) {
+    private bool IsFrontier(Vector2 position) {
         return position.GetNeighbors()
             .Where(neighbor => MapAnalyzer.IsWalkable(neighbor))
             // We spread towards non visible creep because if it is not visible, it is receding (creep source died) or it is not our creep and we want the vision
-            .Any(neighbor => !HasCreep(neighbor) || !VisibilityTracker.IsVisible(neighbor));
+            .Any(neighbor => !HasCreep(neighbor) || !_visibilityTracker.IsVisible(neighbor));
     }
 
     private static bool IsTooCrowded(Vector2 frontierCell, IReadOnlyCollection<Unit> creepTumors) {

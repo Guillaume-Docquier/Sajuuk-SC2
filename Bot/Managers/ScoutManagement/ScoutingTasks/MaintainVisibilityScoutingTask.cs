@@ -13,6 +13,8 @@ namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 public class MaintainVisibilityScoutingTask : ScoutingTask {
     private const bool DrawEnabled = false;
 
+    private readonly IVisibilityTracker _visibilityTracker;
+
     private const int ResolutionReductionFactor = 2;
     private static readonly double ExecuteEvery = TimeUtils.SecsToFrames(1);
 
@@ -20,8 +22,10 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
 
     private readonly HashSet<Vector2> _areaToScout;
 
-    public MaintainVisibilityScoutingTask(IReadOnlyCollection<Vector2> area, int priority, int maxScouts)
+    public MaintainVisibilityScoutingTask(IVisibilityTracker visibilityTracker, IReadOnlyCollection<Vector2> area, int priority, int maxScouts)
         : base(GetCenter(area), priority, maxScouts) {
+        _visibilityTracker = visibilityTracker;
+
         // Lower the resolution for better time performance on large areas
         // The algorithm results are virtually unaffected by this
         _areaToScout = area
@@ -142,7 +146,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
         }
 
         foreach (var cell in _areaToScout) {
-            var color = VisibilityTracker.IsVisible(cell) ? Colors.LightBlue : Colors.LightRed;
+            var color = _visibilityTracker.IsVisible(cell) ? Colors.LightBlue : Colors.LightRed;
             Program.GraphicalDebugger.AddGridSquare(cell.ToVector3(), color);
         }
     }
@@ -186,6 +190,6 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
     }
 
     private bool IsCoverageGoodEnough() {
-        return _areaToScout.All(VisibilityTracker.IsVisible);
+        return _areaToScout.All(_visibilityTracker.IsVisible);
     }
 }

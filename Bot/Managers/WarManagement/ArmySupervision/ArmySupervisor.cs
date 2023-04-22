@@ -4,11 +4,14 @@ using System.Numerics;
 using Bot.Algorithms;
 using Bot.Builds;
 using Bot.ExtensionMethods;
+using Bot.GameSense;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public partial class ArmySupervisor: Supervisor {
+    private readonly IVisibilityTracker _visibilityTracker;
+
     private readonly StateMachine<ArmySupervisor> _stateMachine;
 
     public readonly List<Unit> Army = new List<Unit>();
@@ -27,11 +30,13 @@ public partial class ArmySupervisor: Supervisor {
     protected override IAssigner Assigner { get; }
     protected override IReleaser Releaser { get; }
 
-    public ArmySupervisor() {
+    public ArmySupervisor(IVisibilityTracker visibilityTracker) {
+        _visibilityTracker = visibilityTracker;
+
         Assigner = new ArmySupervisorAssigner(this);
         Releaser = new ArmySupervisorReleaser(this);
 
-        _stateMachine = new StateMachine<ArmySupervisor>(this, new AttackState());
+        _stateMachine = new StateMachine<ArmySupervisor>(this, new AttackState(_visibilityTracker));
     }
 
     public override string ToString() {
@@ -52,7 +57,7 @@ public partial class ArmySupervisor: Supervisor {
     public void AssignTarget(Vector2 target, float blastRadius, bool canHuntTheEnemy = true) {
         if (_target != target) {
             _target = target;
-            _stateMachine.TransitionTo(new AttackState());
+            _stateMachine.TransitionTo(new AttackState(_visibilityTracker));
         }
 
         _blastRadius = blastRadius;
@@ -67,6 +72,6 @@ public partial class ArmySupervisor: Supervisor {
 
         // Reset the state to have a clean slate once we're re-hired
         // Maybe our Manager should just dispose of us instead?
-        _stateMachine.TransitionTo(new AttackState());
+        _stateMachine.TransitionTo(new AttackState(_visibilityTracker));
     }
 }

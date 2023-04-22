@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.MapKnowledge;
 using Bot.Utils;
@@ -13,11 +14,17 @@ namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 public class ProtossScoutingStrategy : IScoutingStrategy {
     private const int TopPriority = 100;
 
+    private readonly IVisibilityTracker _visibilityTracker;
+
     private bool _isInitialized = false;
 
     private ExpandLocation _ownNatural;
     private ScoutingTask _ownNaturalScoutingTask;
     private ScoutingTask _enemyNaturalScoutingTask;
+
+    public ProtossScoutingStrategy(IVisibilityTracker visibilityTracker) {
+        _visibilityTracker = visibilityTracker;
+    }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
         if (!ExpandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
@@ -43,7 +50,7 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
 
         // Keep watching
         if (_ownNaturalScoutingTask.IsComplete()) {
-            _ownNaturalScoutingTask = new RegionScoutingTask(_ownNatural.Position, priority: TopPriority, maxScouts: 1);
+            _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _ownNatural.Position, priority: TopPriority, maxScouts: 1);
 
             yield return _ownNaturalScoutingTask;
         }
@@ -51,10 +58,10 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
 
     private void Init() {
         _ownNatural = ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural);
-        _ownNaturalScoutingTask = new RegionScoutingTask(_ownNatural.Position, priority: TopPriority, maxScouts: 1);
+        _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _ownNatural.Position, priority: TopPriority, maxScouts: 1);
 
         var enemyNatural = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
-        _enemyNaturalScoutingTask = new ExpandScoutingTask(enemyNatural.Position, priority: TopPriority - 1, maxScouts: 1);
+        _enemyNaturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, enemyNatural.Position, priority: TopPriority - 1, maxScouts: 1);
 
         _isInitialized = true;
     }

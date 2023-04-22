@@ -9,19 +9,21 @@ public class EarlyGameState : WarManagerState {
 
     private readonly ITaggingService _taggingService;
     private readonly IEnemyRaceTracker _enemyRaceTracker;
+    private readonly IVisibilityTracker _visibilityTracker;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
 
-    public EarlyGameState(ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker) {
+    public EarlyGameState(ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
+        _visibilityTracker = visibilityTracker;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new EarlyGameBehaviour(Context, _taggingService);
+        _behaviour = new EarlyGameBehaviour(Context, _taggingService, _visibilityTracker);
     }
 
     protected override void Execute() {
@@ -38,7 +40,7 @@ public class EarlyGameState : WarManagerState {
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new MidGame.MidGameState(_taggingService, _enemyRaceTracker));
+            StateMachine.TransitionTo(new MidGame.MidGameState(_taggingService, _enemyRaceTracker, _visibilityTracker));
             return true;
         }
 

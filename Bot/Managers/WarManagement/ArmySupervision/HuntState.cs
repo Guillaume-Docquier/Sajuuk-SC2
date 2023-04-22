@@ -10,14 +10,20 @@ namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public partial class ArmySupervisor {
     public class HuntState: State<ArmySupervisor> {
+        private readonly IVisibilityTracker _visibilityTracker;
+
         private static Dictionary<Vector2, bool> _checkedExpandLocations;
         private static readonly Dictionary<Vector2, bool> CheckedPositions = new Dictionary<Vector2, bool>();
 
         private bool _isNextTargetSet = false;
 
+        public HuntState(IVisibilityTracker visibilityTracker) {
+            _visibilityTracker = visibilityTracker;
+        }
+
         protected override bool TryTransitioning() {
             if (_isNextTargetSet) {
-                StateMachine.TransitionTo(new AttackState());
+                StateMachine.TransitionTo(new AttackState(_visibilityTracker));
                 return true;
             }
 
@@ -34,7 +40,7 @@ public partial class ArmySupervisor {
             }
 
             foreach (var locationToCheck in _checkedExpandLocations.Keys) {
-                _checkedExpandLocations[locationToCheck] |= VisibilityTracker.IsVisible(locationToCheck);
+                _checkedExpandLocations[locationToCheck] |= _visibilityTracker.IsVisible(locationToCheck);
             }
 
             if (AllLocationsHaveBeenChecked(_checkedExpandLocations)) {
@@ -64,10 +70,10 @@ public partial class ArmySupervisor {
             return locations.Values.All(isChecked => isChecked);
         }
 
-        private static void ResetCheckedExpandLocations() {
+        private void ResetCheckedExpandLocations() {
             _checkedExpandLocations = ExpandAnalyzer.ExpandLocations
                 .Select(expandLocation => expandLocation.Position)
-                .ToDictionary(expand => expand, VisibilityTracker.IsVisible);
+                .ToDictionary(expand => expand, _visibilityTracker.IsVisible);
         }
 
         private void ResetCheckedPositions() {
@@ -79,7 +85,7 @@ public partial class ArmySupervisor {
                         continue;
                     }
 
-                    CheckedPositions[position] = VisibilityTracker.IsVisible(position);
+                    CheckedPositions[position] = _visibilityTracker.IsVisible(position);
                 }
             }
         }
@@ -89,7 +95,7 @@ public partial class ArmySupervisor {
         /// </summary>
         private void FindEnemies() {
             foreach (var positionToCheck in CheckedPositions.Where(kv => !kv.Value).Select(kv => kv.Key)) {
-                CheckedPositions[positionToCheck] = VisibilityTracker.IsVisible(positionToCheck);
+                CheckedPositions[positionToCheck] = _visibilityTracker.IsVisible(positionToCheck);
             }
 
             if (AllLocationsHaveBeenChecked(CheckedPositions)) {

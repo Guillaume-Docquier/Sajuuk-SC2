@@ -10,7 +10,9 @@ using SC2APIProtocol;
 namespace Bot.MapKnowledge;
 
 public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
-    public static readonly MapAnalyzer Instance = new MapAnalyzer();
+    public static readonly MapAnalyzer Instance = new MapAnalyzer(VisibilityTracker.Instance);
+
+    private readonly IVisibilityTracker _visibilityTracker;
 
     public static bool IsInitialized { get; private set; } = false;
     public static Vector2 StartingLocation { get; private set; }
@@ -34,13 +36,13 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     /// <summary>
     /// Returns the proportion from 0 to 1 of the walkable tiles that have been explored
     /// </summary>
-    public static float ExplorationRatio {
+    public float ExplorationRatio {
         get {
             if (_walkableCells.Count == 0) {
                 return 0;
             }
 
-            var exploredCellsCount = VisibilityTracker.ExploredCells.Count(cell => IsWalkable(cell));
+            var exploredCellsCount = _visibilityTracker.ExploredCells.Count(cell => IsWalkable(cell));
             return (float)exploredCellsCount / _walkableCells.Count;
         }
     }
@@ -48,18 +50,20 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     /// <summary>
     /// Returns the proportion from 0 to 1 of the walkable tiles that are currently visible
     /// </summary>
-    public static float VisibilityRatio {
+    public float VisibilityRatio {
         get {
             if (_walkableCells.Count == 0) {
                 return 0;
             }
 
-            var visibleCellsCount = VisibilityTracker.VisibleCells.Count(cell => IsWalkable(cell));
+            var visibleCellsCount = _visibilityTracker.VisibleCells.Count(cell => IsWalkable(cell));
             return (float)visibleCellsCount / _walkableCells.Count;
         }
     }
 
-    private MapAnalyzer() {}
+    private MapAnalyzer(IVisibilityTracker visibilityTracker) {
+        _visibilityTracker = visibilityTracker;
+    }
 
     public void Reset() {
         IsInitialized = false;

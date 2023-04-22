@@ -6,14 +6,15 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
-public class VisibilityTracker: INeedUpdating {
+public class VisibilityTracker : IVisibilityTracker, INeedUpdating {
+    // DI: ✔️ The only usages are for static instance creations
     public static readonly VisibilityTracker Instance = new VisibilityTracker();
 
     // TODO GD Put these in a class to hide the backing fields?
-    private static ulong _lastGeneratedAt = ulong.MaxValue;
+    private ulong _lastGeneratedAt = ulong.MaxValue;
 
-    private static List<List<Visibility>> _visibilityMap;
-    private static List<List<Visibility>> VisibilityMap {
+    private List<List<Visibility>> _visibilityMap;
+    private List<List<Visibility>> VisibilityMap {
         get {
             if (_lastGeneratedAt != Controller.Frame) {
                 GenerateVisibilityData();
@@ -23,8 +24,8 @@ public class VisibilityTracker: INeedUpdating {
         }
     }
 
-    private static List<Vector2> _visibleCells;
-    public static List<Vector2> VisibleCells {
+    private List<Vector2> _visibleCells;
+    public List<Vector2> VisibleCells {
         get {
             if (_lastGeneratedAt != Controller.Frame) {
                 GenerateVisibilityData();
@@ -34,8 +35,8 @@ public class VisibilityTracker: INeedUpdating {
         }
     }
 
-    private static List<Vector2> _exploredCells;
-    public static List<Vector2> ExploredCells {
+    private List<Vector2> _exploredCells;
+    public List<Vector2> ExploredCells {
         get {
             if (_lastGeneratedAt != Controller.Frame) {
                 GenerateVisibilityData();
@@ -45,7 +46,7 @@ public class VisibilityTracker: INeedUpdating {
         }
     }
 
-    private static ImageData _rawVisibilityMap;
+    private ImageData _rawVisibilityMap;
 
     private enum Visibility {
         NotExplored = 0,
@@ -67,32 +68,32 @@ public class VisibilityTracker: INeedUpdating {
     }
 
     // TODO GD We could be smarter and check for the building footprint!
-    public static bool IsVisible(Unit unit) {
+    public bool IsVisible(Unit unit) {
         return IsVisible(unit.Position.ToVector2());
     }
 
-    public static bool IsVisible(Vector3 location) {
+    public bool IsVisible(Vector3 location) {
         return IsVisible(location.ToVector2());
     }
 
-    public static bool IsVisible(Vector2 location) {
+    public bool IsVisible(Vector2 location) {
         return VisibilityMap[(int)location.X][(int)location.Y] is Visibility.Visible;
     }
 
     // TODO GD We could be smarter and check for the building footprint!
-    public static bool IsExplored(Unit unit) {
+    public bool IsExplored(Unit unit) {
         return IsExplored(unit.Position.ToVector2());
     }
 
-    public static bool IsExplored(Vector3 location) {
+    public bool IsExplored(Vector3 location) {
         return IsExplored(location.ToVector2());
     }
 
-    public static bool IsExplored(Vector2 location) {
+    public bool IsExplored(Vector2 location) {
         return VisibilityMap[(int)location.X][(int)location.Y] is Visibility.Explored or Visibility.Visible;
     }
 
-    private static void GenerateVisibilityData() {
+    private void GenerateVisibilityData() {
         var maxX = Controller.GameInfo.StartRaw.MapSize.X;
         var maxY = Controller.GameInfo.StartRaw.MapSize.Y;
 

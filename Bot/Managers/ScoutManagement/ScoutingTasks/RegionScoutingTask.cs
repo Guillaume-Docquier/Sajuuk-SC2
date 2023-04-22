@@ -8,12 +8,16 @@ using Bot.MapKnowledge;
 namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 
 public class RegionScoutingTask : ScoutingTask {
+    private readonly IVisibilityTracker _visibilityTracker;
+
     private readonly IRegion _region;
     private readonly HashSet<Vector2> _cellsToExplore;
     private bool _isCancelled = false;
 
-    public RegionScoutingTask(Vector2 scoutLocation, int priority = 0, int maxScouts = 999)
+    public RegionScoutingTask(IVisibilityTracker visibilityTracker, Vector2 scoutLocation, int priority = 0, int maxScouts = 999)
         : base(scoutLocation, priority, maxScouts) {
+        _visibilityTracker = visibilityTracker;
+
         _region = scoutLocation.GetRegion();
         _cellsToExplore = new HashSet<Vector2>(_region.Cells);
     }
@@ -52,7 +56,7 @@ public class RegionScoutingTask : ScoutingTask {
     }
 
     private void UpdateCellsToExplore() {
-        foreach (var cellToExplore in _cellsToExplore.Where(VisibilityTracker.IsVisible).ToList()) {
+        foreach (var cellToExplore in _cellsToExplore.Where(_visibilityTracker.IsVisible).ToList()) {
             _cellsToExplore.Remove(cellToExplore);
         }
     }

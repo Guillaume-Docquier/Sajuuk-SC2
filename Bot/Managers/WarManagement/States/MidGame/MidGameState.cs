@@ -10,19 +10,21 @@ namespace Bot.Managers.WarManagement.States.MidGame;
 public class MidGameState : WarManagerState {
     private readonly ITaggingService _taggingService;
     private readonly IEnemyRaceTracker _enemyRaceTracker;
+    private readonly IVisibilityTracker _visibilityTracker;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
 
-    public MidGameState(ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker) {
+    public MidGameState(ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
+        _visibilityTracker = visibilityTracker;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new MidGameBehaviour(Context);
+        _behaviour = new MidGameBehaviour(Context, _visibilityTracker);
     }
 
     protected override void Execute() {
@@ -39,7 +41,7 @@ public class MidGameState : WarManagerState {
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new FinisherState(_taggingService, _enemyRaceTracker));
+            StateMachine.TransitionTo(new FinisherState(_taggingService, _enemyRaceTracker, _visibilityTracker));
             return true;
         }
 
@@ -51,7 +53,7 @@ public class MidGameState : WarManagerState {
     /// </summary>
     /// <returns>True if we can stop being fancy and just finish the opponent</returns>
     private bool ShouldTransitionToFinisher() {
-        if (MapAnalyzer.VisibilityRatio < 0.85) {
+        if (MapAnalyzer.Instance.VisibilityRatio < 0.85) {
             return false;
         }
 

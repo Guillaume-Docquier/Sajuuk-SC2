@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.MapKnowledge;
 using Bot.Utils;
@@ -13,9 +14,15 @@ namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 public class TerranScoutingStrategy : IScoutingStrategy {
     private const int TopPriority = 100;
 
+    private readonly IVisibilityTracker _visibilityTracker;
+
     private bool _isInitialized = false;
 
     private ScoutingTask _enemyNaturalScoutingTask;
+
+    public TerranScoutingStrategy(IVisibilityTracker visibilityTracker) {
+        _visibilityTracker = visibilityTracker;
+    }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
         if (!ExpandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
@@ -41,7 +48,7 @@ public class TerranScoutingStrategy : IScoutingStrategy {
 
     private void Init() {
         var enemyNatural = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
-        _enemyNaturalScoutingTask = new ExpandScoutingTask(enemyNatural.Position, TopPriority, maxScouts: 1);
+        _enemyNaturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, enemyNatural.Position, TopPriority, maxScouts: 1);
 
         _isInitialized = true;
     }

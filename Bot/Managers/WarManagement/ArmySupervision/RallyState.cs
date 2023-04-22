@@ -4,6 +4,7 @@ using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
+using Bot.GameSense;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;
@@ -12,7 +13,13 @@ public partial class ArmySupervisor {
     public class RallyState: State<ArmySupervisor> {
         private const float AcceptableDistanceToTarget = 3;
 
+        private readonly IVisibilityTracker _visibilityTracker;
+
         private float _attackAtForce;
+
+        public RallyState(IVisibilityTracker visibilityTracker) {
+            _visibilityTracker = visibilityTracker;
+        }
 
         protected override void OnContextSet() {
             _attackAtForce = Context._strongestForce * 1.2f;
@@ -20,7 +27,7 @@ public partial class ArmySupervisor {
 
         protected override bool TryTransitioning() {
             if (Context._mainArmy.GetForce() >= _attackAtForce || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed) {
-                StateMachine.TransitionTo(new AttackState());
+                StateMachine.TransitionTo(new AttackState(_visibilityTracker));
                 return true;
             }
 

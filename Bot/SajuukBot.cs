@@ -22,15 +22,19 @@ public class SajuukBot: PoliteBot {
     private readonly List<Manager> _managers = new List<Manager>();
 
     private readonly IEnemyRaceTracker _enemyRaceTracker;
+    private readonly IVisibilityTracker _visibilityTracker;
 
-    private readonly BotDebugger _debugger = new BotDebugger();
+    private readonly BotDebugger _debugger;
 
     public override string Name => "Sajuuk";
     public override Race Race => Race.Zerg;
 
-    public SajuukBot(string version, List<IScenario> scenarios, ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker)
+    public SajuukBot(string version, List<IScenario> scenarios, ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker)
         : base(version, scenarios, taggingService) {
         _enemyRaceTracker = enemyRaceTracker;
+        _visibilityTracker = visibilityTracker;
+
+        _debugger = new BotDebugger(_visibilityTracker);
     }
 
     protected override Task DoOnFrame() {
@@ -68,10 +72,10 @@ public class SajuukBot: PoliteBot {
         _managers.Add(buildManager);
 
         _managers.Add(new SupplyManager(buildManager));
-        _managers.Add(new ScoutManager(_enemyRaceTracker));
+        _managers.Add(new ScoutManager(_enemyRaceTracker, _visibilityTracker));
         _managers.Add(new EconomyManager(buildManager));
-        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker));
-        _managers.Add(new CreepManager());
+        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker, _visibilityTracker));
+        _managers.Add(new CreepManager(_visibilityTracker));
         _managers.Add(new UpgradesManager());
     }
 

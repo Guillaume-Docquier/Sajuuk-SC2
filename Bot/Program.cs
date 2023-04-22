@@ -111,7 +111,8 @@ public class Program {
             version,
             scenarios,
             TaggingService.Instance,
-            EnemyRaceTracker.Instance
+            EnemyRaceTracker.Instance,
+            VisibilityTracker.Instance
         );
     }
 }

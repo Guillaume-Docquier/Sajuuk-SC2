@@ -14,6 +14,12 @@ using SC2APIProtocol;
 namespace Bot.Debugging;
 
 public class BotDebugger {
+    private readonly IVisibilityTracker _visibilityTracker;
+
+    public BotDebugger(IVisibilityTracker visibilityTracker) {
+        _visibilityTracker = visibilityTracker;
+    }
+
     public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus, Race enemyRace) {
         if (!Program.DebugEnabled) {
             return;
@@ -199,19 +205,19 @@ public class BotDebugger {
         // TODO GD Add creep coverage
         var matchupTexts = new List<string>
         {
-            $"Enemy: {enemyRace} / Visible: {MapAnalyzer.VisibilityRatio,3:P0} / Explored: {MapAnalyzer.ExplorationRatio,3:P0}",
+            $"Enemy: {enemyRace} / Visible: {MapAnalyzer.Instance.VisibilityRatio,3:P0} / Explored: {MapAnalyzer.Instance.ExplorationRatio,3:P0}",
             $"Strategy: {EnemyStrategyTracker.Instance.CurrentEnemyStrategy}"
         };
 
         Program.GraphicalDebugger.AddTextGroup(matchupTexts, virtualPos: new Point { X = 0.50f, Y = 0.02f });
     }
 
-    private static void DebugExploration() {
+    private void DebugExploration() {
         if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Exploration)) {
             return;
         }
 
-        foreach (var notExploredCell in MapAnalyzer.WalkableCells.Where(cell => !VisibilityTracker.IsExplored(cell))) {
+        foreach (var notExploredCell in MapAnalyzer.WalkableCells.Where(cell => !_visibilityTracker.IsExplored(cell))) {
             var color = Colors.PeachPink;
             Program.GraphicalDebugger.AddText("?", color: color, worldPos: notExploredCell.ToVector3().ToPoint());
             Program.GraphicalDebugger.AddGridSquare(notExploredCell.ToVector3(), color: color);

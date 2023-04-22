@@ -14,8 +14,14 @@ public partial class ArmySupervisor {
     public class DefenseState: State<ArmySupervisor> {
         private const bool Debug = true;
 
+        private readonly IVisibilityTracker _visibilityTracker;
+
         private const float AcceptableDistanceToTarget = 3;
         private readonly IUnitsControl _unitsController = new OffensiveUnitsControl();
+
+        public DefenseState(IVisibilityTracker visibilityTracker) {
+            _visibilityTracker = visibilityTracker;
+        }
 
         protected override void OnTransition() {
             _unitsController.Reset(ImmutableList<Unit>.Empty);
@@ -38,7 +44,7 @@ public partial class ArmySupervisor {
                 return false;
             }
 
-            StateMachine.TransitionTo(new HuntState());
+            StateMachine.TransitionTo(new HuntState(_visibilityTracker));
             return true;
         }
 

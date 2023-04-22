@@ -28,6 +28,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     private static readonly Random Rng = new Random();
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
 
+    private readonly IVisibilityTracker _visibilityTracker;
+
     private readonly MidGameBehaviourDebugger _debugger = new MidGameBehaviourDebugger();
     private readonly WarManager _warManager;
     private readonly Dictionary<IRegion, RegionalArmySupervisor> _armySupervisors;
@@ -41,8 +43,10 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     public List<BuildRequest> BuildRequests { get; } = new List<BuildRequest>();
 
-    public MidGameBehaviour(WarManager warManager) {
+    public MidGameBehaviour(WarManager warManager, IVisibilityTracker visibilityTracker) {
         _warManager = warManager;
+        _visibilityTracker = visibilityTracker;
+
         _armySupervisors = RegionAnalyzer.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(region));
 
         BuildRequests.Add(_armyBuildRequest);
@@ -148,10 +152,10 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     private void InitializeScoutingTasks() {
         var expandsToScout = ExpandAnalyzer.ExpandLocations
-            .Where(expandLocation => !VisibilityTracker.IsVisible(expandLocation.Position));
+            .Where(expandLocation => !_visibilityTracker.IsVisible(expandLocation.Position));
 
         foreach (var expandToScout in expandsToScout) {
-            var scoutingTask = new ExpandScoutingTask(expandToScout.Position, priority: 0, maxScouts: 1);
+            var scoutingTask = new ExpandScoutingTask(_visibilityTracker, expandToScout.Position, priority: 0, maxScouts: 1);
             var scoutingSupervisor = new ScoutSupervisor(scoutingTask);
 
             _scoutSupervisors.Add(scoutingSupervisor);

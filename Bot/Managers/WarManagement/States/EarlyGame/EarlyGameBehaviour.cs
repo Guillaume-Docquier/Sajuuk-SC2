@@ -28,7 +28,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     private bool _isRushInProgress = false;
     private bool _hasCleanUpStarted = false;
 
-    public readonly ArmySupervisor DefenseSupervisor = new ArmySupervisor();
+    public readonly ArmySupervisor DefenseSupervisor;
 
     public IAssigner Assigner { get; }
     public IDispatcher Dispatcher { get; }
@@ -36,9 +36,11 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
     public List<BuildRequest> BuildRequests { get; } = new List<BuildRequest>();
 
-    public EarlyGameBehaviour(WarManager warManager, ITaggingService taggingService) {
+    public EarlyGameBehaviour(WarManager warManager, ITaggingService taggingService, IVisibilityTracker visibilityTracker) {
         _warManager = warManager;
         _taggingService = taggingService;
+
+        DefenseSupervisor = new ArmySupervisor(visibilityTracker);
 
         BuildRequests.Add(_armyBuildRequest);
 

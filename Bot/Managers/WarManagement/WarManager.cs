@@ -30,8 +30,8 @@ public class WarManager: Manager {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _stateMachine.State.Behaviour.BuildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
-    public WarManager(ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker) {
-        _stateMachine = new StateMachine<WarManager, WarManagerState>(this, new EarlyGameState(taggingService, enemyRaceTracker));
+    public WarManager(ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker) {
+        _stateMachine = new StateMachine<WarManager, WarManagerState>(this, new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker));
     }
 
     public override string ToString() {

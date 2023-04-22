@@ -8,7 +8,9 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class UnitsTracker: INeedUpdating {
-    public static readonly UnitsTracker Instance = new UnitsTracker();
+    public static readonly UnitsTracker Instance = new UnitsTracker(VisibilityTracker.Instance);
+
+    private readonly IVisibilityTracker _visibilityTracker;
 
     private bool _isInitialized = false;
 
@@ -34,7 +36,9 @@ public class UnitsTracker: INeedUpdating {
 
     private const int EnemyDeathDelaySeconds = 4 * 60;
 
-    private UnitsTracker() {}
+    private UnitsTracker(IVisibilityTracker visibilityTracker) {
+        _visibilityTracker = visibilityTracker;
+    }
 
     public static List<Unit> GetUnits(Alliance alliance) {
         return alliance switch
@@ -175,7 +179,7 @@ public class UnitsTracker: INeedUpdating {
             .Where(unit => unit.Alliance == Alliance.Enemy)
             .Where(enemy => Units.Buildings.Contains(enemy.UnitType))
             .Where(enemyBuilding => !visibleUnitTags.Contains(enemyBuilding.Tag))
-            .Where(VisibilityTracker.IsVisible);
+            .Where(_visibilityTracker.IsVisible);
 
         foreach (var buildingThatProbablyMoved in buildingsThatProbablyMoved) {
             buildingThatProbablyMoved.Died();
@@ -184,7 +188,7 @@ public class UnitsTracker: INeedUpdating {
         }
     }
 
-    private static void RememberEnemyUnitsOutOfSight(List<SC2APIProtocol.Unit> currentlyVisibleUnits) {
+    private void RememberEnemyUnitsOutOfSight(List<SC2APIProtocol.Unit> currentlyVisibleUnits) {
         var enemyUnitIdsNotInVision = UnitsByTag.Values
             .Where(unit => unit.Alliance == Alliance.Enemy)
             .Where(enemyUnit => !Units.Buildings.Contains(enemyUnit.UnitType))
@@ -196,7 +200,7 @@ public class UnitsTracker: INeedUpdating {
         foreach (var enemyUnit in enemyUnitsNotInVision) {
             UnitsByTag.Remove(enemyUnit.Tag);
 
-            if (!VisibilityTracker.IsVisible(enemyUnit)) {
+            if (!_visibilityTracker.IsVisible(enemyUnit)) {
                 if (EnemyGhostUnits.ContainsKey(enemyUnit.Tag)) {
                     Logger.Warning("Trying to add an enemy {0} to the ghosts, but it is already present", enemyUnit);
                 }
@@ -212,9 +216,9 @@ public class UnitsTracker: INeedUpdating {
         }
     }
 
-    private static void EraseGhosts() {
+    private void EraseGhosts() {
         foreach (var (ghostEnemyUnitId, ghostEnemyUnit) in EnemyGhostUnits) {
-            if (VisibilityTracker.IsVisible(ghostEnemyUnit)) {
+            if (_visibilityTracker.IsVisible(ghostEnemyUnit)) {
                 EnemyGhostUnits.Remove(ghostEnemyUnitId);
             }
         }

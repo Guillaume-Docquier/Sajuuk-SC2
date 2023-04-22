@@ -21,6 +21,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
 
     private readonly ITaggingService _taggingService;
     private readonly IEnemyRaceTracker _enemyRaceTracker;
+    private readonly IVisibilityTracker _visibilityTracker;
 
     private readonly FinisherBehaviourDebugger _debugger = new FinisherBehaviourDebugger();
     private readonly WarManager _warManager;
@@ -35,13 +36,17 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     private readonly BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Normal);
     public List<BuildRequest> BuildRequests { get; } = new List<BuildRequest>();
 
-    public readonly ArmySupervisor AttackSupervisor = new ArmySupervisor();
-    public readonly ArmySupervisor TerranFinisherSupervisor = new ArmySupervisor();
+    public readonly ArmySupervisor AttackSupervisor;
+    public readonly ArmySupervisor TerranFinisherSupervisor;
 
-    public FinisherBehaviour(WarManager warManager, ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker) {
+    public FinisherBehaviour(WarManager warManager, ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker) {
         _warManager = warManager;
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
+        _visibilityTracker = visibilityTracker;
+
+        AttackSupervisor = new ArmySupervisor(_visibilityTracker);
+        TerranFinisherSupervisor = new ArmySupervisor(_visibilityTracker);
 
         BuildRequests.Add(_armyBuildRequest);
 
@@ -90,7 +95,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     /// Check if they are basically dead and we should start dealing with the flying buildings.
     /// </summary>
     /// <returns>True if we should start handling flying terran buildings</returns>
-    private static bool ShouldFinishOffTerran(Race enemyRace) {
+    private bool ShouldFinishOffTerran(Race enemyRace) {
         if (enemyRace != Race.Terran) {
             return false;
         }
@@ -103,7 +108,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
             return false;
         }
 
-        if (MapAnalyzer.ExplorationRatio < 0.80 || !ExpandAnalyzer.ExpandLocations.All(expandLocation => VisibilityTracker.IsExplored(expandLocation.Position))) {
+        if (MapAnalyzer.Instance.ExplorationRatio < 0.80 || !ExpandAnalyzer.ExpandLocations.All(expandLocation => _visibilityTracker.IsExplored(expandLocation.Position))) {
             return false;
         }
 

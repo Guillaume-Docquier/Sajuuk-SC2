@@ -8,13 +8,17 @@ using Bot.GameSense;
 namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 
 public class ExpandScoutingTask : ScoutingTask {
+    private readonly IVisibilityTracker _visibilityTracker;
+
     private readonly bool _waitForExpand;
     private readonly float _expandRadius;
 
     private bool _isCancelled = false;
 
-    public ExpandScoutingTask(Vector2 scoutLocation, int priority, int maxScouts, bool waitForExpand = false)
+    public ExpandScoutingTask(IVisibilityTracker visibilityTracker, Vector2 scoutLocation, int priority, int maxScouts, bool waitForExpand = false)
         : base(scoutLocation, priority, maxScouts) {
+        _visibilityTracker = visibilityTracker;
+
         _waitForExpand = waitForExpand;
 
         // We make the expand radius 0 if we don't wait for confirmation just to
@@ -29,7 +33,7 @@ public class ExpandScoutingTask : ScoutingTask {
             return true;
         }
 
-        if (!_waitForExpand && VisibilityTracker.IsVisible(ScoutLocation)) {
+        if (!_waitForExpand && _visibilityTracker.IsVisible(ScoutLocation)) {
             return true;
         }
 

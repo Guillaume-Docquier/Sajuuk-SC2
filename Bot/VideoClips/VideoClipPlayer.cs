@@ -22,7 +22,6 @@ public class VideoClipPlayer : IBot {
     public string Name => "VideoClipPlayer";
     public Race Race => Race.Zerg;
 
-    private readonly BotDebugger _debugger = new BotDebugger();
     private ulong _startAt;
 
     public VideoClipPlayer(string mapName) {
@@ -31,7 +30,6 @@ public class VideoClipPlayer : IBot {
 
     public async Task OnFrame() {
         await EnsureInitialization();
-        _debugger.Debug(new List<BuildFulfillment>(), (null ,BuildBlockCondition.None), Race.NoRace);
 
         foreach (var unit in Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone).Where(unit => unit.HasOrders())) {
             unit.Stop();
