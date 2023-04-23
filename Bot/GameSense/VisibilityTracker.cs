@@ -7,7 +7,9 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class VisibilityTracker : IVisibilityTracker, INeedUpdating {
-    // DI: ✔️ The only usages are for static instance creations
+    /// <summary>
+    /// DI: ✔️ The only usages are for static instance creations
+    /// </summary>
     public static readonly VisibilityTracker Instance = new VisibilityTracker();
 
     // TODO GD Put these in a class to hide the backing fields?
