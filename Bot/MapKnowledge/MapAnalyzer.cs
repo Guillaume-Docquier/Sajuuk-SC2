@@ -9,6 +9,8 @@ using SC2APIProtocol;
 
 namespace Bot.MapKnowledge;
 
+// TODO GD Make two classes: The analyzer and the tracker
+// Analysis should be run manually, and the tracker should be able to load the persisted data before entering the game
 public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     public static readonly MapAnalyzer Instance = new MapAnalyzer(VisibilityTracker.Instance);
 
