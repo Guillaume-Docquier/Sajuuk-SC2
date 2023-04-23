@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Bot.Algorithms;
 using Bot.Builds;
+using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -30,7 +31,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     private readonly IVisibilityTracker _visibilityTracker;
 
-    private readonly MidGameBehaviourDebugger _debugger = new MidGameBehaviourDebugger();
+    private readonly MidGameBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
     private readonly Dictionary<IRegion, RegionalArmySupervisor> _armySupervisors;
     private readonly HashSet<ScoutSupervisor> _scoutSupervisors = new HashSet<ScoutSupervisor>();
@@ -43,10 +44,11 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     public List<BuildRequest> BuildRequests { get; } = new List<BuildRequest>();
 
-    public MidGameBehaviour(WarManager warManager, IVisibilityTracker visibilityTracker) {
+    public MidGameBehaviour(WarManager warManager, IVisibilityTracker visibilityTracker, IDebuggingFlagsTracker debuggingFlagsTracker) {
         _warManager = warManager;
         _visibilityTracker = visibilityTracker;
 
+        _debugger = new MidGameBehaviourDebugger(debuggingFlagsTracker);
         _armySupervisors = RegionAnalyzer.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(region));
 
         BuildRequests.Add(_armyBuildRequest);

@@ -5,11 +5,17 @@ using SC2APIProtocol;
 namespace Bot.Managers.WarManagement.States.Finisher;
 
 public class FinisherBehaviourDebugger {
+    private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
+
     public float OwnForce { get; set; }
     public float EnemyForce { get; set; }
 
+    public FinisherBehaviourDebugger(IDebuggingFlagsTracker debuggingFlagsTracker) {
+        _debuggingFlagsTracker = debuggingFlagsTracker;
+    }
+
     public void Debug() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.WarManager)) {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.WarManager)) {
             return;
         }
 

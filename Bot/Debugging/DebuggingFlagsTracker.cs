@@ -5,15 +5,18 @@ using SC2APIProtocol;
 
 namespace Bot.Debugging;
 
-public class DebuggingFlagsTracker : INeedUpdating {
+public class DebuggingFlagsTracker : IDebuggingFlagsTracker, INeedUpdating {
+    /// <summary>
+    /// DI: ✔️ The only usages are for static instance creations
+    /// </summary>
     public static readonly DebuggingFlagsTracker Instance = new DebuggingFlagsTracker(ChatTracker.Instance);
 
     private readonly IChatTracker _chatTracker;
 
     private readonly HashSet<string> _activeDebuggingFlags = new HashSet<string>();
 
-    private static IReadOnlySet<string> AllDebuggingFlags { get; } = DebuggingFlags.GetAll();
-    private static IReadOnlySet<string> AllDebuggingCommands { get; } = DebuggingCommands.GetAll();
+    private IReadOnlySet<string> AllDebuggingFlags { get; } = DebuggingFlags.GetAll();
+    private IReadOnlySet<string> AllDebuggingCommands { get; } = DebuggingCommands.GetAll();
 
     private DebuggingFlagsTracker(IChatTracker chatTracker) {
         _chatTracker = chatTracker;
@@ -23,8 +26,8 @@ public class DebuggingFlagsTracker : INeedUpdating {
         }
     }
 
-    public static bool IsActive(string debuggingFlag) {
-        return Instance._activeDebuggingFlags.Contains(debuggingFlag);
+    public bool IsActive(string debuggingFlag) {
+        return _activeDebuggingFlags.Contains(debuggingFlag);
     }
 
     public void Reset() {

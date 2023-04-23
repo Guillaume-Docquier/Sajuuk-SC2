@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.Builds;
+using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -23,7 +24,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     private readonly IEnemyRaceTracker _enemyRaceTracker;
     private readonly IVisibilityTracker _visibilityTracker;
 
-    private readonly FinisherBehaviourDebugger _debugger = new FinisherBehaviourDebugger();
+    private readonly FinisherBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
 
     private bool _isTerranFinisherInitiated = false;
@@ -39,12 +40,19 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     public readonly ArmySupervisor AttackSupervisor;
     public readonly ArmySupervisor TerranFinisherSupervisor;
 
-    public FinisherBehaviour(WarManager warManager, ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker) {
+    public FinisherBehaviour(
+        WarManager warManager,
+        ITaggingService taggingService,
+        IEnemyRaceTracker enemyRaceTracker,
+        IVisibilityTracker visibilityTracker,
+        IDebuggingFlagsTracker debuggingFlagsTracker
+    ) {
         _warManager = warManager;
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
 
+        _debugger = new FinisherBehaviourDebugger(debuggingFlagsTracker);
         AttackSupervisor = new ArmySupervisor(_visibilityTracker);
         TerranFinisherSupervisor = new ArmySupervisor(_visibilityTracker);
 

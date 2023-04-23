@@ -49,7 +49,7 @@ public static class Controller {
         VisibilityTracker.Instance,     // DI: ✔️ Depends on nothing
 
         UnitsTracker.Instance,          // Depends on VisibilityTracker
-        DebuggingFlagsTracker.Instance, // Depends on ChatTracker
+        DebuggingFlagsTracker.Instance, // DI: ✔️ Depends on ChatTracker
 
         EnemyRaceTracker.Instance,      // DI: ✔️ Depends on UnitsTracker
         IncomeTracker.Instance,         // Depends on UnitsTracker
@@ -61,7 +61,7 @@ public static class Controller {
         RegionAnalyzer.Instance,        // Depends on ExpandAnalyzer and MapAnalyzer
 
         EnemyStrategyTracker.Instance,  // Depends on UnitsTracker, EnemyRaceTracker, ExpandAnalyzer and RegionAnalyzer
-        RegionTracker.Instance,         // Depends on VisibilityTracker, UnitsTracker, MapAnalyzer and RegionAnalyzer
+        RegionTracker.Instance,         // Depends on DebuggingFlagsTracker, VisibilityTracker, UnitsTracker, MapAnalyzer and RegionAnalyzer
     };
 
     public static void Reset() {

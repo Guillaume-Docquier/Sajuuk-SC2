@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.Builds;
+using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -16,7 +17,7 @@ namespace Bot.Managers.WarManagement.States.EarlyGame;
 public class EarlyGameBehaviour : IWarManagerBehaviour {
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
 
-    private readonly EarlyGameBehaviourDebugger _debugger = new EarlyGameBehaviourDebugger();
+    private readonly EarlyGameBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
     private readonly HashSet<IRegion> _startingRegions;
 
@@ -36,10 +37,11 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
     public List<BuildRequest> BuildRequests { get; } = new List<BuildRequest>();
 
-    public EarlyGameBehaviour(WarManager warManager, ITaggingService taggingService, IVisibilityTracker visibilityTracker) {
+    public EarlyGameBehaviour(WarManager warManager, ITaggingService taggingService, IVisibilityTracker visibilityTracker, IDebuggingFlagsTracker debuggingFlagsTracker) {
         _warManager = warManager;
         _taggingService = taggingService;
 
+        _debugger = new EarlyGameBehaviourDebugger(debuggingFlagsTracker);
         DefenseSupervisor = new ArmySupervisor(visibilityTracker);
 
         BuildRequests.Add(_armyBuildRequest);

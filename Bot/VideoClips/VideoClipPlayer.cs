@@ -14,6 +14,8 @@ using SC2APIProtocol;
 namespace Bot.VideoClips;
 
 public class VideoClipPlayer : IBot {
+    private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
+
     private readonly string _mapName;
     private readonly Queue<Clip> _clips = new Queue<Clip>();
     private Clip _currentlyPlayingClip;
@@ -24,7 +26,9 @@ public class VideoClipPlayer : IBot {
 
     private ulong _startAt;
 
-    public VideoClipPlayer(string mapName) {
+    public VideoClipPlayer(string mapName, IDebuggingFlagsTracker debuggingFlagsTracker) {
+        _debuggingFlagsTracker = debuggingFlagsTracker;
+
         _mapName = mapName;
     }
 
@@ -57,7 +61,7 @@ public class VideoClipPlayer : IBot {
         }
 
         await Program.GameConnection.SendRequest(RequestBuilder.DebugRevealMap());
-        DebuggingFlagsTracker.Instance.HandleMessage(DebuggingCommands.Off);
+        _debuggingFlagsTracker.HandleMessage(DebuggingCommands.Off);
 
         ColorService.SetMap(_mapName);
 
@@ -69,7 +73,7 @@ public class VideoClipPlayer : IBot {
             _currentlyPlayingClip = _clips.Dequeue();
         }
         else {
-            DebuggingFlagsTracker.Instance.HandleMessage(DebuggingFlags.Coordinates);
+            _debuggingFlagsTracker.HandleMessage(DebuggingFlags.Coordinates);
         }
 
         _startAt = Controller.Frame + TimeUtils.SecsToFrames(20);

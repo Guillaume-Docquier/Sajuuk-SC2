@@ -15,9 +15,11 @@ namespace Bot.Debugging;
 
 public class BotDebugger {
     private readonly IVisibilityTracker _visibilityTracker;
+    private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
 
-    public BotDebugger(IVisibilityTracker visibilityTracker) {
+    public BotDebugger(IVisibilityTracker visibilityTracker, IDebuggingFlagsTracker debuggingFlagsTracker) {
         _visibilityTracker = visibilityTracker;
+        _debuggingFlagsTracker = debuggingFlagsTracker;
     }
 
     public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus, Race enemyRace) {
@@ -40,13 +42,13 @@ public class BotDebugger {
         //DebugRocks();
     }
 
-    private static void DebugHelp() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Help)) {
+    private void DebugHelp() {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.Help)) {
             return;
         }
 
         var help = DebuggingFlags.GetAll()
-            .Select(flag => $"{flag,-12} {(DebuggingFlagsTracker.IsActive(flag) ? "ON" : "OFF")}")
+            .Select(flag => $"{flag,-12} {(_debuggingFlagsTracker.IsActive(flag) ? "ON" : "OFF")}")
             .Take(14)
             .ToList();
 
@@ -55,8 +57,8 @@ public class BotDebugger {
         Program.GraphicalDebugger.AddTextGroup(help, virtualPos: new Point { X = 0.02f, Y = 0.46f });
     }
 
-    private static void DebugBuildRequests(IReadOnlyCollection<BuildFulfillment> managerBuildRequests, (BuildFulfillment blockingStep, BuildBlockCondition blockingReason) buildBlockStatus) {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.BuildOrder)) {
+    private void DebugBuildRequests(IReadOnlyCollection<BuildFulfillment> managerBuildRequests, (BuildFulfillment blockingStep, BuildBlockCondition blockingReason) buildBlockStatus) {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.BuildOrder)) {
             return;
         }
 
@@ -77,8 +79,8 @@ public class BotDebugger {
         Program.GraphicalDebugger.AddTextGroup(managersBuildStepsData, virtualPos: new Point { X = 0.02f, Y = 0.02f });
     }
 
-    private static void DebugEnemyDetectors() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.EnemyDetectors)) {
+    private void DebugEnemyDetectors() {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.EnemyDetectors)) {
             return;
         }
 
@@ -89,8 +91,8 @@ public class BotDebugger {
         }
     }
 
-    private static void DebugUnwalkableAreas() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.UnwalkableAreas)) {
+    private void DebugUnwalkableAreas() {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.UnwalkableAreas)) {
             return;
         }
 
@@ -108,8 +110,8 @@ public class BotDebugger {
         }
     }
 
-    private static void DebugIncomeRate() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.IncomeRate)) {
+    private void DebugIncomeRate() {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.IncomeRate)) {
             return;
         }
 
@@ -144,8 +146,8 @@ public class BotDebugger {
         }, virtualPos: new Point { X = 0.410f, Y = 0.725f });
     }
 
-    private static void DebugFutureSpending() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Spend)) {
+    private void DebugFutureSpending() {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.Spend)) {
             return;
         }
 
@@ -160,8 +162,8 @@ public class BotDebugger {
         }, virtualPos: new Point { X = 0.505f, Y = 0.740f });
     }
 
-    private static void DebugEnemyGhostUnits() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.GhostUnits)) {
+    private void DebugEnemyGhostUnits() {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.GhostUnits)) {
             return;
         }
 
@@ -170,8 +172,8 @@ public class BotDebugger {
         }
     }
 
-    private static void DebugKnownEnemyUnits() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.KnownEnemyUnits)) {
+    private void DebugKnownEnemyUnits() {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.KnownEnemyUnits)) {
             return;
         }
 
@@ -197,8 +199,8 @@ public class BotDebugger {
         Program.GraphicalDebugger.AddTextGroup(textGroup, virtualPos: new Point { X = 0.83f, Y = 0.20f });
     }
 
-    private static void DebugMatchupData(Race enemyRace) {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.MatchupData)) {
+    private void DebugMatchupData(Race enemyRace) {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.MatchupData)) {
             return;
         }
 
@@ -213,7 +215,7 @@ public class BotDebugger {
     }
 
     private void DebugExploration() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Exploration)) {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.Exploration)) {
             return;
         }
 
@@ -224,8 +226,8 @@ public class BotDebugger {
         }
     }
 
-    private static void DebugUnitAndEffectNames() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Names)) {
+    private void DebugUnitAndEffectNames() {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.Names)) {
             return;
         }
 
@@ -243,8 +245,8 @@ public class BotDebugger {
         }
     }
 
-    private static void DebugCoordinates() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Coordinates)) {
+    private void DebugCoordinates() {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.Coordinates)) {
             return;
         }
 
@@ -258,7 +260,7 @@ public class BotDebugger {
         }
     }
 
-    private static void DebugRocks() {
+    private void DebugRocks() {
         foreach (var neutralUnit in UnitsTracker.NeutralUnits) {
             var rockInfo = new []
             {

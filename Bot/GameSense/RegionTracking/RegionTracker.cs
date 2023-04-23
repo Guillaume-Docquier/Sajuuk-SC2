@@ -10,7 +10,9 @@ using SC2APIProtocol;
 namespace Bot.GameSense.RegionTracking;
 
 public class RegionTracker : INeedUpdating {
-    public static RegionTracker Instance { get; private set; } = new RegionTracker();
+    public static RegionTracker Instance { get; } = new RegionTracker(DebuggingFlagsTracker.Instance);
+
+    private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
 
     private bool _isInitialized = false;
 
@@ -34,18 +36,10 @@ public class RegionTracker : INeedUpdating {
         Colors.LightRed,
     };
 
-    private RegionTracker() {
-        _regionForceEvaluators[Alliance.Self] = new RegionsForceEvaluator(Alliance.Self, () => Controller.Frame);
-        _regionForceEvaluators[Alliance.Enemy] = new RegionsForceEvaluator(Alliance.Enemy, () => Controller.Frame);
+    private RegionTracker(IDebuggingFlagsTracker debuggingFlagsTracker) {
+        _debuggingFlagsTracker = debuggingFlagsTracker;
 
-        _regionValueEvaluators[Alliance.Self] = new RegionsValueEvaluator(Alliance.Self, () => Controller.Frame);
-        _regionValueEvaluators[Alliance.Enemy] = new RegionsValueEvaluator(Alliance.Enemy, () => Controller.Frame);
-
-        _regionThreatEvaluators[Alliance.Enemy] = new RegionsThreatEvaluator(
-            _regionForceEvaluators[Alliance.Enemy],
-            _regionValueEvaluators[Alliance.Self],
-            () => Controller.Frame
-        );
+        Reset();
     }
 
     /// <summary>
@@ -129,7 +123,20 @@ public class RegionTracker : INeedUpdating {
     }
 
     public void Reset() {
-        Instance = new RegionTracker();
+        _isInitialized = false;
+
+        var getCurrentFrame = () => Controller.Frame;
+        _regionForceEvaluators[Alliance.Self] = new RegionsForceEvaluator(Alliance.Self, getCurrentFrame);
+        _regionForceEvaluators[Alliance.Enemy] = new RegionsForceEvaluator(Alliance.Enemy, getCurrentFrame);
+
+        _regionValueEvaluators[Alliance.Self] = new RegionsValueEvaluator(Alliance.Self, getCurrentFrame);
+        _regionValueEvaluators[Alliance.Enemy] = new RegionsValueEvaluator(Alliance.Enemy, getCurrentFrame);
+
+        _regionThreatEvaluators[Alliance.Enemy] = new RegionsThreatEvaluator(
+            _regionForceEvaluators[Alliance.Enemy],
+            _regionValueEvaluators[Alliance.Self],
+            getCurrentFrame
+        );
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
@@ -157,8 +164,8 @@ public class RegionTracker : INeedUpdating {
     /// <para>The marker also indicates the force of each alliance in the region.</para>
     /// <para>Each region gets a different color using the color pool.</para>
     /// </summary>
-    private static void DrawRegionsSummary() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.Regions)) {
+    private void DrawRegionsSummary() {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.Regions)) {
             return;
         }
 

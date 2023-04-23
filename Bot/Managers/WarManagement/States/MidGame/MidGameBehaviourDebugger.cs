@@ -6,14 +6,20 @@ using SC2APIProtocol;
 namespace Bot.Managers.WarManagement.States.MidGame;
 
 public class MidGameBehaviourDebugger {
+    private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
+
     public float OwnForce { get; set; }
     public float EnemyForce { get; set; }
 
     public BuildRequestPriority BuildPriority { get; set; }
     public BuildBlockCondition BuildBlockCondition { get; set; }
 
+    public MidGameBehaviourDebugger(IDebuggingFlagsTracker debuggingFlagsTracker) {
+        _debuggingFlagsTracker = debuggingFlagsTracker;
+    }
+
     public void Debug() {
-        if (!DebuggingFlagsTracker.IsActive(DebuggingFlags.WarManager)) {
+        if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.WarManager)) {
             return;
         }
 

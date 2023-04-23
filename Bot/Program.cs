@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
 using Bot.MapKnowledge;
@@ -87,7 +88,7 @@ public class Program {
         GraphicalDebugger = new Sc2GraphicalDebugger();
 
         GameConnection = new GameConnection(stepSize: 1);
-        GameConnection.RunLocal(new VideoClipPlayer(MapFileName), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
+        GameConnection.RunLocal(new VideoClipPlayer(MapFileName, DebuggingFlagsTracker.Instance), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
     }
 
     private static void PlayLocalGame() {
@@ -112,7 +113,8 @@ public class Program {
             scenarios,
             TaggingService.Instance,
             EnemyRaceTracker.Instance,
-            VisibilityTracker.Instance
+            VisibilityTracker.Instance,
+            DebuggingFlagsTracker.Instance
         );
     }
 }

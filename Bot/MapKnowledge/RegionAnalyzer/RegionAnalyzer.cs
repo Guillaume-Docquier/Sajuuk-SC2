@@ -12,7 +12,9 @@ using SC2APIProtocol;
 namespace Bot.MapKnowledge;
 
 public class RegionAnalyzer: INeedUpdating {
-    public static readonly RegionAnalyzer Instance = new RegionAnalyzer();
+    public static readonly RegionAnalyzer Instance = new RegionAnalyzer(DebuggingFlagsTracker.Instance);
+
+    private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
 
     public static bool IsInitialized { get; private set; } = false;
     private static Dictionary<Vector2, Region> _regionsLookupMap;
@@ -24,7 +26,9 @@ public class RegionAnalyzer: INeedUpdating {
     private const float RegionZMultiplier = 8;
     private static readonly float DiagonalDistance = (float)Math.Sqrt(2);
 
-    private RegionAnalyzer() {}
+    private RegionAnalyzer(IDebuggingFlagsTracker debuggingFlagsTracker) {
+        _debuggingFlagsTracker = debuggingFlagsTracker;
+    }
 
     public void Reset() {
         IsInitialized = false;
@@ -140,13 +144,13 @@ public class RegionAnalyzer: INeedUpdating {
     /// <summary>
     /// Enables graphical debugging of the RegionAnalyzer's data based on debug flags
     /// </summary>
-    private static void Debug() {
-        if (DebuggingFlagsTracker.IsActive(DebuggingFlags.RegionCells)) {
+    private void Debug() {
+        if (_debuggingFlagsTracker.IsActive(DebuggingFlags.RegionCells)) {
             DrawRegions();
             DrawNoise();
         }
 
-        if (DebuggingFlagsTracker.IsActive(DebuggingFlags.ChokePoints)) {
+        if (_debuggingFlagsTracker.IsActive(DebuggingFlags.ChokePoints)) {
             DrawChokePoints();
         }
     }

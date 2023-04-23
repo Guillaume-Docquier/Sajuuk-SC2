@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Managers.WarManagement.States.Finisher;
@@ -11,20 +12,27 @@ public class MidGameState : WarManagerState {
     private readonly ITaggingService _taggingService;
     private readonly IEnemyRaceTracker _enemyRaceTracker;
     private readonly IVisibilityTracker _visibilityTracker;
+    private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
 
-    public MidGameState(ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker) {
+    public MidGameState(
+        ITaggingService taggingService,
+        IEnemyRaceTracker enemyRaceTracker,
+        IVisibilityTracker visibilityTracker,
+        IDebuggingFlagsTracker debuggingFlagsTracker
+    ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
+        _debuggingFlagsTracker = debuggingFlagsTracker;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new MidGameBehaviour(Context, _visibilityTracker);
+        _behaviour = new MidGameBehaviour(Context, _visibilityTracker, _debuggingFlagsTracker);
     }
 
     protected override void Execute() {
@@ -41,7 +49,7 @@ public class MidGameState : WarManagerState {
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new FinisherState(_taggingService, _enemyRaceTracker, _visibilityTracker));
+            StateMachine.TransitionTo(new FinisherState(_taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker));
             return true;
         }
 

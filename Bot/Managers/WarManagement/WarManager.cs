@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.Builds;
+using Bot.Debugging;
 using Bot.GameSense;
 using Bot.Managers.WarManagement.States;
 using Bot.Managers.WarManagement.States.EarlyGame;
@@ -30,8 +31,13 @@ public class WarManager: Manager {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _stateMachine.State.Behaviour.BuildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
-    public WarManager(ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker) {
-        _stateMachine = new StateMachine<WarManager, WarManagerState>(this, new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker));
+    public WarManager(
+        ITaggingService taggingService,
+        IEnemyRaceTracker enemyRaceTracker,
+        IVisibilityTracker visibilityTracker,
+        IDebuggingFlagsTracker debuggingFlagsTracker
+    ) {
+        _stateMachine = new StateMachine<WarManager, WarManagerState>(this, new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker));
     }
 
     public override string ToString() {
