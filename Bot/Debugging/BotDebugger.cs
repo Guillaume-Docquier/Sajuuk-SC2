@@ -17,11 +17,18 @@ public class BotDebugger {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IIncomeTracker _incomeTracker;
 
-    public BotDebugger(IVisibilityTracker visibilityTracker, IDebuggingFlagsTracker debuggingFlagsTracker, IUnitsTracker unitsTracker) {
+    public BotDebugger(
+        IVisibilityTracker visibilityTracker,
+        IDebuggingFlagsTracker debuggingFlagsTracker,
+        IUnitsTracker unitsTracker,
+        IIncomeTracker incomeTracker
+    ) {
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
+        _incomeTracker = incomeTracker;
     }
 
     public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus, Race enemyRace) {
@@ -131,20 +138,20 @@ public class BotDebugger {
         Program.GraphicalDebugger.AddTextGroup(new[]
         {
             $"Minerals" + $"{$"({mineralMiners})",6}",
-            $"Max: {IncomeTracker.Instance.MaxMineralsCollectionRate, 9:F0}",
-            $"Average: {IncomeTracker.Instance.AverageMineralsCollectionRate, 5:F0}",
-            $"Current: {IncomeTracker.Instance.CurrentMineralsCollectionRate, 5:F0}",
-            $"Expected: {IncomeTracker.Instance.ExpectedMineralsCollectionRate, 4:F0}",
+            $"Max: {_incomeTracker.MaxMineralsCollectionRate, 9:F0}",
+            $"Average: {_incomeTracker.AverageMineralsCollectionRate, 5:F0}",
+            $"Current: {_incomeTracker.CurrentMineralsCollectionRate, 5:F0}",
+            $"Expected: {_incomeTracker.ExpectedMineralsCollectionRate, 4:F0}",
         }, virtualPos: new Point { X = 0.315f, Y = 0.725f });
 
         var vespeneMiners = activeMiningModules.Count(module => module.ResourceType == Resources.ResourceType.Gas);
         Program.GraphicalDebugger.AddTextGroup(new[]
         {
             $"Vespene" + $"{$"({vespeneMiners})",7}",
-            $"Max: {IncomeTracker.Instance.MaxVespeneCollectionRate, 9:F0}",
-            $"Average: {IncomeTracker.Instance.AverageVespeneCollectionRate, 5:F0}",
-            $"Current: {IncomeTracker.Instance.CurrentVespeneCollectionRate, 5:F0}",
-            $"Expected: {IncomeTracker.Instance.ExpectedVespeneCollectionRate, 4:F0}",
+            $"Max: {_incomeTracker.MaxVespeneCollectionRate, 9:F0}",
+            $"Average: {_incomeTracker.AverageVespeneCollectionRate, 5:F0}",
+            $"Current: {_incomeTracker.CurrentVespeneCollectionRate, 5:F0}",
+            $"Expected: {_incomeTracker.ExpectedVespeneCollectionRate, 4:F0}",
         }, virtualPos: new Point { X = 0.410f, Y = 0.725f });
     }
 

@@ -10,10 +10,16 @@ namespace Bot.GameSense;
 // But at the same time, we don't want two of these
 // Soooo... yeah, whatever!
 public class SpendingTracker {
-    public static readonly SpendingTracker Instance = new SpendingTracker();
+    public static readonly SpendingTracker Instance = new SpendingTracker(IncomeTracker.Instance);
+
+    private readonly IIncomeTracker _incomeTracker;
 
     public float ExpectedFutureMineralsSpending { get; private set; }
     public float ExpectedFutureVespeneSpending { get; private set; }
+
+    public SpendingTracker(IIncomeTracker incomeTracker) {
+        _incomeTracker = incomeTracker;
+    }
 
     /// <summary>
     /// Update the expected future spending.
@@ -30,7 +36,7 @@ public class SpendingTracker {
         // TODO GD The list is sorted by priority, then supply, with "atSupply: 0" being last
         // Because of this, if there's a lot of things planned for the future, we won't be counting "atSupply: 0" build requests, but in reality we'll execute them before
         // We could (should) adjust the logic accordingly
-        var spendingLimit = IncomeTracker.Instance.ExpectedMineralsCollectionRate + IncomeTracker.Instance.ExpectedVespeneCollectionRate;
+        var spendingLimit = _incomeTracker.ExpectedMineralsCollectionRate + _incomeTracker.ExpectedVespeneCollectionRate;
         foreach (var buildRequest in futureBuildRequests) {
             var mineralSpending = 0f;
             var vespeneSpending = 0f;

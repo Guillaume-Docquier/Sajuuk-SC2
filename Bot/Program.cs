@@ -115,7 +115,8 @@ public class Program {
             EnemyRaceTracker.Instance,
             VisibilityTracker.Instance,
             DebuggingFlagsTracker.Instance,
-            UnitsTracker.Instance
+            UnitsTracker.Instance,
+            IncomeTracker.Instance
         );
     }
 }

@@ -8,7 +8,10 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
-public class IncomeTracker : INeedUpdating {
+public class IncomeTracker : IIncomeTracker, INeedUpdating {
+    /// <summary>
+    /// DI: ✔️ The only usages are for static instance creations
+    /// </summary>
     public static readonly IncomeTracker Instance = new IncomeTracker(TaggingService.Instance, UnitsTracker.Instance);
 
     private readonly ITaggingService _taggingService;

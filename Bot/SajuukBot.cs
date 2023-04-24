@@ -37,13 +37,14 @@ public class SajuukBot: PoliteBot {
         IEnemyRaceTracker enemyRaceTracker,
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
-        IUnitsTracker unitsTracker
+        IUnitsTracker unitsTracker,
+        IIncomeTracker incomeTracker
     ) : base(version, scenarios, taggingService, unitsTracker) {
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
 
-        _debugger = new BotDebugger(_visibilityTracker, _debuggingFlagsTracker, UnitsTracker);
+        _debugger = new BotDebugger(_visibilityTracker, _debuggingFlagsTracker, UnitsTracker, incomeTracker);
     }
 
     protected override Task DoOnFrame() {

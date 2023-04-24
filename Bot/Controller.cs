@@ -52,7 +52,7 @@ public static class Controller {
         DebuggingFlagsTracker.Instance, // DI: ✔️ Depends on ChatTracker
 
         EnemyRaceTracker.Instance,      // DI: ✔️ Depends on UnitsTracker
-        IncomeTracker.Instance,         // Depends on UnitsTracker
+        IncomeTracker.Instance,         // DI: ✔️ Depends on UnitsTracker
         MapAnalyzer.Instance,           // Depends on UnitsTracker and VisibilityTracker
 
         BuildingTracker.Instance,       // Depends on UnitsTracker and MapAnalyzer
