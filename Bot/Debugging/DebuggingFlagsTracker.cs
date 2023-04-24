@@ -21,9 +21,7 @@ public class DebuggingFlagsTracker : IDebuggingFlagsTracker, INeedUpdating {
     private DebuggingFlagsTracker(IChatTracker chatTracker) {
         _chatTracker = chatTracker;
 
-        if (Program.DebugEnabled) {
-            Reset();
-        }
+        Reset();
     }
 
     public bool IsActive(string debuggingFlag) {
