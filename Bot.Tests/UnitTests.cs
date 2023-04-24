@@ -1,16 +1,24 @@
 using System.Numerics;
 using Bot.GameData;
+using Bot.GameSense;
+using Moq;
 
 namespace Bot.Tests;
 
-public class UnitTests: BaseTestClass {
+public class UnitTests : BaseTestClass {
+    private readonly Mock<IUnitsTracker> _unitsTrackerMock;
+
+    public UnitTests() {
+        _unitsTrackerMock = new Mock<IUnitsTracker>();
+    }
+
     [Theory]
     [InlineData(0, false)]
     [InlineData(1, true)]
     [InlineData(2, true)]
     public void Given1FrameDeathDelay_WhenOutOfVision_DiesAfter1Frame(ulong outOfVisionTime, bool expected) {
         // Arrange
-        var unit = TestUtils.CreateUnit(Units.Zergling, frame: 0);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling, frame: 0);
 
         // Act
         var isDead = unit.IsDead(outOfVisionTime);
@@ -22,7 +30,7 @@ public class UnitTests: BaseTestClass {
     [Fact]
     public void GivenDeathWatcherThatRemovesItself_WhenDies_DoesNotThrow() {
         // Arrange
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
 
         var deathWatcher = new DeathWatcherThatRemovesItself();
         unit.AddDeathWatcher(deathWatcher);
@@ -39,7 +47,7 @@ public class UnitTests: BaseTestClass {
     [Fact]
     public void GivenManager_WhenPlaceBuilding_IsReleased() {
         // Arrange
-        var unit = TestUtils.CreateUnit(Units.Drone);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Drone);
 
         var manager = new TestUtils.DummyManager();
         manager.Assign(unit);
@@ -56,8 +64,8 @@ public class UnitTests: BaseTestClass {
     [Fact]
     public void GivenManager_WhenPlaceExtractor_IsReleased() {
         // Arrange
-        var unit = TestUtils.CreateUnit(Units.Drone);
-        var geyser = TestUtils.CreateUnit(Units.VespeneGeyser);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Drone);
+        var geyser = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.VespeneGeyser);
 
         var manager = new TestUtils.DummyManager();
         manager.Assign(unit);
@@ -74,7 +82,7 @@ public class UnitTests: BaseTestClass {
     [Fact]
     public void GivenNoManager_WhenPlaceBuilding_DoesNotThrow() {
         // Arrange
-        var unit = TestUtils.CreateUnit(Units.Drone);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Drone);
 
         // Act
         Assert.Null(unit.Manager);
@@ -87,8 +95,8 @@ public class UnitTests: BaseTestClass {
     [Fact]
     public void GivenNoManager_WhenPlaceExtractor_DoesNotThrow() {
         // Arrange
-        var unit = TestUtils.CreateUnit(Units.Drone);
-        var geyser = TestUtils.CreateUnit(Units.VespeneGeyser);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Drone);
+        var geyser = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.VespeneGeyser);
 
         // Act
         Assert.Null(unit.Manager);

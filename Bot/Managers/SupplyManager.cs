@@ -8,6 +8,8 @@ using Bot.GameSense;
 namespace Bot.Managers;
 
 public class SupplyManager : UnitlessManager {
+    private readonly IUnitsTracker _unitsTracker;
+
     private const int SupplyPerHatchery = 6;
     private const int SupplyPerOverlord = 8;
 
@@ -15,13 +17,18 @@ public class SupplyManager : UnitlessManager {
     private const int OverlordBatchSize = 4;
 
     private readonly BuildManager _buildManager;
-    private readonly BuildRequest _overlordsBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Overlord, 0, priority: BuildRequestPriority.High);
+
+    private readonly BuildRequest _overlordsBuildRequest;
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
-    public SupplyManager(BuildManager buildManager) {
+    public SupplyManager(BuildManager buildManager, IUnitsTracker unitsTracker) {
+        _unitsTracker = unitsTracker;
+
         _buildManager = buildManager;
+
+        _overlordsBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Overlord, 0, priority: BuildRequestPriority.High);
         _buildRequests.Add(_overlordsBuildRequest);
     }
 
@@ -55,7 +62,7 @@ public class SupplyManager : UnitlessManager {
     }
 
     private int GetSupplyFromHatcheries() {
-        return Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).Count(hatchery => hatchery.IsOperational) * SupplyPerHatchery;
+        return Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery).Count(hatchery => hatchery.IsOperational) * SupplyPerHatchery;
     }
 
     private int GetRequestedSupportedSupply() {

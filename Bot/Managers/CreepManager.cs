@@ -9,15 +9,17 @@ namespace Bot.Managers;
 
 public class CreepManager: UnitlessManager {
     private readonly IVisibilityTracker _visibilityTracker;
+    private readonly IUnitsTracker _unitsTracker;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
-    public CreepManager(IVisibilityTracker visibilityTracker) {
+    public CreepManager(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
         _visibilityTracker = visibilityTracker;
+        _unitsTracker = unitsTracker;
     }
 
     protected override void ManagementPhase() {
-        foreach (var creepTumor in Controller.GetUnits(UnitsTracker.NewOwnedUnits, Units.CreepTumor)) {
+        foreach (var creepTumor in Controller.GetUnits(_unitsTracker.NewOwnedUnits, Units.CreepTumor)) {
             TumorCreepSpreadModule.Install(_visibilityTracker, creepTumor);
         }
     }

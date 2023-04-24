@@ -15,13 +15,15 @@ public class TerranScoutingStrategy : IScoutingStrategy {
     private const int TopPriority = 100;
 
     private readonly IVisibilityTracker _visibilityTracker;
+    private readonly IUnitsTracker _unitsTracker;
 
     private bool _isInitialized = false;
 
     private ScoutingTask _enemyNaturalScoutingTask;
 
-    public TerranScoutingStrategy(IVisibilityTracker visibilityTracker) {
+    public TerranScoutingStrategy(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
         _visibilityTracker = visibilityTracker;
+        _unitsTracker = unitsTracker;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
@@ -48,7 +50,7 @@ public class TerranScoutingStrategy : IScoutingStrategy {
 
     private void Init() {
         var enemyNatural = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
-        _enemyNaturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, enemyNatural.Position, TopPriority, maxScouts: 1);
+        _enemyNaturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, enemyNatural.Position, TopPriority, maxScouts: 1);
 
         _isInitialized = true;
     }

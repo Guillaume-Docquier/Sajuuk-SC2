@@ -2,6 +2,7 @@
 using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
+using Bot.GameSense;
 using Bot.Managers;
 using SC2APIProtocol;
 
@@ -23,7 +24,7 @@ public static class TestUtils {
 
         var rawUnit = new SC2APIProtocol.Unit
         {
-            Tag = _currentTag,
+            Tag = Interlocked.Increment(ref _currentTag),
             UnitType = unitType,
             Alliance = alliance,
             Pos = position.ToPoint(),
@@ -31,13 +32,11 @@ public static class TestUtils {
             BuildProgress = buildProgress,
         };
 
-        // Just make sure to never collide
-        _currentTag++;
-
         return rawUnit;
     }
 
     public static Unit CreateUnit(
+        IUnitsTracker unitsTracker,
         uint unitType,
         uint frame = 0,
         Alliance alliance = Alliance.Self,
@@ -47,7 +46,7 @@ public static class TestUtils {
     ) {
         var rawUnit = CreateUnitRaw(unitType, alliance, position, vespeneContents, buildProgress);
 
-        return new Unit(rawUnit, frame);
+        return new Unit(unitsTracker, rawUnit, frame);
     }
 
     public static void NewFrame(ResponseObservation observation) {

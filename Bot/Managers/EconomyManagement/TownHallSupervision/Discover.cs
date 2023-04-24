@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.GameData;
-using Bot.GameSense;
 
 namespace Bot.Managers.EconomyManagement.TownHallSupervision;
 
@@ -11,7 +10,7 @@ public partial class TownHallSupervisor {
     private const int MaxMinerals = 8;
 
     private IEnumerable<Unit> DiscoverMinerals() {
-        return Controller.GetUnits(UnitsTracker.NeutralUnits, Units.MineralFields)
+        return Controller.GetUnits(_unitsTracker.NeutralUnits, Units.MineralFields)
             .Where(mineral => mineral.Supervisor == null)
             .Where(mineral => mineral.GetRegion() == TownHall.GetRegion())
             .Where(mineral => mineral.DistanceTo(TownHall) < MaxDistanceToExpand)
@@ -19,7 +18,7 @@ public partial class TownHallSupervisor {
     }
 
     private IEnumerable<Unit> DiscoverGasses() {
-        return Controller.GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers)
+        return Controller.GetUnits(_unitsTracker.NeutralUnits, Units.GasGeysers)
             .Where(gas => gas.Supervisor == null)
             .Where(gas => gas.GetRegion() == TownHall.GetRegion())
             .Where(gas => gas.DistanceTo(TownHall) < MaxDistanceToExpand)

@@ -1,9 +1,17 @@
 ﻿using Bot.GameData;
+using Bot.GameSense;
 using Bot.Managers;
+using Moq;
 
 namespace Bot.Tests.Managers;
 
 public class SupervisorTests : BaseTestClass {
+    private readonly Mock<IUnitsTracker> _unitsTrackerMock;
+
+    public SupervisorTests() {
+        _unitsTrackerMock = new Mock<IUnitsTracker>();
+    }
+
     [Fact]
     public void GivenNothing_WhenOnFrame_ThenCallsSupervise() {
         // Arrange
@@ -26,9 +34,9 @@ public class SupervisorTests : BaseTestClass {
         var supervisor = new TestUtils.DummySupervisor();
         var units = new List<Unit>
         {
-            TestUtils.CreateUnit(Units.Zergling),
-            TestUtils.CreateUnit(Units.Drone),
-            TestUtils.CreateUnit(Units.Zergling),
+            TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling),
+            TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Drone),
+            TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling),
         };
 
         // Act
@@ -42,7 +50,7 @@ public class SupervisorTests : BaseTestClass {
     public void GivenNothing_WhenAssigningUnit_SetsSupervisor() {
         // Arrange
         var supervisor = new TestUtils.DummySupervisor();
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
 
         // Act
         supervisor.Assign(unit);
@@ -55,7 +63,7 @@ public class SupervisorTests : BaseTestClass {
     public void GivenNothing_WhenAssigningUnit_AddsToSupervisedUnits() {
         // Arrange
         var supervisor = new TestUtils.DummySupervisor();
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
 
         // Act
         supervisor.Assign(unit);
@@ -70,7 +78,7 @@ public class SupervisorTests : BaseTestClass {
         // Arrange
         var assigner = new DummyAssigner();
         var supervisor = new TestUtils.DummySupervisor(assigner: assigner);
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
 
         // Act
         supervisor.Assign(unit);
@@ -84,7 +92,7 @@ public class SupervisorTests : BaseTestClass {
     public void GivenNothing_WhenAssigningUnit_DoesNotAddDeathWatcher() {
         // Arrange
         var supervisor = new TestUtils.DummySupervisor();
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
 
         // Act
         supervisor.Assign(unit);
@@ -97,10 +105,10 @@ public class SupervisorTests : BaseTestClass {
     public void GivenSupervisedUnit_WhenAssigningOtherUnit_SetsSupervisor() {
         // Arrange
         var supervisor = new TestUtils.DummySupervisor();
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
         supervisor.Assign(unit);
 
-        var otherUnit = TestUtils.CreateUnit(Units.Zergling);
+        var otherUnit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
 
         // Act
         supervisor.Assign(otherUnit);
@@ -113,10 +121,10 @@ public class SupervisorTests : BaseTestClass {
     public void GivenSupervisedUnit_WhenAssigningOtherUnit_AddsToSupervisedUnits() {
         // Arrange
         var supervisor = new TestUtils.DummySupervisor();
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
         supervisor.Assign(unit);
 
-        var otherUnit = TestUtils.CreateUnit(Units.Zergling);
+        var otherUnit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
 
         // Act
         supervisor.Assign(otherUnit);
@@ -130,10 +138,10 @@ public class SupervisorTests : BaseTestClass {
         // Arrange
         var assigner = new DummyAssigner();
         var supervisor = new TestUtils.DummySupervisor(assigner: assigner);
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
         supervisor.Assign(unit);
 
-        var otherUnit = TestUtils.CreateUnit(Units.Zergling);
+        var otherUnit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
 
         // Act
         supervisor.Assign(otherUnit);
@@ -146,10 +154,10 @@ public class SupervisorTests : BaseTestClass {
     public void GivenSupervisedUnit_WhenAssigningOtherUnit_DoesNotAddDeathWatcher() {
         // Arrange
         var supervisor = new TestUtils.DummySupervisor();
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
         supervisor.Assign(unit);
 
-        var otherUnit = TestUtils.CreateUnit(Units.Zergling);
+        var otherUnit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
 
         // Act
         supervisor.Assign(otherUnit);
@@ -163,7 +171,7 @@ public class SupervisorTests : BaseTestClass {
         // Arrange
         var assigner = new DummyAssigner();
         var supervisor = new TestUtils.DummySupervisor(assigner: assigner);
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
         supervisor.Assign(unit);
 
         // Act
@@ -186,7 +194,7 @@ public class SupervisorTests : BaseTestClass {
         // Arrange
         var releaser = new DummyReleaser();
         var supervisor = new TestUtils.DummySupervisor(releaser: releaser);
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
 
         // Act
         supervisor.Release(unit);
@@ -200,10 +208,10 @@ public class SupervisorTests : BaseTestClass {
         // Arrange
         var releaser = new DummyReleaser();
         var supervisor = new TestUtils.DummySupervisor(releaser: releaser);
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
         supervisor.Assign(unit);
 
-        var otherUnit = TestUtils.CreateUnit(Units.Zergling);
+        var otherUnit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
 
         // Act
         supervisor.Release(otherUnit);
@@ -222,7 +230,7 @@ public class SupervisorTests : BaseTestClass {
         // Arrange
         var releaser = new DummyReleaser();
         var supervisor = new TestUtils.DummySupervisor(releaser: releaser);
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
         supervisor.Assign(unit);
 
         // Act
@@ -237,7 +245,7 @@ public class SupervisorTests : BaseTestClass {
         // Arrange
         var releaser = new DummyReleaser();
         var supervisor = new TestUtils.DummySupervisor(releaser: releaser);
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
         supervisor.Assign(unit);
 
         // Act
@@ -253,7 +261,7 @@ public class SupervisorTests : BaseTestClass {
         // Arrange
         var releaser = new DummyReleaser();
         var supervisor = new TestUtils.DummySupervisor(releaser: releaser);
-        var unit = TestUtils.CreateUnit(Units.Zergling);
+        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
         supervisor.Assign(unit);
 
         // Act

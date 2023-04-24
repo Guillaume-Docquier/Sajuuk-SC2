@@ -36,13 +36,14 @@ public class SajuukBot: PoliteBot {
         ITaggingService taggingService,
         IEnemyRaceTracker enemyRaceTracker,
         IVisibilityTracker visibilityTracker,
-        IDebuggingFlagsTracker debuggingFlagsTracker
-    ) : base(version, scenarios, taggingService) {
+        IDebuggingFlagsTracker debuggingFlagsTracker,
+        IUnitsTracker unitsTracker
+    ) : base(version, scenarios, taggingService, unitsTracker) {
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
 
-        _debugger = new BotDebugger(_visibilityTracker, _debuggingFlagsTracker);
+        _debugger = new BotDebugger(_visibilityTracker, _debuggingFlagsTracker, UnitsTracker);
     }
 
     protected override Task DoOnFrame() {
@@ -76,15 +77,15 @@ public class SajuukBot: PoliteBot {
     }
 
     private void InitManagers() {
-        var buildManager = new BuildManager(new TwoBasesRoach(), TaggingService);
+        var buildManager = new BuildManager(new TwoBasesRoach(UnitsTracker), TaggingService);
         _managers.Add(buildManager);
 
-        _managers.Add(new SupplyManager(buildManager));
-        _managers.Add(new ScoutManager(_enemyRaceTracker, _visibilityTracker));
-        _managers.Add(new EconomyManager(buildManager));
-        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker));
-        _managers.Add(new CreepManager(_visibilityTracker));
-        _managers.Add(new UpgradesManager());
+        _managers.Add(new SupplyManager(buildManager, UnitsTracker));
+        _managers.Add(new ScoutManager(_enemyRaceTracker, _visibilityTracker, UnitsTracker));
+        _managers.Add(new EconomyManager(buildManager, UnitsTracker));
+        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, UnitsTracker));
+        _managers.Add(new CreepManager(_visibilityTracker, UnitsTracker));
+        _managers.Add(new UpgradesManager(UnitsTracker));
     }
 
     /// <summary>
@@ -195,7 +196,7 @@ public class SajuukBot: PoliteBot {
         return false;
     }
 
-    private static void EnsureNoSupplyBlock() {
+    private void EnsureNoSupplyBlock() {
         if (!Controller.IsSupplyCapped) {
             return;
         }
@@ -208,6 +209,6 @@ public class SajuukBot: PoliteBot {
             return;
         }
 
-        Controller.ExecuteBuildStep(new QuantityBuildRequest(BuildType.Train, Units.Overlord).Fulfillment);
+        Controller.ExecuteBuildStep(new QuantityBuildRequest(UnitsTracker, BuildType.Train, Units.Overlord).Fulfillment);
     }
 }

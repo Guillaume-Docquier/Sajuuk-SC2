@@ -1,11 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.GameData;
+using Bot.GameSense;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
 
 public partial class SneakAttack {
     public class EngageState : SneakAttackState {
+        private readonly IUnitsTracker _unitsTracker;
+
+        public EngageState(IUnitsTracker unitsTracker) {
+            _unitsTracker = unitsTracker;
+        }
+
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
             return true;
         }
@@ -13,7 +20,7 @@ public partial class SneakAttack {
         protected override void Execute() {
             UnburrowUnderlings(Context._army);
 
-            NextState = new TerminalState();
+            NextState = new TerminalState(_unitsTracker);
         }
 
         private static void UnburrowUnderlings(IEnumerable<Unit> army) {

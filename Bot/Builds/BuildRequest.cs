@@ -1,4 +1,5 @@
 ﻿using Bot.GameData;
+using Bot.GameSense;
 
 namespace Bot.Builds;
 
@@ -44,7 +45,10 @@ public abstract class BuildRequest {
 }
 
 public class QuantityBuildRequest: BuildRequest {
+    private readonly IUnitsTracker _unitsTracker;
+
     public QuantityBuildRequest(
+        IUnitsTracker unitsTracker,
         BuildType buildType,
         uint unitOrUpgradeType,
         int quantity = 1,
@@ -53,15 +57,20 @@ public class QuantityBuildRequest: BuildRequest {
         BuildBlockCondition blockCondition = BuildBlockCondition.None,
         BuildRequestPriority priority = BuildRequestPriority.Normal
     )
-        : base(buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority) {}
+        : base(buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority) {
+        _unitsTracker = unitsTracker;
+    }
 
     protected override BuildFulfillment GenerateBuildFulfillment() {
-        return new QuantityFulfillment(this);
+        return new QuantityFulfillment(this, _unitsTracker);
     }
 }
 
 public class TargetBuildRequest: BuildRequest {
+    private readonly IUnitsTracker _unitsTracker;
+
     public TargetBuildRequest(
+        IUnitsTracker unitsTracker,
         BuildType buildType,
         uint unitOrUpgradeType,
         int targetQuantity,
@@ -70,9 +79,11 @@ public class TargetBuildRequest: BuildRequest {
         BuildBlockCondition blockCondition = BuildBlockCondition.None,
         BuildRequestPriority priority = BuildRequestPriority.Normal
     )
-        : base(buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority) {}
+        : base(buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority) {
+        _unitsTracker = unitsTracker;
+    }
 
     protected override BuildFulfillment GenerateBuildFulfillment() {
-        return new TargetFulfillment(this);
+        return new TargetFulfillment(this, _unitsTracker);
     }
 }

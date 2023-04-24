@@ -1,13 +1,19 @@
 ﻿using System.Numerics;
+using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.MapKnowledge;
-using Bot.Tests.Fixtures;
+using Moq;
 using SC2APIProtocol;
 
 namespace Bot.Tests.GameSense.RegionTracking;
 
-public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
+public class RegionsThreatEvaluatorTests : BaseTestClass {
     private static readonly Func<uint> GetCurrentFrame = () => 1;
+    private readonly Mock<IUnitsTracker> _unitsTrackerMock;
+
+    public RegionsThreatEvaluatorTests() {
+        _unitsTrackerMock = new Mock<IUnitsTracker>();
+    }
 
     [Fact]
     public void GivenNoForcesAndNoValues_WhenUpdateEvaluations_ThenAllEvaluationsAreZero() {
@@ -33,8 +39,8 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
 
         var regions = new[] { region1, region2, region3, region4, region5, region6 };
 
-        var enemyForceEvaluator = new TestRegionsForceEvaluator();
-        var selfValueEvaluator = new TestRegionsValueEvaluator();
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object);
         var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
@@ -83,7 +89,7 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
             { region5, 0 },
             { region6, 0 },
         };
-        var enemyForceEvaluator = new TestRegionsForceEvaluator(forceEvaluations);
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, forceEvaluations);
 
         var valueEvaluations = new Dictionary<IRegion, float>
         {
@@ -94,7 +100,7 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
             { region5, 1 },
             { region6, 0 },
         };
-        var selfValueEvaluator = new TestRegionsValueEvaluator(valueEvaluations);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, valueEvaluations);
         var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
@@ -148,8 +154,8 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
             { region5, 5 },
             { region6, 6 },
         };
-        var enemyForceEvaluator = new TestRegionsForceEvaluator(forceEvaluations);
-        var selfValueEvaluator = new TestRegionsValueEvaluator();
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, forceEvaluations);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object);
         var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
@@ -198,7 +204,7 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
             { region5, 0 },
             { region6, 0 },
         };
-        var enemyForceEvaluator = new TestRegionsForceEvaluator(forceEvaluations);
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, forceEvaluations);
 
         var valueEvaluations = new Dictionary<IRegion, float>
         {
@@ -209,7 +215,7 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
             { region5, 1 },
             { region6, 0 },
         };
-        var selfValueEvaluator = new TestRegionsValueEvaluator(valueEvaluations);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, valueEvaluations);
         var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
@@ -257,7 +263,7 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
             { region5, 0 },
             { region6, 0 },
         };
-        var enemyForceEvaluator = new TestRegionsForceEvaluator(forceEvaluations);
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, forceEvaluations);
 
         var valueEvaluations = new Dictionary<IRegion, float>
         {
@@ -268,7 +274,7 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
             { region5, 1 },
             { region6, 0 },
         };
-        var selfValueEvaluator = new TestRegionsValueEvaluator(valueEvaluations);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, valueEvaluations);
         var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
@@ -316,7 +322,7 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
             { region5, 0 },
             { region6, 0 },
         };
-        var enemyForceEvaluator = new TestRegionsForceEvaluator(forceEvaluations);
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, forceEvaluations);
 
         var valueEvaluations = new Dictionary<IRegion, float>
         {
@@ -327,7 +333,7 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
             { region5, 0 },
             { region6, 0 },
         };
-        var selfValueEvaluator = new TestRegionsValueEvaluator(valueEvaluations);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, valueEvaluations);
         var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
@@ -375,7 +381,7 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
             { region5, 0 },
             { region6, 0 },
         };
-        var enemyForceEvaluator = new TestRegionsForceEvaluator(forceEvaluations);
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, forceEvaluations);
 
         var valueEvaluations = new Dictionary<IRegion, float>
         {
@@ -386,7 +392,7 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
             { region5, 0 },
             { region6, 0 },
         };
-        var selfValueEvaluator = new TestRegionsValueEvaluator(valueEvaluations);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, valueEvaluations);
         var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
 
         enemyForceEvaluator.Init(regions);
@@ -405,13 +411,13 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
     private class TestRegionsForceEvaluator : RegionsForceEvaluator {
         private readonly Dictionary<IRegion, float>? _evaluations;
 
-        public TestRegionsForceEvaluator()
-            : base(Alliance.Enemy, GetCurrentFrame) {
+        public TestRegionsForceEvaluator(IUnitsTracker unitsTracker)
+            : base(unitsTracker, Alliance.Enemy, GetCurrentFrame) {
             _evaluations = null;
         }
 
-        public TestRegionsForceEvaluator(Dictionary<IRegion, float> evaluations)
-            : base(Alliance.Enemy, GetCurrentFrame) {
+        public TestRegionsForceEvaluator(IUnitsTracker unitsTracker, Dictionary<IRegion, float> evaluations)
+            : base(unitsTracker, Alliance.Enemy, GetCurrentFrame) {
             _evaluations = evaluations;
         }
 
@@ -423,13 +429,13 @@ public class RegionsThreatEvaluatorTests : IClassFixture<NoLoggerFixture> {
     private class TestRegionsValueEvaluator : RegionsValueEvaluator {
         private readonly Dictionary<IRegion, float>? _evaluations;
 
-        public TestRegionsValueEvaluator()
-            : base(Alliance.Self, GetCurrentFrame) {
+        public TestRegionsValueEvaluator(IUnitsTracker unitsTracker)
+            : base(unitsTracker, Alliance.Self, GetCurrentFrame) {
             _evaluations = null;
         }
 
-        public TestRegionsValueEvaluator(Dictionary<IRegion, float> evaluations)
-            : base(Alliance.Self, GetCurrentFrame) {
+        public TestRegionsValueEvaluator(IUnitsTracker unitsTracker, Dictionary<IRegion, float> evaluations)
+            : base(unitsTracker, Alliance.Self, GetCurrentFrame) {
             _evaluations = evaluations;
         }
 

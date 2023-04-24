@@ -15,9 +15,10 @@ namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 /// Overlords are recalled if dangerous ground to air units are detected.
 /// </summary>
 public class ZergScoutingStrategy : IScoutingStrategy {
-    private const int TopPriority = 100;
-
     private readonly IVisibilityTracker _visibilityTracker;
+    private readonly IUnitsTracker _unitsTracker;
+
+    private const int TopPriority = 100;
 
     private bool _isInitialized = false;
 
@@ -34,8 +35,9 @@ public class ZergScoutingStrategy : IScoutingStrategy {
     private ScoutingTask _thirdScoutingTask;
     private ScoutingTask _fourthScoutingTask;
 
-    public ZergScoutingStrategy(IVisibilityTracker visibilityTracker) {
+    public ZergScoutingStrategy(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
         _visibilityTracker = visibilityTracker;
+        _unitsTracker = unitsTracker;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
@@ -53,7 +55,7 @@ public class ZergScoutingStrategy : IScoutingStrategy {
         }
 
         // TODO GD Decide based on amount of dead units instead?
-        if (UnitsTracker.EnemyUnits.Any(unit => ThreateningUnitTypes.Contains(unit.UnitType))) {
+        if (_unitsTracker.EnemyUnits.Any(unit => ThreateningUnitTypes.Contains(unit.UnitType))) {
             _naturalScoutingTask.Cancel();
             _naturalExitVisibilityTask.Cancel();
             _thirdScoutingTask.Cancel();
@@ -67,7 +69,7 @@ public class ZergScoutingStrategy : IScoutingStrategy {
 
     private void Init() {
         var enemyNaturalExpandLocation = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
-        _naturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, enemyNaturalExpandLocation.Position, TopPriority, maxScouts: 1, waitForExpand: true);
+        _naturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, enemyNaturalExpandLocation.Position, TopPriority, maxScouts: 1, waitForExpand: true);
 
         var enemyNaturalExitRegion = RegionAnalyzer.GetNaturalExitRegion(Alliance.Enemy);
         var enemyNaturalExitRegionRamps = enemyNaturalExitRegion.Neighbors
@@ -82,10 +84,10 @@ public class ZergScoutingStrategy : IScoutingStrategy {
         _naturalExitVisibilityTask = new MaintainVisibilityScoutingTask(_visibilityTracker, cellsToMaintainVisible, priority: TopPriority - 3, enemyNaturalExitRegionRamps.Count);
 
         var enemyThirdExpandLocation = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Third);
-        _thirdScoutingTask = new ExpandScoutingTask(_visibilityTracker, enemyThirdExpandLocation.Position, TopPriority - 1, maxScouts: 1, waitForExpand: true);
+        _thirdScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, enemyThirdExpandLocation.Position, TopPriority - 1, maxScouts: 1, waitForExpand: true);
 
         var enemyFourthExpandLocation = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Fourth);
-        _fourthScoutingTask = new ExpandScoutingTask(_visibilityTracker, enemyFourthExpandLocation.Position, TopPriority - 2, maxScouts: 1, waitForExpand: true);
+        _fourthScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, enemyFourthExpandLocation.Position, TopPriority - 2, maxScouts: 1, waitForExpand: true);
 
         // We want to route an overlord towards the center of the map sooner than the edge
         // Most early attacks will route through the center, we want to see them

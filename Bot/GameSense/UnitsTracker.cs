@@ -7,40 +7,42 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
-public class UnitsTracker: INeedUpdating {
+public class UnitsTracker : IUnitsTracker, INeedUpdating {
+    /// <summary>
+    /// DI: ✔️ The only usages are for static instance creations
+    /// </summary>
     public static readonly UnitsTracker Instance = new UnitsTracker(VisibilityTracker.Instance);
 
     private readonly IVisibilityTracker _visibilityTracker;
 
+    private const int EnemyDeathDelaySeconds = 4 * 60;
+
     private bool _isInitialized = false;
 
-    public static Dictionary<ulong, Unit> UnitsByTag { get; private set; } = new Dictionary<ulong, Unit>();
+    public Dictionary<ulong, Unit> UnitsByTag { get; private set; } = new Dictionary<ulong, Unit>();
+    public List<Unit> NewOwnedUnits { get; } = new List<Unit>();
 
-    public static readonly List<Unit> NewOwnedUnits = new List<Unit>();
-
-    public static List<Unit> NeutralUnits { get; private set; } = new List<Unit>();
-    public static List<Unit> OwnedUnits { get; private set; } = new List<Unit>();
-    public static List<Unit> EnemyUnits { get; private set; } = new List<Unit>();
+    public List<Unit> NeutralUnits { get; private set; } = new List<Unit>();
+    public List<Unit> OwnedUnits { get; private set; } = new List<Unit>();
+    public List<Unit> EnemyUnits { get; private set; } = new List<Unit>();
 
     /// <summary>
     /// Holds all the units that we've lost vision of.
     /// Does not contain units that we confirmed have moved in the meantime.
     /// </summary>
-    public static Dictionary<ulong, Unit> EnemyGhostUnits { get; } = new Dictionary<ulong, Unit>();
+    public Dictionary<ulong, Unit> EnemyGhostUnits { get; } = new Dictionary<ulong, Unit>();
 
     /// <summary>
     /// Holds all the units that are unaccounted for and that we know are not where we last saw them.
     /// </summary>
     // TODO GD Change EnemyMemorizedUnits to include all units that we know of (Units + Ghosts + Unaccounted for)
-    public static Dictionary<ulong, Unit> EnemyMemorizedUnits { get; } = new Dictionary<ulong, Unit>();
-
-    private const int EnemyDeathDelaySeconds = 4 * 60;
+    public Dictionary<ulong, Unit> EnemyMemorizedUnits { get; } = new Dictionary<ulong, Unit>();
 
     private UnitsTracker(IVisibilityTracker visibilityTracker) {
         _visibilityTracker = visibilityTracker;
     }
 
-    public static List<Unit> GetUnits(Alliance alliance) {
+    public List<Unit> GetUnits(Alliance alliance) {
         return alliance switch
         {
             Alliance.Self => OwnedUnits,
@@ -50,7 +52,7 @@ public class UnitsTracker: INeedUpdating {
         };
     }
 
-    public static List<Unit> GetGhostUnits(Alliance alliance) {
+    public List<Unit> GetGhostUnits(Alliance alliance) {
         return alliance switch
         {
             Alliance.Enemy => EnemyGhostUnits.Values.ToList(),
@@ -103,7 +105,7 @@ public class UnitsTracker: INeedUpdating {
     }
 
     private void Init(IEnumerable<SC2APIProtocol.Unit> rawUnits, ulong frame) {
-        var units = rawUnits.Select(rawUnit => new Unit(rawUnit, frame)).ToList();
+        var units = rawUnits.Select(rawUnit => new Unit(this, rawUnit, frame)).ToList();
 
         UnitsByTag = units.ToDictionary(unit => unit.Tag);
 
@@ -114,7 +116,7 @@ public class UnitsTracker: INeedUpdating {
         _isInitialized = true;
     }
 
-    private static void LogUnknownNeutralUnits() {
+    private void LogUnknownNeutralUnits() {
         var unknownNeutralUnits = NeutralUnits.DistinctBy(unit => unit.UnitType)
             .Where(unit => !Units.Destructibles.Contains(unit.UnitType) && !Units.MineralFields.Contains(unit.UnitType) && !Units.GasGeysers.Contains(unit.UnitType) && unit.UnitType != Units.XelNagaTower)
             .Select(unit => (unit.Name, unit.UnitType))
@@ -123,8 +125,8 @@ public class UnitsTracker: INeedUpdating {
         Logger.Metric($"Unknown Neutral Units: [{string.Join(", ", unknownNeutralUnits)}]");
     }
 
-    private static void HandleNewUnit(SC2APIProtocol.Unit newRawUnit, ulong currentFrame) {
-        var newUnit = new Unit(newRawUnit, currentFrame);
+    private void HandleNewUnit(SC2APIProtocol.Unit newRawUnit, ulong currentFrame) {
+        var newUnit = new Unit(this, newRawUnit, currentFrame);
 
         if (newUnit.Alliance == Alliance.Self) {
             Logger.Info("{0} was born", newUnit);
@@ -224,7 +226,7 @@ public class UnitsTracker: INeedUpdating {
         }
     }
 
-    private static void UpdateUnitLists() {
+    private void UpdateUnitLists() {
         OwnedUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Self).Select(unit => unit.Value).ToList();
         NeutralUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Neutral).Select(unit => unit.Value).ToList();
         EnemyUnits = UnitsByTag.Where(unit => unit.Value.Alliance == Alliance.Enemy).Select(unit => unit.Value).ToList();

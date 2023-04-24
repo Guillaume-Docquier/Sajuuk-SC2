@@ -13,7 +13,10 @@ using SC2APIProtocol;
 namespace Bot.MapKnowledge;
 
 public class ExpandAnalyzer: INeedUpdating {
-    public static ExpandAnalyzer Instance { get; private set; } = new ExpandAnalyzer();
+    public static ExpandAnalyzer Instance { get; } = new ExpandAnalyzer(UnitsTracker.Instance);
+
+    private readonly IUnitsTracker _unitsTracker;
+
     private const bool DrawEnabled = false;
 
     private bool _isInitialized = false;
@@ -29,10 +32,14 @@ public class ExpandAnalyzer: INeedUpdating {
     private const int ExpandRadius = 3; // It's 2.5, we put 3 to be safe
     private static readonly float TooCloseToResourceDistance = (float)Math.Sqrt(1*1 + 3*3); // Empirical, 1x3 diagonal
 
-    private ExpandAnalyzer() {}
+    private ExpandAnalyzer(IUnitsTracker unitsTracker) {
+        _unitsTracker = unitsTracker;
+    }
 
     public void Reset() {
-        Instance = new ExpandAnalyzer();
+        _isInitialized = false;
+        _expandLocations.Clear();
+        _tooCloseToResourceGrid.Clear();
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
@@ -108,10 +115,10 @@ public class ExpandAnalyzer: INeedUpdating {
             : expands.MinBy(expandLocation => expandLocation.Position.DistanceTo(MapAnalyzer.StartingLocation))!;
     }
 
-    private static IEnumerable<List<Unit>> FindResourceClusters() {
+    private IEnumerable<List<Unit>> FindResourceClusters() {
         // See note on MineralField450
-        var minerals = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.MineralFields.Except(new[] { Units.MineralField450 }).ToHashSet());
-        var gasses = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers);
+        var minerals = Controller.GetUnits(_unitsTracker.NeutralUnits, Units.MineralFields.Except(new[] { Units.MineralField450 }).ToHashSet());
+        var gasses = Controller.GetUnits(_unitsTracker.NeutralUnits, Units.GasGeysers);
         var resources = minerals.Concat(gasses).ToList();
 
         return Clustering.DBSCAN(resources, epsilon: 8, minPoints: 4).clusters;
@@ -165,7 +172,7 @@ public class ExpandAnalyzer: INeedUpdating {
         var footprintIsClear = footprint.All(cell => !_tooCloseToResourceGrid[(int)cell.X][(int)cell.Y]);
 
         // We'll query just to be sure
-        if (footprintIsClear && BuildingTracker.QueryPlacement(Units.Hatchery, buildSpot) != ActionResult.CantBuildTooCloseToResources) {
+        if (footprintIsClear && BuildingTracker.Instance.QueryPlacement(Units.Hatchery, buildSpot) != ActionResult.CantBuildTooCloseToResources) {
             return true;
         }
 
@@ -264,10 +271,10 @@ public class ExpandAnalyzer: INeedUpdating {
     /// </summary>
     /// <param name="expandLocation"></param>
     /// <returns>All units that need to be cleared to take the expand</returns>
-    private static HashSet<Unit> FindExpandBlockers(Vector2 expandLocation) {
+    private HashSet<Unit> FindExpandBlockers(Vector2 expandLocation) {
         var hatcheryRadius = KnowledgeBase.GetBuildingRadius(Units.Hatchery);
 
-        return UnitsTracker.NeutralUnits
+        return _unitsTracker.NeutralUnits
             .Where(neutralUnit => neutralUnit.DistanceTo(expandLocation) <= neutralUnit.Radius + hatcheryRadius)
             .ToHashSet();
     }

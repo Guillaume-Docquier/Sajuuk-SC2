@@ -30,13 +30,14 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     private static readonly HashSet<uint> ManageableUnitTypes = Units.ZergMilitary.Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed }).ToHashSet();
 
     private readonly IVisibilityTracker _visibilityTracker;
+    private readonly IUnitsTracker _unitsTracker;
 
     private readonly MidGameBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
     private readonly Dictionary<IRegion, RegionalArmySupervisor> _armySupervisors;
     private readonly HashSet<ScoutSupervisor> _scoutSupervisors = new HashSet<ScoutSupervisor>();
 
-    private BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
+    private BuildRequest _armyBuildRequest;
     private bool _hasCleanUpStarted = false;
 
     public IAssigner Assigner { get; }
@@ -44,16 +45,18 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     public List<BuildRequest> BuildRequests { get; } = new List<BuildRequest>();
 
-    public MidGameBehaviour(WarManager warManager, IVisibilityTracker visibilityTracker, IDebuggingFlagsTracker debuggingFlagsTracker) {
+    public MidGameBehaviour(WarManager warManager, IVisibilityTracker visibilityTracker, IDebuggingFlagsTracker debuggingFlagsTracker, IUnitsTracker unitsTracker) {
         _warManager = warManager;
         _visibilityTracker = visibilityTracker;
+        _unitsTracker = unitsTracker;
 
         _debugger = new MidGameBehaviourDebugger(debuggingFlagsTracker);
-        _armySupervisors = RegionAnalyzer.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(region));
+        _armySupervisors = RegionAnalyzer.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(_unitsTracker, region));
 
+        _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);
 
-        Assigner = new WarManagerAssigner<MidGameBehaviour>(this);
+        Assigner = new WarManagerAssigner<MidGameBehaviour>(this, _unitsTracker);
         Releaser = new WarManagerReleaser<MidGameBehaviour>(this);
     }
 
@@ -62,7 +65,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             return;
         }
 
-        _warManager.Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
+        _warManager.Assign(Controller.GetUnits(_unitsTracker.NewOwnedUnits, ManageableUnitTypes));
     }
 
     public void DispatchPhase() {
@@ -157,8 +160,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             .Where(expandLocation => !_visibilityTracker.IsVisible(expandLocation.Position));
 
         foreach (var expandToScout in expandsToScout) {
-            var scoutingTask = new ExpandScoutingTask(_visibilityTracker, expandToScout.Position, priority: 0, maxScouts: 1);
-            var scoutingSupervisor = new ScoutSupervisor(scoutingTask);
+            var scoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, expandToScout.Position, priority: 0, maxScouts: 1);
+            var scoutingSupervisor = new ScoutSupervisor(_unitsTracker, scoutingTask);
 
             _scoutSupervisors.Add(scoutingSupervisor);
         }
@@ -292,7 +295,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     }
 
     private void RecallUnsupervisedUnits() {
-        var safeRegions = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
+        var safeRegions = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls)
             .Select(townHall => townHall.GetRegion())
             .ToHashSet();
 
@@ -325,7 +328,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         if (_armyBuildRequest.UnitOrUpgradeType != unitTypeToProduce) {
             BuildRequests.Remove(_armyBuildRequest);
 
-            _armyBuildRequest = new TargetBuildRequest(BuildType.Train, unitTypeToProduce, targetQuantity: 100, priority: BuildRequestPriority.Low);
+            _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, unitTypeToProduce, targetQuantity: 100, priority: BuildRequestPriority.Low);
             BuildRequests.Add(_armyBuildRequest);
         }
 
@@ -355,13 +358,13 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// Right now, it just checks if it can make roaches, but in the future it might check against the enemy composition.
     /// </summary>
     /// <returns>The unit type id to produce.</returns>
-    private static uint GetUnitTypeToProduce() {
+    private uint GetUnitTypeToProduce() {
         if (Controller.IsUnlocked(Units.Roach, TechTree.UnitPrerequisites)) {
             return Units.Roach;
         }
 
         // This will include spawning pool in progress. We'll want to start saving larvae for drones
-        if (Controller.GetUnits(UnitsTracker.OwnedUnits, Units.SpawningPool).Any()) {
+        if (Controller.GetUnits(_unitsTracker.OwnedUnits, Units.SpawningPool).Any()) {
             return Units.Zergling;
         }
 
@@ -373,8 +376,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// Returns the total enemy force.
     /// </summary>
     /// <returns>The total enemy force.</returns>
-    private static float GetTotalEnemyForce() {
-        return UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits).GetForce();
+    private float GetTotalEnemyForce() {
+        return _unitsTracker.EnemyMemorizedUnits.Values.Concat(_unitsTracker.EnemyUnits).GetForce();
     }
 
     /// <summary>

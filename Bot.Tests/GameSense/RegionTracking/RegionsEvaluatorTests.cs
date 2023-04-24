@@ -1,12 +1,11 @@
 using System.Numerics;
 using Bot.GameSense.RegionTracking;
 using Bot.MapKnowledge;
-using Bot.Tests.Fixtures;
 
 namespace Bot.Tests.GameSense.RegionTracking;
 
 // TODO GD Test that it updates automatically and once per frame
-public class RegionsEvaluatorTests : IClassFixture<NoLoggerFixture> {
+public class RegionsEvaluatorTests : BaseTestClass {
     [Theory]
     [InlineData(true)]
     [InlineData(false)]

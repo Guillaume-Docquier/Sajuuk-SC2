@@ -35,9 +35,13 @@ public class WarManager: Manager {
         ITaggingService taggingService,
         IEnemyRaceTracker enemyRaceTracker,
         IVisibilityTracker visibilityTracker,
-        IDebuggingFlagsTracker debuggingFlagsTracker
+        IDebuggingFlagsTracker debuggingFlagsTracker,
+        IUnitsTracker unitsTracker
     ) {
-        _stateMachine = new StateMachine<WarManager, WarManagerState>(this, new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker));
+        _stateMachine = new StateMachine<WarManager, WarManagerState>(
+            this,
+            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker)
+        );
     }
 
     public override string ToString() {

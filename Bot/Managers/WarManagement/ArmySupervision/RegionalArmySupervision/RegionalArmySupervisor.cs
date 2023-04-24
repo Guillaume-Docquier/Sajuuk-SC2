@@ -13,19 +13,27 @@ using Bot.StateManagement;
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class RegionalArmySupervisor : Supervisor {
+    private readonly IUnitsTracker _unitsTracker;
+
     private const bool Debug = false;
 
-    private readonly IUnitsControl _offensiveUnitsController = new OffensiveUnitsControl();
-    private readonly IUnitsControl _defensiveUnitsController = new DefensiveUnitsControl();
+    private readonly IUnitsControl _offensiveUnitsController;
+    private readonly IUnitsControl _defensiveUnitsController;
     private readonly IRegion _targetRegion;
     private readonly StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState> _stateMachine;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
-    public RegionalArmySupervisor(IRegion targetRegion) {
+    public RegionalArmySupervisor(IUnitsTracker unitsTracker, IRegion targetRegion) {
+        _unitsTracker = unitsTracker;
+
         _targetRegion = targetRegion;
+
+        _offensiveUnitsController = new OffensiveUnitsControl(_unitsTracker);
+        _defensiveUnitsController = new DefensiveUnitsControl(_unitsTracker);
+
         Releaser = new RegionalArmySupervisorReleaser(this);
-        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState());
+        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState(_unitsTracker));
     }
 
     protected override void Supervise() {
@@ -52,9 +60,9 @@ public class RegionalArmySupervisor : Supervisor {
     /// </summary>
     /// <param name="targetRegion">The target region.</param>
     /// <returns>The enemy units to defeat</returns>
-    private static IEnumerable<Unit> GetEnemyArmy(IRegion targetRegion) {
-        var enemies = UnitsTracker.EnemyUnits
-            .Concat(UnitsTracker.EnemyGhostUnits.Values)
+    private IEnumerable<Unit> GetEnemyArmy(IRegion targetRegion) {
+        var enemies = _unitsTracker.EnemyUnits
+            .Concat(_unitsTracker.EnemyGhostUnits.Values)
             .Where(enemy => !enemy.IsFlying) // TODO GD Bad bad hardcode
             .ToList();
 

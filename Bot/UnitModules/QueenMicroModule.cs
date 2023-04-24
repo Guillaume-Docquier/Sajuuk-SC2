@@ -12,17 +12,17 @@ public class QueenMicroModule: UnitModule, IWatchUnitsDie {
     private Unit _queen;
     private Unit _assignedTownHall;
 
-    public static void Install(Unit queen, Unit assignedTownHall = null) {
-        if (PreInstallCheck(Tag, queen)) {
-            queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall));
-        }
-    }
-
     private QueenMicroModule(Unit queen, Unit assignedTownHall) {
         _queen = queen;
         _queen.AddDeathWatcher(this);
 
         AssignTownHall(assignedTownHall);
+    }
+
+    public static void Install(Unit queen, Unit assignedTownHall = null) {
+        if (PreInstallCheck(Tag, queen)) {
+            queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall));
+        }
     }
 
     public void AssignTownHall(Unit townHall) {
@@ -46,7 +46,7 @@ public class QueenMicroModule: UnitModule, IWatchUnitsDie {
             var tumorPosition = CreepTracker.Instance.GetCreepFrontier()
                 .Where(ExpandAnalyzer.IsNotBlockingExpand)
                 .OrderBy(creepNode => _queen.DistanceTo(creepNode)) // TODO GD Try to favor between bases and towards the enemy
-                .FirstOrDefault(creepNode => BuildingTracker.CanPlace(Units.CreepTumor, creepNode) && Pathfinder.FindPath(_queen.Position.ToVector2(), creepNode) != null);
+                .FirstOrDefault(creepNode => BuildingTracker.Instance.CanPlace(Units.CreepTumor, creepNode) && Pathfinder.FindPath(_queen.Position.ToVector2(), creepNode) != null);
 
             if (tumorPosition != default) {
                 _queen.UseAbility(Abilities.SpawnCreepTumor, position: tumorPosition.ToPoint2D());

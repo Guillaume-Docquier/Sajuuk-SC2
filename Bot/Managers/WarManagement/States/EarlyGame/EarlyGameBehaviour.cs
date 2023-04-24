@@ -22,8 +22,9 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     private readonly HashSet<IRegion> _startingRegions;
 
     private readonly ITaggingService _taggingService;
+    private readonly IUnitsTracker _unitsTracker;
 
-    private BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
+    private BuildRequest _armyBuildRequest;
 
     private bool _rushTagged = false;
     private bool _isRushInProgress = false;
@@ -37,16 +38,24 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
     public List<BuildRequest> BuildRequests { get; } = new List<BuildRequest>();
 
-    public EarlyGameBehaviour(WarManager warManager, ITaggingService taggingService, IVisibilityTracker visibilityTracker, IDebuggingFlagsTracker debuggingFlagsTracker) {
+    public EarlyGameBehaviour(
+        WarManager warManager,
+        ITaggingService taggingService,
+        IVisibilityTracker visibilityTracker,
+        IDebuggingFlagsTracker debuggingFlagsTracker,
+        IUnitsTracker unitsTracker
+    ) {
         _warManager = warManager;
         _taggingService = taggingService;
+        _unitsTracker = unitsTracker;
 
         _debugger = new EarlyGameBehaviourDebugger(debuggingFlagsTracker);
-        DefenseSupervisor = new ArmySupervisor(visibilityTracker);
+        DefenseSupervisor = new ArmySupervisor(visibilityTracker, _unitsTracker);
 
+        _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);
 
-        Assigner = new WarManagerAssigner<EarlyGameBehaviour>(this);
+        Assigner = new WarManagerAssigner<EarlyGameBehaviour>(this, _unitsTracker);
         Dispatcher = new EarlyGameDispatcher(this);
         Releaser = new WarManagerReleaser<EarlyGameBehaviour>(this);
 
@@ -60,7 +69,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
             return;
         }
 
-        _warManager.Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
+        _warManager.Assign(Controller.GetUnits(_unitsTracker.NewOwnedUnits, ManageableUnitTypes));
         RecruitEcoUnitsIfNecessary();
     }
 
@@ -151,7 +160,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         }
 
         var townHallSupervisors = Controller
-            .GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
+            .GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls)
             .Where(unit => unit.Supervisor != null)
             .Select(supervisedTownHall => supervisedTownHall.Supervisor)
             .ToList();
@@ -188,7 +197,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         if (_armyBuildRequest.UnitOrUpgradeType != unitTypeToProduce) {
             BuildRequests.Remove(_armyBuildRequest);
 
-            _armyBuildRequest = new TargetBuildRequest(BuildType.Train, unitTypeToProduce, targetQuantity: 100, priority: BuildRequestPriority.Low);
+            _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, unitTypeToProduce, targetQuantity: 100, priority: BuildRequestPriority.Low);
             BuildRequests.Add(_armyBuildRequest);
         }
 
@@ -224,12 +233,12 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     /// Right now, it just checks if it can make roaches, but in the future it might check against the enemy composition.
     /// </summary>
     /// <returns>The unit type id to produce.</returns>
-    private static uint GetUnitTypeToProduce() {
+    private uint GetUnitTypeToProduce() {
         if (Controller.IsUnlocked(Units.Roach, TechTree.UnitPrerequisites)) {
             return Units.Roach;
         }
 
-        if (Controller.GetUnits(UnitsTracker.OwnedUnits, Units.SpawningPool).Any()) {
+        if (Controller.GetUnits(_unitsTracker.OwnedUnits, Units.SpawningPool).Any()) {
             return Units.Zergling;
         }
 
@@ -241,8 +250,8 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     /// Returns the enemy force, filtering by the provided regions, if any.
     /// </summary>
     /// <returns>The enemy force</returns>
-    private static float GetEnemyForce(IReadOnlySet<IRegion> regionsFilter = null) {
-        var enemyUnits = UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits);
+    private float GetEnemyForce(IReadOnlySet<IRegion> regionsFilter = null) {
+        var enemyUnits = _unitsTracker.EnemyMemorizedUnits.Values.Concat(_unitsTracker.EnemyUnits);
         if (regionsFilter != null) {
             enemyUnits = enemyUnits.Where(enemy => regionsFilter.Contains(enemy.GetRegion()));
         }

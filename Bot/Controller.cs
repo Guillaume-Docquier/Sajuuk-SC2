@@ -48,17 +48,17 @@ public static class Controller {
         ChatTracker.Instance,           // DI: ✔️ Depends on nothing
         VisibilityTracker.Instance,     // DI: ✔️ Depends on nothing
 
-        UnitsTracker.Instance,          // Depends on VisibilityTracker
+        UnitsTracker.Instance,          // DI: ✔️ Depends on VisibilityTracker
         DebuggingFlagsTracker.Instance, // DI: ✔️ Depends on ChatTracker
 
         EnemyRaceTracker.Instance,      // DI: ✔️ Depends on UnitsTracker
         IncomeTracker.Instance,         // Depends on UnitsTracker
         MapAnalyzer.Instance,           // Depends on UnitsTracker and VisibilityTracker
 
-        CreepTracker.Instance,          // Depends on VisibilityTracker and MapAnalyzer
         BuildingTracker.Instance,       // Depends on UnitsTracker and MapAnalyzer
         ExpandAnalyzer.Instance,        // Depends on UnitsTracker and MapAnalyzer
         RegionAnalyzer.Instance,        // Depends on ExpandAnalyzer and MapAnalyzer
+        CreepTracker.Instance,          // Depends on UnitsTracker, VisibilityTracker and MapAnalyzer
 
         EnemyStrategyTracker.Instance,  // Depends on UnitsTracker, EnemyRaceTracker, ExpandAnalyzer and RegionAnalyzer
         RegionTracker.Instance,         // Depends on DebuggingFlagsTracker, VisibilityTracker, UnitsTracker, MapAnalyzer and RegionAnalyzer
@@ -111,7 +111,7 @@ public static class Controller {
         }
 
         CurrentSupply = Observation.Observation.PlayerCommon.FoodUsed;
-        var hasOddAmountOfZerglings = UnitsTracker.OwnedUnits.Count(unit => unit.UnitType == Units.Zergling) % 2 == 1;
+        var hasOddAmountOfZerglings = UnitsTracker.Instance.OwnedUnits.Count(unit => unit.UnitType == Units.Zergling) % 2 == 1;
         if (hasOddAmountOfZerglings) {
             // Zerglings have 0.5 supply. The api returns the supply rounded down, but the game considers the supply rounded up.
             CurrentSupply += 1;
@@ -161,13 +161,13 @@ public static class Controller {
 
     private static int GetTotalCount(uint unitType) {
         var pendingCount = GetPendingCount(unitType, inConstruction: false);
-        var constructionCount = GetUnits(UnitsTracker.OwnedUnits, unitType).Count();
+        var constructionCount = GetUnits(UnitsTracker.Instance.OwnedUnits, unitType).Count();
 
         return pendingCount + constructionCount;
     }
 
     private static int GetPendingCount(uint unitType, bool inConstruction = true) {
-        var workers = GetUnits(UnitsTracker.OwnedUnits, Units.Workers);
+        var workers = GetUnits(UnitsTracker.Instance.OwnedUnits, Units.Workers);
         var abilityId = KnowledgeBase.GetUnitTypeData(unitType).AbilityId;
 
         var counter = 0;
@@ -181,7 +181,7 @@ public static class Controller {
 
         // Count buildings that are already in construction
         if (inConstruction) {
-            foreach (var unit in GetUnits(UnitsTracker.OwnedUnits, unitType)) {
+            foreach (var unit in GetUnits(UnitsTracker.Instance.OwnedUnits, unitType)) {
                 if (!unit.IsOperational) {
                     counter += 1;
                 }
@@ -198,7 +198,7 @@ public static class Controller {
 
         var possibleProducers = TechTree.Producer[unitOrAbilityType];
 
-        var producers = GetUnits(UnitsTracker.OwnedUnits, possibleProducers).Where(unit => unit.IsOperational && unit.IsAvailable);
+        var producers = GetUnits(UnitsTracker.Instance.OwnedUnits, possibleProducers).Where(unit => unit.IsOperational && unit.IsAvailable);
 
         if (!allowQueue) {
             producers = producers.Where(unit => !unit.OrdersExceptMining.Any());
@@ -333,13 +333,13 @@ public static class Controller {
         if (buildingType == Units.Extractor) {
             Logger.Debug("Trying to build {0}", buildingTypeData.Name);
 
-            var extractorPositions = GetUnits(UnitsTracker.OwnedUnits, Units.Extractors)
+            var extractorPositions = GetUnits(UnitsTracker.Instance.OwnedUnits, Units.Extractors)
                 .Select(extractor => extractor.Position.ToVector2())
                 .ToHashSet();
 
-            var availableGas = GetUnits(UnitsTracker.NeutralUnits, Units.GasGeysers)
+            var availableGas = GetUnits(UnitsTracker.Instance.NeutralUnits, Units.GasGeysers)
                 .Where(gas => gas.Supervisor != null)
-                .Where(gas => BuildingTracker.CanPlace(buildingType, gas.Position.ToVector2()))
+                .Where(gas => BuildingTracker.Instance.CanPlace(buildingType, gas.Position.ToVector2()))
                 .Where(gas => !extractorPositions.Contains(gas.Position.ToVector2()))
                 .MaxBy(gas => (gas.Supervisor as TownHallSupervisor)!.WorkerCount); // This is not cute nor clean, but it is efficient and we like that
 
@@ -350,28 +350,28 @@ public static class Controller {
 
             producer = GetAvailableProducer(buildingType, closestTo: availableGas.Position.ToVector2());
             producer.PlaceExtractor(buildingType, availableGas);
-            BuildingTracker.ConfirmPlacement(buildingType, availableGas.Position.ToVector2(), producer);
+            BuildingTracker.Instance.ConfirmPlacement(buildingType, availableGas.Position.ToVector2(), producer);
         }
         else if (location != default) {
             Logger.Debug("Trying to build {0} with location {1}", buildingTypeData.Name, location);
-            if (!BuildingTracker.CanPlace(buildingType, location)) {
+            if (!BuildingTracker.Instance.CanPlace(buildingType, location)) {
                 return BuildRequestResult.NoSuitableLocation;
             }
 
             producer = GetAvailableProducer(buildingType, closestTo: location);
             producer.PlaceBuilding(buildingType, location);
-            BuildingTracker.ConfirmPlacement(buildingType, location, producer);
+            BuildingTracker.Instance.ConfirmPlacement(buildingType, location, producer);
         }
         else {
             Logger.Debug("Trying to build {0} without location", buildingTypeData.Name);
-            var constructionSpot = BuildingTracker.FindConstructionSpot(buildingType);
+            var constructionSpot = BuildingTracker.Instance.FindConstructionSpot(buildingType);
             if (constructionSpot == default) {
                 return BuildRequestResult.NoSuitableLocation;
             }
 
             producer = GetAvailableProducer(buildingType, closestTo: constructionSpot);
             producer.PlaceBuilding(buildingType, constructionSpot);
-            BuildingTracker.ConfirmPlacement(buildingType, constructionSpot, producer);
+            BuildingTracker.Instance.ConfirmPlacement(buildingType, constructionSpot, producer);
         }
 
         Logger.Debug("Done building {0}", buildingTypeData.Name);
@@ -450,7 +450,7 @@ public static class Controller {
         var expandLocation = GetFreeExpandLocations()
             .Where(expandLocation => Pathfinder.FindPath(MapAnalyzer.StartingLocation, expandLocation) != null)
             .OrderBy(expandLocation => Pathfinder.FindPath(MapAnalyzer.StartingLocation, expandLocation).Count)
-            .FirstOrDefault(expandLocation => BuildingTracker.CanPlace(buildingType, expandLocation));
+            .FirstOrDefault(expandLocation => BuildingTracker.Instance.CanPlace(buildingType, expandLocation));
 
         if (expandLocation == default) {
             return BuildRequestResult.NoSuitableLocation;
@@ -462,7 +462,7 @@ public static class Controller {
     public static float GetResearchProgress(uint upgradeId) {
         var upgradeAbilityId = KnowledgeBase.GetUpgradeData(upgradeId).AbilityId;
 
-        var upgradeOrder = GetUnits(UnitsTracker.OwnedUnits, TechTree.Producer[upgradeId])
+        var upgradeOrder = GetUnits(UnitsTracker.Instance.OwnedUnits, TechTree.Producer[upgradeId])
             .SelectMany(producer => producer.Orders)
             .FirstOrDefault(order => order.AbilityId == upgradeAbilityId);
 
@@ -476,7 +476,7 @@ public static class Controller {
     public static bool IsResearchInProgress(uint upgradeId) {
         var upgradeAbilityId = KnowledgeBase.GetUpgradeData(upgradeId).AbilityId;
 
-        return GetUnits(UnitsTracker.OwnedUnits, TechTree.Producer[upgradeId])
+        return GetUnits(UnitsTracker.Instance.OwnedUnits, TechTree.Producer[upgradeId])
             .Any(producer => producer.Orders.Any(order => order.AbilityId == upgradeAbilityId));
     }
 
@@ -488,7 +488,7 @@ public static class Controller {
         // We add eggs because larvae become eggs and I don't want to add eggs to TechTree.Producer since they're not the original producer
         var potentialProducers = new HashSet<uint> { TechTree.Producer[unitTypeToProduce], Units.Egg };
 
-        return GetUnits(UnitsTracker.OwnedUnits, potentialProducers).Where(producer => producer.IsProducing(unitTypeToProduce));
+        return GetUnits(UnitsTracker.Instance.OwnedUnits, potentialProducers).Where(producer => producer.IsProducing(unitTypeToProduce));
     }
 
     /**
@@ -556,7 +556,7 @@ public static class Controller {
     /// <returns>True if the upgrade can be researched right now</returns>
     public static bool IsUnlocked(uint unitOrUpgradeType, Dictionary<uint, List<IPrerequisite>> prerequisites) {
         if (prerequisites.TryGetValue(unitOrUpgradeType, out var unitOrUpgradePrerequisites)) {
-            return unitOrUpgradePrerequisites.All(prerequisite => prerequisite.IsMet());
+            return unitOrUpgradePrerequisites.All(prerequisite => prerequisite.IsMet(UnitsTracker.Instance.OwnedUnits, ResearchedUpgrades));
         }
 
         return true;
@@ -567,7 +567,7 @@ public static class Controller {
     }
 
     public static IEnumerable<Unit> GetMiningTownHalls() {
-        return GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery)
+        return GetUnits(UnitsTracker.Instance.OwnedUnits, Units.Hatchery)
             .Where(townHall => ExpandAnalyzer.ExpandLocations.Any(expandLocation => townHall.DistanceTo(expandLocation.Position) < ExpandIsTakenRadius));
     }
 
@@ -575,9 +575,9 @@ public static class Controller {
     public static IEnumerable<Vector2> GetFreeExpandLocations() {
         return ExpandAnalyzer.ExpandLocations
             .Select(expandLocation => expandLocation.Position)
-            .Where(expandLocation => !GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
-            .Where(expandLocation => !GetUnits(UnitsTracker.EnemyUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
-            .Where(expandLocation => !GetUnits(UnitsTracker.NeutralUnits, Units.Destructibles).Any(destructible => destructible.DistanceTo(expandLocation) < ExpandIsTakenRadius));
+            .Where(expandLocation => !GetUnits(UnitsTracker.Instance.OwnedUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
+            .Where(expandLocation => !GetUnits(UnitsTracker.Instance.EnemyUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
+            .Where(expandLocation => !GetUnits(UnitsTracker.Instance.NeutralUnits, Units.Destructibles).Any(destructible => destructible.DistanceTo(expandLocation) < ExpandIsTakenRadius));
     }
 
     public static Point GetCurrentCameraLocation() {

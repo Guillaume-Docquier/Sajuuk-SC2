@@ -1,13 +1,20 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.ExtensionMethods;
+using Bot.GameSense;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.MapKnowledge;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class EngageState : RegionalArmySupervisionState {
+    private readonly IUnitsTracker _unitsTracker;
+
     private HashSet<Unit> _unitsReadyToAttack = new HashSet<Unit>();
+
+    public EngageState(IUnitsTracker unitsTracker) {
+        _unitsTracker = unitsTracker;
+    }
 
     /// <summary>
     /// Attack the target region with units that are ready to fight.
@@ -28,7 +35,7 @@ public class EngageState : RegionalArmySupervisionState {
         // TODO GD We should consider if retreating is even possible
         // TODO GD Sometimes you have to commit
         if (_unitsReadyToAttack.GetForce() < EnemyArmy.GetForce() * 0.75) {
-            StateMachine.TransitionTo(new DisengageState());
+            StateMachine.TransitionTo(new DisengageState(_unitsTracker));
             return true;
         }
 

@@ -11,14 +11,16 @@ namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public partial class ArmySupervisor {
     public class RallyState: State<ArmySupervisor> {
-        private const float AcceptableDistanceToTarget = 3;
-
         private readonly IVisibilityTracker _visibilityTracker;
+        private readonly IUnitsTracker _unitsTracker;
+
+        private const float AcceptableDistanceToTarget = 3;
 
         private float _attackAtForce;
 
-        public RallyState(IVisibilityTracker visibilityTracker) {
+        public RallyState(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
             _visibilityTracker = visibilityTracker;
+            _unitsTracker = unitsTracker;
         }
 
         protected override void OnContextSet() {
@@ -27,7 +29,7 @@ public partial class ArmySupervisor {
 
         protected override bool TryTransitioning() {
             if (Context._mainArmy.GetForce() >= _attackAtForce || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed) {
-                StateMachine.TransitionTo(new AttackState(_visibilityTracker));
+                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker));
                 return true;
             }
 

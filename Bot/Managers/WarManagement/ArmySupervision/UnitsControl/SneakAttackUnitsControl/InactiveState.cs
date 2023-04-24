@@ -8,26 +8,32 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUni
 
 public partial class SneakAttack {
     public class InactiveState: SneakAttackState {
+        private readonly IUnitsTracker _unitsTracker;
+
         private const float MinimumEngagementArmyThreshold = 0.75f;
         private const float OverwhelmingForceRatio = 4f;
 
         private const float OperationRadius = TankRange + 3;
+
+        public InactiveState(IUnitsTracker unitsTracker) {
+            _unitsTracker = unitsTracker;
+        }
 
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
             if (Context._coolDownUntil > Controller.Frame) {
                 return false;
             }
 
-            if (DetectionTracker.IsDetected(army)) {
+            if (DetectionTracker.Instance.IsDetected(army)) {
                 return false;
             }
 
-            var priorityTargets = GetPriorityTargetsInOperationRadius(army, OperationRadius);
+            var priorityTargets = Context.GetPriorityTargetsInOperationRadius(army, OperationRadius);
             if (!priorityTargets.Any()) {
                 return false;
             }
 
-            var enemiesInSightOfTheArmy = GetGroundEnemiesInSight(army).ToList();
+            var enemiesInSightOfTheArmy = Context.GetGroundEnemiesInSight(army).ToList();
             if (!enemiesInSightOfTheArmy.Any()) {
                 // Nobody in sight, nothing to do
                 return false;
@@ -38,7 +44,7 @@ public partial class SneakAttack {
                 return false;
             }
 
-            var enemyMilitaryUnits = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military)
+            var enemyMilitaryUnits = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Military)
                 .OrderBy(enemy => enemy.DistanceTo(army.GetCenter()))
                 .ToList();
 
@@ -52,16 +58,16 @@ public partial class SneakAttack {
         }
 
         protected override void Execute() {
-            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(Context._army, OperationRadius).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
+            var closestPriorityTarget = Context.GetPriorityTargetsInOperationRadius(Context._army, OperationRadius).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
             if (closestPriorityTarget != null) {
                 Context._targetPosition = closestPriorityTarget.Position.ToVector2();
                 Context._isTargetPriority = true;
             }
             else {
-                var closestTarget = GetGroundEnemiesInSight(Context._army).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
+                var closestTarget = Context.GetGroundEnemiesInSight(Context._army).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
                 if (closestTarget == null) {
                     Logger.Error("BurrowSurprise: Went from None -> Fight because no enemies nearby");
-                    NextState = new TerminalState();
+                    NextState = new TerminalState(_unitsTracker);
                     return;
                 }
 
@@ -69,7 +75,7 @@ public partial class SneakAttack {
                 Context._isTargetPriority = false;
             }
 
-            NextState = new ApproachState();
+            NextState = new ApproachState(_unitsTracker);
         }
     }
 }

@@ -20,15 +20,15 @@ public class TumorCreepSpreadModule: UnitModule {
     private readonly Unit _creepTumor;
     private ulong _spreadAt = default;
 
+    private TumorCreepSpreadModule(IVisibilityTracker visibilityTracker, Unit creepTumor) {
+        _visibilityTracker = visibilityTracker;
+        _creepTumor = creepTumor;
+    }
+
     public static void Install(IVisibilityTracker visibilityTracker, Unit unit) {
         if (PreInstallCheck(Tag, unit)) {
             unit.Modules.Add(Tag, new TumorCreepSpreadModule(visibilityTracker, unit));
         }
-    }
-
-    private TumorCreepSpreadModule(IVisibilityTracker visibilityTracker, Unit creepTumor) {
-        _visibilityTracker = visibilityTracker;
-        _creepTumor = creepTumor;
     }
 
     // TODO GD Move this code in CreepManager
@@ -54,7 +54,7 @@ public class TumorCreepSpreadModule: UnitModule {
                 .Where(CreepTracker.HasCreep)
                 .Where(ExpandAnalyzer.IsNotBlockingExpand)
                 .OrderBy(position => position.DistanceTo(creepTarget))
-                .FirstOrDefault(position => BuildingTracker.CanPlace(Units.CreepTumor, position));
+                .FirstOrDefault(position => BuildingTracker.Instance.CanPlace(Units.CreepTumor, position));
 
             if (bestPlaceLocation == default) {
                 return;

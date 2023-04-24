@@ -9,12 +9,17 @@ using SC2APIProtocol;
 namespace Bot.GameSense.RegionTracking;
 
 public class RegionsForceEvaluator : RegionsEvaluator {
+    private readonly IUnitsTracker _unitsTracker;
+
     private readonly Alliance _alliance;
 
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(120);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
-    public RegionsForceEvaluator(Alliance alliance, Func<uint> getCurrentFrame) : base("force", getCurrentFrame) {
+    public RegionsForceEvaluator(IUnitsTracker unitsTracker, Alliance alliance, Func<uint> getCurrentFrame)
+        : base("force", getCurrentFrame) {
+        _unitsTracker = unitsTracker;
+
         _alliance = alliance;
     }
 
@@ -25,8 +30,8 @@ public class RegionsForceEvaluator : RegionsEvaluator {
     ///
     protected override IEnumerable<(IRegion region, float evaluation)> DoUpdateEvaluations(IReadOnlyCollection<IRegion> regions) {
         // TODO GD Precompute units by region in a tracker
-        var unitsByRegion = UnitsTracker.GetUnits(_alliance)
-            .Concat(UnitsTracker.GetGhostUnits(_alliance))
+        var unitsByRegion = _unitsTracker.GetUnits(_alliance)
+            .Concat(_unitsTracker.GetGhostUnits(_alliance))
             .GroupBy(unit => unit.GetRegion())
             .Where(unitsInRegion => unitsInRegion.Key != null)
             .ToDictionary(unitsInRegion => unitsInRegion.Key, unitsInRegion => unitsInRegion);

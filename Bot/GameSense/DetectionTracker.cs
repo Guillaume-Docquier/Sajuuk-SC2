@@ -5,25 +5,33 @@ using Bot.GameData;
 
 namespace Bot.GameSense;
 
-public static class DetectionTracker {
+public class DetectionTracker {
+    public static readonly DetectionTracker Instance = new DetectionTracker(UnitsTracker.Instance);
+
+    private readonly IUnitsTracker _unitsTracker;
+
     private static bool _enemyHasDetectors = false;
 
-    public static bool IsStealthEffective() {
+    private DetectionTracker(IUnitsTracker unitsTracker) {
+        _unitsTracker = unitsTracker;
+    }
+
+    public bool IsStealthEffective() {
         if (_enemyHasDetectors) {
             return false;
         }
 
         // We can't kill flying units for now, so we can cache this value
-        _enemyHasDetectors = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.MobileDetectors, includeCloaked: true).Any();
+        _enemyHasDetectors = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.MobileDetectors, includeCloaked: true).Any();
 
         return !_enemyHasDetectors;
     }
 
-    public static bool IsDetected(Unit unit) {
+    public bool IsDetected(Unit unit) {
         return IsDetected(new List<Unit> { unit });
     }
 
-    public static bool IsDetected(IReadOnlyCollection<Unit> army) {
+    public bool IsDetected(IReadOnlyCollection<Unit> army) {
         return IsArmyScanned(army) || IsArmyInDetectorRange(army);
     }
 
@@ -35,8 +43,8 @@ public static class DetectionTracker {
             .Any(scan => army.Any(soldier => scan.ToVector2().DistanceTo(soldier.Position.ToVector2()) <= scanRadius));
     }
 
-    private static bool IsArmyInDetectorRange(IReadOnlyCollection<Unit> army) {
-        return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Detectors)
+    private bool IsArmyInDetectorRange(IReadOnlyCollection<Unit> army) {
+        return Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Detectors)
             .Any(detector => army.Any(soldier => soldier.DistanceTo(detector) <= detector.UnitTypeData.SightRange));
     }
 }

@@ -9,18 +9,22 @@ using Bot.Managers.ScoutManagement.ScoutingTasks;
 namespace Bot.Managers.ScoutManagement.ScoutingSupervision;
 
 public class ScoutSupervisor : Supervisor {
+    private readonly IUnitsTracker _unitsTracker;
+
     public readonly ScoutingTask ScoutingTask;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
-    public ScoutSupervisor(ScoutingTask scoutingTask) {
+    public ScoutSupervisor(IUnitsTracker unitsTracker, ScoutingTask scoutingTask) {
+        _unitsTracker = unitsTracker;
+
         ScoutingTask = scoutingTask;
     }
 
     protected override void Supervise() {
         var scoutsThatCanWork = new HashSet<Unit>(SupervisedUnits);
 
-        var enemyUnits = UnitsTracker.EnemyUnits.Concat(UnitsTracker.EnemyGhostUnits.Values).ToList();
+        var enemyUnits = _unitsTracker.EnemyUnits.Concat(_unitsTracker.EnemyGhostUnits.Values).ToList();
         var antiAirEnemies = enemyUnits.Where(enemyUnit => enemyUnit.CanHitAir).ToList();
         var antiGroundEnemies = enemyUnits.Where(enemyUnit => enemyUnit.CanHitGround).ToList();
         foreach (var unitToPreserve in SupervisedUnits) {

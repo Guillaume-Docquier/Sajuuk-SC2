@@ -11,7 +11,13 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 /// attack, have a move order and have enemies in range.
 /// </summary>
 public class DisengagementKiting : IUnitsControl {
+    private readonly IUnitsTracker _unitsTracker;
+
     private const bool Debug = true;
+
+    public DisengagementKiting(IUnitsTracker unitsTracker) {
+        _unitsTracker = unitsTracker;
+    }
 
     public bool IsExecuting() {
         return false;
@@ -46,7 +52,7 @@ public class DisengagementKiting : IUnitsControl {
                 continue;
             }
 
-            var enemiesInRange = UnitsTracker.EnemyUnits
+            var enemiesInRange = _unitsTracker.EnemyUnits
                 .Where(enemy => unit.CanAttack(enemy))
                 .Where(enemy => unit.IsInAttackRangeOf(enemy));
 

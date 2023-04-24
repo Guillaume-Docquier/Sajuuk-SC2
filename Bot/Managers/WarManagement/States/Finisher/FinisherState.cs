@@ -9,6 +9,7 @@ public class FinisherState : WarManagerState {
     private readonly IEnemyRaceTracker _enemyRaceTracker;
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
+    private readonly IUnitsTracker _unitsTracker;
 
     private IWarManagerBehaviour _behaviour;
 
@@ -18,16 +19,18 @@ public class FinisherState : WarManagerState {
         ITaggingService taggingService,
         IEnemyRaceTracker enemyRaceTracker,
         IVisibilityTracker visibilityTracker,
-        IDebuggingFlagsTracker debuggingFlagsTracker
+        IDebuggingFlagsTracker debuggingFlagsTracker,
+        IUnitsTracker unitsTracker
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
+        _unitsTracker = unitsTracker;
     }
 
     protected override void OnContextSet() {
-        _behaviour = new FinisherBehaviour(Context, _taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker);
+        _behaviour = new FinisherBehaviour(Context, _taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker);
     }
 
     protected override void Execute() {

@@ -9,6 +9,8 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUni
 
 public partial class SneakAttack {
     public class SetupState : SneakAttackState {
+        private readonly IUnitsTracker _unitsTracker;
+
         private const float EngageDistance = 1f;
         private const float MinimumArmyThresholdToEngage = 0.80f;
         private const double MinimumIntegrityToEngage = 0.6;
@@ -17,12 +19,16 @@ public partial class SneakAttack {
 
         private readonly StuckDetector _stuckDetector = new StuckDetector();
 
+        public SetupState(IUnitsTracker unitsTracker) {
+            _unitsTracker = unitsTracker;
+        }
+
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
-            if (DetectionTracker.IsDetected(army)) {
+            if (DetectionTracker.Instance.IsDetected(army)) {
                 return false;
             }
 
-            var priorityTargets = GetPriorityTargetsInOperationRadius(army, OperationRadius);
+            var priorityTargets = Context.GetPriorityTargetsInOperationRadius(army, OperationRadius);
             if (!priorityTargets.Any()) {
                 return false;
             }
@@ -40,7 +46,7 @@ public partial class SneakAttack {
             _stuckDetector.Tick(Context._armyCenter);
             if (_stuckDetector.IsStuck) {
                 Logger.Warning("{0} army is stuck", Name);
-                NextState = new TerminalState();
+                NextState = new TerminalState(_unitsTracker);
 
                 return;
             }
@@ -49,14 +55,14 @@ public partial class SneakAttack {
 
             if (Context._targetPosition == default) {
                 Logger.Warning("{0} has no target", Name);
-                NextState = new TerminalState();
+                NextState = new TerminalState(_unitsTracker);
                 Context._isTargetPriority = false;
 
                 return;
             }
 
             if (IsReadyToEngage()) {
-                NextState = new EngageState();
+                NextState = new EngageState(_unitsTracker);
             }
             else {
                 MoveArmyIntoPosition();
@@ -65,7 +71,7 @@ public partial class SneakAttack {
 
         private void ComputeTargetPosition() {
             // Do we need _isTargetPriority at this point? We shouldn't lose sight at this point, right?
-            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(Context._army, OperationRadius)
+            var closestPriorityTarget = Context.GetPriorityTargetsInOperationRadius(Context._army, OperationRadius)
                 .MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
 
             if (closestPriorityTarget != null) {
@@ -73,7 +79,7 @@ public partial class SneakAttack {
                 Context._isTargetPriority = true;
             }
             else {
-                var enemies = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military).ToList();
+                var enemies = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Military).ToList();
                 var closestEnemyCluster = Clustering.DBSCAN(enemies, 5, 2).clusters.MinBy(cluster => cluster.GetCenter().DistanceTo(Context._armyCenter));
 
                 // TODO GD Tweak this to create a concave instead?
@@ -98,7 +104,7 @@ public partial class SneakAttack {
                 nbSoldiersInRange = Context._army.Count(soldier => soldier.IsInAttackRangeOf(Context._targetPosition));
             }
             else {
-                var enemyMilitaryUnits = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military)
+                var enemyMilitaryUnits = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Military)
                     .OrderBy(enemy => enemy.DistanceTo(Context._armyCenter))
                     .ToList();
 

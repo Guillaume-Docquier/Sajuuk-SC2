@@ -1,24 +1,19 @@
 ﻿using Bot.GameData;
 using Bot.GameSense;
 using Bot.Tagging;
-using Bot.Tests.Fixtures;
+using Bot.Tests.Mocks;
 using Moq;
 using SC2APIProtocol;
 
 namespace Bot.Tests.GameSense;
 
-// This is because we play with the global UnitsTracker.Instance
-[Collection("Sequential")]
-public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDisposable {
+public class EnemyRaceTrackerTests : BaseTestClass {
     private readonly Mock<ITaggingService> _taggingServiceMock;
+    private readonly TestUnitsTracker _unitsTracker;
 
     public EnemyRaceTrackerTests() {
-        UnitsTracker.Instance.Reset(); // TODO GD Review the test setup, right now the ResponseGameObservationUtils depend on the UnitsTracker.Instance
         _taggingServiceMock = new Mock<ITaggingService>();
-    }
-
-    public void Dispose() {
-        UnitsTracker.Instance.Reset(); // TODO GD Review the test setup, right now the ResponseGameObservationUtils depend on the UnitsTracker.Instance
+        _unitsTracker = new TestUnitsTracker();
     }
 
     [Theory]
@@ -29,8 +24,9 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
     public void GivenPlayersWithDistinctRaces_WhenUpdate_SetsEnemyRace(Race playerRace, Race enemyRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
-        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
-        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(Enumerable.Empty<Unit>());
+
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
 
         // Act
         enemyRaceTracker.Update(observation, gameInfo);
@@ -47,8 +43,9 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
     public void GivenPlayersWithSameRaces_WhenUpdate_SetsEnemyRace(Race playerRace, Race enemyRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
-        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
-        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(Enumerable.Empty<Unit>());
+
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
 
         // Act
         enemyRaceTracker.Update(observation, gameInfo);
@@ -61,9 +58,10 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
     public void GivenEnemyRandomRaceAndNoVisibleUnits_WhenUpdate_ThenRaceDoesntChange() {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
-        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
-        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
-        enemyRaceTracker.Update(observation, gameInfo);
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(Enumerable.Empty<Unit>());
+
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
+        enemyRaceTracker.Update(observation, gameInfo); // Race.Random
 
         // Act
         enemyRaceTracker.Update(observation, gameInfo);
@@ -73,22 +71,22 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
     }
 
     public static IEnumerable<object[]> EnemyRandomRaceAndVisibleUnitsTestData() {
-        var units = BaseTestClass.GetInitialUnits();
-
-        yield return new object[] { units.Concat(new List<Unit> { TestUtils.CreateUnit(Units.Scv, alliance: Alliance.Enemy) }), Race.Terran };
-        yield return new object[] { units.Concat(new List<Unit> { TestUtils.CreateUnit(Units.Probe, alliance: Alliance.Enemy) }), Race.Protoss };
-        yield return new object[] { units.Concat(new List<Unit> { TestUtils.CreateUnit(Units.Drone, alliance: Alliance.Enemy) }), Race.Zerg };
+        yield return new object[] { new List<SC2APIProtocol.Unit> { TestUtils.CreateUnitRaw(Units.Scv, alliance: Alliance.Enemy) }, Race.Terran };
+        yield return new object[] { new List<SC2APIProtocol.Unit> { TestUtils.CreateUnitRaw(Units.Probe, alliance: Alliance.Enemy) }, Race.Protoss };
+        yield return new object[] { new List<SC2APIProtocol.Unit> { TestUtils.CreateUnitRaw(Units.Drone, alliance: Alliance.Enemy) }, Race.Zerg };
     }
 
     [Theory]
     [MemberData(nameof(EnemyRandomRaceAndVisibleUnitsTestData))]
-    public void GivenRandomPlayerAndVisibleUnits_WhenUpdate_ThenResolvesEnemyRace(IEnumerable<Unit> units, Race expectedRace) {
+    public void GivenRandomPlayerAndVisibleUnits_WhenUpdate_ThenResolvesEnemyRace(List<SC2APIProtocol.Unit> rawUnits, Race expectedRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
-        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: units);
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(Enumerable.Empty<Unit>());
 
-        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
-        UnitsTracker.Instance.Update(observation, gameInfo);
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
+
+        var units = rawUnits.Select(rawUnit => new Unit(_unitsTracker, rawUnit, frame: 0)).ToList();
+        _unitsTracker.SetUnits(units);
 
         // Act
         enemyRaceTracker.Update(observation, gameInfo);
@@ -99,38 +97,42 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
 
     [Theory]
     [MemberData(nameof(EnemyRandomRaceAndVisibleUnitsTestData))]
-    public void GivenEnemyRandomRaceAndVisibleUnits_WhenUpdate_ThenResolvesEnemyRace(IEnumerable<Unit> units, Race expectedRace) {
+    public void GivenEnemyRandomRaceAndVisibleUnits_WhenUpdate_ThenResolvesEnemyRace(List<SC2APIProtocol.Unit> rawUnits, Race expectedRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
-        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: units);
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(Enumerable.Empty<Unit>());
 
-        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
-        enemyRaceTracker.Update(observation, gameInfo);
-        UnitsTracker.Instance.Update(observation, gameInfo);
-
-        // Act
-        enemyRaceTracker.Update(observation, gameInfo);
-
-        // Assert
-        Assert.Equal(expectedRace, enemyRaceTracker.EnemyRace);
-    }
-
-    [Theory]
-    [MemberData(nameof(EnemyRandomRaceAndVisibleUnitsTestData))]
-    public void GivenEnemyResolvedRaceAndNoVisibleUnits_WhenUpdate_ThenRaceDoesntChange(IEnumerable<Unit> units, Race expectedRace) {
-        // Arrange
-        var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
-        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: units);
-
-        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
         enemyRaceTracker.Update(observation, gameInfo); // Race.Random
-        UnitsTracker.Instance.Update(observation, gameInfo);
+
+        var units = rawUnits.Select(rawUnit => new Unit(_unitsTracker, rawUnit, frame: 0)).ToList();
+        _unitsTracker.SetUnits(units);
+
+        // Act
+        enemyRaceTracker.Update(observation, gameInfo);
+
+        // Assert
+        Assert.Equal(expectedRace, enemyRaceTracker.EnemyRace);
+    }
+
+    [Theory]
+    [MemberData(nameof(EnemyRandomRaceAndVisibleUnitsTestData))]
+    public void GivenEnemyResolvedRaceAndNoVisibleUnits_WhenUpdate_ThenRaceDoesntChange(List<SC2APIProtocol.Unit> rawUnits, Race expectedRace) {
+        // Arrange
+        var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(Enumerable.Empty<Unit>(), frame: 0);
+
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
+        enemyRaceTracker.Update(observation, gameInfo); // Race.Random
+
+        var units = rawUnits.Select(rawUnit => new Unit(_unitsTracker, rawUnit, frame: 0)).ToList();
+        _unitsTracker.SetUnits(units);
         enemyRaceTracker.Update(observation, gameInfo); // expectedRace
 
+        _unitsTracker.SetUnits(new List<Unit>());
+
         // Act
-        var newObservation = ResponseGameObservationUtils.CreateResponseObservation(Enumerable.Empty<Unit>(), keepPreviousUnits: false);
-        UnitsTracker.Instance.Reset();
-        enemyRaceTracker.Update(newObservation, gameInfo);
+        enemyRaceTracker.Update(observation, gameInfo);
 
         // Assert
         Assert.Equal(expectedRace, enemyRaceTracker.EnemyRace);
@@ -144,8 +146,9 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
     public void GivenPlayerRaces_WhenUpdate_TagsEnemyRaceOnce(Race playerRace, Race enemyRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
-        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
-        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(Enumerable.Empty<Unit>());
+
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
 
         // Act
         enemyRaceTracker.Update(observation, gameInfo);
@@ -163,10 +166,10 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
     public void GivenEnemyRace_WhenFurtherUpdates_TagsNothing(Race playerRace, Race enemyRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: playerRace, enemyRace: enemyRace);
-        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: BaseTestClass.GetInitialUnits());
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(Enumerable.Empty<Unit>());
 
-        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
-        enemyRaceTracker.Update(observation, gameInfo);
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
+        enemyRaceTracker.Update(observation, gameInfo); // Race.Random
 
         // Act
         _taggingServiceMock.Reset();
@@ -180,17 +183,19 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
 
     [Theory]
     [MemberData(nameof(EnemyRandomRaceAndVisibleUnitsTestData))]
-    public void GivenEnemyRandomRaceAndVisibleUnits_WhenUpdate_ThenTagsActualRaceOnce(IEnumerable<Unit> units, Race expectedRace) {
+    public void GivenEnemyRandomRaceAndVisibleUnits_WhenUpdate_ThenTagsActualRaceOnce(List<SC2APIProtocol.Unit> rawUnits, Race expectedRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
-        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: units);
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(Enumerable.Empty<Unit>());
 
-        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
-        enemyRaceTracker.Update(observation, gameInfo);
-        UnitsTracker.Instance.Update(observation, gameInfo);
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
+        enemyRaceTracker.Update(observation, gameInfo); // Race.Random
+
+        _taggingServiceMock.Reset();
+        var units = rawUnits.Select(rawUnit => new Unit(_unitsTracker, rawUnit, frame: 0)).ToList();
+        _unitsTracker.SetUnits(units);
 
         // Act
-        _taggingServiceMock.Reset();
         enemyRaceTracker.Update(observation, gameInfo);
 
         // Assert
@@ -200,23 +205,42 @@ public class EnemyRaceTrackerTests : IClassFixture<KnowledgeBaseFixture>, IDispo
 
     [Theory]
     [MemberData(nameof(EnemyRandomRaceAndVisibleUnitsTestData))]
-    public void GivenEnemyResolvedRandomRaceAndVisibleUnits_WhenFurtherUpdates_ThenTagsNothing(IEnumerable<Unit> units, Race expectedRace) {
+    public void GivenEnemyResolvedRandomRaceAndVisibleUnits_WhenFurtherUpdates_ThenTagsNothing(List<SC2APIProtocol.Unit> rawUnits, Race expectedRace) {
         // Arrange
         var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Random);
-        var observation = ResponseGameObservationUtils.CreateResponseObservation(units: units);
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(Enumerable.Empty<Unit>());
 
-        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object);
-        enemyRaceTracker.Update(observation, gameInfo);
-        UnitsTracker.Instance.Update(observation, gameInfo);
-        enemyRaceTracker.Update(observation, gameInfo);
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
+        enemyRaceTracker.Update(observation, gameInfo); // Race.Random
+
+        var units = rawUnits.Select(rawUnit => new Unit(_unitsTracker, rawUnit, 0)).ToList();
+        _unitsTracker.SetUnits(units);
+        enemyRaceTracker.Update(observation, gameInfo); // expectedRace
+
+        _taggingServiceMock.Reset();
 
         // Act
-        _taggingServiceMock.Reset();
         enemyRaceTracker.Update(observation, gameInfo);
         enemyRaceTracker.Update(observation, gameInfo);
         enemyRaceTracker.Update(observation, gameInfo);
 
         // Assert
         _taggingServiceMock.Verify(taggingService => taggingService.TagEnemyRace(It.IsAny<Race>()), Times.Never);
+    }
+
+    [Fact]
+    public void GivenEnemyRace_WhenReset_ThenRaceIsNoRace() {
+        // Arrange
+        var gameInfo = ResponseGameInfoUtils.CreateResponseGameInfo(playerRace: Race.Zerg, enemyRace: Race.Terran);
+        var observation = ResponseGameObservationUtils.CreateResponseObservation(Enumerable.Empty<Unit>());
+
+        var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
+        enemyRaceTracker.Update(observation, gameInfo); // Race.Terran
+
+        // Act
+        enemyRaceTracker.Reset();
+
+        // Assert
+        Assert.Equal(Race.NoRace, enemyRaceTracker.EnemyRace);
     }
 }

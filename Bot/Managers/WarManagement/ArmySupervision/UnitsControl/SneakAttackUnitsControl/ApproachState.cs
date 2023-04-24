@@ -7,18 +7,24 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUni
 
 public partial class SneakAttack {
     public class ApproachState : SneakAttackState {
+        private readonly IUnitsTracker _unitsTracker;
+
         private const float SetupDistance = 1.25f;
 
         private const float OperationRadius = TankRange + 5;
 
         private readonly StuckDetector _stuckDetector = new StuckDetector();
 
+        public ApproachState(IUnitsTracker unitsTracker) {
+            _unitsTracker = unitsTracker;
+        }
+
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
-            if (DetectionTracker.IsDetected(army)) {
+            if (DetectionTracker.Instance.IsDetected(army)) {
                 return false;
             }
 
-            var priorityTargets = GetPriorityTargetsInOperationRadius(army, OperationRadius);
+            var priorityTargets = Context.GetPriorityTargetsInOperationRadius(army, OperationRadius);
             if (!priorityTargets.Any()) {
                 return false;
             }
@@ -31,18 +37,18 @@ public partial class SneakAttack {
             _stuckDetector.Tick(Context._armyCenter);
             if (_stuckDetector.IsStuck) {
                 Logger.Warning("{0} army is stuck", Name);
-                NextState = new TerminalState();
+                NextState = new TerminalState(_unitsTracker);
 
                 return;
             }
 
-            var closestPriorityTarget = GetPriorityTargetsInOperationRadius(Context._army, OperationRadius).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
+            var closestPriorityTarget = Context.GetPriorityTargetsInOperationRadius(Context._army, OperationRadius).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
             if (closestPriorityTarget != null) {
                 Context._targetPosition = closestPriorityTarget.Position.ToVector2();
                 Context._isTargetPriority = true;
             }
             else if (!Context._isTargetPriority) {
-                var closestVisibleEnemy = GetGroundEnemiesInSight(Context._army).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
+                var closestVisibleEnemy = Context.GetGroundEnemiesInSight(Context._army).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
                 if (closestVisibleEnemy != null) {
                     Context._targetPosition = closestVisibleEnemy.Position.ToVector2();
                     Context._isTargetPriority = false;
@@ -52,7 +58,7 @@ public partial class SneakAttack {
             if (Context._targetPosition == default) {
                 Logger.Warning("{0} has no target", Name);
                 Context._isTargetPriority = false;
-                NextState = new TerminalState();
+                NextState = new TerminalState(_unitsTracker);
 
                 return;
             }
@@ -65,7 +71,7 @@ public partial class SneakAttack {
                 }
             }
             else {
-                NextState = new SetupState();
+                NextState = new SetupState(_unitsTracker);
             }
         }
     }

@@ -11,8 +11,14 @@ using SC2APIProtocol;
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
 public class BurrowHealing : IUnitsControl {
+    private readonly IUnitsTracker _unitsTracker;
+
     private const double BurrowDownThreshold = 0.5;
     private const double BurrowUpThreshold = 0.6;
+
+    public BurrowHealing(IUnitsTracker unitsTracker) {
+        _unitsTracker = unitsTracker;
+    }
 
     public bool IsExecuting() {
         // TODO GD Should we track who we burrowed?
@@ -34,7 +40,7 @@ public class BurrowHealing : IUnitsControl {
         var roachesThatNeedBurrowing = roaches
             .Where(roach => !roach.IsBurrowed)
             .Where(roach => roach.Integrity <= BurrowDownThreshold)
-            .Where(roach => !DetectionTracker.IsDetected(roach))
+            .Where(roach => !DetectionTracker.Instance.IsDetected(roach))
             .Where(roach => !GetCollidingUnits(roach, checkUnderground: true).Any());
 
         foreach (var roach in roachesThatNeedBurrowing) {
@@ -47,7 +53,7 @@ public class BurrowHealing : IUnitsControl {
         // Resurface
         var roachesThatNeedResurfacing = roaches
             .Where(roach => roach.IsBurrowed)
-            .Where(roach => roach.Integrity >= BurrowUpThreshold || DetectionTracker.IsDetected(roach));
+            .Where(roach => roach.Integrity >= BurrowUpThreshold || DetectionTracker.Instance.IsDetected(roach));
 
         foreach (var roach in roachesThatNeedResurfacing) {
             Resurface(roach, canTunnel);
@@ -59,7 +65,7 @@ public class BurrowHealing : IUnitsControl {
             var roachesThatNeedToTunnel = roaches
                 .Where(roach => roach.IsBurrowed)
                 .Where(roach => roach.Integrity <= BurrowUpThreshold)
-                .Where(roach => !DetectionTracker.IsDetected(roach));
+                .Where(roach => !DetectionTracker.Instance.IsDetected(roach));
 
             foreach (var roach in roachesThatNeedToTunnel) {
                 if (TunnelToSafety(roach)) {
@@ -87,7 +93,7 @@ public class BurrowHealing : IUnitsControl {
     /// </summary>
     /// <param name="roach">The roach to resurface.</param>
     /// <param name="canTunnel">Whether we can move while underground.</param>
-    private static void Resurface(Unit roach, bool canTunnel) {
+    private void Resurface(Unit roach, bool canTunnel) {
         var collidingUnits = GetCollidingUnits(roach, checkUnderground: false).ToList();
         if (collidingUnits.Count <= 0) {
             roach.UseAbility(Abilities.BurrowRoachUp);
@@ -99,8 +105,8 @@ public class BurrowHealing : IUnitsControl {
         }
     }
 
-    private static IEnumerable<Unit> GetCollidingUnits(Unit unit, bool checkUnderground) {
-        return UnitsTracker.UnitsByTag.Values
+    private IEnumerable<Unit> GetCollidingUnits(Unit unit, bool checkUnderground) {
+        return _unitsTracker.UnitsByTag.Values
             .Where(otherUnit => !Units.Buildings.Contains(otherUnit.UnitType)) // We don't care about the buildings
             .Where(otherUnit => !otherUnit.IsFlying) // Flying units can't collide with ground units
             .Where(otherUnit => otherUnit.IsBurrowed == checkUnderground)
@@ -114,7 +120,7 @@ public class BurrowHealing : IUnitsControl {
     /// </summary>
     /// <param name="roach">The roach that needs to tunnel to safety.</param>
     /// <returns>True if the unit was given an order, false otherwise.</returns>
-    private static bool TunnelToSafety(Unit roach) {
+    private bool TunnelToSafety(Unit roach) {
         return TunnelOutOfEnemyRange(roach) || PrepareForResurfacing(roach);
     }
 
@@ -124,14 +130,14 @@ public class BurrowHealing : IUnitsControl {
     /// </summary>
     /// <param name="roach">The roach that needs to tunnel out of enemy range.</param>
     /// <returns>True if the unit was given an order, false otherwise.</returns>
-    private static bool TunnelOutOfEnemyRange(Unit roach) {
-        var enemiesCanHitUs = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Military).Any(enemy => enemy.IsInAttackRangeOf(roach));
+    private bool TunnelOutOfEnemyRange(Unit roach) {
+        var enemiesCanHitUs = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Military).Any(enemy => enemy.IsInAttackRangeOf(roach));
         if (!enemiesCanHitUs) {
             return false;
         }
 
         // Run to safety
-        var safestRegion = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
+        var safestRegion = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls)
             .Select(townHall => townHall.GetRegion())
             .MinBy(region => RegionTracker.GetForce(region, Alliance.Enemy));
 
@@ -149,7 +155,7 @@ public class BurrowHealing : IUnitsControl {
     /// </summary>
     /// <param name="roach">The roach that needs to be ready to resurface.</param>
     /// <returns>True if the unit was given an order, false otherwise.</returns>
-    private static bool PrepareForResurfacing(Unit roach) {
+    private bool PrepareForResurfacing(Unit roach) {
         var collidingUnits = GetCollidingUnits(roach, checkUnderground: false).ToList();
         if (collidingUnits.Count <= 0) {
             return false;

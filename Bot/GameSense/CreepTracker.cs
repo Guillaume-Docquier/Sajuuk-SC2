@@ -10,9 +10,10 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class CreepTracker: INeedUpdating {
-    public static readonly CreepTracker Instance = new CreepTracker(VisibilityTracker.Instance);
+    public static readonly CreepTracker Instance = new CreepTracker(VisibilityTracker.Instance, UnitsTracker.Instance);
 
     private readonly IVisibilityTracker _visibilityTracker;
+    private readonly IUnitsTracker _unitsTracker;
 
     private static ulong _creepMapLastGeneratedAt = ulong.MaxValue;
     private static List<List<bool>> _creepMap;
@@ -25,8 +26,9 @@ public class CreepTracker: INeedUpdating {
     private static int _maxX;
     private static int _maxY;
 
-    private CreepTracker(IVisibilityTracker visibilityTracker) {
+    private CreepTracker(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
         _visibilityTracker = visibilityTracker;
+        _unitsTracker = unitsTracker;
     }
 
     public void Reset() {}
@@ -70,7 +72,7 @@ public class CreepTracker: INeedUpdating {
             return;
         }
 
-        var creepTumors = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.CreepTumor).ToList();
+        var creepTumors = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.CreepTumor).ToList();
         _creepFrontier = MapAnalyzer.WalkableCells
             .Where(_visibilityTracker.IsVisible)
             .Where(HasCreep)

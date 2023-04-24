@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.ExtensionMethods;
+using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.MapKnowledge;
@@ -9,12 +10,20 @@ using SC2APIProtocol;
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class DisengageState : RegionalArmySupervisionState {
+    private readonly IUnitsTracker _unitsTracker;
+
     private const float SafetyDistance = 5;
     private const float SafetyDistanceTolerance = SafetyDistance / 2;
 
-    private readonly IUnitsControl _fleeKiting = new DisengagementKiting();
+    private readonly IUnitsControl _fleeKiting;
 
     private HashSet<Unit> _unitsInSafePosition = new HashSet<Unit>();
+
+    public DisengageState(IUnitsTracker unitsTracker) {
+        _unitsTracker = unitsTracker;
+
+        _fleeKiting = new DisengagementKiting(_unitsTracker);
+    }
 
     /// <summary>
     /// Evacuate units from the target region and keep rallying other units to a safe position.
@@ -37,7 +46,7 @@ public class DisengageState : RegionalArmySupervisionState {
             return false;
         }
 
-        StateMachine.TransitionTo(new ApproachState());
+        StateMachine.TransitionTo(new ApproachState(_unitsTracker));
         return true;
     }
 

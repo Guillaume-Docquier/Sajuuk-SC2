@@ -10,7 +10,13 @@ using Bot.Wrapper;
 namespace Bot.Scenarios;
 
 public class SpawnStuffScenario : IScenario {
+    private readonly IUnitsTracker _unitsTracker;
+
     private bool _isScenarioDone = false;
+
+    public SpawnStuffScenario(IUnitsTracker unitsTracker) {
+        _unitsTracker = unitsTracker;
+    }
 
     public async Task OnFrame() {
         if (_isScenarioDone) {
@@ -18,7 +24,7 @@ public class SpawnStuffScenario : IScenario {
         }
 
         if (Controller.Frame >= TimeUtils.SecsToFrames(50)) {
-            var main = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls)
+            var main = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls)
                 .MaxBy(townHall => Pathfinder.FindPath(townHall.Position.ToVector2(), MapAnalyzer.EnemyStartingLocation).Count);
 
             Logger.Debug("Spawning 1 probe on the main");

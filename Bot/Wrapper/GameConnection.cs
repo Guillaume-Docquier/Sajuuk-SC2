@@ -14,6 +14,8 @@ using SC2APIProtocol;
 namespace Bot.Wrapper;
 
 public class GameConnection {
+    private readonly IUnitsTracker _unitsTracker;
+
     private const string Address = "127.0.0.1";
     private readonly ProtobufProxy _proxy = new ProtobufProxy();
 
@@ -29,8 +31,9 @@ public class GameConnection {
     // On the ladder, for some reason, actions have a 1 frame delay before being received and applied
     // We will run every 2 frames by default, this way we won't notice the delay
     // Lower than 2 is not recommended unless your code is crazy good and can handle the inevitable desync
-    public GameConnection(uint stepSize = 2) {
+    public GameConnection(IUnitsTracker unitsTracker, uint stepSize = 2) {
         _stepSize = stepSize;
+        _unitsTracker = unitsTracker;
     }
 
     private void FindExecutableInfo() {
@@ -282,12 +285,12 @@ public class GameConnection {
         _performanceDebugger.CompileData();
     }
 
-    private static void PrintMemoryInfo() {
+    private void PrintMemoryInfo() {
         var memoryUsedMb = Process.GetCurrentProcess().WorkingSet64 * 1e-6;
         if (memoryUsedMb > 200) {
             Logger.Performance("==== Memory Debug Start ====");
             Logger.Performance("Memory used: {0} MB", memoryUsedMb.ToString("0.00"));
-            Logger.Performance("Units: {0} owned, {1} neutral, {2} enemy", UnitsTracker.OwnedUnits.Count, UnitsTracker.NeutralUnits.Count, UnitsTracker.EnemyUnits.Count);
+            Logger.Performance("Units: {0} owned, {1} neutral, {2} enemy", _unitsTracker.OwnedUnits.Count, _unitsTracker.NeutralUnits.Count, _unitsTracker.EnemyUnits.Count);
             Logger.Performance(
                 "Pathfinding cache: {0} paths, {1} tiles",
                 Pathfinder.CellPathsMemory.Values.Sum(destinations => destinations.Keys.Count),

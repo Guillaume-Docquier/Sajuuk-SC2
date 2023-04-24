@@ -1,10 +1,10 @@
-﻿using System.Linq;
-using Bot.GameSense;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Bot.GameData;
 
 public interface IPrerequisite {
-    bool IsMet();
+    bool IsMet(IEnumerable<Unit> ownedUnits, HashSet<uint> researchedUpgrades);
 }
 
 public class UnitPrerequisite : IPrerequisite {
@@ -14,8 +14,8 @@ public class UnitPrerequisite : IPrerequisite {
         _unitType = unitType;
     }
 
-    public bool IsMet() {
-        return Controller.GetUnits(UnitsTracker.OwnedUnits, _unitType).Any(unit => unit.IsOperational);
+    public bool IsMet(IEnumerable<Unit> ownedUnits, HashSet<uint> researchedUpgrades) {
+        return Controller.GetUnits(ownedUnits, _unitType).Any(unit => unit.IsOperational);
     }
 }
 
@@ -26,7 +26,7 @@ public class TechPrerequisite : IPrerequisite {
         _upgradeId = upgradeId;
     }
 
-    public bool IsMet() {
-        return Controller.ResearchedUpgrades.Contains(_upgradeId);
+    public bool IsMet(IEnumerable<Unit> ownedUnits, HashSet<uint> researchedUpgrades) {
+        return researchedUpgrades.Contains(_upgradeId);
     }
 }

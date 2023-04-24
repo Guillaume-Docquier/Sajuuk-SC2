@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using Bot.Builds;
 using Bot.Debugging;
 using Bot.GameData;
 using Bot.GameSense;
@@ -15,6 +14,7 @@ namespace Bot.VideoClips;
 
 public class VideoClipPlayer : IBot {
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
+    private readonly IUnitsTracker _unitsTracker;
 
     private readonly string _mapName;
     private readonly Queue<Clip> _clips = new Queue<Clip>();
@@ -26,8 +26,9 @@ public class VideoClipPlayer : IBot {
 
     private ulong _startAt;
 
-    public VideoClipPlayer(string mapName, IDebuggingFlagsTracker debuggingFlagsTracker) {
+    public VideoClipPlayer(string mapName, IDebuggingFlagsTracker debuggingFlagsTracker, IUnitsTracker unitsTracker) {
         _debuggingFlagsTracker = debuggingFlagsTracker;
+        _unitsTracker = unitsTracker;
 
         _mapName = mapName;
     }
@@ -35,7 +36,7 @@ public class VideoClipPlayer : IBot {
     public async Task OnFrame() {
         await EnsureInitialization();
 
-        foreach (var unit in Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone).Where(unit => unit.HasOrders())) {
+        foreach (var unit in Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Drone).Where(unit => unit.HasOrders())) {
             unit.Stop();
         }
 

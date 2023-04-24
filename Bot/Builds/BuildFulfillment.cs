@@ -13,10 +13,13 @@ namespace Bot.Builds;
 /// i.e: Fulfill
 /// </summary>
 public abstract class BuildFulfillment {
+    protected readonly IUnitsTracker UnitsTracker;
+
     protected readonly BuildRequest BuildRequest;
 
-    protected BuildFulfillment(BuildRequest buildRequest) {
+    protected BuildFulfillment(BuildRequest buildRequest, IUnitsTracker unitsTracker) {
         BuildRequest = buildRequest;
+        UnitsTracker = unitsTracker;
     }
 
     public BuildType BuildType => BuildRequest.BuildType;
@@ -38,7 +41,8 @@ public abstract class BuildFulfillment {
 }
 
 public class QuantityFulfillment: BuildFulfillment {
-    public QuantityFulfillment(BuildRequest buildRequest) : base(buildRequest) {}
+    public QuantityFulfillment(BuildRequest buildRequest, IUnitsTracker unitsTracker)
+        : base(buildRequest, unitsTracker) {}
 
     private int _fulfilled = 0;
     public override int Fulfilled => _fulfilled;
@@ -49,7 +53,8 @@ public class QuantityFulfillment: BuildFulfillment {
 }
 
 public class TargetFulfillment: BuildFulfillment {
-    public TargetFulfillment(BuildRequest buildRequest) : base(buildRequest) {}
+    public TargetFulfillment(BuildRequest buildRequest, IUnitsTracker unitsTracker)
+        : base(buildRequest, unitsTracker) {}
 
     private int _granted = 0;
 

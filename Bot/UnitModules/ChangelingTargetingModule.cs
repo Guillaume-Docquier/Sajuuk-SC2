@@ -5,22 +5,25 @@ using Bot.GameSense;
 namespace Bot.UnitModules;
 
 public class ChangelingTargetingModule: UnitModule {
+    private readonly IUnitsTracker _unitsTracker;
+
     public const string Tag = "ChangelingTargetingModule";
 
     private readonly Unit _unit;
 
-    public static void Install(Unit unit) {
+    private ChangelingTargetingModule(Unit unit, IUnitsTracker unitsTracker) {
+        _unit = unit;
+        _unitsTracker = unitsTracker;
+    }
+
+    public static void Install(Unit unit, IUnitsTracker unitsTracker) {
         if (PreInstallCheck(Tag, unit)) {
-            unit.Modules.Add(Tag, new ChangelingTargetingModule(unit));
+            unit.Modules.Add(Tag, new ChangelingTargetingModule(unit, unitsTracker));
         }
     }
 
-    private ChangelingTargetingModule(Unit unit) {
-        _unit = unit;
-    }
-
     protected override void DoExecute() {
-        var changelings = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Changelings).ToList();
+        var changelings = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Changelings).ToList();
         if (changelings.Count <= 0) {
             return;
         }

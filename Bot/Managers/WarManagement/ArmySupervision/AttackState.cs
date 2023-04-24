@@ -19,6 +19,7 @@ public partial class ArmySupervisor {
         private const bool Debug = true;
 
         private readonly IVisibilityTracker _visibilityTracker;
+        private readonly IUnitsTracker _unitsTracker;
 
         private const float RocksDestructionRange = 9f;
         private const float AcceptableDistanceToTarget = 3;
@@ -32,10 +33,13 @@ public partial class ArmySupervisor {
         private ulong _pathfindingLock = 0;
         private ulong _pathfindingLockDelay = TimeUtils.SecsToFrames(4);
 
-        private readonly IUnitsControl _unitsController = new OffensiveUnitsControl();
+        private readonly IUnitsControl _unitsController;
 
-        public AttackState(IVisibilityTracker visibilityTracker) {
+        public AttackState(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
             _visibilityTracker = visibilityTracker;
+            _unitsTracker = unitsTracker;
+
+            _unitsController = new OffensiveUnitsControl(_unitsTracker);
         }
 
         protected override void OnTransition() {
@@ -48,7 +52,7 @@ public partial class ArmySupervisor {
             }
 
             if (Context._mainArmy.GetCenter().DistanceTo(Context._target) < AcceptableDistanceToTarget) {
-                StateMachine.TransitionTo(new DefenseState(_visibilityTracker));
+                StateMachine.TransitionTo(new DefenseState(_visibilityTracker, _unitsTracker));
                 return true;
             }
 
@@ -107,7 +111,7 @@ public partial class ArmySupervisor {
             if (_stuckDetector.IsStuck) {
                 Logger.Warning("{0} army is stuck", Name);
 
-                var closestRock = Controller.GetUnits(UnitsTracker.NeutralUnits, Units.Destructibles).MinBy(rock => rock.DistanceTo(armyLocation));
+                var closestRock = Controller.GetUnits(_unitsTracker.NeutralUnits, Units.Destructibles).MinBy(rock => rock.DistanceTo(armyLocation));
                 if (closestRock != null) {
                     Logger.Info("{0} closest rock is {1:F2} units away", Name, closestRock.DistanceTo(armyLocation));
                     if (closestRock.DistanceTo(armyLocation) <= RocksDestructionRange) {

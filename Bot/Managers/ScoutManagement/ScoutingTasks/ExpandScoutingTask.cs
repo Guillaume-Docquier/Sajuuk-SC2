@@ -9,15 +9,17 @@ namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 
 public class ExpandScoutingTask : ScoutingTask {
     private readonly IVisibilityTracker _visibilityTracker;
+    private readonly IUnitsTracker _unitsTracker;
 
     private readonly bool _waitForExpand;
     private readonly float _expandRadius;
 
     private bool _isCancelled = false;
 
-    public ExpandScoutingTask(IVisibilityTracker visibilityTracker, Vector2 scoutLocation, int priority, int maxScouts, bool waitForExpand = false)
+    public ExpandScoutingTask(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, Vector2 scoutLocation, int priority, int maxScouts, bool waitForExpand = false)
         : base(scoutLocation, priority, maxScouts) {
         _visibilityTracker = visibilityTracker;
+        _unitsTracker = unitsTracker;
 
         _waitForExpand = waitForExpand;
 
@@ -37,7 +39,7 @@ public class ExpandScoutingTask : ScoutingTask {
             return true;
         }
 
-        return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.TownHalls)
+        return Controller.GetUnits(_unitsTracker.EnemyUnits, Units.TownHalls)
             .Where(enemyTownHall => enemyTownHall.IsVisible)
             .Any(enemyTownHall => enemyTownHall.DistanceTo(ScoutLocation) <= enemyTownHall.Radius);
     }

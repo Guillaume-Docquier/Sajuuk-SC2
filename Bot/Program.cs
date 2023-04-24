@@ -19,7 +19,7 @@ public class Program {
     {
         //new WorkerRushScenario(),
         //new FlyingTerranScumScenario(),
-        //new SpawnStuffScenario(),
+        //new SpawnStuffScenario(UnitsTracker.Instance),
     };
 
     private const string Version = "4_0_4";
@@ -76,7 +76,7 @@ public class Program {
             DebugEnabled = true;
             GraphicalDebugger = new NullGraphicalDebugger();
 
-            GameConnection = new GameConnection();
+            GameConnection = new GameConnection(UnitsTracker.Instance);
             GameConnection.RunLocal(CreateSajuuk(Version, Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
         }
     }
@@ -87,15 +87,15 @@ public class Program {
         DebugEnabled = true;
         GraphicalDebugger = new Sc2GraphicalDebugger();
 
-        GameConnection = new GameConnection(stepSize: 1);
-        GameConnection.RunLocal(new VideoClipPlayer(MapFileName, DebuggingFlagsTracker.Instance), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
+        GameConnection = new GameConnection(UnitsTracker.Instance, stepSize: 1);
+        GameConnection.RunLocal(new VideoClipPlayer(MapFileName, DebuggingFlagsTracker.Instance, UnitsTracker.Instance), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
     }
 
     private static void PlayLocalGame() {
         DebugEnabled = true;
         GraphicalDebugger = new Sc2GraphicalDebugger();
 
-        GameConnection = new GameConnection();
+        GameConnection = new GameConnection(UnitsTracker.Instance);
         GameConnection.RunLocal(Bot, MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
     }
 
@@ -103,7 +103,7 @@ public class Program {
         DebugEnabled = false;
         GraphicalDebugger = new NullGraphicalDebugger();
 
-        GameConnection = new GameConnection();
+        GameConnection = new GameConnection(UnitsTracker.Instance);
         GameConnection.RunLadder(Bot, args).Wait();
     }
 
@@ -114,7 +114,8 @@ public class Program {
             TaggingService.Instance,
             EnemyRaceTracker.Instance,
             VisibilityTracker.Instance,
-            DebuggingFlagsTracker.Instance
+            DebuggingFlagsTracker.Instance,
+            UnitsTracker.Instance
         );
     }
 }

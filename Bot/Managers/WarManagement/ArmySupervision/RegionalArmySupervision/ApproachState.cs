@@ -1,14 +1,21 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.ExtensionMethods;
+using Bot.GameSense;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.MapKnowledge;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class ApproachState : RegionalArmySupervisionState {
+    private readonly IUnitsTracker _unitsTracker;
+
     public const float SafetyDistance = 5;
     public const float SafetyDistanceTolerance = SafetyDistance / 2;
+
+    public ApproachState(IUnitsTracker unitsTracker) {
+        _unitsTracker = unitsTracker;
+    }
 
     /// <summary>
     /// Move all units into striking position to prepare for an assault.
@@ -26,7 +33,7 @@ public class ApproachState : RegionalArmySupervisionState {
         var unitsInStrikingPosition = GetUnitsInStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy);
         // TODO GD If maxed out, we have to trade
         if (unitsInStrikingPosition.GetForce() >= EnemyArmy.GetForce() * 1.25) {
-            StateMachine.TransitionTo(new EngageState());
+            StateMachine.TransitionTo(new EngageState(_unitsTracker));
             return true;
         }
 

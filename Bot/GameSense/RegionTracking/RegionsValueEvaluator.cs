@@ -9,12 +9,17 @@ using SC2APIProtocol;
 namespace Bot.GameSense.RegionTracking;
 
 public class RegionsValueEvaluator : RegionsEvaluator {
+    private readonly IUnitsTracker _unitsTracker;
+
     private readonly Alliance _alliance;
 
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(240);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
-    public RegionsValueEvaluator(Alliance alliance, Func<uint> getCurrentFrame) : base("value", getCurrentFrame) {
+    public RegionsValueEvaluator(IUnitsTracker unitsTracker, Alliance alliance, Func<uint> getCurrentFrame)
+        : base("value", getCurrentFrame) {
+        _unitsTracker = unitsTracker;
+
         _alliance = alliance;
     }
 
@@ -24,8 +29,8 @@ public class RegionsValueEvaluator : RegionsEvaluator {
     /// </summary>
     protected override IEnumerable<(IRegion region, float evaluation)> DoUpdateEvaluations(IReadOnlyCollection<IRegion> regions) {
         // TODO GD Precompute units by region in a tracker
-        var unitsByRegion = UnitsTracker.GetUnits(_alliance)
-            .Concat(UnitsTracker.GetGhostUnits(_alliance))
+        var unitsByRegion = _unitsTracker.GetUnits(_alliance)
+            .Concat(_unitsTracker.GetGhostUnits(_alliance))
             .GroupBy(unit => unit.GetRegion())
             .Where(unitsInRegion => unitsInRegion.Key != null)
             .ToDictionary(unitsInRegion => unitsInRegion.Key, unitsInRegion => unitsInRegion);

@@ -12,6 +12,8 @@ using Bot.Utils;
 namespace Bot.Managers.EconomyManagement;
 
 public sealed partial class EconomyManager: Manager {
+    private readonly IUnitsTracker _unitsTracker;
+
     private const int MaxDroneCount = 70;
     private readonly BuildManager _buildManager;
 
@@ -26,11 +28,11 @@ public sealed partial class EconomyManager: Manager {
 
     private int _creepQueensCount = 1;
 
-    private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, quantity: 0, blockCondition: BuildBlockCondition.MissingResources, priority: BuildRequestPriority.High);
-    private readonly BuildRequest _macroHatchBuildRequest = new TargetBuildRequest(BuildType.Build, Units.Hatchery, targetQuantity: 0);
-    private readonly BuildRequest _queenBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Queen, targetQuantity: 0);
-    private readonly BuildRequest _extractorsBuildRequest = new TargetBuildRequest(BuildType.Build, Units.Extractor, targetQuantity: 0);
-    private readonly BuildRequest _dronesBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Drone, targetQuantity: 0);
+    private readonly BuildRequest _expandBuildRequest;
+    private readonly BuildRequest _macroHatchBuildRequest;
+    private readonly BuildRequest _queenBuildRequest;
+    private readonly BuildRequest _extractorsBuildRequest;
+    private readonly BuildRequest _dronesBuildRequest;
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment)
@@ -40,30 +42,39 @@ public sealed partial class EconomyManager: Manager {
     protected override IDispatcher Dispatcher { get; }
     protected override IReleaser Releaser { get; }
 
-    public EconomyManager(BuildManager buildManager) {
+    public EconomyManager(BuildManager buildManager, IUnitsTracker unitsTracker) {
         _buildManager = buildManager;
+        _unitsTracker = unitsTracker;
 
         Assigner = new EconomyManagerAssigner(this);
         Dispatcher = new EconomyManagerDispatcher(this);
         Releaser = new EconomyManagerReleaser(this);
 
-        _macroHatchBuildRequest.Requested = _townHalls.Count; // TODO GD Need to differentiate macro and mining bases
-
+        _expandBuildRequest = new QuantityBuildRequest(_unitsTracker, BuildType.Expand, Units.Hatchery, quantity: 0, blockCondition: BuildBlockCondition.MissingResources, priority: BuildRequestPriority.High);
         _buildRequests.Add(_expandBuildRequest);
+
+        // TODO GD Need to differentiate macro and mining townhalls
+        _macroHatchBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Build, Units.Hatchery, targetQuantity: _townHalls.Count);
         _buildRequests.Add(_macroHatchBuildRequest);
+
+        _queenBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Queen, targetQuantity: 0);
         _buildRequests.Add(_queenBuildRequest);
+
+        _extractorsBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Build, Units.Extractor, targetQuantity: 0);
         _buildRequests.Add(_extractorsBuildRequest);
+
+        _dronesBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Drone, targetQuantity: 0);
         _buildRequests.Add(_dronesBuildRequest);
     }
 
     protected override void RecruitmentPhase() {
-        var unmanagedTownHalls = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).Where(unit => unit.Manager == null);
+        var unmanagedTownHalls = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls).Where(unit => unit.Manager == null);
         Assign(unmanagedTownHalls);
 
-        var unmanagedQueens = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Queen).Where(unit => unit.Manager == null);
+        var unmanagedQueens = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Queen).Where(unit => unit.Manager == null);
         Assign(unmanagedQueens);
 
-        var unmanagedIdleWorkers = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Workers)
+        var unmanagedIdleWorkers = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Workers)
             .Where(unit => unit.Manager == null)
             // We do this to not select drones that are going to build something
             // TODO GD This is problematic because we need to send a stop order whenever we release a drone
@@ -93,7 +104,7 @@ public sealed partial class EconomyManager: Manager {
 
         AdjustCreepQueensCount();
 
-        _queenBuildRequest.Requested = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).Count() + _creepQueensCount;
+        _queenBuildRequest.Requested = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery).Count() + _creepQueensCount;
         _dronesBuildRequest.Requested = Math.Min(MaxDroneCount, _townHallSupervisors.Sum(supervisor => !supervisor.TownHall.IsOperational ? 0 : supervisor.SaturatedCapacity));
     }
 
@@ -246,8 +257,8 @@ public sealed partial class EconomyManager: Manager {
                && !GetTownHallsInConstruction().Any();
     }
 
-    private static IEnumerable<Unit> GetIdleLarvae() {
-        return Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Larva)
+    private IEnumerable<Unit> GetIdleLarvae() {
+        return Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Larva)
             .Where(larva => !larva.Orders.Any());
     }
 
@@ -263,8 +274,8 @@ public sealed partial class EconomyManager: Manager {
         return nbTownHalls >= Controller.GetMiningTownHalls().Count() * 2;
     }
 
-    private static IEnumerable<Unit> GetTownHallsInConstruction() {
-        return Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery)
+    private IEnumerable<Unit> GetTownHallsInConstruction() {
+        return Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery)
             .Where(townHall => !townHall.IsOperational)
             .Concat(Controller.GetProducersCarryingOrders(Units.Hatchery));
     }

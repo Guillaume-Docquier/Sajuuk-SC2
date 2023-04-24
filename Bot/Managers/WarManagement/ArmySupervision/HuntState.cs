@@ -11,19 +11,21 @@ namespace Bot.Managers.WarManagement.ArmySupervision;
 public partial class ArmySupervisor {
     public class HuntState: State<ArmySupervisor> {
         private readonly IVisibilityTracker _visibilityTracker;
+        private readonly IUnitsTracker _unitsTracker;
 
         private static Dictionary<Vector2, bool> _checkedExpandLocations;
         private static readonly Dictionary<Vector2, bool> CheckedPositions = new Dictionary<Vector2, bool>();
 
         private bool _isNextTargetSet = false;
 
-        public HuntState(IVisibilityTracker visibilityTracker) {
+        public HuntState(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
             _visibilityTracker = visibilityTracker;
+            _unitsTracker = unitsTracker;
         }
 
         protected override bool TryTransitioning() {
             if (_isNextTargetSet) {
-                StateMachine.TransitionTo(new AttackState(_visibilityTracker));
+                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker));
                 return true;
             }
 
@@ -46,7 +48,7 @@ public partial class ArmySupervisor {
             if (AllLocationsHaveBeenChecked(_checkedExpandLocations)) {
                 ResetCheckedExpandLocations();
                 if (AllLocationsHaveBeenChecked(_checkedExpandLocations)) {
-                    var enemiesToAttack = UnitsTracker.EnemyUnits
+                    var enemiesToAttack = _unitsTracker.EnemyUnits
                         .Where(unit => !unit.IsCloaked)
                         .Where(unit => Context.CanHitAirUnits || !unit.IsFlying)
                         .ToList();

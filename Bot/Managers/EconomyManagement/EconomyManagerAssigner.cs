@@ -40,9 +40,9 @@ public sealed partial class EconomyManager {
             return true;
         }
 
-        private static bool AssignQueen(Unit queen) {
+        private bool AssignQueen(Unit queen) {
             QueenMicroModule.Install(queen);
-            ChangelingTargetingModule.Install(queen);
+            ChangelingTargetingModule.Install(queen, Client._unitsTracker);
 
             return true;
         }

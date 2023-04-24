@@ -12,9 +12,10 @@ namespace Bot.MapKnowledge;
 // TODO GD Make two classes: The analyzer and the tracker
 // Analysis should be run manually, and the tracker should be able to load the persisted data before entering the game
 public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
-    public static readonly MapAnalyzer Instance = new MapAnalyzer(VisibilityTracker.Instance);
+    public static readonly MapAnalyzer Instance = new MapAnalyzer(VisibilityTracker.Instance, UnitsTracker.Instance);
 
     private readonly IVisibilityTracker _visibilityTracker;
+    private readonly IUnitsTracker _unitsTracker;
 
     public static bool IsInitialized { get; private set; } = false;
     public static Vector2 StartingLocation { get; private set; }
@@ -63,8 +64,9 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         }
     }
 
-    private MapAnalyzer(IVisibilityTracker visibilityTracker) {
+    private MapAnalyzer(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
         _visibilityTracker = visibilityTracker;
+        _unitsTracker = unitsTracker;
     }
 
     public void Reset() {
@@ -121,11 +123,11 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         RemoveObstacle(deadUnit);
     }
 
-    private static void InitObstacles() {
+    private void InitObstacles() {
         var obstacleIds = new HashSet<uint>(Units.Obstacles.Concat(Units.MineralFields).Concat(Units.GasGeysers));
         obstacleIds.Remove(Units.UnbuildablePlatesDestructible); // It is destructible but you can walk on it
 
-        _obstacles = Controller.GetUnits(UnitsTracker.NeutralUnits, obstacleIds).ToList();
+        _obstacles = Controller.GetUnits(_unitsTracker.NeutralUnits, obstacleIds).ToList();
 
         _obstacles.ForEach(obstacle => {
             obstacle.AddDeathWatcher(Instance);
@@ -149,8 +151,8 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         obstacle.Position.GetRegion().UpdateObstruction();
     }
 
-    private static void InitSpawnLocations() {
-        StartingLocation = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.TownHalls).First().Position.ToVector2();
+    private void InitSpawnLocations() {
+        StartingLocation = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls).First().Position.ToVector2();
         EnemyStartingLocation = Controller.GameInfo.StartRaw.StartLocations
             .Select(startLocation => new Vector2(startLocation.X, startLocation.Y))
             .MaxBy(enemyLocation => StartingLocation.DistanceTo(enemyLocation));
@@ -174,13 +176,13 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         }
     }
 
-    private static void InitTerrainWalkMap() {
+    private void InitTerrainWalkMap() {
         _terrainWalkMap = ParseWalkMap();
 
         // The walk data makes cells occupied by buildings impassable
         // However, if I want to find a path from my hatch to the enemy, the pathfinding will fail because the hatchery is impassable
         // Lucky for us, when we init the walk map, there's only 1 building so we'll make its cells walkable
-        var startingTownHall = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Hatchery).First();
+        var startingTownHall = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery).First();
         var townHallCells = BuildSearchGrid(startingTownHall.Position, (int)startingTownHall.Radius);
 
         foreach (var cell in townHallCells) {

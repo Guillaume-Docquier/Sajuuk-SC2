@@ -16,6 +16,7 @@ using Action = SC2APIProtocol.Action;
 namespace Bot;
 
 public class Unit: ICanDie, IHavePosition {
+    private readonly IUnitsTracker _unitsTracker;
     public readonly HashSet<IWatchUnitsDie> DeathWatchers = new HashSet<IWatchUnitsDie>();
     public UnitTypeData UnitTypeData;
 
@@ -57,7 +58,7 @@ public class Unit: ICanDie, IHavePosition {
     /// <summary>
     /// The currently engaged target, or null if none.
     /// </summary>
-    public Unit EngagedTarget => UnitsTracker.UnitsByTag.TryGetValue(RawUnitData.EngagedTargetTag, out var engagedTarget) ? engagedTarget : null;
+    public Unit EngagedTarget => _unitsTracker.UnitsByTag.TryGetValue(RawUnitData.EngagedTargetTag, out var engagedTarget) ? engagedTarget : null;
     /// <summary>
     /// Whether the unit has a target.
     /// False does not mean that an enemy is not engaging the unit, it only means that the unit is not currently fighting back.
@@ -154,7 +155,10 @@ public class Unit: ICanDie, IHavePosition {
                                                                               && !Abilities.Gather.Contains(order.AbilityId)
                                                                               && !Abilities.ReturnCargo.Contains(order.AbilityId));
 
-    public Unit(SC2APIProtocol.Unit unit, ulong frame) {
+    // TODO GD I don't know if I like needing a unitsTracker here. Maybe the logic should be extracted out.
+    public Unit(IUnitsTracker unitsTracker, SC2APIProtocol.Unit unit, ulong frame) {
+        _unitsTracker = unitsTracker;
+
         Update(unit, frame);
     }
 
@@ -409,13 +413,13 @@ public class Unit: ICanDie, IHavePosition {
 
         var abilityName = KnowledgeBase.GetAbilityData(abilityId).FriendlyName;
         if (targetUnitTag != ulong.MaxValue) {
-            if (!UnitsTracker.UnitsByTag.ContainsKey(targetUnitTag)) {
+            if (!_unitsTracker.UnitsByTag.ContainsKey(targetUnitTag)) {
                 Logger.Error("Error with {0} trying to {1} on {2}: The target doesn't exist", this, abilityName, Tag);
                 return;
             }
 
             if (abilityId != Abilities.Smart) {
-                var targetUnit = UnitsTracker.UnitsByTag[targetUnitTag];
+                var targetUnit = _unitsTracker.UnitsByTag[targetUnitTag];
                 Logger.Info("{0} using ability {1} on {2}", this, abilityName, targetUnit);
             }
         }
@@ -524,7 +528,7 @@ public class Unit: ICanDie, IHavePosition {
         }
 
         // Extractors are built on a gas, not at a location
-        if (UnitsTracker.UnitsByTag.TryGetValue(producingOrder.TargetUnitTag, out var targetUnit)) {
+        if (_unitsTracker.UnitsByTag.TryGetValue(producingOrder.TargetUnitTag, out var targetUnit)) {
             return targetUnit.Position.ToVector2() == atLocation;
         }
 

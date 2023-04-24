@@ -16,10 +16,12 @@ namespace Bot.Debugging;
 public class BotDebugger {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
+    private readonly IUnitsTracker _unitsTracker;
 
-    public BotDebugger(IVisibilityTracker visibilityTracker, IDebuggingFlagsTracker debuggingFlagsTracker) {
+    public BotDebugger(IVisibilityTracker visibilityTracker, IDebuggingFlagsTracker debuggingFlagsTracker, IUnitsTracker unitsTracker) {
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
+        _unitsTracker = unitsTracker;
     }
 
     public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus, Race enemyRace) {
@@ -84,7 +86,7 @@ public class BotDebugger {
             return;
         }
 
-        var detectors = Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Detectors);
+        var detectors = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Detectors);
         foreach (var detector in detectors) {
             Program.GraphicalDebugger.AddText("!", size: 20, worldPos: detector.Position.AsWorldGridCenter().ToPoint(), color: Colors.Purple);
             Program.GraphicalDebugger.AddGridSquaresInRadius(detector.Position.AsWorldGridCenter(), (int)detector.UnitTypeData.SightRange, Colors.Purple);
@@ -120,7 +122,7 @@ public class BotDebugger {
             "Resource income rates - past 30s",
         }, virtualPos: new Point { X = 0.315f, Y = 0.700f });
 
-        var activeMiningModules = Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Drone)
+        var activeMiningModules = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Drone)
             .Select(UnitModule.Get<MiningModule>)
             .Where(module => module != null)
             .ToList();
@@ -167,7 +169,7 @@ public class BotDebugger {
             return;
         }
 
-        foreach (var enemyGhostUnit in UnitsTracker.EnemyGhostUnits.Values) {
+        foreach (var enemyGhostUnit in _unitsTracker.EnemyGhostUnits.Values) {
             Program.GraphicalDebugger.AddUnit(enemyGhostUnit, Colors.Red);
         }
     }
@@ -181,8 +183,8 @@ public class BotDebugger {
 
         textGroup.Add("Known enemy units\n");
         textGroup.AddRange(
-            UnitsTracker.EnemyMemorizedUnits.Values
-                .Concat(UnitsTracker.EnemyUnits.Where(enemy => !Units.Buildings.Contains(enemy.UnitType)))
+            _unitsTracker.EnemyMemorizedUnits.Values
+                .Concat(_unitsTracker.EnemyUnits.Where(enemy => !Units.Buildings.Contains(enemy.UnitType)))
                 .GroupBy(unit => unit.UnitTypeData.Name)
                 .OrderBy(group => group.Key)
                 .Select(group => $"{group.Count()}x {group.Key}")
@@ -190,7 +192,7 @@ public class BotDebugger {
 
         textGroup.Add("\nKnown enemy buildings\n");
         textGroup.AddRange(
-            UnitsTracker.EnemyUnits.Where(enemy => Units.Buildings.Contains(enemy.UnitType))
+            _unitsTracker.EnemyUnits.Where(enemy => Units.Buildings.Contains(enemy.UnitType))
                 .GroupBy(unit => $"{unit.UnitTypeData.Name} {(unit.RawUnitData.DisplayType == DisplayType.Snapshot ? "(S)" : "")}")
                 .OrderBy(group => group.Key)
                 .Select(group => $"{group.Count()}x {group.Key}")
@@ -231,7 +233,7 @@ public class BotDebugger {
             return;
         }
 
-        foreach (var unit in UnitsTracker.UnitsByTag.Values) {
+        foreach (var unit in _unitsTracker.UnitsByTag.Values) {
             var unitText = $"{unit.Name} ({unit.UnitType})";
             Program.GraphicalDebugger.AddText(unitText, size: 11, worldPos: unit.Position.ToPoint(xOffset: -0.4f));
         }
@@ -261,7 +263,7 @@ public class BotDebugger {
     }
 
     private void DebugRocks() {
-        foreach (var neutralUnit in UnitsTracker.NeutralUnits) {
+        foreach (var neutralUnit in _unitsTracker.NeutralUnits) {
             var rockInfo = new []
             {
                 neutralUnit.Name,

@@ -6,6 +6,8 @@ using Bot.GameSense;
 namespace Bot.UnitModules;
 
 public class AttackPriorityModule: UnitModule {
+    private readonly IUnitsTracker _unitsTracker;
+
     public const string Tag = "AttackPriorityModule";
 
     // TODO GD Get Unit specific priorities
@@ -19,14 +21,15 @@ public class AttackPriorityModule: UnitModule {
 
     private readonly Unit _unit;
 
-    public static void Install(Unit unit) {
-        if (PreInstallCheck(Tag, unit)) {
-            unit.Modules.Add(Tag, new AttackPriorityModule(unit));
-        }
+    private AttackPriorityModule(Unit unit, IUnitsTracker unitsTracker) {
+        _unit = unit;
+        _unitsTracker = unitsTracker;
     }
 
-    private AttackPriorityModule(Unit unit) {
-        _unit = unit;
+    public static void Install(Unit unit, IUnitsTracker unitsTracker) {
+        if (PreInstallCheck(Tag, unit)) {
+            unit.Modules.Add(Tag, new AttackPriorityModule(unit, unitsTracker));
+        }
     }
 
     protected override void DoExecute() {
@@ -42,7 +45,7 @@ public class AttackPriorityModule: UnitModule {
             return;
         }
 
-        var priorityTargetInRange = Controller.GetUnits(UnitsTracker.EnemyUnits, PriorityTargets)
+        var priorityTargetInRange = Controller.GetUnits(_unitsTracker.EnemyUnits, PriorityTargets)
             .Where(priorityTarget => priorityTarget.DistanceTo(_unit) < _unit.MaxRange)
             .MinBy(priorityTarget => priorityTarget.DistanceTo(_unit));
 

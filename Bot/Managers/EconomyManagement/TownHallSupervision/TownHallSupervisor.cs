@@ -12,6 +12,7 @@ namespace Bot.Managers.EconomyManagement.TownHallSupervision;
 
 public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     private readonly ulong _id;
+    private readonly IUnitsTracker _unitsTracker;
     private readonly Color _color;
     public Unit TownHall { get; private set; }
     public Unit Queen { get; private set; }
@@ -24,8 +25,7 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
     private bool _expandHasBeenRequested = false;
     private readonly int _initialMineralsSum;
 
-    // TODO GD atSupply for expands depends on the build order, maybe only after the BO is finished instead?
-    private readonly BuildRequest _expandBuildRequest = new QuantityBuildRequest(BuildType.Expand, Units.Hatchery, atSupply: 75, quantity: 0, blockCondition: BuildBlockCondition.MissingResources, priority: BuildRequestPriority.High);
+    private readonly BuildRequest _expandBuildRequest;
     private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>();
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildStepRequests.Select(buildRequest => buildRequest.Fulfillment);
@@ -58,7 +58,9 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
         }
     }
 
-    public TownHallSupervisor(Unit townHall, Color color) {
+    public TownHallSupervisor(IUnitsTracker unitsTracker, Unit townHall, Color color) {
+        _unitsTracker = unitsTracker;
+
         _id = townHall.Tag;
         _color = color;
 
@@ -68,8 +70,10 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
         Assign(townHall);
         Assign(DiscoverMinerals());
         Assign(DiscoverGasses());
-        Assign(DiscoverExtractors(UnitsTracker.OwnedUnits));
+        Assign(DiscoverExtractors(_unitsTracker.OwnedUnits));
 
+        // TODO GD atSupply for expands depends on the build order, maybe only after the BO is finished instead?
+        _expandBuildRequest = new QuantityBuildRequest(_unitsTracker, BuildType.Expand, Units.Hatchery, atSupply: 75, quantity: 0, blockCondition: BuildBlockCondition.MissingResources, priority: BuildRequestPriority.High);
         _buildStepRequests.Add(_expandBuildRequest);
 
         // You're a macro hatch
@@ -90,7 +94,7 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
         }
 
         ReleaseDepletedGasses();
-        Assign(DiscoverExtractors(UnitsTracker.NewOwnedUnits));
+        Assign(DiscoverExtractors(_unitsTracker.NewOwnedUnits));
 
         UpdateExtractorCapacities();
         UpdateGasAssignments();

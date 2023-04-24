@@ -6,10 +6,11 @@ using SC2APIProtocol;
 namespace Bot.GameSense.EnemyStrategyTracking;
 
 public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTransition> {
-    public static EnemyStrategyTracker Instance { get; private set; } = new EnemyStrategyTracker(TaggingService.Instance, EnemyRaceTracker.Instance);
+    public static EnemyStrategyTracker Instance { get; private set; } = new EnemyStrategyTracker(TaggingService.Instance, EnemyRaceTracker.Instance, UnitsTracker.Instance);
 
     private readonly ITaggingService _taggingService;
     private readonly IEnemyRaceTracker _enemyRaceTracker;
+    private readonly IUnitsTracker _unitsTracker;
 
     private readonly HashSet<ISubscriber<EnemyStrategyTransition>> _subscribers = new HashSet<ISubscriber<EnemyStrategyTransition>>();
 
@@ -17,9 +18,10 @@ public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTrans
 
     public EnemyStrategy CurrentEnemyStrategy { get; private set; } = EnemyStrategy.Unknown;
 
-    private EnemyStrategyTracker(ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker) {
+    private EnemyStrategyTracker(ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker, IUnitsTracker unitsTracker) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
+        _unitsTracker = unitsTracker;
     }
 
     public void Reset() {
@@ -41,7 +43,7 @@ public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTrans
             return;
         }
 
-        var knownEnemyUnits = UnitsTracker.EnemyUnits.Concat(UnitsTracker.EnemyMemorizedUnits.Values).ToList();
+        var knownEnemyUnits = _unitsTracker.EnemyUnits.Concat(_unitsTracker.EnemyMemorizedUnits.Values).ToList();
         var newEnemyStrategy = _strategyInterpreter.Interpret(knownEnemyUnits);
         if (newEnemyStrategy == EnemyStrategy.Unknown || CurrentEnemyStrategy == newEnemyStrategy) {
             return;

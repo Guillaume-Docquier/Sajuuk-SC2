@@ -15,6 +15,7 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
     private const int TopPriority = 100;
 
     private readonly IVisibilityTracker _visibilityTracker;
+    private readonly IUnitsTracker _unitsTracker;
 
     private bool _isInitialized = false;
 
@@ -22,8 +23,9 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
     private ScoutingTask _ownNaturalScoutingTask;
     private ScoutingTask _enemyNaturalScoutingTask;
 
-    public ProtossScoutingStrategy(IVisibilityTracker visibilityTracker) {
+    public ProtossScoutingStrategy(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
         _visibilityTracker = visibilityTracker;
+        _unitsTracker = unitsTracker;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
@@ -61,7 +63,7 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
         _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _ownNatural.Position, priority: TopPriority, maxScouts: 1);
 
         var enemyNatural = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
-        _enemyNaturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, enemyNatural.Position, priority: TopPriority - 1, maxScouts: 1);
+        _enemyNaturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, enemyNatural.Position, priority: TopPriority - 1, maxScouts: 1);
 
         _isInitialized = true;
     }

@@ -12,15 +12,19 @@ namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public partial class ArmySupervisor {
     public class DefenseState: State<ArmySupervisor> {
+        private readonly IVisibilityTracker _visibilityTracker;
+        private readonly IUnitsTracker _unitsTracker;
+
         private const bool Debug = true;
 
-        private readonly IVisibilityTracker _visibilityTracker;
-
         private const float AcceptableDistanceToTarget = 3;
-        private readonly IUnitsControl _unitsController = new OffensiveUnitsControl();
+        private readonly IUnitsControl _unitsController;
 
-        public DefenseState(IVisibilityTracker visibilityTracker) {
+        public DefenseState(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
             _visibilityTracker = visibilityTracker;
+            _unitsTracker = unitsTracker;
+
+            _unitsController = new OffensiveUnitsControl(_unitsTracker);
         }
 
         protected override void OnTransition() {
@@ -36,7 +40,7 @@ public partial class ArmySupervisor {
                 return false;
             }
 
-            var remainingUnits = UnitsTracker.EnemyUnits
+            var remainingUnits = _unitsTracker.EnemyUnits
                 .Where(unit => !unit.IsCloaked)
                 .Where(unit => Context.CanHitAirUnits || !unit.IsFlying);
 
@@ -44,7 +48,7 @@ public partial class ArmySupervisor {
                 return false;
             }
 
-            StateMachine.TransitionTo(new HuntState(_visibilityTracker));
+            StateMachine.TransitionTo(new HuntState(_visibilityTracker, _unitsTracker));
             return true;
         }
 
@@ -70,7 +74,7 @@ public partial class ArmySupervisor {
                 worldPos: soldiers.GetCenter().Translate(1f, 1f).ToVector3().ToPoint());
         }
 
-        private static void Defend(Vector2 targetToDefend, IReadOnlyCollection<Unit> soldiers, float defenseRadius, bool canHitAirUnits) {
+        private void Defend(Vector2 targetToDefend, IReadOnlyCollection<Unit> soldiers, float defenseRadius, bool canHitAirUnits) {
             if (soldiers.Count <= 0) {
                 return;
             }
@@ -80,7 +84,7 @@ public partial class ArmySupervisor {
             Program.GraphicalDebugger.AddSphere(targetToDefend.ToVector3(), AcceptableDistanceToTarget, Colors.Green);
             Program.GraphicalDebugger.AddTextGroup(new[] { "Defend", $"Radius: {defenseRadius}" }, worldPos: targetToDefend.ToVector3().ToPoint());
 
-            var targetList = UnitsTracker.EnemyUnits
+            var targetList = _unitsTracker.EnemyUnits
                 .Where(unit => !unit.IsCloaked)
                 .Where(unit => canHitAirUnits || !unit.IsFlying)
                 .Where(enemy => enemy.DistanceTo(targetToDefend) < defenseRadius)

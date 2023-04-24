@@ -12,6 +12,8 @@ using Bot.MapKnowledge;
 namespace Bot.Managers.ScoutManagement;
 
 public partial class ScoutManager : Manager {
+    private readonly IUnitsTracker _unitsTracker;
+
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
     protected override IAssigner Assigner { get; }
@@ -21,16 +23,18 @@ public partial class ScoutManager : Manager {
     private readonly IScoutingStrategy _scoutingStrategy;
     private readonly HashSet<ScoutSupervisor> _scoutSupervisors = new HashSet<ScoutSupervisor>();
 
-    public ScoutManager(IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker) {
+    public ScoutManager(IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
+        _unitsTracker = unitsTracker;
+
         Assigner = new ScoutManagerAssigner(this);
         Dispatcher = new ScoutManagerDispatcher(this);
         Releaser = new ScoutManagerReleaser(this);
 
-        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker);
+        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker, unitsTracker);
     }
 
     protected override void RecruitmentPhase() {
-        Assign(Controller.GetUnits(UnitsTracker.OwnedUnits, Units.Overlord).Where(unit => unit.Manager == null));
+        Assign(Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Overlord).Where(unit => unit.Manager == null));
 
         // TODO GD Add some condition to request a Drone / Zergling?
     }
@@ -39,7 +43,7 @@ public partial class ScoutManager : Manager {
         ClearCompletedTasks();
 
         foreach (var scoutingTask in _scoutingStrategy.GetNextScoutingTasks()) {
-            _scoutSupervisors.Add(new ScoutSupervisor(scoutingTask));
+            _scoutSupervisors.Add(new ScoutSupervisor(_unitsTracker, scoutingTask));
         }
 
         // TODO GD Reassign as we go to avoid selecting a scout that is super far while a nearby one just finished work
@@ -69,10 +73,10 @@ public partial class ScoutManager : Manager {
     }
 
     // TODO GD Make this reusable
-    private static IEnumerable<Unit> AvoidDanger(HashSet<Unit> unitsToPreserve) {
+    private IEnumerable<Unit> AvoidDanger(HashSet<Unit> unitsToPreserve) {
         var unitsThatAreAvoidingDanger = new List<Unit>();
 
-        var enemyUnits = UnitsTracker.EnemyUnits.Concat(UnitsTracker.EnemyGhostUnits.Values).ToList();
+        var enemyUnits = _unitsTracker.EnemyUnits.Concat(_unitsTracker.EnemyGhostUnits.Values).ToList();
         var antiAirEnemies = enemyUnits.Where(enemyUnit => enemyUnit.CanHitAir).ToList();
         var antiGroundEnemies = enemyUnits.Where(enemyUnit => enemyUnit.CanHitGround).ToList();
         foreach (var unitToPreserve in unitsToPreserve) {

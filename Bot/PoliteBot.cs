@@ -14,6 +14,7 @@ namespace Bot;
 
 public abstract class PoliteBot: IBot {
     protected readonly ITaggingService TaggingService;
+    protected readonly IUnitsTracker UnitsTracker;
 
     private readonly string _version;
     private readonly List<IScenario> _scenarios;
@@ -24,11 +25,12 @@ public abstract class PoliteBot: IBot {
 
     public abstract Race Race { get; }
 
-    protected PoliteBot(string version, List<IScenario> scenarios, ITaggingService taggingService) {
+    protected PoliteBot(string version, List<IScenario> scenarios, ITaggingService taggingService, IUnitsTracker unitsTracker) {
         _version = version;
         _scenarios = scenarios;
 
         TaggingService = taggingService;
+        UnitsTracker = unitsTracker;
     }
 
     public async Task OnFrame() {

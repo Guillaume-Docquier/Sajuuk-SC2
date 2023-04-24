@@ -10,14 +10,16 @@ public class EnemyRaceTracker : IEnemyRaceTracker, INeedUpdating {
     /// <summary>
     /// DI: ✔️ The only usages are for static instance creations
     /// </summary>
-    public static readonly EnemyRaceTracker Instance = new EnemyRaceTracker(TaggingService.Instance);
+    public static readonly EnemyRaceTracker Instance = new EnemyRaceTracker(TaggingService.Instance, UnitsTracker.Instance);
 
     private readonly ITaggingService _taggingService;
+    private readonly IUnitsTracker _unitsTracker;
 
     public Race EnemyRace { get; private set; } = Race.NoRace;
 
-    public EnemyRaceTracker(ITaggingService taggingService) {
+    public EnemyRaceTracker(ITaggingService taggingService, IUnitsTracker unitsTracker) {
         _taggingService = taggingService;
+        _unitsTracker = unitsTracker;
     }
 
     public void Reset() {
@@ -31,7 +33,7 @@ public class EnemyRaceTracker : IEnemyRaceTracker, INeedUpdating {
         }
 
         if (EnemyRace == Race.Random) {
-            var realRace = GetRealRace(UnitsTracker.EnemyUnits);
+            var realRace = GetRealRace(_unitsTracker.EnemyUnits);
             if (realRace != Race.NoRace) {
                 EnemyRace = realRace;
                 _taggingService.TagEnemyRace(EnemyRace);

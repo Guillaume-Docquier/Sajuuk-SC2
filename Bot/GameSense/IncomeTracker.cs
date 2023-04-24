@@ -9,14 +9,16 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class IncomeTracker : INeedUpdating {
-    public static readonly IncomeTracker Instance = new IncomeTracker(TaggingService.Instance);
+    public static readonly IncomeTracker Instance = new IncomeTracker(TaggingService.Instance, UnitsTracker.Instance);
+
+    private readonly ITaggingService _taggingService;
+    private readonly IUnitsTracker _unitsTracker;
 
     private const int LogCollectedMineralsFrame = (int)(90 * TimeUtils.FramesPerSecond);
     private const int StatisticsRollingWindowSeconds = 30;
 
     private readonly CircularQueue<float> _mineralsCollectionRates = new CircularQueue<float>((int)(TimeUtils.FramesPerSecond * StatisticsRollingWindowSeconds));
     private readonly CircularQueue<float> _vespeneCollectionRates = new CircularQueue<float>((int)(TimeUtils.FramesPerSecond * StatisticsRollingWindowSeconds));
-    private readonly ITaggingService _taggingService;
 
     public float CurrentMineralsCollectionRate { get; private set; }
     public float MaxMineralsCollectionRate { get; private set; }
@@ -28,8 +30,9 @@ public class IncomeTracker : INeedUpdating {
     public float AverageVespeneCollectionRate { get; private set; }
     public float ExpectedVespeneCollectionRate { get; private set; }
 
-    private IncomeTracker(ITaggingService taggingService) {
+    private IncomeTracker(ITaggingService taggingService, IUnitsTracker unitsTracker) {
         _taggingService = taggingService;
+        _unitsTracker = unitsTracker;
     }
 
     public void Reset() {
@@ -55,24 +58,24 @@ public class IncomeTracker : INeedUpdating {
         ExpectedMineralsCollectionRate = 0;
         ExpectedVespeneCollectionRate = 0;
 
-        ExpectedMineralsCollectionRate += (float)Controller.GetUnits(UnitsTracker.NeutralUnits, Units.BlueMineralFields)
+        ExpectedMineralsCollectionRate += (float)Controller.GetUnits(_unitsTracker.NeutralUnits, Units.BlueMineralFields)
             .Select(UnitModule.Get<CapacityModule>)
             .Where(module => module != null)
             .Sum(module => ComputeResourceNodeExpectedCollectionRate(Resources.ResourceType.Mineral, module.AssignedUnits.Count));
 
-        ExpectedMineralsCollectionRate += (float)Controller.GetUnits(UnitsTracker.NeutralUnits, Units.GoldMineralFields)
+        ExpectedMineralsCollectionRate += (float)Controller.GetUnits(_unitsTracker.NeutralUnits, Units.GoldMineralFields)
             .Select(UnitModule.Get<CapacityModule>)
             .Where(module => module != null)
             .Sum(module => ComputeResourceNodeExpectedCollectionRate(Resources.ResourceType.Mineral, module.AssignedUnits.Count, isGold: true));
 
-        ExpectedVespeneCollectionRate += (float)Controller.GetUnits(UnitsTracker.NeutralUnits, Units.GreenGasGeysers)
+        ExpectedVespeneCollectionRate += (float)Controller.GetUnits(_unitsTracker.NeutralUnits, Units.GreenGasGeysers)
             .Select(UnitModule.Get<CapacityModule>)
             .Select(module => module?.AssignedUnits?.FirstOrDefault())
             .Where(extractor => extractor != null)
             .Select(UnitModule.Get<CapacityModule>)
             .Sum(module => ComputeResourceNodeExpectedCollectionRate(Resources.ResourceType.Gas, module.AssignedUnits.Count));
 
-        ExpectedVespeneCollectionRate += (float)Controller.GetUnits(UnitsTracker.NeutralUnits, Units.PurpleGasGeysers)
+        ExpectedVespeneCollectionRate += (float)Controller.GetUnits(_unitsTracker.NeutralUnits, Units.PurpleGasGeysers)
             .Select(UnitModule.Get<CapacityModule>)
             .Select(module => module?.AssignedUnits?.FirstOrDefault())
             .Where(extractor => extractor != null)

@@ -10,9 +10,10 @@ using SC2APIProtocol;
 namespace Bot.GameSense.RegionTracking;
 
 public class RegionTracker : INeedUpdating {
-    public static RegionTracker Instance { get; } = new RegionTracker(DebuggingFlagsTracker.Instance);
+    public static RegionTracker Instance { get; } = new RegionTracker(DebuggingFlagsTracker.Instance, UnitsTracker.Instance);
 
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
+    private readonly IUnitsTracker _unitsTracker;
 
     private bool _isInitialized = false;
 
@@ -36,8 +37,9 @@ public class RegionTracker : INeedUpdating {
         Colors.LightRed,
     };
 
-    private RegionTracker(IDebuggingFlagsTracker debuggingFlagsTracker) {
+    private RegionTracker(IDebuggingFlagsTracker debuggingFlagsTracker, IUnitsTracker unitsTracker) {
         _debuggingFlagsTracker = debuggingFlagsTracker;
+        _unitsTracker = unitsTracker;
 
         Reset();
     }
@@ -126,11 +128,11 @@ public class RegionTracker : INeedUpdating {
         _isInitialized = false;
 
         var getCurrentFrame = () => Controller.Frame;
-        _regionForceEvaluators[Alliance.Self] = new RegionsForceEvaluator(Alliance.Self, getCurrentFrame);
-        _regionForceEvaluators[Alliance.Enemy] = new RegionsForceEvaluator(Alliance.Enemy, getCurrentFrame);
+        _regionForceEvaluators[Alliance.Self] = new RegionsForceEvaluator(_unitsTracker, Alliance.Self, getCurrentFrame);
+        _regionForceEvaluators[Alliance.Enemy] = new RegionsForceEvaluator(_unitsTracker, Alliance.Enemy, getCurrentFrame);
 
-        _regionValueEvaluators[Alliance.Self] = new RegionsValueEvaluator(Alliance.Self, getCurrentFrame);
-        _regionValueEvaluators[Alliance.Enemy] = new RegionsValueEvaluator(Alliance.Enemy, getCurrentFrame);
+        _regionValueEvaluators[Alliance.Self] = new RegionsValueEvaluator(_unitsTracker, Alliance.Self, getCurrentFrame);
+        _regionValueEvaluators[Alliance.Enemy] = new RegionsValueEvaluator(_unitsTracker, Alliance.Enemy, getCurrentFrame);
 
         _regionThreatEvaluators[Alliance.Enemy] = new RegionsThreatEvaluator(
             _regionForceEvaluators[Alliance.Enemy],

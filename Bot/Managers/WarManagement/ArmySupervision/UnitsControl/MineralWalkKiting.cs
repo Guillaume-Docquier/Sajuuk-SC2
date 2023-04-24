@@ -14,6 +14,12 @@ using SC2APIProtocol;
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
 public class MineralWalkKiting : IUnitsControl {
+    private readonly IUnitsTracker _unitsTracker;
+
+    public MineralWalkKiting(IUnitsTracker unitsTracker) {
+        _unitsTracker = unitsTracker;
+    }
+
     public bool IsExecuting() {
         // No state, we can abort anytime
         return false;
@@ -49,7 +55,7 @@ public class MineralWalkKiting : IUnitsControl {
 
         // Filter out some enemies for performance
         var regimentCenter = Clustering.GetCenter(dronesThatNeedToKite);
-        var potentialEnemiesToAvoid = UnitsTracker.EnemyUnits.Where(enemy => enemy.DistanceTo(regimentCenter) <= 13).ToList();
+        var potentialEnemiesToAvoid = _unitsTracker.EnemyUnits.Where(enemy => enemy.DistanceTo(regimentCenter) <= 13).ToList();
         if (potentialEnemiesToAvoid.Count <= 0) {
             return uncontrolledUnits;
         }

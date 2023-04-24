@@ -23,6 +23,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     private readonly ITaggingService _taggingService;
     private readonly IEnemyRaceTracker _enemyRaceTracker;
     private readonly IVisibilityTracker _visibilityTracker;
+    private readonly IUnitsTracker _unitsTracker;
 
     private readonly FinisherBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
@@ -33,8 +34,8 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     public IDispatcher Dispatcher { get; }
     public IReleaser Releaser { get; }
 
-    private readonly BuildRequest _corruptorsBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Corruptor, targetQuantity: 0, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
-    private readonly BuildRequest _armyBuildRequest = new TargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Normal);
+    private readonly BuildRequest _corruptorsBuildRequest;
+    private readonly BuildRequest _armyBuildRequest;
     public List<BuildRequest> BuildRequests { get; } = new List<BuildRequest>();
 
     public readonly ArmySupervisor AttackSupervisor;
@@ -45,20 +46,24 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         ITaggingService taggingService,
         IEnemyRaceTracker enemyRaceTracker,
         IVisibilityTracker visibilityTracker,
-        IDebuggingFlagsTracker debuggingFlagsTracker
+        IDebuggingFlagsTracker debuggingFlagsTracker,
+        IUnitsTracker unitsTracker
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
+        _unitsTracker = unitsTracker;
 
         _debugger = new FinisherBehaviourDebugger(debuggingFlagsTracker);
-        AttackSupervisor = new ArmySupervisor(_visibilityTracker);
-        TerranFinisherSupervisor = new ArmySupervisor(_visibilityTracker);
+        AttackSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker);
+        TerranFinisherSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker);
 
+        _corruptorsBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Corruptor, targetQuantity: 0, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
+        _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Normal);
         BuildRequests.Add(_armyBuildRequest);
 
-        Assigner = new WarManagerAssigner<FinisherBehaviour>(this);
+        Assigner = new WarManagerAssigner<FinisherBehaviour>(this, _unitsTracker);
         Dispatcher = new FinisherDispatcher(this);
         Releaser = new WarManagerReleaser<FinisherBehaviour>(this);
 
@@ -68,7 +73,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     }
 
     public void RecruitmentPhase() {
-        _warManager.Assign(Controller.GetUnits(UnitsTracker.NewOwnedUnits, ManageableUnitTypes));
+        _warManager.Assign(Controller.GetUnits(_unitsTracker.NewOwnedUnits, ManageableUnitTypes));
     }
 
     public void DispatchPhase() {
@@ -120,7 +125,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
             return false;
         }
 
-        return Controller.GetUnits(UnitsTracker.EnemyUnits, Units.Buildings).All(building => building.IsFlying);
+        return Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Buildings).All(building => building.IsFlying);
     }
 
     /// <summary>
@@ -131,7 +136,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
             return;
         }
 
-        BuildRequests.Add(new TargetBuildRequest(BuildType.Build, Units.Spire, targetQuantity: 1, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All));
+        BuildRequests.Add(new TargetBuildRequest(_unitsTracker, BuildType.Build, Units.Spire, targetQuantity: 1, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All));
 
         _corruptorsBuildRequest.Requested = 10;
         BuildRequests.Add(_corruptorsBuildRequest);
@@ -169,7 +174,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     /// Returns the enemy force
     /// </summary>
     /// <returns></returns>
-    private static float GetEnemyForce() {
-        return UnitsTracker.EnemyMemorizedUnits.Values.Concat(UnitsTracker.EnemyUnits).GetForce();
+    private float GetEnemyForce() {
+        return _unitsTracker.EnemyMemorizedUnits.Values.Concat(_unitsTracker.EnemyUnits).GetForce();
     }
 }
