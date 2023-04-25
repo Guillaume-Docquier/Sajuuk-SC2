@@ -32,6 +32,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly IExpandAnalyzer _expandAnalyzer;
 
     private readonly MidGameBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
@@ -51,12 +52,14 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer
+        IMapAnalyzer mapAnalyzer,
+        IExpandAnalyzer expandAnalyzer
     ) {
         _warManager = warManager;
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
+        _expandAnalyzer = expandAnalyzer;
 
         _debugger = new MidGameBehaviourDebugger(debuggingFlagsTracker);
         _armySupervisors = RegionAnalyzer.Instance.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(_unitsTracker, _mapAnalyzer, region));
@@ -164,7 +167,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     }
 
     private void InitializeScoutingTasks() {
-        var expandsToScout = ExpandAnalyzer.ExpandLocations
+        var expandsToScout = _expandAnalyzer.ExpandLocations
             .Where(expandLocation => !_visibilityTracker.IsVisible(expandLocation.Position));
 
         foreach (var expandToScout in expandsToScout) {
@@ -307,8 +310,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             .Select(townHall => townHall.GetRegion())
             .ToHashSet();
 
-        var ourMainRegion = ExpandAnalyzer.Instance.GetExpand(Alliance.Self, ExpandType.Main).GetRegion();
-        var enemyMainRegion = ExpandAnalyzer.Instance.GetExpand(Alliance.Enemy, ExpandType.Main).GetRegion();
+        var ourMainRegion = _expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).GetRegion();
+        var enemyMainRegion = _expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).GetRegion();
         foreach (var unsupervisedUnit in _warManager.ManagedUnits.Where(unit => unit.Supervisor == null)) {
             // TODO GD We should make sure that units have a region, this is error prone
             var unitRegion = unsupervisedUnit.GetRegion();

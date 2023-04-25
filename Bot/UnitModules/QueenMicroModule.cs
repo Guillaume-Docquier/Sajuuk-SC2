@@ -8,23 +8,25 @@ namespace Bot.UnitModules;
 
 public class QueenMicroModule: UnitModule, IWatchUnitsDie {
     private readonly IBuildingTracker _buildingTracker;
+    private readonly IExpandAnalyzer _expandAnalyzer;
 
     public const string Tag = "QueenMicroModule";
 
     private Unit _queen;
     private Unit _assignedTownHall;
 
-    private QueenMicroModule(Unit queen, Unit assignedTownHall, IBuildingTracker buildingTracker) {
+    private QueenMicroModule(Unit queen, Unit assignedTownHall, IBuildingTracker buildingTracker, IExpandAnalyzer expandAnalyzer) {
         _queen = queen;
         _buildingTracker = buildingTracker;
-        _queen.AddDeathWatcher(this);
+        _expandAnalyzer = expandAnalyzer;
 
+        _queen.AddDeathWatcher(this);
         AssignTownHall(assignedTownHall);
     }
 
-    public static void Install(Unit queen, Unit assignedTownHall, IBuildingTracker buildingTracker) {
+    public static void Install(Unit queen, Unit assignedTownHall, IBuildingTracker buildingTracker, IExpandAnalyzer expandAnalyzer) {
         if (PreInstallCheck(Tag, queen)) {
-            queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall, buildingTracker));
+            queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall, buildingTracker, expandAnalyzer));
         }
     }
 
@@ -47,7 +49,7 @@ public class QueenMicroModule: UnitModule, IWatchUnitsDie {
         }
         else if (_queen.HasEnoughEnergy(Abilities.SpawnCreepTumor)) {
             var tumorPosition = CreepTracker.Instance.GetCreepFrontier()
-                .Where(ExpandAnalyzer.IsNotBlockingExpand)
+                .Where(_expandAnalyzer.IsNotBlockingExpand)
                 .OrderBy(creepNode => _queen.DistanceTo(creepNode)) // TODO GD Try to favor between bases and towards the enemy
                 .FirstOrDefault(creepNode => _buildingTracker.CanPlace(Units.CreepTumor, creepNode) && Pathfinder.Instance.FindPath(_queen.Position.ToVector2(), creepNode) != null);
 

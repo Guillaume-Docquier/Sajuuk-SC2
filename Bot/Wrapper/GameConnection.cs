@@ -15,6 +15,7 @@ namespace Bot.Wrapper;
 
 public class GameConnection {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IExpandAnalyzer _expandAnalyzer;
 
     private const string Address = "127.0.0.1";
     private readonly ProtobufProxy _proxy = new ProtobufProxy();
@@ -31,9 +32,11 @@ public class GameConnection {
     // On the ladder, for some reason, actions have a 1 frame delay before being received and applied
     // We will run every 2 frames by default, this way we won't notice the delay
     // Lower than 2 is not recommended unless your code is crazy good and can handle the inevitable desync
-    public GameConnection(IUnitsTracker unitsTracker, uint stepSize = 2) {
-        _stepSize = stepSize;
+    public GameConnection(IUnitsTracker unitsTracker, IExpandAnalyzer expandAnalyzer, uint stepSize) {
         _unitsTracker = unitsTracker;
+        _expandAnalyzer = expandAnalyzer;
+
+        _stepSize = stepSize;
     }
 
     private void FindExecutableInfo() {
@@ -229,7 +232,7 @@ public class GameConnection {
                 PrintMemoryInfo();
             }
 
-            if (runDataAnalyzersOnly && ExpandAnalyzer.IsInitialized && RegionAnalyzer.IsInitialized) {
+            if (runDataAnalyzersOnly && _expandAnalyzer.IsInitialized && RegionAnalyzer.IsInitialized) {
                 await Quit();
             }
             else {

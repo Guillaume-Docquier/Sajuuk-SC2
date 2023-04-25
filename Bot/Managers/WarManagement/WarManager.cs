@@ -23,6 +23,7 @@ namespace Bot.Managers.WarManagement;
  */
 
 public class WarManager: Manager {
+    private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly StateMachine<WarManager, WarManagerState> _stateMachine;
     private readonly WarManagerDebugger _debugger = new WarManagerDebugger();
 
@@ -38,11 +39,13 @@ public class WarManager: Manager {
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer
+        IMapAnalyzer mapAnalyzer,
+        IExpandAnalyzer expandAnalyzer
     ) {
+        _expandAnalyzer = expandAnalyzer;
         _stateMachine = new StateMachine<WarManager, WarManagerState>(
             this,
-            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, mapAnalyzer)
+            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, mapAnalyzer, expandAnalyzer)
         );
     }
 

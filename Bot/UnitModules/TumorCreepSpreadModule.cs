@@ -13,6 +13,7 @@ public class TumorCreepSpreadModule: UnitModule {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IBuildingTracker _buildingTracker;
+    private readonly IExpandAnalyzer _expandAnalyzer;
 
     public const string Tag = "TumorCreepSpreadModule";
 
@@ -26,23 +27,26 @@ public class TumorCreepSpreadModule: UnitModule {
         Unit creepTumor,
         IVisibilityTracker visibilityTracker,
         IMapAnalyzer mapAnalyzer,
-        IBuildingTracker buildingTracker
+        IBuildingTracker buildingTracker,
+        IExpandAnalyzer expandAnalyzer
     ) {
         _creepTumor = creepTumor;
 
         _visibilityTracker = visibilityTracker;
         _mapAnalyzer = mapAnalyzer;
         _buildingTracker = buildingTracker;
+        _expandAnalyzer = expandAnalyzer;
     }
 
     public static void Install(
         Unit creepTumor,
         IVisibilityTracker visibilityTracker,
         IMapAnalyzer mapAnalyzer,
-        IBuildingTracker buildingTracker
+        IBuildingTracker buildingTracker,
+        IExpandAnalyzer expandAnalyzer
     ) {
         if (PreInstallCheck(Tag, creepTumor)) {
-            creepTumor.Modules.Add(Tag, new TumorCreepSpreadModule(creepTumor, visibilityTracker, mapAnalyzer, buildingTracker));
+            creepTumor.Modules.Add(Tag, new TumorCreepSpreadModule(creepTumor, visibilityTracker, mapAnalyzer, buildingTracker, expandAnalyzer));
         }
     }
 
@@ -67,7 +71,7 @@ public class TumorCreepSpreadModule: UnitModule {
             var bestPlaceLocation = _mapAnalyzer.BuildSearchRadius(_creepTumor.Position.ToVector2(), spreadRange)
                 .Where(_visibilityTracker.IsVisible)
                 .Where(CreepTracker.Instance.HasCreep)
-                .Where(ExpandAnalyzer.IsNotBlockingExpand)
+                .Where(_expandAnalyzer.IsNotBlockingExpand)
                 .OrderBy(position => position.DistanceTo(creepTarget))
                 .FirstOrDefault(position => _buildingTracker.CanPlace(Units.CreepTumor, position));
 

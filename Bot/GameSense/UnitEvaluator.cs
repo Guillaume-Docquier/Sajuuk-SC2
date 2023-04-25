@@ -6,7 +6,10 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
-public static class UnitEvaluator {
+public class UnitEvaluator {
+    private readonly IExpandAnalyzer _expandAnalyzer;
+    public static readonly UnitEvaluator Instance = new UnitEvaluator(ExpandAnalyzer.Instance);
+
     public static class Force {
         public const float None = 0f;
         public const float Unknown = 1f;
@@ -25,6 +28,10 @@ public static class UnitEvaluator {
         public const float Jackpot = 15f;
     }
 
+    public UnitEvaluator(IExpandAnalyzer expandAnalyzer) {
+        _expandAnalyzer = expandAnalyzer;
+    }
+
     /// <summary>
     /// Evaluates the force of a unit
     /// TODO GD Make this more sophisticated (based on unit cost, range, counters, etc)
@@ -32,7 +39,7 @@ public static class UnitEvaluator {
     /// <param name="unit">The unit to evaluate</param>
     /// <param name="areWorkersOffensive">Whether we should consider the workers as being offensive</param>
     /// <returns>The force of the unit</returns>
-    public static float EvaluateForce(Unit unit, bool areWorkersOffensive = false) {
+    public float EvaluateForce(Unit unit, bool areWorkersOffensive = false) {
         // TODO GD Review this
         // 1 when not yet operational because buildings are tricky since their HP goes up
         // But it'll bad for warping units
@@ -41,7 +48,7 @@ public static class UnitEvaluator {
         return GetUnitForce(unit, areWorkersOffensive) * integrityFactor;
     }
 
-    private static float GetUnitForce(Unit unit, bool areWorkersOffensive = false) {
+    private float GetUnitForce(Unit unit, bool areWorkersOffensive = false) {
         // TODO GD For now we purposefully don't handle air units, so we can't kill them
         if (unit.IsFlying) {
             return Force.None;
@@ -95,7 +102,7 @@ public static class UnitEvaluator {
     /// </summary>
     /// <param name="unit">The valuable unit</param>
     /// <returns>The value of the unit</returns>
-    public static float EvaluateValue(Unit unit) {
+    public float EvaluateValue(Unit unit) {
         // TODO GD For now we purposefully don't handle air units, so we can't kill them
         if (unit.IsFlying) {
             return Value.None;
@@ -103,7 +110,7 @@ public static class UnitEvaluator {
 
         if (Units.TownHalls.Contains(unit.UnitType)) {
             // TODO GD Value based on remaining resources
-            if (ExpandAnalyzer.ExpandLocations.Any(expandLocation => expandLocation.Position.DistanceTo(unit) <= 1)) {
+            if (_expandAnalyzer.ExpandLocations.Any(expandLocation => expandLocation.Position.DistanceTo(unit) <= 1)) {
                 return Value.Prized;
             }
 
@@ -145,9 +152,9 @@ public static class UnitEvaluator {
     /// <param name="unit"></param>
     /// <param name="myAlliance"></param>
     /// <returns></returns>
-    private static bool IsOffensive(Unit unit, Alliance myAlliance) {
-        var myMain = ExpandAnalyzer.Instance.GetExpand(myAlliance, ExpandType.Main);
-        var theirMain = ExpandAnalyzer.Instance.GetExpand(myAlliance.GetOpposing(), ExpandType.Main);
+    private bool IsOffensive(Unit unit, Alliance myAlliance) {
+        var myMain = _expandAnalyzer.GetExpand(myAlliance, ExpandType.Main);
+        var theirMain = _expandAnalyzer.GetExpand(myAlliance.GetOpposing(), ExpandType.Main);
 
         return unit.DistanceTo(theirMain.Position) < unit.DistanceTo(myMain.Position);
     }

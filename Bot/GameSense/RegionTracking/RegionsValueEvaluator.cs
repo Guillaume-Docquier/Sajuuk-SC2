@@ -43,7 +43,7 @@ public class RegionsValueEvaluator : RegionsEvaluator {
                 continue;
             }
 
-            var forceEvaluation = unitsByRegion[region].Sum(unit => UnitEvaluator.EvaluateValue(unit) * GetUnitUncertaintyPenalty(unit));
+            var forceEvaluation = unitsByRegion[region].Sum(unit => UnitEvaluator.Instance.EvaluateValue(unit) * GetUnitUncertaintyPenalty(unit));
 
             yield return (region, forceEvaluation);
         }

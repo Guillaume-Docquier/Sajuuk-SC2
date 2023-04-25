@@ -26,6 +26,7 @@ public class SajuukBot: PoliteBot {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IBuildingTracker _buildingTracker;
+    private readonly IExpandAnalyzer _expandAnalyzer;
 
     private readonly BotDebugger _debugger;
 
@@ -42,12 +43,14 @@ public class SajuukBot: PoliteBot {
         IUnitsTracker unitsTracker,
         IIncomeTracker incomeTracker,
         IMapAnalyzer mapAnalyzer,
-        IBuildingTracker buildingTracker
+        IBuildingTracker buildingTracker,
+        IExpandAnalyzer expandAnalyzer
     ) : base(version, scenarios, taggingService, unitsTracker, mapAnalyzer) {
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _buildingTracker = buildingTracker;
+        _expandAnalyzer = expandAnalyzer;
 
         _debugger = new BotDebugger(_visibilityTracker, _debuggingFlagsTracker, UnitsTracker, incomeTracker, MapAnalyzer);
     }
@@ -87,10 +90,10 @@ public class SajuukBot: PoliteBot {
         _managers.Add(buildManager);
 
         _managers.Add(new SupplyManager(buildManager, UnitsTracker));
-        _managers.Add(new ScoutManager(_enemyRaceTracker, _visibilityTracker, UnitsTracker, MapAnalyzer));
-        _managers.Add(new EconomyManager(buildManager, UnitsTracker, MapAnalyzer, _buildingTracker));
-        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, UnitsTracker, MapAnalyzer));
-        _managers.Add(new CreepManager(_visibilityTracker, UnitsTracker, MapAnalyzer, _buildingTracker));
+        _managers.Add(new ScoutManager(_enemyRaceTracker, _visibilityTracker, UnitsTracker, MapAnalyzer, _expandAnalyzer));
+        _managers.Add(new EconomyManager(buildManager, UnitsTracker, MapAnalyzer, _buildingTracker, _expandAnalyzer));
+        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, UnitsTracker, MapAnalyzer, _expandAnalyzer));
+        _managers.Add(new CreepManager(_visibilityTracker, UnitsTracker, MapAnalyzer, _buildingTracker, _expandAnalyzer));
         _managers.Add(new UpgradesManager(UnitsTracker));
     }
 

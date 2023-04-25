@@ -13,21 +13,28 @@ public partial class ArmySupervisor {
         private readonly IVisibilityTracker _visibilityTracker;
         private readonly IUnitsTracker _unitsTracker;
         private readonly IMapAnalyzer _mapAnalyzer;
+        private readonly IExpandAnalyzer _expandAnalyzer;
 
         private static Dictionary<Vector2, bool> _checkedExpandLocations;
         private static readonly Dictionary<Vector2, bool> CheckedPositions = new Dictionary<Vector2, bool>();
 
         private bool _isNextTargetSet = false;
 
-        public HuntState(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
+        public HuntState(
+            IVisibilityTracker visibilityTracker,
+            IUnitsTracker unitsTracker,
+            IMapAnalyzer mapAnalyzer,
+            IExpandAnalyzer expandAnalyzer
+        ) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
             _mapAnalyzer = mapAnalyzer;
+            _expandAnalyzer = expandAnalyzer;
         }
 
         protected override bool TryTransitioning() {
             if (_isNextTargetSet) {
-                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer));
+                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer));
                 return true;
             }
 
@@ -75,7 +82,7 @@ public partial class ArmySupervisor {
         }
 
         private void ResetCheckedExpandLocations() {
-            _checkedExpandLocations = ExpandAnalyzer.ExpandLocations
+            _checkedExpandLocations = _expandAnalyzer.ExpandLocations
                 .Select(expandLocation => expandLocation.Position)
                 .ToDictionary(expand => expand, _visibilityTracker.IsVisible);
         }
@@ -134,7 +141,7 @@ public partial class ArmySupervisor {
             // _armyManager.Army.ForEach(TargetNeutralUnitsModule.Install);
 
             var armyCenter = _mapAnalyzer.GetClosestWalkable(Context._mainArmy.GetCenter());
-            var nextReachableUncheckedLocations = ExpandAnalyzer.ExpandLocations
+            var nextReachableUncheckedLocations = _expandAnalyzer.ExpandLocations
                 .Select(expandLocation => expandLocation.Position)
                 .Where(expandLocation => !_checkedExpandLocations[expandLocation])
                 .Where(expandLocation => Pathfinder.Instance.FindPath(armyCenter, expandLocation) != null)

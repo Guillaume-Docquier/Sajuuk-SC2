@@ -81,7 +81,7 @@ public class Region : IRegion {
 
         Type = type;
         if (Type == RegionType.Unknown) {
-            var expandInRegion = ExpandAnalyzer.ExpandLocations.FirstOrDefault(expandLocation => Cells.Contains(expandLocation.Position));
+            var expandInRegion = ExpandAnalyzer.Instance.ExpandLocations.FirstOrDefault(expandLocation => Cells.Contains(expandLocation.Position));
             if (expandInRegion != default) {
                 Type = RegionType.Expand;
                 Center = expandInRegion.Position;
@@ -123,7 +123,7 @@ public class Region : IRegion {
             Neighbors.Add(new NeighboringRegion(region, frontier.ToHashSet()));
         }
 
-        var expandInRegion = ExpandAnalyzer.ExpandLocations.FirstOrDefault(expandLocation => Cells.Contains(expandLocation.Position));
+        var expandInRegion = ExpandAnalyzer.Instance.ExpandLocations.FirstOrDefault(expandLocation => Cells.Contains(expandLocation.Position));
         ExpandLocation = expandInRegion;
 
         if (computeObstruction) {

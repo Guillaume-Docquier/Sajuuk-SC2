@@ -76,7 +76,7 @@ public class Program {
             DebugEnabled = true;
             GraphicalDebugger = new NullGraphicalDebugger();
 
-            GameConnection = new GameConnection(UnitsTracker.Instance);
+            GameConnection = CreateGameConnection();
             GameConnection.RunLocal(CreateSajuuk(Version, Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
         }
     }
@@ -88,7 +88,7 @@ public class Program {
         // TODO GD GraphicalDebugger should be injected as well
         GraphicalDebugger = new Sc2GraphicalDebugger(MapAnalyzer.Instance);
 
-        GameConnection = new GameConnection(UnitsTracker.Instance, stepSize: 1);
+        GameConnection = CreateGameConnection(stepSize: 1);
         GameConnection.RunLocal(new VideoClipPlayer(MapFileName, DebuggingFlagsTracker.Instance, UnitsTracker.Instance, MapAnalyzer.Instance), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
     }
 
@@ -96,7 +96,7 @@ public class Program {
         DebugEnabled = true;
         GraphicalDebugger = new Sc2GraphicalDebugger(MapAnalyzer.Instance);
 
-        GameConnection = new GameConnection(UnitsTracker.Instance);
+        GameConnection = CreateGameConnection();
         GameConnection.RunLocal(Bot, MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
     }
 
@@ -104,7 +104,7 @@ public class Program {
         DebugEnabled = false;
         GraphicalDebugger = new NullGraphicalDebugger();
 
-        GameConnection = new GameConnection(UnitsTracker.Instance);
+        GameConnection = CreateGameConnection();
         GameConnection.RunLadder(Bot, args).Wait();
     }
 
@@ -119,7 +119,16 @@ public class Program {
             UnitsTracker.Instance,
             IncomeTracker.Instance,
             MapAnalyzer.Instance,
-            BuildingTracker.Instance
+            BuildingTracker.Instance,
+            ExpandAnalyzer.Instance
+        );
+    }
+
+    private static GameConnection CreateGameConnection(uint stepSize = 2) {
+        return new GameConnection(
+            UnitsTracker.Instance,
+            ExpandAnalyzer.Instance,
+            stepSize
         );
     }
 }

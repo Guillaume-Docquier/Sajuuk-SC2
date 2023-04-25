@@ -9,7 +9,7 @@ namespace Bot.ExtensionMethods;
 
 public static class ArmyExtensions {
     public static float GetForce(this IEnumerable<Unit> army, bool areWorkersOffensive = false) {
-        return army.Sum(soldier => UnitEvaluator.EvaluateForce(soldier, areWorkersOffensive));
+        return army.Sum(soldier => UnitEvaluator.Instance.EvaluateForce(soldier, areWorkersOffensive));
     }
 
     public static Vector2 GetCenter(this IEnumerable<Unit> army) {

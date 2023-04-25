@@ -15,6 +15,7 @@ public class WarManagerTests : BaseTestClass {
     private readonly Mock<IDebuggingFlagsTracker> _debuggingFlagsTrackerMock;
     private readonly TestUnitsTracker _unitsTracker;
     private readonly Mock<IMapAnalyzer> _mapAnalyzerMock;
+    private readonly Mock<IExpandAnalyzer> _expandAnalyzerMock;
 
     public WarManagerTests() {
         _taggingServiceMock = new Mock<ITaggingService>();
@@ -23,6 +24,7 @@ public class WarManagerTests : BaseTestClass {
         _debuggingFlagsTrackerMock = new Mock<IDebuggingFlagsTracker>();
         _unitsTracker = new TestUnitsTracker();
         _mapAnalyzerMock = new Mock<IMapAnalyzer>();
+        _expandAnalyzerMock = new Mock<IExpandAnalyzer>();
     }
 
     [Fact(Skip = "Wait for DI refactor to be done")]
@@ -34,7 +36,8 @@ public class WarManagerTests : BaseTestClass {
             _visibilityTrackerMock.Object,
             _debuggingFlagsTrackerMock.Object,
             _unitsTracker,
-            _mapAnalyzerMock.Object
+            _mapAnalyzerMock.Object,
+            _expandAnalyzerMock.Object
         );
 
         var militaryUnits = Units.ZergMilitary
@@ -60,7 +63,8 @@ public class WarManagerTests : BaseTestClass {
             _visibilityTrackerMock.Object,
             _debuggingFlagsTrackerMock.Object,
             _unitsTracker,
-            _mapAnalyzerMock.Object
+            _mapAnalyzerMock.Object,
+            _expandAnalyzerMock.Object
         );
         // TODO UnitsTracker
 

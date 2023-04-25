@@ -14,10 +14,11 @@ namespace Bot.MapKnowledge;
 // TODO GD Make two classes: The analyzer and the tracker
 // Analysis should be run manually, and the tracker should be able to load the persisted data before entering the game
 public class RegionAnalyzer: INeedUpdating {
-    public static readonly RegionAnalyzer Instance = new RegionAnalyzer(DebuggingFlagsTracker.Instance, MapAnalyzer.Instance);
+    public static readonly RegionAnalyzer Instance = new RegionAnalyzer(DebuggingFlagsTracker.Instance, MapAnalyzer.Instance, ExpandAnalyzer.Instance);
 
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly IExpandAnalyzer _expandAnalyzer;
 
     private readonly RegionDataStore _regionDataStore;
     private readonly RayCastingChokeFinder _rayCastingChokeFinder;
@@ -32,9 +33,10 @@ public class RegionAnalyzer: INeedUpdating {
     private const float RegionZMultiplier = 8;
     private readonly float _diagonalDistance = (float)Math.Sqrt(2);
 
-    private RegionAnalyzer(IDebuggingFlagsTracker debuggingFlagsTracker, IMapAnalyzer mapAnalyzer) {
+    private RegionAnalyzer(IDebuggingFlagsTracker debuggingFlagsTracker, IMapAnalyzer mapAnalyzer, IExpandAnalyzer expandAnalyzer) {
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _mapAnalyzer = mapAnalyzer;
+        _expandAnalyzer = expandAnalyzer;
 
         // TODO GD Inject this as well, probably
         _regionDataStore = new RegionDataStore(_mapAnalyzer);
@@ -52,7 +54,7 @@ public class RegionAnalyzer: INeedUpdating {
     /// <para>There should be at least 1 region per expand location and regions are always separated by ramps or choke points.</para>
     /// </summary>
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
-        if (!ExpandAnalyzer.IsInitialized) {
+        if (!_expandAnalyzer.IsInitialized) {
             return;
         }
 
@@ -119,7 +121,7 @@ public class RegionAnalyzer: INeedUpdating {
     /// <param name="alliance">Yourself or the enemy</param>
     /// <returns>The region outside of the natural</returns>
     public Region GetNaturalExitRegion(Alliance alliance) {
-        var natural = ExpandAnalyzer.Instance.GetExpand(alliance, ExpandType.Natural);
+        var natural = _expandAnalyzer.GetExpand(alliance, ExpandType.Natural);
 
         return Regions
             .Where(region => region.Type == RegionType.OpenArea)

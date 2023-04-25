@@ -24,7 +24,13 @@ public partial class ScoutManager : Manager {
     private readonly IScoutingStrategy _scoutingStrategy;
     private readonly HashSet<ScoutSupervisor> _scoutSupervisors = new HashSet<ScoutSupervisor>();
 
-    public ScoutManager(IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
+    public ScoutManager(
+        IEnemyRaceTracker enemyRaceTracker,
+        IVisibilityTracker visibilityTracker,
+        IUnitsTracker unitsTracker,
+        IMapAnalyzer mapAnalyzer,
+        IExpandAnalyzer expandAnalyzer
+    ) {
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
 
@@ -32,7 +38,7 @@ public partial class ScoutManager : Manager {
         Dispatcher = new ScoutManagerDispatcher(this);
         Releaser = new ScoutManagerReleaser(this);
 
-        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker, _unitsTracker, _mapAnalyzer);
+        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker, _unitsTracker, _mapAnalyzer, expandAnalyzer);
     }
 
     protected override void RecruitmentPhase() {

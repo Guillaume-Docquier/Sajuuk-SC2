@@ -10,14 +10,17 @@ namespace Bot.Scenarios;
 // Simulates a worker rush by smallBly https://aiarena.net/bots/338/
 public class WorkerRushScenario: IScenario {
     private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly IExpandAnalyzer _expandAnalyzer;
 
     private const int DefaultTimingInSeconds = 50;
 
     private readonly int _timingInSeconds;
     private bool _isScenarioDone = false;
 
-    public WorkerRushScenario(IMapAnalyzer mapAnalyzer, int timingInSeconds = DefaultTimingInSeconds) {
+    public WorkerRushScenario(IMapAnalyzer mapAnalyzer, IExpandAnalyzer expandAnalyzer, int timingInSeconds = DefaultTimingInSeconds) {
         _mapAnalyzer = mapAnalyzer;
+        _expandAnalyzer = expandAnalyzer;
+
         _timingInSeconds = timingInSeconds;
     }
 
@@ -27,7 +30,7 @@ public class WorkerRushScenario: IScenario {
         }
 
         if (Controller.Frame >= TimeUtils.SecsToFrames(_timingInSeconds)) {
-            var mainPosition = ExpandAnalyzer.Instance.GetExpand(Alliance.Self, ExpandType.Main).Position;
+            var mainPosition = _expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).Position;
 
             Logger.Debug("Spawning 12 zerglings {0} units away from main", 0);
 

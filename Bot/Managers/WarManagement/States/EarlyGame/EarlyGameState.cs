@@ -15,6 +15,7 @@ public class EarlyGameState : WarManagerState {
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly IExpandAnalyzer _expandAnalyzer;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
@@ -25,7 +26,8 @@ public class EarlyGameState : WarManagerState {
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer
+        IMapAnalyzer mapAnalyzer,
+        IExpandAnalyzer expandAnalyzer
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
@@ -33,12 +35,13 @@ public class EarlyGameState : WarManagerState {
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
+        _expandAnalyzer = expandAnalyzer;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new EarlyGameBehaviour(Context, _taggingService, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _mapAnalyzer);
+        _behaviour = new EarlyGameBehaviour(Context, _taggingService, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer);
     }
 
     protected override void Execute() {
@@ -55,7 +58,7 @@ public class EarlyGameState : WarManagerState {
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new MidGame.MidGameState(_taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _mapAnalyzer));
+            StateMachine.TransitionTo(new MidGame.MidGameState(_taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer));
             return true;
         }
 

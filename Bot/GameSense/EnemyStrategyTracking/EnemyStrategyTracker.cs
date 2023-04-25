@@ -1,16 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.MapKnowledge;
 using Bot.Tagging;
 using SC2APIProtocol;
 
 namespace Bot.GameSense.EnemyStrategyTracking;
 
 public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTransition> {
-    public static EnemyStrategyTracker Instance { get; private set; } = new EnemyStrategyTracker(TaggingService.Instance, EnemyRaceTracker.Instance, UnitsTracker.Instance);
+    public static EnemyStrategyTracker Instance { get; private set; } = new EnemyStrategyTracker(TaggingService.Instance, EnemyRaceTracker.Instance, UnitsTracker.Instance, ExpandAnalyzer.Instance);
 
     private readonly ITaggingService _taggingService;
     private readonly IEnemyRaceTracker _enemyRaceTracker;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IExpandAnalyzer _expandAnalyzer;
 
     private readonly HashSet<ISubscriber<EnemyStrategyTransition>> _subscribers = new HashSet<ISubscriber<EnemyStrategyTransition>>();
 
@@ -18,10 +20,16 @@ public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTrans
 
     public EnemyStrategy CurrentEnemyStrategy { get; private set; } = EnemyStrategy.Unknown;
 
-    private EnemyStrategyTracker(ITaggingService taggingService, IEnemyRaceTracker enemyRaceTracker, IUnitsTracker unitsTracker) {
+    private EnemyStrategyTracker(
+        ITaggingService taggingService,
+        IEnemyRaceTracker enemyRaceTracker,
+        IUnitsTracker unitsTracker,
+        IExpandAnalyzer expandAnalyzer
+    ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
         _unitsTracker = unitsTracker;
+        _expandAnalyzer = expandAnalyzer;
     }
 
     public void Reset() {
@@ -34,7 +42,7 @@ public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTrans
         _strategyInterpreter ??= _enemyRaceTracker.EnemyRace switch
         {
             Race.Terran => new TerranStrategyInterpreter(),
-            Race.Zerg => new ZergStrategyInterpreter(),
+            Race.Zerg => new ZergStrategyInterpreter(_expandAnalyzer),
             Race.Protoss => new ProtossStrategyInterpreter(),
             _ => null,
         };

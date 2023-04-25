@@ -18,6 +18,7 @@ public class ZergScoutingStrategy : IScoutingStrategy {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly IExpandAnalyzer _expandAnalyzer;
 
     private const int TopPriority = 100;
 
@@ -36,14 +37,20 @@ public class ZergScoutingStrategy : IScoutingStrategy {
     private ScoutingTask _thirdScoutingTask;
     private ScoutingTask _fourthScoutingTask;
 
-    public ZergScoutingStrategy(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
+    public ZergScoutingStrategy(
+        IVisibilityTracker visibilityTracker,
+        IUnitsTracker unitsTracker,
+        IMapAnalyzer mapAnalyzer,
+        IExpandAnalyzer expandAnalyzer
+    ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
+        _expandAnalyzer = expandAnalyzer;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
-        if (!ExpandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
+        if (!_expandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
             yield break;
         }
 
@@ -70,7 +77,7 @@ public class ZergScoutingStrategy : IScoutingStrategy {
     }
 
     private void Init() {
-        var enemyNaturalExpandLocation = ExpandAnalyzer.Instance.GetExpand(Alliance.Enemy, ExpandType.Natural);
+        var enemyNaturalExpandLocation = _expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
         _naturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _mapAnalyzer, enemyNaturalExpandLocation.Position, TopPriority, maxScouts: 1, waitForExpand: true);
 
         var enemyNaturalExitRegion = RegionAnalyzer.Instance.GetNaturalExitRegion(Alliance.Enemy);
@@ -85,16 +92,16 @@ public class ZergScoutingStrategy : IScoutingStrategy {
 
         _naturalExitVisibilityTask = new MaintainVisibilityScoutingTask(_visibilityTracker, _mapAnalyzer, cellsToMaintainVisible, priority: TopPriority - 3, enemyNaturalExitRegionRamps.Count);
 
-        var enemyThirdExpandLocation = ExpandAnalyzer.Instance.GetExpand(Alliance.Enemy, ExpandType.Third);
+        var enemyThirdExpandLocation = _expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Third);
         _thirdScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _mapAnalyzer, enemyThirdExpandLocation.Position, TopPriority - 1, maxScouts: 1, waitForExpand: true);
 
-        var enemyFourthExpandLocation = ExpandAnalyzer.Instance.GetExpand(Alliance.Enemy, ExpandType.Fourth);
+        var enemyFourthExpandLocation = _expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Fourth);
         _fourthScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _mapAnalyzer, enemyFourthExpandLocation.Position, TopPriority - 2, maxScouts: 1, waitForExpand: true);
 
         // We want to route an overlord towards the center of the map sooner than the edge
         // Most early attacks will route through the center, we want to see them
         // The expand that's closest to the main is usually towards the center of the map
-        var enemyMainPosition = ExpandAnalyzer.Instance.GetExpand(Alliance.Enemy, ExpandType.Main).Position;
+        var enemyMainPosition = _expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).Position;
         if (_thirdScoutingTask.ScoutLocation.DistanceTo(enemyMainPosition) > _fourthScoutingTask.ScoutLocation.DistanceTo(enemyMainPosition)) {
             _thirdScoutingTask.Priority--;
             _fourthScoutingTask.Priority++;

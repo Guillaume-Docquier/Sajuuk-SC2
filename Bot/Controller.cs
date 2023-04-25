@@ -56,7 +56,7 @@ public static class Controller {
         MapAnalyzer.Instance,           // DI: ✔️ Depends on UnitsTracker and VisibilityTracker
 
         BuildingTracker.Instance,       // DI: ✔️ Depends on UnitsTracker and MapAnalyzer
-        ExpandAnalyzer.Instance,        // Depends on UnitsTracker and MapAnalyzer
+        ExpandAnalyzer.Instance,        // DI: ✔️ Depends on UnitsTracker and MapAnalyzer
         RegionAnalyzer.Instance,        // Depends on ExpandAnalyzer and MapAnalyzer
         CreepTracker.Instance,          // Depends on UnitsTracker, VisibilityTracker and MapAnalyzer
 
@@ -568,12 +568,12 @@ public static class Controller {
 
     public static IEnumerable<Unit> GetMiningTownHalls() {
         return GetUnits(UnitsTracker.Instance.OwnedUnits, Units.Hatchery)
-            .Where(townHall => ExpandAnalyzer.ExpandLocations.Any(expandLocation => townHall.DistanceTo(expandLocation.Position) < ExpandIsTakenRadius));
+            .Where(townHall => ExpandAnalyzer.Instance.ExpandLocations.Any(expandLocation => townHall.DistanceTo(expandLocation.Position) < ExpandIsTakenRadius));
     }
 
     // TODO GD Implement a more robust check
     public static IEnumerable<Vector2> GetFreeExpandLocations() {
-        return ExpandAnalyzer.ExpandLocations
+        return ExpandAnalyzer.Instance.ExpandLocations
             .Select(expandLocation => expandLocation.Position)
             .Where(expandLocation => !GetUnits(UnitsTracker.Instance.OwnedUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
             .Where(expandLocation => !GetUnits(UnitsTracker.Instance.EnemyUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))

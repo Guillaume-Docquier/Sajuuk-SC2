@@ -12,7 +12,10 @@ using SC2APIProtocol;
 
 namespace Bot.MapKnowledge;
 
-public class ExpandAnalyzer : INeedUpdating {
+public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
+    /// <summary>
+    /// DI: ✔️ The only usages are for static instance creations
+    /// </summary>
     public static readonly ExpandAnalyzer Instance = new ExpandAnalyzer(UnitsTracker.Instance, MapAnalyzer.Instance, BuildingTracker.Instance);
 
     private readonly IUnitsTracker _unitsTracker;
@@ -23,11 +26,8 @@ public class ExpandAnalyzer : INeedUpdating {
 
     private const bool DrawEnabled = false;
 
-    private bool _isInitialized = false;
-    public static bool IsInitialized => Instance._isInitialized;
-
-    private List<ExpandLocation> _expandLocations;
-    public static IReadOnlyCollection<ExpandLocation> ExpandLocations => Instance._expandLocations;
+    public bool IsInitialized { get; private set; }  = false;
+    public List<ExpandLocation> ExpandLocations { get; private set; }
 
     private List<List<bool>> _tooCloseToResourceGrid;
 
@@ -45,13 +45,13 @@ public class ExpandAnalyzer : INeedUpdating {
     }
 
     public void Reset() {
-        _isInitialized = false;
-        _expandLocations.Clear();
+        IsInitialized = false;
+        ExpandLocations.Clear();
         _tooCloseToResourceGrid.Clear();
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
-        if (_isInitialized) {
+        if (IsInitialized) {
             return;
         }
 
@@ -59,19 +59,19 @@ public class ExpandAnalyzer : INeedUpdating {
         if (loadedExpandLocations != null) {
             Logger.Info("Initializing ExpandAnalyzer from precomputed data for {0}", Controller.GameInfo.MapName);
 
-            _expandLocations = loadedExpandLocations;
+            ExpandLocations = loadedExpandLocations;
 
             var loadedResourceClusters = FindResourceClusters().ToList();
-            foreach (var expandLocation in _expandLocations) {
+            foreach (var expandLocation in ExpandLocations) {
                 var resourceCluster = GetExpandResourceCluster(expandLocation.Position, loadedResourceClusters);
                 var blockers = FindExpandBlockers(expandLocation.Position);
                 expandLocation.Init(resourceCluster, blockers);
             }
 
-            Logger.Metric("{0} expand locations", _expandLocations.Count);
+            Logger.Metric("{0} expand locations", ExpandLocations.Count);
             Logger.Success("Expand locations loaded from file");
 
-            _isInitialized = true;
+            IsInitialized = true;
             return;
         }
 
@@ -88,10 +88,10 @@ public class ExpandAnalyzer : INeedUpdating {
         var expandPositions = FindExpandLocations(resourceClusters).ToList();
         Logger.Metric("Found {0} expand locations", expandPositions.Count);
 
-        _isInitialized = expandPositions.Count == resourceClusters.Count;
-        if (_isInitialized) {
-            _expandLocations = GenerateExpandLocations(expandPositions, resourceClusters);
-            ExpandLocationDataStore.Save(Controller.GameInfo.MapName, _expandLocations);
+        IsInitialized = expandPositions.Count == resourceClusters.Count;
+        if (IsInitialized) {
+            ExpandLocations = GenerateExpandLocations(expandPositions, resourceClusters);
+            ExpandLocationDataStore.Save(Controller.GameInfo.MapName, ExpandLocations);
             Logger.Success("Expand analysis done and saved");
         }
         else {
@@ -100,9 +100,9 @@ public class ExpandAnalyzer : INeedUpdating {
     }
 
     // TODO GD Doesn't take into account the building dimensions, but good enough for creep spread since it's 1x1
-    public static bool IsNotBlockingExpand(Vector2 position) {
+    public bool IsNotBlockingExpand(Vector2 position) {
         // We could use Regions here, but I'd rather not because of dependencies
-        var closestExpandLocation = Instance._expandLocations
+        var closestExpandLocation = ExpandLocations
             .Select(expandLocation => expandLocation.Position)
             .MinBy(expandPosition => expandPosition.DistanceTo(position));
 
@@ -151,7 +151,7 @@ public class ExpandAnalyzer : INeedUpdating {
         return expandLocations;
     }
 
-    private void InitTooCloseToResourceGrid(List<List<Unit>> resourceClusters) {
+    private void InitTooCloseToResourceGrid(IEnumerable<List<Unit>> resourceClusters) {
         if (_tooCloseToResourceGrid != null) {
             return;
         }

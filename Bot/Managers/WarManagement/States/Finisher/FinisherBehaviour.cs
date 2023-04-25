@@ -25,6 +25,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly IExpandAnalyzer _expandAnalyzer;
 
     private readonly FinisherBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
@@ -49,7 +50,8 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer
+        IMapAnalyzer mapAnalyzer,
+        IExpandAnalyzer expandAnalyzer
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
@@ -57,10 +59,11 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
+        _expandAnalyzer = expandAnalyzer;
 
         _debugger = new FinisherBehaviourDebugger(debuggingFlagsTracker);
-        AttackSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _mapAnalyzer);
-        TerranFinisherSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _mapAnalyzer);
+        AttackSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer);
+        TerranFinisherSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer);
 
         _corruptorsBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Corruptor, targetQuantity: 0, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Normal);
@@ -124,7 +127,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
             return false;
         }
 
-        if (_mapAnalyzer.ExplorationRatio < 0.80 || !ExpandAnalyzer.ExpandLocations.All(expandLocation => _visibilityTracker.IsExplored(expandLocation.Position))) {
+        if (_mapAnalyzer.ExplorationRatio < 0.80 || !_expandAnalyzer.ExpandLocations.All(expandLocation => _visibilityTracker.IsExplored(expandLocation.Position))) {
             return false;
         }
 

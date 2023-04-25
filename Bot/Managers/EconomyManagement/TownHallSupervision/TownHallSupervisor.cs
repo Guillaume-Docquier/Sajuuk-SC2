@@ -5,15 +5,18 @@ using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.MapKnowledge;
 using Bot.UnitModules;
 using SC2APIProtocol;
 
 namespace Bot.Managers.EconomyManagement.TownHallSupervision;
 
 public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
-    private readonly ulong _id;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IBuildingTracker _buildingTracker;
+    private readonly IExpandAnalyzer _expandAnalyzer;
+
+    private readonly ulong _id;
     private readonly Color _color;
     public Unit TownHall { get; private set; }
     public Unit Queen { get; private set; }
@@ -59,9 +62,10 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
         }
     }
 
-    public TownHallSupervisor(IUnitsTracker unitsTracker, IBuildingTracker buildingTracker , Unit townHall, Color color) {
+    public TownHallSupervisor(IUnitsTracker unitsTracker, IBuildingTracker buildingTracker, IExpandAnalyzer expandAnalyzer, Unit townHall, Color color) {
         _unitsTracker = unitsTracker;
         _buildingTracker = buildingTracker;
+        _expandAnalyzer = expandAnalyzer;
 
         _id = townHall.Tag;
         _color = color;

@@ -23,6 +23,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
     private readonly ITaggingService _taggingService;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IExpandAnalyzer _expandAnalyzer;
 
     private BuildRequest _armyBuildRequest;
 
@@ -44,14 +45,16 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer
+        IMapAnalyzer mapAnalyzer,
+        IExpandAnalyzer expandAnalyzer
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
         _unitsTracker = unitsTracker;
+        _expandAnalyzer = expandAnalyzer;
 
         _debugger = new EarlyGameBehaviourDebugger(debuggingFlagsTracker);
-        DefenseSupervisor = new ArmySupervisor(visibilityTracker, _unitsTracker, mapAnalyzer);
+        DefenseSupervisor = new ArmySupervisor(visibilityTracker, _unitsTracker, mapAnalyzer, _expandAnalyzer);
 
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);
@@ -60,8 +63,8 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         Dispatcher = new EarlyGameDispatcher(this);
         Releaser = new WarManagerReleaser<EarlyGameBehaviour>(this);
 
-        var main = ExpandAnalyzer.Instance.GetExpand(Alliance.Self, ExpandType.Main).GetRegion();
-        var natural = ExpandAnalyzer.Instance.GetExpand(Alliance.Self, ExpandType.Natural).GetRegion();
+        var main = _expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).GetRegion();
+        var natural = _expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural).GetRegion();
         _startingRegions = Pathfinder.Instance.FindPath(main, natural).ToHashSet();
     }
 
@@ -133,7 +136,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
     private IRegion GetRegionToDefend() {
         if (GetEnemyForce(_startingRegions) == 0) {
-            var enemyMain = ExpandAnalyzer.Instance.GetExpand(Alliance.Enemy, ExpandType.Main).GetRegion();
+            var enemyMain = _expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).GetRegion();
             return _startingRegions.MinBy(region => Pathfinder.Instance.FindPath(region, enemyMain).GetPathDistance());
         }
 
@@ -179,7 +182,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         draftableDrones = draftableDrones
             .OrderByDescending(drone => drone.Integrity)
             // TODO GD This could be better, it assumes the threat comes from the natural
-            .ThenBy(drone => drone.DistanceTo(ExpandAnalyzer.Instance.GetExpand(Alliance.Self, ExpandType.Natural).Position))
+            .ThenBy(drone => drone.DistanceTo(_expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural).Position))
             .ToList();
 
         var enemyForce = GetEnemyForce();
