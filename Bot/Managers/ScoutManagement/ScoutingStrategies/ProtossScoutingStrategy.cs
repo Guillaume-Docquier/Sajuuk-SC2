@@ -12,10 +12,11 @@ namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 /// For now, nothing more because saving the overlords requires pillar knowledge and air safety analysis.
 /// </summary>
 public class ProtossScoutingStrategy : IScoutingStrategy {
-    private const int TopPriority = 100;
-
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
+
+    private const int TopPriority = 100;
 
     private bool _isInitialized = false;
 
@@ -23,9 +24,10 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
     private ScoutingTask _ownNaturalScoutingTask;
     private ScoutingTask _enemyNaturalScoutingTask;
 
-    public ProtossScoutingStrategy(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
+    public ProtossScoutingStrategy(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
@@ -59,11 +61,11 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
     }
 
     private void Init() {
-        _ownNatural = ExpandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural);
+        _ownNatural = ExpandAnalyzer.Instance.GetExpand(Alliance.Self, ExpandType.Natural);
         _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _ownNatural.Position, priority: TopPriority, maxScouts: 1);
 
-        var enemyNatural = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
-        _enemyNaturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, enemyNatural.Position, priority: TopPriority - 1, maxScouts: 1);
+        var enemyNatural = ExpandAnalyzer.Instance.GetExpand(Alliance.Enemy, ExpandType.Natural);
+        _enemyNaturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _mapAnalyzer, enemyNatural.Position, priority: TopPriority - 1, maxScouts: 1);
 
         _isInitialized = true;
     }

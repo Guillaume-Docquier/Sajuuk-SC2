@@ -13,9 +13,12 @@ using SC2APIProtocol;
 namespace Bot.MapKnowledge;
 
 public class ExpandAnalyzer: INeedUpdating {
-    public static ExpandAnalyzer Instance { get; } = new ExpandAnalyzer(UnitsTracker.Instance);
+    public static ExpandAnalyzer Instance { get; } = new ExpandAnalyzer(UnitsTracker.Instance, MapAnalyzer.Instance);
 
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
+
+    private readonly FootprintCalculator _footprintCalculator;
 
     private const bool DrawEnabled = false;
 
@@ -32,8 +35,11 @@ public class ExpandAnalyzer: INeedUpdating {
     private const int ExpandRadius = 3; // It's 2.5, we put 3 to be safe
     private static readonly float TooCloseToResourceDistance = (float)Math.Sqrt(1*1 + 3*3); // Empirical, 1x3 diagonal
 
-    private ExpandAnalyzer(IUnitsTracker unitsTracker) {
+    private ExpandAnalyzer(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
+
+        _footprintCalculator = new FootprintCalculator(_mapAnalyzer);
     }
 
     public void Reset() {
@@ -107,12 +113,12 @@ public class ExpandAnalyzer: INeedUpdating {
     /// <param name="alliance">Yourself or the enemy</param>
     /// <param name="expandType">The expand type</param>
     /// <returns>The requested expand location</returns>
-    public static ExpandLocation GetExpand(Alliance alliance, ExpandType expandType) {
+    public ExpandLocation GetExpand(Alliance alliance, ExpandType expandType) {
         var expands = ExpandLocations.Where(expandLocation => expandLocation.ExpandType == expandType);
 
         return alliance == Alliance.Enemy
-            ? expands.MinBy(expandLocation => expandLocation.Position.DistanceTo(MapAnalyzer.EnemyStartingLocation))!
-            : expands.MinBy(expandLocation => expandLocation.Position.DistanceTo(MapAnalyzer.StartingLocation))!;
+            ? expands.MinBy(expandLocation => expandLocation.Position.DistanceTo(_mapAnalyzer.EnemyStartingLocation))!
+            : expands.MinBy(expandLocation => expandLocation.Position.DistanceTo(_mapAnalyzer.StartingLocation))!;
     }
 
     private IEnumerable<List<Unit>> FindResourceClusters() {
@@ -121,7 +127,7 @@ public class ExpandAnalyzer: INeedUpdating {
         var gasses = Controller.GetUnits(_unitsTracker.NeutralUnits, Units.GasGeysers);
         var resources = minerals.Concat(gasses).ToList();
 
-        return Clustering.DBSCAN(resources, epsilon: 8, minPoints: 4).clusters;
+        return Clustering.Instance.DBSCAN(resources, epsilon: 8, minPoints: 4).clusters;
     }
 
     private IEnumerable<Vector2> FindExpandLocations(List<List<Unit>> resourceClusters) {
@@ -129,14 +135,14 @@ public class ExpandAnalyzer: INeedUpdating {
 
         var expandLocations = new List<Vector2>();
         foreach (var resourceCluster in resourceClusters) {
-            var centerPosition = Clustering.GetBoundingBoxCenter(resourceCluster).AsWorldGridCenter().ToVector2();
-            var searchGrid = MapAnalyzer.BuildSearchGrid(centerPosition, gridRadius: ExpandSearchRadius);
+            var centerPosition = Clustering.Instance.GetBoundingBoxCenter(resourceCluster).AsWorldGridCenter().ToVector2();
+            var searchGrid = _mapAnalyzer.BuildSearchGrid(centerPosition, gridRadius: ExpandSearchRadius);
 
             var goodBuildSpot = searchGrid.FirstOrDefault(IsValidExpandPlacement);
             if (goodBuildSpot != default) {
                 expandLocations.Add(goodBuildSpot);
-                Program.GraphicalDebugger.AddSphere(goodBuildSpot.ToVector3(), KnowledgeBase.GameGridCellRadius, Colors.Green);
-                Program.GraphicalDebugger.AddSphere(centerPosition.ToVector3(), KnowledgeBase.GameGridCellRadius, Colors.Yellow);
+                Program.GraphicalDebugger.AddSphere(_mapAnalyzer.WithWorldHeight(goodBuildSpot), KnowledgeBase.GameGridCellRadius, Colors.Green);
+                Program.GraphicalDebugger.AddSphere(_mapAnalyzer.WithWorldHeight(centerPosition), KnowledgeBase.GameGridCellRadius, Colors.Yellow);
             }
         }
 
@@ -154,13 +160,13 @@ public class ExpandAnalyzer: INeedUpdating {
         }
 
         var cellsTooCloseToResource = resourceClusters.SelectMany(cluster => cluster)
-            .SelectMany(FootprintCalculator.GetFootprint)
-            .SelectMany(position => MapAnalyzer.BuildSearchRadius(position, TooCloseToResourceDistance))
+            .SelectMany(_footprintCalculator.GetFootprint)
+            .SelectMany(position => _mapAnalyzer.BuildSearchRadius(position, TooCloseToResourceDistance))
             .Select(position => position.AsWorldGridCorner());
 
         foreach (var cell in cellsTooCloseToResource) {
             if (DrawEnabled) {
-                Program.GraphicalDebugger.AddGridSquare(cell.AsWorldGridCenter().ToVector3(), Colors.SunbrightOrange);
+                Program.GraphicalDebugger.AddGridSquare(_mapAnalyzer.WithWorldHeight(cell.AsWorldGridCenter()), Colors.SunbrightOrange);
             }
 
             _tooCloseToResourceGrid[(int)cell.X][(int)cell.Y] = true;
@@ -168,7 +174,7 @@ public class ExpandAnalyzer: INeedUpdating {
     }
 
     private bool IsValidExpandPlacement(Vector2 buildSpot) {
-        var footprint = MapAnalyzer.GetBuildingFootprint(buildSpot, Units.Hatchery);
+        var footprint = _mapAnalyzer.GetBuildingFootprint(buildSpot, Units.Hatchery);
         var footprintIsClear = footprint.All(cell => !_tooCloseToResourceGrid[(int)cell.X][(int)cell.Y]);
 
         // We'll query just to be sure
@@ -202,7 +208,7 @@ public class ExpandAnalyzer: INeedUpdating {
 
         // ExpandType based on distance to own base
         var rank = 0;
-        foreach (var expandPosition in expandPositions.OrderBy(expandPosition => Pathfinder.FindPath(expandPosition, MapAnalyzer.StartingLocation).Count)) {
+        foreach (var expandPosition in expandPositions.OrderBy(expandPosition => Pathfinder.Instance.FindPath(expandPosition, _mapAnalyzer.StartingLocation).Count)) {
             var (expandType, newRank) = CalculateExpandType(resourceClustersByExpand[expandPosition], blockersByExpand[expandPosition], rank);
             expandTypes[expandPosition] = expandType;
             rank = newRank;
@@ -210,7 +216,7 @@ public class ExpandAnalyzer: INeedUpdating {
 
         // ExpandType based on distance to enemy base
         rank = 0;
-        foreach (var expandPosition in expandPositions.OrderBy(expandPosition => Pathfinder.FindPath(expandPosition, MapAnalyzer.EnemyStartingLocation).Count)) {
+        foreach (var expandPosition in expandPositions.OrderBy(expandPosition => Pathfinder.Instance.FindPath(expandPosition, _mapAnalyzer.EnemyStartingLocation).Count)) {
             // Already set, skip
             if (expandTypes.ContainsKey(expandPosition) && expandTypes[expandPosition] != ExpandType.Far) {
                 continue;
@@ -262,8 +268,8 @@ public class ExpandAnalyzer: INeedUpdating {
     /// <param name="expandPosition"></param>
     /// <param name="resourceClusters"></param>
     /// <returns>The resource cluster of that expand position</returns>
-    private static HashSet<Unit> GetExpandResourceCluster(Vector2 expandPosition, IEnumerable<List<Unit>> resourceClusters) {
-        return resourceClusters.MinBy(cluster => cluster.GetCenter().DistanceTo(expandPosition))!.ToHashSet();
+    private HashSet<Unit> GetExpandResourceCluster(Vector2 expandPosition, IEnumerable<List<Unit>> resourceClusters) {
+        return resourceClusters.MinBy(cluster => _mapAnalyzer.GetClosestWalkable(cluster.GetCenter(), searchRadius: 3).DistanceTo(expandPosition))!.ToHashSet();
     }
 
     /// <summary>

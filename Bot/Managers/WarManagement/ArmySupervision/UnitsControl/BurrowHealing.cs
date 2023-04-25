@@ -12,12 +12,14 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
 public class BurrowHealing : IUnitsControl {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
 
     private const double BurrowDownThreshold = 0.5;
     private const double BurrowUpThreshold = 0.6;
 
-    public BurrowHealing(IUnitsTracker unitsTracker) {
+    public BurrowHealing(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
     }
 
     public bool IsExecuting() {
@@ -101,7 +103,7 @@ public class BurrowHealing : IUnitsControl {
         }
 
         if (canTunnel) {
-            MoveAwayFrom(roach, collidingUnits.GetCenter());
+            MoveAwayFrom(roach, _mapAnalyzer.GetClosestWalkable(collidingUnits.GetCenter(), searchRadius: 3));
         }
     }
 
@@ -141,7 +143,7 @@ public class BurrowHealing : IUnitsControl {
             .Select(townHall => townHall.GetRegion())
             .MinBy(region => RegionTracker.GetForce(region, Alliance.Enemy));
 
-        safestRegion ??= RegionAnalyzer.Regions.MinBy(region => RegionTracker.GetForce(region, Alliance.Enemy));
+        safestRegion ??= RegionAnalyzer.Instance.Regions.MinBy(region => RegionTracker.GetForce(region, Alliance.Enemy));
 
         roach.Move(safestRegion!.Center);
 
@@ -162,7 +164,7 @@ public class BurrowHealing : IUnitsControl {
         }
 
         // We might want to consider enemy units as to not wiggle between colliding units and enemies?
-        MoveAwayFrom(roach, collidingUnits.GetCenter());
+        MoveAwayFrom(roach, _mapAnalyzer.GetClosestWalkable(collidingUnits.GetCenter(), searchRadius: 3));
 
         return true;
     }

@@ -17,9 +17,9 @@ namespace Bot;
 public class Program {
     private static readonly List<IScenario> Scenarios = new List<IScenario>
     {
-        //new WorkerRushScenario(),
-        //new FlyingTerranScumScenario(),
-        //new SpawnStuffScenario(UnitsTracker.Instance),
+        //new WorkerRushScenario(MapAnalyzer.Instance),
+        //new FlyingTerranScumScenario(MapAnalyzer.Instance),
+        //new SpawnStuffScenario(UnitsTracker.Instance, MapAnalyzer.Instance),
     };
 
     private const string Version = "4_0_4";
@@ -85,15 +85,16 @@ public class Program {
         Logger.Info("Game launched in video clip mode");
 
         DebugEnabled = true;
-        GraphicalDebugger = new Sc2GraphicalDebugger();
+        // TODO GD GraphicalDebugger should be injected as well
+        GraphicalDebugger = new Sc2GraphicalDebugger(MapAnalyzer.Instance);
 
         GameConnection = new GameConnection(UnitsTracker.Instance, stepSize: 1);
-        GameConnection.RunLocal(new VideoClipPlayer(MapFileName, DebuggingFlagsTracker.Instance, UnitsTracker.Instance), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
+        GameConnection.RunLocal(new VideoClipPlayer(MapFileName, DebuggingFlagsTracker.Instance, UnitsTracker.Instance, MapAnalyzer.Instance), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
     }
 
     private static void PlayLocalGame() {
         DebugEnabled = true;
-        GraphicalDebugger = new Sc2GraphicalDebugger();
+        GraphicalDebugger = new Sc2GraphicalDebugger(MapAnalyzer.Instance);
 
         GameConnection = new GameConnection(UnitsTracker.Instance);
         GameConnection.RunLocal(Bot, MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
@@ -116,7 +117,8 @@ public class Program {
             VisibilityTracker.Instance,
             DebuggingFlagsTracker.Instance,
             UnitsTracker.Instance,
-            IncomeTracker.Instance
+            IncomeTracker.Instance,
+            MapAnalyzer.Instance
         );
     }
 }

@@ -39,7 +39,7 @@ public class RegionsThreatEvaluator : RegionsEvaluator {
                 .OrderByDescending(valuableRegion => valuableRegion.Center.DistanceTo(region.Center))
                 .Sum(valuableRegion => {
                     var normalizedValue = _opponentValueEvaluator.GetEvaluation(valuableRegion, normalized: true);
-                    var path = Pathfinder.FindPath(region, valuableRegion);
+                    var path = Pathfinder.Instance.FindPath(region, valuableRegion);
                     if (path == null) {
                         return 0;
                     }

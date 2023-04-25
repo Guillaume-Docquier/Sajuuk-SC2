@@ -1,5 +1,6 @@
 ﻿using Bot.Debugging;
 using Bot.GameSense;
+using Bot.MapKnowledge;
 using Bot.Tagging;
 using Bot.Utils;
 
@@ -13,6 +14,7 @@ public class EarlyGameState : WarManagerState {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
@@ -22,19 +24,21 @@ public class EarlyGameState : WarManagerState {
         IEnemyRaceTracker enemyRaceTracker,
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
-        IUnitsTracker unitsTracker
+        IUnitsTracker unitsTracker,
+        IMapAnalyzer mapAnalyzer
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new EarlyGameBehaviour(Context, _taggingService, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker);
+        _behaviour = new EarlyGameBehaviour(Context, _taggingService, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _mapAnalyzer);
     }
 
     protected override void Execute() {
@@ -51,7 +55,7 @@ public class EarlyGameState : WarManagerState {
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new MidGame.MidGameState(_taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker));
+            StateMachine.TransitionTo(new MidGame.MidGameState(_taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _mapAnalyzer));
             return true;
         }
 

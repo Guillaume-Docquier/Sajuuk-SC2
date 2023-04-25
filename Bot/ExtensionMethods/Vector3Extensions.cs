@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using Bot.Algorithms;
 using Bot.GameData;
 using Bot.MapKnowledge;
 using SC2APIProtocol;
@@ -81,45 +79,6 @@ public static class Vector3Extensions {
         return new Vector3((float)Math.Floor(vector.X), (float)Math.Floor(vector.Y), vector.Z);
     }
 
-    public static Vector3 WithWorldHeight(this Vector3 vector, float zOffset = 0) {
-        if (!MapAnalyzer.IsInitialized) {
-            return vector;
-        }
-
-        if (!MapAnalyzer.IsInBounds(vector)) {
-            return vector;
-        }
-
-        // Some unwalkable cells are low on the map, let's try to bring them up if they touch a walkable cell (that generally have proper heights)
-        if (!MapAnalyzer.IsWalkable(vector)) {
-            var walkableNeighbors = vector.GetNeighbors().Where(neighbor => MapAnalyzer.IsWalkable(neighbor)).ToList();
-            if (walkableNeighbors.Any()) {
-                return vector with { Z = walkableNeighbors.Max(neighbor => neighbor.WithWorldHeight().Z) };
-            }
-        }
-
-        return vector with { Z = MapAnalyzer.HeightMap[(int)vector.X][(int)vector.Y] + zOffset };
-    }
-
-    public static Vector3 ClosestWalkable(this Vector3 position) {
-        if (MapAnalyzer.IsWalkable(position)) {
-            return position;
-        }
-
-        var closestWalkableCell = MapAnalyzer.BuildSearchGrid(position, 15)
-            .Where(cell => MapAnalyzer.IsWalkable(cell))
-            .DefaultIfEmpty()
-            .MinBy(cell => cell.HorizontalDistanceTo(position));
-
-        // It's probably good to avoid returning default?
-        if (closestWalkableCell == default) {
-            Logger.Error("Vector3.ClosestWalkable returned no elements in a 15 radius around {0}", position);
-            return position;
-        }
-
-        return closestWalkableCell;
-    }
-
     // TODO GD Write proper documentation
     // Distance means the radius of the square (it returns diagonal neighbors that are 1.41 units away)
     public static IEnumerable<Vector3> GetNeighbors(this Vector3 vector, int radius = 1) {
@@ -130,22 +89,6 @@ public static class Vector3Extensions {
                 }
             }
         }
-    }
-
-    /// <summary>
-    /// Gets all cells traversed by the ray from origin to destination using digital differential analyzer (DDA)
-    /// </summary>
-    /// <param name="origin"></param>
-    /// <param name="destination"></param>
-    /// <returns>The cells traversed by the ray from origin to destination</returns>
-    public static HashSet<Vector3> GetPointsInBetween(this Vector3 origin, Vector3 destination) {
-        var targetCellCorner = destination.ToVector2().AsWorldGridCorner();
-
-        var pointsInBetween = RayCasting.RayCast(origin.ToVector2(), destination.ToVector2(), cellCorner => cellCorner == targetCellCorner)
-            .Select(result => result.CornerOfCell.AsWorldGridCenter().ToVector3())
-            .ToHashSet();
-
-        return pointsInBetween;
     }
 
     /// <summary>
@@ -176,6 +119,6 @@ public static class Vector3Extensions {
     /// <param name="position">The position to get the Region of</param>
     /// <returns>The Region of the given position</returns>
     public static IRegion GetRegion(this Vector3 position) {
-        return RegionAnalyzer.GetRegion(position);
+        return RegionAnalyzer.Instance.GetRegion(position);
     }
 }

@@ -146,8 +146,8 @@ public static class UnitEvaluator {
     /// <param name="myAlliance"></param>
     /// <returns></returns>
     private static bool IsOffensive(Unit unit, Alliance myAlliance) {
-        var myMain = ExpandAnalyzer.GetExpand(myAlliance, ExpandType.Main);
-        var theirMain = ExpandAnalyzer.GetExpand(myAlliance.GetOpposing(), ExpandType.Main);
+        var myMain = ExpandAnalyzer.Instance.GetExpand(myAlliance, ExpandType.Main);
+        var theirMain = ExpandAnalyzer.Instance.GetExpand(myAlliance.GetOpposing(), ExpandType.Main);
 
         return unit.DistanceTo(theirMain.Position) < unit.DistanceTo(myMain.Position);
     }

@@ -12,26 +12,33 @@ namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 /// It will use the proper Race scouting strategy once it knows the enemy race.
 /// </summary>
 public class RandomScoutingStrategy : IScoutingStrategy {
-    private const int TopPriority = 100;
-
     private readonly IEnemyRaceTracker _enemyRaceTracker;
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
+
+    private const int TopPriority = 100;
 
     private IScoutingStrategy _concreteScoutingStrategy;
     private ScoutingTask _raceFindingScoutingTask;
     private bool _isInitialized = false;
 
-    public RandomScoutingStrategy(IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
+    public RandomScoutingStrategy(
+        IEnemyRaceTracker enemyRaceTracker,
+        IVisibilityTracker visibilityTracker,
+        IUnitsTracker unitsTracker,
+        IMapAnalyzer mapAnalyzer
+    ) {
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
         if (_enemyRaceTracker.EnemyRace != Race.Random) {
             if (_concreteScoutingStrategy == null) {
-                _concreteScoutingStrategy = ScoutingStrategyFactory.CreateNew(_enemyRaceTracker, _visibilityTracker, _unitsTracker);
+                _concreteScoutingStrategy = ScoutingStrategyFactory.CreateNew(_enemyRaceTracker, _visibilityTracker, _unitsTracker, _mapAnalyzer);
 
                 // Cancel our task, we will rely on the concrete scouting strategy now
                 _raceFindingScoutingTask.Cancel();
@@ -48,8 +55,8 @@ public class RandomScoutingStrategy : IScoutingStrategy {
 
         // Go for the main base if nothing in the natural
         if (_raceFindingScoutingTask.IsComplete()) {
-            var enemyMain = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main);
-            _raceFindingScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, enemyMain.Position, TopPriority, maxScouts: 1);
+            var enemyMain = ExpandAnalyzer.Instance.GetExpand(Alliance.Enemy, ExpandType.Main);
+            _raceFindingScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _mapAnalyzer, enemyMain.Position, TopPriority, maxScouts: 1);
 
             return new [] { _raceFindingScoutingTask };
         }
@@ -61,8 +68,8 @@ public class RandomScoutingStrategy : IScoutingStrategy {
     /// Init a task to get vision of the enemy natural to identify the enemy race
     /// </summary>
     private void Init() {
-        var enemyNatural = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
-        _raceFindingScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, enemyNatural.Position, TopPriority, maxScouts: 1);
+        var enemyNatural = ExpandAnalyzer.Instance.GetExpand(Alliance.Enemy, ExpandType.Natural);
+        _raceFindingScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _mapAnalyzer, enemyNatural.Position, TopPriority, maxScouts: 1);
 
         _isInitialized = true;
     }

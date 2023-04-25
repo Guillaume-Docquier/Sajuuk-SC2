@@ -12,6 +12,7 @@ using Bot.Managers;
 using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
 using Bot.Managers.WarManagement;
+using Bot.MapKnowledge;
 using Bot.Scenarios;
 using Bot.Tagging;
 using SC2APIProtocol;
@@ -38,13 +39,14 @@ public class SajuukBot: PoliteBot {
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IIncomeTracker incomeTracker
-    ) : base(version, scenarios, taggingService, unitsTracker) {
+        IIncomeTracker incomeTracker,
+        IMapAnalyzer mapAnalyzer
+    ) : base(version, scenarios, taggingService, unitsTracker, mapAnalyzer) {
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
 
-        _debugger = new BotDebugger(_visibilityTracker, _debuggingFlagsTracker, UnitsTracker, incomeTracker);
+        _debugger = new BotDebugger(_visibilityTracker, _debuggingFlagsTracker, UnitsTracker, incomeTracker, MapAnalyzer);
     }
 
     protected override Task DoOnFrame() {
@@ -82,10 +84,10 @@ public class SajuukBot: PoliteBot {
         _managers.Add(buildManager);
 
         _managers.Add(new SupplyManager(buildManager, UnitsTracker));
-        _managers.Add(new ScoutManager(_enemyRaceTracker, _visibilityTracker, UnitsTracker));
-        _managers.Add(new EconomyManager(buildManager, UnitsTracker));
-        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, UnitsTracker));
-        _managers.Add(new CreepManager(_visibilityTracker, UnitsTracker));
+        _managers.Add(new ScoutManager(_enemyRaceTracker, _visibilityTracker, UnitsTracker, MapAnalyzer));
+        _managers.Add(new EconomyManager(buildManager, UnitsTracker, MapAnalyzer));
+        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, UnitsTracker, MapAnalyzer));
+        _managers.Add(new CreepManager(_visibilityTracker, UnitsTracker, MapAnalyzer));
         _managers.Add(new UpgradesManager(UnitsTracker));
     }
 

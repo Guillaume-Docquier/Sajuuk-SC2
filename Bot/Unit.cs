@@ -243,8 +243,9 @@ public class Unit: ICanDie, IHavePosition {
             return unitRegion;
         }
 
-        return MapAnalyzer.BuildSearchGrid(Position, gridRadius: 3)
-            .Where(cell => MapAnalyzer.IsWalkable(cell))
+        // TODO GD Injecting MapAnalyzer here means a circular dependency between the UnitsTracker and MapAnalyzer
+        return MapAnalyzer.Instance.BuildSearchGrid(Position, gridRadius: 3)
+            .Where(cell => MapAnalyzer.Instance.IsWalkable(cell))
             .Select(cell => cell.GetRegion())
             .FirstOrDefault(region => region != null);
     }
@@ -524,7 +525,7 @@ public class Unit: ICanDie, IHavePosition {
 
         if (producingOrder.TargetWorldSpacePos != null) {
             // TargetWorldSpacePos is a point, but never has a Z
-            return producingOrder.TargetWorldSpacePos.Equals(atLocation.ToVector3(withWorldHeight: false).ToPoint());
+            return producingOrder.TargetWorldSpacePos.Equals(new Point { X = atLocation.X, Y = atLocation.Y, Z = 0 });
         }
 
         // Extractors are built on a gas, not at a location

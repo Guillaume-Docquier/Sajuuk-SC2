@@ -9,7 +9,9 @@ using Bot.ExtensionMethods;
 
 namespace Bot.MapKnowledge;
 
-public static class RegionDataStore {
+public class RegionDataStore {
+    private readonly IMapAnalyzer _mapAnalyzer;
+
     public static bool IsEnabled = true;
 
     private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
@@ -32,11 +34,15 @@ public static class RegionDataStore {
         Color.Magenta
     };
 
-    private static string GetFileName(string mapName, string format) {
+    public RegionDataStore(IMapAnalyzer mapAnalyzer) {
+        _mapAnalyzer = mapAnalyzer;
+    }
+
+    private string GetFileName(string mapName, string format) {
         return $"Regions_{mapName.Replace(" ", "")}.{format}";
     }
 
-    public static void Save(string mapName, RegionData regionData) {
+    public void Save(string mapName, RegionData regionData) {
         // Will output to bin/Debug/net6.0 or bin/Release/net6.0
         // Make sure to copy to the Data/ folder and set properties to 'Copy if newer'
         var jsonSaveFilePath = GetFileName(mapName, "json");
@@ -47,7 +53,7 @@ public static class RegionDataStore {
         SaveAsImage(mapName, regionData.Regions);
     }
 
-    public static RegionData Load(string mapName) {
+    public RegionData Load(string mapName) {
         if (!IsEnabled) {
             return null;
         }
@@ -68,7 +74,7 @@ public static class RegionDataStore {
     /// </summary>
     /// <param name="mapName"></param>
     /// <param name="regions"></param>
-    private static void SaveAsImage(string mapName, List<Region> regions) {
+    private void SaveAsImage(string mapName, List<Region> regions) {
         if (!OperatingSystem.IsWindows()) {
             return;
         }
@@ -90,7 +96,7 @@ public static class RegionDataStore {
             }
         }
 
-        var image = new Bitmap(MapAnalyzer.MaxX, MapAnalyzer.MaxY);
+        var image = new Bitmap(_mapAnalyzer.MaxX, _mapAnalyzer.MaxY);
         for (var x = 0; x < image.Width; x++) {
             for (var y = 0; y < image.Height; y++) {
                 image.SetPixel(x, y, Color.Black);

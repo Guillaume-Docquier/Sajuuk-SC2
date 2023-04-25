@@ -12,9 +12,9 @@ public class ChokePoint {
     public float Length { get; }
     public HashSet<Vector2> Edge { get; }
 
-    public ChokePoint(Vector2 start, Vector2 end) {
+    public ChokePoint(Vector2 start, Vector2 end, IMapAnalyzer mapAnalyzer) {
         Edge = start.GetPointsInBetween(end)
-            .Where(cell => MapAnalyzer.IsWalkable(cell, includeObstacles: false))
+            .Where(cell => mapAnalyzer.IsWalkable(cell, includeObstacles: false))
             .ToHashSet();
 
         Start = Edge.MinBy(edgePoint => edgePoint.DistanceTo(start));

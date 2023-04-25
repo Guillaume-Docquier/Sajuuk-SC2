@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.Algorithms;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -11,30 +12,35 @@ namespace Bot.MapKnowledge;
 
 // TODO GD Make two classes: The analyzer and the tracker
 // Analysis should be run manually, and the tracker should be able to load the persisted data before entering the game
-public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
+public class MapAnalyzer : IMapAnalyzer, INeedUpdating, IWatchUnitsDie {
+    /// <summary>
+    /// DI: ✔️ The only usages are for static instance creations
+    /// </summary>
     public static readonly MapAnalyzer Instance = new MapAnalyzer(VisibilityTracker.Instance, UnitsTracker.Instance);
 
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
 
-    public static bool IsInitialized { get; private set; } = false;
-    public static Vector2 StartingLocation { get; private set; }
-    public static Vector2 EnemyStartingLocation { get; private set; }
+    private readonly FootprintCalculator _footprintCalculator;
 
-    public static List<List<float>> HeightMap { get; private set; }
+    public bool IsInitialized { get; private set; } = false;
+    public Vector2 StartingLocation { get; private set; }
+    public Vector2 EnemyStartingLocation { get; private set; }
 
-    private static List<Unit> _obstacles;
-    private static readonly HashSet<Vector2> ObstructionMap = new HashSet<Vector2>();
-    private static List<List<bool>> _terrainWalkMap;
-    private static List<List<bool>> _currentWalkMap;
-    private static List<List<bool>> _buildMap;
+    public List<List<float>> HeightMap { get; private set; }
 
-    public static int MaxX { get; private set; }
-    public static int MaxY { get; private set; }
-    public static float DiagonalLength { get; private set; }
+    private List<Unit> _obstacles;
+    private readonly HashSet<Vector2> ObstructionMap = new HashSet<Vector2>();
+    private List<List<bool>> _terrainWalkMap;
+    private List<List<bool>> _currentWalkMap;
+    private List<List<bool>> _buildMap;
 
-    private static readonly HashSet<Vector2> _walkableCells = new HashSet<Vector2>();
-    public static IReadOnlySet<Vector2> WalkableCells => _walkableCells;
+    public int MaxX { get; private set; }
+    public int MaxY { get; private set; }
+    public float DiagonalLength { get; private set; }
+
+    private readonly HashSet<Vector2> _walkableCells = new HashSet<Vector2>();
+    public IReadOnlySet<Vector2> WalkableCells => _walkableCells;
 
     /// <summary>
     /// Returns the proportion from 0 to 1 of the walkable tiles that have been explored
@@ -67,6 +73,8 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     private MapAnalyzer(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
+
+        _footprintCalculator = new FootprintCalculator(this);
     }
 
     public void Reset() {
@@ -107,7 +115,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         IsInitialized = true;
     }
 
-    public static string GetStartingCorner() {
+    public string GetStartingCorner() {
         var corners = new List<(Vector2 Position, string Name)>
         {
             (new Vector2(0,    0),    "bottom left"),
@@ -130,23 +138,23 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         _obstacles = Controller.GetUnits(_unitsTracker.NeutralUnits, obstacleIds).ToList();
 
         _obstacles.ForEach(obstacle => {
-            obstacle.AddDeathWatcher(Instance);
-            foreach (var cell in FootprintCalculator.GetFootprint(obstacle)) {
+            obstacle.AddDeathWatcher(this);
+            foreach (var cell in _footprintCalculator.GetFootprint(obstacle)) {
                 ObstructionMap.Add(cell);
             }
         });
     }
 
-    private static void RemoveObstacle(Unit obstacle) {
+    private void RemoveObstacle(Unit obstacle) {
         _obstacles.Remove(obstacle);
-        foreach (var cell in FootprintCalculator.GetFootprint(obstacle)) {
+        foreach (var cell in _footprintCalculator.GetFootprint(obstacle)) {
             ObstructionMap.Remove(cell);
         }
 
         Logger.Info("Obstacle removed, invalidating Pathfinder cache and updating region obstruction");
 
         // This is a bit ugly, the pathfinder should know about this
-        Pathfinder.InvalidateCache();
+        Pathfinder.Instance.InvalidateCache();
 
         obstacle.Position.GetRegion().UpdateObstruction();
     }
@@ -158,7 +166,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
             .MaxBy(enemyLocation => StartingLocation.DistanceTo(enemyLocation));
     }
 
-    private static void InitHeightMap() {
+    private void InitHeightMap() {
         HeightMap = new List<List<float>>();
         for (var x = 0; x < MaxX; x++) {
             HeightMap.Add(new List<float>(new float[MaxY]));
@@ -190,7 +198,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         }
     }
 
-    private static void InitTerrainBuildMap() {
+    private void InitTerrainBuildMap() {
         _buildMap = new List<List<bool>>();
         for (var x = 0; x < MaxX; x++) {
             _buildMap.Add(new List<bool>(new bool[MaxY]));
@@ -208,7 +216,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         }
     }
 
-    private static List<List<bool>> ParseWalkMap() {
+    private List<List<bool>> ParseWalkMap() {
         var walkMap = new List<List<bool>>();
         for (var x = 0; x < MaxX; x++) {
             walkMap.Add(new List<bool>(new bool[MaxY]));
@@ -235,7 +243,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         return walkMap;
     }
 
-    public static IEnumerable<Vector2> BuildSearchGrid(Vector2 centerPosition, int gridRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
+    public IEnumerable<Vector2> BuildSearchGrid(Vector2 centerPosition, int gridRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
         var grid = new List<Vector2>();
         for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x += stepSize) {
             for (var y = centerPosition.Y - gridRadius; y <= centerPosition.Y + gridRadius; y += stepSize) {
@@ -248,12 +256,12 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         return grid.OrderBy(position => centerPosition.DistanceTo(position));
     }
 
-    public static IEnumerable<Vector3> BuildSearchGrid(Vector3 centerPosition, int gridRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
+    public IEnumerable<Vector3> BuildSearchGrid(Vector3 centerPosition, int gridRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
         var grid = new List<Vector3>();
         for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x += stepSize) {
             for (var y = centerPosition.Y - gridRadius; y <= centerPosition.Y + gridRadius; y += stepSize) {
                 if (!IsInitialized || IsInBounds(x, y)) {
-                    grid.Add(new Vector3(x, y, centerPosition.Z).WithWorldHeight());
+                    grid.Add(WithWorldHeight(new Vector3(x, y, centerPosition.Z)));
                 }
             }
         }
@@ -262,7 +270,7 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     }
 
     // TODO GD Might not work with 2x2 buildings
-    public static IEnumerable<Vector2> GetBuildingFootprint(Vector2 buildingCenter, uint buildingType) {
+    public IEnumerable<Vector2> GetBuildingFootprint(Vector2 buildingCenter, uint buildingType) {
         return BuildSearchGrid(buildingCenter, (int)KnowledgeBase.GetBuildingRadius(buildingType));
     }
 
@@ -274,27 +282,27 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
     /// <param name="circleRadius">The radius of the search area</param>
     /// <param name="stepSize">The cells gap</param>
     /// <returns>The search area composed of all the 1x1 game cells around a center position with a stepSize sized gap</returns>
-    public static IEnumerable<Vector2> BuildSearchRadius(Vector2 centerPosition, float circleRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
+    public IEnumerable<Vector2> BuildSearchRadius(Vector2 centerPosition, float circleRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
         return BuildSearchGrid(centerPosition, (int)circleRadius + 1, stepSize).Where(cell => cell.DistanceTo(centerPosition) <= circleRadius);
     }
 
-    public static bool IsInBounds(Vector2 position) {
+    public bool IsInBounds(Vector2 position) {
         return IsInBounds(position.X, position.Y);
     }
 
-    public static bool IsInBounds(Vector3 position) {
+    public bool IsInBounds(Vector3 position) {
         return IsInBounds(position.X, position.Y);
     }
 
-    public static bool IsInBounds(float x, float y) {
+    public bool IsInBounds(float x, float y) {
         return x >= 0 && x < MaxX && y >= 0 && y < MaxY;
     }
 
-    public static bool IsWalkable(Vector3 position, bool includeObstacles = true) {
+    public bool IsWalkable(Vector3 position, bool includeObstacles = true) {
         return IsWalkable(position.ToVector2(), includeObstacles);
     }
 
-    public static bool IsWalkable(Vector2 position, bool includeObstacles = true) {
+    public bool IsWalkable(Vector2 position, bool includeObstacles = true) {
         if (!IsInBounds(position)) {
             return false;
         }
@@ -305,11 +313,11 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         return isWalkable && !isObstructed;
     }
 
-    public static bool IsBuildable(Vector3 position, bool includeObstacles = true) {
+    public bool IsBuildable(Vector3 position, bool includeObstacles = true) {
         return IsBuildable(position.ToVector2(), includeObstacles);
     }
 
-    public static bool IsBuildable(Vector2 position, bool includeObstacles = true) {
+    public bool IsBuildable(Vector2 position, bool includeObstacles = true) {
         if (!IsInBounds(position)) {
             return false;
         }
@@ -320,7 +328,159 @@ public class MapAnalyzer: INeedUpdating, IWatchUnitsDie {
         return isBuildable && !isObstructed;
     }
 
-    private static void InitWalkableCells() {
+    /// <summary>
+    /// <para>Gets up to 8 reachable neighbors around the position.</para>
+    /// <para>Top, left, down and right are given if they are walkable.</para>
+    /// <para>
+    /// Diagonal neighbors are returned only if at least one of their components if walkable.
+    /// For example, the top right diagonal is reachable of either the top or the right is walkable.
+    /// </para>
+    /// <para>This is a game detail.</para>
+    /// </summary>
+    /// <param name="position">The position to get the neighbors of</param>
+    /// <param name="includeObstacles">If you're wondering if you should be using this, you shouldn't.</param>
+    /// <returns>Up to 8 neighbors</returns>
+    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 position, bool includeObstacles = true) {
+        var leftPos = position.Translate(xTranslation: -1);
+        var isLeftOk = IsInBounds(leftPos) && IsWalkable(leftPos, includeObstacles);
+        if (isLeftOk) {
+            yield return leftPos;
+        }
+
+        var rightPos = position.Translate(xTranslation: 1);
+        var isRightOk = IsInBounds(rightPos) && IsWalkable(rightPos, includeObstacles);
+        if (isRightOk) {
+            yield return rightPos;
+        }
+
+        var upPos = position.Translate(yTranslation: 1);
+        var isUpOk = IsInBounds(upPos) && IsWalkable(upPos, includeObstacles);
+        if (isUpOk) {
+            yield return upPos;
+        }
+
+        var downPos = position.Translate(yTranslation: -1);
+        var isDownOk = IsInBounds(downPos) && IsWalkable(downPos, includeObstacles);
+        if (isDownOk) {
+            yield return downPos;
+        }
+
+        if (isLeftOk || isUpOk) {
+            var leftUpPos = position.Translate(xTranslation: -1, yTranslation: 1);
+            if (IsInBounds(leftUpPos) && IsWalkable(leftUpPos, includeObstacles)) {
+                yield return leftUpPos;
+            }
+        }
+
+        if (isLeftOk || isDownOk) {
+            var leftDownPos = position.Translate(xTranslation: -1, yTranslation: -1);
+            if (IsInBounds(leftDownPos) && IsWalkable(leftDownPos, includeObstacles)) {
+                yield return leftDownPos;
+            }
+        }
+
+        if (isRightOk || isUpOk) {
+            var rightUpPos = position.Translate(xTranslation: 1, yTranslation: 1);
+            if (IsInBounds(rightUpPos) && IsWalkable(rightUpPos, includeObstacles)) {
+                yield return rightUpPos;
+            }
+        }
+
+        if (isRightOk || isDownOk) {
+            var rightDownPos = position.Translate(xTranslation: 1, yTranslation: -1);
+            if (IsInBounds(rightDownPos) && IsWalkable(rightDownPos, includeObstacles)) {
+                yield return rightDownPos;
+            }
+        }
+    }
+
+    public Vector2 GetClosestWalkable(Vector2 position, int searchRadius = 8, HashSet<Vector2> allowedCells = null) {
+        if (IsWalkable(position)) {
+            return position;
+        }
+
+        var searchGrid = BuildSearchGrid(position, searchRadius)
+            .Where(cell => IsWalkable(cell));
+
+        if (allowedCells != null) {
+            searchGrid = searchGrid.Where(allowedCells.Contains);
+        }
+
+        var closestWalkableCell = searchGrid
+            .DefaultIfEmpty()
+            .MinBy(cell => cell.DistanceTo(position));
+
+        // It's probably good to avoid returning default?
+        if (closestWalkableCell == default) {
+            Logger.Error("Vector3.ClosestWalkable returned no elements in a 15 radius around {0}", position);
+            return position;
+        }
+
+        return closestWalkableCell;
+    }
+
+    public Vector3 GetClosestWalkable(Vector3 position) {
+        if (IsWalkable(position)) {
+            return position;
+        }
+
+        var closestWalkableCell = BuildSearchGrid(position, 15)
+            .Where(cell => IsWalkable(cell))
+            .DefaultIfEmpty()
+            .MinBy(cell => cell.HorizontalDistanceTo(position));
+
+        // It's probably good to avoid returning default?
+        if (closestWalkableCell == default) {
+            Logger.Error("Vector3.ClosestWalkable returned no elements in a 15 radius around {0}", position);
+            return position;
+        }
+
+        return closestWalkableCell;
+    }
+
+    public Vector3 WithWorldHeight(Vector3 vector, float zOffset = 0) {
+        if (!IsInitialized) {
+            return vector;
+        }
+
+        if (!IsInBounds(vector)) {
+            return vector;
+        }
+
+        // Some unwalkable cells are low on the map, let's try to bring them up if they touch a walkable cell (that generally have proper heights)
+        if (!IsWalkable(vector)) {
+            var walkableNeighbors = vector.GetNeighbors().Where(neighbor => IsWalkable(neighbor)).ToList();
+            if (walkableNeighbors.Any()) {
+                return vector with { Z = walkableNeighbors.Max(neighbor => WithWorldHeight(neighbor).Z) };
+            }
+        }
+
+        return vector with { Z = HeightMap[(int)vector.X][(int)vector.Y] + zOffset };
+    }
+
+    public Vector3 WithWorldHeight(Vector2 vector, float zOffset = 0f) {
+        var vector3 = new Vector3(vector, zOffset);
+
+        return WithWorldHeight(vector3, zOffset);
+    }
+
+    /// <summary>
+    /// Gets all cells traversed by the ray from origin to destination using digital differential analyzer (DDA)
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <param name="destination"></param>
+    /// <returns>The cells traversed by the ray from origin to destination</returns>
+    public HashSet<Vector3> GetPointsInBetween(Vector3 origin, Vector3 destination) {
+        var targetCellCorner = destination.ToVector2().AsWorldGridCorner();
+
+        var pointsInBetween = RayCasting.RayCast(origin.ToVector2(), destination.ToVector2(), cellCorner => cellCorner == targetCellCorner)
+            .Select(result => WithWorldHeight(result.CornerOfCell.AsWorldGridCenter()))
+            .ToHashSet();
+
+        return pointsInBetween;
+    }
+
+    private void InitWalkableCells() {
         for (var x = 0; x < MaxX; x++) {
             for (var y = 0; y < MaxY; y++) {
                 var cell = new Vector2(x, y).AsWorldGridCenter();

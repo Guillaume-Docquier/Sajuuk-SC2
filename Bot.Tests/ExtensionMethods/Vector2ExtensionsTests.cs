@@ -42,9 +42,9 @@ public class Vector2ExtensionsTests {
         var actual = pointToRotate.RotateAround(origin, MathUtils.DegToRad(angle));
 
         // Assert
-        var displaceOriginMatrix = Matrix4x4.CreateTranslation(origin.ToVector3() * -1);
+        var displaceOriginMatrix = Matrix4x4.CreateTranslation(new Vector3(origin, 0) * -1);
         var rotationMatrix = Matrix4x4.CreateRotationZ((float)MathUtils.DegToRad(angle));
-        var restoreOriginMatrix = Matrix4x4.CreateTranslation(origin.ToVector3());
+        var restoreOriginMatrix = Matrix4x4.CreateTranslation(new Vector3(origin, 0));
 
         var expected = Vector2.Transform(pointToRotate, displaceOriginMatrix);
         expected = Vector2.Transform(expected, rotationMatrix);

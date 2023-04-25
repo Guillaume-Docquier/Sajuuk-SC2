@@ -12,7 +12,10 @@ using Bot.VideoClips.Manim.Animations;
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class StepComparisonClip : Clip {
-    public StepComparisonClip(Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
+    private readonly IMapAnalyzer _mapAnalyzer;
+
+    public StepComparisonClip(IMapAnalyzer mapAnalyzer, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
+        _mapAnalyzer = mapAnalyzer;
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
@@ -21,7 +24,7 @@ public class StepComparisonClip : Clip {
     }
 
     private int ShowGridFarthestFirst(Vector2 origin, int startFrame) {
-        var grid = MapAnalyzer.BuildSearchRadius(origin, 15).ToList();
+        var grid = _mapAnalyzer.BuildSearchRadius(origin, 15).ToList();
         var maxDistance = grid.Max(cell => cell.DistanceTo(origin));
         var animationTotalDuration = TimeUtils.SecsToFrames(1.5f);
 
@@ -30,7 +33,7 @@ public class StepComparisonClip : Clip {
             var relativeDistance = 1 - (cell.DistanceTo(origin) / maxDistance);
             var animationStartFrame = startFrame + (int)(relativeDistance * animationTotalDuration);
 
-            var squareAnimation = new CellDrawingAnimation(cell.ToVector3(), animationStartFrame)
+            var squareAnimation = new CellDrawingAnimation(_mapAnalyzer, _mapAnalyzer.WithWorldHeight(cell), animationStartFrame)
                 .WithDurationInSeconds(0.5f);
             AddAnimation(squareAnimation);
 
@@ -41,11 +44,11 @@ public class StepComparisonClip : Clip {
     }
 
     private int CompareSteps(Vector2 origin, int startFrame) {
-        var rayCastResults = RayCasting.RayCast(origin, MathUtils.DegToRad(30), cell => !MapAnalyzer.IsWalkable(cell)).ToList();
+        var rayCastResults = RayCasting.RayCast(origin, MathUtils.DegToRad(30), cell => !_mapAnalyzer.IsWalkable(cell)).ToList();
 
         var currentOrigin = rayCastResults[0].RayIntersection;
 
-        var originPointAnimation = new SphereDrawingAnimation(currentOrigin.ToVector3(), 0.15f, ColorService.Instance.PointColor , startFrame)
+        var originPointAnimation = new SphereDrawingAnimation(_mapAnalyzer.WithWorldHeight(currentOrigin), 0.15f, ColorService.Instance.PointColor , startFrame)
             .WithDurationInSeconds(0.5f);
         AddAnimation(originPointAnimation);
 
@@ -56,7 +59,7 @@ public class StepComparisonClip : Clip {
         for (var i = 1; i < rayCastResults.Count - 2; i++) {
             var compareStepAnimationEndFrame = CompareSteps(rayCastResults, currentOrigin, previousAnimationEndFrame);
 
-            var drawStepAnimation = new LineDrawingAnimation(currentOrigin.ToVector3(), rayCastResults[i].RayIntersection.ToVector3(), ColorService.Instance.RayColor, compareStepAnimationEndFrame)
+            var drawStepAnimation = new LineDrawingAnimation(_mapAnalyzer.WithWorldHeight(currentOrigin), _mapAnalyzer.WithWorldHeight(rayCastResults[i].RayIntersection), ColorService.Instance.RayColor, compareStepAnimationEndFrame)
                 .WithConstantRate(4);
             AddAnimation(drawStepAnimation);
 
@@ -64,7 +67,7 @@ public class StepComparisonClip : Clip {
                 .WithEndFrame(drawStepAnimation.AnimationEndFrame + 1);
             AddAnimation(panCameraAnimation);
 
-            var pointAnimation = new SphereDrawingAnimation(rayCastResults[i].RayIntersection.ToVector3(), 0.15f, ColorService.Instance.PointColor , drawStepAnimation.AnimationEndFrame)
+            var pointAnimation = new SphereDrawingAnimation(_mapAnalyzer.WithWorldHeight(rayCastResults[i].RayIntersection), 0.15f, ColorService.Instance.PointColor , drawStepAnimation.AnimationEndFrame)
                 .WithDurationInSeconds(0.5f);
             AddAnimation(pointAnimation);
 
@@ -84,12 +87,12 @@ public class StepComparisonClip : Clip {
         }
 
         var nextXAxisLineEnd = new Vector2(nextX.RayIntersection.X, origin.Y);
-        var lineToXAxisAnimation = new LineDrawingAnimation(origin.ToVector3(), nextXAxisLineEnd.ToVector3(), Colors.DarkRed, startFrame)
+        var lineToXAxisAnimation = new LineDrawingAnimation(_mapAnalyzer.WithWorldHeight(origin), _mapAnalyzer.WithWorldHeight(nextXAxisLineEnd), Colors.DarkRed, startFrame)
             .WithDurationInSeconds(1)
             .WithPostAnimationDurationInSeconds(1);
         AddAnimation(lineToXAxisAnimation);
 
-        var lineToXIntersectionAnimation = new LineDrawingAnimation(origin.ToVector3(), nextX.RayIntersection.ToVector3(), ColorService.Instance.RayColor, startFrame)
+        var lineToXIntersectionAnimation = new LineDrawingAnimation(_mapAnalyzer.WithWorldHeight(origin), _mapAnalyzer.WithWorldHeight(nextX.RayIntersection), ColorService.Instance.RayColor, startFrame)
             .WithDurationInSeconds(1)
             .WithPostAnimationDurationInSeconds(1);
         AddAnimation(lineToXIntersectionAnimation);
@@ -97,12 +100,12 @@ public class StepComparisonClip : Clip {
         var nextY = rayCastResults.First(rayCastResult => (int)rayCastResult.CornerOfCell.Y == (int)origin.AsWorldGridCorner().Y + 1); // We're going up
 
         var nextYAxisLineEnd = new Vector2(origin.X, nextY.RayIntersection.Y);
-        var lineToYAxisAnimation = new LineDrawingAnimation(origin.ToVector3(), nextYAxisLineEnd.ToVector3(), Colors.DarkBlue, lineToXIntersectionAnimation.PostAnimationEndFrame)
+        var lineToYAxisAnimation = new LineDrawingAnimation(_mapAnalyzer.WithWorldHeight(origin), _mapAnalyzer.WithWorldHeight(nextYAxisLineEnd), Colors.DarkBlue, lineToXIntersectionAnimation.PostAnimationEndFrame)
             .WithDurationInSeconds(1)
             .WithPostAnimationDurationInSeconds(1);
         AddAnimation(lineToYAxisAnimation);
 
-        var lineToYIntersectionAnimation = new LineDrawingAnimation(origin.ToVector3(), nextY.RayIntersection.ToVector3(), ColorService.Instance.RayColor, lineToXIntersectionAnimation.PostAnimationEndFrame)
+        var lineToYIntersectionAnimation = new LineDrawingAnimation(_mapAnalyzer.WithWorldHeight(origin), _mapAnalyzer.WithWorldHeight(nextY.RayIntersection), ColorService.Instance.RayColor, lineToXIntersectionAnimation.PostAnimationEndFrame)
             .WithDurationInSeconds(1)
             .WithPostAnimationDurationInSeconds(1);
         AddAnimation(lineToYIntersectionAnimation);

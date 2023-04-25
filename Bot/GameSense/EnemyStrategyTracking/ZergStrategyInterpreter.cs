@@ -8,6 +8,8 @@ using SC2APIProtocol;
 namespace Bot.GameSense.EnemyStrategyTracking;
 
 public class ZergStrategyInterpreter : IStrategyInterpreter {
+    private readonly IMapAnalyzer _mapAnalyzer;
+
     private bool _isInitialized = false;
 
     private ulong _poolTiming = 0;
@@ -51,8 +53,8 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
     }
 
     private void Init() {
-        _enemyMain = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main);
-        _enemyNatural = ExpandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
+        _enemyMain = ExpandAnalyzer.Instance.GetExpand(Alliance.Enemy, ExpandType.Main);
+        _enemyNatural = ExpandAnalyzer.Instance.GetExpand(Alliance.Enemy, ExpandType.Natural);
 
         _enemyMainRegion = _enemyMain.GetRegion();
         _enemyNaturalRegion = _enemyNatural.GetRegion();

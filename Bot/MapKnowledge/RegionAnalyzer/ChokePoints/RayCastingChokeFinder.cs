@@ -11,7 +11,9 @@ using SC2APIProtocol;
 namespace Bot.MapKnowledge;
 
 // TODO GD Considering the obstacles (resources, rocks) might be interesting at some point
-public static partial class RayCastingChokeFinder {
+public partial class RayCastingChokeFinder {
+    private readonly IMapAnalyzer _mapAnalyzer;
+
     private const bool DrawEnabled = true; // TODO GD Flag this
 
     private const float ChokeScoreCutOff = 4.4f;
@@ -22,7 +24,11 @@ public static partial class RayCastingChokeFinder {
     private static int MaxX => Controller.GameInfo.StartRaw.MapSize.X;
     private static int MaxY => Controller.GameInfo.StartRaw.MapSize.Y;
 
-    public static List<ChokePoint> FindChokePoints() {
+    public RayCastingChokeFinder(IMapAnalyzer mapAnalyzer) {
+        _mapAnalyzer = mapAnalyzer;
+    }
+
+    public List<ChokePoint> FindChokePoints() {
         var nodes = ComputeWalkableNodesInMap();
         Logger.Info("Computed {0} nodes", nodes.Count);
 
@@ -34,12 +40,12 @@ public static partial class RayCastingChokeFinder {
         return ComputeChokePoints(nodes);
     }
 
-    private static Dictionary<Vector2, Node> ComputeWalkableNodesInMap() {
+    private Dictionary<Vector2, Node> ComputeWalkableNodesInMap() {
         var nodes = new Dictionary<Vector2, Node>();
         for (var x = 0; x < MaxX; x++) {
             for (var y = 0; y < MaxY; y++) {
                 var position = new Vector2(x, y).AsWorldGridCenter();
-                if (MapAnalyzer.IsWalkable(position, includeObstacles: false)) {
+                if (_mapAnalyzer.IsWalkable(position, includeObstacles: false)) {
                     nodes[position] = new Node(position);
                 }
             }
@@ -48,7 +54,7 @@ public static partial class RayCastingChokeFinder {
         return nodes;
     }
 
-    private static List<VisionLine> CreateVisionLines(int nodeCount) {
+    private List<VisionLine> CreateVisionLines(int nodeCount) {
         var savedVisionLines = VisionLinesDataStore.Load(Controller.GameInfo.MapName);
         if (savedVisionLines != null) {
             Logger.Info("Vision lines loaded from file!");
@@ -92,11 +98,11 @@ public static partial class RayCastingChokeFinder {
         return lines;
     }
 
-    private static List<VisionLine> BreakDownIntoContinuousSegments(IEnumerable<VisionLine> lines) {
+    private List<VisionLine> BreakDownIntoContinuousSegments(IEnumerable<VisionLine> lines) {
         return lines.SelectMany(BreakDownIntoContinuousSegments).ToList();
     }
 
-    private static List<VisionLine> BreakDownIntoContinuousSegments(VisionLine visionLine) {
+    private List<VisionLine> BreakDownIntoContinuousSegments(VisionLine visionLine) {
         var lines = new List<VisionLine>();
 
         var cellIndex = 0;
@@ -128,10 +134,10 @@ public static partial class RayCastingChokeFinder {
     /// <param name="visionLine">The line to iterate over</param>
     /// <param name="startCellIndex">The cell index to start at</param>
     /// <returns>The index of the next walkable cell or -1 if none</returns>
-    private static int GoToStartOfNextLine(VisionLine visionLine, int startCellIndex) {
+    private int GoToStartOfNextLine(VisionLine visionLine, int startCellIndex) {
         var currentCellIndex = startCellIndex;
         while (currentCellIndex < visionLine.OrderedTraversedCells.Count) {
-            if (MapAnalyzer.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], includeObstacles: false)) {
+            if (_mapAnalyzer.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], includeObstacles: false)) {
                 return currentCellIndex;
             }
 
@@ -148,7 +154,7 @@ public static partial class RayCastingChokeFinder {
     /// <param name="visionLine">The line to iterate over</param>
     /// <param name="startCellIndex">The cell index to start at</param>
     /// <returns>The index of the last walkable cell or -1 if none</returns>
-    private static int GoToEndOfLine(VisionLine visionLine, int startCellIndex) {
+    private int GoToEndOfLine(VisionLine visionLine, int startCellIndex) {
         if (startCellIndex < 0) {
             return startCellIndex;
         }
@@ -156,7 +162,7 @@ public static partial class RayCastingChokeFinder {
         var currentCellIndex = startCellIndex;
 
         while (currentCellIndex < visionLine.OrderedTraversedCells.Count) {
-            if (!MapAnalyzer.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], includeObstacles: false)) {
+            if (!_mapAnalyzer.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], includeObstacles: false)) {
                 return currentCellIndex - 1;
             }
 
@@ -174,7 +180,7 @@ public static partial class RayCastingChokeFinder {
         }
     }
 
-    private static List<ChokePoint> ComputeChokePoints(Dictionary<Vector2, Node> nodes) {
+    private List<ChokePoint> ComputeChokePoints(Dictionary<Vector2, Node> nodes) {
         foreach (var node in nodes.Values) {
             node.UpdateChokeScore();
         }
@@ -182,7 +188,7 @@ public static partial class RayCastingChokeFinder {
         LogDistribution(nodes.Values.Select(node => node.ChokeScore).ToList());
 
         var initialChokeNodes = nodes.Values.Where(node => node.ChokeScore > ChokeScoreCutOff).ToList();
-        var (chokeNodeClusters, _) = Clustering.DBSCAN(initialChokeNodes, 1.5f, 4);
+        var (chokeNodeClusters, _) = Clustering.Instance.DBSCAN(initialChokeNodes, 1.5f, 4);
 
         // Eliminate outliers from node clusters.
         // We compute a dispersion score based on the average, median and std.
@@ -212,7 +218,7 @@ public static partial class RayCastingChokeFinder {
                 $"Dsp: {dispersionScore,4:F2}",
                 $"Cut: {cut,4:F2}",
             };
-            var chokeNodeClusterCenter = Clustering.GetCenter(chokeNodeCluster).ToVector3();
+            var chokeNodeClusterCenter = _mapAnalyzer.WithWorldHeight(Clustering.Instance.GetCenter(chokeNodeCluster));
             Program.GraphicalDebugger.AddTextGroup(textGroup, worldPos: chokeNodeClusterCenter.ToPoint(zOffset: 5));
             Program.GraphicalDebugger.AddLink(chokeNodeClusterCenter, chokeNodeClusterCenter.Translate(zTranslation: 5), Colors.SunbrightOrange);
 
@@ -232,20 +238,20 @@ public static partial class RayCastingChokeFinder {
 
         DebugLines(chokeLines);
 
-        var (lineCentersClusters, _) = Clustering.DBSCAN(chokeLines, 1.5f, 1);
+        var (lineCentersClusters, _) = Clustering.Instance.DBSCAN(chokeLines, 1.5f, 1);
         var chokePoints = new List<ChokePoint>();
         foreach (var lineCentersCluster in lineCentersClusters) {
-            var clusterCenter = Clustering.GetCenter(lineCentersCluster);
+            var clusterCenter = Clustering.Instance.GetCenter(lineCentersCluster);
 
             var shortestCenterLine = lineCentersCluster.MinBy(line => line.Length + line.Position.ToVector2().DistanceTo(clusterCenter) * 0.5)!;
             DebugLines(new List<VisionLine> { shortestCenterLine }, color: Colors.LimeGreen);
-            chokePoints.Add(new ChokePoint(shortestCenterLine.Start, shortestCenterLine.End));
+            chokePoints.Add(new ChokePoint(shortestCenterLine.Start, shortestCenterLine.End, _mapAnalyzer));
         }
 
         return chokePoints;
     }
 
-    private static void DebugScores(List<Node> nodes, double cutScore) {
+    private void DebugScores(List<Node> nodes, double cutScore) {
         if (!Program.DebugEnabled || !DrawEnabled) {
             return;
         }
@@ -259,17 +265,17 @@ public static partial class RayCastingChokeFinder {
                 textColor = Colors.Blue;
             }
 
-            Program.GraphicalDebugger.AddText($"{node.ChokeScore:F1}", worldPos: node.Position.WithWorldHeight().ToPoint(), color: textColor, size: 13);
+            Program.GraphicalDebugger.AddText($"{node.ChokeScore:F1}", worldPos: _mapAnalyzer.WithWorldHeight(node.Position).ToPoint(), color: textColor, size: 13);
         }
     }
 
-    private static void DebugLines(List<VisionLine> lines, Color color = null) {
+    private void DebugLines(List<VisionLine> lines, Color color = null) {
         if (!Program.DebugEnabled || !DrawEnabled) {
             return;
         }
 
         foreach (var line in lines) {
-            Program.GraphicalDebugger.AddLink(line.Start.ToVector3(zOffset: 0.5f), line.End.ToVector3(zOffset: 0.5f), color ?? Colors.Orange);
+            Program.GraphicalDebugger.AddLink(_mapAnalyzer.WithWorldHeight(line.Start, zOffset: 0.5f), _mapAnalyzer.WithWorldHeight(line.End, zOffset: 0.5f), color ?? Colors.Orange);
         }
     }
 

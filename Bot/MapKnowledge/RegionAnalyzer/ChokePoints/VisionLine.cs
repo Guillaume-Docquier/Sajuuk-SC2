@@ -6,14 +6,15 @@ using Bot.ExtensionMethods;
 
 namespace Bot.MapKnowledge;
 
-public static partial class RayCastingChokeFinder {
+public partial class RayCastingChokeFinder {
     public class VisionLine: IHavePosition {
         public List<Vector2> OrderedTraversedCells { get; }
         public int Angle { get; }
 
         public Vector2 Start { get; }
         public Vector2 End { get; }
-        public Vector3 Position => Vector3.Lerp(Start.ToVector3(), End.ToVector3(), 0.5f);
+        // TODO GD Get rid of MapAnalyzer.Instance, provide and serialize Position
+        public Vector3 Position => Vector3.Lerp(MapAnalyzer.Instance.WithWorldHeight(Start), MapAnalyzer.Instance.WithWorldHeight(End), 0.5f);
         public float Length { get; }
 
         [JsonConstructor]

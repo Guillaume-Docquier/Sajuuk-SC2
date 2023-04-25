@@ -10,19 +10,27 @@ namespace Bot.MapKnowledge;
 using CellPath = List<Vector2>;
 using IRegionPath = List<IRegion>;
 
-public static class Pathfinder {
+public class Pathfinder {
+    public static readonly Pathfinder Instance = new Pathfinder(MapAnalyzer.Instance);
+
+    private readonly IMapAnalyzer _mapAnalyzer;
+
     private const bool DrawEnabled = false; // TODO GD Flag this
 
     /// <summary>
     /// This is public for the performance debugging report, please don't rely on this
     /// </summary>
-    public static readonly Dictionary<Vector2, Dictionary<Vector2, CellPath>> CellPathsMemory = new ();
+    public readonly Dictionary<Vector2, Dictionary<Vector2, CellPath>> CellPathsMemory = new ();
 
     /// <summary>
     /// A multi-level cache for region pathfinding
     /// Used to store paths based on different sets of blocked regions (common use case)
     /// </summary>
-    private static readonly Dictionary<string, Dictionary<IRegion, Dictionary<IRegion, IRegionPath>>> RegionPathsMemory = new ();
+    private readonly Dictionary<string, Dictionary<IRegion, Dictionary<IRegion, IRegionPath>>> _regionPathsMemory = new ();
+
+    public Pathfinder(IMapAnalyzer mapAnalyzer) {
+        _mapAnalyzer = mapAnalyzer;
+    }
 
     /// <summary>
     /// <para>Finds a path between the origin and destination.</para>
@@ -32,10 +40,10 @@ public static class Pathfinder {
     /// <param name="origin">The origin position.</param>
     /// <param name="destination">The destination position.</param>
     /// <returns>The requested path, or null if the destination is unreachable from the origin.</returns>
-    public static CellPath FindPath(Vector2 origin, Vector2 destination) {
+    public CellPath FindPath(Vector2 origin, Vector2 destination) {
         // Improve caching performance
-        origin = origin.ClosestWalkable().AsWorldGridCorner();
-        destination = destination.ClosestWalkable().AsWorldGridCorner();
+        origin = _mapAnalyzer.GetClosestWalkable(origin).AsWorldGridCorner();
+        destination = _mapAnalyzer.GetClosestWalkable(destination).AsWorldGridCorner();
 
         if (origin == destination) {
             return new CellPath();
@@ -46,7 +54,7 @@ public static class Pathfinder {
             return knownPath;
         }
 
-        var maybeNullPath = AStar(origin, destination, (from, to) => from.DistanceTo(to), current => current.GetReachableNeighbors());
+        var maybeNullPath = AStar(origin, destination, (from, to) => from.DistanceTo(to), current => _mapAnalyzer.GetReachableNeighbors(current));
         if (maybeNullPath == null) {
             Logger.Info("No path found between {0} and {1}", origin, destination);
             SavePathToMemory(origin, destination, CellPathsMemory, null);
@@ -70,14 +78,14 @@ public static class Pathfinder {
     /// <param name="destination">The destination region.</param>
     /// <param name="excludedRegions">Regions that should be omitted from pathfinding</param>
     /// <returns>The requested path, or null if the destination is unreachable from the origin.</returns>
-    public static IRegionPath FindPath(IRegion origin, IRegion destination, HashSet<IRegion> excludedRegions = null) {
+    public IRegionPath FindPath(IRegion origin, IRegion destination, HashSet<IRegion> excludedRegions = null) {
         if (origin == destination) {
             return new IRegionPath();
         }
 
         excludedRegions ??= new HashSet<IRegion>();
         var regionMemoryKey = GetRegionMemoryKey(excludedRegions);
-        var regionMemory = GetRegionMemory(RegionPathsMemory, regionMemoryKey);
+        var regionMemory = GetRegionMemory(_regionPathsMemory, regionMemoryKey);
 
         if (TryGetPathFromMemory(origin, destination, regionMemory, out var knownPath)) {
             return knownPath;
@@ -133,9 +141,9 @@ public static class Pathfinder {
     /// Invalidate the pathfinding memory.
     /// This is useful if rocks are broken because new paths might be available.
     /// </summary>
-    public static void InvalidateCache() {
+    public void InvalidateCache() {
         CellPathsMemory.Clear();
-        RegionPathsMemory.Clear();
+        _regionPathsMemory.Clear();
     }
 
     /// <summary>

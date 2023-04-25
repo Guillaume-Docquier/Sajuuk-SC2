@@ -10,10 +10,11 @@ using SC2APIProtocol;
 namespace Bot.GameSense.RegionTracking;
 
 public class RegionTracker : INeedUpdating {
-    public static RegionTracker Instance { get; } = new RegionTracker(DebuggingFlagsTracker.Instance, UnitsTracker.Instance);
+    public static RegionTracker Instance { get; } = new RegionTracker(DebuggingFlagsTracker.Instance, UnitsTracker.Instance, MapAnalyzer.Instance);
 
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
 
     private bool _isInitialized = false;
 
@@ -37,9 +38,10 @@ public class RegionTracker : INeedUpdating {
         Colors.LightRed,
     };
 
-    private RegionTracker(IDebuggingFlagsTracker debuggingFlagsTracker, IUnitsTracker unitsTracker) {
+    private RegionTracker(IDebuggingFlagsTracker debuggingFlagsTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
 
         Reset();
     }
@@ -155,7 +157,7 @@ public class RegionTracker : INeedUpdating {
 
     private void InitEvaluators() {
         foreach (var evaluator in Evaluators) {
-            evaluator.Init(RegionAnalyzer.Regions);
+            evaluator.Init(RegionAnalyzer.Instance.Regions);
         }
 
         _isInitialized = true;
@@ -172,7 +174,7 @@ public class RegionTracker : INeedUpdating {
         }
 
         var regionIndex = 0;
-        foreach (var region in RegionAnalyzer.Regions) {
+        foreach (var region in RegionAnalyzer.Instance.Regions) {
             // TODO GD Set colors on each region directly, with a color different from its neighbors
             var regionColor = RegionColors[regionIndex % RegionColors.Count];
 
@@ -235,17 +237,17 @@ public class RegionTracker : INeedUpdating {
         };
     }
 
-    private static void DrawRegionMarker(IRegion region, Color regionColor, IEnumerable<string> texts, float textXOffset = 0f) {
+    private void DrawRegionMarker(IRegion region, Color regionColor, IEnumerable<string> texts, float textXOffset = 0f) {
         const int zOffset = 5;
-        var offsetRegionCenter = region.Center.ToVector3(zOffset: zOffset);
+        var offsetRegionCenter = _mapAnalyzer.WithWorldHeight(region.Center, zOffset: zOffset);
 
         // Draw the marker
-        Program.GraphicalDebugger.AddLink(region.Center.ToVector3(), offsetRegionCenter, color: regionColor);
+        Program.GraphicalDebugger.AddLink(_mapAnalyzer.WithWorldHeight(region.Center), offsetRegionCenter, color: regionColor);
         Program.GraphicalDebugger.AddTextGroup(texts, size: 14, worldPos: offsetRegionCenter.ToPoint(xOffset: textXOffset), color: regionColor);
 
         // Draw lines to neighbors
         foreach (var neighbor in region.Neighbors) {
-            var neighborOffsetCenter = neighbor.Region.Center.ToVector3(zOffset: zOffset);
+            var neighborOffsetCenter = _mapAnalyzer.WithWorldHeight(neighbor.Region.Center, zOffset: zOffset);
             var regionSizeRatio = (float)region.Cells.Count / (region.Cells.Count + neighbor.Region.Cells.Count);
             var lineEnd = Vector3.Lerp(offsetRegionCenter, neighborOffsetCenter, regionSizeRatio);
             Program.GraphicalDebugger.AddLine(offsetRegionCenter, lineEnd, color: regionColor);

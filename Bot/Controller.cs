@@ -53,7 +53,7 @@ public static class Controller {
 
         EnemyRaceTracker.Instance,      // DI: ✔️ Depends on UnitsTracker
         IncomeTracker.Instance,         // DI: ✔️ Depends on UnitsTracker
-        MapAnalyzer.Instance,           // Depends on UnitsTracker and VisibilityTracker
+        MapAnalyzer.Instance,           // DI: ✔️ Depends on UnitsTracker and VisibilityTracker
 
         BuildingTracker.Instance,       // Depends on UnitsTracker and MapAnalyzer
         ExpandAnalyzer.Instance,        // Depends on UnitsTracker and MapAnalyzer
@@ -427,7 +427,7 @@ public static class Controller {
     }
 
     private static BuildRequestResult PlaceExpand(uint buildingType) {
-        if (!MapAnalyzer.IsInitialized) {
+        if (!MapAnalyzer.Instance.IsInitialized) {
             return BuildRequestResult.NotSupported;
         }
 
@@ -437,7 +437,7 @@ public static class Controller {
     }
 
     private static BuildRequestResult PlaceExpand(uint buildingType, Unit producer) {
-        if (!MapAnalyzer.IsInitialized) {
+        if (!MapAnalyzer.Instance.IsInitialized) {
             return BuildRequestResult.NotSupported;
         }
 
@@ -448,8 +448,8 @@ public static class Controller {
         }
 
         var expandLocation = GetFreeExpandLocations()
-            .Where(expandLocation => Pathfinder.FindPath(MapAnalyzer.StartingLocation, expandLocation) != null)
-            .OrderBy(expandLocation => Pathfinder.FindPath(MapAnalyzer.StartingLocation, expandLocation).Count)
+            .Where(expandLocation => Pathfinder.Instance.FindPath(MapAnalyzer.Instance.StartingLocation, expandLocation) != null)
+            .OrderBy(expandLocation => Pathfinder.Instance.FindPath(MapAnalyzer.Instance.StartingLocation, expandLocation).Count)
             .FirstOrDefault(expandLocation => BuildingTracker.Instance.CanPlace(buildingType, expandLocation));
 
         if (expandLocation == default) {

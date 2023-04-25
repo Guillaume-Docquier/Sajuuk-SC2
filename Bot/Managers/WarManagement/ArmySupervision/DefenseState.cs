@@ -6,6 +6,7 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
+using Bot.MapKnowledge;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;
@@ -14,17 +15,19 @@ public partial class ArmySupervisor {
     public class DefenseState: State<ArmySupervisor> {
         private readonly IVisibilityTracker _visibilityTracker;
         private readonly IUnitsTracker _unitsTracker;
+        private readonly IMapAnalyzer _mapAnalyzer;
 
         private const bool Debug = true;
 
         private const float AcceptableDistanceToTarget = 3;
         private readonly IUnitsControl _unitsController;
 
-        public DefenseState(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
+        public DefenseState(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
+            _mapAnalyzer = mapAnalyzer;
 
-            _unitsController = new OffensiveUnitsControl(_unitsTracker);
+            _unitsController = new OffensiveUnitsControl(_unitsTracker, _mapAnalyzer);
         }
 
         protected override void OnTransition() {
@@ -48,7 +51,7 @@ public partial class ArmySupervisor {
                 return false;
             }
 
-            StateMachine.TransitionTo(new HuntState(_visibilityTracker, _unitsTracker));
+            StateMachine.TransitionTo(new HuntState(_visibilityTracker, _unitsTracker, _mapAnalyzer));
             return true;
         }
 
@@ -58,10 +61,10 @@ public partial class ArmySupervisor {
             var remainingArmy = _unitsController.Execute(new HashSet<Unit>(Context._mainArmy));
 
             Defend(Context._target, remainingArmy, Context._blastRadius, Context.CanHitAirUnits);
-            Rally(Context._mainArmy.GetCenter(), GetSoldiersNotInMainArmy().ToList());
+            Rally(_mapAnalyzer.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3), GetSoldiersNotInMainArmy().ToList());
         }
 
-        private static void DrawArmyData(IReadOnlyCollection<Unit> soldiers) {
+        private void DrawArmyData(IReadOnlyCollection<Unit> soldiers) {
             if (!Debug || soldiers.Count <= 0) {
                 return;
             }
@@ -71,7 +74,7 @@ public partial class ArmySupervisor {
                 {
                     $"Force: {soldiers.GetForce()}",
                 },
-                worldPos: soldiers.GetCenter().Translate(1f, 1f).ToVector3().ToPoint());
+                worldPos: _mapAnalyzer.WithWorldHeight(_mapAnalyzer.GetClosestWalkable(soldiers.GetCenter(), searchRadius: 3).Translate(1f, 1f)).ToPoint());
         }
 
         private void Defend(Vector2 targetToDefend, IReadOnlyCollection<Unit> soldiers, float defenseRadius, bool canHitAirUnits) {
@@ -79,10 +82,10 @@ public partial class ArmySupervisor {
                 return;
             }
 
-            targetToDefend = targetToDefend.ClosestWalkable();
+            targetToDefend = _mapAnalyzer.GetClosestWalkable(targetToDefend);
 
-            Program.GraphicalDebugger.AddSphere(targetToDefend.ToVector3(), AcceptableDistanceToTarget, Colors.Green);
-            Program.GraphicalDebugger.AddTextGroup(new[] { "Defend", $"Radius: {defenseRadius}" }, worldPos: targetToDefend.ToVector3().ToPoint());
+            Program.GraphicalDebugger.AddSphere(_mapAnalyzer.WithWorldHeight(targetToDefend), AcceptableDistanceToTarget, Colors.Green);
+            Program.GraphicalDebugger.AddTextGroup(new[] { "Defend", $"Radius: {defenseRadius}" }, worldPos: _mapAnalyzer.WithWorldHeight(targetToDefend).ToPoint());
 
             var targetList = _unitsTracker.EnemyUnits
                 .Where(unit => !unit.IsCloaked)
@@ -100,7 +103,7 @@ public partial class ArmySupervisor {
 
                         soldier.AttackMove(closestEnemy.Position.ToVector2());
                         Program.GraphicalDebugger.AddLine(soldier.Position, closestEnemy.Position, Colors.Red);
-                        Program.GraphicalDebugger.AddLine(soldier.Position, targetToDefend.ToVector3(), Colors.Green);
+                        Program.GraphicalDebugger.AddLine(soldier.Position, _mapAnalyzer.WithWorldHeight(targetToDefend), Colors.Green);
                     });
             }
             else {
@@ -108,22 +111,22 @@ public partial class ArmySupervisor {
             }
         }
 
-        private static void Rally(Vector2 rallyPoint, IReadOnlyCollection<Unit> soldiers) {
+        private void Rally(Vector2 rallyPoint, IReadOnlyCollection<Unit> soldiers) {
             if (soldiers.Count <= 0) {
                 return;
             }
 
-            rallyPoint = rallyPoint.ClosestWalkable();
+            rallyPoint = _mapAnalyzer.GetClosestWalkable(rallyPoint);
 
-            Program.GraphicalDebugger.AddSphere(rallyPoint.ToVector3(), AcceptableDistanceToTarget, Colors.Blue);
-            Program.GraphicalDebugger.AddText("Rally", worldPos: rallyPoint.ToVector3().ToPoint());
+            Program.GraphicalDebugger.AddSphere(_mapAnalyzer.WithWorldHeight(rallyPoint), AcceptableDistanceToTarget, Colors.Blue);
+            Program.GraphicalDebugger.AddText("Rally", worldPos: _mapAnalyzer.WithWorldHeight(rallyPoint).ToPoint());
 
             soldiers.Where(unit => unit.DistanceTo(rallyPoint) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.AttackMove(rallyPoint));
 
             foreach (var soldier in soldiers) {
-                Program.GraphicalDebugger.AddLine(soldier.Position, rallyPoint.ToVector3(), Colors.Blue);
+                Program.GraphicalDebugger.AddLine(soldier.Position, _mapAnalyzer.WithWorldHeight(rallyPoint), Colors.Blue);
             }
         }
 

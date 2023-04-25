@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Bot.MapKnowledge;
 
-public static partial class RayCastingChokeFinder {
+public partial class RayCastingChokeFinder {
     public static class VisionLinesDataStore {
         public static bool IsEnabled = false;
 

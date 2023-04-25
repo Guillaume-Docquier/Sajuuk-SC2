@@ -15,9 +15,11 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
 public class MineralWalkKiting : IUnitsControl {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
 
-    public MineralWalkKiting(IUnitsTracker unitsTracker) {
+    public MineralWalkKiting(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
     }
 
     public bool IsExecuting() {
@@ -54,7 +56,7 @@ public class MineralWalkKiting : IUnitsControl {
         }
 
         // Filter out some enemies for performance
-        var regimentCenter = Clustering.GetCenter(dronesThatNeedToKite);
+        var regimentCenter = Clustering.Instance.GetCenter(dronesThatNeedToKite);
         var potentialEnemiesToAvoid = _unitsTracker.EnemyUnits.Where(enemy => enemy.DistanceTo(regimentCenter) <= 13).ToList();
         if (potentialEnemiesToAvoid.Count <= 0) {
             return uncontrolledUnits;
@@ -176,13 +178,13 @@ public class MineralWalkKiting : IUnitsControl {
     /// <param name="enemiesToAvoid">The enemies that need to be avoided</param>
     /// <param name="mineralFields">The mineral fields we can walk to</param>
     /// <returns>The mineral field to walk to, or null if there are no good choices</returns>
-    private static Unit GetMineralFieldToWalkTo(Unit drone, IReadOnlyCollection<Unit> enemiesToAvoid, IEnumerable<(Unit unit, Vector2 exit)> mineralFields) {
+    private Unit GetMineralFieldToWalkTo(Unit drone, IReadOnlyCollection<Unit> enemiesToAvoid, IEnumerable<(Unit unit, Vector2 exit)> mineralFields) {
         if (enemiesToAvoid.Count <= 0) {
             return null;
         }
 
         // Get the enemy-drone vector
-        var enemiesCenter = Clustering.GetCenter(enemiesToAvoid);
+        var enemiesCenter = Clustering.Instance.GetCenter(enemiesToAvoid);
         var enemyVector = enemiesCenter.DirectionTo(drone.Position);
 
         // Find the mineral field with the minimum angle to the enemy-drone vector (angle 0 = directly fleeing the enemy
@@ -206,13 +208,13 @@ public class MineralWalkKiting : IUnitsControl {
         return mineralToWalkTo.unit;
     }
 
-    private static void DebugMineralWalkAngle(Unit drone, Vector2 enemyCenter, Vector2 mineralExit, double mineralAngle, Color color) {
+    private void DebugMineralWalkAngle(Unit drone, Vector2 enemyCenter, Vector2 mineralExit, double mineralAngle, Color color) {
         Program.GraphicalDebugger.AddText($"{MathUtils.RadToDeg(mineralAngle):F0} deg", worldPos: drone.Position.ToPoint(zOffset: 2), color: color);
 
-        Program.GraphicalDebugger.AddSphere(mineralExit.ToVector3(zOffset: 2), 0.5f, Colors.Cyan);
-        Program.GraphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), mineralExit.ToVector3(zOffset: 2), Colors.Cyan);
+        Program.GraphicalDebugger.AddSphere(_mapAnalyzer.WithWorldHeight(mineralExit, zOffset: 2), 0.5f, Colors.Cyan);
+        Program.GraphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), _mapAnalyzer.WithWorldHeight(mineralExit, zOffset: 2), Colors.Cyan);
         Program.GraphicalDebugger.AddSphere(drone.Position.Translate(zTranslation: 2), drone.Radius, color);
-        Program.GraphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), enemyCenter.ToVector3(zOffset: 2), Colors.Magenta);
-        Program.GraphicalDebugger.AddSphere(enemyCenter.ToVector3(zOffset: 2), 0.5f, Colors.Magenta);
+        Program.GraphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), _mapAnalyzer.WithWorldHeight(enemyCenter, zOffset: 2), Colors.Magenta);
+        Program.GraphicalDebugger.AddSphere(_mapAnalyzer.WithWorldHeight(enemyCenter, zOffset: 2), 0.5f, Colors.Magenta);
     }
 }

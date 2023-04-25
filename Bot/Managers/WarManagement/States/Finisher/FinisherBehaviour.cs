@@ -24,6 +24,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     private readonly IEnemyRaceTracker _enemyRaceTracker;
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
 
     private readonly FinisherBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
@@ -47,17 +48,19 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         IEnemyRaceTracker enemyRaceTracker,
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
-        IUnitsTracker unitsTracker
+        IUnitsTracker unitsTracker,
+        IMapAnalyzer mapAnalyzer
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
 
         _debugger = new FinisherBehaviourDebugger(debuggingFlagsTracker);
-        AttackSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker);
-        TerranFinisherSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker);
+        AttackSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _mapAnalyzer);
+        TerranFinisherSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _mapAnalyzer);
 
         _corruptorsBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Corruptor, targetQuantity: 0, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Normal);
@@ -67,7 +70,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         Dispatcher = new FinisherDispatcher(this);
         Releaser = new WarManagerReleaser<FinisherBehaviour>(this);
 
-        var target = _warManager.ManagedUnits.GetCenter();
+        var target = _mapAnalyzer.GetClosestWalkable(_warManager.ManagedUnits.GetCenter(), searchRadius: 3);
         AttackSupervisor.AssignTarget(target, 999, canHuntTheEnemy: true);
         TerranFinisherSupervisor.AssignTarget(target, 999, canHuntTheEnemy: true);
     }
@@ -121,7 +124,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
             return false;
         }
 
-        if (MapAnalyzer.Instance.ExplorationRatio < 0.80 || !ExpandAnalyzer.ExpandLocations.All(expandLocation => _visibilityTracker.IsExplored(expandLocation.Position))) {
+        if (_mapAnalyzer.ExplorationRatio < 0.80 || !ExpandAnalyzer.ExpandLocations.All(expandLocation => _visibilityTracker.IsExplored(expandLocation.Position))) {
             return false;
         }
 

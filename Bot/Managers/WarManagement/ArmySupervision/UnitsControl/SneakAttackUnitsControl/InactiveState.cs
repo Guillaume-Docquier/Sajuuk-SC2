@@ -3,20 +3,23 @@ using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.MapKnowledge;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
 
 public partial class SneakAttack {
     public class InactiveState: SneakAttackState {
         private readonly IUnitsTracker _unitsTracker;
+        private readonly IMapAnalyzer _mapAnalyzer;
 
         private const float MinimumEngagementArmyThreshold = 0.75f;
         private const float OverwhelmingForceRatio = 4f;
 
         private const float OperationRadius = TankRange + 3;
 
-        public InactiveState(IUnitsTracker unitsTracker) {
+        public InactiveState(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
             _unitsTracker = unitsTracker;
+            _mapAnalyzer = mapAnalyzer;
         }
 
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
@@ -45,7 +48,7 @@ public partial class SneakAttack {
             }
 
             var enemyMilitaryUnits = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Military)
-                .OrderBy(enemy => enemy.DistanceTo(army.GetCenter()))
+                .OrderBy(enemy => enemy.DistanceTo(_mapAnalyzer.GetClosestWalkable(army.GetCenter(), searchRadius: 3)))
                 .ToList();
 
             var nbSoldiersInRange = army.Count(soldier => enemyMilitaryUnits.Any(soldier.IsInAttackRangeOf));
@@ -67,7 +70,7 @@ public partial class SneakAttack {
                 var closestTarget = Context.GetGroundEnemiesInSight(Context._army).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
                 if (closestTarget == null) {
                     Logger.Error("BurrowSurprise: Went from None -> Fight because no enemies nearby");
-                    NextState = new TerminalState(_unitsTracker);
+                    NextState = new TerminalState(_unitsTracker, _mapAnalyzer);
                     return;
                 }
 
@@ -75,7 +78,7 @@ public partial class SneakAttack {
                 Context._isTargetPriority = false;
             }
 
-            NextState = new ApproachState(_unitsTracker);
+            NextState = new ApproachState(_unitsTracker, _mapAnalyzer);
         }
     }
 }

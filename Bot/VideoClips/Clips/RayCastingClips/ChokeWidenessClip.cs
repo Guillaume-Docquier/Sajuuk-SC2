@@ -10,7 +10,11 @@ using Bot.VideoClips.Manim.Animations;
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class ChokeWidenessClip : Clip {
-    public ChokeWidenessClip(Vector2 origin, Vector2 destination, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
+    private readonly IMapAnalyzer _mapAnalyzer;
+
+    public ChokeWidenessClip(IMapAnalyzer mapAnalyzer, Vector2 origin, Vector2 destination, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
+        _mapAnalyzer = mapAnalyzer;
+
         var centerCameraAnimation = new CenterCameraAnimation(origin, startFrame: 0)
             .WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
@@ -28,14 +32,14 @@ public class ChokeWidenessClip : Clip {
             var currentPosition = Vector2.Lerp(origin, destination, i);
 
             var left = currentPosition.TranslateTowards(destination, 1).RotateAround(currentPosition, MathUtils.DegToRad(90));
-            var leftRayEnd = RayCasting.RayCast(currentPosition, left, cell => !MapAnalyzer.IsWalkable(cell)).Last();
-            var leftRayAnimation = new LineDrawingAnimation(currentPosition.ToVector3(), leftRayEnd.RayIntersection.ToVector3(), Colors.DarkRed, previousAnimationEndFrame)
+            var leftRayEnd = RayCasting.RayCast(currentPosition, left, cell => !_mapAnalyzer.IsWalkable(cell)).Last();
+            var leftRayAnimation = new LineDrawingAnimation(_mapAnalyzer.WithWorldHeight(currentPosition), _mapAnalyzer.WithWorldHeight(leftRayEnd.RayIntersection), Colors.DarkRed, previousAnimationEndFrame)
                 .WithPostAnimationDurationInFrames(1);
             AddAnimation(leftRayAnimation);
 
             var right = currentPosition.TranslateTowards(destination, 1).RotateAround(currentPosition, MathUtils.DegToRad(-90));
-            var rightRayEnd = RayCasting.RayCast(currentPosition, right, cell => !MapAnalyzer.IsWalkable(cell)).Last();
-            var rightRayAnimation = new LineDrawingAnimation(currentPosition.ToVector3(), rightRayEnd.RayIntersection.ToVector3(), Colors.DarkRed, previousAnimationEndFrame)
+            var rightRayEnd = RayCasting.RayCast(currentPosition, right, cell => !_mapAnalyzer.IsWalkable(cell)).Last();
+            var rightRayAnimation = new LineDrawingAnimation(_mapAnalyzer.WithWorldHeight(currentPosition), _mapAnalyzer.WithWorldHeight(rightRayEnd.RayIntersection), Colors.DarkRed, previousAnimationEndFrame)
                 .WithPostAnimationDurationInFrames(1);
             AddAnimation(rightRayAnimation);
 

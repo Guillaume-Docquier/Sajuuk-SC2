@@ -6,8 +6,15 @@ using Bot.GameData;
 
 namespace Bot.MapKnowledge;
 
-public static class FootprintCalculator {
-    public static List<Vector2> GetFootprint(Unit obstacle) {
+public class FootprintCalculator {
+    private readonly IMapAnalyzer _mapAnalyzer;
+
+    // TODO GD It would be nice if we didn't need the map analyzer
+    public FootprintCalculator(IMapAnalyzer mapAnalyzer) {
+        _mapAnalyzer = mapAnalyzer;
+    }
+
+    public List<Vector2> GetFootprint(Unit obstacle) {
         if (Units.MineralFields.Contains(obstacle.UnitType)) {
             return GetMineralFootprint(obstacle);
         }
@@ -28,7 +35,7 @@ public static class FootprintCalculator {
         };
     }
 
-    private static List<Vector2> GetRockFootprint(Unit rock) {
+    private List<Vector2> GetRockFootprint(Unit rock) {
         var footprint = new List<Vector2>();
         switch (rock.UnitType) {
             case Units.DestructibleDebris4x4:
@@ -127,7 +134,7 @@ public static class FootprintCalculator {
         return footprint.Select(cell => cell + rock.Position.ToVector2()).ToList();
     }
 
-    private static List<Vector2> GetGenericFootprint(Unit obstacle) {
-        return MapAnalyzer.BuildSearchGrid(obstacle.Position, (int)obstacle.Radius).Select(cell => cell.AsWorldGridCenter().ToVector2()).ToList();
+    private List<Vector2> GetGenericFootprint(Unit obstacle) {
+        return _mapAnalyzer.BuildSearchGrid(obstacle.Position, (int)obstacle.Radius).Select(cell => cell.AsWorldGridCenter().ToVector2()).ToList();
     }
 }

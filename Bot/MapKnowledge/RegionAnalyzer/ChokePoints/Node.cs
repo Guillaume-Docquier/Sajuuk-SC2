@@ -6,7 +6,7 @@ using Bot.ExtensionMethods;
 
 namespace Bot.MapKnowledge;
 
-public static partial class RayCastingChokeFinder {
+public partial class RayCastingChokeFinder {
     private class Node : IHavePosition {
         // We would like a Vector2 here but IHavePosition requires Vector3
         public Vector3 Position { get; }
@@ -16,7 +16,7 @@ public static partial class RayCastingChokeFinder {
         public List<VisionLine> MostLikelyChokeLines { get; private set; }
 
         public Node(Vector2 position) {
-            Position = position.ToVector3(withWorldHeight: false);
+            Position = new Vector3 { X = position.X, Y = position.Y, Z = 0 };
         }
 
         /// <summary>

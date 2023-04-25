@@ -39,7 +39,7 @@ public abstract class RegionalArmySupervisionState : State<RegionalArmySuperviso
 
         return originRegions.ToDictionary(
             region => region,
-            region => RegionAnalyzer.Regions.Except(reachableRegions[region]).ToHashSet()
+            region => RegionAnalyzer.Instance.Regions.Except(reachableRegions[region]).ToHashSet()
         );
     }
 

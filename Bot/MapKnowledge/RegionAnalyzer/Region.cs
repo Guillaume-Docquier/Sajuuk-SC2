@@ -10,6 +10,9 @@ using SC2APIProtocol;
 
 namespace Bot.MapKnowledge;
 
+// TODO GD Rework the region to differentiate the CalculatedRegion (when generating), PersistedRegion (when loading from file) and real one (that we use)
+// TODO GD CalculatedRegion -> PersistedRegion -> Region
+// TODO GD This will make each constructor more meaningful
 public class Region : IRegion {
     private static readonly List<Color> RegionColors = new List<Color>
     {
@@ -89,7 +92,7 @@ public class Region : IRegion {
         }
 
         if (Center == default) {
-            var regionCenter = Clustering.GetCenter(Cells.ToList());
+            var regionCenter = Clustering.Instance.GetCenter(Cells.ToList());
             Center = Cells.MinBy(cell => cell.DistanceTo(regionCenter));
         }
     }
@@ -102,7 +105,7 @@ public class Region : IRegion {
             var neighboringRegions = cell
                 .GetNeighbors()
                 .Where(neighbor => neighbor.DistanceTo(cell) <= 1) // Disallow diagonals
-                .Select(RegionAnalyzer.GetRegion)
+                .Select(RegionAnalyzer.Instance.GetRegion)
                 .Where(region => region != null && region != this);
 
             foreach (var neighboringRegion in neighboringRegions) {
@@ -176,18 +179,19 @@ public class Region : IRegion {
             return false;
         }
 
-        if (!Cells.Any(cell => MapAnalyzer.IsWalkable(cell))) {
+        // TODO GD Get rid of MapAnalyzer.Instance once Region is split
+        if (!Cells.Any(cell => MapAnalyzer.Instance.IsWalkable(cell))) {
             return true;
         }
 
         var frontier = Neighbors.SelectMany(neighbor => neighbor.Frontier).ToList();
-        var clusteringResult = Clustering.DBSCAN(frontier, epsilon: (float)Math.Sqrt(2), minPoints: 1);
+        var clusteringResult = Clustering.Instance.DBSCAN(frontier, epsilon: (float)Math.Sqrt(2), minPoints: 1);
         if (clusteringResult.clusters.Count != 2) {
             Logger.Error("This ramp has {0} frontiers instead of the expected 2", clusteringResult.clusters.Count);
             return false;
         }
 
-        var pathThrough = Pathfinder.FindPath(
+        var pathThrough = Pathfinder.Instance.FindPath(
             GetWalkableCellNearFrontier(clusteringResult.clusters[0]),
             GetWalkableCellNearFrontier(clusteringResult.clusters[1])
         );
@@ -202,12 +206,13 @@ public class Region : IRegion {
         return portionPassingThrough <= 0.5f;
     }
 
-    private static Vector2 GetWalkableCellNearFrontier(IReadOnlyCollection<Vector2> frontier) {
-        var walkableCell = frontier.FirstOrDefault(cell => MapAnalyzer.IsWalkable(cell));
+    private Vector2 GetWalkableCellNearFrontier(IReadOnlyCollection<Vector2> frontier) {
+        // TODO GD Get rid of MapAnalyzer.Instance once Region is split
+        var walkableCell = frontier.FirstOrDefault(cell => MapAnalyzer.Instance.IsWalkable(cell));
 
         return walkableCell != default
             ? walkableCell
-            : frontier.First().ClosestWalkable();
+            : MapAnalyzer.Instance.GetClosestWalkable(frontier.First());
     }
 
     public override string ToString() {

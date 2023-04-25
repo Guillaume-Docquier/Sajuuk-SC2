@@ -15,6 +15,8 @@ namespace Bot.Debugging.GraphicalDebugging;
 /// Implements all sorts of graphical shapes to help in local debugging.
 /// </summary>
 public class Sc2GraphicalDebugger: IGraphicalDebugger {
+    private readonly IMapAnalyzer _mapAnalyzer;
+
     private const float CreepHeight = 0.02f;
     private const float Padding = 0.05f;
 
@@ -22,6 +24,10 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
     private readonly List<DebugSphere> _debugSpheres = new List<DebugSphere>();
     private readonly Dictionary<Vector3, List<DebugBox>> _debugBoxes = new Dictionary<Vector3, List<DebugBox>>();
     private readonly List<DebugLine> _debugLines = new List<DebugLine>();
+
+    public Sc2GraphicalDebugger(IMapAnalyzer mapAnalyzer) {
+        _mapAnalyzer = mapAnalyzer;
+    }
 
     public Request GetDebugRequest() {
         var debugRequest = RequestBuilder.DebugDraw(
@@ -83,8 +89,8 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
     }
 
     public void AddGridSquaresInRadius(Vector3 centerPosition, int radius, Color color) {
-        foreach (var cell in MapAnalyzer.BuildSearchRadius(centerPosition.ToVector2(), radius)) {
-            AddSquare(cell.ToVector3(), KnowledgeBase.GameGridCellWidth, color, padded: true);
+        foreach (var cell in _mapAnalyzer.BuildSearchRadius(centerPosition.ToVector2(), radius)) {
+            AddSquare(_mapAnalyzer.WithWorldHeight(cell), KnowledgeBase.GameGridCellWidth, color, padded: true);
         }
     }
 
@@ -148,7 +154,7 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
     }
 
     public void AddPath(List<Vector2> path, Color startColor, Color endColor) {
-        AddPath(path.Select(cell => cell.ToVector3()).ToList(), startColor, endColor);
+        AddPath(path.Select(cell => _mapAnalyzer.WithWorldHeight(cell)).ToList(), startColor, endColor);
     }
 
     public void AddPath(List<Vector3> path, Color startColor, Color endColor) {
@@ -172,7 +178,7 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
         );
 
         if (unit.IsFlying) {
-            var groundPosition = unit.Position.WithWorldHeight();
+            var groundPosition = _mapAnalyzer.WithWorldHeight(unit.Position);
             Program.GraphicalDebugger.AddLine(unit.Position, groundPosition, color ?? Colors.White);
             Program.GraphicalDebugger.AddGridSphere(groundPosition, color ?? Colors.White);
         }

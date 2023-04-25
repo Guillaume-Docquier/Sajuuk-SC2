@@ -5,6 +5,7 @@ using Bot.Algorithms;
 using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
+using Bot.MapKnowledge;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;
@@ -12,6 +13,7 @@ namespace Bot.Managers.WarManagement.ArmySupervision;
 public partial class ArmySupervisor: Supervisor {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
 
     private readonly StateMachine<ArmySupervisor> _stateMachine;
 
@@ -31,14 +33,15 @@ public partial class ArmySupervisor: Supervisor {
     protected override IAssigner Assigner { get; }
     protected override IReleaser Releaser { get; }
 
-    public ArmySupervisor(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
+    public ArmySupervisor(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
 
         Assigner = new ArmySupervisorAssigner(this);
         Releaser = new ArmySupervisorReleaser(this);
 
-        _stateMachine = new StateMachine<ArmySupervisor>(this, new AttackState(_visibilityTracker, _unitsTracker));
+        _stateMachine = new StateMachine<ArmySupervisor>(this, new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer));
     }
 
     public override string ToString() {
@@ -50,7 +53,7 @@ public partial class ArmySupervisor: Supervisor {
             return;
         }
 
-        _mainArmy = Clustering.DBSCAN(Army, 4, 2).clusters.MaxBy(army => army.GetForce());
+        _mainArmy = Clustering.Instance.DBSCAN(Army, 4, 2).clusters.MaxBy(army => army.GetForce());
         _mainArmy ??= Army; // TODO GD This is bad, let the states do what they want
 
         _stateMachine.OnFrame();
@@ -59,7 +62,7 @@ public partial class ArmySupervisor: Supervisor {
     public void AssignTarget(Vector2 target, float blastRadius, bool canHuntTheEnemy = true) {
         if (_target != target) {
             _target = target;
-            _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker));
+            _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer));
         }
 
         _blastRadius = blastRadius;
@@ -74,6 +77,6 @@ public partial class ArmySupervisor: Supervisor {
 
         // Reset the state to have a clean slate once we're re-hired
         // Maybe our Manager should just dispose of us instead?
-        _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker));
+        _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer));
     }
 }

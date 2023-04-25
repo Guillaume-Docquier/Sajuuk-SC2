@@ -3,10 +3,15 @@ using System.Linq;
 using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
+using Bot.MapKnowledge;
 
 namespace Bot.Algorithms;
 
-public static class Clustering {
+public class Clustering {
+    public static readonly Clustering Instance = new Clustering(MapAnalyzer.Instance);
+
+    private readonly IMapAnalyzer _mapAnalyzer;
+
     private const bool DrawEnabled = false; // TODO GD Flag this
 
     private enum DBSCANLabels {
@@ -15,13 +20,17 @@ public static class Clustering {
         CorePoint
     }
 
+    public Clustering(IMapAnalyzer mapAnalyzer) {
+        _mapAnalyzer = mapAnalyzer;
+    }
+
     /// <summary>
     /// Performs a flood fill on the given cells, starting from the provided starting point.
     /// </summary>
     /// <param name="cells"></param>
     /// <param name="startingPoint"></param>
     /// <returns>The cells reached by the flood fill</returns>
-    public static IEnumerable<Vector2> FloodFill(IEnumerable<Vector2> cells, Vector2 startingPoint) {
+    public IEnumerable<Vector2> FloodFill(IEnumerable<Vector2> cells, Vector2 startingPoint) {
         var toExplore = cells.ToHashSet();
         toExplore.Remove(startingPoint);
 
@@ -34,7 +43,7 @@ public static class Clustering {
             var cellToExplore = explorationQueue.Dequeue();
             explored.Add(cellToExplore);
 
-            foreach (var neighbor in cellToExplore.GetReachableNeighbors(includeObstacles: false).Where(toExplore.Contains)) {
+            foreach (var neighbor in _mapAnalyzer.GetReachableNeighbors(cellToExplore, includeObstacles: false).Where(toExplore.Contains)) {
                 explorationQueue.Enqueue(neighbor);
                 toExplore.Remove(neighbor);
             }
@@ -51,7 +60,7 @@ public static class Clustering {
     /// <param name="epsilon">How close a point needs to be to be considered nearby</param>
     /// <param name="minPoints">How many points need to be nearby to count as a cluster node</param>
     /// <returns>A list of clusters and the resulting noise</returns>
-    public static (List<List<Vector2>> clusters, List<Vector2> noise) DBSCAN(List<Vector2> positions, float epsilon, int minPoints) {
+    public (List<List<Vector2>> clusters, List<Vector2> noise) DBSCAN(List<Vector2> positions, float epsilon, int minPoints) {
         var clusters = new List<List<Vector2>>();
         var labels = new Dictionary<Vector2, DBSCANLabels>();
 
@@ -118,7 +127,7 @@ public static class Clustering {
     /// <param name="epsilon">How close an item needs to be to be considered nearby</param>
     /// <param name="minPoints">How many items need to be nearby to count as a cluster node</param>
     /// <returns>A list of clusters and the resulting noise</returns>
-    public static (List<List<T>> clusters, List<T> noise) DBSCAN<T>(IReadOnlyCollection<T> items, float epsilon, int minPoints) where T: class, IHavePosition {
+    public (List<List<T>> clusters, List<T> noise) DBSCAN<T>(IReadOnlyCollection<T> items, float epsilon, int minPoints) where T: class, IHavePosition {
         var clusters = new List<List<T>>();
         var labels = new Dictionary<T, DBSCANLabels>();
 
@@ -177,11 +186,11 @@ public static class Clustering {
         return (clusters, noise);
     }
 
-    public static Vector2 GetCenter<T>(IEnumerable<T> cluster) where T: class, IHavePosition {
+    public Vector2 GetCenter<T>(IEnumerable<T> cluster) where T: class, IHavePosition {
         return GetCenter(cluster.Select(item => item.Position.ToVector2()).ToList());
     }
 
-    public static Vector2 GetCenter(List<Vector2> cluster) {
+    public Vector2 GetCenter(List<Vector2> cluster) {
         if (cluster.Count <= 0) {
             Logger.Error("Trying to GetCenter of an empty cluster");
 
@@ -194,11 +203,11 @@ public static class Clustering {
         return new Vector2(avgX, avgY);
     }
 
-    public static Vector3 GetBoundingBoxCenter<T>(IEnumerable<T> cluster) where T: class, IHavePosition {
+    public Vector3 GetBoundingBoxCenter<T>(IEnumerable<T> cluster) where T: class, IHavePosition {
         return GetBoundingBoxCenter(cluster.Select(item => item.Position.ToVector2()).ToList());
     }
 
-    public static Vector3 GetBoundingBoxCenter(List<Vector2> cluster) {
+    public Vector3 GetBoundingBoxCenter(List<Vector2> cluster) {
         var minX = cluster.Select(element => element.X).Min();
         var maxX = cluster.Select(element => element.X).Max();
         var minY = cluster.Select(element => element.Y).Min();
@@ -207,14 +216,14 @@ public static class Clustering {
         var centerX = minX + (maxX - minX) / 2;
         var centerY = minY + (maxY - minY) / 2;
 
-        return new Vector3(centerX, centerY, 0).WithWorldHeight();
+        return _mapAnalyzer.WithWorldHeight(new Vector2(centerX, centerY));
     }
 
-    private static void DrawBoundingBox<T>(IReadOnlyCollection<T> cluster) where T: class, IHavePosition {
+    private void DrawBoundingBox<T>(IReadOnlyCollection<T> cluster) where T: class, IHavePosition {
         DrawBoundingBox(cluster.Select(item => item.Position.ToVector2()).ToList());
     }
 
-    private static void DrawBoundingBox(IReadOnlyCollection<Vector2> cluster) {
+    private void DrawBoundingBox(IReadOnlyCollection<Vector2> cluster) {
         if (!DrawEnabled) {
             return;
         }
@@ -226,7 +235,7 @@ public static class Clustering {
 
         var centerX = minX + (maxX - minX) / 2;
         var centerY = minY + (maxY - minY) / 2;
-        var boundingBoxCenter = new Vector3(centerX, centerY, 0).WithWorldHeight();
+        var boundingBoxCenter = _mapAnalyzer.WithWorldHeight(new Vector2(centerX, centerY));
 
         Program.GraphicalDebugger.AddRectangle(boundingBoxCenter, maxX - minX, maxY - minY, Colors.Orange);
     }

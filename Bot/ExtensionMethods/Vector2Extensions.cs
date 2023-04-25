@@ -19,12 +19,6 @@ public static class Vector2Extensions {
         };
     }
 
-    public static Vector3 ToVector3(this Vector2 vector, bool withWorldHeight = true, float zOffset = 0f) {
-        var vector3 = new Vector3(vector.X, vector.Y, zOffset);
-
-        return withWorldHeight ? vector3.WithWorldHeight(zOffset) : vector3;
-    }
-
     public static float DistanceTo(this Vector2 origin, Unit unit) {
         return Vector2.Distance(origin, unit.Position.ToVector2());
     }
@@ -61,7 +55,7 @@ public static class Vector2Extensions {
     /// <param name="position">The position to get the Region of</param>
     /// <returns>The Region of the given position</returns>
     public static IRegion GetRegion(this Vector2 position) {
-        return RegionAnalyzer.GetRegion(position);
+        return RegionAnalyzer.Instance.GetRegion(position);
     }
 
     /// <summary>
@@ -123,97 +117,6 @@ public static class Vector2Extensions {
             X = (float)(translatedX * cosTheta - translatedY * sinTheta + origin.X),
             Y = (float)(translatedX * sinTheta + translatedY * cosTheta + origin.Y),
         };
-    }
-
-    /// <summary>
-    /// <para>Gets up to 8 reachable neighbors around the position.</para>
-    /// <para>Top, left, down and right are given if they are walkable.</para>
-    /// <para>
-    /// Diagonal neighbors are returned only if at least one of their components if walkable.
-    /// For example, the top right diagonal is reachable of either the top or the right is walkable.
-    /// </para>
-    /// <para>This is a game detail.</para>
-    /// </summary>
-    /// <param name="position">The position to get the neighbors of</param>
-    /// <param name="includeObstacles">If you're wondering if you should be using this, you shouldn't.</param>
-    /// <returns>Up to 8 neighbors</returns>
-    public static IEnumerable<Vector2> GetReachableNeighbors(this Vector2 position, bool includeObstacles = true) {
-        var leftPos = position.Translate(xTranslation: -1);
-        var isLeftOk = MapAnalyzer.IsInBounds(leftPos) && MapAnalyzer.IsWalkable(leftPos, includeObstacles);
-        if (isLeftOk) {
-            yield return leftPos;
-        }
-
-        var rightPos = position.Translate(xTranslation: 1);
-        var isRightOk = MapAnalyzer.IsInBounds(rightPos) && MapAnalyzer.IsWalkable(rightPos, includeObstacles);
-        if (isRightOk) {
-            yield return rightPos;
-        }
-
-        var upPos = position.Translate(yTranslation: 1);
-        var isUpOk = MapAnalyzer.IsInBounds(upPos) && MapAnalyzer.IsWalkable(upPos, includeObstacles);
-        if (isUpOk) {
-            yield return upPos;
-        }
-
-        var downPos = position.Translate(yTranslation: -1);
-        var isDownOk = MapAnalyzer.IsInBounds(downPos) && MapAnalyzer.IsWalkable(downPos, includeObstacles);
-        if (isDownOk) {
-            yield return downPos;
-        }
-
-        if (isLeftOk || isUpOk) {
-            var leftUpPos = position.Translate(xTranslation: -1, yTranslation: 1);
-            if (MapAnalyzer.IsInBounds(leftUpPos) && MapAnalyzer.IsWalkable(leftUpPos, includeObstacles)) {
-                yield return leftUpPos;
-            }
-        }
-
-        if (isLeftOk || isDownOk) {
-            var leftDownPos = position.Translate(xTranslation: -1, yTranslation: -1);
-            if (MapAnalyzer.IsInBounds(leftDownPos) && MapAnalyzer.IsWalkable(leftDownPos, includeObstacles)) {
-                yield return leftDownPos;
-            }
-        }
-
-        if (isRightOk || isUpOk) {
-            var rightUpPos = position.Translate(xTranslation: 1, yTranslation: 1);
-            if (MapAnalyzer.IsInBounds(rightUpPos) && MapAnalyzer.IsWalkable(rightUpPos, includeObstacles)) {
-                yield return rightUpPos;
-            }
-        }
-
-        if (isRightOk || isDownOk) {
-            var rightDownPos = position.Translate(xTranslation: 1, yTranslation: -1);
-            if (MapAnalyzer.IsInBounds(rightDownPos) && MapAnalyzer.IsWalkable(rightDownPos, includeObstacles)) {
-                yield return rightDownPos;
-            }
-        }
-    }
-
-    public static Vector2 ClosestWalkable(this Vector2 position, int searchRadius = 8, HashSet<Vector2> allowedCells = null) {
-        if (MapAnalyzer.IsWalkable(position)) {
-            return position;
-        }
-
-        var searchGrid = MapAnalyzer.BuildSearchGrid(position, searchRadius)
-            .Where(cell => MapAnalyzer.IsWalkable(cell));
-
-        if (allowedCells != null) {
-            searchGrid = searchGrid.Where(allowedCells.Contains);
-        }
-
-        var closestWalkableCell = searchGrid
-            .DefaultIfEmpty()
-            .MinBy(cell => cell.DistanceTo(position));
-
-        // It's probably good to avoid returning default?
-        if (closestWalkableCell == default) {
-            Logger.Error("Vector3.ClosestWalkable returned no elements in a 15 radius around {0}", position);
-            return position;
-        }
-
-        return closestWalkableCell;
     }
 
     /// <summary>

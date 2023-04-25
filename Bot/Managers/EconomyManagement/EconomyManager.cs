@@ -13,6 +13,7 @@ namespace Bot.Managers.EconomyManagement;
 
 public sealed partial class EconomyManager: Manager {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
 
     private const int MaxDroneCount = 70;
     private readonly BuildManager _buildManager;
@@ -42,9 +43,10 @@ public sealed partial class EconomyManager: Manager {
     protected override IDispatcher Dispatcher { get; }
     protected override IReleaser Releaser { get; }
 
-    public EconomyManager(BuildManager buildManager, IUnitsTracker unitsTracker) {
+    public EconomyManager(BuildManager buildManager, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
         _buildManager = buildManager;
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
 
         Assigner = new EconomyManagerAssigner(this);
         Dispatcher = new EconomyManagerDispatcher(this);
@@ -181,7 +183,7 @@ public sealed partial class EconomyManager: Manager {
 
     // TODO GD This doesn't seem to work very well
     private void EqualizeWorkers() {
-        var supervisorInNeed = GetClosestSupervisorWithIdealCapacityNotMet(MapAnalyzer.StartingLocation);
+        var supervisorInNeed = GetClosestSupervisorWithIdealCapacityNotMet(_mapAnalyzer.StartingLocation);
         while (supervisorInNeed != null) {
             var requiredWorkers = supervisorInNeed.IdealAvailableCapacity;
             var supervisorWithExtraWorkers = _townHallSupervisors.FirstOrDefault(supervisor => supervisor.IdealAvailableCapacity < 0); // Negative IdealAvailableCapacity means they have extra workers
@@ -194,7 +196,7 @@ public sealed partial class EconomyManager: Manager {
                 supervisorInNeed.Assign(freeWorker);
             }
 
-            supervisorInNeed = GetClosestSupervisorWithIdealCapacityNotMet(MapAnalyzer.StartingLocation);
+            supervisorInNeed = GetClosestSupervisorWithIdealCapacityNotMet(_mapAnalyzer.StartingLocation);
         }
     }
 

@@ -12,20 +12,22 @@ public partial class ArmySupervisor {
     public class HuntState: State<ArmySupervisor> {
         private readonly IVisibilityTracker _visibilityTracker;
         private readonly IUnitsTracker _unitsTracker;
+        private readonly IMapAnalyzer _mapAnalyzer;
 
         private static Dictionary<Vector2, bool> _checkedExpandLocations;
         private static readonly Dictionary<Vector2, bool> CheckedPositions = new Dictionary<Vector2, bool>();
 
         private bool _isNextTargetSet = false;
 
-        public HuntState(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
+        public HuntState(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
+            _mapAnalyzer = mapAnalyzer;
         }
 
         protected override bool TryTransitioning() {
             if (_isNextTargetSet) {
-                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker));
+                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer));
                 return true;
             }
 
@@ -33,7 +35,7 @@ public partial class ArmySupervisor {
         }
 
         protected override void Execute() {
-            if (MapAnalyzer.IsInitialized && _checkedExpandLocations == null) {
+            if (_mapAnalyzer.IsInitialized && _checkedExpandLocations == null) {
                 ResetCheckedExpandLocations();
             }
 
@@ -80,10 +82,10 @@ public partial class ArmySupervisor {
 
         private void ResetCheckedPositions() {
             CheckedPositions.Clear();
-            for (var x = 0; x < MapAnalyzer.MaxX; x++) {
-                for (var y = 0; y < MapAnalyzer.MaxY; y++) {
+            for (var x = 0; x < _mapAnalyzer.MaxX; x++) {
+                for (var y = 0; y < _mapAnalyzer.MaxY; y++) {
                     var position = new Vector2(x, y).AsWorldGridCenter();
-                    if (!Context.CanFly && !MapAnalyzer.IsWalkable(position)) {
+                    if (!Context.CanFly && !_mapAnalyzer.IsWalkable(position)) {
                         continue;
                     }
 
@@ -104,9 +106,9 @@ public partial class ArmySupervisor {
                 ResetCheckedPositions();
             }
 
-            var armyCenter = Context._mainArmy.GetCenter();
+            var armyCenter = _mapAnalyzer.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3);
             if (!Context.CanFly) {
-                armyCenter = armyCenter.ClosestWalkable();
+                armyCenter = _mapAnalyzer.GetClosestWalkable(armyCenter);
             }
 
             var notVisiblePositions = CheckedPositions
@@ -131,11 +133,11 @@ public partial class ArmySupervisor {
             // TODO GD The module and the manager are giving orders to the unit, freezing it
             // _armyManager.Army.ForEach(TargetNeutralUnitsModule.Install);
 
-            var armyCenter = Context._mainArmy.GetCenter().ClosestWalkable();
+            var armyCenter = _mapAnalyzer.GetClosestWalkable(Context._mainArmy.GetCenter());
             var nextReachableUncheckedLocations = ExpandAnalyzer.ExpandLocations
                 .Select(expandLocation => expandLocation.Position)
                 .Where(expandLocation => !_checkedExpandLocations[expandLocation])
-                .Where(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation) != null)
+                .Where(expandLocation => Pathfinder.Instance.FindPath(armyCenter, expandLocation) != null)
                 .ToList();
 
             if (nextReachableUncheckedLocations.Count == 0) {
@@ -143,7 +145,7 @@ public partial class ArmySupervisor {
                 ResetCheckedExpandLocations();
             }
             else {
-                var nextTarget = nextReachableUncheckedLocations.MinBy(expandLocation => Pathfinder.FindPath(armyCenter, expandLocation).Count);
+                var nextTarget = nextReachableUncheckedLocations.MinBy(expandLocation => Pathfinder.Instance.FindPath(armyCenter, expandLocation).Count);
                 Logger.Info("<HuntState> next target is: {0}", nextTarget);
                 Context._target = nextTarget;
                 _isNextTargetSet = true;

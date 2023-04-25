@@ -12,10 +12,10 @@ public class CellDrawingAnimation : Animation<CellDrawingAnimation> {
     private readonly float _padding;
     private readonly Color _cellColor;
 
-    public CellDrawingAnimation(Vector3 cell, int startFrame, float padding = 0f) : base(startFrame) {
+    public CellDrawingAnimation(IMapAnalyzer mapAnalyzer, Vector3 cell, int startFrame, float padding = 0f) : base(startFrame) {
         _cell = cell;
         _padding = padding;
-        _cellColor = MapAnalyzer.IsWalkable(_cell) ? ColorService.Instance.WalkableCellColor : ColorService.Instance.UnwalkableCellColor;
+        _cellColor = mapAnalyzer.IsWalkable(_cell) ? ColorService.Instance.WalkableCellColor : ColorService.Instance.UnwalkableCellColor;
     }
 
     protected override Task Animate(int currentClipFrame) {

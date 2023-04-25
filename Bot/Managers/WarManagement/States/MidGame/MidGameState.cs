@@ -14,6 +14,7 @@ public class MidGameState : WarManagerState {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
@@ -23,19 +24,21 @@ public class MidGameState : WarManagerState {
         IEnemyRaceTracker enemyRaceTracker,
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
-        IUnitsTracker unitsTracker
+        IUnitsTracker unitsTracker,
+        IMapAnalyzer mapAnalyzer
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new MidGameBehaviour(Context, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker);
+        _behaviour = new MidGameBehaviour(Context, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _mapAnalyzer);
     }
 
     protected override void Execute() {
@@ -52,7 +55,7 @@ public class MidGameState : WarManagerState {
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new FinisherState(_taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker));
+            StateMachine.TransitionTo(new FinisherState(_taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _mapAnalyzer));
             return true;
         }
 
@@ -64,7 +67,7 @@ public class MidGameState : WarManagerState {
     /// </summary>
     /// <returns>True if we can stop being fancy and just finish the opponent</returns>
     private bool ShouldTransitionToFinisher() {
-        if (MapAnalyzer.Instance.VisibilityRatio < 0.85) {
+        if (_mapAnalyzer.VisibilityRatio < 0.85) {
             return false;
         }
 

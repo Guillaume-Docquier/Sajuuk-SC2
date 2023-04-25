@@ -1,9 +1,7 @@
 ﻿using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
-using Bot.GameSense;
 using Bot.Tests.Mocks;
-using Moq;
 
 namespace Bot.Tests.Managers.EconomyManagement.TownHallSupervision;
 

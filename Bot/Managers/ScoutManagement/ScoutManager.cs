@@ -13,6 +13,7 @@ namespace Bot.Managers.ScoutManagement;
 
 public partial class ScoutManager : Manager {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
@@ -23,14 +24,15 @@ public partial class ScoutManager : Manager {
     private readonly IScoutingStrategy _scoutingStrategy;
     private readonly HashSet<ScoutSupervisor> _scoutSupervisors = new HashSet<ScoutSupervisor>();
 
-    public ScoutManager(IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
+    public ScoutManager(IEnemyRaceTracker enemyRaceTracker, IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
 
         Assigner = new ScoutManagerAssigner(this);
         Dispatcher = new ScoutManagerDispatcher(this);
         Releaser = new ScoutManagerReleaser(this);
 
-        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker, unitsTracker);
+        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker, _unitsTracker, _mapAnalyzer);
     }
 
     protected override void RecruitmentPhase() {
@@ -66,7 +68,7 @@ public partial class ScoutManager : Manager {
         }
 
         // TODO GD This can be improved but seems like a sensible default
-        var recallPosition = MapAnalyzer.StartingLocation;
+        var recallPosition = _mapAnalyzer.StartingLocation;
         foreach (var unitToRecall in unitsToRecall.Where(unit => unit.DistanceTo(recallPosition) > 5)) {
             unitToRecall.Move(recallPosition);
         }

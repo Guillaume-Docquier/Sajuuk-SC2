@@ -4,12 +4,14 @@ using Bot.Algorithms;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.MapKnowledge;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
 
 public partial class SneakAttack {
     public class SetupState : SneakAttackState {
         private readonly IUnitsTracker _unitsTracker;
+        private readonly IMapAnalyzer _mapAnalyzer;
 
         private const float EngageDistance = 1f;
         private const float MinimumArmyThresholdToEngage = 0.80f;
@@ -19,8 +21,9 @@ public partial class SneakAttack {
 
         private readonly StuckDetector _stuckDetector = new StuckDetector();
 
-        public SetupState(IUnitsTracker unitsTracker) {
+        public SetupState(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
             _unitsTracker = unitsTracker;
+            _mapAnalyzer = mapAnalyzer;
         }
 
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
@@ -46,7 +49,7 @@ public partial class SneakAttack {
             _stuckDetector.Tick(Context._armyCenter);
             if (_stuckDetector.IsStuck) {
                 Logger.Warning("{0} army is stuck", Name);
-                NextState = new TerminalState(_unitsTracker);
+                NextState = new TerminalState(_unitsTracker, _mapAnalyzer);
 
                 return;
             }
@@ -55,14 +58,14 @@ public partial class SneakAttack {
 
             if (Context._targetPosition == default) {
                 Logger.Warning("{0} has no target", Name);
-                NextState = new TerminalState(_unitsTracker);
+                NextState = new TerminalState(_unitsTracker, _mapAnalyzer);
                 Context._isTargetPriority = false;
 
                 return;
             }
 
             if (IsReadyToEngage()) {
-                NextState = new EngageState(_unitsTracker);
+                NextState = new EngageState(_unitsTracker, _mapAnalyzer);
             }
             else {
                 MoveArmyIntoPosition();
@@ -80,11 +83,13 @@ public partial class SneakAttack {
             }
             else {
                 var enemies = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Military).ToList();
-                var closestEnemyCluster = Clustering.DBSCAN(enemies, 5, 2).clusters.MinBy(cluster => cluster.GetCenter().DistanceTo(Context._armyCenter));
+                var closestEnemyCluster = Clustering.Instance.DBSCAN(enemies, 5, 2)
+                    .clusters
+                    .MinBy(cluster => _mapAnalyzer.GetClosestWalkable(cluster.GetCenter(), searchRadius: 3).DistanceTo(Context._armyCenter));
 
                 // TODO GD Tweak this to create a concave instead?
-                if (closestEnemyCluster != null && Context._armyCenter.DistanceTo(closestEnemyCluster.GetCenter()) <= OperationRadius) {
-                    Context._targetPosition = closestEnemyCluster.GetCenter();
+                if (closestEnemyCluster != null && Context._armyCenter.DistanceTo(_mapAnalyzer.GetClosestWalkable(closestEnemyCluster.GetCenter(), searchRadius: 3)) <= OperationRadius) {
+                    Context._targetPosition = _mapAnalyzer.GetClosestWalkable(closestEnemyCluster.GetCenter(), searchRadius: 3);
                     Context._isTargetPriority = false;
                 }
             }

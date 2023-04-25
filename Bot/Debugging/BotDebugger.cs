@@ -18,17 +18,20 @@ public class BotDebugger {
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IIncomeTracker _incomeTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
 
     public BotDebugger(
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IIncomeTracker incomeTracker
+        IIncomeTracker incomeTracker,
+        IMapAnalyzer mapAnalyzer
     ) {
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
         _incomeTracker = incomeTracker;
+        _mapAnalyzer = mapAnalyzer;
     }
 
     public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus, Race enemyRace) {
@@ -107,12 +110,12 @@ public class BotDebugger {
 
         // We will ignore cells that are too low because we don't see them anyways
         // Showing all of them is too much for protobuf, the CodedOutputStream runs out of space
-        var minHeightRequiredToShow = MapAnalyzer.WalkableCells.Min(cell => cell.ToVector3().Z) - 1;
+        var minHeightRequiredToShow = _mapAnalyzer.WalkableCells.Min(cell => _mapAnalyzer.WithWorldHeight(cell).Z) - 1;
 
-        for (var x = 0; x < MapAnalyzer.MaxX; x++) {
-            for (var y = 0; y < MapAnalyzer.MaxY; y++) {
-                var position = new Vector3(x, y, 0).AsWorldGridCenter().WithWorldHeight();
-                if (!MapAnalyzer.IsWalkable(position) && position.Z >= minHeightRequiredToShow) {
+        for (var x = 0; x < _mapAnalyzer.MaxX; x++) {
+            for (var y = 0; y < _mapAnalyzer.MaxY; y++) {
+                var position = _mapAnalyzer.WithWorldHeight(new Vector3(x, y, 0).AsWorldGridCenter());
+                if (!_mapAnalyzer.IsWalkable(position) && position.Z >= minHeightRequiredToShow) {
                     Program.GraphicalDebugger.AddGridSquare(position, Colors.LightRed);
                 }
             }
@@ -216,7 +219,7 @@ public class BotDebugger {
         // TODO GD Add creep coverage
         var matchupTexts = new List<string>
         {
-            $"Enemy: {enemyRace} / Visible: {MapAnalyzer.Instance.VisibilityRatio,3:P0} / Explored: {MapAnalyzer.Instance.ExplorationRatio,3:P0}",
+            $"Enemy: {enemyRace} / Visible: {_mapAnalyzer.VisibilityRatio,3:P0} / Explored: {_mapAnalyzer.ExplorationRatio,3:P0}",
             $"Strategy: {EnemyStrategyTracker.Instance.CurrentEnemyStrategy}"
         };
 
@@ -228,10 +231,10 @@ public class BotDebugger {
             return;
         }
 
-        foreach (var notExploredCell in MapAnalyzer.WalkableCells.Where(cell => !_visibilityTracker.IsExplored(cell))) {
+        foreach (var notExploredCell in _mapAnalyzer.WalkableCells.Where(cell => !_visibilityTracker.IsExplored(cell))) {
             var color = Colors.PeachPink;
-            Program.GraphicalDebugger.AddText("?", color: color, worldPos: notExploredCell.ToVector3().ToPoint());
-            Program.GraphicalDebugger.AddGridSquare(notExploredCell.ToVector3(), color: color);
+            Program.GraphicalDebugger.AddText("?", color: color, worldPos: _mapAnalyzer.WithWorldHeight(notExploredCell).ToPoint());
+            Program.GraphicalDebugger.AddGridSquare(_mapAnalyzer.WithWorldHeight(notExploredCell), color: color);
         }
     }
 
@@ -246,7 +249,7 @@ public class BotDebugger {
         }
 
         foreach (var effect in Controller.Observation.Observation.RawData.Effects) {
-            foreach (var effectPosition in effect.Pos.Select(effectPosition => new Vector3(effectPosition.X, effectPosition.Y, 0).WithWorldHeight())) {
+            foreach (var effectPosition in effect.Pos.Select(effectPosition => _mapAnalyzer.WithWorldHeight(new Vector3(effectPosition.X, effectPosition.Y, 0)))) {
                 var effectText = $"{KnowledgeBase.GetEffectData(effect.EffectId).FriendlyName} ({effect.EffectId})";
                 Program.GraphicalDebugger.AddText(effectText, size: 11, worldPos: effectPosition.ToPoint(xOffset: -0.4f));
                 Program.GraphicalDebugger.AddSphere(effectPosition, effect.Radius, Colors.Cyan);
@@ -259,13 +262,13 @@ public class BotDebugger {
             return;
         }
 
-        foreach (var cell in MapAnalyzer.WalkableCells) {
+        foreach (var cell in _mapAnalyzer.WalkableCells) {
             var coords = new List<string>
             {
                 $"{cell.X}",
                 $"{cell.Y}"
             };
-            Program.GraphicalDebugger.AddTextGroup(coords, size: 10, worldPos: cell.ToVector3().ToPoint(xOffset: -0.25f, yOffset: 0.2f));
+            Program.GraphicalDebugger.AddTextGroup(coords, size: 10, worldPos: _mapAnalyzer.WithWorldHeight(cell).ToPoint(xOffset: -0.25f, yOffset: 0.2f));
         }
     }
 

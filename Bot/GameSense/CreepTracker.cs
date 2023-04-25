@@ -10,10 +10,11 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class CreepTracker: INeedUpdating {
-    public static readonly CreepTracker Instance = new CreepTracker(VisibilityTracker.Instance, UnitsTracker.Instance);
+    public static readonly CreepTracker Instance = new CreepTracker(VisibilityTracker.Instance, UnitsTracker.Instance, MapAnalyzer.Instance);
 
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
 
     private static ulong _creepMapLastGeneratedAt = ulong.MaxValue;
     private static List<List<bool>> _creepMap;
@@ -26,9 +27,10 @@ public class CreepTracker: INeedUpdating {
     private static int _maxX;
     private static int _maxY;
 
-    private CreepTracker(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
+    private CreepTracker(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
     }
 
     public void Reset() {}
@@ -39,11 +41,11 @@ public class CreepTracker: INeedUpdating {
 
         _rawCreepMap = observation.Observation.RawData.MapState.Creep;
 
-        _creepFrontier.ForEach(creepFrontierNode => Program.GraphicalDebugger.AddGridSquare(creepFrontierNode.ToVector3(), Colors.Orange));
+        _creepFrontier.ForEach(creepFrontierNode => Program.GraphicalDebugger.AddGridSquare(_mapAnalyzer.WithWorldHeight(creepFrontierNode), Colors.Orange));
     }
 
-    public static bool HasCreep(Vector2 position) {
-        if (!MapAnalyzer.IsInBounds(position)) {
+    public bool HasCreep(Vector2 position) {
+        if (!_mapAnalyzer.IsInBounds(position)) {
             Logger.Error("HasCreep called on out of bounds position");
             return false;
         }
@@ -65,7 +67,7 @@ public class CreepTracker: INeedUpdating {
 
     private void GenerateCreepFrontier() {
         // TODO GD At this point, we don't need to calculate the frontier until a hatch or creep tumor dies
-        if (MapAnalyzer.WalkableCells.All(HasCreep)) {
+        if (_mapAnalyzer.WalkableCells.All(HasCreep)) {
             _creepFrontier = new List<Vector2>();
             _creepFrontierLastGeneratedAt = Controller.Frame;
 
@@ -73,7 +75,7 @@ public class CreepTracker: INeedUpdating {
         }
 
         var creepTumors = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.CreepTumor).ToList();
-        _creepFrontier = MapAnalyzer.WalkableCells
+        _creepFrontier = _mapAnalyzer.WalkableCells
             .Where(_visibilityTracker.IsVisible)
             .Where(HasCreep)
             .Where(IsFrontier)
@@ -85,7 +87,7 @@ public class CreepTracker: INeedUpdating {
 
     private bool IsFrontier(Vector2 position) {
         return position.GetNeighbors()
-            .Where(neighbor => MapAnalyzer.IsWalkable(neighbor))
+            .Where(neighbor => _mapAnalyzer.IsWalkable(neighbor))
             // We spread towards non visible creep because if it is not visible, it is receding (creep source died) or it is not our creep and we want the vision
             .Any(neighbor => !HasCreep(neighbor) || !_visibilityTracker.IsVisible(neighbor));
     }

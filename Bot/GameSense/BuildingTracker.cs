@@ -12,15 +12,17 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
-    public static readonly BuildingTracker Instance = new BuildingTracker(UnitsTracker.Instance);
+    public static readonly BuildingTracker Instance = new BuildingTracker(UnitsTracker.Instance, MapAnalyzer.Instance);
 
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IMapAnalyzer _mapAnalyzer;
 
     private readonly Dictionary<Vector2, Unit> _reservedBuildingCells = new Dictionary<Vector2, Unit>();
     private readonly Dictionary<Unit, (uint buildingType, Vector2 position, List<Vector2> cells)> _ongoingBuildingOrders = new();
 
-    private BuildingTracker(IUnitsTracker unitsTracker) {
+    private BuildingTracker(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
         _unitsTracker = unitsTracker;
+        _mapAnalyzer = mapAnalyzer;
     }
 
     public void Reset() {
@@ -30,7 +32,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         foreach (var reservedBuildingCell in _reservedBuildingCells.Keys) {
-            Program.GraphicalDebugger.AddGridSquare(reservedBuildingCell.ToVector3(), Colors.Yellow);
+            Program.GraphicalDebugger.AddGridSquare(_mapAnalyzer.WithWorldHeight(reservedBuildingCell), Colors.Yellow);
         }
 
         foreach (var worker in _ongoingBuildingOrders.Keys) {
@@ -57,8 +59,8 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
     }
 
     public Vector2 FindConstructionSpot(uint buildingType) {
-        var startingSpot = MapAnalyzer.StartingLocation;
-        var searchGrid = MapAnalyzer.BuildSearchGrid(startingSpot, gridRadius: 12, stepSize: 2);
+        var startingSpot = _mapAnalyzer.StartingLocation;
+        var searchGrid = _mapAnalyzer.BuildSearchGrid(startingSpot, gridRadius: 12, stepSize: 2);
         var mineralFields = Controller.GetUnits(_unitsTracker.NeutralUnits, Units.MineralFields).ToList();
 
         foreach (var constructionCandidate in searchGrid) {
@@ -125,7 +127,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
         }
 
         var actionResult = queryBuildingPlacementResponse.Query.Placements[0].Result;
-        DebugBuildingPlacementResult(actionResult, position.ToVector3());
+        DebugBuildingPlacementResult(actionResult, _mapAnalyzer.WithWorldHeight(position));
 
         return actionResult;
     }

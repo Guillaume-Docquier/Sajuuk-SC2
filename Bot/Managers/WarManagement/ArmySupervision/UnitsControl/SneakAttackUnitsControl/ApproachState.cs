@@ -2,12 +2,14 @@
 using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
+using Bot.MapKnowledge;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
 
 public partial class SneakAttack {
     public class ApproachState : SneakAttackState {
         private readonly IUnitsTracker _unitsTracker;
+        private readonly IMapAnalyzer _mapAnalyzer;
 
         private const float SetupDistance = 1.25f;
 
@@ -15,8 +17,9 @@ public partial class SneakAttack {
 
         private readonly StuckDetector _stuckDetector = new StuckDetector();
 
-        public ApproachState(IUnitsTracker unitsTracker) {
+        public ApproachState(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
             _unitsTracker = unitsTracker;
+            _mapAnalyzer = mapAnalyzer;
         }
 
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
@@ -37,7 +40,7 @@ public partial class SneakAttack {
             _stuckDetector.Tick(Context._armyCenter);
             if (_stuckDetector.IsStuck) {
                 Logger.Warning("{0} army is stuck", Name);
-                NextState = new TerminalState(_unitsTracker);
+                NextState = new TerminalState(_unitsTracker, _mapAnalyzer);
 
                 return;
             }
@@ -58,7 +61,7 @@ public partial class SneakAttack {
             if (Context._targetPosition == default) {
                 Logger.Warning("{0} has no target", Name);
                 Context._isTargetPriority = false;
-                NextState = new TerminalState(_unitsTracker);
+                NextState = new TerminalState(_unitsTracker, _mapAnalyzer);
 
                 return;
             }
@@ -71,7 +74,7 @@ public partial class SneakAttack {
                 }
             }
             else {
-                NextState = new SetupState(_unitsTracker);
+                NextState = new SetupState(_unitsTracker, _mapAnalyzer);
             }
         }
     }

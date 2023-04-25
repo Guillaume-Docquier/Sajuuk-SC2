@@ -108,7 +108,7 @@ public class ApproachState : RegionalArmySupervisionState {
                     return float.MaxValue;
                 }
 
-                return Pathfinder.FindPath(unitRegion, approachRegion, blockedRegions).GetPathDistance();
+                return Pathfinder.Instance.FindPath(unitRegion, approachRegion, blockedRegions).GetPathDistance();
             }));
 
         foreach (var unitGroup in unitGroups) {
@@ -154,7 +154,7 @@ public class ApproachState : RegionalArmySupervisionState {
                 continue;
             }
 
-            var path = Pathfinder.FindPath(unitRegion, approachRegion, blockedRegions[unitRegion]);
+            var path = Pathfinder.Instance.FindPath(unitRegion, approachRegion, blockedRegions[unitRegion]);
             if (path == null) {
                 // Trying to gracefully handle a case that I don't think should happen
                 unit.Move(approachRegion.Center);

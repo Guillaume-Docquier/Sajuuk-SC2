@@ -5,6 +5,7 @@ using Bot.Debugging;
 using Bot.GameSense;
 using Bot.Managers.WarManagement.States;
 using Bot.Managers.WarManagement.States.EarlyGame;
+using Bot.MapKnowledge;
 using Bot.StateManagement;
 using Bot.Tagging;
 
@@ -36,11 +37,12 @@ public class WarManager: Manager {
         IEnemyRaceTracker enemyRaceTracker,
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
-        IUnitsTracker unitsTracker
+        IUnitsTracker unitsTracker,
+        IMapAnalyzer mapAnalyzer
     ) {
         _stateMachine = new StateMachine<WarManager, WarManagerState>(
             this,
-            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker)
+            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, mapAnalyzer)
         );
     }
 
