@@ -11,7 +11,10 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
-public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
+public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
+    /// <summary>
+    /// DI: ✔️ The only usages are for static instance creations
+    /// </summary>
     public static readonly BuildingTracker Instance = new BuildingTracker(UnitsTracker.Instance, MapAnalyzer.Instance);
 
     private readonly IUnitsTracker _unitsTracker;
@@ -81,15 +84,15 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
     }
 
     public void ConfirmPlacement(uint buildingType, Vector2 position, Unit builder) {
-        builder.AddDeathWatcher(Instance);
+        builder.AddDeathWatcher(this);
 
-        if (Instance._ongoingBuildingOrders.ContainsKey(builder)) {
-            Instance.ClearBuildingOrder(builder);
+        if (_ongoingBuildingOrders.ContainsKey(builder)) {
+            ClearBuildingOrder(builder);
         }
 
         var buildingCells = GetBuildingCells(buildingType, position).ToList();
-        buildingCells.ForEach(buildingCell => Instance._reservedBuildingCells[buildingCell] = builder);
-        Instance._ongoingBuildingOrders[builder] = (buildingType, position, buildingCells);
+        buildingCells.ForEach(buildingCell => _reservedBuildingCells[buildingCell] = builder);
+        _ongoingBuildingOrders[builder] = (buildingType, position, buildingCells);
     }
 
     private void ClearBuildingOrder(Unit unit) {
@@ -107,7 +110,7 @@ public class BuildingTracker: INeedUpdating, IWatchUnitsDie {
             return ActionResult.CantBuildLocationInvalid;
         }
 
-        if (GetBuildingCells(buildingType, position).Any(buildingCell => Instance._reservedBuildingCells.ContainsKey(buildingCell))) {
+        if (GetBuildingCells(buildingType, position).Any(buildingCell => _reservedBuildingCells.ContainsKey(buildingCell))) {
             return ActionResult.CantBuildLocationInvalid;
         }
 

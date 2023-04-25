@@ -118,7 +118,8 @@ public class Program {
             DebuggingFlagsTracker.Instance,
             UnitsTracker.Instance,
             IncomeTracker.Instance,
-            MapAnalyzer.Instance
+            MapAnalyzer.Instance,
+            BuildingTracker.Instance
         );
     }
 }

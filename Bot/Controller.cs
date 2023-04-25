@@ -55,7 +55,7 @@ public static class Controller {
         IncomeTracker.Instance,         // DI: ✔️ Depends on UnitsTracker
         MapAnalyzer.Instance,           // DI: ✔️ Depends on UnitsTracker and VisibilityTracker
 
-        BuildingTracker.Instance,       // Depends on UnitsTracker and MapAnalyzer
+        BuildingTracker.Instance,       // DI: ✔️ Depends on UnitsTracker and MapAnalyzer
         ExpandAnalyzer.Instance,        // Depends on UnitsTracker and MapAnalyzer
         RegionAnalyzer.Instance,        // Depends on ExpandAnalyzer and MapAnalyzer
         CreepTracker.Instance,          // Depends on UnitsTracker, VisibilityTracker and MapAnalyzer

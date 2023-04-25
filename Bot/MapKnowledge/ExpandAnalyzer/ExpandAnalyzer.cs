@@ -12,11 +12,12 @@ using SC2APIProtocol;
 
 namespace Bot.MapKnowledge;
 
-public class ExpandAnalyzer: INeedUpdating {
-    public static ExpandAnalyzer Instance { get; } = new ExpandAnalyzer(UnitsTracker.Instance, MapAnalyzer.Instance);
+public class ExpandAnalyzer : INeedUpdating {
+    public static readonly ExpandAnalyzer Instance = new ExpandAnalyzer(UnitsTracker.Instance, MapAnalyzer.Instance, BuildingTracker.Instance);
 
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly IBuildingTracker _buildingTracker;
 
     private readonly FootprintCalculator _footprintCalculator;
 
@@ -35,9 +36,10 @@ public class ExpandAnalyzer: INeedUpdating {
     private const int ExpandRadius = 3; // It's 2.5, we put 3 to be safe
     private static readonly float TooCloseToResourceDistance = (float)Math.Sqrt(1*1 + 3*3); // Empirical, 1x3 diagonal
 
-    private ExpandAnalyzer(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
+    private ExpandAnalyzer(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IBuildingTracker buildingTracker) {
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
+        _buildingTracker = buildingTracker;
 
         _footprintCalculator = new FootprintCalculator(_mapAnalyzer);
     }
@@ -178,7 +180,7 @@ public class ExpandAnalyzer: INeedUpdating {
         var footprintIsClear = footprint.All(cell => !_tooCloseToResourceGrid[(int)cell.X][(int)cell.Y]);
 
         // We'll query just to be sure
-        if (footprintIsClear && BuildingTracker.Instance.QueryPlacement(Units.Hatchery, buildSpot) != ActionResult.CantBuildTooCloseToResources) {
+        if (footprintIsClear && _buildingTracker.QueryPlacement(Units.Hatchery, buildSpot) != ActionResult.CantBuildTooCloseToResources) {
             return true;
         }
 

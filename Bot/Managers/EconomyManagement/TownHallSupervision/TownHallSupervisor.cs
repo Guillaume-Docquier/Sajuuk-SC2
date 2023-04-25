@@ -10,9 +10,10 @@ using SC2APIProtocol;
 
 namespace Bot.Managers.EconomyManagement.TownHallSupervision;
 
-public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
+public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
     private readonly ulong _id;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IBuildingTracker _buildingTracker;
     private readonly Color _color;
     public Unit TownHall { get; private set; }
     public Unit Queen { get; private set; }
@@ -58,8 +59,9 @@ public partial class TownHallSupervisor: Supervisor, IWatchUnitsDie {
         }
     }
 
-    public TownHallSupervisor(IUnitsTracker unitsTracker, Unit townHall, Color color) {
+    public TownHallSupervisor(IUnitsTracker unitsTracker, IBuildingTracker buildingTracker , Unit townHall, Color color) {
         _unitsTracker = unitsTracker;
+        _buildingTracker = buildingTracker;
 
         _id = townHall.Tag;
         _color = color;

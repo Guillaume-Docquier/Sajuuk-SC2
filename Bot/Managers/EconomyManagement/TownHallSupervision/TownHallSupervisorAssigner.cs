@@ -79,7 +79,7 @@ public partial class TownHallSupervisor {
                 queenMicroModule.AssignTownHall(_supervisor.TownHall);
             }
             else {
-                QueenMicroModule.Install(queen, _supervisor.TownHall);
+                QueenMicroModule.Install(queen, _supervisor.TownHall, _supervisor._buildingTracker);
             }
 
             LogAssignment(queen);

@@ -12,6 +12,7 @@ namespace Bot.UnitModules;
 public class TumorCreepSpreadModule: UnitModule {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly IBuildingTracker _buildingTracker;
 
     public const string Tag = "TumorCreepSpreadModule";
 
@@ -21,16 +22,27 @@ public class TumorCreepSpreadModule: UnitModule {
     private readonly Unit _creepTumor;
     private ulong _spreadAt = default;
 
-    private TumorCreepSpreadModule(Unit creepTumor, IVisibilityTracker visibilityTracker, IMapAnalyzer mapAnalyzer) {
+    private TumorCreepSpreadModule(
+        Unit creepTumor,
+        IVisibilityTracker visibilityTracker,
+        IMapAnalyzer mapAnalyzer,
+        IBuildingTracker buildingTracker
+    ) {
         _creepTumor = creepTumor;
 
         _visibilityTracker = visibilityTracker;
         _mapAnalyzer = mapAnalyzer;
+        _buildingTracker = buildingTracker;
     }
 
-    public static void Install(Unit unit, IVisibilityTracker visibilityTracker, IMapAnalyzer mapAnalyzer) {
-        if (PreInstallCheck(Tag, unit)) {
-            unit.Modules.Add(Tag, new TumorCreepSpreadModule(unit, visibilityTracker, mapAnalyzer));
+    public static void Install(
+        Unit creepTumor,
+        IVisibilityTracker visibilityTracker,
+        IMapAnalyzer mapAnalyzer,
+        IBuildingTracker buildingTracker
+    ) {
+        if (PreInstallCheck(Tag, creepTumor)) {
+            creepTumor.Modules.Add(Tag, new TumorCreepSpreadModule(creepTumor, visibilityTracker, mapAnalyzer, buildingTracker));
         }
     }
 
@@ -57,7 +69,7 @@ public class TumorCreepSpreadModule: UnitModule {
                 .Where(CreepTracker.Instance.HasCreep)
                 .Where(ExpandAnalyzer.IsNotBlockingExpand)
                 .OrderBy(position => position.DistanceTo(creepTarget))
-                .FirstOrDefault(position => BuildingTracker.Instance.CanPlace(Units.CreepTumor, position));
+                .FirstOrDefault(position => _buildingTracker.CanPlace(Units.CreepTumor, position));
 
             if (bestPlaceLocation == default) {
                 return;

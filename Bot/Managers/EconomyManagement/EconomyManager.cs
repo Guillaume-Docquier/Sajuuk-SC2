@@ -11,9 +11,10 @@ using Bot.Utils;
 
 namespace Bot.Managers.EconomyManagement;
 
-public sealed partial class EconomyManager: Manager {
+public sealed partial class EconomyManager : Manager {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly IBuildingTracker _buildingTracker;
 
     private const int MaxDroneCount = 70;
     private readonly BuildManager _buildManager;
@@ -43,10 +44,11 @@ public sealed partial class EconomyManager: Manager {
     protected override IDispatcher Dispatcher { get; }
     protected override IReleaser Releaser { get; }
 
-    public EconomyManager(BuildManager buildManager, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
+    public EconomyManager(BuildManager buildManager, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IBuildingTracker buildingTracker) {
         _buildManager = buildManager;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
+        _buildingTracker = buildingTracker;
 
         Assigner = new EconomyManagerAssigner(this);
         Dispatcher = new EconomyManagerDispatcher(this);
