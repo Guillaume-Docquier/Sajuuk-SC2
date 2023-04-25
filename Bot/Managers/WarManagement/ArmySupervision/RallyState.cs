@@ -38,7 +38,7 @@ public partial class ArmySupervisor {
         }
 
         protected override bool TryTransitioning() {
-            if (Context._mainArmy.GetForce() >= _attackAtForce || Controller.MaxSupply + 1 >= KnowledgeBase.MaxSupplyAllowed) {
+            if (Context._mainArmy.GetForce() >= _attackAtForce || Controller.SupportedSupply + 1 >= KnowledgeBase.MaxSupplyAllowed) {
                 StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer));
                 return true;
             }

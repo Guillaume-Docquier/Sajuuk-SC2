@@ -206,7 +206,7 @@ public class SajuukBot: PoliteBot {
     }
 
     private void EnsureNoSupplyBlock() {
-        if (!Controller.IsSupplyCapped) {
+        if (!Controller.IsSupplyBlocked) {
             return;
         }
 

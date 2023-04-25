@@ -31,11 +31,11 @@ public static class Controller {
 
     public static uint Frame { get; private set; } = uint.MaxValue;
 
+    public static uint SupportedSupply { get; private set; }
     public static uint CurrentSupply { get; private set; }
-    public static uint MaxSupply { get; private set; }
-    public static int AvailableSupply => (int)(MaxSupply - CurrentSupply);
+    public static int AvailableSupply => (int)(SupportedSupply - CurrentSupply);
 
-    public static bool IsSupplyCapped => AvailableSupply <= 0;
+    public static bool IsSupplyBlocked => AvailableSupply <= 0;
 
     public static int AvailableMinerals { get; private set; }
     public static int AvailableVespene { get; private set; }
@@ -117,7 +117,7 @@ public static class Controller {
             CurrentSupply += 1;
         }
 
-        MaxSupply = Observation.Observation.PlayerCommon.FoodCap;
+        SupportedSupply = Observation.Observation.PlayerCommon.FoodCap;
 
         AvailableMinerals = (int)Observation.Observation.PlayerCommon.Minerals;
         AvailableVespene = (int)Observation.Observation.PlayerCommon.Vespene;
