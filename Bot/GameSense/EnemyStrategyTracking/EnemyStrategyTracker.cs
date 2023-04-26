@@ -6,7 +6,10 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense.EnemyStrategyTracking;
 
-public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTransition> {
+public class EnemyStrategyTracker : IEnemyStrategyTracker, INeedUpdating {
+    /// <summary>
+    /// DI: ✔️ The only usages are for static instance creations
+    /// </summary>
     public static EnemyStrategyTracker Instance { get; private set; } = new EnemyStrategyTracker(
         TaggingService.Instance,
         EnemyRaceTracker.Instance,

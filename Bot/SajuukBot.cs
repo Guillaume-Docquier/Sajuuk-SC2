@@ -8,6 +8,7 @@ using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.GameSense.EnemyStrategyTracking;
 using Bot.Managers;
 using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
@@ -29,6 +30,7 @@ public class SajuukBot: PoliteBot {
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IRegionAnalyzer _regionAnalyzer;
     private readonly ICreepTracker _creepTracker;
+    private readonly IEnemyStrategyTracker _enemyStrategyTracker;
 
     private readonly BotDebugger _debugger;
 
@@ -48,7 +50,8 @@ public class SajuukBot: PoliteBot {
         IBuildingTracker buildingTracker,
         IExpandAnalyzer expandAnalyzer,
         IRegionAnalyzer regionAnalyzer,
-        ICreepTracker creepTracker
+        ICreepTracker creepTracker,
+        IEnemyStrategyTracker enemyStrategyTracker
     ) : base(version, scenarios, taggingService, unitsTracker, mapAnalyzer) {
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
@@ -57,8 +60,9 @@ public class SajuukBot: PoliteBot {
         _expandAnalyzer = expandAnalyzer;
         _regionAnalyzer = regionAnalyzer;
         _creepTracker = creepTracker;
+        _enemyStrategyTracker = enemyStrategyTracker;
 
-        _debugger = new BotDebugger(_visibilityTracker, _debuggingFlagsTracker, UnitsTracker, incomeTracker, MapAnalyzer);
+        _debugger = new BotDebugger(_visibilityTracker, _debuggingFlagsTracker, UnitsTracker, incomeTracker, MapAnalyzer, _enemyStrategyTracker);
     }
 
     protected override Task DoOnFrame() {
@@ -92,7 +96,7 @@ public class SajuukBot: PoliteBot {
     }
 
     private void InitManagers() {
-        var buildManager = new BuildManager(new TwoBasesRoach(UnitsTracker), TaggingService);
+        var buildManager = new BuildManager(new TwoBasesRoach(UnitsTracker), TaggingService, _enemyStrategyTracker);
         _managers.Add(buildManager);
 
         _managers.Add(new SupplyManager(buildManager, UnitsTracker));

@@ -14,10 +14,10 @@ public class BuildManager : UnitlessManager, ISubscriber<EnemyStrategyTransition
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildOrder.BuildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
-    public BuildManager(IBuildOrder buildOrder, ITaggingService taggingService) {
+    public BuildManager(IBuildOrder buildOrder, ITaggingService taggingService, IEnemyStrategyTracker enemyStrategyTracker) {
         _buildOrder = buildOrder;
         _taggingService = taggingService;
-        EnemyStrategyTracker.Instance.Register(this);
+        enemyStrategyTracker.Register(this);
     }
 
     protected override void ManagementPhase() {

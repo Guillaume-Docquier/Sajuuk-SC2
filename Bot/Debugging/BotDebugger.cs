@@ -19,19 +19,22 @@ public class BotDebugger {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IIncomeTracker _incomeTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly IEnemyStrategyTracker _enemyStrategyTracker;
 
     public BotDebugger(
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
         IIncomeTracker incomeTracker,
-        IMapAnalyzer mapAnalyzer
+        IMapAnalyzer mapAnalyzer,
+        IEnemyStrategyTracker enemyStrategyTracker
     ) {
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
         _incomeTracker = incomeTracker;
         _mapAnalyzer = mapAnalyzer;
+        _enemyStrategyTracker = enemyStrategyTracker;
     }
 
     public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus, Race enemyRace) {
@@ -220,7 +223,7 @@ public class BotDebugger {
         var matchupTexts = new List<string>
         {
             $"Enemy: {enemyRace} / Visible: {_mapAnalyzer.VisibilityRatio,3:P0} / Explored: {_mapAnalyzer.ExplorationRatio,3:P0}",
-            $"Strategy: {EnemyStrategyTracker.Instance.CurrentEnemyStrategy}"
+            $"Strategy: {_enemyStrategyTracker.CurrentEnemyStrategy}"
         };
 
         Program.GraphicalDebugger.AddTextGroup(matchupTexts, virtualPos: new Point { X = 0.50f, Y = 0.02f });
