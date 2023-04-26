@@ -27,7 +27,7 @@ public class Program {
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.Berlingrad;
     private const Race OpponentRace = Race.Random;
-    private const Difficulty OpponentDifficulty = Difficulty.VeryEasy;
+    private const Difficulty OpponentDifficulty = Difficulty.CheatInsane;
 
     private const bool RealTime = false;
 
@@ -120,7 +120,8 @@ public class Program {
             IncomeTracker.Instance,
             MapAnalyzer.Instance,
             BuildingTracker.Instance,
-            ExpandAnalyzer.Instance
+            ExpandAnalyzer.Instance,
+            RegionAnalyzer.Instance
         );
     }
 
@@ -128,6 +129,7 @@ public class Program {
         return new GameConnection(
             UnitsTracker.Instance,
             ExpandAnalyzer.Instance,
+            RegionAnalyzer.Instance,
             stepSize
         );
     }

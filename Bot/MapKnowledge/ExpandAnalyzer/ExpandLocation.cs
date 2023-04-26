@@ -6,6 +6,7 @@ using Bot.ExtensionMethods;
 
 namespace Bot.MapKnowledge;
 
+// TODO GD Split this into two types
 public class ExpandLocation : IWatchUnitsDie {
     public Vector2 Position { get; }
 
@@ -54,9 +55,5 @@ public class ExpandLocation : IWatchUnitsDie {
 
     public void Clear() {
         // TODO
-    }
-
-    public IRegion GetRegion() {
-        return Position.GetRegion();
     }
 }

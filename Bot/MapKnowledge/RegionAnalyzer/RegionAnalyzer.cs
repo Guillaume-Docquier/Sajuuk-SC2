@@ -13,7 +13,10 @@ namespace Bot.MapKnowledge;
 
 // TODO GD Make two classes: The analyzer and the tracker
 // Analysis should be run manually, and the tracker should be able to load the persisted data before entering the game
-public class RegionAnalyzer: INeedUpdating {
+public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
+    /// <summary>
+    /// DI: ✔️ The only usages are for static instance creations
+    /// </summary>
     public static readonly RegionAnalyzer Instance = new RegionAnalyzer(DebuggingFlagsTracker.Instance, MapAnalyzer.Instance, ExpandAnalyzer.Instance);
 
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
@@ -23,11 +26,11 @@ public class RegionAnalyzer: INeedUpdating {
     private readonly RegionDataStore _regionDataStore;
     private readonly RayCastingChokeFinder _rayCastingChokeFinder;
 
-    public static bool IsInitialized { get; private set; } = false;
+    public bool IsInitialized { get; private set; } = false;
     private Dictionary<Vector2, Region> _regionsLookupMap;
     private RegionData _regionData;
 
-    public List<Region> Regions => _regionData.Regions;
+    public List<IRegion> Regions => _regionData.Regions.Select(region => region as IRegion).ToList();
 
     private const int RegionMinPoints = 6;
     private const float RegionZMultiplier = 8;
@@ -123,7 +126,7 @@ public class RegionAnalyzer: INeedUpdating {
     public Region GetNaturalExitRegion(Alliance alliance) {
         var natural = _expandAnalyzer.GetExpand(alliance, ExpandType.Natural);
 
-        return Regions
+        return _regionData.Regions
             .Where(region => region.Type == RegionType.OpenArea)
             .MinBy(region => region.Center.DistanceTo(natural.Position))!;
     }

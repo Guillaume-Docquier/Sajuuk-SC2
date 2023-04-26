@@ -7,12 +7,12 @@ using Bot.MapKnowledge;
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
 public class OffensiveUnitsControl : AggregateUnitsControl {
-    public OffensiveUnitsControl(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer)
+    public OffensiveUnitsControl(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IRegionAnalyzer regionAnalyzer)
         : base(new List<IUnitsControl>
         {
             new MineralWalkKiting(unitsTracker, mapAnalyzer),
             new SneakAttack(unitsTracker, mapAnalyzer),
-            new BurrowHealing(unitsTracker, mapAnalyzer),
+            new BurrowHealing(unitsTracker, mapAnalyzer, regionAnalyzer),
             new StutterStep(),
         }) {}
 }

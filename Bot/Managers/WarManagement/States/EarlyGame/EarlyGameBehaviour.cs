@@ -24,6 +24,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     private readonly ITaggingService _taggingService;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly IRegionAnalyzer _regionAnalyzer;
 
     private BuildRequest _armyBuildRequest;
 
@@ -46,15 +47,17 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer
+        IExpandAnalyzer expandAnalyzer,
+        IRegionAnalyzer regionAnalyzer
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
         _unitsTracker = unitsTracker;
         _expandAnalyzer = expandAnalyzer;
+        _regionAnalyzer = regionAnalyzer;
 
         _debugger = new EarlyGameBehaviourDebugger(debuggingFlagsTracker);
-        DefenseSupervisor = new ArmySupervisor(visibilityTracker, _unitsTracker, mapAnalyzer, _expandAnalyzer);
+        DefenseSupervisor = new ArmySupervisor(visibilityTracker, _unitsTracker, mapAnalyzer, _expandAnalyzer, _regionAnalyzer);
 
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);
@@ -63,8 +66,8 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         Dispatcher = new EarlyGameDispatcher(this);
         Releaser = new WarManagerReleaser<EarlyGameBehaviour>(this);
 
-        var main = _expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).GetRegion();
-        var natural = _expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural).GetRegion();
+        var main = _regionAnalyzer.GetRegion(_expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).Position);
+        var natural = _regionAnalyzer.GetRegion(_expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural).Position);
         _startingRegions = Pathfinder.Instance.FindPath(main, natural).ToHashSet();
     }
 
@@ -136,7 +139,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
     private IRegion GetRegionToDefend() {
         if (GetEnemyForce(_startingRegions) == 0) {
-            var enemyMain = _expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).GetRegion();
+            var enemyMain = _regionAnalyzer.GetRegion(_expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).Position);
             return _startingRegions.MinBy(region => Pathfinder.Instance.FindPath(region, enemyMain).GetPathDistance());
         }
 

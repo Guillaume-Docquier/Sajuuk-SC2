@@ -13,13 +13,15 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 public class BurrowHealing : IUnitsControl {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly IRegionAnalyzer _regionAnalyzer;
 
     private const double BurrowDownThreshold = 0.5;
     private const double BurrowUpThreshold = 0.6;
 
-    public BurrowHealing(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
+    public BurrowHealing(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IRegionAnalyzer regionAnalyzer) {
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
+        _regionAnalyzer = regionAnalyzer;
     }
 
     public bool IsExecuting() {
@@ -143,7 +145,7 @@ public class BurrowHealing : IUnitsControl {
             .Select(townHall => townHall.GetRegion())
             .MinBy(region => RegionTracker.GetForce(region, Alliance.Enemy));
 
-        safestRegion ??= RegionAnalyzer.Instance.Regions.MinBy(region => RegionTracker.GetForce(region, Alliance.Enemy));
+        safestRegion ??= _regionAnalyzer.Regions.MinBy(region => RegionTracker.GetForce(region, Alliance.Enemy));
 
         roach.Move(safestRegion!.Center);
 

@@ -9,6 +9,7 @@ namespace Bot.GameSense.EnemyStrategyTracking;
 
 public class ZergStrategyInterpreter : IStrategyInterpreter {
     private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly IRegionAnalyzer _regionAnalyzer;
 
     private bool _isInitialized = false;
 
@@ -38,12 +39,13 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
 
     private static readonly ulong OneBaseTiming = TimeUtils.SecsToFrames(2 * 60 + 30);
 
-    public ZergStrategyInterpreter(IExpandAnalyzer expandAnalyzer) {
+    public ZergStrategyInterpreter(IExpandAnalyzer expandAnalyzer, IRegionAnalyzer regionAnalyzer) {
         _expandAnalyzer = expandAnalyzer;
+        _regionAnalyzer = regionAnalyzer;
     }
 
     public EnemyStrategy Interpret(List<Unit> enemyUnits) {
-        if (!_expandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
+        if (!_expandAnalyzer.IsInitialized || !_regionAnalyzer.IsInitialized) {
             return EnemyStrategy.Unknown;
         }
 
@@ -60,8 +62,8 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
         _enemyMain = _expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main);
         _enemyNatural = _expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
 
-        _enemyMainRegion = _enemyMain.GetRegion();
-        _enemyNaturalRegion = _enemyNatural.GetRegion();
+        _enemyMainRegion = _regionAnalyzer.GetRegion(_enemyMain.Position);
+        _enemyNaturalRegion = _regionAnalyzer.GetRegion(_enemyNatural.Position);
 
         _isInitialized = true;
     }

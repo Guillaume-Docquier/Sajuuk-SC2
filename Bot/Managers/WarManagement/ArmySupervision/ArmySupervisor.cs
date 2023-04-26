@@ -15,6 +15,7 @@ public partial class ArmySupervisor: Supervisor {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly IRegionAnalyzer _regionAnalyzer;
 
     private readonly StateMachine<ArmySupervisor> _stateMachine;
 
@@ -38,17 +39,19 @@ public partial class ArmySupervisor: Supervisor {
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer
+        IExpandAnalyzer expandAnalyzer,
+        IRegionAnalyzer regionAnalyzer
     ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
         _expandAnalyzer = expandAnalyzer;
+        _regionAnalyzer = regionAnalyzer;
 
         Assigner = new ArmySupervisorAssigner(this);
         Releaser = new ArmySupervisorReleaser(this);
 
-        _stateMachine = new StateMachine<ArmySupervisor>(this, new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer));
+        _stateMachine = new StateMachine<ArmySupervisor>(this, new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer));
     }
 
     public override string ToString() {
@@ -69,7 +72,7 @@ public partial class ArmySupervisor: Supervisor {
     public void AssignTarget(Vector2 target, float blastRadius, bool canHuntTheEnemy = true) {
         if (_target != target) {
             _target = target;
-            _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer));
+            _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer));
         }
 
         _blastRadius = blastRadius;
@@ -84,6 +87,6 @@ public partial class ArmySupervisor: Supervisor {
 
         // Reset the state to have a clean slate once we're re-hired
         // Maybe our Manager should just dispose of us instead?
-        _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer));
+        _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer));
     }
 }

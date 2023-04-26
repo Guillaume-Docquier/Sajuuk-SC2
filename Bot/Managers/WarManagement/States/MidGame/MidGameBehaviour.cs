@@ -33,6 +33,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly IRegionAnalyzer _regionAnalyzer;
 
     private readonly MidGameBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
@@ -53,16 +54,18 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer
+        IExpandAnalyzer expandAnalyzer,
+        IRegionAnalyzer regionAnalyzer
     ) {
         _warManager = warManager;
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
         _expandAnalyzer = expandAnalyzer;
+        _regionAnalyzer = regionAnalyzer;
 
         _debugger = new MidGameBehaviourDebugger(debuggingFlagsTracker);
-        _armySupervisors = RegionAnalyzer.Instance.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(_unitsTracker, _mapAnalyzer, region));
+        _armySupervisors = _regionAnalyzer.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(_unitsTracker, _mapAnalyzer, _regionAnalyzer, region));
 
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);
@@ -237,10 +240,10 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         _scoutSupervisors.Clear();
     }
 
-    private static Dictionary<IRegion, List<Unit>> PlanUnitsAllocationToMaximizeImpact(IEnumerable<Unit> availableUnits) {
-        var regionsReach = ComputeRegionsReach(RegionAnalyzer.Instance.Regions);
+    private Dictionary<IRegion, List<Unit>> PlanUnitsAllocationToMaximizeImpact(IEnumerable<Unit> availableUnits) {
+        var regionsReach = ComputeRegionsReach(_regionAnalyzer.Regions);
 
-        var allocations = RegionAnalyzer.Instance.Regions.ToDictionary(region => region as IRegion, _ => new List<Unit>());
+        var allocations = _regionAnalyzer.Regions.ToDictionary(region => region as IRegion, _ => new List<Unit>());
         foreach (var availableUnit in availableUnits.Where(unit => unit.GetRegion() != null)) {
             var mostImpactfulRegion = GetMostImpactfulRegion(availableUnit, regionsReach[availableUnit.GetRegion()]);
             allocations[mostImpactfulRegion].Add(availableUnit);
@@ -266,14 +269,14 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// <param name="unit">The unit that wants to have an impact.</param>
     /// <param name="reachableRegions">The regions where the unit is allowed to have an impact.</param>
     /// <returns>The region from reachableRegions where the given unit will have to most impact.</returns>
-    private static IRegion GetMostImpactfulRegion(Unit unit, IReadOnlyCollection<IRegion> reachableRegions) {
+    private IRegion GetMostImpactfulRegion(Unit unit, IReadOnlyCollection<IRegion> reachableRegions) {
         var unitRegion = unit.GetRegion();
-        var regionsToAvoid = RegionAnalyzer.Instance.Regions.Except(reachableRegions).ToHashSet();
+        var regionsToAvoid = _regionAnalyzer.Regions.Except(reachableRegions).ToHashSet();
 
         return reachableRegions.MaxBy(reachableRegion => {
             // TODO GD This doesn't take into account if the unit can address the threat (grounds vs flying, cloaked, etc)
-            var regionThreat = RegionTracker.GetThreat(reachableRegion, Alliance.Enemy);
-            var regionValue = RegionTracker.GetValue(reachableRegion, Alliance.Enemy);
+            var regionThreat = RegionTracker.Instance.GetThreat(reachableRegion, Alliance.Enemy);
+            var regionValue = RegionTracker.Instance.GetValue(reachableRegion, Alliance.Enemy);
 
             var distance = Pathfinder.Instance.FindPath(unitRegion, reachableRegion, regionsToAvoid).GetPathDistance();
 
@@ -293,8 +296,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     }
 
     private static bool IsAGoal(IRegion region) {
-        var thereIsAThreat = RegionTracker.GetThreat(region, Alliance.Enemy) > 0;
-        var thereIsValue = RegionTracker.GetValue(region, Alliance.Enemy) > 0;
+        var thereIsAThreat = RegionTracker.Instance.GetThreat(region, Alliance.Enemy) > 0;
+        var thereIsValue = RegionTracker.Instance.GetValue(region, Alliance.Enemy) > 0;
 
         return thereIsAThreat || thereIsValue;
     }
@@ -310,8 +313,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             .Select(townHall => townHall.GetRegion())
             .ToHashSet();
 
-        var ourMainRegion = _expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).GetRegion();
-        var enemyMainRegion = _expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).GetRegion();
+        var ourMainRegion = _regionAnalyzer.GetRegion(_expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).Position);
+        var enemyMainRegion = _regionAnalyzer.GetRegion(_expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).Position);
         foreach (var unsupervisedUnit in _warManager.ManagedUnits.Where(unit => unit.Supervisor == null)) {
             // TODO GD We should make sure that units have a region, this is error prone
             var unitRegion = unsupervisedUnit.GetRegion();

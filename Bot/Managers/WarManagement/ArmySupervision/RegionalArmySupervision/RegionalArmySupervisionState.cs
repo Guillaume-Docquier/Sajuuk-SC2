@@ -33,13 +33,14 @@ public abstract class RegionalArmySupervisionState : State<RegionalArmySuperviso
     /// A region should be avoided if there is danger in it.
     /// </summary>
     /// <param name="originRegions">The regions to compute the blocked regions map for.</param>
+    /// <param name="allRegions">All the available regions</param>
     /// <returns>A map of blocked regions</returns>
-    protected static IDictionary<IRegion, HashSet<IRegion>> ComputeBlockedRegionsMap(IReadOnlySet<IRegion> originRegions) {
+    protected static IDictionary<IRegion, HashSet<IRegion>> ComputeBlockedRegionsMap(IReadOnlySet<IRegion> originRegions, IReadOnlySet<IRegion> allRegions) {
         var reachableRegions = ComputeRegionsReach(originRegions);
 
         return originRegions.ToDictionary(
             region => region,
-            region => RegionAnalyzer.Instance.Regions.Except(reachableRegions[region]).ToHashSet()
+            region => allRegions.Except(reachableRegions[region]).ToHashSet()
         );
     }
 

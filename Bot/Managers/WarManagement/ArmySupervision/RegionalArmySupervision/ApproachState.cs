@@ -9,12 +9,14 @@ namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class ApproachState : RegionalArmySupervisionState {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IRegionAnalyzer _regionAnalyzer;
 
     public const float SafetyDistance = 5;
     public const float SafetyDistanceTolerance = SafetyDistance / 2;
 
-    public ApproachState(IUnitsTracker unitsTracker) {
+    public ApproachState(IUnitsTracker unitsTracker, IRegionAnalyzer regionAnalyzer) {
         _unitsTracker = unitsTracker;
+        _regionAnalyzer = regionAnalyzer;
     }
 
     /// <summary>
@@ -22,7 +24,7 @@ public class ApproachState : RegionalArmySupervisionState {
     /// Units will only route through safe regions and stay at a safe distance of enemies in the target region.
     /// </summary>
     protected override void Execute() {
-        MoveIntoStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy, SafetyDistance, DefensiveUnitsController);
+        MoveIntoStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy, SafetyDistance, DefensiveUnitsController, _regionAnalyzer.Regions.ToHashSet());
     }
 
     /// <summary>
@@ -33,7 +35,7 @@ public class ApproachState : RegionalArmySupervisionState {
         var unitsInStrikingPosition = GetUnitsInStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy);
         // TODO GD If maxed out, we have to trade
         if (unitsInStrikingPosition.GetForce() >= EnemyArmy.GetForce() * 1.25) {
-            StateMachine.TransitionTo(new EngageState(_unitsTracker));
+            StateMachine.TransitionTo(new EngageState(_unitsTracker, _regionAnalyzer));
             return true;
         }
 
@@ -83,13 +85,16 @@ public class ApproachState : RegionalArmySupervisionState {
     /// <param name="enemyArmy">The enemy units to get in range of but avoid engaging</param>
     /// <param name="safetyDistance">A safety distance to keep between the enemy</param>
     /// <param name="unitsController">The units controller</param>
+    /// <param name="allRegions">All the regions</param>
     public static void MoveIntoStrikingPosition(
         IReadOnlyCollection<Unit> units,
         IRegion targetRegion,
         IReadOnlyCollection<Unit> enemyArmy,
         float safetyDistance,
-        IUnitsControl unitsController
-    ) {
+        IUnitsControl unitsController,
+        // TODO GD This signature is crap, but I want MoveIntoStrikingPosition to be shareable
+        // TODO GD I should use composition, but right now it's hard to see properly
+        IReadOnlySet<IRegion> allRegions) {
         var approachRegions = targetRegion.GetReachableNeighbors().ToList();
 
         var regionsWithFriendlyUnitPresence = units
@@ -97,7 +102,7 @@ public class ApproachState : RegionalArmySupervisionState {
             .Where(region => region != null)
             .ToHashSet();
 
-        var regionsOutOfReach = ComputeBlockedRegionsMap(regionsWithFriendlyUnitPresence);
+        var regionsOutOfReach = ComputeBlockedRegionsMap(regionsWithFriendlyUnitPresence, allRegions);
 
         var unitGroups = units
             .Where(unit => unit.GetRegion() != null)

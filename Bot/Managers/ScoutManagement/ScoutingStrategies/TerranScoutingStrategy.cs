@@ -16,6 +16,7 @@ public class TerranScoutingStrategy : IScoutingStrategy {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly IRegionAnalyzer _regionAnalyzer;
 
     private const int TopPriority = 100;
 
@@ -27,16 +28,18 @@ public class TerranScoutingStrategy : IScoutingStrategy {
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer
+        IExpandAnalyzer expandAnalyzer,
+        IRegionAnalyzer regionAnalyzer
     ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
         _expandAnalyzer = expandAnalyzer;
+        _regionAnalyzer = regionAnalyzer;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
-        if (!_expandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
+        if (!_expandAnalyzer.IsInitialized || !_regionAnalyzer.IsInitialized) {
             yield break;
         }
 

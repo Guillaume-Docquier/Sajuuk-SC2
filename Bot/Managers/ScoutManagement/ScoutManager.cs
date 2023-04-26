@@ -14,6 +14,7 @@ namespace Bot.Managers.ScoutManagement;
 public partial class ScoutManager : Manager {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly IRegionAnalyzer _regionAnalyzer;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
@@ -29,16 +30,18 @@ public partial class ScoutManager : Manager {
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer
+        IExpandAnalyzer expandAnalyzer,
+        IRegionAnalyzer regionAnalyzer
     ) {
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
+        _regionAnalyzer = regionAnalyzer;
 
         Assigner = new ScoutManagerAssigner(this);
         Dispatcher = new ScoutManagerDispatcher(this);
         Releaser = new ScoutManagerReleaser(this);
 
-        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker, _unitsTracker, _mapAnalyzer, expandAnalyzer);
+        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker, _unitsTracker, _mapAnalyzer, expandAnalyzer, _regionAnalyzer);
     }
 
     protected override void RecruitmentPhase() {
@@ -59,7 +62,7 @@ public partial class ScoutManager : Manager {
     }
 
     protected override void ManagementPhase() {
-        if (!RegionAnalyzer.IsInitialized) {
+        if (!_regionAnalyzer.IsInitialized) {
             return;
         }
 

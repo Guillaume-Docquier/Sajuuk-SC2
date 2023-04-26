@@ -7,12 +7,19 @@ using SC2APIProtocol;
 namespace Bot.GameSense.EnemyStrategyTracking;
 
 public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTransition> {
-    public static EnemyStrategyTracker Instance { get; private set; } = new EnemyStrategyTracker(TaggingService.Instance, EnemyRaceTracker.Instance, UnitsTracker.Instance, ExpandAnalyzer.Instance);
+    public static EnemyStrategyTracker Instance { get; private set; } = new EnemyStrategyTracker(
+        TaggingService.Instance,
+        EnemyRaceTracker.Instance,
+        UnitsTracker.Instance,
+        ExpandAnalyzer.Instance,
+        RegionAnalyzer.Instance
+    );
 
     private readonly ITaggingService _taggingService;
     private readonly IEnemyRaceTracker _enemyRaceTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly IRegionAnalyzer _regionAnalyzer;
 
     private readonly HashSet<ISubscriber<EnemyStrategyTransition>> _subscribers = new HashSet<ISubscriber<EnemyStrategyTransition>>();
 
@@ -24,12 +31,14 @@ public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTrans
         ITaggingService taggingService,
         IEnemyRaceTracker enemyRaceTracker,
         IUnitsTracker unitsTracker,
-        IExpandAnalyzer expandAnalyzer
+        IExpandAnalyzer expandAnalyzer,
+        IRegionAnalyzer regionAnalyzer
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
         _unitsTracker = unitsTracker;
         _expandAnalyzer = expandAnalyzer;
+        _regionAnalyzer = regionAnalyzer;
     }
 
     public void Reset() {
@@ -42,7 +51,7 @@ public class EnemyStrategyTracker : INeedUpdating, IPublisher<EnemyStrategyTrans
         _strategyInterpreter ??= _enemyRaceTracker.EnemyRace switch
         {
             Race.Terran => new TerranStrategyInterpreter(),
-            Race.Zerg => new ZergStrategyInterpreter(_expandAnalyzer),
+            Race.Zerg => new ZergStrategyInterpreter(_expandAnalyzer, _regionAnalyzer),
             Race.Protoss => new ProtossStrategyInterpreter(),
             _ => null,
         };

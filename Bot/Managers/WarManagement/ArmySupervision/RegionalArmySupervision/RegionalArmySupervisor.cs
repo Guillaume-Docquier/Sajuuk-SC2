@@ -24,16 +24,16 @@ public class RegionalArmySupervisor : Supervisor {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
-    public RegionalArmySupervisor(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IRegion targetRegion) {
+    public RegionalArmySupervisor(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IRegionAnalyzer regionAnalyzer, IRegion targetRegion) {
         _unitsTracker = unitsTracker;
 
         _targetRegion = targetRegion;
 
-        _offensiveUnitsController = new OffensiveUnitsControl(_unitsTracker, mapAnalyzer);
-        _defensiveUnitsController = new DefensiveUnitsControl(_unitsTracker, mapAnalyzer);
+        _offensiveUnitsController = new OffensiveUnitsControl(_unitsTracker, mapAnalyzer, regionAnalyzer);
+        _defensiveUnitsController = new DefensiveUnitsControl(_unitsTracker, mapAnalyzer, regionAnalyzer);
 
         Releaser = new RegionalArmySupervisorReleaser(this);
-        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState(_unitsTracker));
+        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState(_unitsTracker, regionAnalyzer));
     }
 
     protected override void Supervise() {

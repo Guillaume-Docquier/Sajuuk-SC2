@@ -10,11 +10,17 @@ using SC2APIProtocol;
 namespace Bot.GameSense.RegionTracking;
 
 public class RegionTracker : INeedUpdating {
-    public static RegionTracker Instance { get; } = new RegionTracker(DebuggingFlagsTracker.Instance, UnitsTracker.Instance, MapAnalyzer.Instance);
+    public static RegionTracker Instance { get; } = new RegionTracker(
+        DebuggingFlagsTracker.Instance,
+        UnitsTracker.Instance,
+        MapAnalyzer.Instance,
+        RegionAnalyzer.Instance
+    );
 
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly IRegionAnalyzer _regionAnalyzer;
 
     private bool _isInitialized = false;
 
@@ -38,10 +44,16 @@ public class RegionTracker : INeedUpdating {
         Colors.LightRed,
     };
 
-    private RegionTracker(IDebuggingFlagsTracker debuggingFlagsTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
+    private RegionTracker(
+        IDebuggingFlagsTracker debuggingFlagsTracker,
+        IUnitsTracker unitsTracker,
+        IMapAnalyzer mapAnalyzer,
+        IRegionAnalyzer regionAnalyzer
+    ) {
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
+        _regionAnalyzer = regionAnalyzer;
 
         Reset();
     }
@@ -53,8 +65,8 @@ public class RegionTracker : INeedUpdating {
     /// <param name="alliance">The alliance to get the force of</param>
     /// <param name="normalized">Whether or not to get the normalized force between 0 and 1</param>
     /// <returns>The force of the position's region</returns>
-    public static float GetForce(Vector2 position, Alliance alliance, bool normalized = false) {
-        return GetForce(position.GetRegion(), alliance, normalized);
+    public float GetForce(Vector2 position, Alliance alliance, bool normalized = false) {
+        return GetForce(_regionAnalyzer.GetRegion(position), alliance, normalized);
     }
 
     /// <summary>
@@ -79,8 +91,8 @@ public class RegionTracker : INeedUpdating {
     /// <param name="alliance">The alliance to get the value of</param>
     /// <param name="normalized">Whether or not to get the normalized value between 0 and 1</param>
     /// <returns>The value of the position's region</returns>
-    public static float GetValue(Vector2 position, Alliance alliance, bool normalized = false) {
-        return GetValue(position.GetRegion(), alliance, normalized);
+    public float GetValue(Vector2 position, Alliance alliance, bool normalized = false) {
+        return GetValue(_regionAnalyzer.GetRegion(position), alliance, normalized);
     }
 
     /// <summary>
@@ -90,7 +102,7 @@ public class RegionTracker : INeedUpdating {
     /// <param name="alliance">The alliance to get the value of</param>
     /// <param name="normalized">Whether or not to get the normalized value between 0 and 1</param>
     /// <returns>The value of the region</returns>
-    public static float GetValue(IRegion region, Alliance alliance, bool normalized = false) {
+    public float GetValue(IRegion region, Alliance alliance, bool normalized = false) {
         if (!Instance._regionValueEvaluators.ContainsKey(alliance)) {
             Logger.Error($"Cannot get value for alliance {alliance}. We don't track that");
         }
@@ -106,8 +118,8 @@ public class RegionTracker : INeedUpdating {
     /// <param name="alliance">The alliance to get the threat of</param>
     /// <param name="normalized">Whether or not to get the normalized threat between 0 and 1</param>
     /// <returns>The threat of the position's region</returns>
-    public static float GetThreat(Vector2 position, Alliance alliance, bool normalized = false) {
-        return GetForce(position.GetRegion(), alliance, normalized);
+    public float GetThreat(Vector2 position, Alliance alliance, bool normalized = false) {
+        return GetForce(_regionAnalyzer.GetRegion(position), alliance, normalized);
     }
 
     /// <summary>
@@ -118,7 +130,7 @@ public class RegionTracker : INeedUpdating {
     /// <param name="alliance">The alliance to get the threat of</param>
     /// <param name="normalized">Whether or not to get the normalized threat between 0 and 1</param>
     /// <returns>The threat of the region</returns>
-    public static float GetThreat(IRegion region, Alliance alliance, bool normalized = false) {
+    public float GetThreat(IRegion region, Alliance alliance, bool normalized = false) {
         if (!Instance._regionThreatEvaluators.ContainsKey(alliance)) {
             Logger.Error($"Cannot get threat for alliance {alliance}. We don't track that");
         }
@@ -144,7 +156,7 @@ public class RegionTracker : INeedUpdating {
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
-        if (!RegionAnalyzer.IsInitialized) {
+        if (!_regionAnalyzer.IsInitialized) {
             return;
         }
 
@@ -157,7 +169,7 @@ public class RegionTracker : INeedUpdating {
 
     private void InitEvaluators() {
         foreach (var evaluator in Evaluators) {
-            evaluator.Init(RegionAnalyzer.Instance.Regions);
+            evaluator.Init(_regionAnalyzer.Regions);
         }
 
         _isInitialized = true;
@@ -174,7 +186,7 @@ public class RegionTracker : INeedUpdating {
         }
 
         var regionIndex = 0;
-        foreach (var region in RegionAnalyzer.Instance.Regions) {
+        foreach (var region in _regionAnalyzer.Regions) {
             // TODO GD Set colors on each region directly, with a color different from its neighbors
             var regionColor = RegionColors[regionIndex % RegionColors.Count];
 
@@ -224,7 +236,7 @@ public class RegionTracker : INeedUpdating {
     /// <param name="region">The region to get the label for</param>
     /// <param name="alliance">The alliance to consider the value of</param>
     /// <returns>A string that describes the value of the region</returns>
-    private static string GetValueLabel(IRegion region, Alliance alliance) {
+    private string GetValueLabel(IRegion region, Alliance alliance) {
         var value = GetValue(region, alliance);
 
         return value switch

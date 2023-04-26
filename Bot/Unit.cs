@@ -238,7 +238,8 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     public IRegion GetRegion() {
-        var unitRegion = Position.GetRegion();
+        // TODO GD I'm not convinced I want to inject stuff into unit, we'll have to revisit that
+        var unitRegion = RegionAnalyzer.Instance.GetRegion(Position);
         if (unitRegion != null) {
             return unitRegion;
         }
@@ -246,7 +247,7 @@ public class Unit: ICanDie, IHavePosition {
         // TODO GD Injecting MapAnalyzer here means a circular dependency between the UnitsTracker and MapAnalyzer
         return MapAnalyzer.Instance.BuildSearchGrid(Position, gridRadius: 3)
             .Where(cell => MapAnalyzer.Instance.IsWalkable(cell))
-            .Select(cell => cell.GetRegion())
+            .Select(cell => RegionAnalyzer.Instance.GetRegion(cell))
             .FirstOrDefault(region => region != null);
     }
 

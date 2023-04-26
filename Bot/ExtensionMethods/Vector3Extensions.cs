@@ -112,13 +112,4 @@ public static class Vector3Extensions {
             Z = position.Z,
         };
     }
-
-    /// <summary>
-    /// Gets the Region of a given position
-    /// </summary>
-    /// <param name="position">The position to get the Region of</param>
-    /// <returns>The Region of the given position</returns>
-    public static IRegion GetRegion(this Vector3 position) {
-        return RegionAnalyzer.Instance.GetRegion(position);
-    }
 }

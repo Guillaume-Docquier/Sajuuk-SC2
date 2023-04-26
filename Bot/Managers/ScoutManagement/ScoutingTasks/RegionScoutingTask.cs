@@ -14,11 +14,11 @@ public class RegionScoutingTask : ScoutingTask {
     private readonly HashSet<Vector2> _cellsToExplore;
     private bool _isCancelled = false;
 
-    public RegionScoutingTask(IVisibilityTracker visibilityTracker, Vector2 scoutLocation, int priority = 0, int maxScouts = 999)
-        : base(scoutLocation, priority, maxScouts) {
+    public RegionScoutingTask(IVisibilityTracker visibilityTracker, IRegion region, int priority = 0, int maxScouts = 999)
+        : base(region.Center, priority, maxScouts) {
         _visibilityTracker = visibilityTracker;
 
-        _region = scoutLocation.GetRegion();
+        _region = region;
         _cellsToExplore = new HashSet<Vector2>(_region.Cells);
     }
 

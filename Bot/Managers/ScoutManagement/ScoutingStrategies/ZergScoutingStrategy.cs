@@ -19,6 +19,7 @@ public class ZergScoutingStrategy : IScoutingStrategy {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly IRegionAnalyzer _regionAnalyzer;
 
     private const int TopPriority = 100;
 
@@ -41,16 +42,18 @@ public class ZergScoutingStrategy : IScoutingStrategy {
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer
+        IExpandAnalyzer expandAnalyzer,
+        IRegionAnalyzer regionAnalyzer
     ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
         _expandAnalyzer = expandAnalyzer;
+        _regionAnalyzer = regionAnalyzer;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
-        if (!_expandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
+        if (!_expandAnalyzer.IsInitialized || !_regionAnalyzer.IsInitialized) {
             yield break;
         }
 
@@ -80,7 +83,7 @@ public class ZergScoutingStrategy : IScoutingStrategy {
         var enemyNaturalExpandLocation = _expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
         _naturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _mapAnalyzer, enemyNaturalExpandLocation.Position, TopPriority, maxScouts: 1, waitForExpand: true);
 
-        var enemyNaturalExitRegion = RegionAnalyzer.Instance.GetNaturalExitRegion(Alliance.Enemy);
+        var enemyNaturalExitRegion = _regionAnalyzer.GetNaturalExitRegion(Alliance.Enemy);
         var enemyNaturalExitRegionRamps = enemyNaturalExitRegion.Neighbors
             .Select(neighbor => neighbor.Region)
             .Where(region => region.Type == RegionType.Ramp)

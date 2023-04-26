@@ -14,6 +14,7 @@ public partial class ArmySupervisor {
         private readonly IUnitsTracker _unitsTracker;
         private readonly IMapAnalyzer _mapAnalyzer;
         private readonly IExpandAnalyzer _expandAnalyzer;
+        private readonly IRegionAnalyzer _regionAnalyzer;
 
         private static Dictionary<Vector2, bool> _checkedExpandLocations;
         private static readonly Dictionary<Vector2, bool> CheckedPositions = new Dictionary<Vector2, bool>();
@@ -24,17 +25,19 @@ public partial class ArmySupervisor {
             IVisibilityTracker visibilityTracker,
             IUnitsTracker unitsTracker,
             IMapAnalyzer mapAnalyzer,
-            IExpandAnalyzer expandAnalyzer
+            IExpandAnalyzer expandAnalyzer,
+            IRegionAnalyzer regionAnalyzer
         ) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
             _mapAnalyzer = mapAnalyzer;
             _expandAnalyzer = expandAnalyzer;
+            _regionAnalyzer = regionAnalyzer;
         }
 
         protected override bool TryTransitioning() {
             if (_isNextTargetSet) {
-                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer));
+                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer));
                 return true;
             }
 

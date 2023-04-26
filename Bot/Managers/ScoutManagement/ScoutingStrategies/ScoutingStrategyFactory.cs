@@ -11,16 +11,17 @@ public static class ScoutingStrategyFactory {
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer
+        IExpandAnalyzer expandAnalyzer,
+        IRegionAnalyzer regionAnalyzer
     ) {
         var enemyRace = enemyRaceTracker.EnemyRace;
 
         return enemyRace switch
         {
-            Race.Protoss => new ProtossScoutingStrategy(visibilityTracker, unitsTracker, mapAnalyzer, expandAnalyzer),
-            Race.Zerg => new ZergScoutingStrategy(visibilityTracker, unitsTracker, mapAnalyzer, expandAnalyzer),
-            Race.Terran => new TerranScoutingStrategy(visibilityTracker, unitsTracker, mapAnalyzer, expandAnalyzer),
-            Race.Random => new RandomScoutingStrategy(enemyRaceTracker, visibilityTracker, unitsTracker, mapAnalyzer, expandAnalyzer),
+            Race.Protoss => new ProtossScoutingStrategy(visibilityTracker, unitsTracker, mapAnalyzer, expandAnalyzer, regionAnalyzer),
+            Race.Zerg => new ZergScoutingStrategy(visibilityTracker, unitsTracker, mapAnalyzer, expandAnalyzer, regionAnalyzer),
+            Race.Terran => new TerranScoutingStrategy(visibilityTracker, unitsTracker, mapAnalyzer, expandAnalyzer, regionAnalyzer),
+            Race.Random => new RandomScoutingStrategy(enemyRaceTracker, visibilityTracker, unitsTracker, mapAnalyzer, expandAnalyzer, regionAnalyzer),
             Race.NoRace => throw new ArgumentException("Race.NoRace is an invalid ScoutingStrategy Race"),
             _ => throw new ArgumentOutOfRangeException(nameof(enemyRace), enemyRace, "Unsupported ScoutingStrategy Race")
         };

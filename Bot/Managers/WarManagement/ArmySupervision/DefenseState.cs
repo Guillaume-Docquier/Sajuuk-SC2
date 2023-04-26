@@ -17,6 +17,7 @@ public partial class ArmySupervisor {
         private readonly IUnitsTracker _unitsTracker;
         private readonly IMapAnalyzer _mapAnalyzer;
         private readonly IExpandAnalyzer _expandAnalyzer;
+        private readonly IRegionAnalyzer _regionAnalyzer;
 
         private const bool Debug = true;
 
@@ -27,14 +28,16 @@ public partial class ArmySupervisor {
             IVisibilityTracker visibilityTracker,
             IUnitsTracker unitsTracker,
             IMapAnalyzer mapAnalyzer,
-            IExpandAnalyzer expandAnalyzer
+            IExpandAnalyzer expandAnalyzer,
+            IRegionAnalyzer regionAnalyzer
         ) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
             _mapAnalyzer = mapAnalyzer;
             _expandAnalyzer = expandAnalyzer;
+            _regionAnalyzer = regionAnalyzer;
 
-            _unitsController = new OffensiveUnitsControl(_unitsTracker, _mapAnalyzer);
+            _unitsController = new OffensiveUnitsControl(_unitsTracker, _mapAnalyzer, _regionAnalyzer);
         }
 
         protected override void OnTransition() {
@@ -58,7 +61,7 @@ public partial class ArmySupervisor {
                 return false;
             }
 
-            StateMachine.TransitionTo(new HuntState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer));
+            StateMachine.TransitionTo(new HuntState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer));
             return true;
         }
 

@@ -16,6 +16,7 @@ public partial class ArmySupervisor {
         private readonly IUnitsTracker _unitsTracker;
         private readonly IMapAnalyzer _mapAnalyzer;
         private readonly IExpandAnalyzer _expandAnalyzer;
+        private readonly IRegionAnalyzer _regionAnalyzer;
 
         private const float AcceptableDistanceToTarget = 3;
 
@@ -25,12 +26,14 @@ public partial class ArmySupervisor {
             IVisibilityTracker visibilityTracker,
             IUnitsTracker unitsTracker,
             IMapAnalyzer mapAnalyzer,
-            IExpandAnalyzer expandAnalyzer
+            IExpandAnalyzer expandAnalyzer,
+            IRegionAnalyzer regionAnalyzer
         ) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
             _mapAnalyzer = mapAnalyzer;
             _expandAnalyzer = expandAnalyzer;
+            _regionAnalyzer = regionAnalyzer;
         }
 
         protected override void OnContextSet() {
@@ -39,7 +42,7 @@ public partial class ArmySupervisor {
 
         protected override bool TryTransitioning() {
             if (Context._mainArmy.GetForce() >= _attackAtForce || Controller.SupportedSupply + 1 >= KnowledgeBase.MaxSupplyAllowed) {
-                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer));
+                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer));
                 return true;
             }
 

@@ -9,11 +9,13 @@ namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class EngageState : RegionalArmySupervisionState {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IRegionAnalyzer _regionAnalyzer;
 
     private HashSet<Unit> _unitsReadyToAttack = new HashSet<Unit>();
 
-    public EngageState(IUnitsTracker unitsTracker) {
+    public EngageState(IUnitsTracker unitsTracker, IRegionAnalyzer regionAnalyzer) {
         _unitsTracker = unitsTracker;
+        _regionAnalyzer = regionAnalyzer;
     }
 
     /// <summary>
@@ -35,7 +37,7 @@ public class EngageState : RegionalArmySupervisionState {
         // TODO GD We should consider if retreating is even possible
         // TODO GD Sometimes you have to commit
         if (_unitsReadyToAttack.GetForce() < EnemyArmy.GetForce() * 0.75) {
-            StateMachine.TransitionTo(new DisengageState(_unitsTracker));
+            StateMachine.TransitionTo(new DisengageState(_unitsTracker, _regionAnalyzer));
             return true;
         }
 
@@ -109,7 +111,7 @@ public class EngageState : RegionalArmySupervisionState {
     /// <param name="units">The units to move</param>
     /// <param name="targetRegion">The region to go to</param>
     /// <param name="enemyArmy">The enemy units to get in range of but avoid engaging</param>
-    private static void JoinTheFight(IReadOnlyCollection<Unit> units, IRegion targetRegion, IReadOnlyCollection<Unit> enemyArmy) {
+    private void JoinTheFight(IReadOnlyCollection<Unit> units, IRegion targetRegion, IReadOnlyCollection<Unit> enemyArmy) {
         var approachRegions = targetRegion.GetReachableNeighbors().ToList();
 
         var regionsWithFriendlyUnitPresence = units
@@ -117,7 +119,7 @@ public class EngageState : RegionalArmySupervisionState {
             .Where(region => region != null)
             .ToHashSet();
 
-        var regionsOutOfReach = ComputeBlockedRegionsMap(regionsWithFriendlyUnitPresence);
+        var regionsOutOfReach = ComputeBlockedRegionsMap(regionsWithFriendlyUnitPresence, _regionAnalyzer.Regions.ToHashSet());
 
         var unitGroups = units
             .Where(unit => unit.GetRegion() != null)

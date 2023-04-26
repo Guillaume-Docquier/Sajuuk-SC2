@@ -156,7 +156,8 @@ public class MapAnalyzer : IMapAnalyzer, INeedUpdating, IWatchUnitsDie {
         // This is a bit ugly, the pathfinder should know about this
         Pathfinder.Instance.InvalidateCache();
 
-        obstacle.Position.GetRegion().UpdateObstruction();
+        // TODO GD Avoid circular dependency, gotta rework this
+        RegionAnalyzer.Instance.GetRegion(obstacle.Position).UpdateObstruction();
     }
 
     private void InitSpawnLocations() {

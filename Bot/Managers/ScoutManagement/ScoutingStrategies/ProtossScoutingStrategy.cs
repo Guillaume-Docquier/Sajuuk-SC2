@@ -16,6 +16,7 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly IRegionAnalyzer _regionAnalyzer;
 
     private const int TopPriority = 100;
 
@@ -29,16 +30,18 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer
+        IExpandAnalyzer expandAnalyzer,
+        IRegionAnalyzer regionAnalyzer
     ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
         _expandAnalyzer = expandAnalyzer;
+        _regionAnalyzer = regionAnalyzer;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
-        if (!_expandAnalyzer.IsInitialized || !RegionAnalyzer.IsInitialized) {
+        if (!_expandAnalyzer.IsInitialized || !_regionAnalyzer.IsInitialized) {
             yield break;
         }
 
@@ -61,7 +64,7 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
 
         // Keep watching
         if (_ownNaturalScoutingTask.IsComplete()) {
-            _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _ownNatural.Position, priority: TopPriority, maxScouts: 1);
+            _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _regionAnalyzer.GetRegion(_ownNatural.Position), priority: TopPriority, maxScouts: 1);
 
             yield return _ownNaturalScoutingTask;
         }
@@ -69,7 +72,7 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
 
     private void Init() {
         _ownNatural = _expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural);
-        _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _ownNatural.Position, priority: TopPriority, maxScouts: 1);
+        _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _regionAnalyzer.GetRegion(_ownNatural.Position), priority: TopPriority, maxScouts: 1);
 
         var enemyNatural = _expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
         _enemyNaturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _mapAnalyzer, enemyNatural.Position, priority: TopPriority - 1, maxScouts: 1);

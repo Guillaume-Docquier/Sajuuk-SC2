@@ -50,35 +50,6 @@ public static class Vector2Extensions {
     }
 
     /// <summary>
-    /// Gets the Region of a given position
-    /// </summary>
-    /// <param name="position">The position to get the Region of</param>
-    /// <returns>The Region of the given position</returns>
-    public static IRegion GetRegion(this Vector2 position) {
-        return RegionAnalyzer.Instance.GetRegion(position);
-    }
-
-    /// <summary>
-    /// Gets the force associated with this position
-    /// </summary>
-    /// <param name="position">The position to get the force of</param>
-    /// <param name="alliance">The alliance to get the force of</param>
-    /// <returns>A number representing the force. The higher the better.</returns>
-    public static float GetForce(this Vector2 position, Alliance alliance) {
-        return RegionTracker.GetForce(position, alliance);
-    }
-
-    /// <summary>
-    /// Gets the value associated with this position
-    /// </summary>
-    /// <param name="position">The position to get the value of</param>
-    /// <param name="alliance">The alliance to get the force of</param>
-    /// <returns>A number representing the value. The higher the better.</returns>
-    public static float GetValue(this Vector2 position, Alliance alliance) {
-        return RegionTracker.GetValue(position, alliance);
-    }
-
-    /// <summary>
     /// Gets all cells traversed by the ray from origin to destination using digital differential analyzer (DDA)
     /// </summary>
     /// <param name="origin"></param>

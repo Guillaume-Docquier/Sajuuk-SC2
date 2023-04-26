@@ -22,6 +22,7 @@ public partial class ArmySupervisor {
         private readonly IUnitsTracker _unitsTracker;
         private readonly IMapAnalyzer _mapAnalyzer;
         private readonly IExpandAnalyzer _expandAnalyzer;
+        private readonly IRegionAnalyzer _regionAnalyzer;
 
         private const float RocksDestructionRange = 9f;
         private const float AcceptableDistanceToTarget = 3;
@@ -37,13 +38,20 @@ public partial class ArmySupervisor {
 
         private readonly IUnitsControl _unitsController;
 
-        public AttackState(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IExpandAnalyzer expandAnalyzer) {
+        public AttackState(
+            IVisibilityTracker visibilityTracker,
+            IUnitsTracker unitsTracker,
+            IMapAnalyzer mapAnalyzer,
+            IExpandAnalyzer expandAnalyzer,
+            IRegionAnalyzer regionAnalyzer
+        ) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
             _mapAnalyzer = mapAnalyzer;
             _expandAnalyzer = expandAnalyzer;
+            _regionAnalyzer = regionAnalyzer;
 
-            _unitsController = new OffensiveUnitsControl(_unitsTracker, _mapAnalyzer);
+            _unitsController = new OffensiveUnitsControl(_unitsTracker, _mapAnalyzer, _regionAnalyzer);
         }
 
         protected override void OnTransition() {
@@ -56,7 +64,7 @@ public partial class ArmySupervisor {
             }
 
             if (_mapAnalyzer.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3).DistanceTo(Context._target) < AcceptableDistanceToTarget) {
-                StateMachine.TransitionTo(new DefenseState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer));
+                StateMachine.TransitionTo(new DefenseState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer));
                 return true;
             }
 
