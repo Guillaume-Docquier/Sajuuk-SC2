@@ -6,6 +6,7 @@ using Bot.Builds;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
+using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.MapKnowledge;
 using Bot.StateManagement;
@@ -14,6 +15,7 @@ namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class RegionalArmySupervisor : Supervisor {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IRegionTracker _regionTracker;
 
     private const bool Debug = false;
 
@@ -24,16 +26,17 @@ public class RegionalArmySupervisor : Supervisor {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
-    public RegionalArmySupervisor(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IRegionAnalyzer regionAnalyzer, IRegion targetRegion) {
+    public RegionalArmySupervisor(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IRegionAnalyzer regionAnalyzer, IRegionTracker regionTracker, IRegion targetRegion) {
         _unitsTracker = unitsTracker;
+        _regionTracker = regionTracker;
 
         _targetRegion = targetRegion;
 
-        _offensiveUnitsController = new OffensiveUnitsControl(_unitsTracker, mapAnalyzer, regionAnalyzer);
-        _defensiveUnitsController = new DefensiveUnitsControl(_unitsTracker, mapAnalyzer, regionAnalyzer);
+        _offensiveUnitsController = new OffensiveUnitsControl(_unitsTracker, mapAnalyzer, regionAnalyzer, _regionTracker);
+        _defensiveUnitsController = new DefensiveUnitsControl(_unitsTracker, mapAnalyzer, regionAnalyzer, _regionTracker);
 
         Releaser = new RegionalArmySupervisorReleaser(this);
-        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState(_unitsTracker, regionAnalyzer));
+        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState(_unitsTracker, regionAnalyzer, _regionTracker));
     }
 
     protected override void Supervise() {

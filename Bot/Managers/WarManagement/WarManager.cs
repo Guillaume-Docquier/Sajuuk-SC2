@@ -3,6 +3,7 @@ using System.Linq;
 using Bot.Builds;
 using Bot.Debugging;
 using Bot.GameSense;
+using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.States;
 using Bot.Managers.WarManagement.States.EarlyGame;
 using Bot.MapKnowledge;
@@ -41,12 +42,13 @@ public class WarManager: Manager {
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
         IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer
+        IRegionAnalyzer regionAnalyzer,
+        IRegionTracker regionTracker
     ) {
         _expandAnalyzer = expandAnalyzer;
         _stateMachine = new StateMachine<WarManager, WarManagerState>(
             this,
-            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, mapAnalyzer, expandAnalyzer, regionAnalyzer)
+            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, mapAnalyzer, expandAnalyzer, regionAnalyzer, regionTracker)
         );
     }
 

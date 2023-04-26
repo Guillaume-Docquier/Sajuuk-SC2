@@ -1,6 +1,7 @@
 ﻿using Bot.Debugging;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.GameSense.RegionTracking;
 using Bot.MapKnowledge;
 using Bot.Tagging;
 using Bot.Tests.Mocks;
@@ -17,6 +18,7 @@ public class WarManagerTests : BaseTestClass {
     private readonly Mock<IMapAnalyzer> _mapAnalyzerMock;
     private readonly Mock<IExpandAnalyzer> _expandAnalyzerMock;
     private readonly Mock<IRegionAnalyzer> _regionAnalyzerMock;
+    private readonly Mock<IRegionTracker> _regionTrackerMock;
 
     public WarManagerTests() {
         _taggingServiceMock = new Mock<ITaggingService>();
@@ -27,6 +29,7 @@ public class WarManagerTests : BaseTestClass {
         _mapAnalyzerMock = new Mock<IMapAnalyzer>();
         _expandAnalyzerMock = new Mock<IExpandAnalyzer>();
         _regionAnalyzerMock = new Mock<IRegionAnalyzer>();
+        _regionTrackerMock = new Mock<IRegionTracker>();
     }
 
     [Fact(Skip = "Wait for DI refactor to be done")]
@@ -40,7 +43,8 @@ public class WarManagerTests : BaseTestClass {
             _unitsTracker,
             _mapAnalyzerMock.Object,
             _expandAnalyzerMock.Object,
-            _regionAnalyzerMock.Object
+            _regionAnalyzerMock.Object,
+            _regionTrackerMock.Object
         );
 
         var militaryUnits = Units.ZergMilitary
@@ -68,7 +72,8 @@ public class WarManagerTests : BaseTestClass {
             _unitsTracker,
             _mapAnalyzerMock.Object,
             _expandAnalyzerMock.Object,
-            _regionAnalyzerMock.Object
+            _regionAnalyzerMock.Object,
+            _regionTrackerMock.Object
         );
         // TODO UnitsTracker
 

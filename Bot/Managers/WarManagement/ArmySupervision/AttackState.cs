@@ -7,6 +7,7 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.MapKnowledge;
 using Bot.StateManagement;
@@ -23,6 +24,7 @@ public partial class ArmySupervisor {
         private readonly IMapAnalyzer _mapAnalyzer;
         private readonly IExpandAnalyzer _expandAnalyzer;
         private readonly IRegionAnalyzer _regionAnalyzer;
+        private readonly IRegionTracker _regionTracker;
 
         private const float RocksDestructionRange = 9f;
         private const float AcceptableDistanceToTarget = 3;
@@ -43,15 +45,17 @@ public partial class ArmySupervisor {
             IUnitsTracker unitsTracker,
             IMapAnalyzer mapAnalyzer,
             IExpandAnalyzer expandAnalyzer,
-            IRegionAnalyzer regionAnalyzer
+            IRegionAnalyzer regionAnalyzer,
+            IRegionTracker regionTracker
         ) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
             _mapAnalyzer = mapAnalyzer;
             _expandAnalyzer = expandAnalyzer;
             _regionAnalyzer = regionAnalyzer;
+            _regionTracker = regionTracker;
 
-            _unitsController = new OffensiveUnitsControl(_unitsTracker, _mapAnalyzer, _regionAnalyzer);
+            _unitsController = new OffensiveUnitsControl(_unitsTracker, _mapAnalyzer, _regionAnalyzer, _regionTracker);
         }
 
         protected override void OnTransition() {
@@ -64,7 +68,7 @@ public partial class ArmySupervisor {
             }
 
             if (_mapAnalyzer.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3).DistanceTo(Context._target) < AcceptableDistanceToTarget) {
-                StateMachine.TransitionTo(new DefenseState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer));
+                StateMachine.TransitionTo(new DefenseState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionTracker));
                 return true;
             }
 

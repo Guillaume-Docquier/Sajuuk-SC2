@@ -9,6 +9,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
+using Bot.GameSense.RegionTracking;
 using Bot.Managers;
 using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
@@ -31,6 +32,7 @@ public class SajuukBot: PoliteBot {
     private readonly IRegionAnalyzer _regionAnalyzer;
     private readonly ICreepTracker _creepTracker;
     private readonly IEnemyStrategyTracker _enemyStrategyTracker;
+    private readonly IRegionTracker _regionTracker;
 
     private readonly BotDebugger _debugger;
 
@@ -51,7 +53,8 @@ public class SajuukBot: PoliteBot {
         IExpandAnalyzer expandAnalyzer,
         IRegionAnalyzer regionAnalyzer,
         ICreepTracker creepTracker,
-        IEnemyStrategyTracker enemyStrategyTracker
+        IEnemyStrategyTracker enemyStrategyTracker,
+        IRegionTracker regionTracker
     ) : base(version, scenarios, taggingService, unitsTracker, mapAnalyzer) {
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
@@ -61,6 +64,7 @@ public class SajuukBot: PoliteBot {
         _regionAnalyzer = regionAnalyzer;
         _creepTracker = creepTracker;
         _enemyStrategyTracker = enemyStrategyTracker;
+        _regionTracker = regionTracker;
 
         _debugger = new BotDebugger(_visibilityTracker, _debuggingFlagsTracker, UnitsTracker, incomeTracker, MapAnalyzer, _enemyStrategyTracker);
     }
@@ -102,7 +106,7 @@ public class SajuukBot: PoliteBot {
         _managers.Add(new SupplyManager(buildManager, UnitsTracker));
         _managers.Add(new ScoutManager(_enemyRaceTracker, _visibilityTracker, UnitsTracker, MapAnalyzer, _expandAnalyzer, _regionAnalyzer));
         _managers.Add(new EconomyManager(buildManager, UnitsTracker, MapAnalyzer, _buildingTracker, _expandAnalyzer, _creepTracker));
-        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, UnitsTracker, MapAnalyzer, _expandAnalyzer, _regionAnalyzer));
+        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, UnitsTracker, MapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionTracker));
         _managers.Add(new CreepManager(_visibilityTracker, UnitsTracker, MapAnalyzer, _buildingTracker, _expandAnalyzer, _creepTracker));
         _managers.Add(new UpgradesManager(UnitsTracker));
     }

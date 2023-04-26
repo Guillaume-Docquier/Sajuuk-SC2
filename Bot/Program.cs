@@ -5,6 +5,7 @@ using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
+using Bot.GameSense.RegionTracking;
 using Bot.MapKnowledge;
 using Bot.Scenarios;
 using Bot.Tagging;
@@ -124,7 +125,8 @@ public class Program {
             ExpandAnalyzer.Instance,
             RegionAnalyzer.Instance,
             CreepTracker.Instance,
-            EnemyStrategyTracker.Instance
+            EnemyStrategyTracker.Instance,
+            RegionTracker.Instance
         );
     }
 

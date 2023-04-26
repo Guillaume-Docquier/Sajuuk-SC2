@@ -1,5 +1,6 @@
 ﻿using Bot.Debugging;
 using Bot.GameSense;
+using Bot.GameSense.RegionTracking;
 using Bot.MapKnowledge;
 using Bot.Tagging;
 using Bot.Utils;
@@ -17,6 +18,7 @@ public class EarlyGameState : WarManagerState {
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IRegionTracker _regionTracker;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
@@ -29,7 +31,8 @@ public class EarlyGameState : WarManagerState {
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
         IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer
+        IRegionAnalyzer regionAnalyzer,
+        IRegionTracker regionTracker
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
@@ -39,12 +42,13 @@ public class EarlyGameState : WarManagerState {
         _mapAnalyzer = mapAnalyzer;
         _expandAnalyzer = expandAnalyzer;
         _regionAnalyzer = regionAnalyzer;
+        _regionTracker = regionTracker;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new EarlyGameBehaviour(Context, _taggingService, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer);
+        _behaviour = new EarlyGameBehaviour(Context, _taggingService, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionTracker);
     }
 
     protected override void Execute() {
@@ -69,7 +73,8 @@ public class EarlyGameState : WarManagerState {
                 _unitsTracker,
                 _mapAnalyzer,
                 _expandAnalyzer,
-                _regionAnalyzer
+                _regionAnalyzer,
+                _regionTracker
             ));
 
             return true;

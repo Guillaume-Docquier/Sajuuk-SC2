@@ -25,6 +25,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IRegionTracker _regionTracker;
 
     private BuildRequest _armyBuildRequest;
 
@@ -48,16 +49,18 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
         IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer
+        IRegionAnalyzer regionAnalyzer,
+        IRegionTracker regionTracker
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
         _unitsTracker = unitsTracker;
         _expandAnalyzer = expandAnalyzer;
         _regionAnalyzer = regionAnalyzer;
+        _regionTracker = regionTracker;
 
         _debugger = new EarlyGameBehaviourDebugger(debuggingFlagsTracker);
-        DefenseSupervisor = new ArmySupervisor(visibilityTracker, _unitsTracker, mapAnalyzer, _expandAnalyzer, _regionAnalyzer);
+        DefenseSupervisor = new ArmySupervisor(visibilityTracker, _unitsTracker, mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionTracker);
 
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);
@@ -143,7 +146,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
             return _startingRegions.MinBy(region => Pathfinder.Instance.FindPath(region, enemyMain).GetPathDistance());
         }
 
-        return _startingRegions.MaxBy(region => RegionTracker.GetForce(region, Alliance.Enemy))!;
+        return _startingRegions.MaxBy(region => _regionTracker.GetForce(region, Alliance.Enemy))!;
     }
 
     /// <summary>

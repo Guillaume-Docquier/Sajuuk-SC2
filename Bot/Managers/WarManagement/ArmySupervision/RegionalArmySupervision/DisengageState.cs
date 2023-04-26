@@ -12,6 +12,7 @@ namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 public class DisengageState : RegionalArmySupervisionState {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IRegionTracker _regionTracker;
 
     private const float SafetyDistance = 5;
     private const float SafetyDistanceTolerance = SafetyDistance / 2;
@@ -20,9 +21,10 @@ public class DisengageState : RegionalArmySupervisionState {
 
     private HashSet<Unit> _unitsInSafePosition = new HashSet<Unit>();
 
-    public DisengageState(IUnitsTracker unitsTracker, IRegionAnalyzer regionAnalyzer) {
+    public DisengageState(IUnitsTracker unitsTracker, IRegionAnalyzer regionAnalyzer, IRegionTracker regionTracker) {
         _unitsTracker = unitsTracker;
         _regionAnalyzer = regionAnalyzer;
+        _regionTracker = regionTracker;
 
         _fleeKiting = new DisengagementKiting(_unitsTracker);
     }
@@ -35,7 +37,7 @@ public class DisengageState : RegionalArmySupervisionState {
         _unitsInSafePosition = GetUnitsInSafePosition(SupervisedUnits, EnemyArmy);
         var unitsInDanger = SupervisedUnits.Except(_unitsInSafePosition).ToList();
 
-        ApproachState.MoveIntoStrikingPosition(_unitsInSafePosition, TargetRegion, EnemyArmy, SafetyDistance + SafetyDistanceTolerance, DefensiveUnitsController, _regionAnalyzer.Regions.ToHashSet());
+        ApproachState.MoveIntoStrikingPosition(_unitsInSafePosition, TargetRegion, EnemyArmy, SafetyDistance + SafetyDistanceTolerance, DefensiveUnitsController, _regionAnalyzer.Regions.ToHashSet(), _regionTracker);
         MoveIntoSafePosition(unitsInDanger, EnemyArmy, _fleeKiting);
     }
 
@@ -48,7 +50,7 @@ public class DisengageState : RegionalArmySupervisionState {
             return false;
         }
 
-        StateMachine.TransitionTo(new ApproachState(_unitsTracker, _regionAnalyzer));
+        StateMachine.TransitionTo(new ApproachState(_unitsTracker, _regionAnalyzer, _regionTracker));
         return true;
     }
 
@@ -70,13 +72,13 @@ public class DisengageState : RegionalArmySupervisionState {
     /// <param name="supervisedUnits">The units to consider</param>
     /// <param name="enemyArmy">The enemy army to strike</param>
     /// <returns>The units that are in a safe position</returns>
-    private static HashSet<Unit> GetUnitsInSafePosition(HashSet<Unit> supervisedUnits, IReadOnlyCollection<Unit> enemyArmy) {
+    private HashSet<Unit> GetUnitsInSafePosition(HashSet<Unit> supervisedUnits, IReadOnlyCollection<Unit> enemyArmy) {
         if (!enemyArmy.Any()) {
             return supervisedUnits;
         }
 
         return supervisedUnits
-            .Where(unit => RegionTracker.GetForce(unit.GetRegion(), Alliance.Enemy) <= 0)
+            .Where(unit => _regionTracker.GetForce(unit.GetRegion(), Alliance.Enemy) <= 0)
             .ToHashSet();
     }
 
@@ -86,7 +88,7 @@ public class DisengageState : RegionalArmySupervisionState {
     /// <param name="units">The units to move</param>
     /// <param name="enemyArmy">The enemy units to get out of range of</param>
     /// <param name="unitsController">The units controller</param>
-    private static void MoveIntoSafePosition(IReadOnlyCollection<Unit> units, IReadOnlyCollection<Unit> enemyArmy, IUnitsControl unitsController) {
+    private void MoveIntoSafePosition(IReadOnlyCollection<Unit> units, IReadOnlyCollection<Unit> enemyArmy, IUnitsControl unitsController) {
         var unitGroups = units
             .Where(unit => unit.GetRegion() != null)
             .GroupBy(unit => unit.GetRegion()
@@ -95,7 +97,7 @@ public class DisengageState : RegionalArmySupervisionState {
                 .MinBy(reachableNeighbor => {
                     var unitDistanceToNeighbor = reachableNeighbor.Frontier.Min(cell => cell.DistanceTo(unit));
                     var enemyDistanceToNeighbor = reachableNeighbor.Frontier.Min(cell => enemyArmy.Min(enemy => cell.DistanceTo(enemy)));
-                    var enemyForce = RegionTracker.GetForce(reachableNeighbor.Region, Alliance.Enemy);
+                    var enemyForce = _regionTracker.GetForce(reachableNeighbor.Region, Alliance.Enemy);
 
                     return unitDistanceToNeighbor / (enemyDistanceToNeighbor + 1) * (enemyForce + 1);
                 })

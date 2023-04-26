@@ -1,5 +1,6 @@
 ﻿using Bot.Debugging;
 using Bot.GameSense;
+using Bot.GameSense.RegionTracking;
 using Bot.MapKnowledge;
 using Bot.Tagging;
 
@@ -14,6 +15,7 @@ public class FinisherState : WarManagerState {
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IRegionTracker _regionTracker;
 
     private IWarManagerBehaviour _behaviour;
 
@@ -27,7 +29,8 @@ public class FinisherState : WarManagerState {
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
         IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer
+        IRegionAnalyzer regionAnalyzer,
+        IRegionTracker regionTracker
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
@@ -37,6 +40,7 @@ public class FinisherState : WarManagerState {
         _mapAnalyzer = mapAnalyzer;
         _expandAnalyzer = expandAnalyzer;
         _regionAnalyzer = regionAnalyzer;
+        _regionTracker = regionTracker;
     }
 
     protected override void OnContextSet() {
@@ -49,7 +53,8 @@ public class FinisherState : WarManagerState {
             _unitsTracker,
             _mapAnalyzer,
             _expandAnalyzer,
-            _regionAnalyzer
+            _regionAnalyzer,
+            _regionTracker
         );
     }
 

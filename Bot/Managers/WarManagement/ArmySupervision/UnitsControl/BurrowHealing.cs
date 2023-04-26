@@ -14,14 +14,16 @@ public class BurrowHealing : IUnitsControl {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IRegionTracker _regionTracker;
 
     private const double BurrowDownThreshold = 0.5;
     private const double BurrowUpThreshold = 0.6;
 
-    public BurrowHealing(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IRegionAnalyzer regionAnalyzer) {
+    public BurrowHealing(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IRegionAnalyzer regionAnalyzer, IRegionTracker regionTracker) {
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
         _regionAnalyzer = regionAnalyzer;
+        _regionTracker = regionTracker;
     }
 
     public bool IsExecuting() {
@@ -143,9 +145,9 @@ public class BurrowHealing : IUnitsControl {
         // Run to safety
         var safestRegion = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls)
             .Select(townHall => townHall.GetRegion())
-            .MinBy(region => RegionTracker.GetForce(region, Alliance.Enemy));
+            .MinBy(region => _regionTracker.GetForce(region, Alliance.Enemy));
 
-        safestRegion ??= _regionAnalyzer.Regions.MinBy(region => RegionTracker.GetForce(region, Alliance.Enemy));
+        safestRegion ??= _regionAnalyzer.Regions.MinBy(region => _regionTracker.GetForce(region, Alliance.Enemy));
 
         roach.Move(safestRegion!.Center);
 

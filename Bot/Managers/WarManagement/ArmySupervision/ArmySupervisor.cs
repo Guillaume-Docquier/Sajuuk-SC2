@@ -5,6 +5,7 @@ using Bot.Algorithms;
 using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
+using Bot.GameSense.RegionTracking;
 using Bot.MapKnowledge;
 using Bot.StateManagement;
 
@@ -16,6 +17,7 @@ public partial class ArmySupervisor: Supervisor {
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IRegionTracker _regionTracker;
 
     private readonly StateMachine<ArmySupervisor> _stateMachine;
 
@@ -40,18 +42,20 @@ public partial class ArmySupervisor: Supervisor {
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
         IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer
+        IRegionAnalyzer regionAnalyzer,
+        IRegionTracker regionTracker
     ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
         _expandAnalyzer = expandAnalyzer;
         _regionAnalyzer = regionAnalyzer;
+        _regionTracker = regionTracker;
 
         Assigner = new ArmySupervisorAssigner(this);
         Releaser = new ArmySupervisorReleaser(this);
 
-        _stateMachine = new StateMachine<ArmySupervisor>(this, new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer));
+        _stateMachine = new StateMachine<ArmySupervisor>(this, new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionTracker));
     }
 
     public override string ToString() {
@@ -72,7 +76,7 @@ public partial class ArmySupervisor: Supervisor {
     public void AssignTarget(Vector2 target, float blastRadius, bool canHuntTheEnemy = true) {
         if (_target != target) {
             _target = target;
-            _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer));
+            _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionTracker));
         }
 
         _blastRadius = blastRadius;
@@ -87,6 +91,6 @@ public partial class ArmySupervisor: Supervisor {
 
         // Reset the state to have a clean slate once we're re-hired
         // Maybe our Manager should just dispose of us instead?
-        _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer));
+        _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionTracker));
     }
 }

@@ -9,7 +9,10 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense.RegionTracking;
 
-public class RegionTracker : INeedUpdating {
+public class RegionTracker : IRegionTracker, INeedUpdating {
+    /// <summary>
+    /// DI: ✔️ The only usages are for static instance creations
+    /// </summary>
     public static RegionTracker Instance { get; } = new RegionTracker(
         DebuggingFlagsTracker.Instance,
         UnitsTracker.Instance,
@@ -76,7 +79,7 @@ public class RegionTracker : INeedUpdating {
     /// <param name="alliance">The alliance to get the force of</param>
     /// <param name="normalized">Whether or not to get the normalized force between 0 and 1</param>
     /// <returns>The force of the region</returns>
-    public static float GetForce(IRegion region, Alliance alliance, bool normalized = false) {
+    public float GetForce(IRegion region, Alliance alliance, bool normalized = false) {
         if (!Instance._regionForceEvaluators.ContainsKey(alliance)) {
             Logger.Error($"Cannot get force for alliance {alliance}. We don't track that");
         }
@@ -216,7 +219,7 @@ public class RegionTracker : INeedUpdating {
     /// <param name="region">The region to get the label for</param>
     /// <param name="alliance">The alliance to consider the force of</param>
     /// <returns>A string that describes the force of the region</returns>
-    private static string GetForceLabel(IRegion region, Alliance alliance) {
+    private string GetForceLabel(IRegion region, Alliance alliance) {
         var force = GetForce(region, alliance);
 
         return force switch

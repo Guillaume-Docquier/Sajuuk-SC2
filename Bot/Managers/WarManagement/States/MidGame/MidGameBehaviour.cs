@@ -34,6 +34,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IRegionTracker _regionTracker;
 
     private readonly MidGameBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
@@ -55,7 +56,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
         IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer
+        IRegionAnalyzer regionAnalyzer,
+        IRegionTracker regionTracker
     ) {
         _warManager = warManager;
         _visibilityTracker = visibilityTracker;
@@ -63,9 +65,10 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         _mapAnalyzer = mapAnalyzer;
         _expandAnalyzer = expandAnalyzer;
         _regionAnalyzer = regionAnalyzer;
+        _regionTracker = regionTracker;
 
         _debugger = new MidGameBehaviourDebugger(debuggingFlagsTracker);
-        _armySupervisors = _regionAnalyzer.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(_unitsTracker, _mapAnalyzer, _regionAnalyzer, region));
+        _armySupervisors = _regionAnalyzer.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(_unitsTracker, _mapAnalyzer, _regionAnalyzer, _regionTracker, region));
 
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);
@@ -275,8 +278,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
         return reachableRegions.MaxBy(reachableRegion => {
             // TODO GD This doesn't take into account if the unit can address the threat (grounds vs flying, cloaked, etc)
-            var regionThreat = RegionTracker.Instance.GetThreat(reachableRegion, Alliance.Enemy);
-            var regionValue = RegionTracker.Instance.GetValue(reachableRegion, Alliance.Enemy);
+            var regionThreat = _regionTracker.GetThreat(reachableRegion, Alliance.Enemy);
+            var regionValue = _regionTracker.GetValue(reachableRegion, Alliance.Enemy);
 
             var distance = Pathfinder.Instance.FindPath(unitRegion, reachableRegion, regionsToAvoid).GetPathDistance();
 
@@ -284,9 +287,9 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         });
     }
 
-    private static void ReleaseUnitsFromUnachievableGoals(Dictionary<IRegion, List<Unit>> plannedUnitsAllocation) {
+    private void ReleaseUnitsFromUnachievableGoals(Dictionary<IRegion, List<Unit>> plannedUnitsAllocation) {
         foreach (var (region, army) in plannedUnitsAllocation) {
-            var hasEnoughForce = army.GetForce() >= RegionTracker.GetForce(region, Alliance.Enemy) * 2;
+            var hasEnoughForce = army.GetForce() >= _regionTracker.GetForce(region, Alliance.Enemy) * 2;
             if (IsAGoal(region) && hasEnoughForce) {
                 continue;
             }
@@ -295,9 +298,9 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         }
     }
 
-    private static bool IsAGoal(IRegion region) {
-        var thereIsAThreat = RegionTracker.Instance.GetThreat(region, Alliance.Enemy) > 0;
-        var thereIsValue = RegionTracker.Instance.GetValue(region, Alliance.Enemy) > 0;
+    private bool IsAGoal(IRegion region) {
+        var thereIsAThreat = _regionTracker.GetThreat(region, Alliance.Enemy) > 0;
+        var thereIsValue = _regionTracker.GetValue(region, Alliance.Enemy) > 0;
 
         return thereIsAThreat || thereIsValue;
     }
@@ -400,14 +403,14 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// </summary>
     /// <param name="regions">The regions to compute the reach of.</param>
     /// <returns></returns>
-    private static Dictionary<IRegion, List<IRegion>> ComputeRegionsReach(IEnumerable<IRegion> regions) {
+    private Dictionary<IRegion, List<IRegion>> ComputeRegionsReach(IEnumerable<IRegion> regions) {
         var reach = new Dictionary<IRegion, List<IRegion>>();
         foreach (var startingRegion in regions) {
             // TODO GD We can greatly optimize this by using dynamic programming
             reach[startingRegion] = TreeSearch.BreadthFirstSearch(
                 startingRegion,
                 region => region.GetReachableNeighbors(),
-                region => RegionTracker.GetForce(region, Alliance.Enemy) > 0
+                region => _regionTracker.GetForce(region, Alliance.Enemy) > 0
             ).ToList();
         }
 

@@ -61,7 +61,7 @@ public static class Controller {
         CreepTracker.Instance,          // DI: ✔️ Depends on UnitsTracker, VisibilityTracker and MapAnalyzer
 
         EnemyStrategyTracker.Instance,  // DI: ✔️ Depends on UnitsTracker, EnemyRaceTracker, ExpandAnalyzer and RegionAnalyzer
-        RegionTracker.Instance,         // Depends on DebuggingFlagsTracker, VisibilityTracker, UnitsTracker, MapAnalyzer and RegionAnalyzer
+        RegionTracker.Instance,         // DI: ✔️ Depends on DebuggingFlagsTracker, VisibilityTracker, UnitsTracker, MapAnalyzer and RegionAnalyzer
     };
 
     public static void Reset() {
