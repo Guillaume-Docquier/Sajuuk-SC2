@@ -9,23 +9,26 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
-public class CreepTracker: INeedUpdating {
+public class CreepTracker : ICreepTracker, INeedUpdating {
+    /// <summary>
+    /// DI: ✔️ The only usages are for static instance creations
+    /// </summary>
     public static readonly CreepTracker Instance = new CreepTracker(VisibilityTracker.Instance, UnitsTracker.Instance, MapAnalyzer.Instance);
 
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IMapAnalyzer _mapAnalyzer;
 
-    private static ulong _creepMapLastGeneratedAt = ulong.MaxValue;
-    private static List<List<bool>> _creepMap;
+    private ulong _creepMapLastGeneratedAt = ulong.MaxValue;
+    private List<List<bool>> _creepMap;
 
-    private static ulong _creepFrontierLastGeneratedAt = ulong.MaxValue;
-    private static List<Vector2> _creepFrontier = new List<Vector2>();
+    private ulong _creepFrontierLastGeneratedAt = ulong.MaxValue;
+    private List<Vector2> _creepFrontier = new List<Vector2>();
 
-    private static ImageData _rawCreepMap;
+    private ImageData _rawCreepMap;
 
-    private static int _maxX;
-    private static int _maxY;
+    private int _maxX;
+    private int _maxY;
 
     private CreepTracker(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
         _visibilityTracker = visibilityTracker;
@@ -101,7 +104,7 @@ public class CreepTracker: INeedUpdating {
         return creepTumors.Min(tumor => tumor.DistanceTo(frontierCell)) < 7;
     }
 
-    private static void GenerateCreepMap() {
+    private void GenerateCreepMap() {
         _creepMap = new List<List<bool>>();
         for (var x = 0; x < _maxX; x++) {
             _creepMap.Add(new List<bool>(new bool[_maxY]));

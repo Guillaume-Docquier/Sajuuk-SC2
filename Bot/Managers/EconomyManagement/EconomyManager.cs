@@ -16,6 +16,7 @@ public sealed partial class EconomyManager : Manager {
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IBuildingTracker _buildingTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly ICreepTracker _creepTracker;
 
     private const int MaxDroneCount = 70;
     private readonly BuildManager _buildManager;
@@ -50,13 +51,15 @@ public sealed partial class EconomyManager : Manager {
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
         IBuildingTracker buildingTracker,
-        IExpandAnalyzer expandAnalyzer
+        IExpandAnalyzer expandAnalyzer,
+        ICreepTracker creepTracker
     ) {
         _buildManager = buildManager;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
         _buildingTracker = buildingTracker;
         _expandAnalyzer = expandAnalyzer;
+        _creepTracker = creepTracker;
 
         Assigner = new EconomyManagerAssigner(this);
         Dispatcher = new EconomyManagerDispatcher(this);

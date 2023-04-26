@@ -14,6 +14,7 @@ public class TumorCreepSpreadModule: UnitModule {
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IBuildingTracker _buildingTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly ICreepTracker _creepTracker;
 
     public const string Tag = "TumorCreepSpreadModule";
 
@@ -28,7 +29,8 @@ public class TumorCreepSpreadModule: UnitModule {
         IVisibilityTracker visibilityTracker,
         IMapAnalyzer mapAnalyzer,
         IBuildingTracker buildingTracker,
-        IExpandAnalyzer expandAnalyzer
+        IExpandAnalyzer expandAnalyzer,
+        ICreepTracker creepTracker
     ) {
         _creepTumor = creepTumor;
 
@@ -36,6 +38,7 @@ public class TumorCreepSpreadModule: UnitModule {
         _mapAnalyzer = mapAnalyzer;
         _buildingTracker = buildingTracker;
         _expandAnalyzer = expandAnalyzer;
+        _creepTracker = creepTracker;
     }
 
     public static void Install(
@@ -43,10 +46,11 @@ public class TumorCreepSpreadModule: UnitModule {
         IVisibilityTracker visibilityTracker,
         IMapAnalyzer mapAnalyzer,
         IBuildingTracker buildingTracker,
-        IExpandAnalyzer expandAnalyzer
+        IExpandAnalyzer expandAnalyzer,
+        ICreepTracker creepTracker
     ) {
         if (PreInstallCheck(Tag, creepTumor)) {
-            creepTumor.Modules.Add(Tag, new TumorCreepSpreadModule(creepTumor, visibilityTracker, mapAnalyzer, buildingTracker, expandAnalyzer));
+            creepTumor.Modules.Add(Tag, new TumorCreepSpreadModule(creepTumor, visibilityTracker, mapAnalyzer, buildingTracker, expandAnalyzer, creepTracker));
         }
     }
 
@@ -58,7 +62,7 @@ public class TumorCreepSpreadModule: UnitModule {
             }
         }
         else if (_spreadAt <= Controller.Frame) {
-            var creepFrontier = CreepTracker.Instance.GetCreepFrontier();
+            var creepFrontier = _creepTracker.GetCreepFrontier();
             if (creepFrontier.Count == 0) {
                 return;
             }
@@ -70,7 +74,7 @@ public class TumorCreepSpreadModule: UnitModule {
 
             var bestPlaceLocation = _mapAnalyzer.BuildSearchRadius(_creepTumor.Position.ToVector2(), spreadRange)
                 .Where(_visibilityTracker.IsVisible)
-                .Where(CreepTracker.Instance.HasCreep)
+                .Where(_creepTracker.HasCreep)
                 .Where(_expandAnalyzer.IsNotBlockingExpand)
                 .OrderBy(position => position.DistanceTo(creepTarget))
                 .FirstOrDefault(position => _buildingTracker.CanPlace(Units.CreepTumor, position));

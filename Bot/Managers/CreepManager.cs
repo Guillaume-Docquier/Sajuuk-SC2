@@ -14,6 +14,7 @@ public class CreepManager: UnitlessManager {
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IBuildingTracker _buildingTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly ICreepTracker _creepTracker;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
@@ -22,18 +23,20 @@ public class CreepManager: UnitlessManager {
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,
         IBuildingTracker buildingTracker,
-        IExpandAnalyzer expandAnalyzer
+        IExpandAnalyzer expandAnalyzer,
+        ICreepTracker creepTracker
     ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _mapAnalyzer = mapAnalyzer;
         _buildingTracker = buildingTracker;
         _expandAnalyzer = expandAnalyzer;
+        _creepTracker = creepTracker;
     }
 
     protected override void ManagementPhase() {
         foreach (var creepTumor in Controller.GetUnits(_unitsTracker.NewOwnedUnits, Units.CreepTumor)) {
-            TumorCreepSpreadModule.Install(creepTumor, _visibilityTracker, _mapAnalyzer, _buildingTracker, _expandAnalyzer);
+            TumorCreepSpreadModule.Install(creepTumor, _visibilityTracker, _mapAnalyzer, _buildingTracker, _expandAnalyzer, _creepTracker);
         }
     }
 

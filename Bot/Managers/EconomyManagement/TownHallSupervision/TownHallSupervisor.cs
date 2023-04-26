@@ -15,6 +15,7 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IBuildingTracker _buildingTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly ICreepTracker _creepTracker;
 
     private readonly ulong _id;
     private readonly Color _color;
@@ -62,10 +63,18 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
         }
     }
 
-    public TownHallSupervisor(IUnitsTracker unitsTracker, IBuildingTracker buildingTracker, IExpandAnalyzer expandAnalyzer, Unit townHall, Color color) {
+    public TownHallSupervisor(
+        IUnitsTracker unitsTracker,
+        IBuildingTracker buildingTracker,
+        IExpandAnalyzer expandAnalyzer,
+        ICreepTracker creepTracker,
+        Unit townHall,
+        Color color
+    ) {
         _unitsTracker = unitsTracker;
         _buildingTracker = buildingTracker;
         _expandAnalyzer = expandAnalyzer;
+        _creepTracker = creepTracker;
 
         _id = townHall.Tag;
         _color = color;

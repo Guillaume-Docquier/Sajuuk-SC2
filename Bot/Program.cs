@@ -121,7 +121,8 @@ public class Program {
             MapAnalyzer.Instance,
             BuildingTracker.Instance,
             ExpandAnalyzer.Instance,
-            RegionAnalyzer.Instance
+            RegionAnalyzer.Instance,
+            CreepTracker.Instance
         );
     }
 

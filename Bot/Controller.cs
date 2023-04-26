@@ -58,7 +58,7 @@ public static class Controller {
         BuildingTracker.Instance,       // DI: ✔️ Depends on UnitsTracker and MapAnalyzer
         ExpandAnalyzer.Instance,        // DI: ✔️ Depends on UnitsTracker and MapAnalyzer
         RegionAnalyzer.Instance,        // DI: ✔️ Depends on ExpandAnalyzer and MapAnalyzer
-        CreepTracker.Instance,          // Depends on UnitsTracker, VisibilityTracker and MapAnalyzer
+        CreepTracker.Instance,          // DI: ✔️ Depends on UnitsTracker, VisibilityTracker and MapAnalyzer
 
         EnemyStrategyTracker.Instance,  // Depends on UnitsTracker, EnemyRaceTracker, ExpandAnalyzer and RegionAnalyzer
         RegionTracker.Instance,         // Depends on DebuggingFlagsTracker, VisibilityTracker, UnitsTracker, MapAnalyzer and RegionAnalyzer
