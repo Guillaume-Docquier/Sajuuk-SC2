@@ -17,8 +17,8 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
     private ulong _expandTiming = 0;
     private ulong _zerglingAttackTiming = 0;
 
-    private static ExpandLocation _enemyMain;
-    private static ExpandLocation _enemyNatural;
+    private static IExpandLocation _enemyMain;
+    private static IExpandLocation _enemyNatural;
 
     private static IRegion _enemyMainRegion;
     private static IRegion _enemyNaturalRegion;

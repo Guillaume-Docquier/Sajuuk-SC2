@@ -102,7 +102,7 @@ public class MineralWalkKiting : IUnitsControl {
     /// <param name="origin">The origin of the exit</param>
     /// <param name="exit">The exit to go through</param>
     /// <returns>An expand whose path from the origin goes through the exit, or null if none.</returns>
-    private static ExpandLocation GetExpandLocationGoingThroughExit(IRegion origin, IRegion exit) {
+    private static IExpandLocation GetExpandLocationGoingThroughExit(IRegion origin, IRegion exit) {
         var exploredRegions = new HashSet<IRegion> { origin };
         var regionsToExplore = new Queue<IRegion>();
         regionsToExplore.Enqueue(exit);
@@ -143,7 +143,7 @@ public class MineralWalkKiting : IUnitsControl {
         if (regimentRegion.Type == RegionType.Expand && !regimentRegion.ExpandLocation.IsDepleted) {
             // When the region is the regimentRegion, we return all minerals with their own position as exit.
             // We keep all minerals because each of them will likely be in a different direction from the unit.
-            var minerals = regimentRegion.ExpandLocation.ResourceCluster
+            var minerals = regimentRegion.ExpandLocation.Resources
                 .Where(resource => Units.MineralFields.Contains(resource.UnitType))
                 .Select(resource => (resource, resource.Position.ToVector2()));
 
@@ -160,7 +160,7 @@ public class MineralWalkKiting : IUnitsControl {
             // When the region is not the regimentRegion, it means we'll have to go through an exit to get to the mineral field.
             // Because of this, all minerals will more or less create the same path to that exit, so we'll just pick one.
             // The direction of the drone moving towards that mineral is hard to accurately determine, so we'll use the center of the exit as an estimation.
-            var mineral = expandLocation.ResourceCluster.FirstOrDefault(resource => Units.MineralFields.Contains(resource.UnitType));
+            var mineral = expandLocation.Resources.FirstOrDefault(resource => Units.MineralFields.Contains(resource.UnitType));
             if (mineral == null) {
                 continue;
             }

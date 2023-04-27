@@ -22,7 +22,7 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
 
     private bool _isInitialized = false;
 
-    private ExpandLocation _ownNatural;
+    private IExpandLocation _ownNatural;
     private ScoutingTask _ownNaturalScoutingTask;
     private ScoutingTask _enemyNaturalScoutingTask;
 

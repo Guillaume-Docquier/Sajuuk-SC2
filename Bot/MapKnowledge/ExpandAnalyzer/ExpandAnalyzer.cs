@@ -27,7 +27,8 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
     private const bool DrawEnabled = false;
 
     public bool IsInitialized { get; private set; }  = false;
-    public List<ExpandLocation> ExpandLocations { get; private set; }
+    private List<ExpandLocation> _expandLocations;
+    public IEnumerable<IExpandLocation> ExpandLocations => _expandLocations;
 
     private List<List<bool>> _tooCloseToResourceGrid;
 
@@ -46,7 +47,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
 
     public void Reset() {
         IsInitialized = false;
-        ExpandLocations.Clear();
+        _expandLocations.Clear();
         _tooCloseToResourceGrid.Clear();
     }
 
@@ -59,16 +60,16 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
         if (loadedExpandLocations != null) {
             Logger.Info("Initializing ExpandAnalyzer from precomputed data for {0}", Controller.GameInfo.MapName);
 
-            ExpandLocations = loadedExpandLocations;
+            _expandLocations = loadedExpandLocations;
 
             var loadedResourceClusters = FindResourceClusters().ToList();
-            foreach (var expandLocation in ExpandLocations) {
+            foreach (var expandLocation in _expandLocations) {
                 var resourceCluster = GetExpandResourceCluster(expandLocation.Position, loadedResourceClusters);
                 var blockers = FindExpandBlockers(expandLocation.Position);
                 expandLocation.Init(resourceCluster, blockers);
             }
 
-            Logger.Metric("{0} expand locations", ExpandLocations.Count);
+            Logger.Metric("{0} expand locations", _expandLocations.Count);
             Logger.Success("Expand locations loaded from file");
 
             IsInitialized = true;
@@ -90,8 +91,8 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
 
         IsInitialized = expandPositions.Count == resourceClusters.Count;
         if (IsInitialized) {
-            ExpandLocations = GenerateExpandLocations(expandPositions, resourceClusters);
-            ExpandLocationDataStore.Save(Controller.GameInfo.MapName, ExpandLocations);
+            _expandLocations = GenerateExpandLocations(expandPositions, resourceClusters);
+            ExpandLocationDataStore.Save(Controller.GameInfo.MapName, _expandLocations);
             Logger.Success("Expand analysis done and saved");
         }
         else {
@@ -115,7 +116,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
     /// <param name="alliance">Yourself or the enemy</param>
     /// <param name="expandType">The expand type</param>
     /// <returns>The requested expand location</returns>
-    public ExpandLocation GetExpand(Alliance alliance, ExpandType expandType) {
+    public IExpandLocation GetExpand(Alliance alliance, ExpandType expandType) {
         var expands = ExpandLocations.Where(expandLocation => expandLocation.ExpandType == expandType);
 
         return alliance == Alliance.Enemy

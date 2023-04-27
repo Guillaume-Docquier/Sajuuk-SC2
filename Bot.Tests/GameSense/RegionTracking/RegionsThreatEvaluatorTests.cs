@@ -453,7 +453,7 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
         public RegionType Type => RegionType.Expand;
         public HashSet<NeighboringRegion> Neighbors { get; } = new HashSet<NeighboringRegion>();
         public bool IsObstructed { get; }
-        public ExpandLocation? ExpandLocation => default;
+        public IExpandLocation? ExpandLocation => default;
 
         public TestRegion(int id, Vector2 center, bool isObstructed = false) {
             Id = id;

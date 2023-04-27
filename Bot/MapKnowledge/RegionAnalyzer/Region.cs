@@ -46,7 +46,7 @@ public class Region : IRegion {
     public Color Color { get; private set; }
 
     [JsonIgnore]
-    public ExpandLocation ExpandLocation { get; private set; }
+    public IExpandLocation ExpandLocation { get; private set; }
 
     [JsonIgnore]
     public HashSet<NeighboringRegion> Neighbors { get; private set; }

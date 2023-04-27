@@ -14,7 +14,7 @@ public interface IRegion {
     public float ApproximatedRadius { get; }
 
     public RegionType Type { get; }
-    public ExpandLocation ExpandLocation { get; }
+    public IExpandLocation ExpandLocation { get; }
     public HashSet<NeighboringRegion> Neighbors { get; }
     public bool IsObstructed { get; }
 

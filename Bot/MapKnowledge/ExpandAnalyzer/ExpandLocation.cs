@@ -2,27 +2,26 @@
 using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
-using Bot.ExtensionMethods;
 
 namespace Bot.MapKnowledge;
 
 // TODO GD Split this into two types
-public class ExpandLocation : IWatchUnitsDie {
+public class ExpandLocation : IExpandLocation, IWatchUnitsDie {
     public Vector2 Position { get; }
 
     [JsonIgnore]
-    private HashSet<Unit> _resourceCluster;
+    private HashSet<Unit> _resources;
     [JsonIgnore]
-    public IReadOnlySet<Unit> ResourceCluster => _resourceCluster;
+    public IReadOnlySet<Unit> Resources => _resources;
     [JsonIgnore]
-    public bool IsDepleted => !ResourceCluster.Any();
+    public bool IsDepleted => !Resources.Any();
 
     [JsonIgnore]
     private HashSet<Unit> _blockers;
     [JsonIgnore]
     public IReadOnlySet<Unit> Blockers => _blockers;
     [JsonIgnore]
-    public bool IsObstructed => Blockers.Any();
+    public bool IsBlocked => Blockers.Any();
 
     public ExpandType ExpandType { get; }
 
@@ -33,8 +32,8 @@ public class ExpandLocation : IWatchUnitsDie {
 
     public void Init(HashSet<Unit> resourceCluster, HashSet<Unit> blockers) {
         // TODO GD Handle depleted gasses
-        _resourceCluster = resourceCluster;
-        foreach (var resource in _resourceCluster) {
+        _resources = resourceCluster;
+        foreach (var resource in _resources) {
             resource.AddDeathWatcher(this);
         }
 
@@ -48,8 +47,8 @@ public class ExpandLocation : IWatchUnitsDie {
         if (_blockers.Contains(deadUnit)) {
             _blockers.Remove(deadUnit);
         }
-        else if (ResourceCluster.Contains(deadUnit)) {
-            _resourceCluster.Remove(deadUnit);
+        else if (Resources.Contains(deadUnit)) {
+            _resources.Remove(deadUnit);
         }
     }
 

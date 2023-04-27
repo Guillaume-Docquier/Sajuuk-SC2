@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Numerics;
 using Bot.GameData;
-using Bot.MapKnowledge;
 using SC2APIProtocol;
 
 namespace Bot.ExtensionMethods;
