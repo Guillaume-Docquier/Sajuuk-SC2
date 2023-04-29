@@ -9,11 +9,11 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense.RegionTracking;
 
-public class RegionTracker : IRegionTracker, INeedUpdating {
+public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdating {
     /// <summary>
     /// DI: ✔️ The only usages are for static instance creations
     /// </summary>
-    public static RegionTracker Instance { get; } = new RegionTracker(
+    public static RegionsEvaluationsTracker Instance { get; } = new RegionsEvaluationsTracker(
         DebuggingFlagsTracker.Instance,
         UnitsTracker.Instance,
         MapAnalyzer.Instance,
@@ -47,7 +47,7 @@ public class RegionTracker : IRegionTracker, INeedUpdating {
         Colors.LightRed,
     };
 
-    private RegionTracker(
+    private RegionsEvaluationsTracker(
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
         IMapAnalyzer mapAnalyzer,

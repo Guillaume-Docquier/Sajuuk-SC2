@@ -12,7 +12,7 @@ namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 public class DisengageState : RegionalArmySupervisionState {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IRegionAnalyzer _regionAnalyzer;
-    private readonly IRegionTracker _regionTracker;
+    private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private const float SafetyDistance = 5;
     private const float SafetyDistanceTolerance = SafetyDistance / 2;
@@ -21,10 +21,10 @@ public class DisengageState : RegionalArmySupervisionState {
 
     private HashSet<Unit> _unitsInSafePosition = new HashSet<Unit>();
 
-    public DisengageState(IUnitsTracker unitsTracker, IRegionAnalyzer regionAnalyzer, IRegionTracker regionTracker) {
+    public DisengageState(IUnitsTracker unitsTracker, IRegionAnalyzer regionAnalyzer, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
         _unitsTracker = unitsTracker;
         _regionAnalyzer = regionAnalyzer;
-        _regionTracker = regionTracker;
+        _regionsEvaluationsTracker = regionsEvaluationsTracker;
 
         _fleeKiting = new DisengagementKiting(_unitsTracker);
     }
@@ -37,7 +37,7 @@ public class DisengageState : RegionalArmySupervisionState {
         _unitsInSafePosition = GetUnitsInSafePosition(SupervisedUnits, EnemyArmy);
         var unitsInDanger = SupervisedUnits.Except(_unitsInSafePosition).ToList();
 
-        ApproachState.MoveIntoStrikingPosition(_unitsInSafePosition, TargetRegion, EnemyArmy, SafetyDistance + SafetyDistanceTolerance, DefensiveUnitsController, _regionAnalyzer.Regions.ToHashSet(), _regionTracker);
+        ApproachState.MoveIntoStrikingPosition(_unitsInSafePosition, TargetRegion, EnemyArmy, SafetyDistance + SafetyDistanceTolerance, DefensiveUnitsController, _regionAnalyzer.Regions.ToHashSet(), _regionsEvaluationsTracker);
         MoveIntoSafePosition(unitsInDanger, EnemyArmy, _fleeKiting);
     }
 
@@ -50,7 +50,7 @@ public class DisengageState : RegionalArmySupervisionState {
             return false;
         }
 
-        StateMachine.TransitionTo(new ApproachState(_unitsTracker, _regionAnalyzer, _regionTracker));
+        StateMachine.TransitionTo(new ApproachState(_unitsTracker, _regionAnalyzer, _regionsEvaluationsTracker));
         return true;
     }
 
@@ -78,7 +78,7 @@ public class DisengageState : RegionalArmySupervisionState {
         }
 
         return supervisedUnits
-            .Where(unit => _regionTracker.GetForce(unit.GetRegion(), Alliance.Enemy) <= 0)
+            .Where(unit => _regionsEvaluationsTracker.GetForce(unit.GetRegion(), Alliance.Enemy) <= 0)
             .ToHashSet();
     }
 
@@ -97,7 +97,7 @@ public class DisengageState : RegionalArmySupervisionState {
                 .MinBy(reachableNeighbor => {
                     var unitDistanceToNeighbor = reachableNeighbor.Frontier.Min(cell => cell.DistanceTo(unit));
                     var enemyDistanceToNeighbor = reachableNeighbor.Frontier.Min(cell => enemyArmy.Min(enemy => cell.DistanceTo(enemy)));
-                    var enemyForce = _regionTracker.GetForce(reachableNeighbor.Region, Alliance.Enemy);
+                    var enemyForce = _regionsEvaluationsTracker.GetForce(reachableNeighbor.Region, Alliance.Enemy);
 
                     return unitDistanceToNeighbor / (enemyDistanceToNeighbor + 1) * (enemyForce + 1);
                 })

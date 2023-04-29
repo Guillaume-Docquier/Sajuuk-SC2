@@ -24,7 +24,7 @@ public partial class ArmySupervisor {
         private readonly IMapAnalyzer _mapAnalyzer;
         private readonly IExpandAnalyzer _expandAnalyzer;
         private readonly IRegionAnalyzer _regionAnalyzer;
-        private readonly IRegionTracker _regionTracker;
+        private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
         private const float RocksDestructionRange = 9f;
         private const float AcceptableDistanceToTarget = 3;
@@ -46,16 +46,16 @@ public partial class ArmySupervisor {
             IMapAnalyzer mapAnalyzer,
             IExpandAnalyzer expandAnalyzer,
             IRegionAnalyzer regionAnalyzer,
-            IRegionTracker regionTracker
+            IRegionsEvaluationsTracker regionsEvaluationsTracker
         ) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
             _mapAnalyzer = mapAnalyzer;
             _expandAnalyzer = expandAnalyzer;
             _regionAnalyzer = regionAnalyzer;
-            _regionTracker = regionTracker;
+            _regionsEvaluationsTracker = regionsEvaluationsTracker;
 
-            _unitsController = new OffensiveUnitsControl(_unitsTracker, _mapAnalyzer, _regionAnalyzer, _regionTracker);
+            _unitsController = new OffensiveUnitsControl(_unitsTracker, _mapAnalyzer, _regionAnalyzer, _regionsEvaluationsTracker);
         }
 
         protected override void OnTransition() {
@@ -68,7 +68,7 @@ public partial class ArmySupervisor {
             }
 
             if (_mapAnalyzer.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3).DistanceTo(Context._target) < AcceptableDistanceToTarget) {
-                StateMachine.TransitionTo(new DefenseState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionTracker));
+                StateMachine.TransitionTo(new DefenseState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionsEvaluationsTracker));
                 return true;
             }
 

@@ -34,7 +34,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IRegionAnalyzer _regionAnalyzer;
-    private readonly IRegionTracker _regionTracker;
+    private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private readonly MidGameBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
@@ -57,7 +57,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         IMapAnalyzer mapAnalyzer,
         IExpandAnalyzer expandAnalyzer,
         IRegionAnalyzer regionAnalyzer,
-        IRegionTracker regionTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker
     ) {
         _warManager = warManager;
         _visibilityTracker = visibilityTracker;
@@ -65,10 +65,10 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         _mapAnalyzer = mapAnalyzer;
         _expandAnalyzer = expandAnalyzer;
         _regionAnalyzer = regionAnalyzer;
-        _regionTracker = regionTracker;
+        _regionsEvaluationsTracker = regionsEvaluationsTracker;
 
         _debugger = new MidGameBehaviourDebugger(debuggingFlagsTracker);
-        _armySupervisors = _regionAnalyzer.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(_unitsTracker, _mapAnalyzer, _regionAnalyzer, _regionTracker, region));
+        _armySupervisors = _regionAnalyzer.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(_unitsTracker, _mapAnalyzer, _regionAnalyzer, _regionsEvaluationsTracker, region));
 
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);
@@ -278,8 +278,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
         return reachableRegions.MaxBy(reachableRegion => {
             // TODO GD This doesn't take into account if the unit can address the threat (grounds vs flying, cloaked, etc)
-            var regionThreat = _regionTracker.GetThreat(reachableRegion, Alliance.Enemy);
-            var regionValue = _regionTracker.GetValue(reachableRegion, Alliance.Enemy);
+            var regionThreat = _regionsEvaluationsTracker.GetThreat(reachableRegion, Alliance.Enemy);
+            var regionValue = _regionsEvaluationsTracker.GetValue(reachableRegion, Alliance.Enemy);
 
             var distance = Pathfinder.Instance.FindPath(unitRegion, reachableRegion, regionsToAvoid).GetPathDistance();
 
@@ -289,7 +289,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     private void ReleaseUnitsFromUnachievableGoals(Dictionary<IRegion, List<Unit>> plannedUnitsAllocation) {
         foreach (var (region, army) in plannedUnitsAllocation) {
-            var hasEnoughForce = army.GetForce() >= _regionTracker.GetForce(region, Alliance.Enemy) * 2;
+            var hasEnoughForce = army.GetForce() >= _regionsEvaluationsTracker.GetForce(region, Alliance.Enemy) * 2;
             if (IsAGoal(region) && hasEnoughForce) {
                 continue;
             }
@@ -299,8 +299,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     }
 
     private bool IsAGoal(IRegion region) {
-        var thereIsAThreat = _regionTracker.GetThreat(region, Alliance.Enemy) > 0;
-        var thereIsValue = _regionTracker.GetValue(region, Alliance.Enemy) > 0;
+        var thereIsAThreat = _regionsEvaluationsTracker.GetThreat(region, Alliance.Enemy) > 0;
+        var thereIsValue = _regionsEvaluationsTracker.GetValue(region, Alliance.Enemy) > 0;
 
         return thereIsAThreat || thereIsValue;
     }
@@ -410,7 +410,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             reach[startingRegion] = TreeSearch.BreadthFirstSearch(
                 startingRegion,
                 region => region.GetReachableNeighbors(),
-                region => _regionTracker.GetForce(region, Alliance.Enemy) > 0
+                region => _regionsEvaluationsTracker.GetForce(region, Alliance.Enemy) > 0
             ).ToList();
         }
 

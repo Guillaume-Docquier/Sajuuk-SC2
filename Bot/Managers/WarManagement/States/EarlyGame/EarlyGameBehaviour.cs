@@ -25,7 +25,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IRegionAnalyzer _regionAnalyzer;
-    private readonly IRegionTracker _regionTracker;
+    private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private BuildRequest _armyBuildRequest;
 
@@ -50,17 +50,17 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         IMapAnalyzer mapAnalyzer,
         IExpandAnalyzer expandAnalyzer,
         IRegionAnalyzer regionAnalyzer,
-        IRegionTracker regionTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
         _unitsTracker = unitsTracker;
         _expandAnalyzer = expandAnalyzer;
         _regionAnalyzer = regionAnalyzer;
-        _regionTracker = regionTracker;
+        _regionsEvaluationsTracker = regionsEvaluationsTracker;
 
         _debugger = new EarlyGameBehaviourDebugger(debuggingFlagsTracker);
-        DefenseSupervisor = new ArmySupervisor(visibilityTracker, _unitsTracker, mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionTracker);
+        DefenseSupervisor = new ArmySupervisor(visibilityTracker, _unitsTracker, mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionsEvaluationsTracker);
 
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);
@@ -146,7 +146,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
             return _startingRegions.MinBy(region => Pathfinder.Instance.FindPath(region, enemyMain).GetPathDistance());
         }
 
-        return _startingRegions.MaxBy(region => _regionTracker.GetForce(region, Alliance.Enemy))!;
+        return _startingRegions.MaxBy(region => _regionsEvaluationsTracker.GetForce(region, Alliance.Enemy))!;
     }
 
     /// <summary>

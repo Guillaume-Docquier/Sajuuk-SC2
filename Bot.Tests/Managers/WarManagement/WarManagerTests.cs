@@ -18,7 +18,7 @@ public class WarManagerTests : BaseTestClass {
     private readonly Mock<IMapAnalyzer> _mapAnalyzerMock;
     private readonly Mock<IExpandAnalyzer> _expandAnalyzerMock;
     private readonly Mock<IRegionAnalyzer> _regionAnalyzerMock;
-    private readonly Mock<IRegionTracker> _regionTrackerMock;
+    private readonly Mock<IRegionsEvaluationsTracker> _regionTrackerMock;
 
     public WarManagerTests() {
         _taggingServiceMock = new Mock<ITaggingService>();
@@ -29,7 +29,7 @@ public class WarManagerTests : BaseTestClass {
         _mapAnalyzerMock = new Mock<IMapAnalyzer>();
         _expandAnalyzerMock = new Mock<IExpandAnalyzer>();
         _regionAnalyzerMock = new Mock<IRegionAnalyzer>();
-        _regionTrackerMock = new Mock<IRegionTracker>();
+        _regionTrackerMock = new Mock<IRegionsEvaluationsTracker>();
     }
 
     [Fact(Skip = "Wait for DI refactor to be done")]

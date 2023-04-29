@@ -4,7 +4,7 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense.RegionTracking;
 
-public interface IRegionTracker {
+public interface IRegionsEvaluationsTracker {
     public float GetForce(Vector2 position, Alliance alliance, bool normalized = false);
     public float GetForce(IRegion region, Alliance alliance, bool normalized = false);
 

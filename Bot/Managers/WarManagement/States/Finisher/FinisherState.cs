@@ -15,7 +15,7 @@ public class FinisherState : WarManagerState {
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IRegionAnalyzer _regionAnalyzer;
-    private readonly IRegionTracker _regionTracker;
+    private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private IWarManagerBehaviour _behaviour;
 
@@ -30,7 +30,7 @@ public class FinisherState : WarManagerState {
         IMapAnalyzer mapAnalyzer,
         IExpandAnalyzer expandAnalyzer,
         IRegionAnalyzer regionAnalyzer,
-        IRegionTracker regionTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
@@ -40,7 +40,7 @@ public class FinisherState : WarManagerState {
         _mapAnalyzer = mapAnalyzer;
         _expandAnalyzer = expandAnalyzer;
         _regionAnalyzer = regionAnalyzer;
-        _regionTracker = regionTracker;
+        _regionsEvaluationsTracker = regionsEvaluationsTracker;
     }
 
     protected override void OnContextSet() {
@@ -54,7 +54,7 @@ public class FinisherState : WarManagerState {
             _mapAnalyzer,
             _expandAnalyzer,
             _regionAnalyzer,
-            _regionTracker
+            _regionsEvaluationsTracker
         );
     }
 

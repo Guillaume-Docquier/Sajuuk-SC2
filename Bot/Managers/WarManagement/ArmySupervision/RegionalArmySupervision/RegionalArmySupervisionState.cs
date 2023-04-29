@@ -34,10 +34,10 @@ public abstract class RegionalArmySupervisionState : State<RegionalArmySuperviso
     /// </summary>
     /// <param name="originRegions">The regions to compute the blocked regions map for.</param>
     /// <param name="allRegions">All the available regions</param>
-    /// <param name="regionTracker">TODO GD Review this parameter</param>
+    /// <param name="regionsEvaluationsTracker">TODO GD Review this parameter</param>
     /// <returns>A map of blocked regions</returns>
-    protected static IDictionary<IRegion, HashSet<IRegion>> ComputeBlockedRegionsMap(IReadOnlySet<IRegion> originRegions, IReadOnlySet<IRegion> allRegions, IRegionTracker regionTracker) {
-        var reachableRegions = ComputeRegionsReach(originRegions, regionTracker);
+    protected static IDictionary<IRegion, HashSet<IRegion>> ComputeBlockedRegionsMap(IReadOnlySet<IRegion> originRegions, IReadOnlySet<IRegion> allRegions, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
+        var reachableRegions = ComputeRegionsReach(originRegions, regionsEvaluationsTracker);
 
         return originRegions.ToDictionary(
             region => region,
@@ -50,16 +50,16 @@ public abstract class RegionalArmySupervisionState : State<RegionalArmySuperviso
     /// A region is reachable if there's a path to it that doesn't go through a dangerous region.
     /// </summary>
     /// <param name="regions">The regions to compute the reach of.</param>
-    /// <param name="regionTracker">TODO GD Review this parameter</param>
+    /// <param name="regionsEvaluationsTracker">TODO GD Review this parameter</param>
     /// <returns>A map of reachable regions</returns>
     // TODO GD Share this instead of recomputing
-    protected static Dictionary<IRegion, List<IRegion>> ComputeRegionsReach(IEnumerable<IRegion> regions, IRegionTracker regionTracker) {
+    protected static Dictionary<IRegion, List<IRegion>> ComputeRegionsReach(IEnumerable<IRegion> regions, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
         var reach = new Dictionary<IRegion, List<IRegion>>();
         foreach (var startingRegion in regions) {
             // TODO GD We can greatly optimize this by using dynamic programming
             reach[startingRegion] = TreeSearch.BreadthFirstSearch(
                 startingRegion,
-                region => region.GetReachableNeighbors().Where(neighbor => regionTracker.GetForce(neighbor, Alliance.Enemy) <= 0),
+                region => region.GetReachableNeighbors().Where(neighbor => regionsEvaluationsTracker.GetForce(neighbor, Alliance.Enemy) <= 0),
                 _ => false // TODO GD We might not need this predicate after all?
             ).ToList();
         }

@@ -43,12 +43,12 @@ public class WarManager: Manager {
         IMapAnalyzer mapAnalyzer,
         IExpandAnalyzer expandAnalyzer,
         IRegionAnalyzer regionAnalyzer,
-        IRegionTracker regionTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker
     ) {
         _expandAnalyzer = expandAnalyzer;
         _stateMachine = new StateMachine<WarManager, WarManagerState>(
             this,
-            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, mapAnalyzer, expandAnalyzer, regionAnalyzer, regionTracker)
+            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, mapAnalyzer, expandAnalyzer, regionAnalyzer, regionsEvaluationsTracker)
         );
     }
 

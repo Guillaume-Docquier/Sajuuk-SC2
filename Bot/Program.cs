@@ -126,7 +126,7 @@ public class Program {
             RegionAnalyzer.Instance,
             CreepTracker.Instance,
             EnemyStrategyTracker.Instance,
-            RegionTracker.Instance
+            RegionsEvaluationsTracker.Instance
         );
     }
 

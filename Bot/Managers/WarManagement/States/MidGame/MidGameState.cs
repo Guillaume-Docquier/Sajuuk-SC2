@@ -18,7 +18,7 @@ public class MidGameState : WarManagerState {
     private readonly IMapAnalyzer _mapAnalyzer;
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IRegionAnalyzer _regionAnalyzer;
-    private readonly IRegionTracker _regionTracker;
+    private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
@@ -32,7 +32,7 @@ public class MidGameState : WarManagerState {
         IMapAnalyzer mapAnalyzer,
         IExpandAnalyzer expandAnalyzer,
         IRegionAnalyzer regionAnalyzer,
-        IRegionTracker regionTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
@@ -42,13 +42,13 @@ public class MidGameState : WarManagerState {
         _mapAnalyzer = mapAnalyzer;
         _expandAnalyzer = expandAnalyzer;
         _regionAnalyzer = regionAnalyzer;
-        _regionTracker = regionTracker;
+        _regionsEvaluationsTracker = regionsEvaluationsTracker;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new MidGameBehaviour(Context, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionTracker);
+        _behaviour = new MidGameBehaviour(Context, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionsEvaluationsTracker);
     }
 
     protected override void Execute() {
@@ -74,7 +74,7 @@ public class MidGameState : WarManagerState {
                 _mapAnalyzer,
                 _expandAnalyzer,
                 _regionAnalyzer,
-                _regionTracker
+                _regionsEvaluationsTracker
             ));
 
             return true;

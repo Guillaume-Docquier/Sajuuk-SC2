@@ -55,7 +55,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         IMapAnalyzer mapAnalyzer,
         IExpandAnalyzer expandAnalyzer,
         IRegionAnalyzer regionAnalyzer,
-        IRegionTracker regionTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
@@ -67,8 +67,8 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         _regionAnalyzer = regionAnalyzer;
 
         _debugger = new FinisherBehaviourDebugger(debuggingFlagsTracker);
-        AttackSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, regionTracker);
-        TerranFinisherSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, regionTracker);
+        AttackSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, regionsEvaluationsTracker);
+        TerranFinisherSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, regionsEvaluationsTracker);
 
         _corruptorsBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Corruptor, targetQuantity: 0, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Normal);

@@ -11,14 +11,14 @@ namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 public class EngageState : RegionalArmySupervisionState {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IRegionAnalyzer _regionAnalyzer;
-    private readonly IRegionTracker _regionTracker;
+    private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private HashSet<Unit> _unitsReadyToAttack = new HashSet<Unit>();
 
-    public EngageState(IUnitsTracker unitsTracker, IRegionAnalyzer regionAnalyzer, IRegionTracker regionTracker) {
+    public EngageState(IUnitsTracker unitsTracker, IRegionAnalyzer regionAnalyzer, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
         _unitsTracker = unitsTracker;
         _regionAnalyzer = regionAnalyzer;
-        _regionTracker = regionTracker;
+        _regionsEvaluationsTracker = regionsEvaluationsTracker;
     }
 
     /// <summary>
@@ -40,7 +40,7 @@ public class EngageState : RegionalArmySupervisionState {
         // TODO GD We should consider if retreating is even possible
         // TODO GD Sometimes you have to commit
         if (_unitsReadyToAttack.GetForce() < EnemyArmy.GetForce() * 0.75) {
-            StateMachine.TransitionTo(new DisengageState(_unitsTracker, _regionAnalyzer, _regionTracker));
+            StateMachine.TransitionTo(new DisengageState(_unitsTracker, _regionAnalyzer, _regionsEvaluationsTracker));
             return true;
         }
 
@@ -122,7 +122,7 @@ public class EngageState : RegionalArmySupervisionState {
             .Where(region => region != null)
             .ToHashSet();
 
-        var regionsOutOfReach = ComputeBlockedRegionsMap(regionsWithFriendlyUnitPresence, _regionAnalyzer.Regions.ToHashSet(), _regionTracker);
+        var regionsOutOfReach = ComputeBlockedRegionsMap(regionsWithFriendlyUnitPresence, _regionAnalyzer.Regions.ToHashSet(), _regionsEvaluationsTracker);
 
         var unitGroups = units
             .Where(unit => unit.GetRegion() != null)
