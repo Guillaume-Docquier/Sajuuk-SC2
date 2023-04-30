@@ -2,7 +2,7 @@
 using System.Numerics;
 using System.Threading.Tasks;
 using Bot.GameData;
-using Bot.MapKnowledge;
+using Bot.GameSense;
 using SC2APIProtocol;
 
 namespace Bot.VideoClips.Manim.Animations;
@@ -12,10 +12,10 @@ public class CellDrawingAnimation : Animation<CellDrawingAnimation> {
     private readonly float _padding;
     private readonly Color _cellColor;
 
-    public CellDrawingAnimation(IMapAnalyzer mapAnalyzer, Vector3 cell, int startFrame, float padding = 0f) : base(startFrame) {
+    public CellDrawingAnimation(ITerrainTracker terrainTracker, Vector3 cell, int startFrame, float padding = 0f) : base(startFrame) {
         _cell = cell;
         _padding = padding;
-        _cellColor = mapAnalyzer.IsWalkable(_cell) ? ColorService.Instance.WalkableCellColor : ColorService.Instance.UnwalkableCellColor;
+        _cellColor = terrainTracker.IsWalkable(_cell) ? ColorService.Instance.WalkableCellColor : ColorService.Instance.UnwalkableCellColor;
     }
 
     protected override Task Animate(int currentClipFrame) {

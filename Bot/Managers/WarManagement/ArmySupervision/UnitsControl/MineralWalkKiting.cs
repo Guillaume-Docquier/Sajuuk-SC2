@@ -7,7 +7,8 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Utils;
 using SC2APIProtocol;
 
@@ -15,11 +16,11 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
 public class MineralWalkKiting : IUnitsControl {
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
 
-    public MineralWalkKiting(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
+    public MineralWalkKiting(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker) {
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
+        _terrainTracker = terrainTracker;
     }
 
     public bool IsExecuting() {
@@ -211,10 +212,10 @@ public class MineralWalkKiting : IUnitsControl {
     private void DebugMineralWalkAngle(Unit drone, Vector2 enemyCenter, Vector2 mineralExit, double mineralAngle, Color color) {
         Program.GraphicalDebugger.AddText($"{MathUtils.RadToDeg(mineralAngle):F0} deg", worldPos: drone.Position.ToPoint(zOffset: 2), color: color);
 
-        Program.GraphicalDebugger.AddSphere(_mapAnalyzer.WithWorldHeight(mineralExit, zOffset: 2), 0.5f, Colors.Cyan);
-        Program.GraphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), _mapAnalyzer.WithWorldHeight(mineralExit, zOffset: 2), Colors.Cyan);
+        Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(mineralExit, zOffset: 2), 0.5f, Colors.Cyan);
+        Program.GraphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), _terrainTracker.WithWorldHeight(mineralExit, zOffset: 2), Colors.Cyan);
         Program.GraphicalDebugger.AddSphere(drone.Position.Translate(zTranslation: 2), drone.Radius, color);
-        Program.GraphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), _mapAnalyzer.WithWorldHeight(enemyCenter, zOffset: 2), Colors.Magenta);
-        Program.GraphicalDebugger.AddSphere(_mapAnalyzer.WithWorldHeight(enemyCenter, zOffset: 2), 0.5f, Colors.Magenta);
+        Program.GraphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), _terrainTracker.WithWorldHeight(enemyCenter, zOffset: 2), Colors.Magenta);
+        Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(enemyCenter, zOffset: 2), 0.5f, Colors.Magenta);
     }
 }

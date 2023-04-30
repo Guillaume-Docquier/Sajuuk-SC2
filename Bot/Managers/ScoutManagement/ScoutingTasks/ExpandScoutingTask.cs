@@ -4,14 +4,13 @@ using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapKnowledge;
 
 namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 
 public class ExpandScoutingTask : ScoutingTask {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
 
     private readonly bool _waitForExpand;
     private readonly float _expandRadius;
@@ -22,7 +21,7 @@ public class ExpandScoutingTask : ScoutingTask {
     public ExpandScoutingTask(
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer,
+        ITerrainTracker terrainTracker,
         Vector2 scoutLocation,
         int priority,
         int maxScouts,
@@ -30,7 +29,7 @@ public class ExpandScoutingTask : ScoutingTask {
     ) : base(scoutLocation, priority, maxScouts) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
+        _terrainTracker = terrainTracker;
 
         _waitForExpand = waitForExpand;
 
@@ -63,7 +62,7 @@ public class ExpandScoutingTask : ScoutingTask {
         foreach (var scout in scouts) {
             var positionInSight = ScoutLocation.TranslateTowards(scout.Position.ToVector2(), scout.UnitTypeData.SightRange + _expandRadius);
             if (!scout.IsFlying) {
-                positionInSight = _mapAnalyzer.GetClosestWalkable(positionInSight);
+                positionInSight = _terrainTracker.GetClosestWalkable(positionInSight);
             }
 
             scout.Move(positionInSight);

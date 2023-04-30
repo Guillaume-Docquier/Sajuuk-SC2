@@ -9,7 +9,9 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.StateManagement;
 using Bot.Utils;
 
@@ -21,9 +23,8 @@ public partial class ArmySupervisor {
 
         private readonly IVisibilityTracker _visibilityTracker;
         private readonly IUnitsTracker _unitsTracker;
-        private readonly IMapAnalyzer _mapAnalyzer;
-        private readonly IExpandAnalyzer _expandAnalyzer;
-        private readonly IRegionAnalyzer _regionAnalyzer;
+        private readonly ITerrainTracker _terrainTracker;
+        private readonly IRegionsTracker _regionsTracker;
         private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
         private const float RocksDestructionRange = 9f;
@@ -43,19 +44,17 @@ public partial class ArmySupervisor {
         public AttackState(
             IVisibilityTracker visibilityTracker,
             IUnitsTracker unitsTracker,
-            IMapAnalyzer mapAnalyzer,
-            IExpandAnalyzer expandAnalyzer,
-            IRegionAnalyzer regionAnalyzer,
+            ITerrainTracker terrainTracker,
+            IRegionsTracker regionsTracker,
             IRegionsEvaluationsTracker regionsEvaluationsTracker
         ) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
-            _mapAnalyzer = mapAnalyzer;
-            _expandAnalyzer = expandAnalyzer;
-            _regionAnalyzer = regionAnalyzer;
+            _terrainTracker = terrainTracker;
+            _regionsTracker = regionsTracker;
             _regionsEvaluationsTracker = regionsEvaluationsTracker;
 
-            _unitsController = new OffensiveUnitsControl(_unitsTracker, _mapAnalyzer, _regionAnalyzer, _regionsEvaluationsTracker);
+            _unitsController = new OffensiveUnitsControl(_unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker);
         }
 
         protected override void OnTransition() {
@@ -67,8 +66,8 @@ public partial class ArmySupervisor {
                 return false;
             }
 
-            if (_mapAnalyzer.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3).DistanceTo(Context._target) < AcceptableDistanceToTarget) {
-                StateMachine.TransitionTo(new DefenseState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionsEvaluationsTracker));
+            if (_terrainTracker.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3).DistanceTo(Context._target) < AcceptableDistanceToTarget) {
+                StateMachine.TransitionTo(new DefenseState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker));
                 return true;
             }
 
@@ -85,7 +84,7 @@ public partial class ArmySupervisor {
             // TODO GD Turn Attack into an IUnitsControl
             Attack(Context._target, remainingArmy);
 
-            Rally(_mapAnalyzer.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3), GetSoldiersNotInMainArmy().ToList());
+            Rally(_terrainTracker.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3), GetSoldiersNotInMainArmy().ToList());
         }
 
         private void DrawArmyData(IReadOnlyCollection<Unit> soldiers) {
@@ -98,7 +97,7 @@ public partial class ArmySupervisor {
                 {
                     $"Force: {soldiers.GetForce()}",
                 },
-                worldPos: _mapAnalyzer.WithWorldHeight(_mapAnalyzer.GetClosestWalkable(soldiers.GetCenter(), searchRadius: 3).Translate(1f, 1f)).ToPoint());
+                worldPos: _terrainTracker.WithWorldHeight(_terrainTracker.GetClosestWalkable(soldiers.GetCenter(), searchRadius: 3).Translate(1f, 1f)).ToPoint());
         }
 
         private void Attack(Vector2 targetToAttack, IReadOnlyCollection<Unit> army) {
@@ -113,7 +112,7 @@ public partial class ArmySupervisor {
                 .Where(unit => unit.DistanceTo(targetToAttack) > AcceptableDistanceToTarget)
                 .ToList();
 
-            var armyLocation = _mapAnalyzer.GetClosestWalkable(army.GetCenter(), searchRadius: 3);
+            var armyLocation = _terrainTracker.GetClosestWalkable(army.GetCenter(), searchRadius: 3);
             var absoluteDistanceToTarget = armyLocation.DistanceTo(targetToAttack);
 
             if (!army.IsFighting()) {
@@ -162,10 +161,10 @@ public partial class ArmySupervisor {
                 return;
             }
 
-            Program.GraphicalDebugger.AddSphere(_mapAnalyzer.WithWorldHeight(targetToAttack), AcceptableDistanceToTarget, Colors.Red);
-            Program.GraphicalDebugger.AddText("Attack", worldPos: _mapAnalyzer.WithWorldHeight(targetToAttack).ToPoint());
+            Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(targetToAttack), AcceptableDistanceToTarget, Colors.Red);
+            Program.GraphicalDebugger.AddText("Attack", worldPos: _terrainTracker.WithWorldHeight(targetToAttack).ToPoint());
             foreach (var soldier in soldiers) {
-                Program.GraphicalDebugger.AddLine(soldier.Position, _mapAnalyzer.WithWorldHeight(targetToAttack), Colors.Red);
+                Program.GraphicalDebugger.AddLine(soldier.Position, _terrainTracker.WithWorldHeight(targetToAttack), Colors.Red);
             }
         }
 
@@ -179,7 +178,7 @@ public partial class ArmySupervisor {
         }
 
         private void AttackMove(Vector2 targetToAttack, IEnumerable<Unit> soldiers) {
-            targetToAttack = _mapAnalyzer.GetClosestWalkable(targetToAttack);
+            targetToAttack = _terrainTracker.GetClosestWalkable(targetToAttack);
 
             soldiers
                 .ToList()
@@ -197,7 +196,7 @@ public partial class ArmySupervisor {
                 return;
             }
 
-            rallyPoint = _mapAnalyzer.GetClosestWalkable(rallyPoint);
+            rallyPoint = _terrainTracker.GetClosestWalkable(rallyPoint);
 
             DrawRallyData(rallyPoint, soldiers);
 
@@ -209,10 +208,10 @@ public partial class ArmySupervisor {
                 return;
             }
 
-            Program.GraphicalDebugger.AddSphere(_mapAnalyzer.WithWorldHeight(rallyPoint), AcceptableDistanceToTarget, Colors.Blue);
-            Program.GraphicalDebugger.AddText("Rally", worldPos: _mapAnalyzer.WithWorldHeight(rallyPoint).ToPoint());
+            Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(rallyPoint), AcceptableDistanceToTarget, Colors.Blue);
+            Program.GraphicalDebugger.AddText("Rally", worldPos: _terrainTracker.WithWorldHeight(rallyPoint).ToPoint());
             foreach (var soldier in soldiers) {
-                Program.GraphicalDebugger.AddLine(soldier.Position, _mapAnalyzer.WithWorldHeight(rallyPoint), Colors.Blue);
+                Program.GraphicalDebugger.AddLine(soldier.Position, _terrainTracker.WithWorldHeight(rallyPoint), Colors.Blue);
             }
         }
 

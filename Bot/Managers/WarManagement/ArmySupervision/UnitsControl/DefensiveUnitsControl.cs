@@ -1,15 +1,19 @@
 ﻿using System.Collections.Generic;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.RegionAnalysis;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
 public class DefensiveUnitsControl : AggregateUnitsControl {
-    public DefensiveUnitsControl(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IRegionAnalyzer regionAnalyzer, IRegionsEvaluationsTracker regionsEvaluationsTracker)
-        : base(new List<IUnitsControl>
+    public DefensiveUnitsControl(
+        IUnitsTracker unitsTracker,
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker,
+        IRegionsEvaluationsTracker regionsEvaluationsTracker
+    ) : base(new List<IUnitsControl>
         {
-            new BurrowHealing(unitsTracker, mapAnalyzer, regionAnalyzer, regionsEvaluationsTracker),
+            new BurrowHealing(unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker),
             new DisengagementKiting(unitsTracker),
         }) {}
 }

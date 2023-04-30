@@ -3,7 +3,7 @@ using System.Linq;
 using Bot.Builds;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.UnitModules;
 
 namespace Bot.Managers;
@@ -11,9 +11,9 @@ namespace Bot.Managers;
 public class CreepManager: UnitlessManager {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
     private readonly IBuildingTracker _buildingTracker;
-    private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly IRegionsTracker _regionsTracker;
     private readonly ICreepTracker _creepTracker;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
@@ -21,22 +21,22 @@ public class CreepManager: UnitlessManager {
     public CreepManager(
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer,
+        ITerrainTracker terrainTracker,
         IBuildingTracker buildingTracker,
-        IExpandAnalyzer expandAnalyzer,
+        IRegionsTracker regionsTracker,
         ICreepTracker creepTracker
     ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
+        _terrainTracker = terrainTracker;
         _buildingTracker = buildingTracker;
-        _expandAnalyzer = expandAnalyzer;
+        _regionsTracker = regionsTracker;
         _creepTracker = creepTracker;
     }
 
     protected override void ManagementPhase() {
         foreach (var creepTumor in Controller.GetUnits(_unitsTracker.NewOwnedUnits, Units.CreepTumor)) {
-            TumorCreepSpreadModule.Install(creepTumor, _visibilityTracker, _mapAnalyzer, _buildingTracker, _expandAnalyzer, _creepTracker);
+            TumorCreepSpreadModule.Install(creepTumor, _visibilityTracker, _terrainTracker, _buildingTracker, _creepTracker, _regionsTracker);
         }
     }
 

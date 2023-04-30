@@ -11,7 +11,9 @@ using Bot.GameSense.RegionTracking;
 using Bot.Managers.ScoutManagement.ScoutingSupervision;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.States.MidGame;
@@ -31,9 +33,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
-    private readonly IExpandAnalyzer _expandAnalyzer;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
+    private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private readonly MidGameBehaviourDebugger _debugger;
@@ -54,21 +55,19 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer,
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker
     ) {
         _warManager = warManager;
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
-        _expandAnalyzer = expandAnalyzer;
-        _regionAnalyzer = regionAnalyzer;
+        _terrainTracker = terrainTracker;
+        _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
 
         _debugger = new MidGameBehaviourDebugger(debuggingFlagsTracker);
-        _armySupervisors = _regionAnalyzer.Regions.ToDictionary(region => region as IRegion, region => new RegionalArmySupervisor(_unitsTracker, _mapAnalyzer, _regionAnalyzer, _regionsEvaluationsTracker, region));
+        _armySupervisors = _regionsTracker.Regions.ToDictionary(region => region, region => new RegionalArmySupervisor(_unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, region));
 
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);
@@ -173,11 +172,11 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     }
 
     private void InitializeScoutingTasks() {
-        var expandsToScout = _expandAnalyzer.ExpandLocations
+        var expandsToScout = _regionsTracker.ExpandLocations
             .Where(expandLocation => !_visibilityTracker.IsVisible(expandLocation.Position));
 
         foreach (var expandToScout in expandsToScout) {
-            var scoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _mapAnalyzer, expandToScout.Position, priority: 0, maxScouts: 1);
+            var scoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _terrainTracker, expandToScout.Position, priority: 0, maxScouts: 1);
             var scoutingSupervisor = new ScoutSupervisor(_unitsTracker, scoutingTask);
 
             _scoutSupervisors.Add(scoutingSupervisor);
@@ -244,9 +243,9 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     }
 
     private Dictionary<IRegion, List<Unit>> PlanUnitsAllocationToMaximizeImpact(IEnumerable<Unit> availableUnits) {
-        var regionsReach = ComputeRegionsReach(_regionAnalyzer.Regions);
+        var regionsReach = ComputeRegionsReach(_regionsTracker.Regions);
 
-        var allocations = _regionAnalyzer.Regions.ToDictionary(region => region as IRegion, _ => new List<Unit>());
+        var allocations = _regionsTracker.Regions.ToDictionary(region => region as IRegion, _ => new List<Unit>());
         foreach (var availableUnit in availableUnits.Where(unit => unit.GetRegion() != null)) {
             var mostImpactfulRegion = GetMostImpactfulRegion(availableUnit, regionsReach[availableUnit.GetRegion()]);
             allocations[mostImpactfulRegion].Add(availableUnit);
@@ -274,7 +273,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// <returns>The region from reachableRegions where the given unit will have to most impact.</returns>
     private IRegion GetMostImpactfulRegion(Unit unit, IReadOnlyCollection<IRegion> reachableRegions) {
         var unitRegion = unit.GetRegion();
-        var regionsToAvoid = _regionAnalyzer.Regions.Except(reachableRegions).ToHashSet();
+        var regionsToAvoid = _regionsTracker.Regions.Except(reachableRegions).ToHashSet();
 
         return reachableRegions.MaxBy(reachableRegion => {
             // TODO GD This doesn't take into account if the unit can address the threat (grounds vs flying, cloaked, etc)
@@ -316,8 +315,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             .Select(townHall => townHall.GetRegion())
             .ToHashSet();
 
-        var ourMainRegion = _regionAnalyzer.GetRegion(_expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).Position);
-        var enemyMainRegion = _regionAnalyzer.GetRegion(_expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).Position);
+        var ourMainRegion = _regionsTracker.GetRegion(_regionsTracker.GetExpand(Alliance.Self, ExpandType.Main).Position);
+        var enemyMainRegion = _regionsTracker.GetRegion(_regionsTracker.GetExpand(Alliance.Enemy, ExpandType.Main).Position);
         foreach (var unsupervisedUnit in _warManager.ManagedUnits.Where(unit => unit.Supervisor == null)) {
             // TODO GD We should make sure that units have a region, this is error prone
             var unitRegion = unsupervisedUnit.GetRegion();

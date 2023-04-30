@@ -8,14 +8,13 @@ using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class RegionalArmySupervisor : Supervisor {
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private const bool Debug = false;
 
@@ -26,17 +25,16 @@ public class RegionalArmySupervisor : Supervisor {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
-    public RegionalArmySupervisor(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IRegionAnalyzer regionAnalyzer, IRegionsEvaluationsTracker regionsEvaluationsTracker, IRegion targetRegion) {
+    public RegionalArmySupervisor(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker, IRegionsTracker regionsTracker, IRegionsEvaluationsTracker regionsEvaluationsTracker, IRegion targetRegion) {
         _unitsTracker = unitsTracker;
-        _regionsEvaluationsTracker = regionsEvaluationsTracker;
 
         _targetRegion = targetRegion;
 
-        _offensiveUnitsController = new OffensiveUnitsControl(_unitsTracker, mapAnalyzer, regionAnalyzer, _regionsEvaluationsTracker);
-        _defensiveUnitsController = new DefensiveUnitsControl(_unitsTracker, mapAnalyzer, regionAnalyzer, _regionsEvaluationsTracker);
+        _offensiveUnitsController = new OffensiveUnitsControl(_unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker);
+        _defensiveUnitsController = new DefensiveUnitsControl(_unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker);
 
         Releaser = new RegionalArmySupervisorReleaser(this);
-        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState(_unitsTracker, regionAnalyzer, _regionsEvaluationsTracker));
+        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState(_unitsTracker, regionsTracker, regionsEvaluationsTracker));
     }
 
     protected override void Supervise() {

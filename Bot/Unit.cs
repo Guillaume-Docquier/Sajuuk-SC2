@@ -5,7 +5,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.UnitModules;
 using Bot.Utils;
 using Bot.Wrapper;
@@ -239,15 +239,15 @@ public class Unit: ICanDie, IHavePosition {
 
     public IRegion GetRegion() {
         // TODO GD I'm not convinced I want to inject stuff into unit, we'll have to revisit that
-        var unitRegion = RegionAnalyzer.Instance.GetRegion(Position);
+        var unitRegion = RegionsTracker.Instance.GetRegion(Position);
         if (unitRegion != null) {
             return unitRegion;
         }
 
-        // TODO GD Injecting MapAnalyzer here means a circular dependency between the UnitsTracker and MapAnalyzer
-        return MapAnalyzer.Instance.BuildSearchGrid(Position, gridRadius: 3)
-            .Where(cell => MapAnalyzer.Instance.IsWalkable(cell))
-            .Select(cell => RegionAnalyzer.Instance.GetRegion(cell))
+        // TODO GD Injecting TerrainTracker here means a circular dependency between the UnitsTracker and TerrainTracker
+        return TerrainTracker.Instance.BuildSearchGrid(Position, gridRadius: 3)
+            .Where(cell => TerrainTracker.Instance.IsWalkable(cell))
+            .Select(cell => RegionsTracker.Instance.GetRegion(cell))
             .FirstOrDefault(region => region != null);
     }
 

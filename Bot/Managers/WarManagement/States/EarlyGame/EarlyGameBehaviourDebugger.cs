@@ -2,7 +2,7 @@
 using Bot.Builds;
 using Bot.Debugging;
 using Bot.Managers.WarManagement.States.MidGame;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.States.EarlyGame;

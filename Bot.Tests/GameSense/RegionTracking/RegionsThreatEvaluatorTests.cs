@@ -1,7 +1,8 @@
 ﻿using System.Numerics;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Moq;
 using SC2APIProtocol;
 
@@ -30,12 +31,12 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
         var region3 = new TestRegion(3, new Vector2(1, 0));
         var region4 = new TestRegion(4, new Vector2(2, 0));
 
-        region1.AddNeighbors(new [] { region2, region3 });
-        region2.AddNeighbors(new [] { region1, region4 });
-        region3.AddNeighbors(new [] { region1, region4, region5, region6 });
-        region4.AddNeighbors(new [] { region2, region3 });
-        region5.AddNeighbors(new [] { region3, region6 });
-        region6.AddNeighbors(new [] { region3, region5 });
+        region1.SetNeighbors(new [] { region2, region3 });
+        region2.SetNeighbors(new [] { region1, region4 });
+        region3.SetNeighbors(new [] { region1, region4, region5, region6 });
+        region4.SetNeighbors(new [] { region2, region3 });
+        region5.SetNeighbors(new [] { region3, region6 });
+        region6.SetNeighbors(new [] { region3, region5 });
 
         var regions = new[] { region1, region2, region3, region4, region5, region6 };
 
@@ -71,12 +72,12 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
         var region3 = new TestRegion(3, new Vector2(1, 0));
         var region4 = new TestRegion(4, new Vector2(2, 0));
 
-        region1.AddNeighbors(new [] { region2, region3 });
-        region2.AddNeighbors(new [] { region1, region4 });
-        region3.AddNeighbors(new [] { region1, region4, region5, region6 });
-        region4.AddNeighbors(new [] { region2, region3 });
-        region5.AddNeighbors(new [] { region3, region6 });
-        region6.AddNeighbors(new [] { region3, region5 });
+        region1.SetNeighbors(new [] { region2, region3 });
+        region2.SetNeighbors(new [] { region1, region4 });
+        region3.SetNeighbors(new [] { region1, region4, region5, region6 });
+        region4.SetNeighbors(new [] { region2, region3 });
+        region5.SetNeighbors(new [] { region3, region6 });
+        region6.SetNeighbors(new [] { region3, region5 });
 
         var regions = new[] { region1, region2, region3, region4, region5, region6 };
 
@@ -136,12 +137,12 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
         var region3 = new TestRegion(3, new Vector2(1, 0));
         var region4 = new TestRegion(4, new Vector2(2, 0));
 
-        region1.AddNeighbors(new [] { region2, region3 });
-        region2.AddNeighbors(new [] { region1, region4 });
-        region3.AddNeighbors(new [] { region1, region4, region5, region6 });
-        region4.AddNeighbors(new [] { region2, region3 });
-        region5.AddNeighbors(new [] { region3, region6 });
-        region6.AddNeighbors(new [] { region3, region5 });
+        region1.SetNeighbors(new [] { region2, region3 });
+        region2.SetNeighbors(new [] { region1, region4 });
+        region3.SetNeighbors(new [] { region1, region4, region5, region6 });
+        region4.SetNeighbors(new [] { region2, region3 });
+        region5.SetNeighbors(new [] { region3, region6 });
+        region6.SetNeighbors(new [] { region3, region5 });
 
         var regions = new[] { region1, region2, region3, region4, region5, region6 };
 
@@ -186,12 +187,12 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
         var region3 = new TestRegion(3, new Vector2(1, 0));
         var region4 = new TestRegion(4, new Vector2(2, 0));
 
-        region1.AddNeighbors(new [] { region2, region3 });
-        region2.AddNeighbors(new [] { region1, region4 });
-        region3.AddNeighbors(new [] { region1, region4, region5, region6 });
-        region4.AddNeighbors(new [] { region2, region3 });
-        region5.AddNeighbors(new [] { region3, region6 });
-        region6.AddNeighbors(new [] { region3, region5 });
+        region1.SetNeighbors(new [] { region2, region3 });
+        region2.SetNeighbors(new [] { region1, region4 });
+        region3.SetNeighbors(new [] { region1, region4, region5, region6 });
+        region4.SetNeighbors(new [] { region2, region3 });
+        region5.SetNeighbors(new [] { region3, region6 });
+        region6.SetNeighbors(new [] { region3, region5 });
 
         var regions = new[] { region1, region2, region3, region4, region5, region6 };
 
@@ -245,12 +246,12 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
         var region3 = new TestRegion(3, new Vector2(1, 0));
         var region4 = new TestRegion(4, new Vector2(2, 0));
 
-        region1.AddNeighbors(new [] { region2, region3 });
-        region2.AddNeighbors(new [] { region1, region4 });
-        region3.AddNeighbors(new [] { region1, region4, region5, region6 });
-        region4.AddNeighbors(new [] { region2, region3 });
-        region5.AddNeighbors(new [] { region3, region6 });
-        region6.AddNeighbors(new [] { region3, region5 });
+        region1.SetNeighbors(new [] { region2, region3 });
+        region2.SetNeighbors(new [] { region1, region4 });
+        region3.SetNeighbors(new [] { region1, region4, region5, region6 });
+        region4.SetNeighbors(new [] { region2, region3 });
+        region5.SetNeighbors(new [] { region3, region6 });
+        region6.SetNeighbors(new [] { region3, region5 });
 
         var regions = new[] { region1, region2, region3, region4, region5, region6 };
 
@@ -304,12 +305,12 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
         var region3 = new TestRegion(3, new Vector2(1, 0));
         var region4 = new TestRegion(4, new Vector2(2, 0));
 
-        region1.AddNeighbors(new [] { region2, region3 });
-        region2.AddNeighbors(new [] { region1, region4 });
-        region3.AddNeighbors(new [] { region1, region4, region5, region6 });
-        region4.AddNeighbors(new [] { region2, region3 });
-        region5.AddNeighbors(new [] { region3, region6 });
-        region6.AddNeighbors(new [] { region3, region5 });
+        region1.SetNeighbors(new [] { region2, region3 });
+        region2.SetNeighbors(new [] { region1, region4 });
+        region3.SetNeighbors(new [] { region1, region4, region5, region6 });
+        region4.SetNeighbors(new [] { region2, region3 });
+        region5.SetNeighbors(new [] { region3, region6 });
+        region6.SetNeighbors(new [] { region3, region5 });
 
         var regions = new[] { region1, region2, region3, region4, region5, region6 };
 
@@ -363,12 +364,12 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
         var region3 = new TestRegion(3, new Vector2(1, 0));
         var region4 = new TestRegion(4, new Vector2(2, 0));
 
-        region1.AddNeighbors(new [] { region2, region3 });
-        region2.AddNeighbors(new [] { region1, region4 });
-        region3.AddNeighbors(new [] { region1, region4, region5, region6 });
-        region4.AddNeighbors(new [] { region2, region3 });
-        region5.AddNeighbors(new [] { region3, region6 });
-        region6.AddNeighbors(new [] { region3, region5 });
+        region1.SetNeighbors(new [] { region2, region3 });
+        region2.SetNeighbors(new [] { region1, region4 });
+        region3.SetNeighbors(new [] { region1, region4, region5, region6 });
+        region4.SetNeighbors(new [] { region2, region3 });
+        region5.SetNeighbors(new [] { region3, region6 });
+        region6.SetNeighbors(new [] { region3, region5 });
 
         var regions = new[] { region1, region2, region3, region4, region5, region6 };
 
@@ -451,7 +452,7 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
         public HashSet<Vector2> Cells { get; } = new HashSet<Vector2>();
         public float ApproximatedRadius => 0;
         public RegionType Type => RegionType.Expand;
-        public HashSet<NeighboringRegion> Neighbors { get; } = new HashSet<NeighboringRegion>();
+        public IEnumerable<INeighboringRegion> Neighbors { get; set; } = new HashSet<INeighboringRegion>();
         public bool IsObstructed { get; }
         public IExpandLocation? ExpandLocation => default;
 
@@ -465,10 +466,8 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
             return Neighbors.Select(neighbor => neighbor.Region);
         }
 
-        public void AddNeighbors(IEnumerable<TestRegion> neighbors) {
-            foreach (var neighbor in neighbors) {
-                Neighbors.Add(new NeighboringRegion(neighbor, new HashSet<Vector2>()));
-            }
+        public void SetNeighbors(IEnumerable<TestRegion> neighbors) {
+            Neighbors = neighbors.Select(neighbor => new TestNeighboringRegion(neighbor));
         }
 
         public void UpdateObstruction() {
@@ -477,6 +476,15 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
 
         public override string ToString() {
             return $"TestRegion {Id}";
+        }
+    }
+
+    private class TestNeighboringRegion : INeighboringRegion {
+        public IRegion Region { get; }
+        public HashSet<Vector2> Frontier { get; } = new HashSet<Vector2>();
+
+        public TestNeighboringRegion(IRegion region) {
+            Region = region;
         }
     }
 }

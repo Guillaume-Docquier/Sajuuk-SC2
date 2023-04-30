@@ -5,7 +5,7 @@ using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.UnitModules;
 using SC2APIProtocol;
 
@@ -14,7 +14,7 @@ namespace Bot.Managers.EconomyManagement.TownHallSupervision;
 public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IBuildingTracker _buildingTracker;
-    private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly IRegionsTracker _regionsTracker;
     private readonly ICreepTracker _creepTracker;
 
     private readonly ulong _id;
@@ -66,14 +66,14 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
     public TownHallSupervisor(
         IUnitsTracker unitsTracker,
         IBuildingTracker buildingTracker,
-        IExpandAnalyzer expandAnalyzer,
+        IRegionsTracker regionsTracker,
         ICreepTracker creepTracker,
         Unit townHall,
         Color color
     ) {
         _unitsTracker = unitsTracker;
         _buildingTracker = buildingTracker;
-        _expandAnalyzer = expandAnalyzer;
+        _regionsTracker = regionsTracker;
         _creepTracker = creepTracker;
 
         _id = townHall.Tag;

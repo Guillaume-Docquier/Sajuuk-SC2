@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
 using Bot.GameSense.RegionTracking;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
+using Bot.MapAnalysis.RegionAnalysis.ChokePoints;
+using Bot.Persistence;
 using Bot.Scenarios;
 using Bot.Tagging;
 using Bot.VideoClips;
@@ -27,7 +31,7 @@ public class Program {
     private const string Version = "4_0_4";
     private static readonly IBot Bot = CreateSajuuk(Version, Scenarios);
 
-    private const string MapFileName = Maps.Season_2022_4.FileNames.Berlingrad;
+    public const string MapFileName = Maps.Season_2022_4.FileNames.Berlingrad;
     private const Race OpponentRace = Race.Random;
     private const Difficulty OpponentDifficulty = Difficulty.CheatInsane;
 
@@ -39,6 +43,25 @@ public class Program {
     public static IGraphicalDebugger GraphicalDebugger { get; set; }
 
     public static void Main(string[] args) {
+        var regs = new List<Reg>
+        {
+            new Reg(1),
+            new Reg(2),
+            new Reg(3),
+            new Reg(4),
+            new Reg(5),
+        };
+
+        regs[0].Exp = new Exp(1, regs[0]);
+        regs[1].Exp = new Exp(2, regs[1]);
+        regs[2].Exp = new Exp(3, regs[2]);
+
+        var repo = new JsonMapDataRepository<List<Reg>>("Data/Oops/Ahah/Lol/RegExp.json");
+        repo.Save(regs);
+        var loaded = repo.Load();
+
+        var stop = 1;
+
         try {
             switch (args.Length) {
                 case 1 when args[0] == "--generateData":
@@ -62,10 +85,9 @@ public class Program {
         Logger.Info("Terminated.");
     }
 
-    private static void DisableDataStores() {
-        ExpandLocationDataStore.IsEnabled = false;
-        RegionDataStore.IsEnabled = false;
-        RayCastingChokeFinder.VisionLinesDataStore.IsEnabled = false;
+    private static void EnableMapAnalysis() {
+        ExpandAnalyzer.Instance.IsEnabled = true;
+        RegionAnalyzer.Instance.IsEnabled = true;
     }
 
     private static void PlayDataGeneration() {
@@ -73,7 +95,8 @@ public class Program {
         foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
             Logger.Info("Generating data for {0}", mapFileName);
 
-            DisableDataStores();
+            // TODO GD Instead of doing this, we should be able to use a different set of Controller, Bot and GameConnection
+            EnableMapAnalysis();
 
             DebugEnabled = true;
             GraphicalDebugger = new NullGraphicalDebugger();
@@ -88,15 +111,15 @@ public class Program {
 
         DebugEnabled = true;
         // TODO GD GraphicalDebugger should be injected as well
-        GraphicalDebugger = new Sc2GraphicalDebugger(MapAnalyzer.Instance);
+        GraphicalDebugger = new Sc2GraphicalDebugger(TerrainTracker.Instance);
 
         GameConnection = CreateGameConnection(stepSize: 1);
-        GameConnection.RunLocal(new VideoClipPlayer(MapFileName, DebuggingFlagsTracker.Instance, UnitsTracker.Instance, MapAnalyzer.Instance), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
+        GameConnection.RunLocal(new VideoClipPlayer(MapFileName, DebuggingFlagsTracker.Instance, UnitsTracker.Instance, TerrainTracker.Instance), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
     }
 
     private static void PlayLocalGame() {
         DebugEnabled = true;
-        GraphicalDebugger = new Sc2GraphicalDebugger(MapAnalyzer.Instance);
+        GraphicalDebugger = new Sc2GraphicalDebugger(TerrainTracker.Instance);
 
         GameConnection = CreateGameConnection();
         GameConnection.RunLocal(Bot, MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
@@ -120,10 +143,9 @@ public class Program {
             DebuggingFlagsTracker.Instance,
             UnitsTracker.Instance,
             IncomeTracker.Instance,
-            MapAnalyzer.Instance,
+            TerrainTracker.Instance,
             BuildingTracker.Instance,
-            ExpandAnalyzer.Instance,
-            RegionAnalyzer.Instance,
+            RegionsTracker.Instance,
             CreepTracker.Instance,
             EnemyStrategyTracker.Instance,
             RegionsEvaluationsTracker.Instance
@@ -137,5 +159,36 @@ public class Program {
             RegionAnalyzer.Instance,
             stepSize
         );
+    }
+
+    private class Reg {
+        [JsonInclude]
+        public int Id { get; private set; }
+        [JsonInclude]
+        public Exp Exp { get; set; }
+
+        [JsonConstructor]
+        [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
+        public Reg() {}
+
+        public Reg(int id) {
+            Id = id;
+        }
+    }
+
+    private class Exp {
+        [JsonInclude]
+        public int Id { get; private set; }
+        [JsonInclude]
+        public Reg Reg { get; private set; }
+
+        [JsonConstructor]
+        [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
+        public Exp() {}
+
+        public Exp(int id, Reg reg) {
+            Id = id;
+            Reg = reg;
+        }
     }
 }

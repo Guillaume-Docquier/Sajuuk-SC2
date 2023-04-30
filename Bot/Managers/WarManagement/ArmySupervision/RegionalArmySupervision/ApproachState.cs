@@ -4,21 +4,22 @@ using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class ApproachState : RegionalArmySupervisionState {
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     public const float SafetyDistance = 5;
     public const float SafetyDistanceTolerance = SafetyDistance / 2;
 
-    public ApproachState(IUnitsTracker unitsTracker, IRegionAnalyzer regionAnalyzer, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
+    public ApproachState(IUnitsTracker unitsTracker, IRegionsTracker regionsTracker, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
         _unitsTracker = unitsTracker;
-        _regionAnalyzer = regionAnalyzer;
+        _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
     }
 
@@ -27,7 +28,7 @@ public class ApproachState : RegionalArmySupervisionState {
     /// Units will only route through safe regions and stay at a safe distance of enemies in the target region.
     /// </summary>
     protected override void Execute() {
-        MoveIntoStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy, SafetyDistance, DefensiveUnitsController, _regionAnalyzer.Regions.ToHashSet(), _regionsEvaluationsTracker);
+        MoveIntoStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy, SafetyDistance, DefensiveUnitsController, _regionsTracker.Regions.ToHashSet(), _regionsEvaluationsTracker);
     }
 
     /// <summary>
@@ -38,7 +39,7 @@ public class ApproachState : RegionalArmySupervisionState {
         var unitsInStrikingPosition = GetUnitsInStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy);
         // TODO GD If maxed out, we have to trade
         if (unitsInStrikingPosition.GetForce() >= EnemyArmy.GetForce() * 1.25) {
-            StateMachine.TransitionTo(new EngageState(_unitsTracker, _regionAnalyzer, _regionsEvaluationsTracker));
+            StateMachine.TransitionTo(new EngageState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker));
             return true;
         }
 

@@ -14,7 +14,8 @@ using Bot.Managers;
 using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
 using Bot.Managers.WarManagement;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Scenarios;
 using Bot.Tagging;
 using SC2APIProtocol;
@@ -28,8 +29,8 @@ public class SajuukBot: PoliteBot {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IBuildingTracker _buildingTracker;
-    private readonly IExpandAnalyzer _expandAnalyzer;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+
+    private readonly IRegionsTracker _regionsTracker;
     private readonly ICreepTracker _creepTracker;
     private readonly IEnemyStrategyTracker _enemyStrategyTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
@@ -48,25 +49,23 @@ public class SajuukBot: PoliteBot {
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
         IIncomeTracker incomeTracker,
-        IMapAnalyzer mapAnalyzer,
+        ITerrainTracker terrainTracker,
         IBuildingTracker buildingTracker,
-        IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer,
+        IRegionsTracker regionsTracker,
         ICreepTracker creepTracker,
         IEnemyStrategyTracker enemyStrategyTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker
-    ) : base(version, scenarios, taggingService, unitsTracker, mapAnalyzer) {
+    ) : base(version, scenarios, taggingService, unitsTracker, terrainTracker) {
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _buildingTracker = buildingTracker;
-        _expandAnalyzer = expandAnalyzer;
-        _regionAnalyzer = regionAnalyzer;
+        _regionsTracker = regionsTracker;
         _creepTracker = creepTracker;
         _enemyStrategyTracker = enemyStrategyTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
 
-        _debugger = new BotDebugger(_visibilityTracker, _debuggingFlagsTracker, UnitsTracker, incomeTracker, MapAnalyzer, _enemyStrategyTracker);
+        _debugger = new BotDebugger(_visibilityTracker, _debuggingFlagsTracker, UnitsTracker, incomeTracker, TerrainTracker, _enemyStrategyTracker);
     }
 
     protected override Task DoOnFrame() {
@@ -104,10 +103,10 @@ public class SajuukBot: PoliteBot {
         _managers.Add(buildManager);
 
         _managers.Add(new SupplyManager(buildManager, UnitsTracker));
-        _managers.Add(new ScoutManager(_enemyRaceTracker, _visibilityTracker, UnitsTracker, MapAnalyzer, _expandAnalyzer, _regionAnalyzer));
-        _managers.Add(new EconomyManager(buildManager, UnitsTracker, MapAnalyzer, _buildingTracker, _expandAnalyzer, _creepTracker));
-        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, UnitsTracker, MapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionsEvaluationsTracker));
-        _managers.Add(new CreepManager(_visibilityTracker, UnitsTracker, MapAnalyzer, _buildingTracker, _expandAnalyzer, _creepTracker));
+        _managers.Add(new ScoutManager(_enemyRaceTracker, _visibilityTracker, UnitsTracker, TerrainTracker, _regionsTracker));
+        _managers.Add(new EconomyManager(buildManager, UnitsTracker, TerrainTracker, _buildingTracker, _regionsTracker, _creepTracker));
+        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, UnitsTracker, TerrainTracker, _regionsTracker, _regionsEvaluationsTracker));
+        _managers.Add(new CreepManager(_visibilityTracker, UnitsTracker, TerrainTracker, _buildingTracker, _regionsTracker, _creepTracker));
         _managers.Add(new UpgradesManager(UnitsTracker));
     }
 

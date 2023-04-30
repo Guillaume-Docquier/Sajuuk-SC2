@@ -5,24 +5,24 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
 public class BurrowHealing : IUnitsControl {
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
+    private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private const double BurrowDownThreshold = 0.5;
     private const double BurrowUpThreshold = 0.6;
 
-    public BurrowHealing(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer, IRegionAnalyzer regionAnalyzer, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
+    public BurrowHealing(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker, IRegionsTracker regionsTracker, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
-        _regionAnalyzer = regionAnalyzer;
+        _terrainTracker = terrainTracker;
+        _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
     }
 
@@ -107,7 +107,7 @@ public class BurrowHealing : IUnitsControl {
         }
 
         if (canTunnel) {
-            MoveAwayFrom(roach, _mapAnalyzer.GetClosestWalkable(collidingUnits.GetCenter(), searchRadius: 3));
+            MoveAwayFrom(roach, _terrainTracker.GetClosestWalkable(collidingUnits.GetCenter(), searchRadius: 3));
         }
     }
 
@@ -147,7 +147,7 @@ public class BurrowHealing : IUnitsControl {
             .Select(townHall => townHall.GetRegion())
             .MinBy(region => _regionsEvaluationsTracker.GetForce(region, Alliance.Enemy));
 
-        safestRegion ??= _regionAnalyzer.Regions.MinBy(region => _regionsEvaluationsTracker.GetForce(region, Alliance.Enemy));
+        safestRegion ??= _regionsTracker.Regions.MinBy(region => _regionsEvaluationsTracker.GetForce(region, Alliance.Enemy));
 
         roach.Move(safestRegion!.Center);
 
@@ -168,7 +168,7 @@ public class BurrowHealing : IUnitsControl {
         }
 
         // We might want to consider enemy units as to not wiggle between colliding units and enemies?
-        MoveAwayFrom(roach, _mapAnalyzer.GetClosestWalkable(collidingUnits.GetCenter(), searchRadius: 3));
+        MoveAwayFrom(roach, _terrainTracker.GetClosestWalkable(collidingUnits.GetCenter(), searchRadius: 3));
 
         return true;
     }

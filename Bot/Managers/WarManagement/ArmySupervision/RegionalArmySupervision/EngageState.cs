@@ -4,20 +4,21 @@ using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class EngageState : RegionalArmySupervisionState {
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private HashSet<Unit> _unitsReadyToAttack = new HashSet<Unit>();
 
-    public EngageState(IUnitsTracker unitsTracker, IRegionAnalyzer regionAnalyzer, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
+    public EngageState(IUnitsTracker unitsTracker, IRegionsTracker regionsTracker, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
         _unitsTracker = unitsTracker;
-        _regionAnalyzer = regionAnalyzer;
+        _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
     }
 
@@ -40,7 +41,7 @@ public class EngageState : RegionalArmySupervisionState {
         // TODO GD We should consider if retreating is even possible
         // TODO GD Sometimes you have to commit
         if (_unitsReadyToAttack.GetForce() < EnemyArmy.GetForce() * 0.75) {
-            StateMachine.TransitionTo(new DisengageState(_unitsTracker, _regionAnalyzer, _regionsEvaluationsTracker));
+            StateMachine.TransitionTo(new DisengageState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker));
             return true;
         }
 
@@ -122,7 +123,7 @@ public class EngageState : RegionalArmySupervisionState {
             .Where(region => region != null)
             .ToHashSet();
 
-        var regionsOutOfReach = ComputeBlockedRegionsMap(regionsWithFriendlyUnitPresence, _regionAnalyzer.Regions.ToHashSet(), _regionsEvaluationsTracker);
+        var regionsOutOfReach = ComputeBlockedRegionsMap(regionsWithFriendlyUnitPresence, _regionsTracker.Regions.ToHashSet(), _regionsEvaluationsTracker);
 
         var unitGroups = units
             .Where(unit => unit.GetRegion() != null)

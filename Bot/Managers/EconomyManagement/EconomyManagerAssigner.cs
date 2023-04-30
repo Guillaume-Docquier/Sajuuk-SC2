@@ -41,7 +41,7 @@ public sealed partial class EconomyManager {
         }
 
         private bool AssignQueen(Unit queen) {
-            QueenMicroModule.Install(queen, null, Client._buildingTracker, Client._expandAnalyzer, Client._creepTracker);
+            QueenMicroModule.Install(queen, null, Client._buildingTracker, Client._regionsTracker, Client._creepTracker);
             ChangelingTargetingModule.Install(queen, Client._unitsTracker);
 
             return true;

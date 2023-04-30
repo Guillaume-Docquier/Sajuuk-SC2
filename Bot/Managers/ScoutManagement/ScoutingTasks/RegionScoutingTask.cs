@@ -3,7 +3,7 @@ using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.RegionAnalysis;
 
 namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 

@@ -4,7 +4,9 @@ using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;
@@ -13,9 +15,8 @@ public partial class ArmySupervisor {
     public class HuntState: State<ArmySupervisor> {
         private readonly IVisibilityTracker _visibilityTracker;
         private readonly IUnitsTracker _unitsTracker;
-        private readonly IMapAnalyzer _mapAnalyzer;
-        private readonly IExpandAnalyzer _expandAnalyzer;
-        private readonly IRegionAnalyzer _regionAnalyzer;
+        private readonly ITerrainTracker _terrainTracker;
+        private readonly IRegionsTracker _regionsTracker;
         private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
         private static Dictionary<Vector2, bool> _checkedExpandLocations;
@@ -26,22 +27,20 @@ public partial class ArmySupervisor {
         public HuntState(
             IVisibilityTracker visibilityTracker,
             IUnitsTracker unitsTracker,
-            IMapAnalyzer mapAnalyzer,
-            IExpandAnalyzer expandAnalyzer,
-            IRegionAnalyzer regionAnalyzer,
+            ITerrainTracker terrainTracker,
+            IRegionsTracker regionsTracker,
             IRegionsEvaluationsTracker regionsEvaluationsTracker
         ) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
-            _mapAnalyzer = mapAnalyzer;
-            _expandAnalyzer = expandAnalyzer;
-            _regionAnalyzer = regionAnalyzer;
+            _terrainTracker = terrainTracker;
+            _regionsTracker = regionsTracker;
             _regionsEvaluationsTracker = regionsEvaluationsTracker;
         }
 
         protected override bool TryTransitioning() {
             if (_isNextTargetSet) {
-                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionsEvaluationsTracker));
+                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker));
                 return true;
             }
 
@@ -49,7 +48,7 @@ public partial class ArmySupervisor {
         }
 
         protected override void Execute() {
-            if (_mapAnalyzer.IsInitialized && _checkedExpandLocations == null) {
+            if (_checkedExpandLocations == null) {
                 ResetCheckedExpandLocations();
             }
 
@@ -89,17 +88,17 @@ public partial class ArmySupervisor {
         }
 
         private void ResetCheckedExpandLocations() {
-            _checkedExpandLocations = _expandAnalyzer.ExpandLocations
+            _checkedExpandLocations = _regionsTracker.ExpandLocations
                 .Select(expandLocation => expandLocation.Position)
                 .ToDictionary(expand => expand, _visibilityTracker.IsVisible);
         }
 
         private void ResetCheckedPositions() {
             CheckedPositions.Clear();
-            for (var x = 0; x < _mapAnalyzer.MaxX; x++) {
-                for (var y = 0; y < _mapAnalyzer.MaxY; y++) {
+            for (var x = 0; x < _terrainTracker.MaxX; x++) {
+                for (var y = 0; y < _terrainTracker.MaxY; y++) {
                     var position = new Vector2(x, y).AsWorldGridCenter();
-                    if (!Context.CanFly && !_mapAnalyzer.IsWalkable(position)) {
+                    if (!Context.CanFly && !_terrainTracker.IsWalkable(position)) {
                         continue;
                     }
 
@@ -120,9 +119,9 @@ public partial class ArmySupervisor {
                 ResetCheckedPositions();
             }
 
-            var armyCenter = _mapAnalyzer.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3);
+            var armyCenter = _terrainTracker.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3);
             if (!Context.CanFly) {
-                armyCenter = _mapAnalyzer.GetClosestWalkable(armyCenter);
+                armyCenter = _terrainTracker.GetClosestWalkable(armyCenter);
             }
 
             var notVisiblePositions = CheckedPositions
@@ -147,8 +146,8 @@ public partial class ArmySupervisor {
             // TODO GD The module and the manager are giving orders to the unit, freezing it
             // _armyManager.Army.ForEach(TargetNeutralUnitsModule.Install);
 
-            var armyCenter = _mapAnalyzer.GetClosestWalkable(Context._mainArmy.GetCenter());
-            var nextReachableUncheckedLocations = _expandAnalyzer.ExpandLocations
+            var armyCenter = _terrainTracker.GetClosestWalkable(Context._mainArmy.GetCenter());
+            var nextReachableUncheckedLocations = _regionsTracker.ExpandLocations
                 .Select(expandLocation => expandLocation.Position)
                 .Where(expandLocation => !_checkedExpandLocations[expandLocation])
                 .Where(expandLocation => Pathfinder.Instance.FindPath(armyCenter, expandLocation) != null)

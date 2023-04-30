@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Utils;
 using SC2APIProtocol;
 
@@ -14,9 +15,8 @@ namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 public class ProtossScoutingStrategy : IScoutingStrategy {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
-    private readonly IExpandAnalyzer _expandAnalyzer;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
+    private readonly IRegionsTracker _regionsTracker;
 
     private const int TopPriority = 100;
 
@@ -29,22 +29,16 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
     public ProtossScoutingStrategy(
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker
     ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
-        _expandAnalyzer = expandAnalyzer;
-        _regionAnalyzer = regionAnalyzer;
+        _terrainTracker = terrainTracker;
+        _regionsTracker = regionsTracker;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
-        if (!_expandAnalyzer.IsInitialized || !_regionAnalyzer.IsInitialized) {
-            yield break;
-        }
-
         // Stop after 4 minutes just in case to avoid sending overlords to their death
         // We'll need smarter checks to determine if we're safe
         if (Controller.Frame >= TimeUtils.SecsToFrames(4 * 60)) {
@@ -64,18 +58,18 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
 
         // Keep watching
         if (_ownNaturalScoutingTask.IsComplete()) {
-            _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _regionAnalyzer.GetRegion(_ownNatural.Position), priority: TopPriority, maxScouts: 1);
+            _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _regionsTracker.GetRegion(_ownNatural.Position), priority: TopPriority, maxScouts: 1);
 
             yield return _ownNaturalScoutingTask;
         }
     }
 
     private void Init() {
-        _ownNatural = _expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural);
-        _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _regionAnalyzer.GetRegion(_ownNatural.Position), priority: TopPriority, maxScouts: 1);
+        _ownNatural = _regionsTracker.GetExpand(Alliance.Self, ExpandType.Natural);
+        _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _regionsTracker.GetRegion(_ownNatural.Position), priority: TopPriority, maxScouts: 1);
 
-        var enemyNatural = _expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Natural);
-        _enemyNaturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _mapAnalyzer, enemyNatural.Position, priority: TopPriority - 1, maxScouts: 1);
+        var enemyNatural = _regionsTracker.GetExpand(Alliance.Enemy, ExpandType.Natural);
+        _enemyNaturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _terrainTracker, enemyNatural.Position, priority: TopPriority - 1, maxScouts: 1);
 
         _isInitialized = true;
     }

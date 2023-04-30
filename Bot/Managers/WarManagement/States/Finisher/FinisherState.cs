@@ -1,7 +1,8 @@
 ﻿using Bot.Debugging;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Tagging;
 
 namespace Bot.Managers.WarManagement.States.Finisher;
@@ -12,9 +13,8 @@ public class FinisherState : WarManagerState {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
-    private readonly IExpandAnalyzer _expandAnalyzer;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
+    private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private IWarManagerBehaviour _behaviour;
@@ -27,9 +27,8 @@ public class FinisherState : WarManagerState {
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer,
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker
     ) {
         _taggingService = taggingService;
@@ -37,9 +36,8 @@ public class FinisherState : WarManagerState {
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
-        _expandAnalyzer = expandAnalyzer;
-        _regionAnalyzer = regionAnalyzer;
+        _terrainTracker = terrainTracker;
+        _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
     }
 
@@ -51,9 +49,8 @@ public class FinisherState : WarManagerState {
             _visibilityTracker,
             _debuggingFlagsTracker,
             _unitsTracker,
-            _mapAnalyzer,
-            _expandAnalyzer,
-            _regionAnalyzer,
+            _terrainTracker,
+            _regionsTracker,
             _regionsEvaluationsTracker
         );
     }

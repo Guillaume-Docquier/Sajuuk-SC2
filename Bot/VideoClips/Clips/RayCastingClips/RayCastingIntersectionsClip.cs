@@ -2,17 +2,17 @@
 using System.Linq;
 using System.Numerics;
 using Bot.Algorithms;
-using Bot.MapKnowledge;
+using Bot.GameSense;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
 
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class RayCastingIntersectionsClip : Clip {
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
 
-    public RayCastingIntersectionsClip(IMapAnalyzer mapAnalyzer, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
-        _mapAnalyzer = mapAnalyzer;
+    public RayCastingIntersectionsClip(ITerrainTracker terrainTracker, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
+        _terrainTracker = terrainTracker;
 
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
@@ -25,10 +25,10 @@ public class RayCastingIntersectionsClip : Clip {
         var endFrame = startAt;
 
         var random = new Random();
-        foreach (var cell in _mapAnalyzer.BuildSearchRadius(origin, 15)) {
+        foreach (var cell in _terrainTracker.BuildSearchRadius(origin, 15)) {
             var rng = (float)random.NextDouble();
             var rngStartFrame = startAt + (int)TimeUtils.SecsToFrames(rng * 1f);
-            var squareAnimation = new CellDrawingAnimation(_mapAnalyzer, _mapAnalyzer.WithWorldHeight(cell), rngStartFrame).WithDurationInSeconds(0.5f);
+            var squareAnimation = new CellDrawingAnimation(_terrainTracker, _terrainTracker.WithWorldHeight(cell), rngStartFrame).WithDurationInSeconds(0.5f);
 
             AddAnimation(squareAnimation);
 
@@ -39,18 +39,18 @@ public class RayCastingIntersectionsClip : Clip {
     }
 
     private void CastRay(Vector2 origin, int startAt) {
-        var rayCastResults = RayCasting.RayCast(origin, MathUtils.DegToRad(30), cell => !_mapAnalyzer.IsWalkable(cell)).ToList();
+        var rayCastResults = RayCasting.RayCast(origin, MathUtils.DegToRad(30), cell => !_terrainTracker.IsWalkable(cell)).ToList();
 
         var previousIntersection = rayCastResults[0].RayIntersection;
         var previousAnimationEnd = startAt;
         foreach (var rayCastResult in rayCastResults) {
             var rayEnd = rayCastResult.RayIntersection;
-            var lineDrawingAnimation = new LineDrawingAnimation(_mapAnalyzer.WithWorldHeight(previousIntersection), _mapAnalyzer.WithWorldHeight(rayEnd), ColorService.Instance.RayColor, previousAnimationEnd)
+            var lineDrawingAnimation = new LineDrawingAnimation(_terrainTracker.WithWorldHeight(previousIntersection), _terrainTracker.WithWorldHeight(rayEnd), ColorService.Instance.RayColor, previousAnimationEnd)
                 .WithConstantRate(4);
 
             AddAnimation(lineDrawingAnimation);
 
-            var sphereDrawingAnimation = new SphereDrawingAnimation(_mapAnalyzer.WithWorldHeight(rayEnd), 0.1f, ColorService.Instance.PointColor, lineDrawingAnimation.AnimationEndFrame)
+            var sphereDrawingAnimation = new SphereDrawingAnimation(_terrainTracker.WithWorldHeight(rayEnd), 0.1f, ColorService.Instance.PointColor, lineDrawingAnimation.AnimationEndFrame)
                 .WithDurationInSeconds(0.5f);
 
             AddAnimation(sphereDrawingAnimation);

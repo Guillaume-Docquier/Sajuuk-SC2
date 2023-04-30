@@ -3,7 +3,7 @@ using System.Linq;
 using System.Numerics;
 using Bot.Algorithms;
 using Bot.Debugging.GraphicalDebugging;
-using Bot.MapKnowledge;
+using Bot.GameSense;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
 using SC2APIProtocol;
@@ -11,16 +11,16 @@ using SC2APIProtocol;
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class PerpendicularLinesScanClip : Clip {
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
 
-    public PerpendicularLinesScanClip(IMapAnalyzer mapAnalyzer, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
-        _mapAnalyzer = mapAnalyzer;
+    public PerpendicularLinesScanClip(ITerrainTracker terrainTracker, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
+        _terrainTracker = terrainTracker;
 
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0)
             .WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
-        var locationAnimation = new CellDrawingAnimation(_mapAnalyzer, _mapAnalyzer.WithWorldHeight(sceneLocation), centerCameraAnimation.AnimationEndFrame)
+        var locationAnimation = new CellDrawingAnimation(_terrainTracker, _terrainTracker.WithWorldHeight(sceneLocation), centerCameraAnimation.AnimationEndFrame)
             .WithDurationInSeconds(1);
         AddAnimation(locationAnimation);
 
@@ -39,11 +39,11 @@ public class PerpendicularLinesScanClip : Clip {
     }
 
     private int DrawCross(Vector2 origin, double angle, int startFrame) {
-        DrawRaySegments(RayCasting.RayCast(origin, MathUtils.DegToRad(angle), cell => !_mapAnalyzer.IsWalkable(cell)).ToList(), startFrame, Colors.BrightGreen);
-        DrawRaySegments(RayCasting.RayCast(origin, MathUtils.DegToRad(angle + 90), cell => !_mapAnalyzer.IsWalkable(cell)).ToList(), startFrame, Colors.Red);
-        DrawRaySegments(RayCasting.RayCast(origin, MathUtils.DegToRad(angle + 180), cell => !_mapAnalyzer.IsWalkable(cell)).ToList(), startFrame, Colors.BrightGreen);
+        DrawRaySegments(RayCasting.RayCast(origin, MathUtils.DegToRad(angle), cell => !_terrainTracker.IsWalkable(cell)).ToList(), startFrame, Colors.BrightGreen);
+        DrawRaySegments(RayCasting.RayCast(origin, MathUtils.DegToRad(angle + 90), cell => !_terrainTracker.IsWalkable(cell)).ToList(), startFrame, Colors.Red);
+        DrawRaySegments(RayCasting.RayCast(origin, MathUtils.DegToRad(angle + 180), cell => !_terrainTracker.IsWalkable(cell)).ToList(), startFrame, Colors.BrightGreen);
 
-        return DrawRaySegments(RayCasting.RayCast(origin, MathUtils.DegToRad(angle + 270), cell => !_mapAnalyzer.IsWalkable(cell)).ToList(), startFrame, Colors.Red);
+        return DrawRaySegments(RayCasting.RayCast(origin, MathUtils.DegToRad(angle + 270), cell => !_terrainTracker.IsWalkable(cell)).ToList(), startFrame, Colors.Red);
     }
 
     private int DrawRaySegments(List<RayCasting.RayCastResult> rayCastResults, int startFrame, Color color) {
@@ -57,7 +57,7 @@ public class PerpendicularLinesScanClip : Clip {
     }
 
     private int DrawRay(Vector2 origin, Vector2 destination, int startFrame, Color color) {
-        var lineDrawingAnimation = new LineDrawingAnimation(_mapAnalyzer.WithWorldHeight(origin), _mapAnalyzer.WithWorldHeight(destination), color, startFrame)
+        var lineDrawingAnimation = new LineDrawingAnimation(_terrainTracker.WithWorldHeight(origin), _terrainTracker.WithWorldHeight(destination), color, startFrame)
             .WithPostAnimationDurationInFrames(1);
 
         AddAnimation(lineDrawingAnimation);

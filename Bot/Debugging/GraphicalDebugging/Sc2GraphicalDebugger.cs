@@ -4,7 +4,7 @@ using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
-using Bot.MapKnowledge;
+using Bot.GameSense;
 using Bot.Utils;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -15,7 +15,7 @@ namespace Bot.Debugging.GraphicalDebugging;
 /// Implements all sorts of graphical shapes to help in local debugging.
 /// </summary>
 public class Sc2GraphicalDebugger: IGraphicalDebugger {
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
 
     private const float CreepHeight = 0.02f;
     private const float Padding = 0.05f;
@@ -25,8 +25,8 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
     private readonly Dictionary<Vector3, List<DebugBox>> _debugBoxes = new Dictionary<Vector3, List<DebugBox>>();
     private readonly List<DebugLine> _debugLines = new List<DebugLine>();
 
-    public Sc2GraphicalDebugger(IMapAnalyzer mapAnalyzer) {
-        _mapAnalyzer = mapAnalyzer;
+    public Sc2GraphicalDebugger(ITerrainTracker terrainTracker) {
+        _terrainTracker = terrainTracker;
     }
 
     public Request GetDebugRequest() {
@@ -89,8 +89,8 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
     }
 
     public void AddGridSquaresInRadius(Vector3 centerPosition, int radius, Color color) {
-        foreach (var cell in _mapAnalyzer.BuildSearchRadius(centerPosition.ToVector2(), radius)) {
-            AddSquare(_mapAnalyzer.WithWorldHeight(cell), KnowledgeBase.GameGridCellWidth, color, padded: true);
+        foreach (var cell in _terrainTracker.BuildSearchRadius(centerPosition.ToVector2(), radius)) {
+            AddSquare(_terrainTracker.WithWorldHeight(cell), KnowledgeBase.GameGridCellWidth, color, padded: true);
         }
     }
 
@@ -154,7 +154,7 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
     }
 
     public void AddPath(List<Vector2> path, Color startColor, Color endColor) {
-        AddPath(path.Select(cell => _mapAnalyzer.WithWorldHeight(cell)).ToList(), startColor, endColor);
+        AddPath(path.Select(cell => _terrainTracker.WithWorldHeight(cell)).ToList(), startColor, endColor);
     }
 
     public void AddPath(List<Vector3> path, Color startColor, Color endColor) {
@@ -178,7 +178,7 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
         );
 
         if (unit.IsFlying) {
-            var groundPosition = _mapAnalyzer.WithWorldHeight(unit.Position);
+            var groundPosition = _terrainTracker.WithWorldHeight(unit.Position);
             Program.GraphicalDebugger.AddLine(unit.Position, groundPosition, color ?? Colors.White);
             Program.GraphicalDebugger.AddGridSphere(groundPosition, color ?? Colors.White);
         }

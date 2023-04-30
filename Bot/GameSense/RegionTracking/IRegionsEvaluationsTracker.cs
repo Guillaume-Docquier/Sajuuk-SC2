@@ -1,5 +1,5 @@
 ﻿using System.Numerics;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;
 
 namespace Bot.GameSense.RegionTracking;

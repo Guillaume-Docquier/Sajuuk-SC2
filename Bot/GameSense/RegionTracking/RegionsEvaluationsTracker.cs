@@ -4,7 +4,7 @@ using System.Numerics;
 using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;
 
 namespace Bot.GameSense.RegionTracking;
@@ -16,14 +16,14 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
     public static RegionsEvaluationsTracker Instance { get; } = new RegionsEvaluationsTracker(
         DebuggingFlagsTracker.Instance,
         UnitsTracker.Instance,
-        MapAnalyzer.Instance,
-        RegionAnalyzer.Instance
+        TerrainTracker.Instance,
+        RegionsTracker.Instance
     );
 
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
+    private readonly IRegionsTracker _regionsTracker;
 
     private bool _isInitialized = false;
 
@@ -50,13 +50,13 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
     private RegionsEvaluationsTracker(
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer,
-        IRegionAnalyzer regionAnalyzer
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker
     ) {
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
-        _regionAnalyzer = regionAnalyzer;
+        _terrainTracker = terrainTracker;
+        _regionsTracker = regionsTracker;
 
         Reset();
     }
@@ -69,7 +69,7 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
     /// <param name="normalized">Whether or not to get the normalized force between 0 and 1</param>
     /// <returns>The force of the position's region</returns>
     public float GetForce(Vector2 position, Alliance alliance, bool normalized = false) {
-        return GetForce(_regionAnalyzer.GetRegion(position), alliance, normalized);
+        return GetForce(_regionsTracker.GetRegion(position), alliance, normalized);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
     /// <param name="normalized">Whether or not to get the normalized value between 0 and 1</param>
     /// <returns>The value of the position's region</returns>
     public float GetValue(Vector2 position, Alliance alliance, bool normalized = false) {
-        return GetValue(_regionAnalyzer.GetRegion(position), alliance, normalized);
+        return GetValue(_regionsTracker.GetRegion(position), alliance, normalized);
     }
 
     /// <summary>
@@ -122,7 +122,7 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
     /// <param name="normalized">Whether or not to get the normalized threat between 0 and 1</param>
     /// <returns>The threat of the position's region</returns>
     public float GetThreat(Vector2 position, Alliance alliance, bool normalized = false) {
-        return GetForce(_regionAnalyzer.GetRegion(position), alliance, normalized);
+        return GetForce(_regionsTracker.GetRegion(position), alliance, normalized);
     }
 
     /// <summary>
@@ -159,10 +159,6 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
-        if (!_regionAnalyzer.IsInitialized) {
-            return;
-        }
-
         if (!_isInitialized) {
             InitEvaluators();
         }
@@ -172,7 +168,7 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
 
     private void InitEvaluators() {
         foreach (var evaluator in Evaluators) {
-            evaluator.Init(_regionAnalyzer.Regions);
+            evaluator.Init(_regionsTracker.Regions);
         }
 
         _isInitialized = true;
@@ -189,7 +185,7 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
         }
 
         var regionIndex = 0;
-        foreach (var region in _regionAnalyzer.Regions) {
+        foreach (var region in _regionsTracker.Regions) {
             // TODO GD Set colors on each region directly, with a color different from its neighbors
             var regionColor = RegionColors[regionIndex % RegionColors.Count];
 
@@ -254,15 +250,15 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
 
     private void DrawRegionMarker(IRegion region, Color regionColor, IEnumerable<string> texts, float textXOffset = 0f) {
         const int zOffset = 5;
-        var offsetRegionCenter = _mapAnalyzer.WithWorldHeight(region.Center, zOffset: zOffset);
+        var offsetRegionCenter = _terrainTracker.WithWorldHeight(region.Center, zOffset: zOffset);
 
         // Draw the marker
-        Program.GraphicalDebugger.AddLink(_mapAnalyzer.WithWorldHeight(region.Center), offsetRegionCenter, color: regionColor);
+        Program.GraphicalDebugger.AddLink(_terrainTracker.WithWorldHeight(region.Center), offsetRegionCenter, color: regionColor);
         Program.GraphicalDebugger.AddTextGroup(texts, size: 14, worldPos: offsetRegionCenter.ToPoint(xOffset: textXOffset), color: regionColor);
 
         // Draw lines to neighbors
         foreach (var neighbor in region.Neighbors) {
-            var neighborOffsetCenter = _mapAnalyzer.WithWorldHeight(neighbor.Region.Center, zOffset: zOffset);
+            var neighborOffsetCenter = _terrainTracker.WithWorldHeight(neighbor.Region.Center, zOffset: zOffset);
             var regionSizeRatio = (float)region.Cells.Count / (region.Cells.Count + neighbor.Region.Cells.Count);
             var lineEnd = Vector3.Lerp(offsetRegionCenter, neighborOffsetCenter, regionSizeRatio);
             Program.GraphicalDebugger.AddLine(offsetRegionCenter, lineEnd, color: regionColor);

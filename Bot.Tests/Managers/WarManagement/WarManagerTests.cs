@@ -2,7 +2,8 @@
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Tagging;
 using Bot.Tests.Mocks;
 using Moq;
@@ -15,10 +16,9 @@ public class WarManagerTests : BaseTestClass {
     private readonly Mock<IVisibilityTracker> _visibilityTrackerMock;
     private readonly Mock<IDebuggingFlagsTracker> _debuggingFlagsTrackerMock;
     private readonly TestUnitsTracker _unitsTracker;
-    private readonly Mock<IMapAnalyzer> _mapAnalyzerMock;
-    private readonly Mock<IExpandAnalyzer> _expandAnalyzerMock;
-    private readonly Mock<IRegionAnalyzer> _regionAnalyzerMock;
-    private readonly Mock<IRegionsEvaluationsTracker> _regionTrackerMock;
+    private readonly Mock<ITerrainTracker> _terrainTrackerMock;
+    private readonly Mock<IRegionsTracker> _regionsTrackerMock;
+    private readonly Mock<IRegionsEvaluationsTracker> _regionsEvaluationsTrackerMock;
 
     public WarManagerTests() {
         _taggingServiceMock = new Mock<ITaggingService>();
@@ -26,10 +26,9 @@ public class WarManagerTests : BaseTestClass {
         _visibilityTrackerMock = new Mock<IVisibilityTracker>();
         _debuggingFlagsTrackerMock = new Mock<IDebuggingFlagsTracker>();
         _unitsTracker = new TestUnitsTracker();
-        _mapAnalyzerMock = new Mock<IMapAnalyzer>();
-        _expandAnalyzerMock = new Mock<IExpandAnalyzer>();
-        _regionAnalyzerMock = new Mock<IRegionAnalyzer>();
-        _regionTrackerMock = new Mock<IRegionsEvaluationsTracker>();
+        _terrainTrackerMock = new Mock<ITerrainTracker>();
+        _regionsTrackerMock = new Mock<IRegionsTracker>();
+        _regionsEvaluationsTrackerMock = new Mock<IRegionsEvaluationsTracker>();
     }
 
     [Fact(Skip = "Wait for DI refactor to be done")]
@@ -41,10 +40,9 @@ public class WarManagerTests : BaseTestClass {
             _visibilityTrackerMock.Object,
             _debuggingFlagsTrackerMock.Object,
             _unitsTracker,
-            _mapAnalyzerMock.Object,
-            _expandAnalyzerMock.Object,
-            _regionAnalyzerMock.Object,
-            _regionTrackerMock.Object
+            _terrainTrackerMock.Object,
+            _regionsTrackerMock.Object,
+            _regionsEvaluationsTrackerMock.Object
         );
 
         var militaryUnits = Units.ZergMilitary
@@ -70,10 +68,9 @@ public class WarManagerTests : BaseTestClass {
             _visibilityTrackerMock.Object,
             _debuggingFlagsTrackerMock.Object,
             _unitsTracker,
-            _mapAnalyzerMock.Object,
-            _expandAnalyzerMock.Object,
-            _regionAnalyzerMock.Object,
-            _regionTrackerMock.Object
+            _terrainTrackerMock.Object,
+            _regionsTrackerMock.Object,
+            _regionsEvaluationsTrackerMock.Object
         );
         // TODO UnitsTracker
 

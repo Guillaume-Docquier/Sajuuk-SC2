@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.RegionAnalysis;
 
 namespace Bot.GameSense.RegionTracking;
 
