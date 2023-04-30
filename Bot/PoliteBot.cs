@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapKnowledge;
 using Bot.Scenarios;
 using Bot.Tagging;
 using Bot.Utils;
@@ -15,7 +14,7 @@ namespace Bot;
 public abstract class PoliteBot: IBot {
     protected readonly ITaggingService TaggingService;
     protected readonly IUnitsTracker UnitsTracker;
-    protected readonly IMapAnalyzer MapAnalyzer;
+    protected readonly ITerrainTracker TerrainTracker;
 
     private readonly string _version;
     private readonly List<IScenario> _scenarios;
@@ -26,13 +25,13 @@ public abstract class PoliteBot: IBot {
 
     public abstract Race Race { get; }
 
-    protected PoliteBot(string version, List<IScenario> scenarios, ITaggingService taggingService, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
+    protected PoliteBot(string version, List<IScenario> scenarios, ITaggingService taggingService, IUnitsTracker unitsTracker, ITerrainTracker terrainTracker) {
         _version = version;
         _scenarios = scenarios;
 
         TaggingService = taggingService;
         UnitsTracker = unitsTracker;
-        MapAnalyzer = mapAnalyzer;
+        TerrainTracker = terrainTracker;
     }
 
     public async Task OnFrame() {
@@ -48,7 +47,7 @@ public abstract class PoliteBot: IBot {
             Logger.Info("--------------------------------------");
             Logger.Metric("Bot: {0}", Name);
             Logger.Metric("Map: {0}", Controller.GameInfo.MapName);
-            Logger.Metric("Starting Corner: {0}", MapAnalyzer.GetStartingCorner());
+            Logger.Metric("Starting Corner: {0}", TerrainTracker.GetStartingCorner());
             Logger.Metric("Bot Version: {0}", _version);
             Logger.Info("--------------------------------------");
         }

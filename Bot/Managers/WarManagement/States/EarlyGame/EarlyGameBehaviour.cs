@@ -8,7 +8,9 @@ using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.Managers.WarManagement.States.MidGame;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Tagging;
 using SC2APIProtocol;
 
@@ -23,8 +25,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
     private readonly ITaggingService _taggingService;
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IExpandAnalyzer _expandAnalyzer;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private BuildRequest _armyBuildRequest;
@@ -47,20 +48,18 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer,
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
         _unitsTracker = unitsTracker;
-        _expandAnalyzer = expandAnalyzer;
-        _regionAnalyzer = regionAnalyzer;
+        _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
 
         _debugger = new EarlyGameBehaviourDebugger(debuggingFlagsTracker);
-        DefenseSupervisor = new ArmySupervisor(visibilityTracker, _unitsTracker, mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionsEvaluationsTracker);
+        DefenseSupervisor = new ArmySupervisor(visibilityTracker, _unitsTracker, terrainTracker, _regionsTracker, _regionsEvaluationsTracker);
 
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);
@@ -69,8 +68,8 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         Dispatcher = new EarlyGameDispatcher(this);
         Releaser = new WarManagerReleaser<EarlyGameBehaviour>(this);
 
-        var main = _regionAnalyzer.GetRegion(_expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Main).Position);
-        var natural = _regionAnalyzer.GetRegion(_expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural).Position);
+        var main = _regionsTracker.GetRegion(_regionsTracker.GetExpand(Alliance.Self, ExpandType.Main).Position);
+        var natural = _regionsTracker.GetRegion(_regionsTracker.GetExpand(Alliance.Self, ExpandType.Natural).Position);
         _startingRegions = Pathfinder.Instance.FindPath(main, natural).ToHashSet();
     }
 
@@ -142,7 +141,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
     private IRegion GetRegionToDefend() {
         if (GetEnemyForce(_startingRegions) == 0) {
-            var enemyMain = _regionAnalyzer.GetRegion(_expandAnalyzer.GetExpand(Alliance.Enemy, ExpandType.Main).Position);
+            var enemyMain = _regionsTracker.GetRegion(_regionsTracker.GetExpand(Alliance.Enemy, ExpandType.Main).Position);
             return _startingRegions.MinBy(region => Pathfinder.Instance.FindPath(region, enemyMain).GetPathDistance());
         }
 
@@ -188,7 +187,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         draftableDrones = draftableDrones
             .OrderByDescending(drone => drone.Integrity)
             // TODO GD This could be better, it assumes the threat comes from the natural
-            .ThenBy(drone => drone.DistanceTo(_expandAnalyzer.GetExpand(Alliance.Self, ExpandType.Natural).Position))
+            .ThenBy(drone => drone.DistanceTo(_regionsTracker.GetExpand(Alliance.Self, ExpandType.Natural).Position))
             .ToList();
 
         var enemyForce = GetEnemyForce();

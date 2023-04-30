@@ -7,7 +7,8 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Tagging;
 using Bot.Utils;
 using SC2APIProtocol;
@@ -25,9 +26,8 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     private readonly IEnemyRaceTracker _enemyRaceTracker;
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
-    private readonly IExpandAnalyzer _expandAnalyzer;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
+    private readonly IRegionsTracker _regionsTracker;
 
     private readonly FinisherBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
@@ -52,9 +52,8 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer,
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker
     ) {
         _warManager = warManager;
@@ -62,13 +61,12 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
-        _expandAnalyzer = expandAnalyzer;
-        _regionAnalyzer = regionAnalyzer;
+        _terrainTracker = terrainTracker;
+        _regionsTracker = regionsTracker;
 
         _debugger = new FinisherBehaviourDebugger(debuggingFlagsTracker);
-        AttackSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, regionsEvaluationsTracker);
-        TerranFinisherSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, regionsEvaluationsTracker);
+        AttackSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, regionsEvaluationsTracker);
+        TerranFinisherSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, regionsEvaluationsTracker);
 
         _corruptorsBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Corruptor, targetQuantity: 0, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Normal);
@@ -78,7 +76,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         Dispatcher = new FinisherDispatcher(this);
         Releaser = new WarManagerReleaser<FinisherBehaviour>(this);
 
-        var target = _mapAnalyzer.GetClosestWalkable(_warManager.ManagedUnits.GetCenter(), searchRadius: 3);
+        var target = _terrainTracker.GetClosestWalkable(_warManager.ManagedUnits.GetCenter(), searchRadius: 3);
         AttackSupervisor.AssignTarget(target, 999, canHuntTheEnemy: true);
         TerranFinisherSupervisor.AssignTarget(target, 999, canHuntTheEnemy: true);
     }
@@ -132,7 +130,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
             return false;
         }
 
-        if (_mapAnalyzer.ExplorationRatio < 0.80 || !_expandAnalyzer.ExpandLocations.All(expandLocation => _visibilityTracker.IsExplored(expandLocation.Position))) {
+        if (_terrainTracker.ExplorationRatio < 0.80 || !_regionsTracker.ExpandLocations.All(expandLocation => _visibilityTracker.IsExplored(expandLocation.Position))) {
             return false;
         }
 

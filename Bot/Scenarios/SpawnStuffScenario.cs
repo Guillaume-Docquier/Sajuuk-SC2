@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis;
 using Bot.Utils;
 using Bot.Wrapper;
 
@@ -11,13 +11,13 @@ namespace Bot.Scenarios;
 
 public class SpawnStuffScenario : IScenario {
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
 
     private bool _isScenarioDone = false;
 
-    public SpawnStuffScenario(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
+    public SpawnStuffScenario(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker) {
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
+        _terrainTracker = terrainTracker;
     }
 
     public async Task OnFrame() {
@@ -27,7 +27,7 @@ public class SpawnStuffScenario : IScenario {
 
         if (Controller.Frame >= TimeUtils.SecsToFrames(50)) {
             var main = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls)
-                .MaxBy(townHall => Pathfinder.Instance.FindPath(townHall.Position.ToVector2(), _mapAnalyzer.EnemyStartingLocation).Count);
+                .MaxBy(townHall => Pathfinder.Instance.FindPath(townHall.Position.ToVector2(), _terrainTracker.EnemyStartingLocation).Count);
 
             Logger.Debug("Spawning 1 probe on the main");
 

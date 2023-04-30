@@ -2,18 +2,17 @@
 using System.Linq;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapKnowledge;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
 
 public partial class SneakAttack {
     public class EngageState : SneakAttackState {
         private readonly IUnitsTracker _unitsTracker;
-        private readonly IMapAnalyzer _mapAnalyzer;
+        private readonly ITerrainTracker _terrainTracker;
 
-        public EngageState(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
+        public EngageState(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker) {
             _unitsTracker = unitsTracker;
-            _mapAnalyzer = mapAnalyzer;
+            _terrainTracker = terrainTracker;
         }
 
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
@@ -23,7 +22,7 @@ public partial class SneakAttack {
         protected override void Execute() {
             UnburrowUnderlings(Context._army);
 
-            NextState = new TerminalState(_unitsTracker, _mapAnalyzer);
+            NextState = new TerminalState(_unitsTracker, _terrainTracker);
         }
 
         private static void UnburrowUnderlings(IEnumerable<Unit> army) {

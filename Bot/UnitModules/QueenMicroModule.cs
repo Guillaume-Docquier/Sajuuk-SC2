@@ -2,13 +2,15 @@
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis;
+using Bot.MapAnalysis.ExpandAnalysis;
 
 namespace Bot.UnitModules;
 
 public class QueenMicroModule: UnitModule, IWatchUnitsDie {
     private readonly IBuildingTracker _buildingTracker;
-    private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly IRegionsTracker _regionsTracker;
+
     private readonly ICreepTracker _creepTracker;
 
     public const string Tag = "QueenMicroModule";
@@ -20,12 +22,12 @@ public class QueenMicroModule: UnitModule, IWatchUnitsDie {
         Unit queen,
         Unit assignedTownHall,
         IBuildingTracker buildingTracker,
-        IExpandAnalyzer expandAnalyzer,
+        IRegionsTracker regionsTracker,
         ICreepTracker creepTracker
     ) {
         _queen = queen;
         _buildingTracker = buildingTracker;
-        _expandAnalyzer = expandAnalyzer;
+        _regionsTracker = regionsTracker;
         _creepTracker = creepTracker;
 
         _queen.AddDeathWatcher(this);
@@ -36,11 +38,11 @@ public class QueenMicroModule: UnitModule, IWatchUnitsDie {
         Unit queen,
         Unit assignedTownHall,
         IBuildingTracker buildingTracker,
-        IExpandAnalyzer expandAnalyzer,
+        IRegionsTracker regionsTracker,
         ICreepTracker creepTracker
     ) {
         if (PreInstallCheck(Tag, queen)) {
-            queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall, buildingTracker, expandAnalyzer, creepTracker));
+            queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall, buildingTracker, regionsTracker, creepTracker));
         }
     }
 
@@ -63,7 +65,7 @@ public class QueenMicroModule: UnitModule, IWatchUnitsDie {
         }
         else if (_queen.HasEnoughEnergy(Abilities.SpawnCreepTumor)) {
             var tumorPosition = _creepTracker.GetCreepFrontier()
-                .Where(_expandAnalyzer.IsNotBlockingExpand)
+                .Where(_regionsTracker.IsNotBlockingExpand)
                 .OrderBy(creepNode => _queen.DistanceTo(creepNode)) // TODO GD Try to favor between bases and towards the enemy
                 .FirstOrDefault(creepNode => _buildingTracker.CanPlace(Units.CreepTumor, creepNode) && Pathfinder.Instance.FindPath(_queen.Position.ToVector2(), creepNode) != null);
 

@@ -1,16 +1,16 @@
 ﻿using System.Threading.Tasks;
 using Bot.GameData;
-using Bot.MapKnowledge;
+using Bot.GameSense;
 using Bot.Utils;
 using Bot.Wrapper;
 
 namespace Bot.Scenarios;
 
 public class FlyingTerranScumScenario : IScenario {
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
 
-    public FlyingTerranScumScenario(IMapAnalyzer mapAnalyzer) {
-        _mapAnalyzer = mapAnalyzer;
+    public FlyingTerranScumScenario(ITerrainTracker terrainTracker) {
+        _terrainTracker = terrainTracker;
     }
 
     public async Task OnFrame() {
@@ -18,6 +18,6 @@ public class FlyingTerranScumScenario : IScenario {
             return;
         }
 
-        await Program.GameConnection.SendRequest(RequestBuilder.DebugCreateUnit(Owner.Enemy, Units.CommandCenterFlying, 1, _mapAnalyzer.WithWorldHeight(_mapAnalyzer.EnemyStartingLocation)));
+        await Program.GameConnection.SendRequest(RequestBuilder.DebugCreateUnit(Owner.Enemy, Units.CommandCenterFlying, 1, _terrainTracker.WithWorldHeight(_terrainTracker.EnemyStartingLocation)));
     }
 }

@@ -6,7 +6,8 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;
@@ -15,9 +16,8 @@ public partial class ArmySupervisor {
     public class RallyState: State<ArmySupervisor> {
         private readonly IVisibilityTracker _visibilityTracker;
         private readonly IUnitsTracker _unitsTracker;
-        private readonly IMapAnalyzer _mapAnalyzer;
-        private readonly IExpandAnalyzer _expandAnalyzer;
-        private readonly IRegionAnalyzer _regionAnalyzer;
+        private readonly ITerrainTracker _terrainTracker;
+        private readonly IRegionsTracker _regionsTracker;
         private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
         private const float AcceptableDistanceToTarget = 3;
@@ -27,16 +27,14 @@ public partial class ArmySupervisor {
         public RallyState(
             IVisibilityTracker visibilityTracker,
             IUnitsTracker unitsTracker,
-            IMapAnalyzer mapAnalyzer,
-            IExpandAnalyzer expandAnalyzer,
-            IRegionAnalyzer regionAnalyzer,
+            ITerrainTracker terrainTracker,
+            IRegionsTracker regionsTracker,
             IRegionsEvaluationsTracker regionsEvaluationsTracker
         ) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
-            _mapAnalyzer = mapAnalyzer;
-            _expandAnalyzer = expandAnalyzer;
-            _regionAnalyzer = regionAnalyzer;
+            _terrainTracker = terrainTracker;
+            _regionsTracker = regionsTracker;
             _regionsEvaluationsTracker = regionsEvaluationsTracker;
         }
 
@@ -46,7 +44,7 @@ public partial class ArmySupervisor {
 
         protected override bool TryTransitioning() {
             if (Context._mainArmy.GetForce() >= _attackAtForce || Controller.SupportedSupply + 1 >= KnowledgeBase.MaxSupplyAllowed) {
-                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionsEvaluationsTracker));
+                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker));
                 return true;
             }
 
@@ -56,7 +54,7 @@ public partial class ArmySupervisor {
         protected override void Execute() {
             DrawArmyData();
 
-            Grow(_mapAnalyzer.GetClosestWalkable(Context.Army.GetCenter(), searchRadius: 3), Context.Army);
+            Grow(_terrainTracker.GetClosestWalkable(Context.Army.GetCenter(), searchRadius: 3), Context.Army);
         }
 
         private void DrawArmyData() {
@@ -67,7 +65,7 @@ public partial class ArmySupervisor {
                     $"Strongest: {Context._strongestForce}",
                     $"Attack at: {_attackAtForce}"
                 },
-                worldPos: _mapAnalyzer.WithWorldHeight(_mapAnalyzer.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3).Translate(1f, 1f)).ToPoint());
+                worldPos: _terrainTracker.WithWorldHeight(_terrainTracker.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3).Translate(1f, 1f)).ToPoint());
         }
 
         private void Grow(Vector2 growPosition, IReadOnlyCollection<Unit> soldiers) {
@@ -75,17 +73,17 @@ public partial class ArmySupervisor {
                 return;
             }
 
-            growPosition = _mapAnalyzer.GetClosestWalkable(growPosition);
+            growPosition = _terrainTracker.GetClosestWalkable(growPosition);
 
-            Program.GraphicalDebugger.AddSphere(_mapAnalyzer.WithWorldHeight(growPosition), AcceptableDistanceToTarget, Colors.Yellow);
-            Program.GraphicalDebugger.AddText("Grow", worldPos: _mapAnalyzer.WithWorldHeight(growPosition).ToPoint());
+            Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(growPosition), AcceptableDistanceToTarget, Colors.Yellow);
+            Program.GraphicalDebugger.AddText("Grow", worldPos: _terrainTracker.WithWorldHeight(growPosition).ToPoint());
 
             soldiers.Where(unit => unit.DistanceTo(growPosition) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.AttackMove(growPosition));
 
             foreach (var soldier in soldiers) {
-                Program.GraphicalDebugger.AddLine(soldier.Position, _mapAnalyzer.WithWorldHeight(growPosition), Colors.Yellow);
+                Program.GraphicalDebugger.AddLine(soldier.Position, _terrainTracker.WithWorldHeight(growPosition), Colors.Yellow);
             }
         }
     }

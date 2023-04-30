@@ -7,14 +7,15 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingStrategies;
 using Bot.Managers.ScoutManagement.ScoutingSupervision;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 
 namespace Bot.Managers.ScoutManagement;
 
 public partial class ScoutManager : Manager {
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
+    private readonly IRegionsTracker _regionsTracker;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
@@ -29,19 +30,18 @@ public partial class ScoutManager : Manager {
         IEnemyRaceTracker enemyRaceTracker,
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker
     ) {
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
-        _regionAnalyzer = regionAnalyzer;
+        _terrainTracker = terrainTracker;
+        _regionsTracker = regionsTracker;
 
         Assigner = new ScoutManagerAssigner(this);
         Dispatcher = new ScoutManagerDispatcher(this);
         Releaser = new ScoutManagerReleaser(this);
 
-        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker, _unitsTracker, _mapAnalyzer, expandAnalyzer, _regionAnalyzer);
+        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker);
     }
 
     protected override void RecruitmentPhase() {
@@ -62,10 +62,6 @@ public partial class ScoutManager : Manager {
     }
 
     protected override void ManagementPhase() {
-        if (!_regionAnalyzer.IsInitialized) {
-            return;
-        }
-
         // TODO GD Consider releasing units
         foreach (var scoutSupervisor in _scoutSupervisors) {
             scoutSupervisor.OnFrame();
@@ -77,7 +73,7 @@ public partial class ScoutManager : Manager {
         }
 
         // TODO GD This can be improved but seems like a sensible default
-        var recallPosition = _mapAnalyzer.StartingLocation;
+        var recallPosition = _terrainTracker.StartingLocation;
         foreach (var unitToRecall in unitsToRecall.Where(unit => unit.DistanceTo(recallPosition) > 5)) {
             unitToRecall.Move(recallPosition);
         }

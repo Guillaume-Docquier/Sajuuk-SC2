@@ -3,14 +3,14 @@ using System.Linq;
 using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
-using Bot.MapKnowledge;
+using Bot.GameSense;
 
 namespace Bot.Algorithms;
 
 public class Clustering {
-    public static readonly Clustering Instance = new Clustering(MapAnalyzer.Instance);
+    public static readonly Clustering Instance = new Clustering(TerrainTracker.Instance);
 
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
 
     private const bool DrawEnabled = false; // TODO GD Flag this
 
@@ -20,8 +20,8 @@ public class Clustering {
         CorePoint
     }
 
-    public Clustering(IMapAnalyzer mapAnalyzer) {
-        _mapAnalyzer = mapAnalyzer;
+    public Clustering(ITerrainTracker terrainTracker) {
+        _terrainTracker = terrainTracker;
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public class Clustering {
             var cellToExplore = explorationQueue.Dequeue();
             explored.Add(cellToExplore);
 
-            foreach (var neighbor in _mapAnalyzer.GetReachableNeighbors(cellToExplore, includeObstacles: false).Where(toExplore.Contains)) {
+            foreach (var neighbor in _terrainTracker.GetReachableNeighbors(cellToExplore, includeObstacles: false).Where(toExplore.Contains)) {
                 explorationQueue.Enqueue(neighbor);
                 toExplore.Remove(neighbor);
             }
@@ -216,7 +216,7 @@ public class Clustering {
         var centerX = minX + (maxX - minX) / 2;
         var centerY = minY + (maxY - minY) / 2;
 
-        return _mapAnalyzer.WithWorldHeight(new Vector2(centerX, centerY));
+        return _terrainTracker.WithWorldHeight(new Vector2(centerX, centerY));
     }
 
     private void DrawBoundingBox<T>(IReadOnlyCollection<T> cluster) where T: class, IHavePosition {
@@ -235,7 +235,7 @@ public class Clustering {
 
         var centerX = minX + (maxX - minX) / 2;
         var centerY = minY + (maxY - minY) / 2;
-        var boundingBoxCenter = _mapAnalyzer.WithWorldHeight(new Vector2(centerX, centerY));
+        var boundingBoxCenter = _terrainTracker.WithWorldHeight(new Vector2(centerX, centerY));
 
         Program.GraphicalDebugger.AddRectangle(boundingBoxCenter, maxX - minX, maxY - minY, Colors.Orange);
     }

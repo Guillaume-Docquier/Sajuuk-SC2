@@ -3,7 +3,7 @@ using System.Linq;
 using Bot.Algorithms;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.StateManagement;
 using SC2APIProtocol;
 

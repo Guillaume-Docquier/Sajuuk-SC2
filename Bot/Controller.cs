@@ -11,7 +11,9 @@ using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.EconomyManagement.TownHallSupervision;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Utils;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -45,23 +47,24 @@ public static class Controller {
     // TODO GD I'm sure we could figure out the dependency graph automatically
     private static List<INeedUpdating> ThoseWhoNeedUpdating => new List<INeedUpdating>
     {
-        ChatTracker.Instance,           // DI: ✔️ Depends on nothing
-        VisibilityTracker.Instance,     // DI: ✔️ Depends on nothing
+        ChatTracker.Instance,               // DI: ✔️ Depends on nothing
+        VisibilityTracker.Instance,         // DI: ✔️ Depends on nothing
 
-        UnitsTracker.Instance,          // DI: ✔️ Depends on VisibilityTracker
-        DebuggingFlagsTracker.Instance, // DI: ✔️ Depends on ChatTracker
+        UnitsTracker.Instance,              // DI: ✔️ Depends on VisibilityTracker
+        DebuggingFlagsTracker.Instance,     // DI: ✔️ Depends on ChatTracker
 
-        EnemyRaceTracker.Instance,      // DI: ✔️ Depends on UnitsTracker
-        IncomeTracker.Instance,         // DI: ✔️ Depends on UnitsTracker
-        MapAnalyzer.Instance,           // DI: ✔️ Depends on UnitsTracker and VisibilityTracker
+        EnemyRaceTracker.Instance,          // DI: ✔️ Depends on UnitsTracker
+        IncomeTracker.Instance,             // DI: ✔️ Depends on UnitsTracker
+        TerrainTracker.Instance,            // DI: ✔️ Depends on VisibilityTracker and UnitsTracker
 
-        BuildingTracker.Instance,       // DI: ✔️ Depends on UnitsTracker and MapAnalyzer
-        ExpandAnalyzer.Instance,        // DI: ✔️ Depends on UnitsTracker and MapAnalyzer
-        RegionAnalyzer.Instance,        // DI: ✔️ Depends on ExpandAnalyzer and MapAnalyzer
-        CreepTracker.Instance,          // DI: ✔️ Depends on UnitsTracker, VisibilityTracker and MapAnalyzer
+        RegionsTracker.Instance,            // DI: ✔️ Depends on TerrainTracker, DebuggingFlagsTracker and UnitsTracker
+        BuildingTracker.Instance,           // DI: ✔️ Depends on UnitsTracker and TerrainTracker
+        ExpandAnalyzer.Instance,            // DI: ✔️ Depends on UnitsTracker, TerrainTracker and BuildingTracker
+        RegionAnalyzer.Instance,            // DI: ✔️ Depends on TerrainTracker and ExpandAnalyzer
+        CreepTracker.Instance,              // DI: ✔️ Depends on VisibilityTracker, UnitsTracker and TerrainTracker
 
-        EnemyStrategyTracker.Instance,  // DI: ✔️ Depends on UnitsTracker, EnemyRaceTracker, ExpandAnalyzer and RegionAnalyzer
-        RegionsEvaluationsTracker.Instance,         // DI: ✔️ Depends on DebuggingFlagsTracker, VisibilityTracker, UnitsTracker, MapAnalyzer and RegionAnalyzer
+        EnemyStrategyTracker.Instance,      // DI: ✔️ Depends on UnitsTracker, EnemyRaceTracker, ExpandAnalyzer and RegionAnalyzer
+        RegionsEvaluationsTracker.Instance, // DI: ✔️ Depends on DebuggingFlagsTracker, VisibilityTracker, UnitsTracker, MapAnalyzer and RegionAnalyzer
     };
 
     public static void Reset() {
@@ -427,7 +430,7 @@ public static class Controller {
     }
 
     private static BuildRequestResult PlaceExpand(uint buildingType) {
-        if (!MapAnalyzer.Instance.IsInitialized) {
+        if (!TerrainTracker.Instance.IsAnalysisComplete) {
             return BuildRequestResult.NotSupported;
         }
 
@@ -437,7 +440,7 @@ public static class Controller {
     }
 
     private static BuildRequestResult PlaceExpand(uint buildingType, Unit producer) {
-        if (!MapAnalyzer.Instance.IsInitialized) {
+        if (!TerrainTracker.Instance.IsAnalysisComplete) {
             return BuildRequestResult.NotSupported;
         }
 
@@ -448,8 +451,8 @@ public static class Controller {
         }
 
         var expandLocation = GetFreeExpandLocations()
-            .Where(expandLocation => Pathfinder.Instance.FindPath(MapAnalyzer.Instance.StartingLocation, expandLocation) != null)
-            .OrderBy(expandLocation => Pathfinder.Instance.FindPath(MapAnalyzer.Instance.StartingLocation, expandLocation).Count)
+            .Where(expandLocation => Pathfinder.Instance.FindPath(TerrainTracker.Instance.StartingLocation, expandLocation) != null)
+            .OrderBy(expandLocation => Pathfinder.Instance.FindPath(TerrainTracker.Instance.StartingLocation, expandLocation).Count)
             .FirstOrDefault(expandLocation => BuildingTracker.Instance.CanPlace(buildingType, expandLocation));
 
         if (expandLocation == default) {

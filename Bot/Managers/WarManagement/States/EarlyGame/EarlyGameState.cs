@@ -1,7 +1,8 @@
 ﻿using Bot.Debugging;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Tagging;
 using Bot.Utils;
 
@@ -15,9 +16,8 @@ public class EarlyGameState : WarManagerState {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
-    private readonly IExpandAnalyzer _expandAnalyzer;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
+    private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
@@ -29,9 +29,8 @@ public class EarlyGameState : WarManagerState {
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer,
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker
     ) {
         _taggingService = taggingService;
@@ -39,16 +38,15 @@ public class EarlyGameState : WarManagerState {
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
-        _expandAnalyzer = expandAnalyzer;
-        _regionAnalyzer = regionAnalyzer;
+        _terrainTracker = terrainTracker;
+        _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new EarlyGameBehaviour(Context, _taggingService, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _mapAnalyzer, _expandAnalyzer, _regionAnalyzer, _regionsEvaluationsTracker);
+        _behaviour = new EarlyGameBehaviour(Context, _taggingService, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker);
     }
 
     protected override void Execute() {
@@ -71,9 +69,8 @@ public class EarlyGameState : WarManagerState {
                 _visibilityTracker,
                 _debuggingFlagsTracker,
                 _unitsTracker,
-                _mapAnalyzer,
-                _expandAnalyzer,
-                _regionAnalyzer,
+                _terrainTracker,
+                _regionsTracker,
                 _regionsEvaluationsTracker
             ));
 

@@ -7,7 +7,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Utils;
 using SC2APIProtocol;
 
@@ -234,7 +236,7 @@ public class GameConnection {
                 PrintMemoryInfo();
             }
 
-            if (runDataAnalyzersOnly && _expandAnalyzer.IsInitialized && _regionAnalyzer.IsInitialized) {
+            if (runDataAnalyzersOnly && _expandAnalyzer.IsAnalysisComplete && _regionAnalyzer.IsAnalysisComplete) {
                 await Quit();
             }
             else {

@@ -6,16 +6,16 @@ using Bot.Builds;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.EconomyManagement.TownHallSupervision;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.Utils;
 
 namespace Bot.Managers.EconomyManagement;
 
 public sealed partial class EconomyManager : Manager {
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
     private readonly IBuildingTracker _buildingTracker;
-    private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly IRegionsTracker _regionsTracker;
     private readonly ICreepTracker _creepTracker;
 
     private const int MaxDroneCount = 70;
@@ -49,16 +49,16 @@ public sealed partial class EconomyManager : Manager {
     public EconomyManager(
         BuildManager buildManager,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer,
+        ITerrainTracker terrainTracker,
         IBuildingTracker buildingTracker,
-        IExpandAnalyzer expandAnalyzer,
+        IRegionsTracker regionsTracker,
         ICreepTracker creepTracker
     ) {
         _buildManager = buildManager;
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
+        _terrainTracker = terrainTracker;
         _buildingTracker = buildingTracker;
-        _expandAnalyzer = expandAnalyzer;
+        _regionsTracker = regionsTracker;
         _creepTracker = creepTracker;
 
         Assigner = new EconomyManagerAssigner(this);
@@ -196,7 +196,7 @@ public sealed partial class EconomyManager : Manager {
 
     // TODO GD This doesn't seem to work very well
     private void EqualizeWorkers() {
-        var supervisorInNeed = GetClosestSupervisorWithIdealCapacityNotMet(_mapAnalyzer.StartingLocation);
+        var supervisorInNeed = GetClosestSupervisorWithIdealCapacityNotMet(_terrainTracker.StartingLocation);
         while (supervisorInNeed != null) {
             var requiredWorkers = supervisorInNeed.IdealAvailableCapacity;
             var supervisorWithExtraWorkers = _townHallSupervisors.FirstOrDefault(supervisor => supervisor.IdealAvailableCapacity < 0); // Negative IdealAvailableCapacity means they have extra workers
@@ -209,7 +209,7 @@ public sealed partial class EconomyManager : Manager {
                 supervisorInNeed.Assign(freeWorker);
             }
 
-            supervisorInNeed = GetClosestSupervisorWithIdealCapacityNotMet(_mapAnalyzer.StartingLocation);
+            supervisorInNeed = GetClosestSupervisorWithIdealCapacityNotMet(_terrainTracker.StartingLocation);
         }
     }
 

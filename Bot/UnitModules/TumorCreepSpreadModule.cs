@@ -4,17 +4,18 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.Utils;
 
 namespace Bot.UnitModules;
 
 public class TumorCreepSpreadModule: UnitModule {
     private readonly IVisibilityTracker _visibilityTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
     private readonly IBuildingTracker _buildingTracker;
-    private readonly IExpandAnalyzer _expandAnalyzer;
+
     private readonly ICreepTracker _creepTracker;
+    private readonly IRegionsTracker _regionsTracker;
 
     public const string Tag = "TumorCreepSpreadModule";
 
@@ -27,30 +28,30 @@ public class TumorCreepSpreadModule: UnitModule {
     private TumorCreepSpreadModule(
         Unit creepTumor,
         IVisibilityTracker visibilityTracker,
-        IMapAnalyzer mapAnalyzer,
+        ITerrainTracker terrainTracker,
         IBuildingTracker buildingTracker,
-        IExpandAnalyzer expandAnalyzer,
-        ICreepTracker creepTracker
+        ICreepTracker creepTracker,
+        IRegionsTracker regionsTracker
     ) {
         _creepTumor = creepTumor;
 
         _visibilityTracker = visibilityTracker;
-        _mapAnalyzer = mapAnalyzer;
+        _terrainTracker = terrainTracker;
         _buildingTracker = buildingTracker;
-        _expandAnalyzer = expandAnalyzer;
         _creepTracker = creepTracker;
+        _regionsTracker = regionsTracker;
     }
 
     public static void Install(
         Unit creepTumor,
         IVisibilityTracker visibilityTracker,
-        IMapAnalyzer mapAnalyzer,
+        ITerrainTracker terrainTracker,
         IBuildingTracker buildingTracker,
-        IExpandAnalyzer expandAnalyzer,
-        ICreepTracker creepTracker
+        ICreepTracker creepTracker,
+        IRegionsTracker regionsTracker
     ) {
         if (PreInstallCheck(Tag, creepTumor)) {
-            creepTumor.Modules.Add(Tag, new TumorCreepSpreadModule(creepTumor, visibilityTracker, mapAnalyzer, buildingTracker, expandAnalyzer, creepTracker));
+            creepTumor.Modules.Add(Tag, new TumorCreepSpreadModule(creepTumor, visibilityTracker, terrainTracker, buildingTracker, creepTracker, regionsTracker));
         }
     }
 
@@ -67,15 +68,15 @@ public class TumorCreepSpreadModule: UnitModule {
                 return;
             }
 
-            var creepTarget = creepFrontier.MinBy(creepNode => creepNode.DistanceTo(_creepTumor) + creepNode.DistanceTo(_mapAnalyzer.EnemyStartingLocation) * EnemyBaseConvergenceFactor);
+            var creepTarget = creepFrontier.MinBy(creepNode => creepNode.DistanceTo(_creepTumor) + creepNode.DistanceTo(_terrainTracker.EnemyStartingLocation) * EnemyBaseConvergenceFactor);
 
             // Make sure not to go too far out
             var spreadRange = (int)Math.Floor(_creepTumor.UnitTypeData.SightRange - 0.5);
 
-            var bestPlaceLocation = _mapAnalyzer.BuildSearchRadius(_creepTumor.Position.ToVector2(), spreadRange)
+            var bestPlaceLocation = _terrainTracker.BuildSearchRadius(_creepTumor.Position.ToVector2(), spreadRange)
                 .Where(_visibilityTracker.IsVisible)
                 .Where(_creepTracker.HasCreep)
-                .Where(_expandAnalyzer.IsNotBlockingExpand)
+                .Where(_regionsTracker.IsNotBlockingExpand)
                 .OrderBy(position => position.DistanceTo(creepTarget))
                 .FirstOrDefault(position => _buildingTracker.CanPlace(Units.CreepTumor, position));
 
@@ -84,7 +85,7 @@ public class TumorCreepSpreadModule: UnitModule {
             }
 
             _creepTumor.UseAbility(Abilities.SpawnCreepTumor, position: bestPlaceLocation.ToPoint2D());
-            Program.GraphicalDebugger.AddSphere(_mapAnalyzer.WithWorldHeight(bestPlaceLocation), 1, Colors.Yellow);
+            Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(bestPlaceLocation), 1, Colors.Yellow);
 
             Uninstall<TumorCreepSpreadModule>(_creepTumor);
         }

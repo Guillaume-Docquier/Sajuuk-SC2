@@ -1,14 +1,15 @@
 ﻿using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameData;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
 using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
 public class UnitEvaluator {
-    private readonly IExpandAnalyzer _expandAnalyzer;
-    public static readonly UnitEvaluator Instance = new UnitEvaluator(ExpandAnalyzer.Instance);
+    public static readonly UnitEvaluator Instance = new UnitEvaluator(RegionsTracker.Instance);
+
+    private readonly IRegionsTracker _regionsTracker;
 
     public static class Force {
         public const float None = 0f;
@@ -28,8 +29,8 @@ public class UnitEvaluator {
         public const float Jackpot = 15f;
     }
 
-    public UnitEvaluator(IExpandAnalyzer expandAnalyzer) {
-        _expandAnalyzer = expandAnalyzer;
+    public UnitEvaluator(IRegionsTracker regionsTracker) {
+        _regionsTracker = regionsTracker;
     }
 
     /// <summary>
@@ -110,7 +111,7 @@ public class UnitEvaluator {
 
         if (Units.TownHalls.Contains(unit.UnitType)) {
             // TODO GD Value based on remaining resources
-            if (_expandAnalyzer.ExpandLocations.Any(expandLocation => expandLocation.Position.DistanceTo(unit) <= 1)) {
+            if (_regionsTracker.ExpandLocations.Any(expandLocation => expandLocation.Position.DistanceTo(unit) <= 1)) {
                 return Value.Prized;
             }
 
@@ -153,8 +154,8 @@ public class UnitEvaluator {
     /// <param name="myAlliance"></param>
     /// <returns></returns>
     private bool IsOffensive(Unit unit, Alliance myAlliance) {
-        var myMain = _expandAnalyzer.GetExpand(myAlliance, ExpandType.Main);
-        var theirMain = _expandAnalyzer.GetExpand(myAlliance.GetOpposing(), ExpandType.Main);
+        var myMain = _regionsTracker.GetExpand(myAlliance, ExpandType.Main);
+        var theirMain = _regionsTracker.GetExpand(myAlliance.GetOpposing(), ExpandType.Main);
 
         return unit.DistanceTo(theirMain.Position) < unit.DistanceTo(myMain.Position);
     }

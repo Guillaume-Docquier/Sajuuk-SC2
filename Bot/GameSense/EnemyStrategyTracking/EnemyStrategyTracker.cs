@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Tagging;
 using SC2APIProtocol;
 
@@ -14,15 +15,13 @@ public class EnemyStrategyTracker : IEnemyStrategyTracker, INeedUpdating {
         TaggingService.Instance,
         EnemyRaceTracker.Instance,
         UnitsTracker.Instance,
-        ExpandAnalyzer.Instance,
-        RegionAnalyzer.Instance
+        RegionsTracker.Instance
     );
 
     private readonly ITaggingService _taggingService;
     private readonly IEnemyRaceTracker _enemyRaceTracker;
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IExpandAnalyzer _expandAnalyzer;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IRegionsTracker _regionsTracker;
 
     private readonly HashSet<ISubscriber<EnemyStrategyTransition>> _subscribers = new HashSet<ISubscriber<EnemyStrategyTransition>>();
 
@@ -34,14 +33,12 @@ public class EnemyStrategyTracker : IEnemyStrategyTracker, INeedUpdating {
         ITaggingService taggingService,
         IEnemyRaceTracker enemyRaceTracker,
         IUnitsTracker unitsTracker,
-        IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer
+        IRegionsTracker regionsTracker
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
         _unitsTracker = unitsTracker;
-        _expandAnalyzer = expandAnalyzer;
-        _regionAnalyzer = regionAnalyzer;
+        _regionsTracker = regionsTracker;
     }
 
     public void Reset() {
@@ -54,7 +51,7 @@ public class EnemyStrategyTracker : IEnemyStrategyTracker, INeedUpdating {
         _strategyInterpreter ??= _enemyRaceTracker.EnemyRace switch
         {
             Race.Terran => new TerranStrategyInterpreter(),
-            Race.Zerg => new ZergStrategyInterpreter(_expandAnalyzer, _regionAnalyzer),
+            Race.Zerg => new ZergStrategyInterpreter(_regionsTracker),
             Race.Protoss => new ProtossStrategyInterpreter(),
             _ => null,
         };

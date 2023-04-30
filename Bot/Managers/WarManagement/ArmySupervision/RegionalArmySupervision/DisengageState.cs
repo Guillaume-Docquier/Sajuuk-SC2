@@ -4,14 +4,14 @@ using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class DisengageState : RegionalArmySupervisionState {
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
 
     private const float SafetyDistance = 5;
@@ -21,9 +21,9 @@ public class DisengageState : RegionalArmySupervisionState {
 
     private HashSet<Unit> _unitsInSafePosition = new HashSet<Unit>();
 
-    public DisengageState(IUnitsTracker unitsTracker, IRegionAnalyzer regionAnalyzer, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
+    public DisengageState(IUnitsTracker unitsTracker, IRegionsTracker regionsTracker, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
         _unitsTracker = unitsTracker;
-        _regionAnalyzer = regionAnalyzer;
+        _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
 
         _fleeKiting = new DisengagementKiting(_unitsTracker);
@@ -37,7 +37,7 @@ public class DisengageState : RegionalArmySupervisionState {
         _unitsInSafePosition = GetUnitsInSafePosition(SupervisedUnits, EnemyArmy);
         var unitsInDanger = SupervisedUnits.Except(_unitsInSafePosition).ToList();
 
-        ApproachState.MoveIntoStrikingPosition(_unitsInSafePosition, TargetRegion, EnemyArmy, SafetyDistance + SafetyDistanceTolerance, DefensiveUnitsController, _regionAnalyzer.Regions.ToHashSet(), _regionsEvaluationsTracker);
+        ApproachState.MoveIntoStrikingPosition(_unitsInSafePosition, TargetRegion, EnemyArmy, SafetyDistance + SafetyDistanceTolerance, DefensiveUnitsController, _regionsTracker.Regions.ToHashSet(), _regionsEvaluationsTracker);
         MoveIntoSafePosition(unitsInDanger, EnemyArmy, _fleeKiting);
     }
 
@@ -50,7 +50,7 @@ public class DisengageState : RegionalArmySupervisionState {
             return false;
         }
 
-        StateMachine.TransitionTo(new ApproachState(_unitsTracker, _regionAnalyzer, _regionsEvaluationsTracker));
+        StateMachine.TransitionTo(new ApproachState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker));
         return true;
     }
 

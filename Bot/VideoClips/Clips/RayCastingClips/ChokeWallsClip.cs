@@ -4,17 +4,17 @@ using System.Linq;
 using System.Numerics;
 using Bot.Algorithms;
 using Bot.ExtensionMethods;
-using Bot.MapKnowledge;
+using Bot.GameSense;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
 
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class ChokeWallsClip : Clip {
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
 
-    public ChokeWallsClip(IMapAnalyzer mapAnalyzer, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
-        _mapAnalyzer = mapAnalyzer;
+    public ChokeWallsClip(ITerrainTracker terrainTracker, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
+        _terrainTracker = terrainTracker;
 
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0)
             .WithDurationInSeconds(1);
@@ -22,7 +22,7 @@ public class ChokeWallsClip : Clip {
 
         var visibleCells = new HashSet<Vector2>();
         for (var angle = 0; angle < 360; angle += 1) {
-            var rayCastResults = RayCasting.RayCast(sceneLocation, MathUtils.DegToRad(angle), cell => !_mapAnalyzer.IsWalkable(cell)).ToList();
+            var rayCastResults = RayCasting.RayCast(sceneLocation, MathUtils.DegToRad(angle), cell => !_terrainTracker.IsWalkable(cell)).ToList();
             foreach (var rayCastResult in rayCastResults) {
                 visibleCells.Add(rayCastResult.CornerOfCell.AsWorldGridCenter());
             }
@@ -31,8 +31,8 @@ public class ChokeWallsClip : Clip {
         var pauseAnimation = new PauseAnimation(centerCameraAnimation.AnimationEndFrame).WithDurationInSeconds(2);
         AddAnimation(pauseAnimation);
 
-        var showWallsAnimationEndFrame = ShowCells(sceneLocation, visibleCells.Where(cell => !mapAnalyzer.IsWalkable(cell)).ToList(), pauseAnimation.AnimationEndFrame);
-        ShowCells(sceneLocation, visibleCells.Where(cell => mapAnalyzer.IsWalkable(cell)).ToList(), showWallsAnimationEndFrame);
+        var showWallsAnimationEndFrame = ShowCells(sceneLocation, visibleCells.Where(cell => !terrainTracker.IsWalkable(cell)).ToList(), pauseAnimation.AnimationEndFrame);
+        ShowCells(sceneLocation, visibleCells.Where(cell => terrainTracker.IsWalkable(cell)).ToList(), showWallsAnimationEndFrame);
     }
 
     private int ShowCells(Vector2 origin, List<Vector2> cells, int startAt) {
@@ -44,7 +44,7 @@ public class ChokeWallsClip : Clip {
             var relativeDistance = cell.DistanceTo(origin) / maxDistance;
             var startFrame = startAt + (int)(relativeDistance * animationTotalDuration);
 
-            var squareAnimation = new CellDrawingAnimation(_mapAnalyzer, _mapAnalyzer.WithWorldHeight(cell), startFrame).WithDurationInSeconds(1f);
+            var squareAnimation = new CellDrawingAnimation(_terrainTracker, _terrainTracker.WithWorldHeight(cell), startFrame).WithDurationInSeconds(1f);
             AddAnimation(squareAnimation);
 
             endFrame = Math.Max(endFrame, squareAnimation.AnimationEndFrame);

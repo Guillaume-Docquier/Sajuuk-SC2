@@ -6,7 +6,6 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapKnowledge;
 using Bot.StateManagement;
 using Bot.Utils;
 
@@ -14,7 +13,7 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUni
 
 public partial class SneakAttack : IUnitsControl {
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
 
     private const float TankRange = 13;
 
@@ -35,11 +34,11 @@ public partial class SneakAttack : IUnitsControl {
         Units.Immortal,
     };
 
-    public SneakAttack(IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
+    public SneakAttack(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker) {
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
+        _terrainTracker = terrainTracker;
 
-        _stateMachine = new StateMachine<SneakAttack, SneakAttackState>(this, new InactiveState(_unitsTracker, _mapAnalyzer));
+        _stateMachine = new StateMachine<SneakAttack, SneakAttackState>(this, new InactiveState(_unitsTracker, _terrainTracker));
     }
 
     public bool IsExecuting() {
@@ -62,7 +61,7 @@ public partial class SneakAttack : IUnitsControl {
             return army;
         }
 
-        _armyCenter = _mapAnalyzer.GetClosestWalkable(_army.GetCenter(), searchRadius: 3);
+        _armyCenter = _terrainTracker.GetClosestWalkable(_army.GetCenter(), searchRadius: 3);
 
         _stateMachine.OnFrame();
 
@@ -97,7 +96,7 @@ public partial class SneakAttack : IUnitsControl {
 
         _targetPosition = default;
 
-        _stateMachine.TransitionTo(new InactiveState(_unitsTracker, _mapAnalyzer));
+        _stateMachine.TransitionTo(new InactiveState(_unitsTracker, _terrainTracker));
     }
 
     private static bool HasProperTech() {
@@ -134,11 +133,11 @@ public partial class SneakAttack : IUnitsControl {
             return;
         }
 
-        Program.GraphicalDebugger.AddLink(_mapAnalyzer.WithWorldHeight(_armyCenter), _mapAnalyzer.WithWorldHeight(_targetPosition), Colors.Magenta);
-        Program.GraphicalDebugger.AddSphere(_mapAnalyzer.WithWorldHeight(_targetPosition), 1, Colors.Magenta);
+        Program.GraphicalDebugger.AddLink(_terrainTracker.WithWorldHeight(_armyCenter), _terrainTracker.WithWorldHeight(_targetPosition), Colors.Magenta);
+        Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(_targetPosition), 1, Colors.Magenta);
 
         if (_isTargetPriority) {
-            Program.GraphicalDebugger.AddText("!", size: 20, worldPos: _mapAnalyzer.WithWorldHeight(_targetPosition).ToPoint());
+            Program.GraphicalDebugger.AddText("!", size: 20, worldPos: _terrainTracker.WithWorldHeight(_targetPosition).ToPoint());
         }
     }
 }

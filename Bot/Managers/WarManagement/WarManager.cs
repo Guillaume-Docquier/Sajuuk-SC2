@@ -6,7 +6,8 @@ using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.States;
 using Bot.Managers.WarManagement.States.EarlyGame;
-using Bot.MapKnowledge;
+using Bot.MapAnalysis.ExpandAnalysis;
+using Bot.MapAnalysis.RegionAnalysis;
 using Bot.StateManagement;
 using Bot.Tagging;
 
@@ -24,7 +25,6 @@ namespace Bot.Managers.WarManagement;
  */
 
 public class WarManager: Manager {
-    private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly StateMachine<WarManager, WarManagerState> _stateMachine;
     private readonly WarManagerDebugger _debugger = new WarManagerDebugger();
 
@@ -40,15 +40,13 @@ public class WarManager: Manager {
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IMapAnalyzer mapAnalyzer,
-        IExpandAnalyzer expandAnalyzer,
-        IRegionAnalyzer regionAnalyzer,
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker
     ) {
-        _expandAnalyzer = expandAnalyzer;
         _stateMachine = new StateMachine<WarManager, WarManagerState>(
             this,
-            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, mapAnalyzer, expandAnalyzer, regionAnalyzer, regionsEvaluationsTracker)
+            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker)
         );
     }
 

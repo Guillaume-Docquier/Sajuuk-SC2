@@ -4,7 +4,6 @@ using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
-using Bot.MapKnowledge;
 using SC2APIProtocol;
 
 namespace Bot.GameSense;
@@ -13,11 +12,11 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
     /// <summary>
     /// DI: ✔️ The only usages are for static instance creations
     /// </summary>
-    public static readonly CreepTracker Instance = new CreepTracker(VisibilityTracker.Instance, UnitsTracker.Instance, MapAnalyzer.Instance);
+    public static readonly CreepTracker Instance = new CreepTracker(VisibilityTracker.Instance, UnitsTracker.Instance, TerrainTracker.Instance);
 
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
 
     private ulong _creepMapLastGeneratedAt = ulong.MaxValue;
     private List<List<bool>> _creepMap;
@@ -30,10 +29,10 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
     private int _maxX;
     private int _maxY;
 
-    private CreepTracker(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, IMapAnalyzer mapAnalyzer) {
+    private CreepTracker(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, ITerrainTracker terrainTracker) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
-        _mapAnalyzer = mapAnalyzer;
+        _terrainTracker = terrainTracker;
     }
 
     public void Reset() {}
@@ -44,11 +43,11 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
 
         _rawCreepMap = observation.Observation.RawData.MapState.Creep;
 
-        _creepFrontier.ForEach(creepFrontierNode => Program.GraphicalDebugger.AddGridSquare(_mapAnalyzer.WithWorldHeight(creepFrontierNode), Colors.Orange));
+        _creepFrontier.ForEach(creepFrontierNode => Program.GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(creepFrontierNode), Colors.Orange));
     }
 
     public bool HasCreep(Vector2 position) {
-        if (!_mapAnalyzer.IsInBounds(position)) {
+        if (!_terrainTracker.IsInBounds(position)) {
             Logger.Error("HasCreep called on out of bounds position");
             return false;
         }
@@ -70,7 +69,7 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
 
     private void GenerateCreepFrontier() {
         // TODO GD At this point, we don't need to calculate the frontier until a hatch or creep tumor dies
-        if (_mapAnalyzer.WalkableCells.All(HasCreep)) {
+        if (_terrainTracker.WalkableCells.All(HasCreep)) {
             _creepFrontier = new List<Vector2>();
             _creepFrontierLastGeneratedAt = Controller.Frame;
 
@@ -78,7 +77,7 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
         }
 
         var creepTumors = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.CreepTumor).ToList();
-        _creepFrontier = _mapAnalyzer.WalkableCells
+        _creepFrontier = _terrainTracker.WalkableCells
             .Where(_visibilityTracker.IsVisible)
             .Where(HasCreep)
             .Where(IsFrontier)
@@ -90,7 +89,7 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
 
     private bool IsFrontier(Vector2 position) {
         return position.GetNeighbors()
-            .Where(neighbor => _mapAnalyzer.IsWalkable(neighbor))
+            .Where(neighbor => _terrainTracker.IsWalkable(neighbor))
             // We spread towards non visible creep because if it is not visible, it is receding (creep source died) or it is not our creep and we want the vision
             .Any(neighbor => !HasCreep(neighbor) || !_visibilityTracker.IsVisible(neighbor));
     }

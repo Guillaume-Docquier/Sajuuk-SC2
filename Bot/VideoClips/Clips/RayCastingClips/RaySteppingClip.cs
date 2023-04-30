@@ -4,19 +4,19 @@ using System.Linq;
 using System.Numerics;
 using Bot.Algorithms;
 using Bot.ExtensionMethods;
-using Bot.MapKnowledge;
+using Bot.GameSense;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
 
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class RaySteppingClip : Clip {
-    private readonly IMapAnalyzer _mapAnalyzer;
+    private readonly ITerrainTracker _terrainTracker;
 
     private const int StepTranslation = 4;
     private static readonly List<int> Angles = new List<int> { 25, 45, 65 };
-    public RaySteppingClip(IMapAnalyzer mapAnalyzer, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
-        _mapAnalyzer = mapAnalyzer;
+    public RaySteppingClip(ITerrainTracker terrainTracker, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
+        _terrainTracker = terrainTracker;
 
         sceneLocation = sceneLocation.Translate(xTranslation: -StepTranslation * (Angles.Count - 1));
 
@@ -31,7 +31,7 @@ public class RaySteppingClip : Clip {
     }
 
     private int RayStep(Vector2 rayStart, int angleDeg, int startAt) {
-        var rayCastingResults = RayCasting.RayCast(rayStart, MathUtils.DegToRad(angleDeg), cell => !_mapAnalyzer.IsWalkable(cell)).ToList();
+        var rayCastingResults = RayCasting.RayCast(rayStart, MathUtils.DegToRad(angleDeg), cell => !_terrainTracker.IsWalkable(cell)).ToList();
 
         var showOriginCellReadyFrame = ShowCell(rayCastingResults[0].CornerOfCell.AsWorldGridCenter(), startAt);
         var showOriginReadyFrame = ShowPoint(rayCastingResults[0].RayIntersection, startAt);
@@ -51,7 +51,7 @@ public class RaySteppingClip : Clip {
     }
 
     private int CastRay(Vector2 rayStart, Vector2 rayEnd, int startAt) {
-        var lineDrawingAnimation = new LineDrawingAnimation(_mapAnalyzer.WithWorldHeight(rayStart), _mapAnalyzer.WithWorldHeight(rayEnd), ColorService.Instance.RayColor, startAt)
+        var lineDrawingAnimation = new LineDrawingAnimation(_terrainTracker.WithWorldHeight(rayStart), _terrainTracker.WithWorldHeight(rayEnd), ColorService.Instance.RayColor, startAt)
             .WithDurationInSeconds(1);
 
         AddAnimation(lineDrawingAnimation);
@@ -60,7 +60,7 @@ public class RaySteppingClip : Clip {
     }
 
     private int ShowCell(Vector2 cell, int startAt) {
-        var squareAnimation = new CellDrawingAnimation(_mapAnalyzer, _mapAnalyzer.WithWorldHeight(cell), startAt)
+        var squareAnimation = new CellDrawingAnimation(_terrainTracker, _terrainTracker.WithWorldHeight(cell), startAt)
             .WithDurationInSeconds(0.5f);
 
         AddAnimation(squareAnimation);
@@ -69,7 +69,7 @@ public class RaySteppingClip : Clip {
     }
 
     private int ShowPoint(Vector2 origin, int startAt) {
-        var sphereAnimation = new SphereDrawingAnimation(_mapAnalyzer.WithWorldHeight(origin), radius: 0.15f, ColorService.Instance.PointColor, startAt)
+        var sphereAnimation = new SphereDrawingAnimation(_terrainTracker.WithWorldHeight(origin), radius: 0.15f, ColorService.Instance.PointColor, startAt)
             .WithDurationInSeconds(0.5f);
 
         AddAnimation(sphereAnimation);
