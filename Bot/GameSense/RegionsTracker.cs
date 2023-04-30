@@ -19,7 +19,7 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
     public static readonly RegionsTracker Instance = new RegionsTracker(
         TerrainTracker.Instance,
         DebuggingFlagsTracker.Instance,
-        new RegionsDataRepository(Program.MapFileName),
+        new RegionsDataRepository(TerrainTracker.Instance, Program.MapFileName),
         ExpandUnitsAnalyzer.Instance,
         UnitsTracker.Instance
     );
@@ -34,7 +34,6 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
 
     private Dictionary<Vector2, IRegion> _regionsLookupMap;
     private RegionsData _regionsData;
-
 
     private List<ExpandLocation> _expandLocations;
     private Dictionary<ExpandType, List<ExpandLocation>> _expandLocationsByType;
