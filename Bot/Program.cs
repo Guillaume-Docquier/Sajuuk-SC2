@@ -43,25 +43,6 @@ public class Program {
     public static IGraphicalDebugger GraphicalDebugger { get; set; }
 
     public static void Main(string[] args) {
-        var regs = new List<Reg>
-        {
-            new Reg(1),
-            new Reg(2),
-            new Reg(3),
-            new Reg(4),
-            new Reg(5),
-        };
-
-        regs[0].Exp = new Exp(1, regs[0]);
-        regs[1].Exp = new Exp(2, regs[1]);
-        regs[2].Exp = new Exp(3, regs[2]);
-
-        var repo = new JsonMapDataRepository<List<Reg>>("Data/Oops/Ahah/Lol/RegExp.json");
-        repo.Save(regs);
-        var loaded = repo.Load();
-
-        var stop = 1;
-
         try {
             switch (args.Length) {
                 case 1 when args[0] == "--generateData":
@@ -159,36 +140,5 @@ public class Program {
             RegionAnalyzer.Instance,
             stepSize
         );
-    }
-
-    private class Reg {
-        [JsonInclude]
-        public int Id { get; private set; }
-        [JsonInclude]
-        public Exp Exp { get; set; }
-
-        [JsonConstructor]
-        [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
-        public Reg() {}
-
-        public Reg(int id) {
-            Id = id;
-        }
-    }
-
-    private class Exp {
-        [JsonInclude]
-        public int Id { get; private set; }
-        [JsonInclude]
-        public Reg Reg { get; private set; }
-
-        [JsonConstructor]
-        [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
-        public Exp() {}
-
-        public Exp(int id, Reg reg) {
-            Id = id;
-            Reg = reg;
-        }
     }
 }
