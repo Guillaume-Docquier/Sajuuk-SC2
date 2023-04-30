@@ -20,7 +20,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     public static readonly RegionAnalyzer Instance = new RegionAnalyzer(
         TerrainTracker.Instance,
         ExpandAnalyzer.Instance,
-        new RegionsDataRepository(Program.MapFileName)
+        new RegionsDataRepository(TerrainTracker.Instance, Program.MapFileName)
     );
 
     private readonly ITerrainTracker _terrainTracker;

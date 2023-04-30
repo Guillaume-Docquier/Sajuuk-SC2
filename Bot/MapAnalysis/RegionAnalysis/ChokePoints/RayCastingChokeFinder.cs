@@ -56,12 +56,6 @@ public partial class RayCastingChokeFinder {
     }
 
     private List<VisionLine> CreateVisionLines(int nodeCount) {
-        var savedVisionLines = VisionLinesDataStore.Load(Controller.GameInfo.MapName);
-        if (savedVisionLines != null) {
-            Logger.Info("Vision lines loaded from file!");
-            return savedVisionLines;
-        }
-
         var allLines = new List<VisionLine>();
         for (var angle = StartingAngle; angle <= MaxAngle; angle += AngleIncrement) {
             var lines = CreateLinesAtAnAngle(angle);
@@ -73,8 +67,7 @@ public partial class RayCastingChokeFinder {
             allLines.AddRange(lines);
         }
 
-        VisionLinesDataStore.Save(Controller.GameInfo.MapName, allLines);
-        Logger.Info("Vision lines saved!");
+        Logger.Info("All vision lines computed!");
 
         return allLines;
     }
