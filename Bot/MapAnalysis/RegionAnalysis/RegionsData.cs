@@ -7,10 +7,10 @@ using Bot.MapAnalysis.RegionAnalysis.ChokePoints;
 namespace Bot.MapAnalysis.RegionAnalysis;
 
 public class RegionsData {
-    public List<Region> Regions { get; }
-    public List<HashSet<Vector2>> Ramps { get; }
-    public List<Vector2> Noise { get; }
-    public List<ChokePoint> ChokePoints { get; }
+    [JsonInclude] public List<Region> Regions { get; private set; }
+    [JsonInclude] public List<HashSet<Vector2>> Ramps { get; private set; }
+    [JsonInclude] public List<Vector2> Noise { get; private set; }
+    [JsonInclude] public List<ChokePoint> ChokePoints { get; private set; }
 
     [JsonConstructor]
     [Obsolete("Do not use this parameterless JsonConstructor", error: true)]

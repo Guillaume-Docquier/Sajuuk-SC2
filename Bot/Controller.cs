@@ -567,12 +567,12 @@ public static class Controller {
 
     public static IEnumerable<Unit> GetMiningTownHalls() {
         return GetUnits(UnitsTracker.Instance.OwnedUnits, Units.Hatchery)
-            .Where(townHall => ExpandAnalyzer.Instance.ExpandLocations.Any(expandLocation => townHall.DistanceTo(expandLocation.Position) < ExpandIsTakenRadius));
+            .Where(townHall => RegionsTracker.Instance.ExpandLocations.Any(expandLocation => townHall.DistanceTo(expandLocation.Position) < ExpandIsTakenRadius));
     }
 
     // TODO GD Implement a more robust check
     public static IEnumerable<Vector2> GetFreeExpandLocations() {
-        return ExpandAnalyzer.Instance.ExpandLocations
+        return RegionsTracker.Instance.ExpandLocations
             .Select(expandLocation => expandLocation.Position)
             .Where(expandLocation => !GetUnits(UnitsTracker.Instance.OwnedUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))
             .Where(expandLocation => !GetUnits(UnitsTracker.Instance.EnemyUnits, Units.TownHalls).Any(townHall => townHall.DistanceTo(expandLocation) < ExpandIsTakenRadius))

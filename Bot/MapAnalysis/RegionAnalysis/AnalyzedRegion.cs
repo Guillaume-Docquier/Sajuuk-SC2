@@ -21,7 +21,7 @@ public class AnalyzedRegion : Region {
         Colors.Magenta
     };
 
-    public AnalyzedRegion(IEnumerable<Vector2> cells, RegionType type) {
+    public AnalyzedRegion(IEnumerable<Vector2> cells, RegionType type, IEnumerable<ExpandLocation> expandLocations) {
         Cells = cells.ToHashSet();
 
         // The approximated radius is the diagonal of the cells as if they were a square
@@ -33,7 +33,7 @@ public class AnalyzedRegion : Region {
 
         Type = type;
         if (Type == RegionType.Unknown) {
-            var expandInRegion = ExpandAnalyzer.Instance.ExpandLocations.FirstOrDefault(expandLocation => Cells.Contains(expandLocation.Position));
+            var expandInRegion = expandLocations.FirstOrDefault(expandLocation => Cells.Contains(expandLocation.Position));
             if (expandInRegion != default) {
                 Type = RegionType.Expand;
                 Center = expandInRegion.Position;
