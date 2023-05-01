@@ -22,9 +22,6 @@ public partial class RayCastingChokeFinder {
     private const int MaxAngle = 175;
     private const int AngleIncrement = 5;
 
-    private static int MaxX => Controller.GameInfo.StartRaw.MapSize.X;
-    private static int MaxY => Controller.GameInfo.StartRaw.MapSize.Y;
-
     public RayCastingChokeFinder(ITerrainTracker terrainTracker) {
         _terrainTracker = terrainTracker;
     }
@@ -43,8 +40,8 @@ public partial class RayCastingChokeFinder {
 
     private Dictionary<Vector2, Node> ComputeWalkableNodesInMap() {
         var nodes = new Dictionary<Vector2, Node>();
-        for (var x = 0; x < MaxX; x++) {
-            for (var y = 0; y < MaxY; y++) {
+        for (var x = 0; x < _terrainTracker.MaxX; x++) {
+            for (var y = 0; y < _terrainTracker.MaxY; y++) {
                 var position = new Vector2(x, y).AsWorldGridCenter();
                 if (_terrainTracker.IsWalkable(position, includeObstacles: false)) {
                     nodes[position] = new Node(position);
@@ -58,7 +55,7 @@ public partial class RayCastingChokeFinder {
     private List<VisionLine> CreateVisionLines(int nodeCount) {
         var allLines = new List<VisionLine>();
         for (var angle = StartingAngle; angle <= MaxAngle; angle += AngleIncrement) {
-            var lines = CreateLinesAtAnAngle(angle);
+            var lines = CreateLinesAtAnAngle(angle, _terrainTracker.MaxX, _terrainTracker.MaxY);
             lines = BreakDownIntoContinuousSegments(lines);
 
             var nbNodesCovered = lines.SelectMany(line => line.OrderedTraversedCells).ToHashSet().Count;
@@ -72,19 +69,19 @@ public partial class RayCastingChokeFinder {
         return allLines;
     }
 
-    private static List<VisionLine> CreateLinesAtAnAngle(int angleInDegrees) {
-        var origin = new Vector2 { X = MaxX / 2f, Y = MaxY / 2f };
+    private static List<VisionLine> CreateLinesAtAnAngle(int angleInDegrees, int maxX, int maxY) {
+        var origin = new Vector2 { X = maxX / 2f, Y = maxY / 2f };
 
-        var lineLength = (int)Math.Ceiling(Math.Sqrt(MaxX * MaxX + MaxY * MaxY));
+        var lineLength = (int)Math.Ceiling(Math.Sqrt(maxX * maxX + maxY * maxY));
         var paddingX = (int)(lineLength / 2f - origin.X);
         var paddingY = (int)(lineLength / 2f - origin.Y);
 
         var angleInRadians = MathUtils.DegToRad(angleInDegrees);
 
         var lines = new List<VisionLine>();
-        for (var y = -paddingY; y < MaxY + paddingY; y++) {
+        for (var y = -paddingY; y < maxY + paddingY; y++) {
             var start = new Vector2(-paddingX, y).RotateAround(origin, angleInRadians);
-            var end = new Vector2(MaxX + paddingX, y).RotateAround(origin, angleInRadians);
+            var end = new Vector2(maxX + paddingX, y).RotateAround(origin, angleInRadians);
 
             lines.Add(new VisionLine(start, end, angleInDegrees));
         }
