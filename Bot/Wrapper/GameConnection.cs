@@ -29,6 +29,7 @@ public class GameConnection {
 
     private readonly uint _stepSize;
     private static readonly ulong DebugMemoryEvery = TimeUtils.SecsToFrames(5);
+    private ulong _quitAt = ulong.MaxValue;
 
     private readonly PerformanceDebugger _performanceDebugger = new PerformanceDebugger();
 
@@ -230,8 +231,11 @@ public class GameConnection {
                 PrintMemoryInfo();
             }
 
-            if (runDataAnalyzersOnly && _expandAnalyzer.IsAnalysisComplete && _regionAnalyzer.IsAnalysisComplete) {
+            if (_quitAt <= nextFrame) {
                 await Quit();
+            }
+            else if (runDataAnalyzersOnly && _expandAnalyzer.IsAnalysisComplete && _regionAnalyzer.IsAnalysisComplete && _quitAt == ulong.MaxValue) {
+                _quitAt = nextFrame + _stepSize * 10; // Just give a few frames to debug the analysis
             }
             else {
                 await SendRequest(RequestBuilder.RequestStep(_stepSize));
