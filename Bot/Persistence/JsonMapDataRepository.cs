@@ -8,11 +8,12 @@ public class JsonMapDataRepository<TData> : IMapDataRepository<TData> {
     private readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions
     {
         ReferenceHandler = ReferenceHandler.Preserve,
+        MaxDepth = 256,
         Converters =
         {
             new JsonSerializers.Vector2JsonConverter(),
             new JsonSerializers.Vector3JsonConverter(),
-        }
+        },
     };
 
     private readonly string _fileName;
