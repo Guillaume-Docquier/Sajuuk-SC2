@@ -38,10 +38,10 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
     /// <summary>
     /// Saves the regions data as JSON, and saves a PNG image of the saved regions.
     /// </summary>
-    /// <param name="data">The regions data to save.</param>
-    public void Save(RegionsData data) {
-        _jsonMapDataRepository.Save(data);
-        SaveAsImage(data.Regions);
+    /// <param name="regionsData">The regions data to save.</param>
+    public void Save(RegionsData regionsData) {
+        _jsonMapDataRepository.Save(regionsData);
+        SaveAsImage(regionsData.Regions);
     }
 
     /// <summary>
@@ -54,7 +54,7 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
 
     /// <summary>
     /// Saves the regions as an image where each region has a different color than its neighbors.
-    /// The saved imaged is actually upside down because the SC2 origin is the bottom left, while an image origin is top left.
+    /// TODO GD The saved imaged is actually upside down because the SC2 origin is the bottom left, while an image origin is top left.
     /// (Oh well. Fix it if you want, I don't)
     /// </summary>
     /// <param name="regions"></param>

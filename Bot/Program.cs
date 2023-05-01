@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using Bot.Algorithms;
 using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
@@ -27,9 +28,8 @@ public class Program {
     };
 
     private const string Version = "4_0_4";
-    private static readonly IBot Bot = CreateSajuuk(Version, Scenarios);
 
-    public const string MapFileName = Maps.Season_2022_4.FileNames.Berlingrad;
+    public static string MapFileName = Maps.Season_2022_4.FileNames.Berlingrad;
     private const Race OpponentRace = Race.Random;
     private const Difficulty OpponentDifficulty = Difficulty.CheatInsane;
 
@@ -69,30 +69,38 @@ public class Program {
         DebugEnabled = true;
         GraphicalDebugger = new NullGraphicalDebugger();
 
+        // TODO GD Kinda whack but won't be needed once DI is finished
+        var getThoseWhoNeedUpdating = () => new List<INeedUpdating>
+        {
+            VisibilityTracker.Instance, // DI: ✔️ Depends on nothing
+
+            UnitsTracker.Instance,      // DI: ✔️ Depends on VisibilityTracker
+            TerrainTracker.Instance,    // DI: ✔️ Depends on VisibilityTracker and UnitsTracker
+
+            BuildingTracker.Instance,   // DI: ✔️ Depends on UnitsTracker and TerrainTracker
+
+            ExpandAnalyzer.Instance,    // DI: ✔️ Depends on UnitsTracker, TerrainTracker and BuildingTracker
+            RegionAnalyzer.Instance,    // DI: ✔️ Depends on TerrainTracker and ExpandAnalyzer
+        };
+
         foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
-            Logger.Info("Generating data for {0}", mapFileName);
+            MapFileName = mapFileName;
+
+            // Ensure clean state
+            Controller.Reset();
+            getThoseWhoNeedUpdating().ForEach(needsUpdating => needsUpdating.Reset()); // We need to reset so that the analyzers get the right file name
+
+            // Those are not yet injected
+            Pathfinder.Instance.Reset();
+            Clustering.Instance.Reset();
 
             // TODO GD Instead of doing this, we should be able to use a different Controller and another GameConnection
             // DI Should create new instances for each run
-            Controller.ThoseWhoNeedUpdating = new List<INeedUpdating>
-            {
-                VisibilityTracker.Instance, // DI: ✔️ Depends on nothing
+            Controller.ThoseWhoNeedUpdating = getThoseWhoNeedUpdating();
 
-                UnitsTracker.Instance,      // DI: ✔️ Depends on VisibilityTracker
-                TerrainTracker.Instance,    // DI: ✔️ Depends on VisibilityTracker and UnitsTracker
-
-                BuildingTracker.Instance,   // DI: ✔️ Depends on UnitsTracker and TerrainTracker
-
-                ExpandAnalyzer.Instance,    // DI: ✔️ Depends on UnitsTracker, TerrainTracker and BuildingTracker
-                RegionAnalyzer.Instance,    // DI: ✔️ Depends on TerrainTracker and ExpandAnalyzer
-            };
-
+            Logger.Important($"Generating data for {mapFileName}");
             GameConnection = CreateGameConnection();
             GameConnection.RunLocal(new MapAnalysisRunner(() => Controller.Frame), mapFileName, Race.Zerg, Difficulty.VeryEasy, realTime: false, runDataAnalyzersOnly: true).Wait();
-
-            // Reset for the next run
-            Controller.Reset();
-            Controller.ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Reset());
         }
     }
 
@@ -112,7 +120,7 @@ public class Program {
         GraphicalDebugger = new Sc2GraphicalDebugger(TerrainTracker.Instance);
 
         GameConnection = CreateGameConnection();
-        GameConnection.RunLocal(Bot, MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
+        GameConnection.RunLocal(CreateSajuuk(Version, Scenarios), MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
     }
 
     private static void PlayLadderGame(string[] args) {
@@ -120,7 +128,7 @@ public class Program {
         GraphicalDebugger = new NullGraphicalDebugger();
 
         GameConnection = CreateGameConnection();
-        GameConnection.RunLadder(Bot, args).Wait();
+        GameConnection.RunLadder(CreateSajuuk(Version, Scenarios), args).Wait();
     }
 
     private static IBot CreateSajuuk(string version, List<IScenario> scenarios) {

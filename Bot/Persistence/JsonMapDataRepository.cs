@@ -22,14 +22,15 @@ public class JsonMapDataRepository<TData> : IMapDataRepository<TData> {
         _fileName = fileName;
     }
 
-    public void Save(TData regions) {
-        var jsonString = JsonSerializer.Serialize(regions, _jsonSerializerOptions);
+    public void Save(TData data) {
+        var jsonString = JsonSerializer.Serialize(data, _jsonSerializerOptions);
 
         // Make sure to copy and set properties to 'Copy if newer'
         // TODO GD Print it?
 
         CreateDirectoryIfNotExists(_fileName);
         File.WriteAllText(_fileName, jsonString);
+        Logger.Success($"JSON data saved to {_fileName}");
     }
 
     public TData Load() {

@@ -13,7 +13,7 @@ using CellPath = List<Vector2>;
 using IRegionPath = List<IRegion>;
 
 public class Pathfinder {
-    public static readonly Pathfinder Instance = new Pathfinder(TerrainTracker.Instance);
+    public static Pathfinder Instance { get; private set; } = new Pathfinder(TerrainTracker.Instance);
 
     private readonly ITerrainTracker _terrainTracker;
 
@@ -32,6 +32,10 @@ public class Pathfinder {
 
     public Pathfinder(ITerrainTracker terrainTracker) {
         _terrainTracker = terrainTracker;
+    }
+
+    public void Reset() {
+        Instance = new Pathfinder(TerrainTracker.Instance);
     }
 
     /// <summary>
