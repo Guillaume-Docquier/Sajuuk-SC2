@@ -2,8 +2,6 @@
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
-using Bot.MapAnalysis.ExpandAnalysis;
-using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Tagging;
 using Bot.Tests.Mocks;
 using Moq;

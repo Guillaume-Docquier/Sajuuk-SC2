@@ -10,7 +10,7 @@ public class VisibilityTracker : IVisibilityTracker, INeedUpdating {
     /// <summary>
     /// DI: ✔️ The only usages are for static instance creations
     /// </summary>
-    public static readonly VisibilityTracker Instance = new VisibilityTracker();
+    public static VisibilityTracker Instance { get; private set; } = new VisibilityTracker();
 
     // TODO GD Put these in a class to hide the backing fields?
     private ulong _lastGeneratedAt = ulong.MaxValue;
@@ -58,11 +58,7 @@ public class VisibilityTracker : IVisibilityTracker, INeedUpdating {
     private VisibilityTracker() {}
 
     public void Reset() {
-        _lastGeneratedAt = ulong.MaxValue;
-        _visibilityMap = null;
-        _rawVisibilityMap = null;
-        _visibleCells = null;
-        _exploredCells = null;
+        Instance = new VisibilityTracker();
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {

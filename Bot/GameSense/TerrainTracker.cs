@@ -6,7 +6,6 @@ using Bot.Algorithms;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.MapAnalysis;
-using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;
 
 namespace Bot.GameSense;
@@ -15,7 +14,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     /// <summary>
     /// DI: ✔️ The only usages are for static instance creations
     /// </summary>
-    public static readonly TerrainTracker Instance = new TerrainTracker(VisibilityTracker.Instance, UnitsTracker.Instance);
+    public static TerrainTracker Instance  { get; private set; } = new TerrainTracker(VisibilityTracker.Instance, UnitsTracker.Instance);
 
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
@@ -29,7 +28,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     public List<List<float>> HeightMap { get; private set; }
 
     private List<Unit> _obstacles;
-    private readonly HashSet<Vector2> ObstructionMap = new HashSet<Vector2>();
+    private readonly HashSet<Vector2> _obstructionMap = new HashSet<Vector2>();
     private List<List<bool>> _terrainWalkMap;
     private List<List<bool>> _currentWalkMap;
     private List<List<bool>> _buildMap;
@@ -77,17 +76,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     }
 
     public void Reset() {
-        IsAnalysisComplete = false;
-        StartingLocation = default;
-        EnemyStartingLocation = default;
-
-        HeightMap = null;
-
-        _obstacles = null;
-        ObstructionMap.Clear();
-        _terrainWalkMap = null;
-        _currentWalkMap = null;
-        _walkableCells.Clear();
+        Instance = new TerrainTracker(VisibilityTracker.Instance, UnitsTracker.Instance);
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
@@ -139,7 +128,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         _obstacles.ForEach(obstacle => {
             obstacle.AddDeathWatcher(this);
             foreach (var cell in _footprintCalculator.GetFootprint(obstacle)) {
-                ObstructionMap.Add(cell);
+                _obstructionMap.Add(cell);
             }
         });
     }
@@ -147,7 +136,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     private void RemoveObstacle(Unit obstacle) {
         _obstacles.Remove(obstacle);
         foreach (var cell in _footprintCalculator.GetFootprint(obstacle)) {
-            ObstructionMap.Remove(cell);
+            _obstructionMap.Remove(cell);
         }
 
         // TODO GD Pathfinder can now watch units death
@@ -232,7 +221,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
                 // TODO GD This is problematic for _currentWalkMap
                 // On some maps, some tiles under destructibles are not walkable
                 // We'll consider them walkable, but they won't be until the obstacle is cleared
-                if (ObstructionMap.Contains(new Vector2(x, y).AsWorldGridCenter())) {
+                if (_obstructionMap.Contains(new Vector2(x, y).AsWorldGridCenter())) {
                     walkMap[x][y] = true;
                 }
             }
@@ -306,7 +295,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         }
 
         var isWalkable = _terrainWalkMap[(int)position.X][(int)position.Y];
-        var isObstructed = includeObstacles && ObstructionMap.Contains(position.AsWorldGridCenter());
+        var isObstructed = includeObstacles && _obstructionMap.Contains(position.AsWorldGridCenter());
 
         return isWalkable && !isObstructed;
     }
@@ -321,7 +310,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         }
 
         var isBuildable = _buildMap[(int)position.X][(int)position.Y];
-        var isObstructed = includeObstacles && ObstructionMap.Contains(position.AsWorldGridCenter());
+        var isObstructed = includeObstacles && _obstructionMap.Contains(position.AsWorldGridCenter());
 
         return isBuildable && !isObstructed;
     }

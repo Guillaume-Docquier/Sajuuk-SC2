@@ -5,7 +5,6 @@ using System.Numerics;
 using Bot.Algorithms;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
-using Bot.GameSense;
 using Bot.MapAnalysis.ExpandAnalysis;
 using SC2APIProtocol;
 

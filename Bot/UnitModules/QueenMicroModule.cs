@@ -3,7 +3,6 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapAnalysis;
-using Bot.MapAnalysis.ExpandAnalysis;
 
 namespace Bot.UnitModules;
 

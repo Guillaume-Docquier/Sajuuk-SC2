@@ -16,7 +16,11 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
     /// <summary>
     /// DI: ✔️ The only usages are for static instance creations
     /// </summary>
-    public static readonly ExpandAnalyzer Instance = new ExpandAnalyzer(TerrainTracker.Instance, BuildingTracker.Instance, ExpandUnitsAnalyzer.Instance);
+    public static ExpandAnalyzer Instance { get; private set; } = new ExpandAnalyzer(
+        TerrainTracker.Instance,
+        BuildingTracker.Instance,
+        new ExpandUnitsAnalyzer(UnitsTracker.Instance, TerrainTracker.Instance)
+    );
 
     private readonly ITerrainTracker _terrainTracker;
     private readonly IBuildingTracker _buildingTracker;
@@ -29,10 +33,9 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
     private const int ExpandSearchRadius = 5;
     private static readonly float TooCloseToResourceDistance = (float)Math.Sqrt(1*1 + 3*3); // Empirical, 1x3 diagonal
 
-    private List<List<bool>> _tooCloseToResourceGrid = new List<List<bool>>();
-    private List<ExpandLocation> _expandLocations = new List<ExpandLocation>();
+    private List<List<bool>> _tooCloseToResourceGrid;
+    private List<ExpandLocation> _expandLocations;
 
-    public bool IsEnabled = false;
     public bool IsAnalysisComplete { get; private set; }  = false;
     public IEnumerable<ExpandLocation> ExpandLocations => _expandLocations;
 
@@ -46,13 +49,11 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
     }
 
     public void Reset() {
-        IsAnalysisComplete = false;
-        _expandLocations.Clear();
-        _tooCloseToResourceGrid.Clear();
+        Instance = new ExpandAnalyzer(TerrainTracker.Instance, BuildingTracker.Instance, new ExpandUnitsAnalyzer(UnitsTracker.Instance, TerrainTracker.Instance));
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
-        if (IsAnalysisComplete || !IsEnabled) {
+        if (IsAnalysisComplete) {
             return;
         }
 
@@ -77,6 +78,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
         }
         else {
             Logger.Error("Expand analysis failed, the number of resource clusters found does not match the number of expands found");
+            Environment.Exit(1);
         }
     }
 
@@ -105,8 +107,8 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
         }
 
         _tooCloseToResourceGrid = new List<List<bool>>();
-        for (var x = 0; x < Controller.GameInfo.StartRaw.MapSize.X; x++) {
-            _tooCloseToResourceGrid.Add(new List<bool>(new bool[Controller.GameInfo.StartRaw.MapSize.Y]));
+        for (var x = 0; x < _terrainTracker.MaxX; x++) {
+            _tooCloseToResourceGrid.Add(new List<bool>(new bool[_terrainTracker.MaxY]));
         }
 
         var cellsTooCloseToResource = resourceClusters.SelectMany(cluster => cluster)

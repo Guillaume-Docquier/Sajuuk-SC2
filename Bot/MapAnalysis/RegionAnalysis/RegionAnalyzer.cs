@@ -17,7 +17,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <summary>
     /// DI: ✔️ The only usages are for static instance creations
     /// </summary>
-    public static readonly RegionAnalyzer Instance = new RegionAnalyzer(
+    public static RegionAnalyzer Instance { get; private set; } = new RegionAnalyzer(
         TerrainTracker.Instance,
         ExpandAnalyzer.Instance,
         new RegionsDataRepository(TerrainTracker.Instance, Program.MapFileName)
@@ -36,7 +36,6 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
 
     private RegionsData _regionsData;
 
-    public bool IsEnabled = false;
     public bool IsAnalysisComplete => _regionsData != null;
     public List<IRegion> Regions => _regionsData.Regions.Select(region => region as IRegion).ToList();
 
@@ -54,7 +53,11 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     }
 
     public void Reset() {
-        _regionsData = null;
+        Instance = new RegionAnalyzer(
+            TerrainTracker.Instance,
+            ExpandAnalyzer.Instance,
+            new RegionsDataRepository(TerrainTracker.Instance, Program.MapFileName)
+        );
     }
 
     /// <summary>
@@ -66,7 +69,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             return;
         }
 
-        if (IsAnalysisComplete || !IsEnabled) {
+        if (IsAnalysisComplete) {
             return;
         }
 

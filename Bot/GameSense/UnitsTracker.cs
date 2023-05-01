@@ -11,7 +11,7 @@ public class UnitsTracker : IUnitsTracker, INeedUpdating {
     /// <summary>
     /// DI: ✔️ The only usages are for static instance creations
     /// </summary>
-    public static readonly UnitsTracker Instance = new UnitsTracker(VisibilityTracker.Instance);
+    public static UnitsTracker Instance { get; private set; } = new UnitsTracker(VisibilityTracker.Instance);
 
     private readonly IVisibilityTracker _visibilityTracker;
 
@@ -61,15 +61,7 @@ public class UnitsTracker : IUnitsTracker, INeedUpdating {
     }
 
     public void Reset() {
-        _isInitialized = false;
-
-        UnitsByTag.Clear();
-
-        NewOwnedUnits.Clear();
-
-        NeutralUnits.Clear();
-        OwnedUnits.Clear();
-        EnemyUnits.Clear();
+        Instance = new UnitsTracker(VisibilityTracker.Instance);
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {

@@ -3,7 +3,6 @@ using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl.StutterStepUnitsControl;
-using Bot.MapAnalysis.RegionAnalysis;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 

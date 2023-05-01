@@ -7,8 +7,6 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision;
-using Bot.MapAnalysis.ExpandAnalysis;
-using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Tagging;
 using Bot.Utils;
 using SC2APIProtocol;

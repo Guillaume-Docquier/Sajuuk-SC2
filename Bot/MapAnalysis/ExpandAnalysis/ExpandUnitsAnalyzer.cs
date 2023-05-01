@@ -9,11 +9,6 @@ using Bot.GameSense;
 namespace Bot.MapAnalysis.ExpandAnalysis;
 
 public class ExpandUnitsAnalyzer : IExpandUnitsAnalyzer {
-    /// <summary>
-    /// DI: ✔️ The only usages are for static instance creations
-    /// </summary>
-    public static readonly ExpandUnitsAnalyzer Instance = new ExpandUnitsAnalyzer(UnitsTracker.Instance, TerrainTracker.Instance);
-
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
 

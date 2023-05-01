@@ -14,7 +14,7 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
     /// <summary>
     /// DI: ✔️ The only usages are for static instance creations
     /// </summary>
-    public static readonly BuildingTracker Instance = new BuildingTracker(UnitsTracker.Instance, TerrainTracker.Instance);
+    public static BuildingTracker Instance { get; private set; } = new BuildingTracker(UnitsTracker.Instance, TerrainTracker.Instance);
 
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
@@ -28,8 +28,7 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
     }
 
     public void Reset() {
-        _reservedBuildingCells.Clear();
-        _ongoingBuildingOrders.Clear();
+        Instance = new BuildingTracker(UnitsTracker.Instance, TerrainTracker.Instance);
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {

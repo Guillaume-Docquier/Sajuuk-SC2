@@ -3,7 +3,6 @@ using System.Linq;
 using Bot.Builds;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.UnitModules;
 
 namespace Bot.Managers;

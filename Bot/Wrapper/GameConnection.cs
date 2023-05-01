@@ -187,12 +187,6 @@ public class GameConnection {
     }
 
     private async Task Run(IBot bot, uint playerId, bool runDataAnalyzersOnly = false) {
-        // We use this to generate data for all maps by running a single frame on each of them
-        // We need to reset because everything is global static
-        if (runDataAnalyzersOnly) {
-            Controller.Reset();
-        }
-
         var dataRequest = new Request
         {
             Data = new RequestData
