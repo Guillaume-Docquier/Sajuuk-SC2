@@ -4,8 +4,6 @@ using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.States.Finisher;
-using Bot.MapAnalysis.ExpandAnalysis;
-using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Tagging;
 
 namespace Bot.Managers.WarManagement.States.MidGame;

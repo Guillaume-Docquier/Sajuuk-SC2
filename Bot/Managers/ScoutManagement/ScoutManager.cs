@@ -7,8 +7,6 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingStrategies;
 using Bot.Managers.ScoutManagement.ScoutingSupervision;
-using Bot.MapAnalysis.ExpandAnalysis;
-using Bot.MapAnalysis.RegionAnalysis;
 
 namespace Bot.Managers.ScoutManagement;
 

@@ -5,7 +5,6 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
-using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;

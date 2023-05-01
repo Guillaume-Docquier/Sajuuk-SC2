@@ -5,7 +5,6 @@ using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.UnitModules;
 using SC2APIProtocol;
 

@@ -2,7 +2,6 @@
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.Tests.Mocks;
 using Moq;
 

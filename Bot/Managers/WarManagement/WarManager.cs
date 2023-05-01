@@ -6,8 +6,6 @@ using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.States;
 using Bot.Managers.WarManagement.States.EarlyGame;
-using Bot.MapAnalysis.ExpandAnalysis;
-using Bot.MapAnalysis.RegionAnalysis;
 using Bot.StateManagement;
 using Bot.Tagging;
 

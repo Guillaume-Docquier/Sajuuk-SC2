@@ -10,8 +10,6 @@ using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.MapAnalysis;
-using Bot.MapAnalysis.ExpandAnalysis;
-using Bot.MapAnalysis.RegionAnalysis;
 using Bot.StateManagement;
 using Bot.Utils;
 

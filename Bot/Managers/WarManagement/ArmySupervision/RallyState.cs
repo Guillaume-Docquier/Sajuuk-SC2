@@ -6,8 +6,6 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionTracking;
-using Bot.MapAnalysis.ExpandAnalysis;
-using Bot.MapAnalysis.RegionAnalysis;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;

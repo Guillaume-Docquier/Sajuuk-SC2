@@ -14,8 +14,6 @@ using Bot.Managers;
 using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
 using Bot.Managers.WarManagement;
-using Bot.MapAnalysis.ExpandAnalysis;
-using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Scenarios;
 using Bot.Tagging;
 using SC2APIProtocol;

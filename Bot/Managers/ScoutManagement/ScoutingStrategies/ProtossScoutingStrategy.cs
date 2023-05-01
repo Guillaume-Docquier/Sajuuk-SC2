@@ -2,7 +2,6 @@
 using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.MapAnalysis.ExpandAnalysis;
-using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Utils;
 using SC2APIProtocol;
 

@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
 using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
 using Bot.GameSense.RegionTracking;
+using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
-using Bot.MapAnalysis.RegionAnalysis.ChokePoints;
-using Bot.Persistence;
 using Bot.Scenarios;
 using Bot.Tagging;
 using Bot.VideoClips;
@@ -66,24 +64,35 @@ public class Program {
         Logger.Info("Terminated.");
     }
 
-    private static void EnableMapAnalysis() {
-        ExpandAnalyzer.Instance.IsEnabled = true;
-        RegionAnalyzer.Instance.IsEnabled = true;
-    }
-
     private static void PlayDataGeneration() {
         Logger.Info("Game launched in data generation mode");
+        DebugEnabled = true;
+        GraphicalDebugger = new NullGraphicalDebugger();
+
         foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
             Logger.Info("Generating data for {0}", mapFileName);
 
-            // TODO GD Instead of doing this, we should be able to use a different set of Controller, Bot and GameConnection
-            EnableMapAnalysis();
+            // TODO GD Instead of doing this, we should be able to use a different Controller and another GameConnection
+            // DI Should create new instances for each run
+            Controller.ThoseWhoNeedUpdating = new List<INeedUpdating>
+            {
+                VisibilityTracker.Instance, // DI: ✔️ Depends on nothing
 
-            DebugEnabled = true;
-            GraphicalDebugger = new NullGraphicalDebugger();
+                UnitsTracker.Instance,      // DI: ✔️ Depends on VisibilityTracker
+                TerrainTracker.Instance,    // DI: ✔️ Depends on VisibilityTracker and UnitsTracker
+
+                BuildingTracker.Instance,   // DI: ✔️ Depends on UnitsTracker and TerrainTracker
+
+                ExpandAnalyzer.Instance,    // DI: ✔️ Depends on UnitsTracker, TerrainTracker and BuildingTracker
+                RegionAnalyzer.Instance,    // DI: ✔️ Depends on TerrainTracker and ExpandAnalyzer
+            };
 
             GameConnection = CreateGameConnection();
-            GameConnection.RunLocal(CreateSajuuk(Version, Scenarios), mapFileName, OpponentRace, OpponentDifficulty, realTime: false, runDataAnalyzersOnly: true).Wait();
+            GameConnection.RunLocal(new MapAnalysisRunner(() => Controller.Frame), mapFileName, Race.Zerg, Difficulty.VeryEasy, realTime: false, runDataAnalyzersOnly: true).Wait();
+
+            // Reset for the next run
+            Controller.Reset();
+            Controller.ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Reset());
         }
     }
 

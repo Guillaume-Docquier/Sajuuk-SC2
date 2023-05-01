@@ -13,7 +13,6 @@ using Bot.GameSense.RegionTracking;
 using Bot.Managers.EconomyManagement.TownHallSupervision;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
-using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Utils;
 using Bot.Wrapper;
 using SC2APIProtocol;
@@ -45,7 +44,7 @@ public static class Controller {
     public static HashSet<uint> ResearchedUpgrades { get; private set; }
 
     // TODO GD I'm sure we could figure out the dependency graph automatically
-    private static List<INeedUpdating> ThoseWhoNeedUpdating => new List<INeedUpdating>
+    public static List<INeedUpdating> ThoseWhoNeedUpdating { get; set; } =  new List<INeedUpdating>
     {
         ChatTracker.Instance,               // DI: ✔️ Depends on nothing
         VisibilityTracker.Instance,         // DI: ✔️ Depends on nothing
@@ -59,8 +58,6 @@ public static class Controller {
 
         RegionsTracker.Instance,            // DI: ✔️ Depends on TerrainTracker, DebuggingFlagsTracker and UnitsTracker
         BuildingTracker.Instance,           // DI: ✔️ Depends on UnitsTracker and TerrainTracker
-        ExpandAnalyzer.Instance,            // DI: ✔️ Depends on UnitsTracker, TerrainTracker and BuildingTracker
-        RegionAnalyzer.Instance,            // DI: ✔️ Depends on TerrainTracker and ExpandAnalyzer
         CreepTracker.Instance,              // DI: ✔️ Depends on VisibilityTracker, UnitsTracker and TerrainTracker
 
         EnemyStrategyTracker.Instance,      // DI: ✔️ Depends on UnitsTracker, EnemyRaceTracker, ExpandAnalyzer and RegionAnalyzer
@@ -75,7 +72,6 @@ public static class Controller {
         Observation = null;
 
         _frameDelayMs = 0;
-        ThoseWhoNeedUpdating.ForEach(needsUpdating => needsUpdating.Reset());
     }
 
     public static void SetSimulationTime(string reason) {
@@ -106,7 +102,7 @@ public static class Controller {
         Frame = Observation.Observation.GameLoop;
 
         if (!IsProperlyInitialized()) {
-            Environment.Exit(0);
+            Environment.Exit(1);
         }
 
         foreach (var needsUpdating in ThoseWhoNeedUpdating) {

@@ -6,7 +6,6 @@ using Bot.Builds;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.EconomyManagement.TownHallSupervision;
-using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.Utils;
 
 namespace Bot.Managers.EconomyManagement;

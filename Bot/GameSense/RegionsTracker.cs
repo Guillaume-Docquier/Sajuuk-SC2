@@ -19,9 +19,9 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
     public static readonly RegionsTracker Instance = new RegionsTracker(
         TerrainTracker.Instance,
         DebuggingFlagsTracker.Instance,
+        UnitsTracker.Instance,
         new RegionsDataRepository(TerrainTracker.Instance, Program.MapFileName),
-        ExpandUnitsAnalyzer.Instance,
-        UnitsTracker.Instance
+        new ExpandUnitsAnalyzer(UnitsTracker.Instance, TerrainTracker.Instance)
     );
 
     private readonly ITerrainTracker _terrainTracker;
@@ -44,15 +44,15 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
     public RegionsTracker(
         ITerrainTracker terrainTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
+        IUnitsTracker unitsTracker,
         IMapDataRepository<RegionsData> regionsRepository,
-        IExpandUnitsAnalyzer expandUnitsAnalyzer,
-        IUnitsTracker unitsTracker
+        IExpandUnitsAnalyzer expandUnitsAnalyzer
     ) {
         _terrainTracker = terrainTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
+        _unitsTracker = unitsTracker;
         _regionsRepository = regionsRepository;
         _expandUnitsAnalyzer = expandUnitsAnalyzer;
-        _unitsTracker = unitsTracker;
     }
 
     public void Reset() {
