@@ -67,7 +67,6 @@ public class Program {
     private static void PlayDataGeneration() {
         Logger.Info("Game launched in data generation mode");
         DebugEnabled = true;
-        GraphicalDebugger = new NullGraphicalDebugger();
 
         // TODO GD Kinda whack but won't be needed once DI is finished
         var getThoseWhoNeedUpdating = () => new List<INeedUpdating>
@@ -93,6 +92,8 @@ public class Program {
             // Those are not yet injected
             Pathfinder.Instance.Reset();
             Clustering.Instance.Reset();
+
+            GraphicalDebugger = new Sc2GraphicalDebugger(TerrainTracker.Instance);
 
             // TODO GD Instead of doing this, we should be able to use a different Controller and another GameConnection
             // DI Should create new instances for each run
