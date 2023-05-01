@@ -29,8 +29,8 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
     private const int ExpandSearchRadius = 5;
     private static readonly float TooCloseToResourceDistance = (float)Math.Sqrt(1*1 + 3*3); // Empirical, 1x3 diagonal
 
-    private List<List<bool>> _tooCloseToResourceGrid;
-    private List<ExpandLocation> _expandLocations;
+    private List<List<bool>> _tooCloseToResourceGrid = new List<List<bool>>();
+    private List<ExpandLocation> _expandLocations = new List<ExpandLocation>();
 
     public bool IsEnabled = false;
     public bool IsAnalysisComplete { get; private set; }  = false;
