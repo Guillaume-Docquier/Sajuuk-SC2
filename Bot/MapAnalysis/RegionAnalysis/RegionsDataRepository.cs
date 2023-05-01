@@ -54,8 +54,6 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
 
     /// <summary>
     /// Saves the regions as an image where each region has a different color than its neighbors.
-    /// TODO GD The saved imaged is actually upside down because the SC2 origin is the bottom left, while an image origin is top left.
-    /// (Oh well. Fix it if you want, I don't)
     /// </summary>
     /// <param name="regions"></param>
     private void SaveAsImage(List<Region> regions) {
@@ -94,7 +92,9 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
             }
         }
 
-        ScaleImage(image, UpscalingFactor).Save($"{_fileName}.png", ImageFormat.Png);
+        var scaledImage = ScaleImage(image, UpscalingFactor);
+        scaledImage.RotateFlip(RotateFlipType.RotateNoneFlipY);
+        scaledImage.Save($"{_fileName}.png", ImageFormat.Png);
     }
 
     /// <summary>
