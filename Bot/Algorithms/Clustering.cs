@@ -8,7 +8,7 @@ using Bot.GameSense;
 namespace Bot.Algorithms;
 
 public class Clustering {
-    public static readonly Clustering Instance = new Clustering(TerrainTracker.Instance);
+    public static Clustering Instance { get; private set; } = new Clustering(TerrainTracker.Instance);
 
     private readonly ITerrainTracker _terrainTracker;
 
@@ -22,6 +22,10 @@ public class Clustering {
 
     public Clustering(ITerrainTracker terrainTracker) {
         _terrainTracker = terrainTracker;
+    }
+
+    public void Reset() {
+        Instance = new Clustering(TerrainTracker.Instance);
     }
 
     /// <summary>
