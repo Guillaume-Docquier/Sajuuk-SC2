@@ -114,7 +114,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var map = new List<MapCell>();
         for (var x = 0; x < _terrainTracker.MaxX; x++) {
             for (var y = 0; y < _terrainTracker.MaxY; y++) {
-                var mapCell = new MapCell(_terrainTracker.WithWorldHeight(new Vector2(x, y)));
+                var mapCell = new MapCell(_terrainTracker.WithWorldHeight(new Vector2(x, y)).AsWorldGridCenter());
                 if (_terrainTracker.IsWalkable(mapCell.Position, includeObstacles: false)) {
                     map.Add(mapCell);
                 }
