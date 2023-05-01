@@ -246,14 +246,14 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         return _rayCastingChokeFinder.FindChokePoints();
     }
 
-    private static List<AnalyzedRegion> BuildRegions(List<HashSet<Vector2>> potentialRegions, List<HashSet<Vector2>> ramps, List<ChokePoint> potentialChokePoints) {
+    private List<AnalyzedRegion> BuildRegions(List<HashSet<Vector2>> potentialRegions, List<HashSet<Vector2>> ramps, List<ChokePoint> potentialChokePoints) {
         var regions = new List<AnalyzedRegion>();
         foreach (var region in potentialRegions) {
             var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints);
-            regions.AddRange(subregions.Select(subregion => new AnalyzedRegion(subregion, RegionType.Unknown)));
+            regions.AddRange(subregions.Select(subregion => new AnalyzedRegion(subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
         }
 
-        regions.AddRange(ramps.Select(ramp => new AnalyzedRegion(ramp, RegionType.Ramp)));
+        regions.AddRange(ramps.Select(ramp => new AnalyzedRegion(ramp, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
 
         return regions;
     }

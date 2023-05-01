@@ -8,8 +8,8 @@ namespace Bot.MapAnalysis.ExpandAnalysis;
 
 // TODO GD Split this into two types
 public class ExpandLocation : IExpandLocation, IWatchUnitsDie {
-    public int Id { get; }
-    public Vector2 Position { get; }
+    [JsonInclude] public int Id { get; private set;}
+    [JsonInclude] public Vector2 Position { get; private set;}
 
     [JsonIgnore] public HashSet<Unit> Resources { get; set; }
     [JsonIgnore] public bool IsDepleted => !Resources.Any();
@@ -17,9 +17,9 @@ public class ExpandLocation : IExpandLocation, IWatchUnitsDie {
     [JsonIgnore] public HashSet<Unit> Blockers { get; set; }
     [JsonIgnore] public bool IsBlocked => Blockers.Any();
 
-    public IRegion Region { get; set; }
+    [JsonInclude] public IRegion Region { get; set; }
 
-    public ExpandType ExpandType { get; }
+    [JsonInclude] public ExpandType ExpandType { get; private set;}
 
     [JsonConstructor] public ExpandLocation() {}
 

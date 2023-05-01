@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
@@ -8,10 +9,14 @@ using Bot.GameSense;
 namespace Bot.MapAnalysis.RegionAnalysis.ChokePoints;
 
 public class ChokePoint {
-    public Vector2 Start { get; }
-    public Vector2 End { get; }
-    public float Length { get; }
-    public HashSet<Vector2> Edge { get; }
+    [JsonInclude] public Vector2 Start { get; private set; }
+    [JsonInclude] public Vector2 End { get; private set; }
+    [JsonInclude] public float Length { get; private set; }
+    [JsonInclude] public HashSet<Vector2> Edge { get; private set; }
+
+    [JsonConstructor]
+    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
+    public ChokePoint() {}
 
     public ChokePoint(Vector2 start, Vector2 end, ITerrainTracker terrainTracker) {
         Edge = start.GetPointsInBetween(end)
@@ -21,16 +26,5 @@ public class ChokePoint {
         Start = Edge.MinBy(edgePoint => edgePoint.DistanceTo(start));
         End = Edge.MinBy(edgePoint => edgePoint.DistanceTo(end));
         Length = Start.DistanceTo(End);
-    }
-
-    /// <summary>
-    /// This constructor is only meant for deserialization, you should not use it.
-    /// </summary>
-    [JsonConstructor]
-    public ChokePoint(Vector2 start, Vector2 end, HashSet<Vector2> edge, float length) {
-        Start = start;
-        End = end;
-        Edge = edge;
-        Length = length;
     }
 }
