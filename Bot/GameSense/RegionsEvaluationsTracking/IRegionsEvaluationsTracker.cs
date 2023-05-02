@@ -2,7 +2,7 @@
 using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;
 
-namespace Bot.GameSense.RegionTracking;
+namespace Bot.GameSense.RegionsEvaluationsTracking;
 
 public interface IRegionsEvaluationsTracker {
     public float GetForce(Vector2 position, Alliance alliance, bool normalized = false);

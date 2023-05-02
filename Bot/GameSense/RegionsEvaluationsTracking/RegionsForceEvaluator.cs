@@ -6,27 +6,28 @@ using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Utils;
 using SC2APIProtocol;
 
-namespace Bot.GameSense.RegionTracking;
+namespace Bot.GameSense.RegionsEvaluationsTracking;
 
-public class RegionsValueEvaluator : RegionsEvaluator {
+public class RegionsForceEvaluator : RegionsEvaluator {
     private readonly IUnitsTracker _unitsTracker;
 
     private readonly Alliance _alliance;
 
-    private static readonly ulong HalfLife = TimeUtils.SecsToFrames(240);
+    private static readonly ulong HalfLife = TimeUtils.SecsToFrames(120);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
-    public RegionsValueEvaluator(IUnitsTracker unitsTracker, Alliance alliance, Func<uint> getCurrentFrame)
-        : base("value", getCurrentFrame) {
+    public RegionsForceEvaluator(IUnitsTracker unitsTracker, Alliance alliance, Func<uint> getCurrentFrame)
+        : base("force", getCurrentFrame) {
         _unitsTracker = unitsTracker;
 
         _alliance = alliance;
     }
 
     /// <summary>
-    /// Evaluates the value of each region based on the units within.
-    /// The value decays as the information grows older.
+    /// Evaluates the force of each region based on the units within.
+    /// The force decays as the information grows older
     /// </summary>
+    ///
     protected override IEnumerable<(IRegion region, float evaluation)> DoUpdateEvaluations(IReadOnlyCollection<IRegion> regions) {
         // TODO GD Precompute units by region in a tracker
         var unitsByRegion = _unitsTracker.GetUnits(_alliance)
@@ -43,30 +44,30 @@ public class RegionsValueEvaluator : RegionsEvaluator {
                 continue;
             }
 
-            var forceEvaluation = unitsByRegion[region].Sum(unit => UnitEvaluator.Instance.EvaluateValue(unit) * GetUnitUncertaintyPenalty(unit));
+            var forceEvaluation = unitsByRegion[region].Sum(unit => UnitEvaluator.Instance.EvaluateForce(unit) * GetUnitUncertaintyPenalty(unit));
 
             yield return (region, forceEvaluation);
         }
     }
 
     /// <summary>
-    /// Penalize the value of units (like ghost units) that have not been seen in a while.
+    /// Penalize the force of units (like ghost units) that have not been seen in a while.
     /// </summary>
-    /// <param name="unit"></param>
-    /// <returns>The value penalty, within ]0, 1]</returns>
-    private static float GetUnitUncertaintyPenalty(Unit unit) {
+    /// <param name="enemy"></param>
+    /// <returns>The force penalty, within ]0, 1]</returns>
+    private static float GetUnitUncertaintyPenalty(Unit enemy) {
         // TODO GD Maybe make terran building that can fly uncertain, but not so much
         // Buildings can be considered static
-        if (Units.Buildings.Contains(unit.UnitType)) {
+        if (Units.Buildings.Contains(enemy.UnitType)) {
             return 1;
         }
 
         // Avoid computing decay for nothing
-        if (Controller.Frame == unit.LastSeen) {
+        if (Controller.Frame == enemy.LastSeen) {
             return 1;
         }
 
-        return ExponentialDecayFactor(Controller.Frame - unit.LastSeen);
+        return ExponentialDecayFactor(Controller.Frame - enemy.LastSeen);
     }
 
     /// <summary>

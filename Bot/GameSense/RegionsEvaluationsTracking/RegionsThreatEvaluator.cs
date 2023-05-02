@@ -5,7 +5,7 @@ using Bot.ExtensionMethods;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
 
-namespace Bot.GameSense.RegionTracking;
+namespace Bot.GameSense.RegionsEvaluationsTracking;
 
 public class RegionsThreatEvaluator : RegionsEvaluator {
     private readonly IRegionsEvaluator _forceEvaluator;

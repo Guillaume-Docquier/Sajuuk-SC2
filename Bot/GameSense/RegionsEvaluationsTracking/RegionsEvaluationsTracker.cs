@@ -7,7 +7,7 @@ using Bot.ExtensionMethods;
 using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;
 
-namespace Bot.GameSense.RegionTracking;
+namespace Bot.GameSense.RegionsEvaluationsTracking;
 
 public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdating {
     /// <summary>

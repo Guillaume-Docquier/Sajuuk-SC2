@@ -5,7 +5,7 @@ using Bot.Algorithms;
 using Bot.Builds;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
-using Bot.GameSense.RegionTracking;
+using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;

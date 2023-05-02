@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using Bot.GameSense;
-using Bot.GameSense.RegionTracking;
+using Bot.GameSense.RegionsEvaluationsTracking;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 

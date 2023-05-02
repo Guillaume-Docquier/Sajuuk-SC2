@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Bot.MapAnalysis.RegionAnalysis;
 
-namespace Bot.GameSense.RegionTracking;
+namespace Bot.GameSense.RegionsEvaluationsTracking;
 
 public abstract class RegionsEvaluator : IRegionsEvaluator {
     private readonly string _evaluatedPropertyName;

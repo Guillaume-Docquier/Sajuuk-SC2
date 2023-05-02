@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.Algorithms;
-using Bot.GameSense.RegionTracking;
+using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.MapAnalysis.RegionAnalysis;
 using Bot.StateManagement;
