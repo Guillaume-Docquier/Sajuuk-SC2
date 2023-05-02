@@ -1,6 +1,6 @@
 ﻿using Bot.Debugging;
 using Bot.GameSense;
-using Bot.GameSense.RegionTracking;
+using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Tagging;
 using Bot.Utils;
 

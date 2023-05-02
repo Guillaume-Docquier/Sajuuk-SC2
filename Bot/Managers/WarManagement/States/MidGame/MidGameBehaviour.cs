@@ -7,7 +7,7 @@ using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.GameSense.RegionTracking;
+using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers.ScoutManagement.ScoutingSupervision;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;

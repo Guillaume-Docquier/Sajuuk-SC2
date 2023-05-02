@@ -1,7 +1,7 @@
 ﻿using Bot.Debugging;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.GameSense.RegionTracking;
+using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Tagging;
 using Bot.Tests.Mocks;
 using Moq;

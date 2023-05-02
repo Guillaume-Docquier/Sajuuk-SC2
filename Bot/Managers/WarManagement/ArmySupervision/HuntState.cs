@@ -3,7 +3,7 @@ using System.Linq;
 using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
-using Bot.GameSense.RegionTracking;
+using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.MapAnalysis;
 using Bot.StateManagement;
 
