@@ -425,20 +425,12 @@ public static class Controller {
     }
 
     private static BuildRequestResult PlaceExpand(uint buildingType) {
-        if (!TerrainTracker.Instance.IsAnalysisComplete) {
-            return BuildRequestResult.NotSupported;
-        }
-
         var producer = GetAvailableProducer(buildingType);
 
         return PlaceExpand(buildingType, producer);
     }
 
     private static BuildRequestResult PlaceExpand(uint buildingType, Unit producer) {
-        if (!TerrainTracker.Instance.IsAnalysisComplete) {
-            return BuildRequestResult.NotSupported;
-        }
-
         var buildingTypeData = KnowledgeBase.GetUnitTypeData(buildingType);
         var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
         if (requirementsValidationResult != BuildRequestResult.Ok) {
