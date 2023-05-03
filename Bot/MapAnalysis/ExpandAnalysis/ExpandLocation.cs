@@ -6,9 +6,7 @@ using Bot.MapAnalysis.RegionAnalysis;
 
 namespace Bot.MapAnalysis.ExpandAnalysis;
 
-// TODO GD Split this into two types
 public class ExpandLocation : IExpandLocation, IWatchUnitsDie {
-    [JsonInclude] public int Id { get; private set;}
     [JsonInclude] public Vector2 Position { get; private set;}
 
     [JsonIgnore] public HashSet<Unit> Resources { get; set; }

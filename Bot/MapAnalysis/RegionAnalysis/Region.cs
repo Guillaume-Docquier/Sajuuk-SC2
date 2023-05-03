@@ -25,8 +25,7 @@ public class Region : IRegion {
     [JsonInclude] public HashSet<NeighboringRegion> ConcreteNeighbors { get; set; }
     [JsonIgnore] public IEnumerable<INeighboringRegion> Neighbors => ConcreteNeighbors;
 
-    [JsonConstructor]
-    public Region() {}
+    [JsonConstructor] public Region() {}
 
     public IEnumerable<IRegion> GetReachableNeighbors() {
         return Neighbors
