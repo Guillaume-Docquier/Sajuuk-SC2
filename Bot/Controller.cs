@@ -12,7 +12,6 @@ using Bot.GameSense.EnemyStrategyTracking;
 using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers.EconomyManagement.TownHallSupervision;
 using Bot.MapAnalysis;
-using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.Utils;
 using Bot.Wrapper;
 using SC2APIProtocol;

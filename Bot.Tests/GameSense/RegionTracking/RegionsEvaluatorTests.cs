@@ -1,8 +1,6 @@
-using System.Numerics;
 using Bot.GameSense.RegionsEvaluationsTracking;
-using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
-using SC2APIProtocol;
+using Moq;
 
 namespace Bot.Tests.GameSense.RegionTracking;
 
@@ -16,9 +14,9 @@ public class RegionsEvaluatorTests : BaseTestClass {
         var regionsEvaluator = new TestRegionsEvaluator();
         var regions = new IRegion[]
         {
-            new TestRegion(),
-            new TestRegion(),
-            new TestRegion(),
+            new Mock<IRegion>().Object,
+            new Mock<IRegion>().Object,
+            new Mock<IRegion>().Object,
         };
 
         // Act
@@ -37,9 +35,9 @@ public class RegionsEvaluatorTests : BaseTestClass {
         // Arrange
         var evaluations = new Dictionary<IRegion, float>
         {
-            { new TestRegion(), 1 },
-            { new TestRegion(), 2 },
-            { new TestRegion(), 3 },
+            { new Mock<IRegion>().Object, 1 },
+            { new Mock<IRegion>().Object, 2 },
+            { new Mock<IRegion>().Object, 3 },
         };
         var regionsEvaluator = new TestRegionsEvaluator(evaluations);
 
@@ -47,7 +45,7 @@ public class RegionsEvaluatorTests : BaseTestClass {
         regionsEvaluator.UpdateEvaluations();
 
         // Act
-        var unknownRegion = new TestRegion();
+        var unknownRegion = new Mock<IRegion>().Object;
         var evaluation = regionsEvaluator.GetEvaluation(unknownRegion, normalized);
 
         //Assert
@@ -59,9 +57,9 @@ public class RegionsEvaluatorTests : BaseTestClass {
         // Arrange
         var evaluations = new Dictionary<IRegion, float>
         {
-            { new TestRegion(), 1 },
-            { new TestRegion(), 2 },
-            { new TestRegion(), 3 },
+            { new Mock<IRegion>().Object, 1 },
+            { new Mock<IRegion>().Object, 2 },
+            { new Mock<IRegion>().Object, 3 },
         };
         var regionsEvaluator = new TestRegionsEvaluator(evaluations);
 
@@ -81,10 +79,10 @@ public class RegionsEvaluatorTests : BaseTestClass {
         // Arrange
         var evaluations = new Dictionary<IRegion, float>
         {
-            { new TestRegion(), 1 },
-            { new TestRegion(), 2 },
-            { new TestRegion(), 3 },
-            { new TestRegion(), 4 },
+            { new Mock<IRegion>().Object, 1 },
+            { new Mock<IRegion>().Object, 2 },
+            { new Mock<IRegion>().Object, 3 },
+            { new Mock<IRegion>().Object, 4 },
         };
         var regionsEvaluator = new TestRegionsEvaluator(evaluations);
 
@@ -105,10 +103,10 @@ public class RegionsEvaluatorTests : BaseTestClass {
         // Arrange
         var evaluations = new Dictionary<IRegion, float>
         {
-            { new TestRegion(), 0 },
-            { new TestRegion(), 0 },
-            { new TestRegion(), 0 },
-            { new TestRegion(), 0 },
+            { new Mock<IRegion>().Object, 0 },
+            { new Mock<IRegion>().Object, 0 },
+            { new Mock<IRegion>().Object, 0 },
+            { new Mock<IRegion>().Object, 0 },
         };
         var regionsEvaluator = new TestRegionsEvaluator(evaluations);
 
@@ -138,26 +136,6 @@ public class RegionsEvaluatorTests : BaseTestClass {
 
         protected override IEnumerable<(IRegion region, float evaluation)> DoUpdateEvaluations(IReadOnlyCollection<IRegion> regions) {
             return regions.Select(region => (region, _evaluations == null ? 0 : _evaluations[region]));
-        }
-    }
-
-    private class TestRegion : IRegion {
-        public int Id { get; }
-        public Color Color { get; }
-        public Vector2 Center { get; }
-        public HashSet<Vector2> Cells { get; }
-        public float ApproximatedRadius { get; }
-        public RegionType Type { get; }
-        public IExpandLocation ExpandLocation { get; }
-        public IEnumerable<INeighboringRegion> Neighbors { get; }
-        public bool IsObstructed { get; }
-
-        public TestRegion() {
-
-        }
-
-        public IEnumerable<IRegion> GetReachableNeighbors() {
-            throw new NotImplementedException();
         }
     }
 }
