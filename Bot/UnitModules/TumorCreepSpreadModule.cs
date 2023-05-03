@@ -75,7 +75,7 @@ public class TumorCreepSpreadModule: UnitModule {
             var bestPlaceLocation = _terrainTracker.BuildSearchRadius(_creepTumor.Position.ToVector2(), spreadRange)
                 .Where(_visibilityTracker.IsVisible)
                 .Where(_creepTracker.HasCreep)
-                .Where(_regionsTracker.IsNotBlockingExpand)
+                .Where(position => !_regionsTracker.IsBlockingExpand(position))
                 .OrderBy(position => position.DistanceTo(creepTarget))
                 .FirstOrDefault(position => _buildingTracker.CanPlace(Units.CreepTumor, position));
 

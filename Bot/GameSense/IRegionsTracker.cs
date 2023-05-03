@@ -8,11 +8,9 @@ namespace Bot.GameSense;
 
 public interface IRegionsTracker {
     public IEnumerable<IRegion> Regions { get; }
-
-    // TODO GD We might not need to expose expand locations?
     public IEnumerable<IExpandLocation> ExpandLocations { get; }
 
-    public bool IsNotBlockingExpand(Vector2 position);
+    public bool IsBlockingExpand(Vector2 position);
     public IRegion GetRegion(Vector2 position);
     public IRegion GetRegion(Vector3 position);
 
