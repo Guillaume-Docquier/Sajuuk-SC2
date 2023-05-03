@@ -134,13 +134,13 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
     }
 
     // TODO GD Doesn't take into account the building dimensions, but good enough for creep spread since it's 1x1
-    public bool IsNotBlockingExpand(Vector2 position) {
-        // We could use Regions here, but I'd rather not because of dependencies
-        var closestExpandLocation = _expandLocations
-            .Select(expandLocation => expandLocation.Position)
-            .MinBy(expandPosition => expandPosition.DistanceTo(position));
+    public bool IsBlockingExpand(Vector2 position) {
+        var region = GetRegion(position);
+        if (region.ExpandLocation == null) {
+            return false;
+        }
 
-        return closestExpandLocation.DistanceTo(position) > ExpandRadius + 1;
+        return region.ExpandLocation.Position.DistanceTo(position) <= ExpandRadius + 1;
     }
 
     /// <summary>
