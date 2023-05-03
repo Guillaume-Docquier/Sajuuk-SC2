@@ -21,7 +21,8 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
 
     private readonly FootprintCalculator _footprintCalculator;
 
-    public bool IsAnalysisComplete { get; private set; } = false;
+    private bool _isInitialized = false;
+
     public Vector2 StartingLocation { get; private set; }
     public Vector2 EnemyStartingLocation { get; private set; }
 
@@ -80,7 +81,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
-        if (IsAnalysisComplete) {
+        if (_isInitialized) {
             _currentWalkMap = ParseWalkMap();
             return;
         }
@@ -100,7 +101,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
 
         InitWalkableCells();
 
-        IsAnalysisComplete = true;
+        _isInitialized = true;
     }
 
     public string GetStartingCorner() {
@@ -234,7 +235,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         var grid = new List<Vector2>();
         for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x += stepSize) {
             for (var y = centerPosition.Y - gridRadius; y <= centerPosition.Y + gridRadius; y += stepSize) {
-                if (!IsAnalysisComplete || IsInBounds(x, y)) {
+                if (!_isInitialized || IsInBounds(x, y)) {
                     grid.Add(new Vector2(x, y));
                 }
             }
@@ -247,7 +248,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         var grid = new List<Vector3>();
         for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x += stepSize) {
             for (var y = centerPosition.Y - gridRadius; y <= centerPosition.Y + gridRadius; y += stepSize) {
-                if (!IsAnalysisComplete || IsInBounds(x, y)) {
+                if (!_isInitialized || IsInBounds(x, y)) {
                     grid.Add(WithWorldHeight(new Vector3(x, y, centerPosition.Z)));
                 }
             }
@@ -426,7 +427,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     }
 
     public Vector3 WithWorldHeight(Vector3 vector, float zOffset = 0) {
-        if (!IsAnalysisComplete) {
+        if (!_isInitialized) {
             return vector;
         }
 
