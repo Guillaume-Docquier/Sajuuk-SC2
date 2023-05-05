@@ -20,6 +20,7 @@ public class SajuukBot : PoliteBot {
 
     private readonly IManagerFactory _managerFactory;
     private readonly IBuildRequestFactory _buildRequestFactory;
+    private readonly IBuildOrderFactory _buildOrderFactory;
 
     private readonly IBotDebugger _debugger;
 
@@ -34,10 +35,12 @@ public class SajuukBot : PoliteBot {
         ITerrainTracker terrainTracker,
         IManagerFactory managerFactory,
         IBuildRequestFactory buildRequestFactory,
+        IBuildOrderFactory buildOrderFactory,
         IBotDebugger botDebugger
     ) : base(version, scenarios, taggingService, unitsTracker, terrainTracker) {
         _managerFactory = managerFactory;
         _buildRequestFactory = buildRequestFactory;
+        _buildOrderFactory = buildOrderFactory;
 
         _debugger = botDebugger;
     }
@@ -69,7 +72,7 @@ public class SajuukBot : PoliteBot {
     }
 
     private void InitManagers() {
-        var buildManager = _managerFactory.CreateBuildManager(new TwoBasesRoach(UnitsTracker, _buildRequestFactory));
+        var buildManager = _managerFactory.CreateBuildManager(_buildOrderFactory.CreateTwoBasesRoach());
         _managers.Add(buildManager);
 
         _managers.Add(_managerFactory.CreateSupplyManager(buildManager));

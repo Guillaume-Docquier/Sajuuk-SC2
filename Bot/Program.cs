@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Bot.Algorithms;
 using Bot.Builds;
+using Bot.Builds.BuildOrders;
 using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
@@ -141,6 +142,8 @@ public class Program {
     private static IBot CreateSajuuk(string version, List<IScenario> scenarios) {
         var buildRequestFactory = new BuildRequestFactory(UnitsTracker.Instance);
 
+        var buildOrderFactory = new BuildOrderFactory(UnitsTracker.Instance, buildRequestFactory);
+
         var economySupervisorFactory = new EconomySupervisorFactory(
             UnitsTracker.Instance,
             BuildingTracker.Instance,
@@ -215,6 +218,7 @@ public class Program {
             TerrainTracker.Instance,
             managerFactory,
             buildRequestFactory,
+            buildOrderFactory,
             botDebugger
         );
     }
