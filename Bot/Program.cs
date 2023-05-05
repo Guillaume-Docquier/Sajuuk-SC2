@@ -157,17 +157,23 @@ public class Program {
             RegionsEvaluationsTracker.Instance
         );
 
-        var warManagerStateFactory = new WarManagerStateFactory(
+        var warManagerBehaviourFactory = new WarManagerBehaviourFactory(
             TaggingService.Instance,
-            EnemyRaceTracker.Instance,
-            VisibilityTracker.Instance,
             DebuggingFlagsTracker.Instance,
             UnitsTracker.Instance,
-            TerrainTracker.Instance,
             RegionsTracker.Instance,
             RegionsEvaluationsTracker.Instance,
+            VisibilityTracker.Instance,
+            TerrainTracker.Instance,
+            EnemyRaceTracker.Instance,
             scoutSupervisorFactory,
             warSupervisorFactory
+        );
+
+        var warManagerStateFactory = new WarManagerStateFactory(
+            UnitsTracker.Instance,
+            TerrainTracker.Instance,
+            warManagerBehaviourFactory
         );
 
         var managerFactory = new ManagerFactory(

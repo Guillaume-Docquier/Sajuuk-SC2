@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Bot.Builds;
 
-namespace Bot.Managers.WarManagement;
+namespace Bot.Managers.WarManagement.States;
 
 public interface IWarManagerBehaviour {
     public IAssigner Assigner { get; }

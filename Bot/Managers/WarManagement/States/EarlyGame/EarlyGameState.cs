@@ -1,47 +1,28 @@
-﻿using Bot.Debugging;
-using Bot.GameSense;
-using Bot.GameSense.RegionsEvaluationsTracking;
-using Bot.Tagging;
-using Bot.Utils;
+﻿using Bot.Utils;
 
 namespace Bot.Managers.WarManagement.States.EarlyGame;
 
 public class EarlyGameState : WarManagerState {
     private const int EarlyGameEndInSeconds = (int)(5 * 60);
 
-    private readonly ITaggingService _taggingService;
-    private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
-    private readonly IUnitsTracker _unitsTracker;
-    private readonly IRegionsTracker _regionsTracker;
-    private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
-    private readonly IWarSupervisorFactory _warSupervisorFactory;
     private readonly IWarManagerStateFactory _warManagerStateFactory;
+    private readonly IWarManagerBehaviourFactory _warManagerBehaviourFactory;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
 
     public EarlyGameState(
-        ITaggingService taggingService,
-        IDebuggingFlagsTracker debuggingFlagsTracker,
-        IUnitsTracker unitsTracker,
-        IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IWarSupervisorFactory warSupervisorFactory,
-        IWarManagerStateFactory warManagerStateFactory
+        IWarManagerStateFactory warManagerStateFactory,
+        IWarManagerBehaviourFactory warManagerBehaviourFactory
     ) {
-        _taggingService = taggingService;
-        _debuggingFlagsTracker = debuggingFlagsTracker;
-        _unitsTracker = unitsTracker;
-        _regionsTracker = regionsTracker;
-        _regionsEvaluationsTracker = regionsEvaluationsTracker;
-        _warSupervisorFactory = warSupervisorFactory;
         _warManagerStateFactory = warManagerStateFactory;
+        _warManagerBehaviourFactory = warManagerBehaviourFactory;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new EarlyGameBehaviour(Context, _taggingService, _debuggingFlagsTracker, _unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _warSupervisorFactory);
+        _behaviour = _warManagerBehaviourFactory.CreateEarlyGameBehaviour(Context);
     }
 
     protected override void Execute() {

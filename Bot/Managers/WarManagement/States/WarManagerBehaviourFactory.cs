@@ -1,0 +1,59 @@
+﻿using Bot.Debugging;
+using Bot.GameSense;
+using Bot.GameSense.RegionsEvaluationsTracking;
+using Bot.Managers.ScoutManagement;
+using Bot.Managers.WarManagement.States.EarlyGame;
+using Bot.Managers.WarManagement.States.Finisher;
+using Bot.Managers.WarManagement.States.MidGame;
+using Bot.Tagging;
+
+namespace Bot.Managers.WarManagement.States;
+
+public class WarManagerBehaviourFactory : IWarManagerBehaviourFactory {
+    private readonly ITaggingService _taggingService;
+    private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
+    private readonly IUnitsTracker _unitsTracker;
+    private readonly IRegionsTracker _regionsTracker;
+    private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+    private readonly IVisibilityTracker _visibilityTracker;
+    private readonly ITerrainTracker _terrainTracker;
+    private readonly IEnemyRaceTracker _enemyRaceTracker;
+    private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
+    private readonly IWarSupervisorFactory _warSupervisorFactory;
+
+    public WarManagerBehaviourFactory(
+        ITaggingService taggingService,
+        IDebuggingFlagsTracker debuggingFlagsTracker,
+        IUnitsTracker unitsTracker,
+        IRegionsTracker regionsTracker,
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IVisibilityTracker visibilityTracker,
+        ITerrainTracker terrainTracker,
+        IEnemyRaceTracker enemyRaceTracker,
+        IScoutSupervisorFactory scoutSupervisorFactory,
+        IWarSupervisorFactory warSupervisorFactory
+    ) {
+        _taggingService = taggingService;
+        _debuggingFlagsTracker = debuggingFlagsTracker;
+        _unitsTracker = unitsTracker;
+        _regionsTracker = regionsTracker;
+        _regionsEvaluationsTracker = regionsEvaluationsTracker;
+        _visibilityTracker = visibilityTracker;
+        _terrainTracker = terrainTracker;
+        _enemyRaceTracker = enemyRaceTracker;
+        _scoutSupervisorFactory = scoutSupervisorFactory;
+        _warSupervisorFactory = warSupervisorFactory;
+    }
+
+    public EarlyGameBehaviour CreateEarlyGameBehaviour(WarManager warManager) {
+        return new EarlyGameBehaviour(warManager, _taggingService, _debuggingFlagsTracker, _unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _warSupervisorFactory);
+    }
+
+    public MidGameBehaviour CreateMidGameBehaviour(WarManager warManager) {
+        return new MidGameBehaviour(warManager, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _scoutSupervisorFactory, _warSupervisorFactory);
+    }
+
+    public FinisherBehaviour CreateFinisherBehaviour(WarManager warManager) {
+        return new FinisherBehaviour(warManager, _taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _warSupervisorFactory);
+    }
+}

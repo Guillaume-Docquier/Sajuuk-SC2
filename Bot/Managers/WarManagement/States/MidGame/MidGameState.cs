@@ -1,52 +1,34 @@
 ﻿using System.Linq;
-using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
-using Bot.GameSense.RegionsEvaluationsTracking;
-using Bot.Managers.ScoutManagement;
 
 namespace Bot.Managers.WarManagement.States.MidGame;
 
 public class MidGameState : WarManagerState {
-    private readonly IVisibilityTracker _visibilityTracker;
-    private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
-    private readonly IRegionsTracker _regionsTracker;
-    private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
-    private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
-    private readonly IWarSupervisorFactory _warSupervisorFactory;
     private readonly IWarManagerStateFactory _warManagerStateFactory;
+    private readonly IWarManagerBehaviourFactory _warManagerBehaviourFactory;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
 
     public MidGameState(
-        IVisibilityTracker visibilityTracker,
-        IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
-        IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IScoutSupervisorFactory scoutSupervisorFactory,
-        IWarSupervisorFactory warSupervisorFactory,
-        IWarManagerStateFactory warManagerStateFactory
+        IWarManagerStateFactory warManagerStateFactory,
+        IWarManagerBehaviourFactory warManagerBehaviourFactory
     ) {
-        _visibilityTracker = visibilityTracker;
-        _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
-        _regionsTracker = regionsTracker;
-        _regionsEvaluationsTracker = regionsEvaluationsTracker;
-        _scoutSupervisorFactory = scoutSupervisorFactory;
-        _warSupervisorFactory = warSupervisorFactory;
         _warManagerStateFactory = warManagerStateFactory;
+        _warManagerBehaviourFactory = warManagerBehaviourFactory;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new MidGameBehaviour(Context, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _scoutSupervisorFactory, _warSupervisorFactory);
+        _behaviour = _warManagerBehaviourFactory.CreateMidGameBehaviour(Context);
     }
 
     protected override void Execute() {
