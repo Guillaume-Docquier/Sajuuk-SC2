@@ -5,7 +5,6 @@ using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.Tagging;
 using Bot.Utils;
@@ -52,7 +51,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker
+        IWarSupervisorFactory warSupervisorFactory
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
@@ -63,8 +62,8 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         _regionsTracker = regionsTracker;
 
         _debugger = new FinisherBehaviourDebugger(debuggingFlagsTracker);
-        AttackSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, regionsEvaluationsTracker);
-        TerranFinisherSupervisor = new ArmySupervisor(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, regionsEvaluationsTracker);
+        AttackSupervisor = warSupervisorFactory.CreateArmySupervisor();
+        TerranFinisherSupervisor = warSupervisorFactory.CreateArmySupervisor();
 
         _corruptorsBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Corruptor, targetQuantity: 0, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Normal);

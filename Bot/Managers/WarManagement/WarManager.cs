@@ -42,11 +42,12 @@ public class WarManager: Manager {
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IScoutSupervisorFactory scoutSupervisorFactory
+        IScoutSupervisorFactory scoutSupervisorFactory,
+        IWarSupervisorFactory warSupervisorFactory
     ) {
         _stateMachine = new StateMachine<WarManager, WarManagerState>(
             this,
-            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker, scoutSupervisorFactory)
+            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker, scoutSupervisorFactory, warSupervisorFactory)
         );
     }
 

@@ -1,6 +1,5 @@
 ﻿using Bot.Debugging;
 using Bot.GameSense;
-using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Tagging;
 
 namespace Bot.Managers.WarManagement.States.Finisher;
@@ -13,7 +12,7 @@ public class FinisherState : WarManagerState {
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
-    private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+    private readonly IWarSupervisorFactory _warSupervisorFactory;
 
     private IWarManagerBehaviour _behaviour;
 
@@ -27,7 +26,7 @@ public class FinisherState : WarManagerState {
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker
+        IWarSupervisorFactory warSupervisorFactory
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
@@ -36,7 +35,7 @@ public class FinisherState : WarManagerState {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
-        _regionsEvaluationsTracker = regionsEvaluationsTracker;
+        _warSupervisorFactory = warSupervisorFactory;
     }
 
     protected override void OnContextSet() {
@@ -49,7 +48,7 @@ public class FinisherState : WarManagerState {
             _unitsTracker,
             _terrainTracker,
             _regionsTracker,
-            _regionsEvaluationsTracker
+            _warSupervisorFactory
         );
     }
 

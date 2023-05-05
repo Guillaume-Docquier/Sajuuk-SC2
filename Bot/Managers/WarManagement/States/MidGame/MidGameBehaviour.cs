@@ -60,7 +60,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IScoutSupervisorFactory scoutSupervisorFactory
+        IScoutSupervisorFactory scoutSupervisorFactory,
+        IWarSupervisorFactory warSupervisorFactory
     ) {
         _warManager = warManager;
         _visibilityTracker = visibilityTracker;
@@ -71,7 +72,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         _scoutSupervisorFactory = scoutSupervisorFactory;
 
         _debugger = new MidGameBehaviourDebugger(debuggingFlagsTracker);
-        _armySupervisors = _regionsTracker.Regions.ToDictionary(region => region, region => new RegionalArmySupervisor(_unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, region));
+        _armySupervisors = _regionsTracker.Regions.ToDictionary(region => region, warSupervisorFactory.CreateRegionalArmySupervisor);
 
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);

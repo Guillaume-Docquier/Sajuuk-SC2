@@ -2,7 +2,6 @@
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
-using Bot.Managers.EconomyManagement.TownHallSupervision;
 using SC2APIProtocol;
 
 namespace Bot.Managers.EconomyManagement;

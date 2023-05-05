@@ -24,6 +24,7 @@ public class ManagerFactory : IManagerFactory {
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IEconomySupervisorFactory _economySupervisorFactory;
     private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
+    private readonly IWarSupervisorFactory _warSupervisorFactory;
 
     public ManagerFactory(
         ITaggingService taggingService,
@@ -37,7 +38,10 @@ public class ManagerFactory : IManagerFactory {
         ICreepTracker creepTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IEconomySupervisorFactory economySupervisorFactory, IScoutSupervisorFactory scoutSupervisorFactory) {
+        IEconomySupervisorFactory economySupervisorFactory,
+        IScoutSupervisorFactory scoutSupervisorFactory,
+        IWarSupervisorFactory warSupervisorFactory
+    ) {
         _taggingService = taggingService;
         _enemyStrategyTracker = enemyStrategyTracker;
         _unitsTracker = unitsTracker;
@@ -51,6 +55,7 @@ public class ManagerFactory : IManagerFactory {
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _economySupervisorFactory = economySupervisorFactory;
         _scoutSupervisorFactory = scoutSupervisorFactory;
+        _warSupervisorFactory = warSupervisorFactory;
     }
 
     public BuildManager CreateBuildManager(IBuildOrder buildOrder) {
@@ -70,7 +75,7 @@ public class ManagerFactory : IManagerFactory {
     }
 
     public WarManager CreateWarManager() {
-        return new WarManager(_taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _scoutSupervisorFactory);
+        return new WarManager(_taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _scoutSupervisorFactory, _warSupervisorFactory);
     }
 
     public CreepManager CreateCreepManager() {

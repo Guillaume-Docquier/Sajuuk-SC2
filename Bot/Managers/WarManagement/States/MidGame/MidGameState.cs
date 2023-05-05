@@ -19,6 +19,7 @@ public class MidGameState : WarManagerState {
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
+    private readonly IWarSupervisorFactory _warSupervisorFactory;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
@@ -32,7 +33,8 @@ public class MidGameState : WarManagerState {
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IScoutSupervisorFactory scoutSupervisorFactory
+        IScoutSupervisorFactory scoutSupervisorFactory,
+        IWarSupervisorFactory warSupervisorFactory
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
@@ -43,12 +45,13 @@ public class MidGameState : WarManagerState {
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _scoutSupervisorFactory = scoutSupervisorFactory;
+        _warSupervisorFactory = warSupervisorFactory;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new MidGameBehaviour(Context, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _scoutSupervisorFactory);
+        _behaviour = new MidGameBehaviour(Context, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _scoutSupervisorFactory, _warSupervisorFactory);
     }
 
     protected override void Execute() {
@@ -73,7 +76,7 @@ public class MidGameState : WarManagerState {
                 _unitsTracker,
                 _terrainTracker,
                 _regionsTracker,
-                _regionsEvaluationsTracker
+                _warSupervisorFactory
             ));
 
             return true;

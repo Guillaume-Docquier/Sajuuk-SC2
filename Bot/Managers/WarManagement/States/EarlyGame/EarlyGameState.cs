@@ -19,6 +19,7 @@ public class EarlyGameState : WarManagerState {
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
+    private readonly IWarSupervisorFactory _warSupervisorFactory;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
@@ -32,7 +33,8 @@ public class EarlyGameState : WarManagerState {
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IScoutSupervisorFactory scoutSupervisorFactory
+        IScoutSupervisorFactory scoutSupervisorFactory,
+        IWarSupervisorFactory warSupervisorFactory
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
@@ -43,12 +45,13 @@ public class EarlyGameState : WarManagerState {
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _scoutSupervisorFactory = scoutSupervisorFactory;
+        _warSupervisorFactory = warSupervisorFactory;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new EarlyGameBehaviour(Context, _taggingService, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker);
+        _behaviour = new EarlyGameBehaviour(Context, _taggingService, _debuggingFlagsTracker, _unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _warSupervisorFactory);
     }
 
     protected override void Execute() {
@@ -74,7 +77,8 @@ public class EarlyGameState : WarManagerState {
                 _terrainTracker,
                 _regionsTracker,
                 _regionsEvaluationsTracker,
-                _scoutSupervisorFactory
+                _scoutSupervisorFactory,
+                _warSupervisorFactory
             ));
 
             return true;

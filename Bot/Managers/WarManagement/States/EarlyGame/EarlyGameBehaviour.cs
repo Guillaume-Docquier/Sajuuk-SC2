@@ -45,12 +45,11 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     public EarlyGameBehaviour(
         WarManager warManager,
         ITaggingService taggingService,
-        IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IWarSupervisorFactory warSupervisorFactory
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
@@ -59,7 +58,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
 
         _debugger = new EarlyGameBehaviourDebugger(debuggingFlagsTracker);
-        DefenseSupervisor = new ArmySupervisor(visibilityTracker, _unitsTracker, terrainTracker, _regionsTracker, _regionsEvaluationsTracker);
+        DefenseSupervisor = warSupervisorFactory.CreateArmySupervisor();
 
         _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);

@@ -25,7 +25,13 @@ public class RegionalArmySupervisor : Supervisor {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
-    public RegionalArmySupervisor(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker, IRegionsTracker regionsTracker, IRegionsEvaluationsTracker regionsEvaluationsTracker, IRegion targetRegion) {
+    public RegionalArmySupervisor(
+        IUnitsTracker unitsTracker,
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker,
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IRegion targetRegion
+    ) {
         _unitsTracker = unitsTracker;
 
         _targetRegion = targetRegion;
