@@ -17,7 +17,15 @@ public abstract class BuildRequest {
     public BuildBlockCondition BlockCondition;
     public BuildRequestPriority Priority;
 
-    protected BuildRequest(BuildType buildType, uint unitOrUpgradeType, int quantity, uint atSupply, bool queue, BuildBlockCondition blockCondition, BuildRequestPriority priority) {
+    protected BuildRequest(
+        BuildType buildType,
+        uint unitOrUpgradeType,
+        int quantity,
+        uint atSupply,
+        bool queue,
+        BuildBlockCondition blockCondition,
+        BuildRequestPriority priority
+    ) {
         BuildType = buildType;
         UnitOrUpgradeType = unitOrUpgradeType;
         AtSupply = atSupply;
@@ -51,11 +59,11 @@ public class QuantityBuildRequest: BuildRequest {
         IUnitsTracker unitsTracker,
         BuildType buildType,
         uint unitOrUpgradeType,
-        int quantity = 1,
-        uint atSupply = 0,
-        bool queue = false,
-        BuildBlockCondition blockCondition = BuildBlockCondition.None,
-        BuildRequestPriority priority = BuildRequestPriority.Normal
+        int quantity,
+        uint atSupply,
+        bool queue,
+        BuildBlockCondition blockCondition,
+        BuildRequestPriority priority
     )
         : base(buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority) {
         _unitsTracker = unitsTracker;
@@ -74,10 +82,10 @@ public class TargetBuildRequest: BuildRequest {
         BuildType buildType,
         uint unitOrUpgradeType,
         int targetQuantity,
-        uint atSupply = 0,
-        bool queue = false,
-        BuildBlockCondition blockCondition = BuildBlockCondition.None,
-        BuildRequestPriority priority = BuildRequestPriority.Normal
+        uint atSupply,
+        bool queue,
+        BuildBlockCondition blockCondition,
+        BuildRequestPriority priority
     )
         : base(buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority) {
         _unitsTracker = unitsTracker;

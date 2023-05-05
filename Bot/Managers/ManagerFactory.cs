@@ -22,6 +22,7 @@ public class ManagerFactory : IManagerFactory {
     private readonly IEconomySupervisorFactory _economySupervisorFactory;
     private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
     private readonly IWarManagerStateFactory _warManagerStateFactory;
+    private readonly IBuildRequestFactory _buildRequestFactory;
 
     public ManagerFactory(
         ITaggingService taggingService,
@@ -35,7 +36,8 @@ public class ManagerFactory : IManagerFactory {
         ICreepTracker creepTracker,
         IEconomySupervisorFactory economySupervisorFactory,
         IScoutSupervisorFactory scoutSupervisorFactory,
-        IWarManagerStateFactory warManagerStateFactory
+        IWarManagerStateFactory warManagerStateFactory,
+        IBuildRequestFactory buildRequestFactory
     ) {
         _taggingService = taggingService;
         _enemyStrategyTracker = enemyStrategyTracker;
@@ -49,6 +51,7 @@ public class ManagerFactory : IManagerFactory {
         _economySupervisorFactory = economySupervisorFactory;
         _scoutSupervisorFactory = scoutSupervisorFactory;
         _warManagerStateFactory = warManagerStateFactory;
+        _buildRequestFactory = buildRequestFactory;
     }
 
     public BuildManager CreateBuildManager(IBuildOrder buildOrder) {
@@ -56,7 +59,7 @@ public class ManagerFactory : IManagerFactory {
     }
 
     public SupplyManager CreateSupplyManager(BuildManager buildManager) {
-        return new SupplyManager(buildManager, _unitsTracker);
+        return new SupplyManager(buildManager, _unitsTracker, _buildRequestFactory);
     }
 
     public ScoutManager CreateScoutManager() {
@@ -64,7 +67,7 @@ public class ManagerFactory : IManagerFactory {
     }
 
     public EconomyManager CreateEconomyManager(BuildManager buildManager) {
-        return new EconomyManager(buildManager, _unitsTracker, _terrainTracker, _buildingTracker, _regionsTracker, _creepTracker, _economySupervisorFactory);
+        return new EconomyManager(buildManager, _unitsTracker, _terrainTracker, _buildingTracker, _regionsTracker, _creepTracker, _economySupervisorFactory, _buildRequestFactory);
     }
 
     public WarManager CreateWarManager() {
@@ -76,6 +79,6 @@ public class ManagerFactory : IManagerFactory {
     }
 
     public UpgradesManager CreateUpgradesManager() {
-        return new UpgradesManager(_unitsTracker);
+        return new UpgradesManager(_unitsTracker, _buildRequestFactory);
     }
 }

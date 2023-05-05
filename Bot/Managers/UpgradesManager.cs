@@ -9,6 +9,7 @@ namespace Bot.Managers;
 
 public class UpgradesManager : UnitlessManager {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IBuildRequestFactory _buildRequestFactory;
 
     private readonly HashSet<uint> _requestedUpgrades = new HashSet<uint>();
 
@@ -16,10 +17,11 @@ public class UpgradesManager : UnitlessManager {
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(request => request.Fulfillment);
 
-    public UpgradesManager(IUnitsTracker unitsTracker) {
+    public UpgradesManager(IUnitsTracker unitsTracker, IBuildRequestFactory buildRequestFactory) {
         _unitsTracker = unitsTracker;
+        _buildRequestFactory = buildRequestFactory;
 
-        _evolutionChamberBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Build, Units.EvolutionChamber, targetQuantity: 0);
+        _evolutionChamberBuildRequest = _buildRequestFactory.CreateTargetBuildRequest(BuildType.Build, Units.EvolutionChamber, targetQuantity: 0);
         _buildRequests.Add(_evolutionChamberBuildRequest);
     }
 
@@ -64,7 +66,7 @@ public class UpgradesManager : UnitlessManager {
 
         if (roachCount >= 12) {
             _evolutionChamberBuildRequest.Requested = 1;
-            _buildRequests.Add(new TargetBuildRequest(_unitsTracker, BuildType.Research, Upgrades.ZergGroundArmorsLevel1, targetQuantity: 1));
+            _buildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.Research, Upgrades.ZergGroundArmorsLevel1, targetQuantity: 1));
             _requestedUpgrades.Add(Upgrades.ZergGroundArmorsLevel1);
         }
     }
@@ -93,8 +95,8 @@ public class UpgradesManager : UnitlessManager {
         }
 
         if (roachCount >= 27) {
-            _buildRequests.Add(new TargetBuildRequest(_unitsTracker, BuildType.Research, Upgrades.ZergMissileWeaponsLevel2, targetQuantity: 1));
-            _buildRequests.Add(new TargetBuildRequest(_unitsTracker, BuildType.Research, Upgrades.ZergGroundArmorsLevel2,   targetQuantity: 1));
+            _buildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.Research, Upgrades.ZergMissileWeaponsLevel2, targetQuantity: 1));
+            _buildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.Research, Upgrades.ZergGroundArmorsLevel2,   targetQuantity: 1));
             _requestedUpgrades.Add(Upgrades.ZergMissileWeaponsLevel2);
             _requestedUpgrades.Add(Upgrades.ZergGroundArmorsLevel2);
         }
@@ -110,10 +112,10 @@ public class UpgradesManager : UnitlessManager {
         }
 
         if (roachCount >= 40) {
-            _buildRequests.Add(new TargetBuildRequest  (_unitsTracker, BuildType.Build,       Units.InfestationPit,              targetQuantity: 1));
-            _buildRequests.Add(new TargetBuildRequest  (_unitsTracker, BuildType.UpgradeInto, Units.Hive,                        targetQuantity: 1));
-            _buildRequests.Add(new TargetBuildRequest  (_unitsTracker, BuildType.Research,    Upgrades.ZergMissileWeaponsLevel3, targetQuantity: 1));
-            _buildRequests.Add(new TargetBuildRequest  (_unitsTracker, BuildType.Research,    Upgrades.ZergGroundArmorsLevel3,   targetQuantity: 1));
+            _buildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.Build,       Units.InfestationPit,              targetQuantity: 1));
+            _buildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.UpgradeInto, Units.Hive,                        targetQuantity: 1));
+            _buildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.Research,    Upgrades.ZergMissileWeaponsLevel3, targetQuantity: 1));
+            _buildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.Research,    Upgrades.ZergGroundArmorsLevel3,   targetQuantity: 1));
             _requestedUpgrades.Add(Upgrades.ZergMissileWeaponsLevel3);
             _requestedUpgrades.Add(Upgrades.ZergGroundArmorsLevel3);
         }

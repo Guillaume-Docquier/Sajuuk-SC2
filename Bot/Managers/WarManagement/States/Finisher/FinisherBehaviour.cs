@@ -25,6 +25,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
+    private readonly IBuildRequestFactory _buildRequestFactory;
 
     private readonly FinisherBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
@@ -51,7 +52,8 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
-        IWarSupervisorFactory warSupervisorFactory
+        IWarSupervisorFactory warSupervisorFactory,
+        IBuildRequestFactory buildRequestFactory
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
@@ -60,13 +62,14 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
+        _buildRequestFactory = buildRequestFactory;
 
         _debugger = new FinisherBehaviourDebugger(debuggingFlagsTracker);
         AttackSupervisor = warSupervisorFactory.CreateArmySupervisor();
         TerranFinisherSupervisor = warSupervisorFactory.CreateArmySupervisor();
 
-        _corruptorsBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Corruptor, targetQuantity: 0, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
-        _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Normal);
+        _corruptorsBuildRequest = _buildRequestFactory.CreateTargetBuildRequest(BuildType.Train, Units.Corruptor, targetQuantity: 0, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All);
+        _armyBuildRequest = _buildRequestFactory.CreateTargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Normal);
         BuildRequests.Add(_armyBuildRequest);
 
         Assigner = new WarManagerAssigner<FinisherBehaviour>(this, _unitsTracker);
@@ -142,7 +145,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
             return;
         }
 
-        BuildRequests.Add(new TargetBuildRequest(_unitsTracker, BuildType.Build, Units.Spire, targetQuantity: 1, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All));
+        BuildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.Build, Units.Spire, targetQuantity: 1, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All));
 
         _corruptorsBuildRequest.Requested = 10;
         BuildRequests.Add(_corruptorsBuildRequest);

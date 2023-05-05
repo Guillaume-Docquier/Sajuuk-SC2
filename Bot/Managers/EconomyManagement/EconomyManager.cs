@@ -53,7 +53,8 @@ public sealed partial class EconomyManager : Manager {
         IBuildingTracker buildingTracker,
         IRegionsTracker regionsTracker,
         ICreepTracker creepTracker,
-        IEconomySupervisorFactory economySupervisorFactory
+        IEconomySupervisorFactory economySupervisorFactory,
+        IBuildRequestFactory buildRequestFactory
     ) {
         _buildManager = buildManager;
         _unitsTracker = unitsTracker;
@@ -67,20 +68,20 @@ public sealed partial class EconomyManager : Manager {
         Dispatcher = new EconomyManagerDispatcher(this);
         Releaser = new EconomyManagerReleaser(this);
 
-        _expandBuildRequest = new QuantityBuildRequest(_unitsTracker, BuildType.Expand, Units.Hatchery, quantity: 0, blockCondition: BuildBlockCondition.MissingResources, priority: BuildRequestPriority.High);
+        _expandBuildRequest = buildRequestFactory.CreateQuantityBuildRequest(BuildType.Expand, Units.Hatchery, quantity: 0, blockCondition: BuildBlockCondition.MissingResources, priority: BuildRequestPriority.High);
         _buildRequests.Add(_expandBuildRequest);
 
         // TODO GD Need to differentiate macro and mining townhalls
-        _macroHatchBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Build, Units.Hatchery, targetQuantity: _townHalls.Count);
+        _macroHatchBuildRequest = buildRequestFactory.CreateTargetBuildRequest(BuildType.Build, Units.Hatchery, targetQuantity: _townHalls.Count);
         _buildRequests.Add(_macroHatchBuildRequest);
 
-        _queenBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Queen, targetQuantity: 0);
+        _queenBuildRequest = buildRequestFactory.CreateTargetBuildRequest(BuildType.Train, Units.Queen, targetQuantity: 0);
         _buildRequests.Add(_queenBuildRequest);
 
-        _extractorsBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Build, Units.Extractor, targetQuantity: 0);
+        _extractorsBuildRequest = buildRequestFactory.CreateTargetBuildRequest(BuildType.Build, Units.Extractor, targetQuantity: 0);
         _buildRequests.Add(_extractorsBuildRequest);
 
-        _dronesBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Drone, targetQuantity: 0);
+        _dronesBuildRequest = buildRequestFactory.CreateTargetBuildRequest(BuildType.Train, Units.Drone, targetQuantity: 0);
         _buildRequests.Add(_dronesBuildRequest);
     }
 

@@ -67,6 +67,7 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
         IBuildingTracker buildingTracker,
         IRegionsTracker regionsTracker,
         ICreepTracker creepTracker,
+        IBuildRequestFactory buildRequestFactory,
         Unit townHall,
         Color color
     ) {
@@ -87,7 +88,7 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
         Assign(DiscoverExtractors(_unitsTracker.OwnedUnits));
 
         // TODO GD atSupply for expands depends on the build order, maybe only after the BO is finished instead?
-        _expandBuildRequest = new QuantityBuildRequest(_unitsTracker, BuildType.Expand, Units.Hatchery, atSupply: 75, quantity: 0, blockCondition: BuildBlockCondition.MissingResources, priority: BuildRequestPriority.High);
+        _expandBuildRequest = buildRequestFactory.CreateQuantityBuildRequest(BuildType.Expand, Units.Hatchery, atSupply: 75, quantity: 0, blockCondition: BuildBlockCondition.MissingResources, priority: BuildRequestPriority.High);
         _buildStepRequests.Add(_expandBuildRequest);
 
         // You're a macro hatch

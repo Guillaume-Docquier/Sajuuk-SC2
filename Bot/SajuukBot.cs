@@ -19,6 +19,8 @@ public class SajuukBot : PoliteBot {
     private readonly List<Manager> _managers = new List<Manager>();
 
     private readonly IManagerFactory _managerFactory;
+    private readonly IBuildRequestFactory _buildRequestFactory;
+
     private readonly IBotDebugger _debugger;
 
     public override string Name => "Sajuuk";
@@ -31,9 +33,12 @@ public class SajuukBot : PoliteBot {
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IManagerFactory managerFactory,
+        IBuildRequestFactory buildRequestFactory,
         IBotDebugger botDebugger
     ) : base(version, scenarios, taggingService, unitsTracker, terrainTracker) {
         _managerFactory = managerFactory;
+        _buildRequestFactory = buildRequestFactory;
+
         _debugger = botDebugger;
     }
 
@@ -64,7 +69,7 @@ public class SajuukBot : PoliteBot {
     }
 
     private void InitManagers() {
-        var buildManager = _managerFactory.CreateBuildManager(new TwoBasesRoach(UnitsTracker));
+        var buildManager = _managerFactory.CreateBuildManager(new TwoBasesRoach(UnitsTracker, _buildRequestFactory));
         _managers.Add(buildManager);
 
         _managers.Add(_managerFactory.CreateSupplyManager(buildManager));
@@ -196,6 +201,6 @@ public class SajuukBot : PoliteBot {
             return;
         }
 
-        Controller.ExecuteBuildStep(new QuantityBuildRequest(UnitsTracker, BuildType.Train, Units.Overlord).Fulfillment);
+        Controller.ExecuteBuildStep(_buildRequestFactory.CreateQuantityBuildRequest(BuildType.Train, Units.Overlord).Fulfillment);
     }
 }

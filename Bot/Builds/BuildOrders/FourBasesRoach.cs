@@ -21,36 +21,36 @@ public class FourBasesRoach : IBuildOrder {
     private List<BuildRequest> _buildRequests;
     public IReadOnlyCollection<BuildRequest> BuildRequests => _buildRequests;
 
-    public FourBasesRoach(IUnitsTracker unitsTracker) {
+    public FourBasesRoach(IUnitsTracker unitsTracker, IBuildRequestFactory buildRequestFactory) {
         _unitsTracker = unitsTracker;
 
         _buildRequests = new List<BuildRequest>
         {
-            new TargetBuildRequest  (_unitsTracker, BuildType.Train,       Units.Overlord,                    atSupply: 14, targetQuantity: 2),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Train,       Units.Overlord,                    atSupply: 14, targetQuantity: 2),
             // TODO GD The build requests are sorted by supply, so the pool and extractor actually get built before the hatch.
-            new QuantityBuildRequest(_unitsTracker, BuildType.Expand,      Units.Hatchery,                    atSupply: 17),                    // TODO GD Need to be able to say 1 expand as opposed to 2 hatcheries
-            new TargetBuildRequest  (_unitsTracker, BuildType.Build,       Units.SpawningPool,                atSupply: 16, targetQuantity: 1),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Build,       Units.Extractor,                   atSupply: 17, targetQuantity: 1),
-            new QuantityBuildRequest(_unitsTracker, BuildType.Expand,      Units.Hatchery,                    atSupply: 19),
-            new QuantityBuildRequest(_unitsTracker, BuildType.Train,       Units.Zergling,                    atSupply: 22, quantity: 1),
-            new QuantityBuildRequest(_unitsTracker, BuildType.Expand,      Units.Hatchery,                    atSupply: 24),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Build,       Units.EvolutionChamber,            atSupply: 28, targetQuantity: 1),
-            new TargetBuildRequest  (_unitsTracker, BuildType.UpgradeInto, Units.Lair,                        atSupply: 27, targetQuantity: 1),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Build,       Units.RoachWarren,                 atSupply: 31, targetQuantity: 1),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Research,    Upgrades.ZergMissileWeaponsLevel1, atSupply: 30, targetQuantity: 1),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Train,       Units.Queen,                       atSupply: 30, targetQuantity: 1),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Build,       Units.Extractor,                   atSupply: 33, targetQuantity: 2),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Train,       Units.Overlord,                    atSupply: 34, targetQuantity: 3),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Research,    Upgrades.TunnelingClaws,           atSupply: 41, targetQuantity: 1),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Train,       Units.Overlord,                    atSupply: 42, targetQuantity: 4),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Research,    Upgrades.Burrow,                   atSupply: 42, targetQuantity: 1),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Train,       Units.Overlord,                    atSupply: 50, targetQuantity: 5),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Train,       Units.Overlord,                    atSupply: 54, targetQuantity: 7),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Train,       Units.Queen,                       atSupply: 54, targetQuantity: 3),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Train,       Units.Roach,                       atSupply: 58, targetQuantity: 2),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Train,       Units.Overlord,                    atSupply: 62, targetQuantity: 7),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Train,       Units.Roach,                       atSupply: 62, targetQuantity: 9),
-            new TargetBuildRequest  (_unitsTracker, BuildType.Research,    Upgrades.GlialReconstitution,      atSupply: 80, targetQuantity: 1),
+            buildRequestFactory.CreateQuantityBuildRequest(BuildType.Expand,      Units.Hatchery,                    atSupply: 17),                    // TODO GD Need to be able to say 1 expand as opposed to 2 hatcheries
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Build,       Units.SpawningPool,                atSupply: 16, targetQuantity: 1),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 17, targetQuantity: 1),
+            buildRequestFactory.CreateQuantityBuildRequest(BuildType.Expand,      Units.Hatchery,                    atSupply: 19),
+            buildRequestFactory.CreateQuantityBuildRequest(BuildType.Train,       Units.Zergling,                    atSupply: 22, quantity: 1),
+            buildRequestFactory.CreateQuantityBuildRequest(BuildType.Expand,      Units.Hatchery,                    atSupply: 24),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Build,       Units.EvolutionChamber,            atSupply: 28, targetQuantity: 1),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.UpgradeInto, Units.Lair,                        atSupply: 27, targetQuantity: 1),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Build,       Units.RoachWarren,                 atSupply: 31, targetQuantity: 1),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Research,    Upgrades.ZergMissileWeaponsLevel1, atSupply: 30, targetQuantity: 1),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Train,       Units.Queen,                       atSupply: 30, targetQuantity: 1),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 33, targetQuantity: 2),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Train,       Units.Overlord,                    atSupply: 34, targetQuantity: 3),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Research,    Upgrades.TunnelingClaws,           atSupply: 41, targetQuantity: 1),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Train,       Units.Overlord,                    atSupply: 42, targetQuantity: 4),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Research,    Upgrades.Burrow,                   atSupply: 42, targetQuantity: 1),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Train,       Units.Overlord,                    atSupply: 50, targetQuantity: 5),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Train,       Units.Overlord,                    atSupply: 54, targetQuantity: 7),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Train,       Units.Queen,                       atSupply: 54, targetQuantity: 3),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Train,       Units.Roach,                       atSupply: 58, targetQuantity: 2),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Train,       Units.Overlord,                    atSupply: 62, targetQuantity: 7),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Train,       Units.Roach,                       atSupply: 62, targetQuantity: 9),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Research,    Upgrades.GlialReconstitution,      atSupply: 80, targetQuantity: 1),
         };
 
         foreach (var buildRequest in _buildRequests) {

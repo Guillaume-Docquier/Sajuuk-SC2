@@ -23,12 +23,12 @@ public class SupplyManager : UnitlessManager {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
-    public SupplyManager(BuildManager buildManager, IUnitsTracker unitsTracker) {
+    public SupplyManager(BuildManager buildManager, IUnitsTracker unitsTracker, IBuildRequestFactory buildRequestFactory) {
         _unitsTracker = unitsTracker;
 
         _buildManager = buildManager;
 
-        _overlordsBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Overlord, 0, priority: BuildRequestPriority.High);
+        _overlordsBuildRequest = buildRequestFactory.CreateTargetBuildRequest(BuildType.Train, Units.Overlord, 0, priority: BuildRequestPriority.High);
         _buildRequests.Add(_overlordsBuildRequest);
     }
 

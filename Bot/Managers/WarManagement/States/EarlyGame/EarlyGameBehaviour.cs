@@ -27,6 +27,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+    private readonly IBuildRequestFactory _buildRequestFactory;
 
     private BuildRequest _armyBuildRequest;
 
@@ -49,18 +50,20 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         IUnitsTracker unitsTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IWarSupervisorFactory warSupervisorFactory
+        IWarSupervisorFactory warSupervisorFactory,
+        IBuildRequestFactory buildRequestFactory
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
         _unitsTracker = unitsTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
+        _buildRequestFactory = buildRequestFactory;
 
         _debugger = new EarlyGameBehaviourDebugger(debuggingFlagsTracker);
         DefenseSupervisor = warSupervisorFactory.CreateArmySupervisor();
 
-        _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
+        _armyBuildRequest = _buildRequestFactory.CreateTargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);
 
         Assigner = new WarManagerAssigner<EarlyGameBehaviour>(this, _unitsTracker);
@@ -205,7 +208,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         if (_armyBuildRequest.UnitOrUpgradeType != unitTypeToProduce) {
             BuildRequests.Remove(_armyBuildRequest);
 
-            _armyBuildRequest = new TargetBuildRequest(_unitsTracker, BuildType.Train, unitTypeToProduce, targetQuantity: 100, priority: BuildRequestPriority.Low);
+            _armyBuildRequest = _buildRequestFactory.CreateTargetBuildRequest(BuildType.Train, unitTypeToProduce, targetQuantity: 100, priority: BuildRequestPriority.Low);
             BuildRequests.Add(_armyBuildRequest);
         }
 
