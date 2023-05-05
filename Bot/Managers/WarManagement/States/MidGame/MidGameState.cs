@@ -3,6 +3,7 @@ using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
+using Bot.Managers.ScoutManagement;
 using Bot.Managers.WarManagement.States.Finisher;
 using Bot.Tagging;
 
@@ -17,6 +18,7 @@ public class MidGameState : WarManagerState {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+    private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
@@ -29,7 +31,8 @@ public class MidGameState : WarManagerState {
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IScoutSupervisorFactory scoutSupervisorFactory
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
@@ -39,12 +42,13 @@ public class MidGameState : WarManagerState {
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
+        _scoutSupervisorFactory = scoutSupervisorFactory;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
 
     protected override void OnContextSet() {
-        _behaviour = new MidGameBehaviour(Context, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker);
+        _behaviour = new MidGameBehaviour(Context, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _scoutSupervisorFactory);
     }
 
     protected override void Execute() {

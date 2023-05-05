@@ -8,6 +8,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
+using Bot.Managers.ScoutManagement;
 using Bot.Managers.ScoutManagement.ScoutingSupervision;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
@@ -36,6 +37,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+    private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
 
     private readonly MidGameBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
@@ -57,7 +59,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IScoutSupervisorFactory scoutSupervisorFactory
     ) {
         _warManager = warManager;
         _visibilityTracker = visibilityTracker;
@@ -65,6 +68,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
+        _scoutSupervisorFactory = scoutSupervisorFactory;
 
         _debugger = new MidGameBehaviourDebugger(debuggingFlagsTracker);
         _armySupervisors = _regionsTracker.Regions.ToDictionary(region => region, region => new RegionalArmySupervisor(_unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, region));
@@ -177,7 +181,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
         foreach (var expandToScout in expandsToScout) {
             var scoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _terrainTracker, expandToScout.Position, priority: 0, maxScouts: 1);
-            var scoutingSupervisor = new ScoutSupervisor(_unitsTracker, scoutingTask);
+            var scoutingSupervisor = _scoutSupervisorFactory.CreateScoutSupervisor(scoutingTask);
 
             _scoutSupervisors.Add(scoutingSupervisor);
         }

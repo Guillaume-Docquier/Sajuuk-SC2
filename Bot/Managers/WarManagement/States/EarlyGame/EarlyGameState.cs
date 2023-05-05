@@ -1,6 +1,7 @@
 ﻿using Bot.Debugging;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
+using Bot.Managers.ScoutManagement;
 using Bot.Tagging;
 using Bot.Utils;
 
@@ -17,6 +18,7 @@ public class EarlyGameState : WarManagerState {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+    private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
@@ -29,7 +31,8 @@ public class EarlyGameState : WarManagerState {
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IScoutSupervisorFactory scoutSupervisorFactory
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
@@ -39,6 +42,7 @@ public class EarlyGameState : WarManagerState {
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
+        _scoutSupervisorFactory = scoutSupervisorFactory;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
@@ -69,7 +73,8 @@ public class EarlyGameState : WarManagerState {
                 _unitsTracker,
                 _terrainTracker,
                 _regionsTracker,
-                _regionsEvaluationsTracker
+                _regionsEvaluationsTracker,
+                _scoutSupervisorFactory
             ));
 
             return true;

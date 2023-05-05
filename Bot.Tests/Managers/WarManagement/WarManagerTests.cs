@@ -2,6 +2,7 @@
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
+using Bot.Managers.ScoutManagement;
 using Bot.Tagging;
 using Bot.Tests.Mocks;
 using Moq;
@@ -17,6 +18,7 @@ public class WarManagerTests : BaseTestClass {
     private readonly Mock<ITerrainTracker> _terrainTrackerMock;
     private readonly Mock<IRegionsTracker> _regionsTrackerMock;
     private readonly Mock<IRegionsEvaluationsTracker> _regionsEvaluationsTrackerMock;
+    private readonly Mock<IScoutSupervisorFactory> _scoutSupervisorFactoryMock;
 
     public WarManagerTests() {
         _taggingServiceMock = new Mock<ITaggingService>();
@@ -27,6 +29,7 @@ public class WarManagerTests : BaseTestClass {
         _terrainTrackerMock = new Mock<ITerrainTracker>();
         _regionsTrackerMock = new Mock<IRegionsTracker>();
         _regionsEvaluationsTrackerMock = new Mock<IRegionsEvaluationsTracker>();
+        _scoutSupervisorFactoryMock = new Mock<IScoutSupervisorFactory>();
     }
 
     [Fact(Skip = "Wait for DI refactor to be done")]
@@ -40,7 +43,8 @@ public class WarManagerTests : BaseTestClass {
             _unitsTracker,
             _terrainTrackerMock.Object,
             _regionsTrackerMock.Object,
-            _regionsEvaluationsTrackerMock.Object
+            _regionsEvaluationsTrackerMock.Object,
+            _scoutSupervisorFactoryMock.Object
         );
 
         var militaryUnits = Units.ZergMilitary
@@ -68,7 +72,8 @@ public class WarManagerTests : BaseTestClass {
             _unitsTracker,
             _terrainTrackerMock.Object,
             _regionsTrackerMock.Object,
-            _regionsEvaluationsTrackerMock.Object
+            _regionsEvaluationsTrackerMock.Object,
+            _scoutSupervisorFactoryMock.Object
         );
         // TODO UnitsTracker
 

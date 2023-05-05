@@ -14,6 +14,7 @@ public partial class ScoutManager : Manager {
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
+    private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
@@ -29,11 +30,13 @@ public partial class ScoutManager : Manager {
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
-        IRegionsTracker regionsTracker
+        IRegionsTracker regionsTracker,
+        IScoutSupervisorFactory scoutSupervisorFactory
     ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
+        _scoutSupervisorFactory = scoutSupervisorFactory;
 
         Assigner = new ScoutManagerAssigner(this);
         Dispatcher = new ScoutManagerDispatcher(this);
@@ -52,7 +55,7 @@ public partial class ScoutManager : Manager {
         ClearCompletedTasks();
 
         foreach (var scoutingTask in _scoutingStrategy.GetNextScoutingTasks()) {
-            _scoutSupervisors.Add(new ScoutSupervisor(_unitsTracker, scoutingTask));
+            _scoutSupervisors.Add(_scoutSupervisorFactory.CreateScoutSupervisor(scoutingTask));
         }
 
         // TODO GD Reassign as we go to avoid selecting a scout that is super far while a nearby one just finished work

@@ -23,6 +23,7 @@ public class ManagerFactory : IManagerFactory {
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IEconomySupervisorFactory _economySupervisorFactory;
+    private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
 
     public ManagerFactory(
         ITaggingService taggingService,
@@ -36,8 +37,7 @@ public class ManagerFactory : IManagerFactory {
         ICreepTracker creepTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IEconomySupervisorFactory economySupervisorFactory
-    ) {
+        IEconomySupervisorFactory economySupervisorFactory, IScoutSupervisorFactory scoutSupervisorFactory) {
         _taggingService = taggingService;
         _enemyStrategyTracker = enemyStrategyTracker;
         _unitsTracker = unitsTracker;
@@ -50,6 +50,7 @@ public class ManagerFactory : IManagerFactory {
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _economySupervisorFactory = economySupervisorFactory;
+        _scoutSupervisorFactory = scoutSupervisorFactory;
     }
 
     public BuildManager CreateBuildManager(IBuildOrder buildOrder) {
@@ -61,7 +62,7 @@ public class ManagerFactory : IManagerFactory {
     }
 
     public ScoutManager CreateScoutManager() {
-        return new ScoutManager(_enemyRaceTracker, _visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker);
+        return new ScoutManager(_enemyRaceTracker, _visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _scoutSupervisorFactory);
     }
 
     public EconomyManager CreateEconomyManager(BuildManager buildManager) {
@@ -69,7 +70,7 @@ public class ManagerFactory : IManagerFactory {
     }
 
     public WarManager CreateWarManager() {
-        return new WarManager(_taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker);
+        return new WarManager(_taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _scoutSupervisorFactory);
     }
 
     public CreepManager CreateCreepManager() {

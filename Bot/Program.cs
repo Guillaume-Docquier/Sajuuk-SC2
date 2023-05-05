@@ -9,6 +9,7 @@ using Bot.GameSense.EnemyStrategyTracking;
 using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers;
 using Bot.Managers.EconomyManagement;
+using Bot.Managers.ScoutManagement;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
@@ -142,6 +143,10 @@ public class Program {
             CreepTracker.Instance
         );
 
+        var scoutSupervisorFactory = new ScoutSupervisorFactory(
+            UnitsTracker.Instance
+        );
+
         var managerFactory = new ManagerFactory(
             TaggingService.Instance,
             EnemyStrategyTracker.Instance,
@@ -154,7 +159,8 @@ public class Program {
             CreepTracker.Instance,
             DebuggingFlagsTracker.Instance,
             RegionsEvaluationsTracker.Instance,
-            economySupervisorFactory
+            economySupervisorFactory,
+            scoutSupervisorFactory
         );
 
         var botDebugger = new BotDebugger(

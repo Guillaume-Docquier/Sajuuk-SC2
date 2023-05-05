@@ -4,6 +4,7 @@ using Bot.Builds;
 using Bot.Debugging;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
+using Bot.Managers.ScoutManagement;
 using Bot.Managers.WarManagement.States;
 using Bot.Managers.WarManagement.States.EarlyGame;
 using Bot.StateManagement;
@@ -40,11 +41,12 @@ public class WarManager: Manager {
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IScoutSupervisorFactory scoutSupervisorFactory
     ) {
         _stateMachine = new StateMachine<WarManager, WarManagerState>(
             this,
-            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker)
+            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker, scoutSupervisorFactory)
         );
     }
 
