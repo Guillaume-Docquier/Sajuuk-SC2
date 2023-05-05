@@ -4,14 +4,10 @@ using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers.ScoutManagement;
-using Bot.Managers.WarManagement.States.Finisher;
-using Bot.Tagging;
 
 namespace Bot.Managers.WarManagement.States.MidGame;
 
 public class MidGameState : WarManagerState {
-    private readonly ITaggingService _taggingService;
-    private readonly IEnemyRaceTracker _enemyRaceTracker;
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
@@ -20,13 +16,12 @@ public class MidGameState : WarManagerState {
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
     private readonly IWarSupervisorFactory _warSupervisorFactory;
+    private readonly IWarManagerStateFactory _warManagerStateFactory;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
 
     public MidGameState(
-        ITaggingService taggingService,
-        IEnemyRaceTracker enemyRaceTracker,
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
@@ -34,10 +29,9 @@ public class MidGameState : WarManagerState {
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
         IScoutSupervisorFactory scoutSupervisorFactory,
-        IWarSupervisorFactory warSupervisorFactory
+        IWarSupervisorFactory warSupervisorFactory,
+        IWarManagerStateFactory warManagerStateFactory
     ) {
-        _taggingService = taggingService;
-        _enemyRaceTracker = enemyRaceTracker;
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
@@ -46,6 +40,7 @@ public class MidGameState : WarManagerState {
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _scoutSupervisorFactory = scoutSupervisorFactory;
         _warSupervisorFactory = warSupervisorFactory;
+        _warManagerStateFactory = warManagerStateFactory;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
@@ -68,16 +63,7 @@ public class MidGameState : WarManagerState {
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new FinisherState(
-                _taggingService,
-                _enemyRaceTracker,
-                _visibilityTracker,
-                _debuggingFlagsTracker,
-                _unitsTracker,
-                _terrainTracker,
-                _regionsTracker,
-                _warSupervisorFactory
-            ));
+            StateMachine.TransitionTo(_warManagerStateFactory.CreateFinisherState());
 
             return true;
         }

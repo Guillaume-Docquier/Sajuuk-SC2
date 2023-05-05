@@ -1,11 +1,10 @@
 ﻿using Bot.Builds;
-using Bot.Debugging;
 using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
-using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
 using Bot.Managers.WarManagement;
+using Bot.Managers.WarManagement.States;
 using Bot.Tagging;
 
 namespace Bot.Managers;
@@ -20,11 +19,9 @@ public class ManagerFactory : IManagerFactory {
     private readonly IRegionsTracker _regionsTracker;
     private readonly IBuildingTracker _buildingTracker;
     private readonly ICreepTracker _creepTracker;
-    private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
-    private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IEconomySupervisorFactory _economySupervisorFactory;
     private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
-    private readonly IWarSupervisorFactory _warSupervisorFactory;
+    private readonly IWarManagerStateFactory _warManagerStateFactory;
 
     public ManagerFactory(
         ITaggingService taggingService,
@@ -36,11 +33,9 @@ public class ManagerFactory : IManagerFactory {
         IRegionsTracker regionsTracker,
         IBuildingTracker buildingTracker,
         ICreepTracker creepTracker,
-        IDebuggingFlagsTracker debuggingFlagsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker,
         IEconomySupervisorFactory economySupervisorFactory,
         IScoutSupervisorFactory scoutSupervisorFactory,
-        IWarSupervisorFactory warSupervisorFactory
+        IWarManagerStateFactory warManagerStateFactory
     ) {
         _taggingService = taggingService;
         _enemyStrategyTracker = enemyStrategyTracker;
@@ -51,11 +46,9 @@ public class ManagerFactory : IManagerFactory {
         _regionsTracker = regionsTracker;
         _buildingTracker = buildingTracker;
         _creepTracker = creepTracker;
-        _debuggingFlagsTracker = debuggingFlagsTracker;
-        _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _economySupervisorFactory = economySupervisorFactory;
         _scoutSupervisorFactory = scoutSupervisorFactory;
-        _warSupervisorFactory = warSupervisorFactory;
+        _warManagerStateFactory = warManagerStateFactory;
     }
 
     public BuildManager CreateBuildManager(IBuildOrder buildOrder) {
@@ -75,7 +68,7 @@ public class ManagerFactory : IManagerFactory {
     }
 
     public WarManager CreateWarManager() {
-        return new WarManager(_taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _scoutSupervisorFactory, _warSupervisorFactory);
+        return new WarManager(_warManagerStateFactory);
     }
 
     public CreepManager CreateCreepManager() {

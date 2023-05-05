@@ -1,7 +1,6 @@
 ﻿using Bot.Debugging;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
-using Bot.Managers.ScoutManagement;
 using Bot.Tagging;
 using Bot.Utils;
 
@@ -11,41 +10,32 @@ public class EarlyGameState : WarManagerState {
     private const int EarlyGameEndInSeconds = (int)(5 * 60);
 
     private readonly ITaggingService _taggingService;
-    private readonly IEnemyRaceTracker _enemyRaceTracker;
-    private readonly IVisibilityTracker _visibilityTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
-    private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
-    private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
     private readonly IWarSupervisorFactory _warSupervisorFactory;
+    private readonly IWarManagerStateFactory _warManagerStateFactory;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
 
     public EarlyGameState(
         ITaggingService taggingService,
-        IEnemyRaceTracker enemyRaceTracker,
-        IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IScoutSupervisorFactory scoutSupervisorFactory,
-        IWarSupervisorFactory warSupervisorFactory
+        IWarSupervisorFactory warSupervisorFactory,
+        IWarManagerStateFactory warManagerStateFactory
     ) {
         _taggingService = taggingService;
-        _enemyRaceTracker = enemyRaceTracker;
-        _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
-        _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
-        _scoutSupervisorFactory = scoutSupervisorFactory;
         _warSupervisorFactory = warSupervisorFactory;
+        _warManagerStateFactory = warManagerStateFactory;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
@@ -68,18 +58,7 @@ public class EarlyGameState : WarManagerState {
 
     protected override bool TryTransitioning() {
         if (_transitionState == TransitionState.TransitionComplete) {
-            StateMachine.TransitionTo(new MidGame.MidGameState(
-                _taggingService,
-                _enemyRaceTracker,
-                _visibilityTracker,
-                _debuggingFlagsTracker,
-                _unitsTracker,
-                _terrainTracker,
-                _regionsTracker,
-                _regionsEvaluationsTracker,
-                _scoutSupervisorFactory,
-                _warSupervisorFactory
-            ));
+            StateMachine.TransitionTo(_warManagerStateFactory.CreateMidGameState());
 
             return true;
         }

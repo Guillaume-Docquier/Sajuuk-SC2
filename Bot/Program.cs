@@ -11,6 +11,7 @@ using Bot.Managers;
 using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
 using Bot.Managers.WarManagement;
+using Bot.Managers.WarManagement.States;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
@@ -156,6 +157,19 @@ public class Program {
             RegionsEvaluationsTracker.Instance
         );
 
+        var warManagerStateFactory = new WarManagerStateFactory(
+            TaggingService.Instance,
+            EnemyRaceTracker.Instance,
+            VisibilityTracker.Instance,
+            DebuggingFlagsTracker.Instance,
+            UnitsTracker.Instance,
+            TerrainTracker.Instance,
+            RegionsTracker.Instance,
+            RegionsEvaluationsTracker.Instance,
+            scoutSupervisorFactory,
+            warSupervisorFactory
+        );
+
         var managerFactory = new ManagerFactory(
             TaggingService.Instance,
             EnemyStrategyTracker.Instance,
@@ -166,11 +180,9 @@ public class Program {
             RegionsTracker.Instance,
             BuildingTracker.Instance,
             CreepTracker.Instance,
-            DebuggingFlagsTracker.Instance,
-            RegionsEvaluationsTracker.Instance,
             economySupervisorFactory,
             scoutSupervisorFactory,
-            warSupervisorFactory
+            warManagerStateFactory
         );
 
         var botDebugger = new BotDebugger(

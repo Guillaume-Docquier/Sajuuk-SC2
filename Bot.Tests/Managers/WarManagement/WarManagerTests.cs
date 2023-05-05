@@ -1,55 +1,23 @@
-﻿using Bot.Debugging;
-using Bot.GameData;
-using Bot.GameSense;
-using Bot.GameSense.RegionsEvaluationsTracking;
-using Bot.Managers.ScoutManagement;
-using Bot.Managers.WarManagement;
-using Bot.Tagging;
+﻿using Bot.GameData;
+using Bot.Managers.WarManagement.States;
 using Bot.Tests.Mocks;
 using Moq;
 
 namespace Bot.Tests.Managers.WarManagement;
 
 public class WarManagerTests : BaseTestClass {
-    private readonly Mock<ITaggingService> _taggingServiceMock;
-    private readonly Mock<IEnemyRaceTracker> _enemyRaceTrackerMock;
-    private readonly Mock<IVisibilityTracker> _visibilityTrackerMock;
-    private readonly Mock<IDebuggingFlagsTracker> _debuggingFlagsTrackerMock;
     private readonly TestUnitsTracker _unitsTracker;
-    private readonly Mock<ITerrainTracker> _terrainTrackerMock;
-    private readonly Mock<IRegionsTracker> _regionsTrackerMock;
-    private readonly Mock<IRegionsEvaluationsTracker> _regionsEvaluationsTrackerMock;
-    private readonly Mock<IScoutSupervisorFactory> _scoutSupervisorFactoryMock;
-    private readonly Mock<IWarSupervisorFactory> _warSupervisorFactoryMock;
+    private readonly Mock<IWarManagerStateFactory> _warManagerStateFactoryMock;
 
     public WarManagerTests() {
-        _taggingServiceMock = new Mock<ITaggingService>();
-        _enemyRaceTrackerMock = new Mock<IEnemyRaceTracker>();
-        _visibilityTrackerMock = new Mock<IVisibilityTracker>();
-        _debuggingFlagsTrackerMock = new Mock<IDebuggingFlagsTracker>();
         _unitsTracker = new TestUnitsTracker();
-        _terrainTrackerMock = new Mock<ITerrainTracker>();
-        _regionsTrackerMock = new Mock<IRegionsTracker>();
-        _regionsEvaluationsTrackerMock = new Mock<IRegionsEvaluationsTracker>();
-        _scoutSupervisorFactoryMock = new Mock<IScoutSupervisorFactory>();
-        _warSupervisorFactoryMock = new Mock<IWarSupervisorFactory>();
+        _warManagerStateFactoryMock = new Mock<IWarManagerStateFactory>();
     }
 
     [Fact(Skip = "Wait for DI refactor to be done")]
     public void GivenUnmanagedUnits_WhenOnFrame_ManagesMilitaryUnits() {
         // Arrange
-        var manager = new Bot.Managers.WarManagement.WarManager(
-            _taggingServiceMock.Object,
-            _enemyRaceTrackerMock.Object,
-            _visibilityTrackerMock.Object,
-            _debuggingFlagsTrackerMock.Object,
-            _unitsTracker,
-            _terrainTrackerMock.Object,
-            _regionsTrackerMock.Object,
-            _regionsEvaluationsTrackerMock.Object,
-            _scoutSupervisorFactoryMock.Object,
-            _warSupervisorFactoryMock.Object
-        );
+        var manager = new Bot.Managers.WarManagement.WarManager(_warManagerStateFactoryMock.Object);
 
         var militaryUnits = Units.ZergMilitary
             .Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed })
@@ -68,18 +36,7 @@ public class WarManagerTests : BaseTestClass {
     [Fact(Skip = "Not yet implemented")]
     public void GivenUnManagedUnit_WhenOnFrame_DoesNotManageNonMilitaryUnits() {
         // Arrange
-        var manager = new Bot.Managers.WarManagement.WarManager(
-            _taggingServiceMock.Object,
-            _enemyRaceTrackerMock.Object,
-            _visibilityTrackerMock.Object,
-            _debuggingFlagsTrackerMock.Object,
-            _unitsTracker,
-            _terrainTrackerMock.Object,
-            _regionsTrackerMock.Object,
-            _regionsEvaluationsTrackerMock.Object,
-            _scoutSupervisorFactoryMock.Object,
-            _warSupervisorFactoryMock.Object
-        );
+        var manager = new Bot.Managers.WarManagement.WarManager(_warManagerStateFactoryMock.Object);
         // TODO UnitsTracker
 
         // Act

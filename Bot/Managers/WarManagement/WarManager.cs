@@ -1,14 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.Builds;
-using Bot.Debugging;
-using Bot.GameSense;
-using Bot.GameSense.RegionsEvaluationsTracking;
-using Bot.Managers.ScoutManagement;
 using Bot.Managers.WarManagement.States;
-using Bot.Managers.WarManagement.States.EarlyGame;
 using Bot.StateManagement;
-using Bot.Tagging;
 
 namespace Bot.Managers.WarManagement;
 
@@ -33,21 +27,10 @@ public class WarManager: Manager {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _stateMachine.State.Behaviour.BuildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
-    public WarManager(
-        ITaggingService taggingService,
-        IEnemyRaceTracker enemyRaceTracker,
-        IVisibilityTracker visibilityTracker,
-        IDebuggingFlagsTracker debuggingFlagsTracker,
-        IUnitsTracker unitsTracker,
-        ITerrainTracker terrainTracker,
-        IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IScoutSupervisorFactory scoutSupervisorFactory,
-        IWarSupervisorFactory warSupervisorFactory
-    ) {
+    public WarManager(IWarManagerStateFactory warManagerStateFactory) {
         _stateMachine = new StateMachine<WarManager, WarManagerState>(
             this,
-            new EarlyGameState(taggingService, enemyRaceTracker, visibilityTracker, debuggingFlagsTracker, unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker, scoutSupervisorFactory, warSupervisorFactory)
+            warManagerStateFactory.CreateEarlyGameState()
         );
     }
 
