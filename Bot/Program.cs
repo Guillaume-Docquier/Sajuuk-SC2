@@ -8,6 +8,7 @@ using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
 using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers;
+using Bot.Managers.EconomyManagement;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
@@ -134,6 +135,13 @@ public class Program {
     }
 
     private static IBot CreateSajuuk(string version, List<IScenario> scenarios) {
+        var economySupervisorFactory = new EconomySupervisorFactory(
+            UnitsTracker.Instance,
+            BuildingTracker.Instance,
+            RegionsTracker.Instance,
+            CreepTracker.Instance
+        );
+
         var managerFactory = new ManagerFactory(
             TaggingService.Instance,
             EnemyStrategyTracker.Instance,
@@ -145,7 +153,8 @@ public class Program {
             BuildingTracker.Instance,
             CreepTracker.Instance,
             DebuggingFlagsTracker.Instance,
-            RegionsEvaluationsTracker.Instance
+            RegionsEvaluationsTracker.Instance,
+            economySupervisorFactory
         );
 
         var botDebugger = new BotDebugger(

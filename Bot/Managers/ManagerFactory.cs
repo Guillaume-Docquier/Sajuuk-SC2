@@ -22,6 +22,7 @@ public class ManagerFactory : IManagerFactory {
     private readonly ICreepTracker _creepTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+    private readonly IEconomySupervisorFactory _economySupervisorFactory;
 
     public ManagerFactory(
         ITaggingService taggingService,
@@ -34,7 +35,8 @@ public class ManagerFactory : IManagerFactory {
         IBuildingTracker buildingTracker,
         ICreepTracker creepTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IEconomySupervisorFactory economySupervisorFactory
     ) {
         _taggingService = taggingService;
         _enemyStrategyTracker = enemyStrategyTracker;
@@ -47,6 +49,7 @@ public class ManagerFactory : IManagerFactory {
         _creepTracker = creepTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
+        _economySupervisorFactory = economySupervisorFactory;
     }
 
     public BuildManager CreateBuildManager(IBuildOrder buildOrder) {
@@ -62,7 +65,7 @@ public class ManagerFactory : IManagerFactory {
     }
 
     public EconomyManager CreateEconomyManager(BuildManager buildManager) {
-        return new EconomyManager(buildManager, _unitsTracker, _terrainTracker, _buildingTracker, _regionsTracker, _creepTracker);
+        return new EconomyManager(buildManager, _unitsTracker, _terrainTracker, _buildingTracker, _regionsTracker, _creepTracker, _economySupervisorFactory);
     }
 
     public WarManager CreateWarManager() {
