@@ -7,6 +7,7 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
 using Bot.GameSense.RegionsEvaluationsTracking;
+using Bot.Managers;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
@@ -133,21 +134,38 @@ public class Program {
     }
 
     private static IBot CreateSajuuk(string version, List<IScenario> scenarios) {
-        return new SajuukBot(
-            version,
-            scenarios,
+        var managerFactory = new ManagerFactory(
             TaggingService.Instance,
+            EnemyStrategyTracker.Instance,
+            UnitsTracker.Instance,
             EnemyRaceTracker.Instance,
+            VisibilityTracker.Instance,
+            TerrainTracker.Instance,
+            RegionsTracker.Instance,
+            BuildingTracker.Instance,
+            CreepTracker.Instance,
+            DebuggingFlagsTracker.Instance,
+            RegionsEvaluationsTracker.Instance
+        );
+
+        var botDebugger = new BotDebugger(
             VisibilityTracker.Instance,
             DebuggingFlagsTracker.Instance,
             UnitsTracker.Instance,
             IncomeTracker.Instance,
             TerrainTracker.Instance,
-            BuildingTracker.Instance,
-            RegionsTracker.Instance,
-            CreepTracker.Instance,
             EnemyStrategyTracker.Instance,
-            RegionsEvaluationsTracker.Instance
+            EnemyRaceTracker.Instance
+        );
+
+        return new SajuukBot(
+            version,
+            scenarios,
+            TaggingService.Instance,
+            UnitsTracker.Instance,
+            TerrainTracker.Instance,
+            managerFactory,
+            botDebugger
         );
     }
 

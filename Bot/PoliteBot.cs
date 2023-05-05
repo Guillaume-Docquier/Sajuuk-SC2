@@ -12,9 +12,9 @@ using SC2APIProtocol;
 namespace Bot;
 
 public abstract class PoliteBot: IBot {
-    protected readonly ITaggingService TaggingService;
+    private readonly ITaggingService _taggingService;
     protected readonly IUnitsTracker UnitsTracker;
-    protected readonly ITerrainTracker TerrainTracker;
+    private readonly ITerrainTracker _terrainTracker;
 
     private readonly string _version;
     private readonly List<IScenario> _scenarios;
@@ -29,9 +29,9 @@ public abstract class PoliteBot: IBot {
         _version = version;
         _scenarios = scenarios;
 
-        TaggingService = taggingService;
+        _taggingService = taggingService;
         UnitsTracker = unitsTracker;
-        TerrainTracker = terrainTracker;
+        _terrainTracker = terrainTracker;
     }
 
     public async Task OnFrame() {
@@ -47,7 +47,7 @@ public abstract class PoliteBot: IBot {
             Logger.Info("--------------------------------------");
             Logger.Metric("Bot: {0}", Name);
             Logger.Metric("Map: {0}", Controller.GameInfo.MapName);
-            Logger.Metric("Starting Corner: {0}", TerrainTracker.GetStartingCorner());
+            Logger.Metric("Starting Corner: {0}", _terrainTracker.GetStartingCorner());
             Logger.Metric("Bot Version: {0}", _version);
             Logger.Info("--------------------------------------");
         }
@@ -55,7 +55,7 @@ public abstract class PoliteBot: IBot {
         if (!_greetDone && Controller.Frame >= TimeUtils.SecsToFrames(1)) {
             Controller.Chat($"Hi, my name is {Name}");
             Controller.Chat("I wish you good luck and good fun!");
-            TaggingService.TagVersion(_version);
+            _taggingService.TagVersion(_version);
             _greetDone = true;
         }
     }

@@ -12,13 +12,14 @@ using SC2APIProtocol;
 
 namespace Bot.Debugging;
 
-public class BotDebugger {
+public class BotDebugger : IBotDebugger {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IIncomeTracker _incomeTracker;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IEnemyStrategyTracker _enemyStrategyTracker;
+    private readonly IEnemyRaceTracker _enemyRaceTracker;
 
     public BotDebugger(
         IVisibilityTracker visibilityTracker,
@@ -26,7 +27,8 @@ public class BotDebugger {
         IUnitsTracker unitsTracker,
         IIncomeTracker incomeTracker,
         ITerrainTracker terrainTracker,
-        IEnemyStrategyTracker enemyStrategyTracker
+        IEnemyStrategyTracker enemyStrategyTracker,
+        IEnemyRaceTracker enemyRaceTracker
     ) {
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
@@ -34,9 +36,10 @@ public class BotDebugger {
         _incomeTracker = incomeTracker;
         _terrainTracker = terrainTracker;
         _enemyStrategyTracker = enemyStrategyTracker;
+        _enemyRaceTracker = enemyRaceTracker;
     }
 
-    public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus, Race enemyRace) {
+    public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus) {
         if (!Program.DebugEnabled) {
             return;
         }
@@ -49,7 +52,7 @@ public class BotDebugger {
         DebugFutureSpending();
         DebugEnemyGhostUnits();
         DebugKnownEnemyUnits();
-        DebugMatchupData(enemyRace);
+        DebugMatchupData();
         DebugExploration();
         DebugUnitAndEffectNames();
         DebugCoordinates();
@@ -213,7 +216,7 @@ public class BotDebugger {
         Program.GraphicalDebugger.AddTextGroup(textGroup, virtualPos: new Point { X = 0.83f, Y = 0.20f });
     }
 
-    private void DebugMatchupData(Race enemyRace) {
+    private void DebugMatchupData() {
         if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.MatchupData)) {
             return;
         }
@@ -221,7 +224,7 @@ public class BotDebugger {
         // TODO GD Add creep coverage
         var matchupTexts = new List<string>
         {
-            $"Enemy: {enemyRace} / Visible: {_terrainTracker.VisibilityRatio,3:P0} / Explored: {_terrainTracker.ExplorationRatio,3:P0}",
+            $"Enemy: {_enemyRaceTracker.EnemyRace} / Visible: {_terrainTracker.VisibilityRatio,3:P0} / Explored: {_terrainTracker.ExplorationRatio,3:P0}",
             $"Strategy: {_enemyStrategyTracker.CurrentEnemyStrategy}"
         };
 

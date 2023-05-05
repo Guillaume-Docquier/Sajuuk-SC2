@@ -8,32 +8,18 @@ using Bot.Debugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.GameSense.EnemyStrategyTracking;
-using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers;
-using Bot.Managers.EconomyManagement;
-using Bot.Managers.ScoutManagement;
-using Bot.Managers.WarManagement;
 using Bot.Scenarios;
 using Bot.Tagging;
 using SC2APIProtocol;
 
 namespace Bot;
 
-public class SajuukBot: PoliteBot {
+public class SajuukBot : PoliteBot {
     private readonly List<Manager> _managers = new List<Manager>();
 
-    private readonly IEnemyRaceTracker _enemyRaceTracker;
-    private readonly IVisibilityTracker _visibilityTracker;
-    private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
-    private readonly IBuildingTracker _buildingTracker;
-
-    private readonly IRegionsTracker _regionsTracker;
-    private readonly ICreepTracker _creepTracker;
-    private readonly IEnemyStrategyTracker _enemyStrategyTracker;
-    private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
-
-    private readonly BotDebugger _debugger;
+    private readonly IManagerFactory _managerFactory;
+    private readonly IBotDebugger _debugger;
 
     public override string Name => "Sajuuk";
     public override Race Race => Race.Zerg;
@@ -42,28 +28,13 @@ public class SajuukBot: PoliteBot {
         string version,
         List<IScenario> scenarios,
         ITaggingService taggingService,
-        IEnemyRaceTracker enemyRaceTracker,
-        IVisibilityTracker visibilityTracker,
-        IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IIncomeTracker incomeTracker,
         ITerrainTracker terrainTracker,
-        IBuildingTracker buildingTracker,
-        IRegionsTracker regionsTracker,
-        ICreepTracker creepTracker,
-        IEnemyStrategyTracker enemyStrategyTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker
+        IManagerFactory managerFactory,
+        IBotDebugger botDebugger
     ) : base(version, scenarios, taggingService, unitsTracker, terrainTracker) {
-        _enemyRaceTracker = enemyRaceTracker;
-        _visibilityTracker = visibilityTracker;
-        _debuggingFlagsTracker = debuggingFlagsTracker;
-        _buildingTracker = buildingTracker;
-        _regionsTracker = regionsTracker;
-        _creepTracker = creepTracker;
-        _enemyStrategyTracker = enemyStrategyTracker;
-        _regionsEvaluationsTracker = regionsEvaluationsTracker;
-
-        _debugger = new BotDebugger(_visibilityTracker, _debuggingFlagsTracker, UnitsTracker, incomeTracker, TerrainTracker, _enemyStrategyTracker);
+        _managerFactory = managerFactory;
+        _debugger = botDebugger;
     }
 
     protected override Task DoOnFrame() {
@@ -83,11 +54,7 @@ public class SajuukBot: PoliteBot {
 
         SpendingTracker.Instance.UpdateExpectedFutureSpending(flatManagerRequests);
 
-        _debugger.Debug(
-            flatManagerRequests,
-            buildBlockStatus,
-            _enemyRaceTracker.EnemyRace
-        );
+        _debugger.Debug(flatManagerRequests, buildBlockStatus);
 
         foreach (var unit in UnitsTracker.UnitsByTag.Values) {
             unit.ExecuteModules();
@@ -97,15 +64,15 @@ public class SajuukBot: PoliteBot {
     }
 
     private void InitManagers() {
-        var buildManager = new BuildManager(new TwoBasesRoach(UnitsTracker), TaggingService, _enemyStrategyTracker);
+        var buildManager = _managerFactory.CreateBuildManager(new TwoBasesRoach(UnitsTracker));
         _managers.Add(buildManager);
 
-        _managers.Add(new SupplyManager(buildManager, UnitsTracker));
-        _managers.Add(new ScoutManager(_enemyRaceTracker, _visibilityTracker, UnitsTracker, TerrainTracker, _regionsTracker));
-        _managers.Add(new EconomyManager(buildManager, UnitsTracker, TerrainTracker, _buildingTracker, _regionsTracker, _creepTracker));
-        _managers.Add(new WarManager(TaggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, UnitsTracker, TerrainTracker, _regionsTracker, _regionsEvaluationsTracker));
-        _managers.Add(new CreepManager(_visibilityTracker, UnitsTracker, TerrainTracker, _buildingTracker, _regionsTracker, _creepTracker));
-        _managers.Add(new UpgradesManager(UnitsTracker));
+        _managers.Add(_managerFactory.CreateSupplyManager(buildManager));
+        _managers.Add(_managerFactory.CreateScoutManager());
+        _managers.Add(_managerFactory.CreateEconomyManager(buildManager));
+        _managers.Add(_managerFactory.CreateWarManager());
+        _managers.Add(_managerFactory.CreateCreepManager());
+        _managers.Add(_managerFactory.CreateUpgradesManager());
     }
 
     /// <summary>
