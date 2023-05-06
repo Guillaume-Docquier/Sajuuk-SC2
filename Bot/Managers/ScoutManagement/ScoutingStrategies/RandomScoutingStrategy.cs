@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.MapAnalysis.ExpandAnalysis;
@@ -14,12 +13,9 @@ namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 /// </summary>
 public class RandomScoutingStrategy : IScoutingStrategy {
     private readonly IEnemyRaceTracker _enemyRaceTracker;
-    private readonly IVisibilityTracker _visibilityTracker;
-    private readonly IUnitsTracker _unitsTracker;
-    private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
-    private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IScoutingTaskFactory _scoutingTaskFactory;
+    private readonly IScoutingStrategyFactory _scoutingStrategyFactory;
 
     private const int TopPriority = 100;
 
@@ -29,26 +25,20 @@ public class RandomScoutingStrategy : IScoutingStrategy {
 
     public RandomScoutingStrategy(
         IEnemyRaceTracker enemyRaceTracker,
-        IVisibilityTracker visibilityTracker,
-        IUnitsTracker unitsTracker,
-        ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
-        IGraphicalDebugger graphicalDebugger,
-        IScoutingTaskFactory scoutingTaskFactory
+        IScoutingTaskFactory scoutingTaskFactory,
+        IScoutingStrategyFactory scoutingStrategyFactory
     ) {
         _enemyRaceTracker = enemyRaceTracker;
-        _visibilityTracker = visibilityTracker;
-        _unitsTracker = unitsTracker;
-        _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
-        _graphicalDebugger = graphicalDebugger;
         _scoutingTaskFactory = scoutingTaskFactory;
+        _scoutingStrategyFactory = scoutingStrategyFactory;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
         if (_enemyRaceTracker.EnemyRace != Race.Random) {
             if (_concreteScoutingStrategy == null) {
-                _concreteScoutingStrategy = ScoutingStrategyFactory.CreateNew(_enemyRaceTracker, _visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _graphicalDebugger, _scoutingTaskFactory);
+                _concreteScoutingStrategy = _scoutingStrategyFactory.CreateNew(_enemyRaceTracker.EnemyRace);
 
                 // Cancel our task, we will rely on the concrete scouting strategy now
                 _raceFindingScoutingTask.Cancel();

@@ -4,7 +4,7 @@ using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
 using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
-using Bot.Managers.ScoutManagement.ScoutingTasks;
+using Bot.Managers.ScoutManagement.ScoutingStrategies;
 using Bot.Managers.WarManagement;
 using Bot.Managers.WarManagement.States;
 using Bot.Tagging;
@@ -26,7 +26,7 @@ public class ManagerFactory : IManagerFactory {
     private readonly IWarManagerStateFactory _warManagerStateFactory;
     private readonly IBuildRequestFactory _buildRequestFactory;
     private readonly IGraphicalDebugger _graphicalDebugger;
-    private readonly IScoutingTaskFactory _scoutingTaskFactory;
+    private readonly IScoutingStrategyFactory _scoutingStrategyFactory;
 
     public ManagerFactory(
         ITaggingService taggingService,
@@ -43,7 +43,7 @@ public class ManagerFactory : IManagerFactory {
         IWarManagerStateFactory warManagerStateFactory,
         IBuildRequestFactory buildRequestFactory,
         IGraphicalDebugger graphicalDebugger,
-        IScoutingTaskFactory scoutingTaskFactory
+        IScoutingStrategyFactory scoutingStrategyFactory
     ) {
         _taggingService = taggingService;
         _enemyStrategyTracker = enemyStrategyTracker;
@@ -59,7 +59,7 @@ public class ManagerFactory : IManagerFactory {
         _warManagerStateFactory = warManagerStateFactory;
         _buildRequestFactory = buildRequestFactory;
         _graphicalDebugger = graphicalDebugger;
-        _scoutingTaskFactory = scoutingTaskFactory;
+        _scoutingStrategyFactory = scoutingStrategyFactory;
     }
 
     public BuildManager CreateBuildManager(IBuildOrder buildOrder) {
@@ -71,7 +71,7 @@ public class ManagerFactory : IManagerFactory {
     }
 
     public ScoutManager CreateScoutManager() {
-        return new ScoutManager(_enemyRaceTracker, _visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _scoutSupervisorFactory, _graphicalDebugger, _scoutingTaskFactory);
+        return new ScoutManager(_enemyRaceTracker, _unitsTracker, _terrainTracker, _scoutSupervisorFactory, _scoutingStrategyFactory);
     }
 
     public EconomyManager CreateEconomyManager(BuildManager buildManager) {

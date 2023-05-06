@@ -12,6 +12,7 @@ using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers;
 using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
+using Bot.Managers.ScoutManagement.ScoutingStrategies;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.Managers.WarManagement;
 using Bot.Managers.WarManagement.ArmySupervision;
@@ -204,6 +205,13 @@ public class Program {
             warManagerBehaviourFactory
         );
 
+        var scoutingStrategyFactory = new ScoutingStrategyFactory(
+            RegionsTracker.Instance,
+            scoutingTaskFactory,
+            UnitsTracker.Instance,
+            EnemyRaceTracker.Instance
+        );
+
         var managerFactory = new ManagerFactory(
             TaggingService.Instance,
             EnemyStrategyTracker.Instance,
@@ -219,7 +227,7 @@ public class Program {
             warManagerStateFactory,
             buildRequestFactory,
             GraphicalDebugger.Instance,
-            scoutingTaskFactory
+            scoutingStrategyFactory
         );
 
         var botDebugger = new BotDebugger(
