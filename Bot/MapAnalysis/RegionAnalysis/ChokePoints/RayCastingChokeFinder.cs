@@ -14,6 +14,7 @@ namespace Bot.MapAnalysis.RegionAnalysis.ChokePoints;
 // TODO GD Considering the obstacles (resources, rocks) might be interesting at some point
 public partial class RayCastingChokeFinder {
     private readonly ITerrainTracker _terrainTracker;
+    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
 
     private const bool DrawEnabled = true; // TODO GD Flag this
 
@@ -210,8 +211,8 @@ public partial class RayCastingChokeFinder {
                 $"Cut: {cut,4:F2}",
             };
             var chokeNodeClusterCenter = _terrainTracker.WithWorldHeight(Clustering.Instance.GetCenter(chokeNodeCluster));
-            Program.GraphicalDebugger.AddTextGroup(textGroup, worldPos: chokeNodeClusterCenter.ToPoint(zOffset: 5));
-            Program.GraphicalDebugger.AddLink(chokeNodeClusterCenter, chokeNodeClusterCenter.Translate(zTranslation: 5), Colors.SunbrightOrange);
+            GraphicalDebugger.AddTextGroup(textGroup, worldPos: chokeNodeClusterCenter.ToPoint(zOffset: 5));
+            GraphicalDebugger.AddLink(chokeNodeClusterCenter, chokeNodeClusterCenter.Translate(zTranslation: 5), Colors.SunbrightOrange);
 
             DebugScores(chokeNodeCluster, cut);
 
@@ -256,7 +257,7 @@ public partial class RayCastingChokeFinder {
                 textColor = Colors.Blue;
             }
 
-            Program.GraphicalDebugger.AddText($"{node.ChokeScore:F1}", worldPos: _terrainTracker.WithWorldHeight(node.Position).ToPoint(), color: textColor, size: 13);
+            GraphicalDebugger.AddText($"{node.ChokeScore:F1}", worldPos: _terrainTracker.WithWorldHeight(node.Position).ToPoint(), color: textColor, size: 13);
         }
     }
 
@@ -266,7 +267,7 @@ public partial class RayCastingChokeFinder {
         }
 
         foreach (var line in lines) {
-            Program.GraphicalDebugger.AddLink(_terrainTracker.WithWorldHeight(line.Start, zOffset: 0.5f), _terrainTracker.WithWorldHeight(line.End, zOffset: 0.5f), color ?? Colors.Orange);
+            GraphicalDebugger.AddLink(_terrainTracker.WithWorldHeight(line.Start, zOffset: 0.5f), _terrainTracker.WithWorldHeight(line.End, zOffset: 0.5f), color ?? Colors.Orange);
         }
     }
 

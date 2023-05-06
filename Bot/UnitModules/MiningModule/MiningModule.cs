@@ -1,28 +1,31 @@
 ﻿using System;
+using Bot.Debugging.GraphicalDebugging;
 
 namespace Bot.UnitModules;
 
 public class MiningModule: UnitModule {
     public const string Tag = "MiningModule";
 
+    private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly Unit _worker;
     private IStrategy _strategy;
 
     public Resources.ResourceType ResourceType;
     public Unit AssignedResource;
 
-    public static MiningModule Install(Unit worker, Unit assignedResource) {
+    public static MiningModule Install(IGraphicalDebugger graphicalDebugger, Unit worker, Unit assignedResource) {
         if (!PreInstallCheck(Tag, worker)) {
             return null;
         }
 
-        var miningModule = new MiningModule(worker, assignedResource);
+        var miningModule = new MiningModule(graphicalDebugger, worker, assignedResource);
         worker.Modules.Add(Tag, miningModule);
 
         return miningModule;
     }
 
-    private MiningModule(Unit worker, Unit assignedResource) {
+    private MiningModule(IGraphicalDebugger graphicalDebugger, Unit worker, Unit assignedResource) {
+        _graphicalDebugger = graphicalDebugger;
         _worker = worker;
 
         if (assignedResource != null) {
@@ -65,8 +68,8 @@ public class MiningModule: UnitModule {
 
         _strategy = ResourceType switch
         {
-            Resources.ResourceType.Gas => new GasMiningStrategy(_worker, newlyAssignedResource),
-            Resources.ResourceType.Mineral => new MineralMiningStrategy(_worker, newlyAssignedResource),
+            Resources.ResourceType.Gas => new GasMiningStrategy(_graphicalDebugger, _worker, newlyAssignedResource),
+            Resources.ResourceType.Mineral => new MineralMiningStrategy(_graphicalDebugger, _worker, newlyAssignedResource),
             _ => throw new ArgumentException("Cannot create strategy because the assigned resource doesn't have a resource type."),
         };
 

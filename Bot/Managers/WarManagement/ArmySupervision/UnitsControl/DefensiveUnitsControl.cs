@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
 
@@ -9,10 +10,11 @@ public class DefensiveUnitsControl : AggregateUnitsControl {
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IGraphicalDebugger graphicalDebugger
     ) : base(new List<IUnitsControl>
         {
             new BurrowHealing(unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker),
-            new DisengagementKiting(unitsTracker),
+            new DisengagementKiting(unitsTracker, graphicalDebugger),
         }) {}
 }

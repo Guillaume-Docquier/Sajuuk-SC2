@@ -13,9 +13,17 @@ namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class StepComparisonClip : Clip {
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
-    public StepComparisonClip(ITerrainTracker terrainTracker, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
+    public StepComparisonClip(
+        ITerrainTracker terrainTracker,
+        IGraphicalDebugger graphicalDebugger,
+        Vector2 sceneLocation,
+        int pauseAtEndOfClipDurationSeconds
+    ) : base(pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
+        _graphicalDebugger = graphicalDebugger;
+
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
@@ -33,7 +41,7 @@ public class StepComparisonClip : Clip {
             var relativeDistance = 1 - (cell.DistanceTo(origin) / maxDistance);
             var animationStartFrame = startFrame + (int)(relativeDistance * animationTotalDuration);
 
-            var squareAnimation = new CellDrawingAnimation(_terrainTracker, _terrainTracker.WithWorldHeight(cell), animationStartFrame)
+            var squareAnimation = new CellDrawingAnimation(_terrainTracker, _graphicalDebugger, _terrainTracker.WithWorldHeight(cell), animationStartFrame)
                 .WithDurationInSeconds(0.5f);
             AddAnimation(squareAnimation);
 
@@ -48,7 +56,7 @@ public class StepComparisonClip : Clip {
 
         var currentOrigin = rayCastResults[0].RayIntersection;
 
-        var originPointAnimation = new SphereDrawingAnimation(_terrainTracker.WithWorldHeight(currentOrigin), 0.15f, ColorService.Instance.PointColor , startFrame)
+        var originPointAnimation = new SphereDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(currentOrigin), 0.15f, ColorService.Instance.PointColor , startFrame)
             .WithDurationInSeconds(0.5f);
         AddAnimation(originPointAnimation);
 
@@ -59,7 +67,7 @@ public class StepComparisonClip : Clip {
         for (var i = 1; i < rayCastResults.Count - 2; i++) {
             var compareStepAnimationEndFrame = CompareSteps(rayCastResults, currentOrigin, previousAnimationEndFrame);
 
-            var drawStepAnimation = new LineDrawingAnimation(_terrainTracker.WithWorldHeight(currentOrigin), _terrainTracker.WithWorldHeight(rayCastResults[i].RayIntersection), ColorService.Instance.RayColor, compareStepAnimationEndFrame)
+            var drawStepAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(currentOrigin), _terrainTracker.WithWorldHeight(rayCastResults[i].RayIntersection), ColorService.Instance.RayColor, compareStepAnimationEndFrame)
                 .WithConstantRate(4);
             AddAnimation(drawStepAnimation);
 
@@ -67,7 +75,7 @@ public class StepComparisonClip : Clip {
                 .WithEndFrame(drawStepAnimation.AnimationEndFrame + 1);
             AddAnimation(panCameraAnimation);
 
-            var pointAnimation = new SphereDrawingAnimation(_terrainTracker.WithWorldHeight(rayCastResults[i].RayIntersection), 0.15f, ColorService.Instance.PointColor , drawStepAnimation.AnimationEndFrame)
+            var pointAnimation = new SphereDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(rayCastResults[i].RayIntersection), 0.15f, ColorService.Instance.PointColor , drawStepAnimation.AnimationEndFrame)
                 .WithDurationInSeconds(0.5f);
             AddAnimation(pointAnimation);
 
@@ -87,12 +95,12 @@ public class StepComparisonClip : Clip {
         }
 
         var nextXAxisLineEnd = new Vector2(nextX.RayIntersection.X, origin.Y);
-        var lineToXAxisAnimation = new LineDrawingAnimation(_terrainTracker.WithWorldHeight(origin), _terrainTracker.WithWorldHeight(nextXAxisLineEnd), Colors.DarkRed, startFrame)
+        var lineToXAxisAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(origin), _terrainTracker.WithWorldHeight(nextXAxisLineEnd), Colors.DarkRed, startFrame)
             .WithDurationInSeconds(1)
             .WithPostAnimationDurationInSeconds(1);
         AddAnimation(lineToXAxisAnimation);
 
-        var lineToXIntersectionAnimation = new LineDrawingAnimation(_terrainTracker.WithWorldHeight(origin), _terrainTracker.WithWorldHeight(nextX.RayIntersection), ColorService.Instance.RayColor, startFrame)
+        var lineToXIntersectionAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(origin), _terrainTracker.WithWorldHeight(nextX.RayIntersection), ColorService.Instance.RayColor, startFrame)
             .WithDurationInSeconds(1)
             .WithPostAnimationDurationInSeconds(1);
         AddAnimation(lineToXIntersectionAnimation);
@@ -100,12 +108,12 @@ public class StepComparisonClip : Clip {
         var nextY = rayCastResults.First(rayCastResult => (int)rayCastResult.CornerOfCell.Y == (int)origin.AsWorldGridCorner().Y + 1); // We're going up
 
         var nextYAxisLineEnd = new Vector2(origin.X, nextY.RayIntersection.Y);
-        var lineToYAxisAnimation = new LineDrawingAnimation(_terrainTracker.WithWorldHeight(origin), _terrainTracker.WithWorldHeight(nextYAxisLineEnd), Colors.DarkBlue, lineToXIntersectionAnimation.PostAnimationEndFrame)
+        var lineToYAxisAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(origin), _terrainTracker.WithWorldHeight(nextYAxisLineEnd), Colors.DarkBlue, lineToXIntersectionAnimation.PostAnimationEndFrame)
             .WithDurationInSeconds(1)
             .WithPostAnimationDurationInSeconds(1);
         AddAnimation(lineToYAxisAnimation);
 
-        var lineToYIntersectionAnimation = new LineDrawingAnimation(_terrainTracker.WithWorldHeight(origin), _terrainTracker.WithWorldHeight(nextY.RayIntersection), ColorService.Instance.RayColor, lineToXIntersectionAnimation.PostAnimationEndFrame)
+        var lineToYIntersectionAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(origin), _terrainTracker.WithWorldHeight(nextY.RayIntersection), ColorService.Instance.RayColor, lineToXIntersectionAnimation.PostAnimationEndFrame)
             .WithDurationInSeconds(1)
             .WithPostAnimationDurationInSeconds(1);
         AddAnimation(lineToYIntersectionAnimation);

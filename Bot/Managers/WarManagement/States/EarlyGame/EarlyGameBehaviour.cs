@@ -2,6 +2,7 @@
 using System.Linq;
 using Bot.Builds;
 using Bot.Debugging;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -51,7 +52,8 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
         IWarSupervisorFactory warSupervisorFactory,
-        IBuildRequestFactory buildRequestFactory
+        IBuildRequestFactory buildRequestFactory,
+        IGraphicalDebugger graphicalDebugger
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
@@ -60,7 +62,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _buildRequestFactory = buildRequestFactory;
 
-        _debugger = new EarlyGameBehaviourDebugger(debuggingFlagsTracker);
+        _debugger = new EarlyGameBehaviourDebugger(debuggingFlagsTracker, graphicalDebugger);
         DefenseSupervisor = warSupervisorFactory.CreateArmySupervisor();
 
         _armyBuildRequest = _buildRequestFactory.CreateTargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);

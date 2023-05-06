@@ -13,6 +13,7 @@ namespace Bot.Managers.ScoutManagement.ScoutingTasks;
 public class MaintainVisibilityScoutingTask : ScoutingTask {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private const bool DrawEnabled = false;
 
@@ -23,10 +24,17 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
 
     private readonly HashSet<Vector2> _areaToScout;
 
-    public MaintainVisibilityScoutingTask(IVisibilityTracker visibilityTracker, ITerrainTracker terrainTracker, IReadOnlyCollection<Vector2> area, int priority, int maxScouts)
-        : base(GetCenter(area), priority, maxScouts) {
+    public MaintainVisibilityScoutingTask(
+        IVisibilityTracker visibilityTracker,
+        ITerrainTracker terrainTracker,
+        IGraphicalDebugger graphicalDebugger,
+        IReadOnlyCollection<Vector2> area,
+        int priority,
+        int maxScouts
+    ) : base(GetCenter(area), priority, maxScouts) {
         _visibilityTracker = visibilityTracker;
         _terrainTracker = terrainTracker;
+        _graphicalDebugger = graphicalDebugger;
 
         // Lower the resolution for better time performance on large areas
         // The algorithm results are virtually unaffected by this
@@ -99,7 +107,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
         var cellToExplore = _areaToScout.MaxBy(cell => coverageScores[cell]);
 
         scout.Move(cellToExplore);
-        Program.GraphicalDebugger.AddLink(scout.Position, _terrainTracker.WithWorldHeight(cellToExplore), Colors.LightBlue);
+        _graphicalDebugger.AddLink(scout.Position, _terrainTracker.WithWorldHeight(cellToExplore), Colors.LightBlue);
     }
 
     /// <summary>
@@ -138,7 +146,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
             });
 
             scout.Move(cellToExplore);
-            Program.GraphicalDebugger.AddLink(scout.Position, _terrainTracker.WithWorldHeight(cellToExplore), Colors.LightBlue);
+            _graphicalDebugger.AddLink(scout.Position, _terrainTracker.WithWorldHeight(cellToExplore), Colors.LightBlue);
         }
     }
 
@@ -149,7 +157,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
 
         foreach (var cell in _areaToScout) {
             var color = _visibilityTracker.IsVisible(cell) ? Colors.LightBlue : Colors.LightRed;
-            Program.GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(cell), color);
+            _graphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(cell), color);
         }
     }
 

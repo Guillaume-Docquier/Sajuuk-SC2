@@ -21,6 +21,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
         BuildingTracker.Instance,
         new ExpandUnitsAnalyzer(UnitsTracker.Instance, TerrainTracker.Instance)
     );
+    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
 
     private readonly ITerrainTracker _terrainTracker;
     private readonly IBuildingTracker _buildingTracker;
@@ -93,8 +94,8 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
             var goodBuildSpot = searchGrid.FirstOrDefault(IsValidExpandPlacement);
             if (goodBuildSpot != default) {
                 expandLocations.Add(goodBuildSpot);
-                Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(goodBuildSpot), KnowledgeBase.GameGridCellRadius, Colors.Green);
-                Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(centerPosition), KnowledgeBase.GameGridCellRadius, Colors.Yellow);
+                GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(goodBuildSpot), KnowledgeBase.GameGridCellRadius, Colors.Green);
+                GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(centerPosition), KnowledgeBase.GameGridCellRadius, Colors.Yellow);
             }
         }
 
@@ -118,7 +119,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
 
         foreach (var cell in cellsTooCloseToResource) {
             if (DrawEnabled) {
-                Program.GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(cell.AsWorldGridCenter()), Colors.SunbrightOrange);
+                GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(cell.AsWorldGridCenter()), Colors.SunbrightOrange);
             }
 
             _tooCloseToResourceGrid[(int)cell.X][(int)cell.Y] = true;

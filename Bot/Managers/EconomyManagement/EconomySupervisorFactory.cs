@@ -1,4 +1,5 @@
 ﻿using Bot.Builds;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
 using Bot.Managers.EconomyManagement.TownHallSupervision;
 using SC2APIProtocol;
@@ -11,22 +12,25 @@ public class EconomySupervisorFactory : IEconomySupervisorFactory {
     private readonly IRegionsTracker _regionsTracker;
     private readonly ICreepTracker _creepTracker;
     private readonly IBuildRequestFactory _buildRequestFactory;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     public EconomySupervisorFactory(
         IUnitsTracker unitsTracker,
         IBuildingTracker buildingTracker,
         IRegionsTracker regionsTracker,
         ICreepTracker creepTracker,
-        IBuildRequestFactory buildRequestFactory
+        IBuildRequestFactory buildRequestFactory,
+        IGraphicalDebugger graphicalDebugger
     ) {
         _unitsTracker = unitsTracker;
         _buildingTracker = buildingTracker;
         _regionsTracker = regionsTracker;
         _creepTracker = creepTracker;
         _buildRequestFactory = buildRequestFactory;
+        _graphicalDebugger = graphicalDebugger;
     }
 
     public TownHallSupervisor CreateTownHallSupervisor(Unit townHall, Color color) {
-        return new TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTracker, _creepTracker, _buildRequestFactory, townHall, color);
+        return new TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTracker, _creepTracker, _buildRequestFactory, _graphicalDebugger, townHall, color);
     }
 }

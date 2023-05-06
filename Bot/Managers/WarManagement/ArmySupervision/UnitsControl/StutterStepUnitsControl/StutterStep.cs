@@ -9,6 +9,8 @@ using SC2APIProtocol;
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.StutterStepUnitsControl;
 
 public class StutterStep : IUnitsControl {
+    private readonly IGraphicalDebugger _graphicalDebugger;
+
     [Flags]
     private enum DebugModeFlags {
         None = 0,
@@ -22,6 +24,10 @@ public class StutterStep : IUnitsControl {
     private const DebugModeFlags DebugMode = DebugModeFlags.PressureArrows | DebugModeFlags.Move;
 
     private readonly ExecutionTimeDebugger _debugger = new ExecutionTimeDebugger();
+
+    public StutterStep(IGraphicalDebugger graphicalDebugger) {
+        _graphicalDebugger = graphicalDebugger;
+    }
 
     public bool IsExecuting() {
         return false;
@@ -112,7 +118,7 @@ public class StutterStep : IUnitsControl {
     /// </summary>
     /// <param name="pressureGraph">The pressure graph to respect</param>
     /// <returns>The list of units that should move given the pressure graph</returns>
-    private static IEnumerable<Unit> GetUnitsThatShouldMove(IReadOnlyDictionary<Unit, PressureGraph.Pressure<Unit>> pressureGraph) {
+    private IEnumerable<Unit> GetUnitsThatShouldMove(IReadOnlyDictionary<Unit, PressureGraph.Pressure<Unit>> pressureGraph) {
         var checkedUnits = new HashSet<Unit>();
         var unitsThatNeedToMove = new HashSet<Unit>();
 
@@ -173,41 +179,41 @@ public class StutterStep : IUnitsControl {
     /// </summary>
     /// <param name="pressureGraph">The pressure graph</param>
     /// <param name="color">The color of the pressure graph</param>
-    private static void DebugPressureArrows(IReadOnlyDictionary<Unit, PressureGraph.Pressure<Unit>> pressureGraph, Color color) {
+    private void DebugPressureArrows(IReadOnlyDictionary<Unit, PressureGraph.Pressure<Unit>> pressureGraph, Color color) {
         if (!DebugMode.HasFlag(DebugModeFlags.PressureArrows)) {
             return;
         }
 
         foreach (var (soldier, pressure) in pressureGraph) {
             foreach (var pressured in pressure.To) {
-                Program.GraphicalDebugger.AddArrowedLine(soldier.Position.Translate(zTranslation: 1), pressured.Position.Translate(zTranslation: 1), color);
+                _graphicalDebugger.AddArrowedLine(soldier.Position.Translate(zTranslation: 1), pressured.Position.Translate(zTranslation: 1), color);
             }
         }
     }
 
-    private static void DebugPressures(IReadOnlyDictionary<Unit, PressureGraph.Pressure<Unit>> pressureGraph) {
+    private void DebugPressures(IReadOnlyDictionary<Unit, PressureGraph.Pressure<Unit>> pressureGraph) {
         if (!DebugMode.HasFlag(DebugModeFlags.Pressures)) {
             return;
         }
 
         foreach (var (soldier, pressure) in pressureGraph) {
-            Program.GraphicalDebugger.AddText($"{pressure.To.Count}-{pressure.From.Count}", worldPos: soldier.Position.ToPoint(yOffset: -0.17f), color: Colors.Yellow);
+            _graphicalDebugger.AddText($"{pressure.To.Count}-{pressure.From.Count}", worldPos: soldier.Position.ToPoint(yOffset: -0.17f), color: Colors.Yellow);
         }
     }
 
-    private static void DebugUnitMove(Unit unit) {
+    private void DebugUnitMove(Unit unit) {
         if (!DebugMode.HasFlag(DebugModeFlags.Move)) {
             return;
         }
 
-        Program.GraphicalDebugger.AddText("PUSH", worldPos: unit.Position.ToPoint(yOffset: 0.51f));
+        _graphicalDebugger.AddText("PUSH", worldPos: unit.Position.ToPoint(yOffset: 0.51f));
     }
 
-    private static void DebugUnitMoveCheck(Unit unit, bool shouldMove) {
+    private void DebugUnitMoveCheck(Unit unit, bool shouldMove) {
         if (!DebugMode.HasFlag(DebugModeFlags.MoveCheck)) {
             return;
         }
 
-        Program.GraphicalDebugger.AddText($"{shouldMove}", worldPos: unit.Position.ToPoint(yOffset: -0.51f), color: Colors.Yellow);
+        _graphicalDebugger.AddText($"{shouldMove}", worldPos: unit.Position.ToPoint(yOffset: -0.51f), color: Colors.Yellow);
     }
 }

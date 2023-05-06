@@ -20,6 +20,7 @@ public class BotDebugger : IBotDebugger {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IEnemyStrategyTracker _enemyStrategyTracker;
     private readonly IEnemyRaceTracker _enemyRaceTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     public BotDebugger(
         IVisibilityTracker visibilityTracker,
@@ -28,7 +29,8 @@ public class BotDebugger : IBotDebugger {
         IIncomeTracker incomeTracker,
         ITerrainTracker terrainTracker,
         IEnemyStrategyTracker enemyStrategyTracker,
-        IEnemyRaceTracker enemyRaceTracker
+        IEnemyRaceTracker enemyRaceTracker,
+        IGraphicalDebugger graphicalDebugger
     ) {
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
@@ -37,6 +39,7 @@ public class BotDebugger : IBotDebugger {
         _terrainTracker = terrainTracker;
         _enemyStrategyTracker = enemyStrategyTracker;
         _enemyRaceTracker = enemyRaceTracker;
+        _graphicalDebugger = graphicalDebugger;
     }
 
     public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus) {
@@ -71,7 +74,7 @@ public class BotDebugger : IBotDebugger {
 
         help.Insert(0, "Debug flags");
 
-        Program.GraphicalDebugger.AddTextGroup(help, virtualPos: new Point { X = 0.02f, Y = 0.46f });
+        _graphicalDebugger.AddTextGroup(help, virtualPos: new Point { X = 0.02f, Y = 0.46f });
     }
 
     private void DebugBuildRequests(IReadOnlyCollection<BuildFulfillment> managerBuildRequests, (BuildFulfillment blockingStep, BuildBlockCondition blockingReason) buildBlockStatus) {
@@ -93,7 +96,7 @@ public class BotDebugger : IBotDebugger {
 
         managersBuildStepsData.Insert(0, $"Next {managersBuildStepsData.Count}/{managerBuildRequests.Count} build requests:\n");
 
-        Program.GraphicalDebugger.AddTextGroup(managersBuildStepsData, virtualPos: new Point { X = 0.02f, Y = 0.02f });
+        _graphicalDebugger.AddTextGroup(managersBuildStepsData, virtualPos: new Point { X = 0.02f, Y = 0.02f });
     }
 
     private void DebugEnemyDetectors() {
@@ -103,8 +106,8 @@ public class BotDebugger : IBotDebugger {
 
         var detectors = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Detectors);
         foreach (var detector in detectors) {
-            Program.GraphicalDebugger.AddText("!", size: 20, worldPos: detector.Position.AsWorldGridCenter().ToPoint(), color: Colors.Purple);
-            Program.GraphicalDebugger.AddGridSquaresInRadius(detector.Position.AsWorldGridCenter(), (int)detector.UnitTypeData.SightRange, Colors.Purple);
+            _graphicalDebugger.AddText("!", size: 20, worldPos: detector.Position.AsWorldGridCenter().ToPoint(), color: Colors.Purple);
+            _graphicalDebugger.AddGridSquaresInRadius(detector.Position.AsWorldGridCenter(), (int)detector.UnitTypeData.SightRange, Colors.Purple);
         }
     }
 
@@ -121,7 +124,7 @@ public class BotDebugger : IBotDebugger {
             for (var y = 0; y < _terrainTracker.MaxY; y++) {
                 var position = _terrainTracker.WithWorldHeight(new Vector3(x, y, 0).AsWorldGridCenter());
                 if (!_terrainTracker.IsWalkable(position) && position.Z >= minHeightRequiredToShow) {
-                    Program.GraphicalDebugger.AddGridSquare(position, Colors.LightRed);
+                    _graphicalDebugger.AddGridSquare(position, Colors.LightRed);
                 }
             }
         }
@@ -132,7 +135,7 @@ public class BotDebugger : IBotDebugger {
             return;
         }
 
-        Program.GraphicalDebugger.AddTextGroup(new[]
+        _graphicalDebugger.AddTextGroup(new[]
         {
             "Resource income rates - past 30s",
         }, virtualPos: new Point { X = 0.315f, Y = 0.700f });
@@ -143,7 +146,7 @@ public class BotDebugger : IBotDebugger {
             .ToList();
 
         var mineralMiners = activeMiningModules.Count(module => module.ResourceType == Resources.ResourceType.Mineral);
-        Program.GraphicalDebugger.AddTextGroup(new[]
+        _graphicalDebugger.AddTextGroup(new[]
         {
             $"Minerals" + $"{$"({mineralMiners})",6}",
             $"Max: {_incomeTracker.MaxMineralsCollectionRate, 9:F0}",
@@ -153,7 +156,7 @@ public class BotDebugger : IBotDebugger {
         }, virtualPos: new Point { X = 0.315f, Y = 0.725f });
 
         var vespeneMiners = activeMiningModules.Count(module => module.ResourceType == Resources.ResourceType.Gas);
-        Program.GraphicalDebugger.AddTextGroup(new[]
+        _graphicalDebugger.AddTextGroup(new[]
         {
             $"Vespene" + $"{$"({vespeneMiners})",7}",
             $"Max: {_incomeTracker.MaxVespeneCollectionRate, 9:F0}",
@@ -169,7 +172,7 @@ public class BotDebugger : IBotDebugger {
         }
 
         var mineralsToGasRatio = SpendingTracker.Instance.ExpectedFutureMineralsSpending / SpendingTracker.Instance.ExpectedFutureVespeneSpending;
-        Program.GraphicalDebugger.AddTextGroup(new[]
+        _graphicalDebugger.AddTextGroup(new[]
         {
             "Future spending",
             $"Minerals: {SpendingTracker.Instance.ExpectedFutureMineralsSpending, 8:F0}",
@@ -185,7 +188,7 @@ public class BotDebugger : IBotDebugger {
         }
 
         foreach (var enemyGhostUnit in _unitsTracker.EnemyGhostUnits.Values) {
-            Program.GraphicalDebugger.AddUnit(enemyGhostUnit, Colors.Red);
+            _graphicalDebugger.AddUnit(enemyGhostUnit, Colors.Red);
         }
     }
 
@@ -213,7 +216,7 @@ public class BotDebugger : IBotDebugger {
                 .Select(group => $"{group.Count()}x {group.Key}")
         );
 
-        Program.GraphicalDebugger.AddTextGroup(textGroup, virtualPos: new Point { X = 0.83f, Y = 0.20f });
+        _graphicalDebugger.AddTextGroup(textGroup, virtualPos: new Point { X = 0.83f, Y = 0.20f });
     }
 
     private void DebugMatchupData() {
@@ -228,7 +231,7 @@ public class BotDebugger : IBotDebugger {
             $"Strategy: {_enemyStrategyTracker.CurrentEnemyStrategy}"
         };
 
-        Program.GraphicalDebugger.AddTextGroup(matchupTexts, virtualPos: new Point { X = 0.50f, Y = 0.02f });
+        _graphicalDebugger.AddTextGroup(matchupTexts, virtualPos: new Point { X = 0.50f, Y = 0.02f });
     }
 
     private void DebugExploration() {
@@ -238,8 +241,8 @@ public class BotDebugger : IBotDebugger {
 
         foreach (var notExploredCell in _terrainTracker.WalkableCells.Where(cell => !_visibilityTracker.IsExplored(cell))) {
             var color = Colors.PeachPink;
-            Program.GraphicalDebugger.AddText("?", color: color, worldPos: _terrainTracker.WithWorldHeight(notExploredCell).ToPoint());
-            Program.GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(notExploredCell), color: color);
+            _graphicalDebugger.AddText("?", color: color, worldPos: _terrainTracker.WithWorldHeight(notExploredCell).ToPoint());
+            _graphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(notExploredCell), color: color);
         }
     }
 
@@ -250,14 +253,14 @@ public class BotDebugger : IBotDebugger {
 
         foreach (var unit in _unitsTracker.UnitsByTag.Values) {
             var unitText = $"{unit.Name} ({unit.UnitType})";
-            Program.GraphicalDebugger.AddText(unitText, size: 11, worldPos: unit.Position.ToPoint(xOffset: -0.4f));
+            _graphicalDebugger.AddText(unitText, size: 11, worldPos: unit.Position.ToPoint(xOffset: -0.4f));
         }
 
         foreach (var effect in Controller.Observation.Observation.RawData.Effects) {
             foreach (var effectPosition in effect.Pos.Select(effectPosition => _terrainTracker.WithWorldHeight(new Vector3(effectPosition.X, effectPosition.Y, 0)))) {
                 var effectText = $"{KnowledgeBase.GetEffectData(effect.EffectId).FriendlyName} ({effect.EffectId})";
-                Program.GraphicalDebugger.AddText(effectText, size: 11, worldPos: effectPosition.ToPoint(xOffset: -0.4f));
-                Program.GraphicalDebugger.AddSphere(effectPosition, effect.Radius, Colors.Cyan);
+                _graphicalDebugger.AddText(effectText, size: 11, worldPos: effectPosition.ToPoint(xOffset: -0.4f));
+                _graphicalDebugger.AddSphere(effectPosition, effect.Radius, Colors.Cyan);
             }
         }
     }
@@ -273,7 +276,7 @@ public class BotDebugger : IBotDebugger {
                 $"{cell.X}",
                 $"{cell.Y}"
             };
-            Program.GraphicalDebugger.AddTextGroup(coords, size: 10, worldPos: _terrainTracker.WithWorldHeight(cell).ToPoint(xOffset: -0.25f, yOffset: 0.2f));
+            _graphicalDebugger.AddTextGroup(coords, size: 10, worldPos: _terrainTracker.WithWorldHeight(cell).ToPoint(xOffset: -0.25f, yOffset: 0.2f));
         }
     }
 
@@ -285,7 +288,7 @@ public class BotDebugger : IBotDebugger {
                 neutralUnit.Position.ToString(),
             };
 
-            Program.GraphicalDebugger.AddTextGroup(rockInfo, worldPos: neutralUnit.Position.ToPoint());
+            _graphicalDebugger.AddTextGroup(rockInfo, worldPos: neutralUnit.Position.ToPoint());
         }
     }
 }

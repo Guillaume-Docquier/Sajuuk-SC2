@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
@@ -16,6 +17,7 @@ public partial class ArmySupervisor {
         private readonly ITerrainTracker _terrainTracker;
         private readonly IRegionsTracker _regionsTracker;
         private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+        private readonly IGraphicalDebugger _graphicalDebugger;
 
         private static Dictionary<Vector2, bool> _checkedExpandLocations;
         private static readonly Dictionary<Vector2, bool> CheckedPositions = new Dictionary<Vector2, bool>();
@@ -27,18 +29,20 @@ public partial class ArmySupervisor {
             IUnitsTracker unitsTracker,
             ITerrainTracker terrainTracker,
             IRegionsTracker regionsTracker,
-            IRegionsEvaluationsTracker regionsEvaluationsTracker
+            IRegionsEvaluationsTracker regionsEvaluationsTracker,
+            IGraphicalDebugger graphicalDebugger
         ) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
             _terrainTracker = terrainTracker;
             _regionsTracker = regionsTracker;
             _regionsEvaluationsTracker = regionsEvaluationsTracker;
+            _graphicalDebugger = graphicalDebugger;
         }
 
         protected override bool TryTransitioning() {
             if (_isNextTargetSet) {
-                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker));
+                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger));
                 return true;
             }
 

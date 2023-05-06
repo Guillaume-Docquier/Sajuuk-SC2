@@ -14,6 +14,7 @@ using IRegionPath = List<IRegion>;
 
 public class Pathfinder {
     public static Pathfinder Instance { get; private set; } = new Pathfinder(TerrainTracker.Instance);
+    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
 
     private readonly ITerrainTracker _terrainTracker;
 
@@ -164,10 +165,10 @@ public class Pathfinder {
         }
 
         if (isKnown) {
-            Program.GraphicalDebugger.AddPath(path, Colors.LightGreen, Colors.DarkGreen);
+            GraphicalDebugger.AddPath(path, Colors.LightGreen, Colors.DarkGreen);
         }
         else {
-            Program.GraphicalDebugger.AddPath(path, Colors.LightBlue, Colors.DarkBlue);
+            GraphicalDebugger.AddPath(path, Colors.LightBlue, Colors.DarkBlue);
         }
     }
 

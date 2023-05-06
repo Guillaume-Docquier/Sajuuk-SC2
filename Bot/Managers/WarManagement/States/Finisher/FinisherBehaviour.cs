@@ -2,6 +2,7 @@
 using System.Linq;
 using Bot.Builds;
 using Bot.Debugging;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -53,7 +54,8 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
         IWarSupervisorFactory warSupervisorFactory,
-        IBuildRequestFactory buildRequestFactory
+        IBuildRequestFactory buildRequestFactory,
+        IGraphicalDebugger graphicalDebugger
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
@@ -64,7 +66,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         _regionsTracker = regionsTracker;
         _buildRequestFactory = buildRequestFactory;
 
-        _debugger = new FinisherBehaviourDebugger(debuggingFlagsTracker);
+        _debugger = new FinisherBehaviourDebugger(debuggingFlagsTracker, graphicalDebugger);
         AttackSupervisor = warSupervisorFactory.CreateArmySupervisor();
         TerranFinisherSupervisor = warSupervisorFactory.CreateArmySupervisor();
 

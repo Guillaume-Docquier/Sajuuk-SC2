@@ -1,4 +1,5 @@
 ﻿using System;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
 using SC2APIProtocol;
 
@@ -10,16 +11,17 @@ public static class ScoutingStrategyFactory {
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
-        IRegionsTracker regionsTracker
+        IRegionsTracker regionsTracker,
+        IGraphicalDebugger graphicalDebugger
     ) {
         var enemyRace = enemyRaceTracker.EnemyRace;
 
         return enemyRace switch
         {
             Race.Protoss => new ProtossScoutingStrategy(visibilityTracker, unitsTracker, terrainTracker, regionsTracker),
-            Race.Zerg => new ZergScoutingStrategy(visibilityTracker, unitsTracker, terrainTracker, regionsTracker),
+            Race.Zerg => new ZergScoutingStrategy(visibilityTracker, unitsTracker, terrainTracker, regionsTracker, graphicalDebugger),
             Race.Terran => new TerranScoutingStrategy(visibilityTracker, unitsTracker, terrainTracker, regionsTracker),
-            Race.Random => new RandomScoutingStrategy(enemyRaceTracker, visibilityTracker, unitsTracker, terrainTracker, regionsTracker),
+            Race.Random => new RandomScoutingStrategy(enemyRaceTracker, visibilityTracker, unitsTracker, terrainTracker, regionsTracker, graphicalDebugger),
             Race.NoRace => throw new ArgumentException("Race.NoRace is an invalid ScoutingStrategy Race"),
             _ => throw new ArgumentOutOfRangeException(nameof(enemyRace), enemyRace, "Unsupported ScoutingStrategy Race")
         };

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapAnalysis;
@@ -19,6 +20,7 @@ public class GameConnection {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private const string Address = "127.0.0.1";
     private readonly ProtobufProxy _proxy = new ProtobufProxy();
@@ -36,10 +38,11 @@ public class GameConnection {
     // On the ladder, for some reason, actions have a 1 frame delay before being received and applied
     // We will run every 2 frames by default, this way we won't notice the delay
     // Lower than 2 is not recommended unless your code is crazy good and can handle the inevitable desync
-    public GameConnection(IUnitsTracker unitsTracker, IExpandAnalyzer expandAnalyzer, IRegionAnalyzer regionAnalyzer, uint stepSize) {
+    public GameConnection(IUnitsTracker unitsTracker, IExpandAnalyzer expandAnalyzer, IRegionAnalyzer regionAnalyzer, IGraphicalDebugger graphicalDebugger, uint stepSize) {
         _unitsTracker = unitsTracker;
         _expandAnalyzer = expandAnalyzer;
         _regionAnalyzer = regionAnalyzer;
+        _graphicalDebugger = graphicalDebugger;
 
         _stepSize = stepSize;
     }
@@ -275,7 +278,7 @@ public class GameConnection {
         _performanceDebugger.ActionsStopwatch.Stop();
 
         _performanceDebugger.DebuggerStopwatch.Start();
-        var request = Program.GraphicalDebugger.GetDebugRequest();
+        var request = _graphicalDebugger.GetDebugRequest();
         if (request != null) {
             await SendRequest(request);
         }

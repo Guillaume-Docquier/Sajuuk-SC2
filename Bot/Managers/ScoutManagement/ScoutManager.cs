@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Numerics;
 using Bot.Builds;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -31,7 +32,8 @@ public partial class ScoutManager : Manager {
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
-        IScoutSupervisorFactory scoutSupervisorFactory
+        IScoutSupervisorFactory scoutSupervisorFactory,
+        IGraphicalDebugger graphicalDebugger
     ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
@@ -42,7 +44,7 @@ public partial class ScoutManager : Manager {
         Dispatcher = new ScoutManagerDispatcher(this);
         Releaser = new ScoutManagerReleaser(this);
 
-        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker);
+        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, graphicalDebugger);
     }
 
     protected override void RecruitmentPhase() {

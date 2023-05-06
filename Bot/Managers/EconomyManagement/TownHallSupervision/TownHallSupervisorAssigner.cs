@@ -59,7 +59,7 @@ public partial class TownHallSupervisor {
 
             _supervisor.TownHall = townHall;
 
-            DebugLocationModule.Install(_supervisor.TownHall, _supervisor._color);
+            DebugLocationModule.Install(_supervisor._graphicalDebugger, _supervisor.TownHall, _supervisor._color);
 
             LogAssignment(townHall);
         }
@@ -72,7 +72,7 @@ public partial class TownHallSupervisor {
 
             _supervisor.Queen = queen;
 
-            DebugLocationModule.Install(queen, _supervisor._color);
+            DebugLocationModule.Install(_supervisor._graphicalDebugger, queen, _supervisor._color);
 
             var queenMicroModule = UnitModule.Get<QueenMicroModule>(queen);
             if (queenMicroModule != null) {
@@ -88,8 +88,8 @@ public partial class TownHallSupervisor {
         private void AssignWorker(Unit worker) {
             _supervisor._workers.Add(worker);
 
-            DebugLocationModule.Install(worker, _supervisor._color);
-            MiningModule.Install(worker, null);
+            DebugLocationModule.Install(_supervisor._graphicalDebugger, worker, _supervisor._color);
+            MiningModule.Install(_supervisor._graphicalDebugger, worker, null);
 
             LogAssignment(worker);
         }
@@ -99,8 +99,8 @@ public partial class TownHallSupervisor {
 
             _supervisor._extractors.Add(extractor);
 
-            DebugLocationModule.Install(extractor, _supervisor._color);
-            CapacityModule.Install(extractor, Resources.MaxDronesPerExtractor);
+            DebugLocationModule.Install(_supervisor._graphicalDebugger, extractor, _supervisor._color);
+            CapacityModule.Install(_supervisor._graphicalDebugger, extractor, Resources.MaxDronesPerExtractor);
 
             UnitModule.Get<CapacityModule>(_supervisor._gasses.First(gas => gas.DistanceTo(extractor) < 1)).Assign(extractor); // TODO GD Make this cleaner
 
@@ -112,8 +112,8 @@ public partial class TownHallSupervisor {
 
             _supervisor._minerals.Add(mineral);
 
-            DebugLocationModule.Install(mineral, _supervisor._color);
-            CapacityModule.Install(mineral, Resources.MaxDronesPerMinerals);
+            DebugLocationModule.Install(_supervisor._graphicalDebugger, mineral, _supervisor._color);
+            CapacityModule.Install(_supervisor._graphicalDebugger, mineral, Resources.MaxDronesPerMinerals);
 
             LogAssignment(mineral);
         }
@@ -122,8 +122,8 @@ public partial class TownHallSupervisor {
         private void AssignGas(Unit gas) {
             _supervisor._gasses.Add(gas);
 
-            DebugLocationModule.Install(gas, _supervisor._color);
-            CapacityModule.Install(gas, MaxExtractorsPerGas, showDebugInfo: false);
+            DebugLocationModule.Install(_supervisor._graphicalDebugger, gas, _supervisor._color);
+            CapacityModule.Install(_supervisor._graphicalDebugger, gas, MaxExtractorsPerGas, showDebugInfo: false);
 
             LogAssignment(gas);
         }

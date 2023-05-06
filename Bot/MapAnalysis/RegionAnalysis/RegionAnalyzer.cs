@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.Algorithms;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.MapAnalysis.ExpandAnalysis;
@@ -22,6 +23,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         ExpandAnalyzer.Instance,
         new RegionsDataRepository(TerrainTracker.Instance, Program.MapFileName)
     );
+    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
 
     private readonly ITerrainTracker _terrainTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;

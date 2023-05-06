@@ -3,9 +3,11 @@ using System.Linq;
 using System.Numerics;
 using Bot.Algorithms;
 using Bot.Builds;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
+using Bot.Managers.WarManagement.States;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;
@@ -16,6 +18,7 @@ public partial class ArmySupervisor: Supervisor {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private readonly StateMachine<ArmySupervisor> _stateMachine;
 
@@ -40,18 +43,20 @@ public partial class ArmySupervisor: Supervisor {
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IGraphicalDebugger graphicalDebugger
     ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
+        _graphicalDebugger = graphicalDebugger;
 
         Assigner = new ArmySupervisorAssigner(this);
         Releaser = new ArmySupervisorReleaser(this);
 
-        _stateMachine = new StateMachine<ArmySupervisor>(this, new AttackState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker));
+        _stateMachine = new StateMachine<ArmySupervisor>(this, new AttackState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger));
     }
 
     public override string ToString() {
@@ -72,7 +77,7 @@ public partial class ArmySupervisor: Supervisor {
     public void AssignTarget(Vector2 target, float blastRadius, bool canHuntTheEnemy = true) {
         if (_target != target) {
             _target = target;
-            _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker));
+            _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger));
         }
 
         _blastRadius = blastRadius;
@@ -87,6 +92,6 @@ public partial class ArmySupervisor: Supervisor {
 
         // Reset the state to have a clean slate once we're re-hired
         // Maybe our Manager should just dispose of us instead?
-        _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker));
+        _stateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger));
     }
 }

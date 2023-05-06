@@ -9,14 +9,16 @@ namespace Bot.UnitModules;
 public class GasMiningStrategy: IStrategy {
     private static readonly ulong GasDeathDelay = Convert.ToUInt64(1.415 * TimeUtils.FramesPerSecond) + 5; // +5 just to be sure
 
+    private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly Unit _worker;
     private readonly Unit _resource;
 
-    public GasMiningStrategy(Unit worker, Unit resource) {
+    public GasMiningStrategy(IGraphicalDebugger graphicalDebugger, Unit worker, Unit resource) {
         // Workers disappear when going inside extractors for 1.415 seconds
         // Change their death delay so that we don't think they're dead
         worker.DeathDelay = GasDeathDelay;
 
+        _graphicalDebugger = graphicalDebugger;
         _worker = worker;
         _resource = resource;
     }
@@ -26,6 +28,6 @@ public class GasMiningStrategy: IStrategy {
             _worker.Gather(_resource);
         }
 
-        Program.GraphicalDebugger.AddLine(_worker.Position, _resource.Position, Colors.LimeGreen);
+        _graphicalDebugger.AddLine(_worker.Position, _resource.Position, Colors.LimeGreen);
     }
 }

@@ -23,6 +23,7 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
         new RegionsDataRepository(TerrainTracker.Instance, Program.MapFileName),
         new ExpandUnitsAnalyzer(UnitsTracker.Instance, TerrainTracker.Instance)
     );
+    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
 
     private readonly ITerrainTracker _terrainTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
@@ -136,7 +137,7 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
     // TODO GD Doesn't take into account the building dimensions, but good enough for creep spread since it's 1x1
     public bool IsBlockingExpand(Vector2 position) {
         var region = GetRegion(position);
-        if (region.ExpandLocation == null) {
+        if (region?.ExpandLocation == null) {
             return false;
         }
 
@@ -183,13 +184,13 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
             var frontier = region.Neighbors.SelectMany(neighboringRegion => neighboringRegion.Frontier).ToList();
 
             foreach (var position in region.Cells.Except(frontier)) {
-                Program.GraphicalDebugger.AddText($"{region.Id}", size: 12, worldPos: _terrainTracker.WithWorldHeight(position).ToPoint(), color: region.Color);
-                Program.GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(position), region.Color);
+                GraphicalDebugger.AddText($"{region.Id}", size: 12, worldPos: _terrainTracker.WithWorldHeight(position).ToPoint(), color: region.Color);
+                GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(position), region.Color);
             }
 
             foreach (var position in frontier) {
-                Program.GraphicalDebugger.AddText($"F{region.Id}", size: 12, worldPos: _terrainTracker.WithWorldHeight(position).ToPoint(), color: region.Color);
-                Program.GraphicalDebugger.AddGridSphere(_terrainTracker.WithWorldHeight(position), region.Color);
+                GraphicalDebugger.AddText($"F{region.Id}", size: 12, worldPos: _terrainTracker.WithWorldHeight(position).ToPoint(), color: region.Color);
+                GraphicalDebugger.AddGridSphere(_terrainTracker.WithWorldHeight(position), region.Color);
             }
         }
     }
@@ -201,8 +202,8 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
     /// </summary>
     private void DrawNoise() {
         foreach (var position in _regionsData.Noise) {
-            Program.GraphicalDebugger.AddText("?", size: 12, worldPos: _terrainTracker.WithWorldHeight(position).ToPoint(), color: Colors.Red);
-            Program.GraphicalDebugger.AddGridSphere(_terrainTracker.WithWorldHeight(position), Colors.Red);
+            GraphicalDebugger.AddText("?", size: 12, worldPos: _terrainTracker.WithWorldHeight(position).ToPoint(), color: Colors.Red);
+            GraphicalDebugger.AddGridSphere(_terrainTracker.WithWorldHeight(position), Colors.Red);
         }
     }
 
@@ -211,7 +212,7 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
     /// </summary>
     private void DrawChokePoints() {
         foreach (var chokePoint in _regionsData.ChokePoints) {
-            Program.GraphicalDebugger.AddPath(chokePoint.Edge.Select(edge => _terrainTracker.WithWorldHeight(edge)).ToList(), Colors.LightRed, Colors.LightRed);
+            GraphicalDebugger.AddPath(chokePoint.Edge.Select(edge => _terrainTracker.WithWorldHeight(edge)).ToList(), Colors.LightRed, Colors.LightRed);
         }
     }
 

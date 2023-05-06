@@ -15,6 +15,7 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
     /// DI: ✔️ The only usages are for static instance creations
     /// </summary>
     public static BuildingTracker Instance { get; private set; } = new BuildingTracker(UnitsTracker.Instance, TerrainTracker.Instance);
+    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
 
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
@@ -33,7 +34,7 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         foreach (var reservedBuildingCell in _reservedBuildingCells.Keys) {
-            Program.GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(reservedBuildingCell), Colors.Yellow);
+            GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(reservedBuildingCell), Colors.Yellow);
         }
 
         foreach (var worker in _ongoingBuildingOrders.Keys) {
@@ -151,20 +152,20 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
 
     private void DebugBuildingPlacementResult(ActionResult actionResult, Vector3 targetPos) {
         if (actionResult == ActionResult.NotSupported) {
-            Program.GraphicalDebugger.AddGridSquare(targetPos, Colors.Black);
+            GraphicalDebugger.AddGridSquare(targetPos, Colors.Black);
         }
         else if (actionResult == ActionResult.CantBuildLocationInvalid) {
-            Program.GraphicalDebugger.AddGridSquare(targetPos, Colors.Red);
+            GraphicalDebugger.AddGridSquare(targetPos, Colors.Red);
         }
         else if (actionResult == ActionResult.CantBuildTooCloseToResources) {
-            Program.GraphicalDebugger.AddGridSquare(targetPos, Colors.Cyan);
+            GraphicalDebugger.AddGridSquare(targetPos, Colors.Cyan);
         }
         else if (actionResult == ActionResult.Success) {
-            Program.GraphicalDebugger.AddGridSquare(targetPos, Colors.Green);
+            GraphicalDebugger.AddGridSquare(targetPos, Colors.Green);
         }
         else {
             Logger.Warning("[CanPlace] Unexpected placement result: {0}", actionResult);
-            Program.GraphicalDebugger.AddGridSquare(targetPos, Colors.Magenta);
+            GraphicalDebugger.AddGridSquare(targetPos, Colors.Magenta);
         }
     }
 

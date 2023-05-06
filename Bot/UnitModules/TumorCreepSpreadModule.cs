@@ -15,6 +15,7 @@ public class TumorCreepSpreadModule: UnitModule {
 
     private readonly ICreepTracker _creepTracker;
     private readonly IRegionsTracker _regionsTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     public const string Tag = "TumorCreepSpreadModule";
 
@@ -30,7 +31,8 @@ public class TumorCreepSpreadModule: UnitModule {
         ITerrainTracker terrainTracker,
         IBuildingTracker buildingTracker,
         ICreepTracker creepTracker,
-        IRegionsTracker regionsTracker
+        IRegionsTracker regionsTracker,
+        IGraphicalDebugger graphicalDebugger
     ) {
         _creepTumor = creepTumor;
 
@@ -39,6 +41,7 @@ public class TumorCreepSpreadModule: UnitModule {
         _buildingTracker = buildingTracker;
         _creepTracker = creepTracker;
         _regionsTracker = regionsTracker;
+        _graphicalDebugger = graphicalDebugger;
     }
 
     public static void Install(
@@ -47,10 +50,11 @@ public class TumorCreepSpreadModule: UnitModule {
         ITerrainTracker terrainTracker,
         IBuildingTracker buildingTracker,
         ICreepTracker creepTracker,
-        IRegionsTracker regionsTracker
+        IRegionsTracker regionsTracker,
+        IGraphicalDebugger graphicalDebugger
     ) {
         if (PreInstallCheck(Tag, creepTumor)) {
-            creepTumor.Modules.Add(Tag, new TumorCreepSpreadModule(creepTumor, visibilityTracker, terrainTracker, buildingTracker, creepTracker, regionsTracker));
+            creepTumor.Modules.Add(Tag, new TumorCreepSpreadModule(creepTumor, visibilityTracker, terrainTracker, buildingTracker, creepTracker, regionsTracker, graphicalDebugger));
         }
     }
 
@@ -84,7 +88,7 @@ public class TumorCreepSpreadModule: UnitModule {
             }
 
             _creepTumor.UseAbility(Abilities.SpawnCreepTumor, position: bestPlaceLocation.ToPoint2D());
-            Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(bestPlaceLocation), 1, Colors.Yellow);
+            _graphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(bestPlaceLocation), 1, Colors.Yellow);
 
             Uninstall<TumorCreepSpreadModule>(_creepTumor);
         }

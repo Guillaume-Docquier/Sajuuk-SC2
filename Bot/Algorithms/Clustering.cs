@@ -8,9 +8,10 @@ using Bot.GameSense;
 namespace Bot.Algorithms;
 
 public class Clustering {
-    public static Clustering Instance { get; private set; } = new Clustering(TerrainTracker.Instance);
+    public static Clustering Instance { get; private set; } = new Clustering(TerrainTracker.Instance, GraphicalDebugger.Instance);
 
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private const bool DrawEnabled = false; // TODO GD Flag this
 
@@ -20,12 +21,13 @@ public class Clustering {
         CorePoint
     }
 
-    public Clustering(ITerrainTracker terrainTracker) {
+    public Clustering(ITerrainTracker terrainTracker, IGraphicalDebugger graphicalDebugger) {
         _terrainTracker = terrainTracker;
+        _graphicalDebugger = graphicalDebugger;
     }
 
     public void Reset() {
-        Instance = new Clustering(TerrainTracker.Instance);
+        Instance = new Clustering(TerrainTracker.Instance, GraphicalDebugger.Instance);
     }
 
     /// <summary>
@@ -241,6 +243,6 @@ public class Clustering {
         var centerY = minY + (maxY - minY) / 2;
         var boundingBoxCenter = _terrainTracker.WithWorldHeight(new Vector2(centerX, centerY));
 
-        Program.GraphicalDebugger.AddRectangle(boundingBoxCenter, maxX - minX, maxY - minY, Colors.Orange);
+        _graphicalDebugger.AddRectangle(boundingBoxCenter, maxX - minX, maxY - minY, Colors.Orange);
     }
 }

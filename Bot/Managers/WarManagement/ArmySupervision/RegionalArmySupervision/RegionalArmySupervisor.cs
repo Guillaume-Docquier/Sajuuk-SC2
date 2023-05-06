@@ -15,6 +15,7 @@ namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class RegionalArmySupervisor : Supervisor {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private const bool Debug = false;
 
@@ -30,17 +31,19 @@ public class RegionalArmySupervisor : Supervisor {
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IGraphicalDebugger graphicalDebugger,
         IRegion targetRegion
     ) {
         _unitsTracker = unitsTracker;
+        _graphicalDebugger = graphicalDebugger;
 
         _targetRegion = targetRegion;
 
-        _offensiveUnitsController = new OffensiveUnitsControl(_unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker);
-        _defensiveUnitsController = new DefensiveUnitsControl(_unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker);
+        _offensiveUnitsController = new OffensiveUnitsControl(_unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker, _graphicalDebugger);
+        _defensiveUnitsController = new DefensiveUnitsControl(_unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker, _graphicalDebugger);
 
         Releaser = new RegionalArmySupervisorReleaser(this);
-        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState(_unitsTracker, regionsTracker, regionsEvaluationsTracker));
+        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState(_unitsTracker, regionsTracker, regionsEvaluationsTracker, _graphicalDebugger));
     }
 
     protected override void Supervise() {
@@ -96,7 +99,7 @@ public class RegionalArmySupervisor : Supervisor {
         };
 
         foreach (var supervisedUnit in SupervisedUnits) {
-            Program.GraphicalDebugger.AddText($"{stateSymbol} {_targetRegion.Id:00}", worldPos: supervisedUnit.Position.ToPoint(yOffset: -0.17f), color: Colors.Yellow);
+            _graphicalDebugger.AddText($"{stateSymbol} {_targetRegion.Id:00}", worldPos: supervisedUnit.Position.ToPoint(yOffset: -0.17f), color: Colors.Yellow);
         }
     }
 

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -20,6 +21,7 @@ public class ZergScoutingStrategy : IScoutingStrategy {
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private const int TopPriority = 100;
 
@@ -42,12 +44,14 @@ public class ZergScoutingStrategy : IScoutingStrategy {
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
-        IRegionsTracker regionsTracker
+        IRegionsTracker regionsTracker,
+        IGraphicalDebugger graphicalDebugger
     ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
+        _graphicalDebugger = graphicalDebugger;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
@@ -87,7 +91,7 @@ public class ZergScoutingStrategy : IScoutingStrategy {
             .Concat(enemyNaturalExitRegionRamps.SelectMany(region => region.Cells))
             .ToList();
 
-        _naturalExitVisibilityTask = new MaintainVisibilityScoutingTask(_visibilityTracker, _terrainTracker, cellsToMaintainVisible, priority: TopPriority - 3, enemyNaturalExitRegionRamps.Count);
+        _naturalExitVisibilityTask = new MaintainVisibilityScoutingTask(_visibilityTracker, _terrainTracker, _graphicalDebugger, cellsToMaintainVisible, priority: TopPriority - 3, enemyNaturalExitRegionRamps.Count);
 
         var enemyThirdExpandLocation = _regionsTracker.GetExpand(Alliance.Enemy, ExpandType.Third);
         _thirdScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _terrainTracker, enemyThirdExpandLocation.Position, TopPriority - 1, maxScouts: 1, waitForExpand: true);

@@ -45,8 +45,6 @@ public class Program {
     public static GameConnection GameConnection { get; private set; }
     public static bool DebugEnabled { get; private set; }
 
-    public static IGraphicalDebugger GraphicalDebugger { get; set; }
-
     public static void Main(string[] args) {
         try {
             switch (args.Length) {
@@ -100,7 +98,7 @@ public class Program {
             Pathfinder.Instance.Reset();
             Clustering.Instance.Reset();
 
-            GraphicalDebugger = new Sc2GraphicalDebugger(TerrainTracker.Instance);
+            GraphicalDebugger.Instance = new Sc2GraphicalDebugger(TerrainTracker.Instance);
 
             // TODO GD Instead of doing this, we should be able to use a different Controller and another GameConnection
             // DI Should create new instances for each run
@@ -116,16 +114,15 @@ public class Program {
         Logger.Info("Game launched in video clip mode");
 
         DebugEnabled = true;
-        // TODO GD GraphicalDebugger should be injected as well
-        GraphicalDebugger = new Sc2GraphicalDebugger(TerrainTracker.Instance);
+        GraphicalDebugger.Instance = new Sc2GraphicalDebugger(TerrainTracker.Instance);
 
         GameConnection = CreateGameConnection(stepSize: 1);
-        GameConnection.RunLocal(new VideoClipPlayer(MapFileName, DebuggingFlagsTracker.Instance, UnitsTracker.Instance, TerrainTracker.Instance), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
+        GameConnection.RunLocal(new VideoClipPlayer(MapFileName, DebuggingFlagsTracker.Instance, UnitsTracker.Instance, TerrainTracker.Instance, GraphicalDebugger.Instance), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
     }
 
     private static void PlayLocalGame() {
         DebugEnabled = true;
-        GraphicalDebugger = new Sc2GraphicalDebugger(TerrainTracker.Instance);
+        GraphicalDebugger.Instance = new Sc2GraphicalDebugger(TerrainTracker.Instance);
 
         GameConnection = CreateGameConnection();
         GameConnection.RunLocal(CreateSajuuk(Version, Scenarios), MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
@@ -133,7 +130,8 @@ public class Program {
 
     private static void PlayLadderGame(string[] args) {
         DebugEnabled = false;
-        GraphicalDebugger = new NullGraphicalDebugger();
+        // TODO GD That doesn't work because static trackers will get an undefined reference
+        GraphicalDebugger.Instance = new NullGraphicalDebugger();
 
         GameConnection = CreateGameConnection();
         GameConnection.RunLadder(CreateSajuuk(Version, Scenarios), args).Wait();
@@ -149,7 +147,8 @@ public class Program {
             BuildingTracker.Instance,
             RegionsTracker.Instance,
             CreepTracker.Instance,
-            buildRequestFactory
+            buildRequestFactory,
+            GraphicalDebugger.Instance
         );
 
         var scoutSupervisorFactory = new ScoutSupervisorFactory(
@@ -161,7 +160,8 @@ public class Program {
             UnitsTracker.Instance,
             TerrainTracker.Instance,
             RegionsTracker.Instance,
-            RegionsEvaluationsTracker.Instance
+            RegionsEvaluationsTracker.Instance,
+            GraphicalDebugger.Instance
         );
 
         var warManagerBehaviourFactory = new WarManagerBehaviourFactory(
@@ -175,7 +175,8 @@ public class Program {
             EnemyRaceTracker.Instance,
             scoutSupervisorFactory,
             warSupervisorFactory,
-            buildRequestFactory
+            buildRequestFactory,
+            GraphicalDebugger.Instance
         );
 
         var warManagerStateFactory = new WarManagerStateFactory(
@@ -197,7 +198,8 @@ public class Program {
             economySupervisorFactory,
             scoutSupervisorFactory,
             warManagerStateFactory,
-            buildRequestFactory
+            buildRequestFactory,
+            GraphicalDebugger.Instance
         );
 
         var botDebugger = new BotDebugger(
@@ -207,7 +209,8 @@ public class Program {
             IncomeTracker.Instance,
             TerrainTracker.Instance,
             EnemyStrategyTracker.Instance,
-            EnemyRaceTracker.Instance
+            EnemyRaceTracker.Instance,
+            GraphicalDebugger.Instance
         );
 
         return new SajuukBot(
@@ -228,6 +231,7 @@ public class Program {
             UnitsTracker.Instance,
             ExpandAnalyzer.Instance,
             RegionAnalyzer.Instance,
+            GraphicalDebugger.Instance,
             stepSize
         );
     }

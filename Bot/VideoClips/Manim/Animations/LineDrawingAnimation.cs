@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Threading.Tasks;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.Utils;
 using SC2APIProtocol;
@@ -9,6 +10,7 @@ namespace Bot.VideoClips.Manim.Animations;
 public class LineDrawingAnimation : Animation<LineDrawingAnimation> {
     private const float ThicknessOffset = 0.005f;
 
+    private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly Vector3 _lineStart;
     private readonly Vector3 _lineEnd;
     private readonly Color _color;
@@ -16,7 +18,9 @@ public class LineDrawingAnimation : Animation<LineDrawingAnimation> {
 
     private readonly float _lineLength;
 
-    public LineDrawingAnimation(Vector3 lineStart, Vector3 lineEnd, Color color, int startFrame, int thickness = 3): base(startFrame) {
+    public LineDrawingAnimation(IGraphicalDebugger graphicalDebugger, Vector3 lineStart, Vector3 lineEnd, Color color, int startFrame, int thickness = 3): base(startFrame) {
+        _graphicalDebugger = graphicalDebugger;
+
         _lineStart = lineStart;
         _lineEnd = lineEnd;
         _color = color;
@@ -32,7 +36,7 @@ public class LineDrawingAnimation : Animation<LineDrawingAnimation> {
             var start = _lineStart.TranslateTowards(_lineEnd, ThicknessOffset * offset).Rotate2D(MathUtils.DegToRad(90), _lineStart);
             var end = _lineEnd.TranslateTowards(_lineStart, ThicknessOffset * offset).Rotate2D(MathUtils.DegToRad(-90), _lineEnd);
 
-            Program.GraphicalDebugger.AddLine(
+            _graphicalDebugger.AddLine(
                 start,
                 Vector3.Lerp(start, end, percentDone),
                 _color
@@ -47,7 +51,7 @@ public class LineDrawingAnimation : Animation<LineDrawingAnimation> {
             var start = _lineStart.TranslateTowards(_lineEnd, ThicknessOffset * offset).Rotate2D(MathUtils.DegToRad(90), _lineStart);
             var end = _lineEnd.TranslateTowards(_lineStart, ThicknessOffset * offset).Rotate2D(MathUtils.DegToRad(-90), _lineEnd);
 
-            Program.GraphicalDebugger.AddLine(start, end, _color);
+            _graphicalDebugger.AddLine(start, end, _color);
         }
     }
 

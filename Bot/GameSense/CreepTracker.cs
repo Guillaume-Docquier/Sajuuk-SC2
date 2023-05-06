@@ -13,6 +13,7 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
     /// DI: ✔️ The only usages are for static instance creations
     /// </summary>
     public static readonly CreepTracker Instance = new CreepTracker(VisibilityTracker.Instance, UnitsTracker.Instance, TerrainTracker.Instance);
+    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
 
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
@@ -43,7 +44,7 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
 
         _rawCreepMap = observation.Observation.RawData.MapState.Creep;
 
-        _creepFrontier.ForEach(creepFrontierNode => Program.GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(creepFrontierNode), Colors.Orange));
+        _creepFrontier.ForEach(creepFrontierNode => GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(creepFrontierNode), Colors.Orange));
     }
 
     public bool HasCreep(Vector2 position) {

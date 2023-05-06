@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.Builds;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.EconomyManagement.TownHallSupervision;
@@ -17,6 +18,7 @@ public sealed partial class EconomyManager : Manager {
     private readonly IRegionsTracker _regionsTracker;
     private readonly ICreepTracker _creepTracker;
     private readonly IEconomySupervisorFactory _economySupervisorFactory;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private const int MaxDroneCount = 70;
     private readonly BuildManager _buildManager;
@@ -54,7 +56,8 @@ public sealed partial class EconomyManager : Manager {
         IRegionsTracker regionsTracker,
         ICreepTracker creepTracker,
         IEconomySupervisorFactory economySupervisorFactory,
-        IBuildRequestFactory buildRequestFactory
+        IBuildRequestFactory buildRequestFactory,
+        IGraphicalDebugger graphicalDebugger
     ) {
         _buildManager = buildManager;
         _unitsTracker = unitsTracker;
@@ -63,6 +66,7 @@ public sealed partial class EconomyManager : Manager {
         _regionsTracker = regionsTracker;
         _creepTracker = creepTracker;
         _economySupervisorFactory = economySupervisorFactory;
+        _graphicalDebugger = graphicalDebugger;
 
         Assigner = new EconomyManagerAssigner(this);
         Dispatcher = new EconomyManagerDispatcher(this);

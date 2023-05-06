@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Utils;
@@ -9,9 +10,17 @@ namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class NaiveRayCastClip : Clip {
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
-    public NaiveRayCastClip(ITerrainTracker terrainTracker, Vector2 sceneLocation, float stepSize, int pauseAtEndOfClipDurationSeconds = 5) : base(pauseAtEndOfClipDurationSeconds) {
+    public NaiveRayCastClip(
+        ITerrainTracker terrainTracker,
+        IGraphicalDebugger graphicalDebugger,
+        Vector2 sceneLocation,
+        float stepSize,
+        int pauseAtEndOfClipDurationSeconds = 5
+    ) : base(pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
+        _graphicalDebugger = graphicalDebugger;
 
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
@@ -27,7 +36,7 @@ public class NaiveRayCastClip : Clip {
         foreach (var cell in _terrainTracker.BuildSearchRadius(origin, 15)) {
             var rng = (float)random.NextDouble();
             var rngStartFrame = startAt + (int)TimeUtils.SecsToFrames(rng * 1f);
-            var squareAnimation = new CellDrawingAnimation(_terrainTracker, _terrainTracker.WithWorldHeight(cell), rngStartFrame).WithDurationInSeconds(0.5f);
+            var squareAnimation = new CellDrawingAnimation(_terrainTracker, _graphicalDebugger, _terrainTracker.WithWorldHeight(cell), rngStartFrame).WithDurationInSeconds(0.5f);
 
             AddAnimation(squareAnimation);
 
@@ -44,12 +53,12 @@ public class NaiveRayCastClip : Clip {
         var previousIntersection = rayStart;
         while (_terrainTracker.IsWalkable(previousIntersection)) {
             var rayEnd = previousIntersection + step;
-            var lineDrawingAnimation = new LineDrawingAnimation(_terrainTracker.WithWorldHeight(previousIntersection), _terrainTracker.WithWorldHeight(rayEnd), ColorService.Instance.RayColor, previousAnimationEnd)
+            var lineDrawingAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(previousIntersection), _terrainTracker.WithWorldHeight(rayEnd), ColorService.Instance.RayColor, previousAnimationEnd)
                 .WithConstantRate(4);
 
             AddAnimation(lineDrawingAnimation);
 
-            var sphereDrawingAnimation = new SphereDrawingAnimation(_terrainTracker.WithWorldHeight(rayEnd), 0.1f, ColorService.Instance.PointColor, lineDrawingAnimation.AnimationEndFrame)
+            var sphereDrawingAnimation = new SphereDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(rayEnd), 0.1f, ColorService.Instance.PointColor, lineDrawingAnimation.AnimationEndFrame)
                 .WithDurationInSeconds(0.2f);
 
             AddAnimation(sphereDrawingAnimation);

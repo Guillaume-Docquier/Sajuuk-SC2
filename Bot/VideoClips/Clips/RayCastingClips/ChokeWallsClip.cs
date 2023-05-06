@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Bot.Algorithms;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Utils;
@@ -12,9 +13,16 @@ namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class ChokeWallsClip : Clip {
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
-    public ChokeWallsClip(ITerrainTracker terrainTracker, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
+    public ChokeWallsClip(
+        ITerrainTracker terrainTracker,
+        IGraphicalDebugger graphicalDebugger,
+        Vector2 sceneLocation,
+        int pauseAtEndOfClipDurationSeconds
+    ) : base(pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
+        _graphicalDebugger = graphicalDebugger;
 
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0)
             .WithDurationInSeconds(1);
@@ -44,7 +52,7 @@ public class ChokeWallsClip : Clip {
             var relativeDistance = cell.DistanceTo(origin) / maxDistance;
             var startFrame = startAt + (int)(relativeDistance * animationTotalDuration);
 
-            var squareAnimation = new CellDrawingAnimation(_terrainTracker, _terrainTracker.WithWorldHeight(cell), startFrame).WithDurationInSeconds(1f);
+            var squareAnimation = new CellDrawingAnimation(_terrainTracker, _graphicalDebugger, _terrainTracker.WithWorldHeight(cell), startFrame).WithDurationInSeconds(1f);
             AddAnimation(squareAnimation);
 
             endFrame = Math.Max(endFrame, squareAnimation.AnimationEndFrame);

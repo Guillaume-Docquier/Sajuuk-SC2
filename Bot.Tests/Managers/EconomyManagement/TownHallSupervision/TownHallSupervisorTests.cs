@@ -14,6 +14,7 @@ public class TownHallSupervisorTests : BaseTestClass {
     private readonly Mock<IRegionsTracker> _regionsTrackerMock;
     private readonly Mock<ICreepTracker> _creepTrackerMock;
     private readonly Mock<IBuildRequestFactory> _buildRequestFactoryMock;
+    private readonly Mock<IGraphicalDebugger> _graphicalDebuggerMock;
 
     public TownHallSupervisorTests() {
         _unitsTracker = new TestUnitsTracker();
@@ -21,6 +22,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         _regionsTrackerMock = new Mock<IRegionsTracker>();
         _creepTrackerMock = new Mock<ICreepTracker>();
         _buildRequestFactoryMock = new Mock<IBuildRequestFactory>();
+        _graphicalDebuggerMock = new Mock<IGraphicalDebugger>();
     }
 
     [Fact(Skip = "Wait for DI refactor to be done")]
@@ -31,7 +33,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         _unitsTracker.SetUnits(new List<Unit> { townHall, farMineral });
 
         // Act
-        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, _graphicalDebuggerMock.Object, townHall, Colors.Cyan);
 
         // Assert
         Assert.Null(farMineral.Supervisor);
@@ -45,7 +47,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         _unitsTracker.SetUnits(new List<Unit> { townHall, closeMineral });
 
         // Act
-        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, _graphicalDebuggerMock.Object, townHall, Colors.Cyan);
 
         // Assert
         Assert.Equal(townHallSupervisor, closeMineral.Supervisor);
@@ -59,7 +61,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         _unitsTracker.SetUnits(new List<Unit> { townHall, closeMineral });
 
         // Act
-        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, _graphicalDebuggerMock.Object, townHall, Colors.Cyan);
 
         // Assert
         Assert.Equal(2, townHallSupervisor.IdealCapacity);
@@ -74,7 +76,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         _unitsTracker.SetUnits(new List<Unit> { townHall, farGasGeyser });
 
         // Act
-        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, _graphicalDebuggerMock.Object, townHall, Colors.Cyan);
 
         // Assert
         Assert.Null(farGasGeyser.Supervisor);
@@ -88,7 +90,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         _unitsTracker.SetUnits(new List<Unit> { townHall, closeGasGeyser });
 
         // Act
-        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, _graphicalDebuggerMock.Object, townHall, Colors.Cyan);
 
         // Assert
         Assert.Equal(townHallSupervisor, closeGasGeyser.Supervisor);
@@ -103,7 +105,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         _unitsTracker.SetUnits(new List<Unit> { townHall, closeGasGeyser, extractor });
 
         // Act
-        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, _graphicalDebuggerMock.Object, townHall, Colors.Cyan);
 
         // Assert
         Assert.Equal(townHallSupervisor, extractor.Supervisor);
@@ -117,7 +119,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var extractor = TestUtils.CreateUnit(_unitsTracker, Units.Extractor);
         _unitsTracker.SetUnits(new List<Unit> { townHall, closeGasGeyser, extractor });
 
-        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, _graphicalDebuggerMock.Object, townHall, Colors.Cyan);
 
         // Act
         closeGasGeyser.RawUnitData.VespeneContents = 0;
@@ -138,7 +140,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         _unitsTracker.SetUnits(new List<Unit> { townHall, closeMineral, worker });
 
         // Act
-        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, _graphicalDebuggerMock.Object, townHall, Colors.Cyan);
         townHallSupervisor.Assign(worker);
         townHallSupervisor.OnFrame();
 
@@ -155,7 +157,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var worker = TestUtils.CreateUnit(_unitsTracker, Units.Drone);
         _unitsTracker.SetUnits(new List<Unit> { townHall, closeMineral, worker });
 
-        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, _graphicalDebuggerMock.Object, townHall, Colors.Cyan);
         townHallSupervisor.Assign(worker);
         townHallSupervisor.OnFrame();
 
@@ -174,7 +176,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var worker = TestUtils.CreateUnit(_unitsTracker, Units.Drone);
         _unitsTracker.SetUnits(new List<Unit> { townHall, closeMineral, worker });
 
-        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, _graphicalDebuggerMock.Object, townHall, Colors.Cyan);
         townHallSupervisor.Assign(worker);
         townHallSupervisor.OnFrame();
 
@@ -196,7 +198,7 @@ public class TownHallSupervisorTests : BaseTestClass {
         var worker = TestUtils.CreateUnit(_unitsTracker, Units.Drone);
         _unitsTracker.SetUnits(new List<Unit> { townHall, closeMineral, closeGas, extractor, worker });
 
-        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, townHall, Colors.Cyan);
+        var townHallSupervisor = new Bot.Managers.EconomyManagement.TownHallSupervision.TownHallSupervisor(_unitsTracker, _buildingTracker, _regionsTrackerMock.Object, _creepTrackerMock.Object, _buildRequestFactoryMock.Object, _graphicalDebuggerMock.Object, townHall, Colors.Cyan);
         townHallSupervisor.Assign(worker);
         townHallSupervisor.OnFrame();
 

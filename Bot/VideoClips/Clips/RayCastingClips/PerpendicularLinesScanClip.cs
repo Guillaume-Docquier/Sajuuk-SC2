@@ -12,15 +12,22 @@ namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class PerpendicularLinesScanClip : Clip {
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
-    public PerpendicularLinesScanClip(ITerrainTracker terrainTracker, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
+    public PerpendicularLinesScanClip(
+        ITerrainTracker terrainTracker,
+        IGraphicalDebugger graphicalDebugger,
+        Vector2 sceneLocation,
+        int pauseAtEndOfClipDurationSeconds
+    ) : base(pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
+        _graphicalDebugger = graphicalDebugger;
 
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0)
             .WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
-        var locationAnimation = new CellDrawingAnimation(_terrainTracker, _terrainTracker.WithWorldHeight(sceneLocation), centerCameraAnimation.AnimationEndFrame)
+        var locationAnimation = new CellDrawingAnimation(_terrainTracker, _graphicalDebugger, _terrainTracker.WithWorldHeight(sceneLocation), centerCameraAnimation.AnimationEndFrame)
             .WithDurationInSeconds(1);
         AddAnimation(locationAnimation);
 
@@ -57,7 +64,7 @@ public class PerpendicularLinesScanClip : Clip {
     }
 
     private int DrawRay(Vector2 origin, Vector2 destination, int startFrame, Color color) {
-        var lineDrawingAnimation = new LineDrawingAnimation(_terrainTracker.WithWorldHeight(origin), _terrainTracker.WithWorldHeight(destination), color, startFrame)
+        var lineDrawingAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(origin), _terrainTracker.WithWorldHeight(destination), color, startFrame)
             .WithPostAnimationDurationInFrames(1);
 
         AddAnimation(lineDrawingAnimation);

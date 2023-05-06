@@ -1,4 +1,5 @@
 ﻿using Bot.Builds;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
 using Bot.Managers.EconomyManagement;
@@ -23,6 +24,7 @@ public class ManagerFactory : IManagerFactory {
     private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
     private readonly IWarManagerStateFactory _warManagerStateFactory;
     private readonly IBuildRequestFactory _buildRequestFactory;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     public ManagerFactory(
         ITaggingService taggingService,
@@ -37,7 +39,8 @@ public class ManagerFactory : IManagerFactory {
         IEconomySupervisorFactory economySupervisorFactory,
         IScoutSupervisorFactory scoutSupervisorFactory,
         IWarManagerStateFactory warManagerStateFactory,
-        IBuildRequestFactory buildRequestFactory
+        IBuildRequestFactory buildRequestFactory,
+        IGraphicalDebugger graphicalDebugger
     ) {
         _taggingService = taggingService;
         _enemyStrategyTracker = enemyStrategyTracker;
@@ -52,6 +55,7 @@ public class ManagerFactory : IManagerFactory {
         _scoutSupervisorFactory = scoutSupervisorFactory;
         _warManagerStateFactory = warManagerStateFactory;
         _buildRequestFactory = buildRequestFactory;
+        _graphicalDebugger = graphicalDebugger;
     }
 
     public BuildManager CreateBuildManager(IBuildOrder buildOrder) {
@@ -63,19 +67,19 @@ public class ManagerFactory : IManagerFactory {
     }
 
     public ScoutManager CreateScoutManager() {
-        return new ScoutManager(_enemyRaceTracker, _visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _scoutSupervisorFactory);
+        return new ScoutManager(_enemyRaceTracker, _visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _scoutSupervisorFactory, _graphicalDebugger);
     }
 
     public EconomyManager CreateEconomyManager(BuildManager buildManager) {
-        return new EconomyManager(buildManager, _unitsTracker, _terrainTracker, _buildingTracker, _regionsTracker, _creepTracker, _economySupervisorFactory, _buildRequestFactory);
+        return new EconomyManager(buildManager, _unitsTracker, _terrainTracker, _buildingTracker, _regionsTracker, _creepTracker, _economySupervisorFactory, _buildRequestFactory, _graphicalDebugger);
     }
 
     public WarManager CreateWarManager() {
-        return new WarManager(_warManagerStateFactory);
+        return new WarManager(_warManagerStateFactory, _graphicalDebugger);
     }
 
     public CreepManager CreateCreepManager() {
-        return new CreepManager(_visibilityTracker, _unitsTracker, _terrainTracker, _buildingTracker, _regionsTracker, _creepTracker);
+        return new CreepManager(_visibilityTracker, _unitsTracker, _terrainTracker, _buildingTracker, _regionsTracker, _creepTracker, _graphicalDebugger);
     }
 
     public UpgradesManager CreateUpgradesManager() {

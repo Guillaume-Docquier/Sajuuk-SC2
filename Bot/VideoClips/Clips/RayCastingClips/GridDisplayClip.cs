@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Numerics;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Utils;
@@ -10,9 +11,16 @@ namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class GridDisplayClip : Clip {
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
-    public GridDisplayClip(ITerrainTracker terrainTracker, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
+    public GridDisplayClip(
+        ITerrainTracker terrainTracker,
+        IGraphicalDebugger graphicalDebugger,
+        Vector2 sceneLocation,
+        int pauseAtEndOfClipDurationSeconds = 5
+    ) : base(pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
+        _graphicalDebugger = graphicalDebugger;
 
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
@@ -30,7 +38,7 @@ public class GridDisplayClip : Clip {
             var relativeDistance = cell.DistanceTo(origin) / maxDistance;
             var startFrame = startAt + (int)(relativeDistance * animationTotalDuration);
 
-            var squareAnimation = new CellDrawingAnimation(_terrainTracker, _terrainTracker.WithWorldHeight(cell), startFrame).WithDurationInSeconds(0.5f);
+            var squareAnimation = new CellDrawingAnimation(_terrainTracker, _graphicalDebugger, _terrainTracker.WithWorldHeight(cell), startFrame).WithDurationInSeconds(0.5f);
             AddAnimation(squareAnimation);
 
             endFrame = Math.Max(endFrame, squareAnimation.AnimationEndFrame);

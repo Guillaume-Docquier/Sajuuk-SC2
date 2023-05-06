@@ -17,10 +17,12 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 public class MineralWalkKiting : IUnitsControl {
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
-    public MineralWalkKiting(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker) {
+    public MineralWalkKiting(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker, IGraphicalDebugger graphicalDebugger) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
+        _graphicalDebugger = graphicalDebugger;
     }
 
     public bool IsExecuting() {
@@ -210,12 +212,12 @@ public class MineralWalkKiting : IUnitsControl {
     }
 
     private void DebugMineralWalkAngle(Unit drone, Vector2 enemyCenter, Vector2 mineralExit, double mineralAngle, Color color) {
-        Program.GraphicalDebugger.AddText($"{MathUtils.RadToDeg(mineralAngle):F0} deg", worldPos: drone.Position.ToPoint(zOffset: 2), color: color);
+        _graphicalDebugger.AddText($"{MathUtils.RadToDeg(mineralAngle):F0} deg", worldPos: drone.Position.ToPoint(zOffset: 2), color: color);
 
-        Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(mineralExit, zOffset: 2), 0.5f, Colors.Cyan);
-        Program.GraphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), _terrainTracker.WithWorldHeight(mineralExit, zOffset: 2), Colors.Cyan);
-        Program.GraphicalDebugger.AddSphere(drone.Position.Translate(zTranslation: 2), drone.Radius, color);
-        Program.GraphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), _terrainTracker.WithWorldHeight(enemyCenter, zOffset: 2), Colors.Magenta);
-        Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(enemyCenter, zOffset: 2), 0.5f, Colors.Magenta);
+        _graphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(mineralExit, zOffset: 2), 0.5f, Colors.Cyan);
+        _graphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), _terrainTracker.WithWorldHeight(mineralExit, zOffset: 2), Colors.Cyan);
+        _graphicalDebugger.AddSphere(drone.Position.Translate(zTranslation: 2), drone.Radius, color);
+        _graphicalDebugger.AddLine(drone.Position.Translate(zTranslation: 2), _terrainTracker.WithWorldHeight(enemyCenter, zOffset: 2), Colors.Magenta);
+        _graphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(enemyCenter, zOffset: 2), 0.5f, Colors.Magenta);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -12,11 +13,13 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 /// </summary>
 public class DisengagementKiting : IUnitsControl {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private const bool Debug = true;
 
-    public DisengagementKiting(IUnitsTracker unitsTracker) {
+    public DisengagementKiting(IUnitsTracker unitsTracker, IGraphicalDebugger graphicalDebugger) {
         _unitsTracker = unitsTracker;
+        _graphicalDebugger = graphicalDebugger;
     }
 
     public bool IsExecuting() {
@@ -72,11 +75,11 @@ public class DisengagementKiting : IUnitsControl {
         // Nothing to do
     }
 
-    private static void DebugUnitKite(Unit unit) {
+    private void DebugUnitKite(Unit unit) {
         if (!Debug) {
             return;
         }
 
-        Program.GraphicalDebugger.AddText("KITE", worldPos: unit.Position.ToPoint(yOffset: 0.51f));
+        _graphicalDebugger.AddText("KITE", worldPos: unit.Position.ToPoint(yOffset: 0.51f));
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.Builds;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.UnitModules;
@@ -14,6 +15,7 @@ public class CreepManager: UnitlessManager {
     private readonly IBuildingTracker _buildingTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly ICreepTracker _creepTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
 
@@ -23,7 +25,8 @@ public class CreepManager: UnitlessManager {
         ITerrainTracker terrainTracker,
         IBuildingTracker buildingTracker,
         IRegionsTracker regionsTracker,
-        ICreepTracker creepTracker
+        ICreepTracker creepTracker,
+        IGraphicalDebugger graphicalDebugger
     ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
@@ -31,11 +34,12 @@ public class CreepManager: UnitlessManager {
         _buildingTracker = buildingTracker;
         _regionsTracker = regionsTracker;
         _creepTracker = creepTracker;
+        _graphicalDebugger = graphicalDebugger;
     }
 
     protected override void ManagementPhase() {
         foreach (var creepTumor in Controller.GetUnits(_unitsTracker.NewOwnedUnits, Units.CreepTumor)) {
-            TumorCreepSpreadModule.Install(creepTumor, _visibilityTracker, _terrainTracker, _buildingTracker, _creepTracker, _regionsTracker);
+            TumorCreepSpreadModule.Install(creepTumor, _visibilityTracker, _terrainTracker, _buildingTracker, _creepTracker, _regionsTracker, _graphicalDebugger);
         }
     }
 

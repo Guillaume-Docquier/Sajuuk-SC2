@@ -73,7 +73,7 @@ public sealed partial class EconomyManager {
             supervisor ??= Client.GetClosestSupervisorWithSaturatedCapacityNotMet(worker.Position.ToVector2());
 
             if (supervisor == null) {
-                Program.GraphicalDebugger.AddText("!", color: Colors.Red, worldPos: worker.Position.ToPoint(yOffset: worker.Radius));
+                Client._graphicalDebugger.AddText("!", color: Colors.Red, worldPos: worker.Position.ToPoint(yOffset: worker.Radius));
                 return false;
             }
 

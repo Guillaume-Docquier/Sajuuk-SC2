@@ -1,17 +1,20 @@
 ﻿using System.Collections.Generic;
 using Bot.Debugging;
+using Bot.Debugging.GraphicalDebugging;
 using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.States.Finisher;
 
 public class FinisherBehaviourDebugger {
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     public float OwnForce { get; set; }
     public float EnemyForce { get; set; }
 
-    public FinisherBehaviourDebugger(IDebuggingFlagsTracker debuggingFlagsTracker) {
+    public FinisherBehaviourDebugger(IDebuggingFlagsTracker debuggingFlagsTracker, IGraphicalDebugger graphicalDebugger) {
         _debuggingFlagsTracker = debuggingFlagsTracker;
+        _graphicalDebugger = graphicalDebugger;
     }
 
     public void Debug() {
@@ -26,6 +29,6 @@ public class FinisherBehaviourDebugger {
             $"Enemy force: {EnemyForce:F1}",
         };
 
-        Program.GraphicalDebugger.AddTextGroup(texts, virtualPos: new Point { X = 0.30f, Y = 0.02f });
+        _graphicalDebugger.AddTextGroup(texts, virtualPos: new Point { X = 0.30f, Y = 0.02f });
     }
 }

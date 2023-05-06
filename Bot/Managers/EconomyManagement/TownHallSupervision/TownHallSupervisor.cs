@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Bot.Builds;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -15,6 +16,7 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
     private readonly IBuildingTracker _buildingTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly ICreepTracker _creepTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private readonly ulong _id;
     private readonly Color _color;
@@ -68,6 +70,7 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
         IRegionsTracker regionsTracker,
         ICreepTracker creepTracker,
         IBuildRequestFactory buildRequestFactory,
+        IGraphicalDebugger graphicalDebugger,
         Unit townHall,
         Color color
     ) {
@@ -75,6 +78,7 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
         _buildingTracker = buildingTracker;
         _regionsTracker = regionsTracker;
         _creepTracker = creepTracker;
+        _graphicalDebugger = graphicalDebugger;
 
         _id = townHall.Tag;
         _color = color;
@@ -327,7 +331,7 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
             return;
         }
 
-        Program.GraphicalDebugger.AddTextGroup(new[]
+        _graphicalDebugger.AddTextGroup(new[]
             {
                 $"IdealAvailCapacity: {IdealAvailableCapacity}",
                 $"SaturAvailCapacity: {SaturatedAvailableCapacity}",

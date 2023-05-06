@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.Builds;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.Managers.WarManagement.States;
 using Bot.StateManagement;
 
@@ -18,8 +19,8 @@ namespace Bot.Managers.WarManagement;
  */
 
 public class WarManager: Manager {
+    private readonly WarManagerDebugger _debugger;
     private readonly StateMachine<WarManager, WarManagerState> _stateMachine;
-    private readonly WarManagerDebugger _debugger = new WarManagerDebugger();
 
     protected override IAssigner Assigner => _stateMachine.State.Behaviour.Assigner;
     protected override IDispatcher Dispatcher => _stateMachine.State.Behaviour.Dispatcher;
@@ -27,7 +28,8 @@ public class WarManager: Manager {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _stateMachine.State.Behaviour.BuildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
-    public WarManager(IWarManagerStateFactory warManagerStateFactory) {
+    public WarManager(IWarManagerStateFactory warManagerStateFactory, IGraphicalDebugger graphicalDebugger) {
+        _debugger = new WarManagerDebugger(graphicalDebugger);
         _stateMachine = new StateMachine<WarManager, WarManagerState>(
             this,
             warManagerStateFactory.CreateEarlyGameState()

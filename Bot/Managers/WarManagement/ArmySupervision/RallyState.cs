@@ -17,6 +17,7 @@ public partial class ArmySupervisor {
         private readonly ITerrainTracker _terrainTracker;
         private readonly IRegionsTracker _regionsTracker;
         private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+        private readonly IGraphicalDebugger _graphicalDebugger;
 
         private const float AcceptableDistanceToTarget = 3;
 
@@ -27,13 +28,15 @@ public partial class ArmySupervisor {
             IUnitsTracker unitsTracker,
             ITerrainTracker terrainTracker,
             IRegionsTracker regionsTracker,
-            IRegionsEvaluationsTracker regionsEvaluationsTracker
+            IRegionsEvaluationsTracker regionsEvaluationsTracker,
+            IGraphicalDebugger graphicalDebugger
         ) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
             _terrainTracker = terrainTracker;
             _regionsTracker = regionsTracker;
             _regionsEvaluationsTracker = regionsEvaluationsTracker;
+            _graphicalDebugger = graphicalDebugger;
         }
 
         protected override void OnContextSet() {
@@ -42,7 +45,7 @@ public partial class ArmySupervisor {
 
         protected override bool TryTransitioning() {
             if (Context._mainArmy.GetForce() >= _attackAtForce || Controller.SupportedSupply + 1 >= KnowledgeBase.MaxSupplyAllowed) {
-                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker));
+                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger));
                 return true;
             }
 
@@ -56,7 +59,7 @@ public partial class ArmySupervisor {
         }
 
         private void DrawArmyData() {
-            Program.GraphicalDebugger.AddTextGroup(
+            _graphicalDebugger.AddTextGroup(
                 new[]
                 {
                     $"Force: {Context._mainArmy.GetForce()}",
@@ -73,15 +76,15 @@ public partial class ArmySupervisor {
 
             growPosition = _terrainTracker.GetClosestWalkable(growPosition);
 
-            Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(growPosition), AcceptableDistanceToTarget, Colors.Yellow);
-            Program.GraphicalDebugger.AddText("Grow", worldPos: _terrainTracker.WithWorldHeight(growPosition).ToPoint());
+            _graphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(growPosition), AcceptableDistanceToTarget, Colors.Yellow);
+            _graphicalDebugger.AddText("Grow", worldPos: _terrainTracker.WithWorldHeight(growPosition).ToPoint());
 
             soldiers.Where(unit => unit.DistanceTo(growPosition) > AcceptableDistanceToTarget)
                 .ToList()
                 .ForEach(unit => unit.AttackMove(growPosition));
 
             foreach (var soldier in soldiers) {
-                Program.GraphicalDebugger.AddLine(soldier.Position, _terrainTracker.WithWorldHeight(growPosition), Colors.Yellow);
+                _graphicalDebugger.AddLine(soldier.Position, _terrainTracker.WithWorldHeight(growPosition), Colors.Yellow);
             }
         }
     }

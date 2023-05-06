@@ -170,8 +170,8 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
     }
 
     public void AddUnit(Unit unit, Color color = null) {
-        Program.GraphicalDebugger.AddSphere(unit.Position, unit.Radius * 1.25f, color ?? Colors.White);
-        Program.GraphicalDebugger.AddText(
+        AddSphere(unit.Position, unit.Radius * 1.25f, color ?? Colors.White);
+        AddText(
             $"{unit.UnitTypeData.Name}",
             size: 13,
             worldPos: unit.Position.Translate(zTranslation: unit.Radius * 1.25f).ToPoint()
@@ -179,8 +179,8 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
 
         if (unit.IsFlying) {
             var groundPosition = _terrainTracker.WithWorldHeight(unit.Position);
-            Program.GraphicalDebugger.AddLine(unit.Position, groundPosition, color ?? Colors.White);
-            Program.GraphicalDebugger.AddGridSphere(groundPosition, color ?? Colors.White);
+            AddLine(unit.Position, groundPosition, color ?? Colors.White);
+            AddGridSphere(groundPosition, color ?? Colors.White);
         }
     }
 }

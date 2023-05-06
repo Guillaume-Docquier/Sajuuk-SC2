@@ -14,6 +14,7 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUni
 public partial class SneakAttack : IUnitsControl {
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private const float TankRange = 13;
 
@@ -34,9 +35,10 @@ public partial class SneakAttack : IUnitsControl {
         Units.Immortal,
     };
 
-    public SneakAttack(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker) {
+    public SneakAttack(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker, IGraphicalDebugger graphicalDebugger) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
+        _graphicalDebugger = graphicalDebugger;
 
         _stateMachine = new StateMachine<SneakAttack, SneakAttackState>(this, new InactiveState(_unitsTracker, _terrainTracker));
     }
@@ -133,11 +135,11 @@ public partial class SneakAttack : IUnitsControl {
             return;
         }
 
-        Program.GraphicalDebugger.AddLink(_terrainTracker.WithWorldHeight(_armyCenter), _terrainTracker.WithWorldHeight(_targetPosition), Colors.Magenta);
-        Program.GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(_targetPosition), 1, Colors.Magenta);
+        _graphicalDebugger.AddLink(_terrainTracker.WithWorldHeight(_armyCenter), _terrainTracker.WithWorldHeight(_targetPosition), Colors.Magenta);
+        _graphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(_targetPosition), 1, Colors.Magenta);
 
         if (_isTargetPriority) {
-            Program.GraphicalDebugger.AddText("!", size: 20, worldPos: _terrainTracker.WithWorldHeight(_targetPosition).ToPoint());
+            _graphicalDebugger.AddText("!", size: 20, worldPos: _terrainTracker.WithWorldHeight(_targetPosition).ToPoint());
         }
     }
 }

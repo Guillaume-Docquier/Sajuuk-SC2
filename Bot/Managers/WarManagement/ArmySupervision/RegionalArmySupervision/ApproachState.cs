@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
@@ -13,14 +14,21 @@ public class ApproachState : RegionalArmySupervisionState {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     public const float SafetyDistance = 5;
     public const float SafetyDistanceTolerance = SafetyDistance / 2;
 
-    public ApproachState(IUnitsTracker unitsTracker, IRegionsTracker regionsTracker, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
+    public ApproachState(
+        IUnitsTracker unitsTracker,
+        IRegionsTracker regionsTracker,
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IGraphicalDebugger graphicalDebugger
+    ) {
         _unitsTracker = unitsTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
+        _graphicalDebugger = graphicalDebugger;
     }
 
     /// <summary>
@@ -39,7 +47,7 @@ public class ApproachState : RegionalArmySupervisionState {
         var unitsInStrikingPosition = GetUnitsInStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy);
         // TODO GD If maxed out, we have to trade
         if (unitsInStrikingPosition.GetForce() >= EnemyArmy.GetForce() * 1.25) {
-            StateMachine.TransitionTo(new EngageState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker));
+            StateMachine.TransitionTo(new EngageState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger));
             return true;
         }
 

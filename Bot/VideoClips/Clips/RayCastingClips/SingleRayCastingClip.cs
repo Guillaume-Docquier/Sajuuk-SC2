@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Numerics;
 using Bot.Algorithms;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Utils;
@@ -9,10 +10,17 @@ using Bot.VideoClips.Manim.Animations;
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class SingleRayCastingClip : Clip {
-    private ITerrainTracker _terrainTracker;
+    private readonly ITerrainTracker _terrainTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
-    public SingleRayCastingClip(ITerrainTracker terrainTracker, Vector2 sceneLocation, int pauseAtEndOfClipDurationSeconds = 5): base(pauseAtEndOfClipDurationSeconds) {
+    public SingleRayCastingClip(
+        ITerrainTracker terrainTracker,
+        IGraphicalDebugger graphicalDebugger,
+        Vector2 sceneLocation,
+        int pauseAtEndOfClipDurationSeconds = 5
+    ) : base(pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
+        _graphicalDebugger = graphicalDebugger;
 
         var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
@@ -32,7 +40,7 @@ public class SingleRayCastingClip : Clip {
         var pauseAnimation = new PauseAnimation(showPointReadyFrame).WithDurationInSeconds(1);
         AddAnimation(pauseAnimation);
 
-        var lineDrawingAnimation = new LineDrawingAnimation(_terrainTracker.WithWorldHeight(rayStart), _terrainTracker.WithWorldHeight(rayEnd), ColorService.Instance.RayColor, pauseAnimation.AnimationEndFrame)
+        var lineDrawingAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(rayStart), _terrainTracker.WithWorldHeight(rayEnd), ColorService.Instance.RayColor, pauseAnimation.AnimationEndFrame)
             .WithConstantRate(3);
 
         AddAnimation(lineDrawingAnimation);
@@ -46,14 +54,14 @@ public class SingleRayCastingClip : Clip {
     }
 
     private void ShowWall(Vector2 wall, int startAt) {
-        var squareAnimation = new CellDrawingAnimation(_terrainTracker, _terrainTracker.WithWorldHeight(wall), startAt)
+        var squareAnimation = new CellDrawingAnimation(_terrainTracker, _graphicalDebugger, _terrainTracker.WithWorldHeight(wall), startAt)
             .WithDurationInSeconds(0.5f);
 
         AddAnimation(squareAnimation);
     }
 
     private int ShowPoint(Vector2 origin, int startAt) {
-        var sphereAnimation = new SphereDrawingAnimation(_terrainTracker.WithWorldHeight(origin), radius: 0.15f, ColorService.Instance.PointColor, startAt)
+        var sphereAnimation = new SphereDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(origin), radius: 0.15f, ColorService.Instance.PointColor, startAt)
             .WithDurationInSeconds(0.5f);
 
         AddAnimation(sphereAnimation);

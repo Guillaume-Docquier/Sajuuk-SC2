@@ -19,6 +19,7 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
         TerrainTracker.Instance,
         RegionsTracker.Instance
     );
+    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
 
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
@@ -253,15 +254,15 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
         var offsetRegionCenter = _terrainTracker.WithWorldHeight(region.Center, zOffset: zOffset);
 
         // Draw the marker
-        Program.GraphicalDebugger.AddLink(_terrainTracker.WithWorldHeight(region.Center), offsetRegionCenter, color: regionColor);
-        Program.GraphicalDebugger.AddTextGroup(texts, size: 14, worldPos: offsetRegionCenter.ToPoint(xOffset: textXOffset), color: regionColor);
+        GraphicalDebugger.AddLink(_terrainTracker.WithWorldHeight(region.Center), offsetRegionCenter, color: regionColor);
+        GraphicalDebugger.AddTextGroup(texts, size: 14, worldPos: offsetRegionCenter.ToPoint(xOffset: textXOffset), color: regionColor);
 
         // Draw lines to neighbors
         foreach (var neighbor in region.Neighbors) {
             var neighborOffsetCenter = _terrainTracker.WithWorldHeight(neighbor.Region.Center, zOffset: zOffset);
             var regionSizeRatio = (float)region.Cells.Count / (region.Cells.Count + neighbor.Region.Cells.Count);
             var lineEnd = Vector3.Lerp(offsetRegionCenter, neighborOffsetCenter, regionSizeRatio);
-            Program.GraphicalDebugger.AddLine(offsetRegionCenter, lineEnd, color: regionColor);
+            GraphicalDebugger.AddLine(offsetRegionCenter, lineEnd, color: regionColor);
         }
     }
 }

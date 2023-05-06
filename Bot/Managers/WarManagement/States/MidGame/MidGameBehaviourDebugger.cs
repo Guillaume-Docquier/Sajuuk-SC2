@@ -1,12 +1,14 @@
 ﻿using System.Collections.Generic;
 using Bot.Builds;
 using Bot.Debugging;
+using Bot.Debugging.GraphicalDebugging;
 using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.States.MidGame;
 
 public class MidGameBehaviourDebugger {
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     public float OwnForce { get; set; }
     public float EnemyForce { get; set; }
@@ -14,8 +16,9 @@ public class MidGameBehaviourDebugger {
     public BuildRequestPriority BuildPriority { get; set; }
     public BuildBlockCondition BuildBlockCondition { get; set; }
 
-    public MidGameBehaviourDebugger(IDebuggingFlagsTracker debuggingFlagsTracker) {
+    public MidGameBehaviourDebugger(IDebuggingFlagsTracker debuggingFlagsTracker, IGraphicalDebugger graphicalDebugger) {
         _debuggingFlagsTracker = debuggingFlagsTracker;
+        _graphicalDebugger = graphicalDebugger;
     }
 
     public void Debug() {
@@ -33,6 +36,6 @@ public class MidGameBehaviourDebugger {
             $" - Blocking: {BuildBlockCondition}",
         };
 
-        Program.GraphicalDebugger.AddTextGroup(texts, virtualPos: new Point { X = 0.30f, Y = 0.02f });
+        _graphicalDebugger.AddTextGroup(texts, virtualPos: new Point { X = 0.30f, Y = 0.02f });
     }
 }

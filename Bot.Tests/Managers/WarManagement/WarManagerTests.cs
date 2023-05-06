@@ -1,4 +1,5 @@
-﻿using Bot.GameData;
+﻿using Bot.Debugging.GraphicalDebugging;
+using Bot.GameData;
 using Bot.Managers.WarManagement.States;
 using Bot.Tests.Mocks;
 using Moq;
@@ -8,16 +9,18 @@ namespace Bot.Tests.Managers.WarManagement;
 public class WarManagerTests : BaseTestClass {
     private readonly TestUnitsTracker _unitsTracker;
     private readonly Mock<IWarManagerStateFactory> _warManagerStateFactoryMock;
+    private readonly Mock<IGraphicalDebugger> _graphicalDebuggerMock;
 
     public WarManagerTests() {
         _unitsTracker = new TestUnitsTracker();
         _warManagerStateFactoryMock = new Mock<IWarManagerStateFactory>();
+        _graphicalDebuggerMock = new Mock<IGraphicalDebugger>();
     }
 
     [Fact(Skip = "Wait for DI refactor to be done")]
     public void GivenUnmanagedUnits_WhenOnFrame_ManagesMilitaryUnits() {
         // Arrange
-        var manager = new Bot.Managers.WarManagement.WarManager(_warManagerStateFactoryMock.Object);
+        var manager = new Bot.Managers.WarManagement.WarManager(_warManagerStateFactoryMock.Object, _graphicalDebuggerMock.Object);
 
         var militaryUnits = Units.ZergMilitary
             .Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed })
@@ -36,7 +39,7 @@ public class WarManagerTests : BaseTestClass {
     [Fact(Skip = "Not yet implemented")]
     public void GivenUnManagedUnit_WhenOnFrame_DoesNotManageNonMilitaryUnits() {
         // Arrange
-        var manager = new Bot.Managers.WarManagement.WarManager(_warManagerStateFactoryMock.Object);
+        var manager = new Bot.Managers.WarManagement.WarManager(_warManagerStateFactoryMock.Object, _graphicalDebuggerMock.Object);
         // TODO UnitsTracker
 
         // Act

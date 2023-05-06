@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
@@ -13,6 +14,7 @@ public class DisengageState : RegionalArmySupervisionState {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private const float SafetyDistance = 5;
     private const float SafetyDistanceTolerance = SafetyDistance / 2;
@@ -21,12 +23,18 @@ public class DisengageState : RegionalArmySupervisionState {
 
     private HashSet<Unit> _unitsInSafePosition = new HashSet<Unit>();
 
-    public DisengageState(IUnitsTracker unitsTracker, IRegionsTracker regionsTracker, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
+    public DisengageState(
+        IUnitsTracker unitsTracker,
+        IRegionsTracker regionsTracker,
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IGraphicalDebugger graphicalDebugger
+    ) {
         _unitsTracker = unitsTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
+        _graphicalDebugger = graphicalDebugger;
 
-        _fleeKiting = new DisengagementKiting(_unitsTracker);
+        _fleeKiting = new DisengagementKiting(_unitsTracker, _graphicalDebugger);
     }
 
     /// <summary>
@@ -50,7 +58,7 @@ public class DisengageState : RegionalArmySupervisionState {
             return false;
         }
 
-        StateMachine.TransitionTo(new ApproachState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker));
+        StateMachine.TransitionTo(new ApproachState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger));
         return true;
     }
 

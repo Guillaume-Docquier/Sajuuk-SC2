@@ -4,6 +4,7 @@ using System.Linq;
 using Bot.Algorithms;
 using Bot.Builds;
 using Bot.Debugging;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -63,7 +64,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
         IScoutSupervisorFactory scoutSupervisorFactory,
         IWarSupervisorFactory warSupervisorFactory,
-        IBuildRequestFactory buildRequestFactory
+        IBuildRequestFactory buildRequestFactory,
+        IGraphicalDebugger graphicalDebugger
     ) {
         _warManager = warManager;
         _visibilityTracker = visibilityTracker;
@@ -74,7 +76,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         _scoutSupervisorFactory = scoutSupervisorFactory;
         _buildRequestFactory = buildRequestFactory;
 
-        _debugger = new MidGameBehaviourDebugger(debuggingFlagsTracker);
+        _debugger = new MidGameBehaviourDebugger(debuggingFlagsTracker, graphicalDebugger);
         _armySupervisors = _regionsTracker.Regions.ToDictionary(region => region, warSupervisorFactory.CreateRegionalArmySupervisor);
 
         _armyBuildRequest = _buildRequestFactory.CreateTargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);

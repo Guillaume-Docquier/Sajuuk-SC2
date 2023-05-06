@@ -5,6 +5,12 @@ using Bot.ExtensionMethods;
 namespace Bot.Managers.WarManagement;
 
 public class WarManagerDebugger {
+    private readonly IGraphicalDebugger _graphicalDebugger;
+
+    public WarManagerDebugger(IGraphicalDebugger graphicalDebugger) {
+        _graphicalDebugger = graphicalDebugger;
+    }
+
     public void Debug(HashSet<Unit> army) {
         foreach (var soldier in army) {
             var text = "";
@@ -19,7 +25,7 @@ public class WarManagerDebugger {
                 text += "!";
             }
 
-            Program.GraphicalDebugger.AddText(text, worldPos: soldier.Position.ToPoint(yOffset: 0.17f), color: Colors.Red);
+            _graphicalDebugger.AddText(text, worldPos: soldier.Position.ToPoint(yOffset: 0.17f), color: Colors.Red);
         }
     }
 }

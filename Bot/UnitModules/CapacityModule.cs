@@ -7,6 +7,7 @@ namespace Bot.UnitModules;
 public class CapacityModule: UnitModule, IWatchUnitsDie {
     public const string Tag = "CapacityModule";
 
+    private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly Unit _unit;
     private readonly bool _showDebugInfo;
 
@@ -28,18 +29,19 @@ public class CapacityModule: UnitModule, IWatchUnitsDie {
 
     public int AvailableCapacity => MaxCapacity - AssignedUnits.Count;
 
-    public static CapacityModule Install(Unit unit, int maxCapacity, bool showDebugInfo = true) {
+    public static CapacityModule Install(IGraphicalDebugger graphicalDebugger, Unit unit, int maxCapacity, bool showDebugInfo = true) {
         if (!PreInstallCheck(Tag, unit)) {
             return null;
         }
 
-        var capacityModule = new CapacityModule(unit, maxCapacity, showDebugInfo);
+        var capacityModule = new CapacityModule(graphicalDebugger, unit, maxCapacity, showDebugInfo);
         unit.Modules.Add(Tag, capacityModule);
 
         return capacityModule;
     }
 
-    private CapacityModule(Unit unit, int maxCapacity, bool showDebugInfo) {
+    private CapacityModule(IGraphicalDebugger graphicalDebugger, Unit unit, int maxCapacity, bool showDebugInfo) {
+        _graphicalDebugger = graphicalDebugger;
         _unit = unit;
         MaxCapacity = maxCapacity;
         _showDebugInfo = showDebugInfo;
@@ -57,7 +59,7 @@ public class CapacityModule: UnitModule, IWatchUnitsDie {
             < 0 => Colors.Red,
         };
 
-        Program.GraphicalDebugger.AddText($"{AssignedUnits.Count}/{MaxCapacity}", color: color, worldPos: _unit.Position.ToPoint(xOffset: -0.2f));
+        _graphicalDebugger.AddText($"{AssignedUnits.Count}/{MaxCapacity}", color: color, worldPos: _unit.Position.ToPoint(xOffset: -0.2f));
     }
 
     public void ReportUnitDeath(Unit deadUnit) {

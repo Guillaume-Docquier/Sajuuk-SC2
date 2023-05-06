@@ -23,10 +23,12 @@ namespace Bot.UnitModules;
 public class MineralMiningStrategy: IStrategy {
     private const float SpeedMiningDistanceThreshold = 0.4f; // Empirically tested, do not go lower
 
+    private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly Unit _worker;
     private readonly Unit _mineral;
 
-    public MineralMiningStrategy(Unit worker, Unit mineral) {
+    public MineralMiningStrategy(IGraphicalDebugger graphicalDebugger, Unit worker, Unit mineral) {
+        _graphicalDebugger = graphicalDebugger;
         _worker = worker;
         _mineral = mineral;
     }
@@ -39,7 +41,7 @@ public class MineralMiningStrategy: IStrategy {
             Gather();
         }
 
-        Program.GraphicalDebugger.AddLine(_worker.Position, _mineral.Position, Colors.Cyan);
+        _graphicalDebugger.AddLine(_worker.Position, _mineral.Position, Colors.Cyan);
     }
 
     private bool CanDoSpeedMining() {

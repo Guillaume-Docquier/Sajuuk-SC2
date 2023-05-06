@@ -11,9 +11,17 @@ namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class ChokeWidenessClip : Clip {
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
-    public ChokeWidenessClip(ITerrainTracker terrainTracker, Vector2 origin, Vector2 destination, int pauseAtEndOfClipDurationSeconds) : base(pauseAtEndOfClipDurationSeconds) {
+    public ChokeWidenessClip(
+        ITerrainTracker terrainTracker,
+        IGraphicalDebugger graphicalDebugger,
+        Vector2 origin,
+        Vector2 destination,
+        int pauseAtEndOfClipDurationSeconds
+    ) : base(pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
+        _graphicalDebugger = graphicalDebugger;
 
         var centerCameraAnimation = new CenterCameraAnimation(origin, startFrame: 0)
             .WithDurationInSeconds(1);
@@ -33,13 +41,13 @@ public class ChokeWidenessClip : Clip {
 
             var left = currentPosition.TranslateTowards(destination, 1).RotateAround(currentPosition, MathUtils.DegToRad(90));
             var leftRayEnd = RayCasting.RayCast(currentPosition, left, cell => !_terrainTracker.IsWalkable(cell)).Last();
-            var leftRayAnimation = new LineDrawingAnimation(_terrainTracker.WithWorldHeight(currentPosition), _terrainTracker.WithWorldHeight(leftRayEnd.RayIntersection), Colors.DarkRed, previousAnimationEndFrame)
+            var leftRayAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(currentPosition), _terrainTracker.WithWorldHeight(leftRayEnd.RayIntersection), Colors.DarkRed, previousAnimationEndFrame)
                 .WithPostAnimationDurationInFrames(1);
             AddAnimation(leftRayAnimation);
 
             var right = currentPosition.TranslateTowards(destination, 1).RotateAround(currentPosition, MathUtils.DegToRad(-90));
             var rightRayEnd = RayCasting.RayCast(currentPosition, right, cell => !_terrainTracker.IsWalkable(cell)).Last();
-            var rightRayAnimation = new LineDrawingAnimation(_terrainTracker.WithWorldHeight(currentPosition), _terrainTracker.WithWorldHeight(rightRayEnd.RayIntersection), Colors.DarkRed, previousAnimationEndFrame)
+            var rightRayAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(currentPosition), _terrainTracker.WithWorldHeight(rightRayEnd.RayIntersection), Colors.DarkRed, previousAnimationEndFrame)
                 .WithPostAnimationDurationInFrames(1);
             AddAnimation(rightRayAnimation);
 
