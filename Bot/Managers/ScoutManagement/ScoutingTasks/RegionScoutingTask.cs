@@ -14,7 +14,7 @@ public class RegionScoutingTask : ScoutingTask {
     private readonly HashSet<Vector2> _cellsToExplore;
     private bool _isCancelled = false;
 
-    public RegionScoutingTask(IVisibilityTracker visibilityTracker, IRegion region, int priority = 0, int maxScouts = 999)
+    public RegionScoutingTask(IVisibilityTracker visibilityTracker, IRegion region, int priority, int maxScouts)
         : base(region.Center, priority, maxScouts) {
         _visibilityTracker = visibilityTracker;
 

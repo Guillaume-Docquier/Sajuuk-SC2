@@ -12,10 +12,8 @@ namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 /// For now, nothing more because saving the overlords requires pillar knowledge and air safety analysis.
 /// </summary>
 public class ProtossScoutingStrategy : IScoutingStrategy {
-    private readonly IVisibilityTracker _visibilityTracker;
-    private readonly IUnitsTracker _unitsTracker;
-    private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
+    private readonly IScoutingTaskFactory _scoutingTaskFactory;
 
     private const int TopPriority = 100;
 
@@ -26,15 +24,11 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
     private ScoutingTask _enemyNaturalScoutingTask;
 
     public ProtossScoutingStrategy(
-        IVisibilityTracker visibilityTracker,
-        IUnitsTracker unitsTracker,
-        ITerrainTracker terrainTracker,
-        IRegionsTracker regionsTracker
+        IRegionsTracker regionsTracker,
+        IScoutingTaskFactory scoutingTaskFactory
     ) {
-        _visibilityTracker = visibilityTracker;
-        _unitsTracker = unitsTracker;
-        _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
+        _scoutingTaskFactory = scoutingTaskFactory;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
@@ -57,7 +51,7 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
 
         // Keep watching
         if (_ownNaturalScoutingTask.IsComplete()) {
-            _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _regionsTracker.GetRegion(_ownNatural.Position), priority: TopPriority, maxScouts: 1);
+            _ownNaturalScoutingTask = _scoutingTaskFactory.CreateRegionScoutingTask(_ownNatural.Region, priority: TopPriority, maxScouts: 1);
 
             yield return _ownNaturalScoutingTask;
         }
@@ -65,10 +59,10 @@ public class ProtossScoutingStrategy : IScoutingStrategy {
 
     private void Init() {
         _ownNatural = _regionsTracker.GetExpand(Alliance.Self, ExpandType.Natural);
-        _ownNaturalScoutingTask = new RegionScoutingTask(_visibilityTracker, _regionsTracker.GetRegion(_ownNatural.Position), priority: TopPriority, maxScouts: 1);
+        _ownNaturalScoutingTask = _scoutingTaskFactory.CreateRegionScoutingTask(_ownNatural.Region, priority: TopPriority, maxScouts: 1);
 
         var enemyNatural = _regionsTracker.GetExpand(Alliance.Enemy, ExpandType.Natural);
-        _enemyNaturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _terrainTracker, enemyNatural.Position, priority: TopPriority - 1, maxScouts: 1);
+        _enemyNaturalScoutingTask = _scoutingTaskFactory.CreateExpandScoutingTask(enemyNatural.Position, priority: TopPriority - 1, maxScouts: 1);
 
         _isInitialized = true;
     }

@@ -35,11 +35,11 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
-    private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
     private readonly IBuildRequestFactory _buildRequestFactory;
+    private readonly IScoutingTaskFactory _scoutingTaskFactory;
 
     private readonly MidGameBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
@@ -59,22 +59,22 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         IVisibilityTracker visibilityTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
         IScoutSupervisorFactory scoutSupervisorFactory,
         IWarSupervisorFactory warSupervisorFactory,
         IBuildRequestFactory buildRequestFactory,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        IScoutingTaskFactory scoutingTaskFactory
     ) {
         _warManager = warManager;
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
-        _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _scoutSupervisorFactory = scoutSupervisorFactory;
         _buildRequestFactory = buildRequestFactory;
+        _scoutingTaskFactory = scoutingTaskFactory;
 
         _debugger = new MidGameBehaviourDebugger(debuggingFlagsTracker, graphicalDebugger);
         _armySupervisors = _regionsTracker.Regions.ToDictionary(region => region, warSupervisorFactory.CreateRegionalArmySupervisor);
@@ -186,7 +186,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             .Where(expandLocation => !_visibilityTracker.IsVisible(expandLocation.Position));
 
         foreach (var expandToScout in expandsToScout) {
-            var scoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _terrainTracker, expandToScout.Position, priority: 0, maxScouts: 1);
+            var scoutingTask = _scoutingTaskFactory.CreateExpandScoutingTask(expandToScout.Position, priority: 0, maxScouts: 1);
             var scoutingSupervisor = _scoutSupervisorFactory.CreateScoutSupervisor(scoutingTask);
 
             _scoutSupervisors.Add(scoutingSupervisor);

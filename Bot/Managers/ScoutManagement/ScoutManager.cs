@@ -8,13 +8,13 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.ScoutManagement.ScoutingStrategies;
 using Bot.Managers.ScoutManagement.ScoutingSupervision;
+using Bot.Managers.ScoutManagement.ScoutingTasks;
 
 namespace Bot.Managers.ScoutManagement;
 
 public partial class ScoutManager : Manager {
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
-    private readonly IRegionsTracker _regionsTracker;
     private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
@@ -33,18 +33,18 @@ public partial class ScoutManager : Manager {
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
         IScoutSupervisorFactory scoutSupervisorFactory,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        IScoutingTaskFactory scoutingTaskFactory
     ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
-        _regionsTracker = regionsTracker;
         _scoutSupervisorFactory = scoutSupervisorFactory;
 
         Assigner = new ScoutManagerAssigner(this);
         Dispatcher = new ScoutManagerDispatcher(this);
         Releaser = new ScoutManagerReleaser(this);
 
-        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, graphicalDebugger);
+        _scoutingStrategy = ScoutingStrategyFactory.CreateNew(enemyRaceTracker, visibilityTracker, _unitsTracker, _terrainTracker, regionsTracker, graphicalDebugger, scoutingTaskFactory);
     }
 
     protected override void RecruitmentPhase() {

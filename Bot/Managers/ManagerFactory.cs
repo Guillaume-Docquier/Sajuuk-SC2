@@ -4,6 +4,7 @@ using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
 using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
+using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.Managers.WarManagement;
 using Bot.Managers.WarManagement.States;
 using Bot.Tagging;
@@ -25,6 +26,7 @@ public class ManagerFactory : IManagerFactory {
     private readonly IWarManagerStateFactory _warManagerStateFactory;
     private readonly IBuildRequestFactory _buildRequestFactory;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IScoutingTaskFactory _scoutingTaskFactory;
 
     public ManagerFactory(
         ITaggingService taggingService,
@@ -40,7 +42,8 @@ public class ManagerFactory : IManagerFactory {
         IScoutSupervisorFactory scoutSupervisorFactory,
         IWarManagerStateFactory warManagerStateFactory,
         IBuildRequestFactory buildRequestFactory,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        IScoutingTaskFactory scoutingTaskFactory
     ) {
         _taggingService = taggingService;
         _enemyStrategyTracker = enemyStrategyTracker;
@@ -56,6 +59,7 @@ public class ManagerFactory : IManagerFactory {
         _warManagerStateFactory = warManagerStateFactory;
         _buildRequestFactory = buildRequestFactory;
         _graphicalDebugger = graphicalDebugger;
+        _scoutingTaskFactory = scoutingTaskFactory;
     }
 
     public BuildManager CreateBuildManager(IBuildOrder buildOrder) {
@@ -67,7 +71,7 @@ public class ManagerFactory : IManagerFactory {
     }
 
     public ScoutManager CreateScoutManager() {
-        return new ScoutManager(_enemyRaceTracker, _visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _scoutSupervisorFactory, _graphicalDebugger);
+        return new ScoutManager(_enemyRaceTracker, _visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _scoutSupervisorFactory, _graphicalDebugger, _scoutingTaskFactory);
     }
 
     public EconomyManager CreateEconomyManager(BuildManager buildManager) {

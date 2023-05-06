@@ -25,7 +25,7 @@ public class ExpandScoutingTask : ScoutingTask {
         Vector2 scoutLocation,
         int priority,
         int maxScouts,
-        bool waitForExpand = false
+        bool waitForExpand
     ) : base(scoutLocation, priority, maxScouts) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;

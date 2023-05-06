@@ -12,10 +12,8 @@ namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 /// For now, nothing more because saving the overlords requires pillar knowledge and air safety analysis.
 /// </summary>
 public class TerranScoutingStrategy : IScoutingStrategy {
-    private readonly IVisibilityTracker _visibilityTracker;
-    private readonly IUnitsTracker _unitsTracker;
-    private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
+    private readonly IScoutingTaskFactory _scoutingTaskFactory;
 
     private const int TopPriority = 100;
 
@@ -24,15 +22,11 @@ public class TerranScoutingStrategy : IScoutingStrategy {
     private ScoutingTask _enemyNaturalScoutingTask;
 
     public TerranScoutingStrategy(
-        IVisibilityTracker visibilityTracker,
-        IUnitsTracker unitsTracker,
-        ITerrainTracker terrainTracker,
-        IRegionsTracker regionsTracker
+        IRegionsTracker regionsTracker,
+        IScoutingTaskFactory scoutingTaskFactory
     ) {
-        _visibilityTracker = visibilityTracker;
-        _unitsTracker = unitsTracker;
-        _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
+        _scoutingTaskFactory = scoutingTaskFactory;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
@@ -55,7 +49,7 @@ public class TerranScoutingStrategy : IScoutingStrategy {
 
     private void Init() {
         var enemyNatural = _regionsTracker.GetExpand(Alliance.Enemy, ExpandType.Natural);
-        _enemyNaturalScoutingTask = new ExpandScoutingTask(_visibilityTracker, _unitsTracker, _terrainTracker, enemyNatural.Position, TopPriority, maxScouts: 1);
+        _enemyNaturalScoutingTask = _scoutingTaskFactory.CreateExpandScoutingTask(enemyNatural.Position, TopPriority, maxScouts: 1);
 
         _isInitialized = true;
     }

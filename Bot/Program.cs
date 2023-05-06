@@ -12,6 +12,7 @@ using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers;
 using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
+using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.Managers.WarManagement;
 using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.Managers.WarManagement.States;
@@ -174,6 +175,13 @@ public class Program {
             armySupervisorStateFactory
         );
 
+        var scoutingTaskFactory = new ScoutingTaskFactory(
+            VisibilityTracker.Instance,
+            UnitsTracker.Instance,
+            TerrainTracker.Instance,
+            GraphicalDebugger.Instance
+        );
+
         var warManagerBehaviourFactory = new WarManagerBehaviourFactory(
             TaggingService.Instance,
             DebuggingFlagsTracker.Instance,
@@ -186,7 +194,8 @@ public class Program {
             scoutSupervisorFactory,
             warSupervisorFactory,
             buildRequestFactory,
-            GraphicalDebugger.Instance
+            GraphicalDebugger.Instance,
+            scoutingTaskFactory
         );
 
         var warManagerStateFactory = new WarManagerStateFactory(
@@ -209,7 +218,8 @@ public class Program {
             scoutSupervisorFactory,
             warManagerStateFactory,
             buildRequestFactory,
-            GraphicalDebugger.Instance
+            GraphicalDebugger.Instance,
+            scoutingTaskFactory
         );
 
         var botDebugger = new BotDebugger(
