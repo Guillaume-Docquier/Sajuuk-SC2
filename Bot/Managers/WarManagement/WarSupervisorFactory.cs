@@ -3,6 +3,7 @@ using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
+using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.MapAnalysis.RegionAnalysis;
 
 namespace Bot.Managers.WarManagement;
@@ -14,6 +15,7 @@ public class WarSupervisorFactory : IWarSupervisorFactory {
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IArmySupervisorStateFactory _armySupervisorStateFactory;
+    private readonly IUnitsControlFactory _unitsControlFactory;
 
     public WarSupervisorFactory(
         IUnitsTracker unitsTracker,
@@ -21,7 +23,8 @@ public class WarSupervisorFactory : IWarSupervisorFactory {
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
         IGraphicalDebugger graphicalDebugger,
-        IArmySupervisorStateFactory armySupervisorStateFactory
+        IArmySupervisorStateFactory armySupervisorStateFactory,
+        IUnitsControlFactory unitsControlFactory
     ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
@@ -29,6 +32,7 @@ public class WarSupervisorFactory : IWarSupervisorFactory {
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _graphicalDebugger = graphicalDebugger;
         _armySupervisorStateFactory = armySupervisorStateFactory;
+        _unitsControlFactory = unitsControlFactory;
     }
 
     public ArmySupervisor CreateArmySupervisor() {
@@ -36,6 +40,6 @@ public class WarSupervisorFactory : IWarSupervisorFactory {
     }
 
     public RegionalArmySupervisor CreateRegionalArmySupervisor(IRegion region) {
-        return new RegionalArmySupervisor(_unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger, region);
+        return new RegionalArmySupervisor(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger, _unitsControlFactory, region);
     }
 }

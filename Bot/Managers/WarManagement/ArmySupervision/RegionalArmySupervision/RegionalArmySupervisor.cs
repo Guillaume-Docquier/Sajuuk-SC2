@@ -28,10 +28,10 @@ public class RegionalArmySupervisor : Supervisor {
 
     public RegionalArmySupervisor(
         IUnitsTracker unitsTracker,
-        ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
         IGraphicalDebugger graphicalDebugger,
+        IUnitsControlFactory unitsControlFactory,
         IRegion targetRegion
     ) {
         _unitsTracker = unitsTracker;
@@ -39,11 +39,11 @@ public class RegionalArmySupervisor : Supervisor {
 
         _targetRegion = targetRegion;
 
-        _offensiveUnitsController = new OffensiveUnitsControl(_unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker, _graphicalDebugger);
-        _defensiveUnitsController = new DefensiveUnitsControl(_unitsTracker, terrainTracker, regionsTracker, regionsEvaluationsTracker, _graphicalDebugger);
+        _offensiveUnitsController = unitsControlFactory.CreateOffensiveUnitsControl();
+        _defensiveUnitsController = unitsControlFactory.CreateDefensiveUnitsControl();
 
         Releaser = new RegionalArmySupervisorReleaser(this);
-        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState(_unitsTracker, regionsTracker, regionsEvaluationsTracker, _graphicalDebugger));
+        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState(_unitsTracker, regionsTracker, regionsEvaluationsTracker, _graphicalDebugger, unitsControlFactory));
     }
 
     protected override void Supervise() {

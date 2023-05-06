@@ -15,6 +15,7 @@ public class DisengageState : RegionalArmySupervisionState {
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IUnitsControlFactory _unitsControlFactory;
 
     private const float SafetyDistance = 5;
     private const float SafetyDistanceTolerance = SafetyDistance / 2;
@@ -27,14 +28,16 @@ public class DisengageState : RegionalArmySupervisionState {
         IUnitsTracker unitsTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        IUnitsControlFactory unitsControlFactory
     ) {
         _unitsTracker = unitsTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _graphicalDebugger = graphicalDebugger;
+        _unitsControlFactory = unitsControlFactory;
 
-        _fleeKiting = new DisengagementKiting(_unitsTracker, _graphicalDebugger);
+        _fleeKiting = _unitsControlFactory.CreateDisengagementKiting();
     }
 
     /// <summary>
@@ -58,7 +61,7 @@ public class DisengageState : RegionalArmySupervisionState {
             return false;
         }
 
-        StateMachine.TransitionTo(new ApproachState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger));
+        StateMachine.TransitionTo(new ApproachState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger, _unitsControlFactory));
         return true;
     }
 

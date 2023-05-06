@@ -41,17 +41,16 @@ public partial class ArmySupervisor {
         public AttackState(
             IUnitsTracker unitsTracker,
             ITerrainTracker terrainTracker,
-            IRegionsTracker regionsTracker,
-            IRegionsEvaluationsTracker regionsEvaluationsTracker,
             IGraphicalDebugger graphicalDebugger,
-            IArmySupervisorStateFactory armySupervisorStateFactory
+            IArmySupervisorStateFactory armySupervisorStateFactory,
+            IUnitsControlFactory unitsControlFactory
         ) {
             _unitsTracker = unitsTracker;
             _terrainTracker = terrainTracker;
             _graphicalDebugger = graphicalDebugger;
             _armySupervisorStateFactory = armySupervisorStateFactory;
 
-            _unitsController = new OffensiveUnitsControl(_unitsTracker, _terrainTracker, regionsTracker, regionsEvaluationsTracker, _graphicalDebugger);
+            _unitsController = unitsControlFactory.CreateOffensiveUnitsControl();
         }
 
         protected override void OnTransition() {

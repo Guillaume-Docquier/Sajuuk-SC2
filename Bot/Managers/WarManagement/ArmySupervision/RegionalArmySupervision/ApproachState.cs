@@ -15,6 +15,7 @@ public class ApproachState : RegionalArmySupervisionState {
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IUnitsControlFactory _unitsControlFactory;
 
     public const float SafetyDistance = 5;
     public const float SafetyDistanceTolerance = SafetyDistance / 2;
@@ -23,12 +24,14 @@ public class ApproachState : RegionalArmySupervisionState {
         IUnitsTracker unitsTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        IUnitsControlFactory unitsControlFactory
     ) {
         _unitsTracker = unitsTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _graphicalDebugger = graphicalDebugger;
+        _unitsControlFactory = unitsControlFactory;
     }
 
     /// <summary>
@@ -47,7 +50,7 @@ public class ApproachState : RegionalArmySupervisionState {
         var unitsInStrikingPosition = GetUnitsInStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy);
         // TODO GD If maxed out, we have to trade
         if (unitsInStrikingPosition.GetForce() >= EnemyArmy.GetForce() * 1.25) {
-            StateMachine.TransitionTo(new EngageState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger));
+            StateMachine.TransitionTo(new EngageState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger, _unitsControlFactory));
             return true;
         }
 

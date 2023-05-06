@@ -15,6 +15,7 @@ public class EngageState : RegionalArmySupervisionState {
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IUnitsControlFactory _unitsControlFactory;
 
     private HashSet<Unit> _unitsReadyToAttack = new HashSet<Unit>();
 
@@ -22,12 +23,14 @@ public class EngageState : RegionalArmySupervisionState {
         IUnitsTracker unitsTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        IUnitsControlFactory unitsControlFactory
     ) {
         _unitsTracker = unitsTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _graphicalDebugger = graphicalDebugger;
+        _unitsControlFactory = unitsControlFactory;
     }
 
     /// <summary>
@@ -49,7 +52,7 @@ public class EngageState : RegionalArmySupervisionState {
         // TODO GD We should consider if retreating is even possible
         // TODO GD Sometimes you have to commit
         if (_unitsReadyToAttack.GetForce() < EnemyArmy.GetForce() * 0.75) {
-            StateMachine.TransitionTo(new DisengageState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger));
+            StateMachine.TransitionTo(new DisengageState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger, _unitsControlFactory));
             return true;
         }
 

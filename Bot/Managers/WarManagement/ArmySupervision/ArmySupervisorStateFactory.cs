@@ -1,6 +1,7 @@
 ﻿using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
+using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;
 
@@ -11,6 +12,7 @@ public class ArmySupervisorStateFactory : IArmySupervisorStateFactory {
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IUnitsControlFactory _unitsControlFactory;
 
     public ArmySupervisorStateFactory(
         IVisibilityTracker visibilityTracker,
@@ -18,7 +20,8 @@ public class ArmySupervisorStateFactory : IArmySupervisorStateFactory {
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        IUnitsControlFactory unitsControlFactory
     ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
@@ -26,14 +29,15 @@ public class ArmySupervisorStateFactory : IArmySupervisorStateFactory {
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _graphicalDebugger = graphicalDebugger;
+        _unitsControlFactory = unitsControlFactory;
     }
 
     public ArmySupervisor.AttackState CreateAttackState() {
-        return new ArmySupervisor.AttackState(_unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger, this);
+        return new ArmySupervisor.AttackState(_unitsTracker, _terrainTracker, _graphicalDebugger, this, _unitsControlFactory);
     }
 
     public ArmySupervisor.DefenseState CreateDefenseState() {
-        return new ArmySupervisor.DefenseState(_unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger, this);
+        return new ArmySupervisor.DefenseState(_unitsTracker, _terrainTracker, _graphicalDebugger, this, _unitsControlFactory);
     }
 
     public ArmySupervisor.HuntState CreateHuntState() {
