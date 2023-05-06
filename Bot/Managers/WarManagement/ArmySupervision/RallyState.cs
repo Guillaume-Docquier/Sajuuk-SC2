@@ -5,38 +5,28 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public partial class ArmySupervisor {
     public class RallyState: State<ArmySupervisor> {
-        private readonly IVisibilityTracker _visibilityTracker;
-        private readonly IUnitsTracker _unitsTracker;
         private readonly ITerrainTracker _terrainTracker;
-        private readonly IRegionsTracker _regionsTracker;
-        private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
         private readonly IGraphicalDebugger _graphicalDebugger;
+        private readonly IArmySupervisorStateFactory _armySupervisorStateFactory;
 
         private const float AcceptableDistanceToTarget = 3;
 
         private float _attackAtForce;
 
         public RallyState(
-            IVisibilityTracker visibilityTracker,
-            IUnitsTracker unitsTracker,
             ITerrainTracker terrainTracker,
-            IRegionsTracker regionsTracker,
-            IRegionsEvaluationsTracker regionsEvaluationsTracker,
-            IGraphicalDebugger graphicalDebugger
+            IGraphicalDebugger graphicalDebugger,
+            IArmySupervisorStateFactory armySupervisorStateFactory
         ) {
-            _visibilityTracker = visibilityTracker;
-            _unitsTracker = unitsTracker;
             _terrainTracker = terrainTracker;
-            _regionsTracker = regionsTracker;
-            _regionsEvaluationsTracker = regionsEvaluationsTracker;
             _graphicalDebugger = graphicalDebugger;
+            _armySupervisorStateFactory = armySupervisorStateFactory;
         }
 
         protected override void OnContextSet() {
@@ -45,7 +35,7 @@ public partial class ArmySupervisor {
 
         protected override bool TryTransitioning() {
             if (Context._mainArmy.GetForce() >= _attackAtForce || Controller.SupportedSupply + 1 >= KnowledgeBase.MaxSupplyAllowed) {
-                StateMachine.TransitionTo(new AttackState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger));
+                StateMachine.TransitionTo(_armySupervisorStateFactory.CreateAttackState());
                 return true;
             }
 

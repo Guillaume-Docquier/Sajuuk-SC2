@@ -13,12 +13,10 @@ namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public partial class ArmySupervisor {
     public class DefenseState: State<ArmySupervisor> {
-        private readonly IVisibilityTracker _visibilityTracker;
         private readonly IUnitsTracker _unitsTracker;
         private readonly ITerrainTracker _terrainTracker;
-        private readonly IRegionsTracker _regionsTracker;
-        private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
         private readonly IGraphicalDebugger _graphicalDebugger;
+        private readonly IArmySupervisorStateFactory _armySupervisorStateFactory;
 
         private const bool Debug = true;
 
@@ -26,21 +24,19 @@ public partial class ArmySupervisor {
         private readonly IUnitsControl _unitsController;
 
         public DefenseState(
-            IVisibilityTracker visibilityTracker,
             IUnitsTracker unitsTracker,
             ITerrainTracker terrainTracker,
             IRegionsTracker regionsTracker,
             IRegionsEvaluationsTracker regionsEvaluationsTracker,
-            IGraphicalDebugger graphicalDebugger
+            IGraphicalDebugger graphicalDebugger,
+            IArmySupervisorStateFactory armySupervisorStateFactory
         ) {
-            _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
             _terrainTracker = terrainTracker;
-            _regionsTracker = regionsTracker;
-            _regionsEvaluationsTracker = regionsEvaluationsTracker;
             _graphicalDebugger = graphicalDebugger;
+            _armySupervisorStateFactory = armySupervisorStateFactory;
 
-            _unitsController = new OffensiveUnitsControl(_unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger);
+            _unitsController = new OffensiveUnitsControl(_unitsTracker, _terrainTracker, regionsTracker, regionsEvaluationsTracker, _graphicalDebugger);
         }
 
         protected override void OnTransition() {
@@ -64,7 +60,7 @@ public partial class ArmySupervisor {
                 return false;
             }
 
-            StateMachine.TransitionTo(new HuntState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger));
+            StateMachine.TransitionTo(_armySupervisorStateFactory.CreateHuntState());
             return true;
         }
 

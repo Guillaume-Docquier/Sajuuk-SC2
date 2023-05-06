@@ -8,31 +8,31 @@ using Bot.MapAnalysis.RegionAnalysis;
 namespace Bot.Managers.WarManagement;
 
 public class WarSupervisorFactory : IWarSupervisorFactory {
-    private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IArmySupervisorStateFactory _armySupervisorStateFactory;
 
     public WarSupervisorFactory(
-        IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        IArmySupervisorStateFactory armySupervisorStateFactory
     ) {
-        _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _graphicalDebugger = graphicalDebugger;
+        _armySupervisorStateFactory = armySupervisorStateFactory;
     }
 
     public ArmySupervisor CreateArmySupervisor() {
-        return new ArmySupervisor(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger);
+        return new ArmySupervisor(_armySupervisorStateFactory);
     }
 
     public RegionalArmySupervisor CreateRegionalArmySupervisor(IRegion region) {

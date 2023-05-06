@@ -13,6 +13,7 @@ using Bot.Managers;
 using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
 using Bot.Managers.WarManagement;
+using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.Managers.WarManagement.States;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
@@ -155,13 +156,22 @@ public class Program {
             UnitsTracker.Instance
         );
 
-        var warSupervisorFactory = new WarSupervisorFactory(
+        var armySupervisorStateFactory = new ArmySupervisorStateFactory(
             VisibilityTracker.Instance,
             UnitsTracker.Instance,
             TerrainTracker.Instance,
             RegionsTracker.Instance,
             RegionsEvaluationsTracker.Instance,
             GraphicalDebugger.Instance
+        );
+
+        var warSupervisorFactory = new WarSupervisorFactory(
+            UnitsTracker.Instance,
+            TerrainTracker.Instance,
+            RegionsTracker.Instance,
+            RegionsEvaluationsTracker.Instance,
+            GraphicalDebugger.Instance,
+            armySupervisorStateFactory
         );
 
         var warManagerBehaviourFactory = new WarManagerBehaviourFactory(

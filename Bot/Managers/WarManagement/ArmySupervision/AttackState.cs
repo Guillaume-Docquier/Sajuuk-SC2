@@ -19,12 +19,10 @@ public partial class ArmySupervisor {
     public class AttackState: State<ArmySupervisor> {
         private const bool Debug = true;
 
-        private readonly IVisibilityTracker _visibilityTracker;
         private readonly IUnitsTracker _unitsTracker;
         private readonly ITerrainTracker _terrainTracker;
-        private readonly IRegionsTracker _regionsTracker;
-        private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
         private readonly IGraphicalDebugger _graphicalDebugger;
+        private readonly IArmySupervisorStateFactory _armySupervisorStateFactory;
 
         private const float RocksDestructionRange = 9f;
         private const float AcceptableDistanceToTarget = 3;
@@ -41,21 +39,19 @@ public partial class ArmySupervisor {
         private readonly IUnitsControl _unitsController;
 
         public AttackState(
-            IVisibilityTracker visibilityTracker,
             IUnitsTracker unitsTracker,
             ITerrainTracker terrainTracker,
             IRegionsTracker regionsTracker,
             IRegionsEvaluationsTracker regionsEvaluationsTracker,
-            IGraphicalDebugger graphicalDebugger
+            IGraphicalDebugger graphicalDebugger,
+            IArmySupervisorStateFactory armySupervisorStateFactory
         ) {
-            _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
             _terrainTracker = terrainTracker;
-            _regionsTracker = regionsTracker;
-            _regionsEvaluationsTracker = regionsEvaluationsTracker;
             _graphicalDebugger = graphicalDebugger;
+            _armySupervisorStateFactory = armySupervisorStateFactory;
 
-            _unitsController = new OffensiveUnitsControl(_unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger);
+            _unitsController = new OffensiveUnitsControl(_unitsTracker, _terrainTracker, regionsTracker, regionsEvaluationsTracker, _graphicalDebugger);
         }
 
         protected override void OnTransition() {
@@ -68,7 +64,7 @@ public partial class ArmySupervisor {
             }
 
             if (_terrainTracker.GetClosestWalkable(Context._mainArmy.GetCenter(), searchRadius: 3).DistanceTo(Context._target) < AcceptableDistanceToTarget) {
-                StateMachine.TransitionTo(new DefenseState(_visibilityTracker, _unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger));
+                StateMachine.TransitionTo(_armySupervisorStateFactory.CreateDefenseState());
                 return true;
             }
 
