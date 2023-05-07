@@ -16,6 +16,7 @@ using Bot.Managers.ScoutManagement.ScoutingStrategies;
 using Bot.Managers.ScoutManagement.ScoutingTasks;
 using Bot.Managers.WarManagement;
 using Bot.Managers.WarManagement.ArmySupervision;
+using Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.Managers.WarManagement.States;
 using Bot.MapAnalysis;
@@ -177,14 +178,18 @@ public class Program {
             unitsControlFactory
         );
 
-        var warSupervisorFactory = new WarSupervisorFactory(
-            UnitsTracker.Instance,
-            TerrainTracker.Instance,
+        var regionalArmySupervisorStateFactory = new RegionalArmySupervisorStateFactory(
             RegionsTracker.Instance,
             RegionsEvaluationsTracker.Instance,
+            unitsControlFactory
+        );
+
+        var warSupervisorFactory = new WarSupervisorFactory(
+            UnitsTracker.Instance,
             GraphicalDebugger.Instance,
             armySupervisorStateFactory,
-            unitsControlFactory
+            unitsControlFactory,
+            regionalArmySupervisorStateFactory
         );
 
         var scoutingTaskFactory = new ScoutingTaskFactory(

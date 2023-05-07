@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
@@ -11,26 +10,20 @@ using Bot.MapAnalysis.RegionAnalysis;
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class EngageState : RegionalArmySupervisionState {
-    private readonly IUnitsTracker _unitsTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
-    private readonly IGraphicalDebugger _graphicalDebugger;
-    private readonly IUnitsControlFactory _unitsControlFactory;
+    private readonly IRegionalArmySupervisorStateFactory _regionalArmySupervisorStateFactory;
 
     private HashSet<Unit> _unitsReadyToAttack = new HashSet<Unit>();
 
     public EngageState(
-        IUnitsTracker unitsTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IGraphicalDebugger graphicalDebugger,
-        IUnitsControlFactory unitsControlFactory
+        IRegionalArmySupervisorStateFactory regionalArmySupervisorStateFactory
     ) {
-        _unitsTracker = unitsTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
-        _graphicalDebugger = graphicalDebugger;
-        _unitsControlFactory = unitsControlFactory;
+        _regionalArmySupervisorStateFactory = regionalArmySupervisorStateFactory;
     }
 
     /// <summary>
@@ -52,7 +45,7 @@ public class EngageState : RegionalArmySupervisionState {
         // TODO GD We should consider if retreating is even possible
         // TODO GD Sometimes you have to commit
         if (_unitsReadyToAttack.GetForce() < EnemyArmy.GetForce() * 0.75) {
-            StateMachine.TransitionTo(new DisengageState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger, _unitsControlFactory));
+            StateMachine.TransitionTo(_regionalArmySupervisorStateFactory.CreateDisengageState());
             return true;
         }
 

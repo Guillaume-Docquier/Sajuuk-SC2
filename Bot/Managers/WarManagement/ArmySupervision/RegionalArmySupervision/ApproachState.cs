@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
@@ -11,27 +10,21 @@ using Bot.MapAnalysis.RegionAnalysis;
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class ApproachState : RegionalArmySupervisionState {
-    private readonly IUnitsTracker _unitsTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
-    private readonly IGraphicalDebugger _graphicalDebugger;
-    private readonly IUnitsControlFactory _unitsControlFactory;
+    private readonly IRegionalArmySupervisorStateFactory _regionalArmySupervisorStateFactory;
 
     public const float SafetyDistance = 5;
     public const float SafetyDistanceTolerance = SafetyDistance / 2;
 
     public ApproachState(
-        IUnitsTracker unitsTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IGraphicalDebugger graphicalDebugger,
-        IUnitsControlFactory unitsControlFactory
+        IRegionalArmySupervisorStateFactory regionalArmySupervisorStateFactory
     ) {
-        _unitsTracker = unitsTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
-        _graphicalDebugger = graphicalDebugger;
-        _unitsControlFactory = unitsControlFactory;
+        _regionalArmySupervisorStateFactory = regionalArmySupervisorStateFactory;
     }
 
     /// <summary>
@@ -50,7 +43,7 @@ public class ApproachState : RegionalArmySupervisionState {
         var unitsInStrikingPosition = GetUnitsInStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy);
         // TODO GD If maxed out, we have to trade
         if (unitsInStrikingPosition.GetForce() >= EnemyArmy.GetForce() * 1.25) {
-            StateMachine.TransitionTo(new EngageState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger, _unitsControlFactory));
+            StateMachine.TransitionTo(_regionalArmySupervisorStateFactory.CreateEngageState());
             return true;
         }
 

@@ -7,7 +7,6 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.MapAnalysis;
 using Bot.StateManagement;

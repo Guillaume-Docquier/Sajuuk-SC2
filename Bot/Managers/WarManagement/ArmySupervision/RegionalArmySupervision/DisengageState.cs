@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
@@ -11,11 +10,9 @@ using SC2APIProtocol;
 namespace Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 
 public class DisengageState : RegionalArmySupervisionState {
-    private readonly IUnitsTracker _unitsTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
-    private readonly IGraphicalDebugger _graphicalDebugger;
-    private readonly IUnitsControlFactory _unitsControlFactory;
+    private readonly IRegionalArmySupervisorStateFactory _regionalArmySupervisorStateFactory;
 
     private const float SafetyDistance = 5;
     private const float SafetyDistanceTolerance = SafetyDistance / 2;
@@ -25,19 +22,16 @@ public class DisengageState : RegionalArmySupervisionState {
     private HashSet<Unit> _unitsInSafePosition = new HashSet<Unit>();
 
     public DisengageState(
-        IUnitsTracker unitsTracker,
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IGraphicalDebugger graphicalDebugger,
-        IUnitsControlFactory unitsControlFactory
+        IUnitsControlFactory unitsControlFactory,
+        IRegionalArmySupervisorStateFactory regionalArmySupervisorStateFactory
     ) {
-        _unitsTracker = unitsTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
-        _graphicalDebugger = graphicalDebugger;
-        _unitsControlFactory = unitsControlFactory;
+        _regionalArmySupervisorStateFactory = regionalArmySupervisorStateFactory;
 
-        _fleeKiting = _unitsControlFactory.CreateDisengagementKiting();
+        _fleeKiting = unitsControlFactory.CreateDisengagementKiting();
     }
 
     /// <summary>
@@ -61,7 +55,7 @@ public class DisengageState : RegionalArmySupervisionState {
             return false;
         }
 
-        StateMachine.TransitionTo(new ApproachState(_unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _graphicalDebugger, _unitsControlFactory));
+        StateMachine.TransitionTo(_regionalArmySupervisorStateFactory.CreateApproachState());
         return true;
     }
 

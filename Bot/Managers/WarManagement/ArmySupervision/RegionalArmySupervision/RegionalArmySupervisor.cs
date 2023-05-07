@@ -6,7 +6,6 @@ using Bot.Builds;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
-using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
 using Bot.MapAnalysis.RegionAnalysis;
 using Bot.StateManagement;
@@ -28,10 +27,9 @@ public class RegionalArmySupervisor : Supervisor {
 
     public RegionalArmySupervisor(
         IUnitsTracker unitsTracker,
-        IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker,
         IGraphicalDebugger graphicalDebugger,
         IUnitsControlFactory unitsControlFactory,
+        IRegionalArmySupervisorStateFactory regionalArmySupervisorStateFactory,
         IRegion targetRegion
     ) {
         _unitsTracker = unitsTracker;
@@ -43,7 +41,7 @@ public class RegionalArmySupervisor : Supervisor {
         _defensiveUnitsController = unitsControlFactory.CreateDefensiveUnitsControl();
 
         Releaser = new RegionalArmySupervisorReleaser(this);
-        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, new ApproachState(_unitsTracker, regionsTracker, regionsEvaluationsTracker, _graphicalDebugger, unitsControlFactory));
+        _stateMachine = new StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState>(this, regionalArmySupervisorStateFactory.CreateApproachState());
     }
 
     protected override void Supervise() {
