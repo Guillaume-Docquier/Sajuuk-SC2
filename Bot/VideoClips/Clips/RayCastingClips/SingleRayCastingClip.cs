@@ -4,9 +4,9 @@ using Bot.Algorithms;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
+using Bot.Requests;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
-using Bot.Wrapper;
 
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
@@ -15,12 +15,14 @@ public class SingleRayCastingClip : Clip {
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IController _controller;
     private readonly IRequestBuilder _requestBuilder;
+    private readonly IRequestService _requestService;
 
     public SingleRayCastingClip(
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
         IController controller,
         IRequestBuilder requestBuilder,
+        IRequestService requestService,
         Vector2 sceneLocation,
         int pauseAtEndOfClipDurationSeconds = 5
     ) : base(pauseAtEndOfClipDurationSeconds) {
@@ -28,8 +30,9 @@ public class SingleRayCastingClip : Clip {
         _graphicalDebugger = graphicalDebugger;
         _controller = controller;
         _requestBuilder = requestBuilder;
+        _requestService = requestService;
 
-        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, sceneLocation, startFrame: 0).WithDurationInSeconds(1);
+        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, _requestService, sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
         var pauseAnimation = new PauseAnimation(centerCameraAnimation.AnimationEndFrame).WithDurationInSeconds(1);
@@ -52,7 +55,7 @@ public class SingleRayCastingClip : Clip {
 
         AddAnimation(lineDrawingAnimation);
 
-        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, rayEnd, lineDrawingAnimation.StartFrame).WithEndFrame(lineDrawingAnimation.AnimationEndFrame);
+        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, _requestService, rayEnd, lineDrawingAnimation.StartFrame).WithEndFrame(lineDrawingAnimation.AnimationEndFrame);
         AddAnimation(centerCameraAnimation);
 
         ShowPoint(rayEnd, lineDrawingAnimation.AnimationEndFrame);

@@ -3,9 +3,9 @@ using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
+using Bot.Requests;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
-using Bot.Wrapper;
 
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
@@ -14,12 +14,14 @@ public class NaiveRayCastClip : Clip {
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IController _controller;
     private readonly IRequestBuilder _requestBuilder;
+    private readonly IRequestService _requestService;
 
     public NaiveRayCastClip(
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
         IController controller,
         IRequestBuilder requestBuilder,
+        IRequestService requestService,
         Vector2 sceneLocation,
         float stepSize,
         int pauseAtEndOfClipDurationSeconds = 5
@@ -28,8 +30,9 @@ public class NaiveRayCastClip : Clip {
         _graphicalDebugger = graphicalDebugger;
         _controller = controller;
         _requestBuilder = requestBuilder;
+        _requestService = requestService;
 
-        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, sceneLocation, startFrame: 0).WithDurationInSeconds(1);
+        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, _requestService, sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
         var showGridEndFrame = ShowGrid(sceneLocation, centerCameraAnimation.AnimationEndFrame);
@@ -74,7 +77,7 @@ public class NaiveRayCastClip : Clip {
             previousAnimationEnd = sphereDrawingAnimation.AnimationEndFrame;
         }
 
-        var cameraMoveToEndAnimation = new CenterCameraAnimation(_controller, _requestBuilder, previousIntersection, startFrame)
+        var cameraMoveToEndAnimation = new CenterCameraAnimation(_controller, _requestBuilder, _requestService, previousIntersection, startFrame)
             .WithEndFrame(previousAnimationEnd);
 
         AddAnimation(cameraMoveToEndAnimation);

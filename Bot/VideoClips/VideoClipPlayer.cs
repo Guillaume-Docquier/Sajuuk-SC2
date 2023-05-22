@@ -6,6 +6,7 @@ using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.Requests;
 using Bot.Utils;
 using Bot.VideoClips.Clips.RayCastingClips;
 using Bot.Wrapper;
@@ -21,6 +22,7 @@ public class VideoClipPlayer : IBot {
     private readonly IFrameClock _frameClock;
     private readonly IController _controller;
     private readonly IRequestBuilder _requestBuilder;
+    private readonly IRequestService _requestService;
 
     private readonly string _mapName;
     private readonly Queue<Clip> _clips = new Queue<Clip>();
@@ -40,6 +42,7 @@ public class VideoClipPlayer : IBot {
         IFrameClock frameClock,
         IController controller,
         IRequestBuilder requestBuilder,
+        IRequestService requestService,
         string mapName
     ) {
         _debuggingFlagsTracker = debuggingFlagsTracker;
@@ -49,6 +52,7 @@ public class VideoClipPlayer : IBot {
         _frameClock = frameClock;
         _controller = controller;
         _requestBuilder = requestBuilder;
+        _requestService = requestService;
 
         _mapName = mapName;
     }
@@ -81,7 +85,7 @@ public class VideoClipPlayer : IBot {
             return;
         }
 
-        await Program.GameConnection.SendRequest(_requestBuilder.DebugRevealMap());
+        await _requestService.SendRequest(_requestBuilder.DebugRevealMap());
         _debuggingFlagsTracker.HandleMessage(DebuggingCommands.Off);
 
         ColorService.SetMap(_mapName);
@@ -105,42 +109,42 @@ public class VideoClipPlayer : IBot {
     private IEnumerable<Clip> GetClipsForMap(string mapName) {
         switch (mapName) {
             case Maps.Season_2022_4.FileNames.Stargazers:
-                yield return new PerpendicularLinesScanClip (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(50.5f,  92.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new SingleRayCastingClip       (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new NaiveRayCastClip           (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(99.5f,  52.5f),  stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
-                yield return new NaiveRayCastClip           (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(99.5f,  52.5f),  stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
-                yield return new GridDisplayClip            (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new StepComparisonClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new RaySteppingClip            (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new RayCastingIntersectionsClip(_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(111.5f, 33.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(148.5f, 91.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new PerpendicularLinesScanClip (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(50.5f,  92.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new SingleRayCastingClip       (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(99.5f,  52.5f),  stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(99.5f,  52.5f),  stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
+                yield return new GridDisplayClip            (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new StepComparisonClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new RaySteppingClip            (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new RayCastingIntersectionsClip(_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(111.5f, 33.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(148.5f, 91.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 break;
             case Maps.Season_2022_4.FileNames.CosmicSapphire:
-                yield return new SingleRayCastingClip       (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new NaiveRayCastClip           (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(132.5f, 47.5f),  stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
-                yield return new NaiveRayCastClip           (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(132.5f, 47.5f),  stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
-                yield return new GridDisplayClip            (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new RaySteppingClip            (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new RayCastingIntersectionsClip(_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new ChokeWidenessClip          (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(27.5f, 100.5f),  new Vector2(38.5f, 89.5f), pauseAtEndOfClipDurationSeconds: 5);
-                yield return new ChokeWallsClip             (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(32.5f, 94.5f),   pauseAtEndOfClipDurationSeconds: 5);
-                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(134.5f, 133.5f), pauseAtEndOfClipDurationSeconds: 5);
-                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(32.5f,  94.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new SingleRayCastingClip       (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(132.5f, 47.5f),  stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(132.5f, 47.5f),  stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
+                yield return new GridDisplayClip            (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new RaySteppingClip            (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new RayCastingIntersectionsClip(_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new ChokeWidenessClip          (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(27.5f, 100.5f),  new Vector2(38.5f, 89.5f), pauseAtEndOfClipDurationSeconds: 5);
+                yield return new ChokeWallsClip             (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(32.5f, 94.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(134.5f, 133.5f), pauseAtEndOfClipDurationSeconds: 5);
+                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(32.5f,  94.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 break;
             case Maps.Season_2022_4.FileNames.Hardwire:
-                yield return new PerpendicularLinesScanClip (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(126.5f, 158.5f),  pauseAtEndOfClipDurationSeconds: 5);
-                yield return new SingleRayCastingClip       (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
-                yield return new NaiveRayCastClip           (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(80.5f,  82.5f),   stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
-                yield return new NaiveRayCastClip           (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(80.5f,  82.5f),   stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
-                yield return new GridDisplayClip            (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
-                yield return new RaySteppingClip            (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
-                yield return new RayCastingIntersectionsClip(_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
-                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
-                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(100.5f, 60.5f),   pauseAtEndOfClipDurationSeconds: 5);
-                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, new Vector2(126.5f, 65.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new PerpendicularLinesScanClip (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(126.5f, 158.5f),  pauseAtEndOfClipDurationSeconds: 5);
+                yield return new SingleRayCastingClip       (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(80.5f,  82.5f),   stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
+                yield return new NaiveRayCastClip           (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(80.5f,  82.5f),   stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
+                yield return new GridDisplayClip            (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new RaySteppingClip            (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new RayCastingIntersectionsClip(_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(100.5f, 60.5f),   pauseAtEndOfClipDurationSeconds: 5);
+                yield return new FullRayCastingClip         (_terrainTracker, _graphicalDebugger, _controller, _requestBuilder, _requestService, new Vector2(126.5f, 65.5f),   pauseAtEndOfClipDurationSeconds: 5);
                 break;
         }
     }

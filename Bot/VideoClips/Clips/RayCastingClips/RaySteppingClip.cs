@@ -6,9 +6,9 @@ using Bot.Algorithms;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
+using Bot.Requests;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
-using Bot.Wrapper;
 
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
@@ -23,6 +23,7 @@ public class RaySteppingClip : Clip {
         IGraphicalDebugger graphicalDebugger,
         IController controller,
         IRequestBuilder requestBuilder,
+        IRequestService requestService,
         Vector2 sceneLocation,
         int pauseAtEndOfClipDurationSeconds
     ) : base(pauseAtEndOfClipDurationSeconds) {
@@ -33,7 +34,7 @@ public class RaySteppingClip : Clip {
 
         var nextAnimationStart = 0;
         foreach (var angle in Angles) {
-            var panCameraAnimation = new CenterCameraAnimation(controller, requestBuilder, sceneLocation, startFrame: nextAnimationStart).WithDurationInSeconds(1);
+            var panCameraAnimation = new CenterCameraAnimation(controller, requestBuilder, requestService, sceneLocation, startFrame: nextAnimationStart).WithDurationInSeconds(1);
             AddAnimation(panCameraAnimation);
 
             nextAnimationStart = RayStep(sceneLocation, angle, panCameraAnimation.AnimationEndFrame);

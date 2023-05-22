@@ -5,8 +5,8 @@ using System.Numerics;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.Requests;
 using Bot.Utils;
-using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot.Debugging.GraphicalDebugging;

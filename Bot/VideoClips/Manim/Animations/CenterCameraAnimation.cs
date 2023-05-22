@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using System.Threading.Tasks;
 using Bot.ExtensionMethods;
-using Bot.Wrapper;
+using Bot.Requests;
 using SC2APIProtocol;
 
 namespace Bot.VideoClips.Manim.Animations;
@@ -11,6 +11,7 @@ public class CenterCameraAnimation : Animation<CenterCameraAnimation> {
 
     private readonly IController _controller;
     private readonly IRequestBuilder _requestBuilder;
+    private readonly IRequestService _requestService;
 
     private Vector2 _origin;
     private readonly Vector2 _destination;
@@ -18,11 +19,13 @@ public class CenterCameraAnimation : Animation<CenterCameraAnimation> {
     public CenterCameraAnimation(
         IController controller,
         IRequestBuilder requestBuilder,
+        IRequestService requestService,
         Vector2 destination,
         int startFrame
     ) : base(startFrame) {
         _controller = controller;
         _requestBuilder = requestBuilder;
+        _requestService = requestService;
 
         _destination = destination.Translate(yTranslation: CenteringCorrectionOffset);
     }
@@ -35,6 +38,6 @@ public class CenterCameraAnimation : Animation<CenterCameraAnimation> {
         var percentDone = GetAnimationPercentDone(currentClipFrame);
         var nextPosition = Vector2.Lerp(_origin, _destination, percentDone);
 
-        await Program.GameConnection.SendRequest(_requestBuilder.DebugMoveCamera(new Point { X = nextPosition.X, Y = nextPosition.Y }));
+        await _requestService.SendRequest(_requestBuilder.DebugMoveCamera(new Point { X = nextPosition.X, Y = nextPosition.Y }));
     }
 }

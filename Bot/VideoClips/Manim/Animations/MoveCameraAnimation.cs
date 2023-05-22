@@ -1,25 +1,28 @@
 ﻿using System.Numerics;
 using System.Threading.Tasks;
 using Bot.ExtensionMethods;
+using Bot.Requests;
 using Bot.Utils;
-using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot.VideoClips.Manim.Animations;
 
 public class MoveCameraAnimation : Animation<MoveCameraAnimation> {
     private readonly IRequestBuilder _requestBuilder;
+    private readonly IRequestService _requestService;
 
     private readonly Vector2 _origin;
     private readonly Vector2 _destination;
 
     public MoveCameraAnimation(
         IRequestBuilder requestBuilder,
+        IRequestService requestService,
         Vector2 origin,
         Vector2 destination,
         int startFrame
     ) : base(startFrame) {
         _requestBuilder = requestBuilder;
+        _requestService = requestService;
 
         _origin = origin;
         _destination = destination;
@@ -29,7 +32,7 @@ public class MoveCameraAnimation : Animation<MoveCameraAnimation> {
         var percentDone = GetAnimationPercentDone(currentClipFrame);
         var nextPosition = Vector2.Lerp(_origin, _destination, percentDone);
 
-        await Program.GameConnection.SendRequest(_requestBuilder.DebugMoveCamera(new Point { X = nextPosition.X, Y = nextPosition.Y, Z = 0 }));
+        await _requestService.SendRequest(_requestBuilder.DebugMoveCamera(new Point { X = nextPosition.X, Y = nextPosition.Y, Z = 0 }));
     }
 
     public MoveCameraAnimation WithConstantRate(float unitsPerSecond) {

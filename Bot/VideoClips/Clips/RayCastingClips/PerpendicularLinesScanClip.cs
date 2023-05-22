@@ -4,9 +4,9 @@ using System.Numerics;
 using Bot.Algorithms;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
+using Bot.Requests;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
-using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot.VideoClips.Clips.RayCastingClips;
@@ -20,13 +20,14 @@ public class PerpendicularLinesScanClip : Clip {
         IGraphicalDebugger graphicalDebugger,
         IController controller,
         IRequestBuilder requestBuilder,
+        IRequestService requestService,
         Vector2 sceneLocation,
         int pauseAtEndOfClipDurationSeconds
     ) : base(pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
 
-        var centerCameraAnimation = new CenterCameraAnimation(controller, requestBuilder, sceneLocation, startFrame: 0)
+        var centerCameraAnimation = new CenterCameraAnimation(controller, requestBuilder, requestService, sceneLocation, startFrame: 0)
             .WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 

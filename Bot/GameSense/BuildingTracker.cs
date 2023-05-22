@@ -5,7 +5,7 @@ using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
-using Bot.Wrapper;
+using Bot.Requests;
 using SC2APIProtocol;
 
 namespace Bot.GameSense;
@@ -15,7 +15,8 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
     private readonly ITerrainTracker _terrainTracker;
     private readonly KnowledgeBase _knowledgeBase;
     private readonly IGraphicalDebugger _graphicalDebugger;
-    private readonly RequestBuilder _requestBuilder;
+    private readonly IRequestBuilder _requestBuilder;
+    private readonly IRequestService _requestService;
 
     private readonly Dictionary<Vector2, Unit> _reservedBuildingCells = new Dictionary<Vector2, Unit>();
     private readonly Dictionary<Unit, (uint buildingType, Vector2 position, List<Vector2> cells)> _ongoingBuildingOrders = new();
@@ -25,13 +26,15 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
         ITerrainTracker terrainTracker,
         KnowledgeBase knowledgeBase,
         IGraphicalDebugger graphicalDebugger,
-        RequestBuilder requestBuilder
+        IRequestBuilder requestBuilder,
+        IRequestService requestService
     ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _knowledgeBase = knowledgeBase;
         _graphicalDebugger = graphicalDebugger;
         _requestBuilder = requestBuilder;
+        _requestService = requestService;
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
@@ -121,7 +124,7 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
         }
 
         // TODO GD Check with MapAnalyzer._currentWalkMap before checking with the query
-        var queryBuildingPlacementResponse = Program.GameConnection.SendRequest(_requestBuilder.RequestQueryBuildingPlacement(buildingType, position)).Result;
+        var queryBuildingPlacementResponse = _requestService.SendRequest(_requestBuilder.RequestQueryBuildingPlacement(buildingType, position)).Result;
         if (queryBuildingPlacementResponse.Query.Placements.Count == 0) {
             return ActionResult.NotSupported;
         }

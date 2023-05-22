@@ -6,9 +6,9 @@ using Bot.Algorithms;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
+using Bot.Requests;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
-using Bot.Wrapper;
 
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
@@ -17,12 +17,14 @@ public class StepComparisonClip : Clip {
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IController _controller;
     private readonly IRequestBuilder _requestBuilder;
+    private readonly IRequestService _requestService;
 
     public StepComparisonClip(
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
         IController controller,
         IRequestBuilder requestBuilder,
+        IRequestService requestService,
         Vector2 sceneLocation,
         int pauseAtEndOfClipDurationSeconds
     ) : base(pauseAtEndOfClipDurationSeconds) {
@@ -30,8 +32,9 @@ public class StepComparisonClip : Clip {
         _graphicalDebugger = graphicalDebugger;
         _controller = controller;
         _requestBuilder = requestBuilder;
+        _requestService = requestService;
 
-        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, sceneLocation, startFrame: 0).WithDurationInSeconds(1);
+        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, _requestService, sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
         var gridReadyFrame = ShowGridFarthestFirst(sceneLocation, centerCameraAnimation.AnimationEndFrame);
@@ -78,7 +81,7 @@ public class StepComparisonClip : Clip {
                 .WithConstantRate(4);
             AddAnimation(drawStepAnimation);
 
-            var panCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, rayCastResults[i].RayIntersection, compareStepAnimationEndFrame)
+            var panCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, _requestService, rayCastResults[i].RayIntersection, compareStepAnimationEndFrame)
                 .WithEndFrame(drawStepAnimation.AnimationEndFrame + 1);
             AddAnimation(panCameraAnimation);
 

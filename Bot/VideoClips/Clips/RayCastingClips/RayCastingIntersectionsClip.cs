@@ -4,9 +4,9 @@ using System.Numerics;
 using Bot.Algorithms;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
+using Bot.Requests;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
-using Bot.Wrapper;
 
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
@@ -15,12 +15,14 @@ public class RayCastingIntersectionsClip : Clip {
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IController _controller;
     private readonly IRequestBuilder _requestBuilder;
+    private readonly IRequestService _requestService;
 
     public RayCastingIntersectionsClip(
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
         IController controller,
         IRequestBuilder requestBuilder,
+        IRequestService requestService,
         Vector2 sceneLocation,
         int pauseAtEndOfClipDurationSeconds = 5
     ) : base(pauseAtEndOfClipDurationSeconds) {
@@ -28,8 +30,9 @@ public class RayCastingIntersectionsClip : Clip {
         _graphicalDebugger = graphicalDebugger;
         _controller = controller;
         _requestBuilder = requestBuilder;
+        _requestService = requestService;
 
-        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, sceneLocation, startFrame: 0).WithDurationInSeconds(1);
+        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, _requestService, sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
         var gridReadyFrame = ShowGrid(sceneLocation, centerCameraAnimation.AnimationEndFrame);
@@ -74,7 +77,7 @@ public class RayCastingIntersectionsClip : Clip {
             previousAnimationEnd = sphereDrawingAnimation.AnimationEndFrame + (int)TimeUtils.SecsToFrames(0.5f);
         }
 
-        var cameraMoveToEndAnimation = new CenterCameraAnimation(_controller, _requestBuilder, rayCastResults.Last().RayIntersection, startAt)
+        var cameraMoveToEndAnimation = new CenterCameraAnimation(_controller, _requestBuilder, _requestService, rayCastResults.Last().RayIntersection, startAt)
             .WithEndFrame(previousAnimationEnd);
 
         AddAnimation(cameraMoveToEndAnimation);

@@ -24,6 +24,7 @@ using Bot.Managers.WarManagement.States;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
+using Bot.Requests;
 using Bot.Scenarios;
 using Bot.Tagging;
 using Bot.VideoClips;
@@ -49,7 +50,6 @@ public class Program {
 
     private const bool RealTime = false;
 
-    public static GameConnection GameConnection { get; private set; }
     public static bool DebugEnabled { get; private set; }
 
     public static void Main(string[] args) {
@@ -82,10 +82,10 @@ public class Program {
 
         foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
             var services = CreateServices(graphicalDebugging: false, dataGeneration: true);
-            GameConnection = CreateGameConnection(services, stepSize: 1);
+            var gameConnection = CreateGameConnection(services, stepSize: 1);
 
             Logger.Important($"Generating data for {mapFileName}");
-            GameConnection.RunLocal(
+            gameConnection.RunLocal(
                 new MapAnalysisRunner(services.FrameClock),
                 mapFileName,
                 Race.Zerg,
@@ -100,7 +100,7 @@ public class Program {
         DebugEnabled = true;
 
         var services = CreateServices(graphicalDebugging: true);
-        GameConnection = CreateGameConnection(services, stepSize: 1);
+        var gameConnection = CreateGameConnection(services, stepSize: 1);
 
         var videoClipPlayer = new VideoClipPlayer(
             services.DebuggingFlagsTracker,
@@ -110,31 +110,32 @@ public class Program {
             services.FrameClock,
             services.Controller,
             services.RequestBuilder,
+            services.RequestService,
             MapFileName
         );
 
         Logger.Info("Game launched in video clip mode");
-        GameConnection.RunLocal(videoClipPlayer, MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
+        gameConnection.RunLocal(videoClipPlayer, MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
     }
 
     private static void PlayLocalGame() {
         DebugEnabled = true;
 
         var services = CreateServices(graphicalDebugging: true);
-        GameConnection = CreateGameConnection(services);
+        var gameConnection = CreateGameConnection(services);
 
         Logger.Info("Game launched in local play mode");
-        GameConnection.RunLocal(CreateSajuuk(services, Version, Scenarios), MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
+        gameConnection.RunLocal(CreateSajuuk(services, Version, Scenarios), MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
     }
 
     private static void PlayLadderGame(string[] args) {
         DebugEnabled = false;
 
         var services = CreateServices(graphicalDebugging: false);
-        GameConnection = CreateGameConnection(services);
+        var gameConnection = CreateGameConnection(services);
 
         Logger.Info("Game launched in ladder play mode");
-        GameConnection.RunLadder(CreateSajuuk(services, Version, Scenarios), args).Wait();
+        gameConnection.RunLadder(CreateSajuuk(services, Version, Scenarios), args).Wait();
     }
 
     private static GameConnection CreateGameConnection(Services services, uint stepSize = 2) {
@@ -149,6 +150,8 @@ public class Program {
             services.RequestBuilder,
             services.Pathfinder,
             services.ActionService,
+            services.ProtobufProxy,
+            services.RequestService,
             stepSize
         );
     }
@@ -327,6 +330,9 @@ public class Program {
     }
 
     private static Services CreateServices(bool graphicalDebugging, bool dataGeneration = false) {
+        var protobufProxy = new ProtobufProxy();
+        var requestService = new RequestService(protobufProxy);
+
         var frameClock = new FrameClock();
         var visibilityTracker = new VisibilityTracker(frameClock);
 
@@ -346,7 +352,7 @@ public class Program {
         var pathfinder = new Pathfinder(terrainTracker, graphicalDebugger);
         var clustering = new Clustering(terrainTracker, graphicalDebugger);
 
-        var buildingTracker = new BuildingTracker(unitsTracker, terrainTracker, knowledgeBase, graphicalDebugger, requestBuilder);
+        var buildingTracker = new BuildingTracker(unitsTracker, terrainTracker, knowledgeBase, graphicalDebugger, requestBuilder, requestService);
 
         var chatTracker = new ChatTracker();
         var debuggingFlagsTracker = new DebuggingFlagsTracker(chatTracker);
@@ -452,6 +458,8 @@ public class Program {
             DetectionTracker = detectionTracker,
             ChatService = chatService,
             ActionService = actionService,
+            RequestService = requestService,
+            ProtobufProxy = protobufProxy,
             ExpandAnalyzer = expandAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different GameConnection implementation
             RegionAnalyzer = regionAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different GameConnection implementation
         };
@@ -484,6 +492,8 @@ public class Program {
         public IDetectionTracker DetectionTracker { get; init; }
         public IChatService ChatService { get; init; }
         public IActionService ActionService { get; init; }
+        public IRequestService RequestService { get; init; }
+        public IProtobufProxy ProtobufProxy { get; init; }
 
         public IExpandAnalyzer ExpandAnalyzer { get; init; }
         public IRegionAnalyzer RegionAnalyzer { get; init; }

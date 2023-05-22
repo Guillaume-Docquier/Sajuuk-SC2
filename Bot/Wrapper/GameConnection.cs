@@ -12,6 +12,7 @@ using Bot.GameSense;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
+using Bot.Requests;
 using Bot.Utils;
 using SC2APIProtocol;
 
@@ -28,9 +29,10 @@ public class GameConnection {
     private readonly IRequestBuilder _requestBuilder;
     private readonly IPathfinder _pathfinder;
     private readonly IActionService _actionService;
+    private readonly IProtobufProxy _protobufProxy;
+    private readonly IRequestService _requestService;
 
     private const string Address = "127.0.0.1";
-    private readonly ProtobufProxy _proxy = new ProtobufProxy();
 
     private string _starcraftExe;
     private string _starcraftDir;
@@ -56,6 +58,8 @@ public class GameConnection {
         IRequestBuilder requestBuilder,
         IPathfinder pathfinder,
         IActionService actionService,
+        IProtobufProxy protobufProxy,
+        IRequestService requestService,
         uint stepSize
     ) {
         _unitsTracker = unitsTracker;
@@ -68,6 +72,8 @@ public class GameConnection {
         _requestBuilder = requestBuilder;
         _pathfinder = pathfinder;
         _actionService = actionService;
+        _protobufProxy = protobufProxy;
+        _requestService = requestService;
 
         _stepSize = stepSize;
     }
@@ -133,11 +139,12 @@ public class GameConnection {
         Process.Start(processStartInfo);
     }
 
+    // TODO GD That retry logic should probably go into the proxy?
     private async Task Connect(int port) {
         const int timeout = 60;
         for (var i = 0; i < timeout * 2; i++) {
             try {
-                await _proxy.Connect(Address, port);
+                await _protobufProxy.Connect(Address, port);
                 Logger.Info("--> Connected");
 
                 return;
@@ -160,7 +167,7 @@ public class GameConnection {
             throw new Exception($"Unable to locate map: {mapPath}");
         }
 
-        var createGameResponse = await SendRequest(_requestBuilder.RequestCreateComputerGame(realTime, mapPath, opponentRace, opponentDifficulty), logErrors: true);
+        var createGameResponse = await _requestService.SendRequest(_requestBuilder.RequestCreateComputerGame(realTime, mapPath, opponentRace, opponentDifficulty), logErrors: true);
 
         // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
         if (createGameResponse.CreateGame.Error != ResponseCreateGame.Types.Error.MissingMap) {
@@ -172,7 +179,7 @@ public class GameConnection {
     }
 
     private async Task<uint> JoinGame(Race race) {
-        var joinGameResponse = await SendRequest(_requestBuilder.RequestJoinLocalGame(race), logErrors: true);
+        var joinGameResponse = await _requestService.SendRequest(_requestBuilder.RequestJoinLocalGame(race), logErrors: true);
 
         // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
         if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.MissingParticipation) {
@@ -183,10 +190,6 @@ public class GameConnection {
         }
 
         return joinGameResponse.JoinGame.PlayerId;
-    }
-
-    public async Task Ping() {
-        await _proxy.Ping();
     }
 
     public async Task RunLadder(IBot bot, string[] args) {
@@ -202,7 +205,7 @@ public class GameConnection {
     }
 
     private async Task<uint> JoinGameLadder(Race race, int startPort) {
-        var joinGameResponse = await SendRequest(_requestBuilder.RequestJoinLadderGame(race, startPort), logErrors: true);
+        var joinGameResponse = await _requestService.SendRequest(_requestBuilder.RequestJoinLadderGame(race, startPort), logErrors: true);
 
         // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
         if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.MissingParticipation) {
@@ -227,13 +230,13 @@ public class GameConnection {
                 UpgradeId = true,
             }
         };
-        var dataResponse = await SendRequest(dataRequest);
+        var dataResponse = await _requestService.SendRequest(dataRequest);
         _knowledgeBase.Data = dataResponse.Data;
 
         while (true) {
             // _frameClock.CurrentFrame is uint.MaxValue until we request frame 0
             var nextFrame = _frameClock.CurrentFrame == uint.MaxValue ? 0 : _frameClock.CurrentFrame + _stepSize;
-            var observationResponse = await SendRequest(_requestBuilder.RequestObservation(nextFrame));
+            var observationResponse = await _requestService.SendRequest(_requestBuilder.RequestObservation(nextFrame));
 
             if (observationResponse.Status is Status.Quit) {
                 Logger.Info("Game was terminated.");
@@ -260,19 +263,19 @@ public class GameConnection {
             }
 
             if (_quitAt <= nextFrame) {
-                await Quit();
+                await _protobufProxy.Quit();
             }
             else if (runDataAnalyzersOnly && _expandAnalyzer.IsAnalysisComplete && _regionAnalyzer.IsAnalysisComplete && _quitAt == ulong.MaxValue) {
                 _quitAt = nextFrame + _stepSize * 10; // Just give a few frames to debug the analysis
             }
             else {
-                await SendRequest(_requestBuilder.RequestStep(_stepSize));
+                await _requestService.SendRequest(_requestBuilder.RequestStep(_stepSize));
             }
         }
     }
 
     private async Task RunBot(IBot bot, ResponseObservation observation) {
-        var gameInfoResponse = await SendRequest(_requestBuilder.RequestGameInfo());
+        var gameInfoResponse = await _requestService.SendRequest(_requestBuilder.RequestGameInfo());
 
         _performanceDebugger.FrameStopwatch.Start();
 
@@ -288,7 +291,7 @@ public class GameConnection {
         var actions = _actionService.GetActions().ToList();
 
         if (actions.Count > 0) {
-            var response = await SendRequest(_requestBuilder.RequestAction(actions));
+            var response = await _requestService.SendRequest(_requestBuilder.RequestAction(actions));
 
             var unsuccessfulActions = actions
                 .Zip(response.Action.Result, (action, result) => (action, result))
@@ -305,7 +308,7 @@ public class GameConnection {
         _performanceDebugger.DebuggerStopwatch.Start();
         var request = _graphicalDebugger.GetDebugRequest();
         if (request != null) {
-            await SendRequest(request);
+            await _requestService.SendRequest(request);
         }
         _performanceDebugger.DebuggerStopwatch.Stop();
 
@@ -330,31 +333,5 @@ public class GameConnection {
                 _pathfinder.CellPathsMemory.Values.SelectMany(destinations => destinations.Values).Sum(path => path.Count));
             Logger.Performance("==== Memory Debug End ====");
         }
-    }
-
-    private static void LogResponseErrors(Response response) {
-        if (response.Error.Count > 0) {
-            Logger.Error("Response errors:");
-            foreach (var error in response.Error) {
-                Logger.Error(error);
-            }
-        }
-    }
-
-    public Task Quit() {
-        Logger.Info("Quitting game...");
-        return SendRequest(new Request
-        {
-            Quit = new RequestQuit()
-        });
-    }
-
-    public async Task<Response> SendRequest(Request request, bool logErrors = false) {
-        var response = await _proxy.SendRequest(request);
-        if (logErrors) {
-            LogResponseErrors(response);
-        }
-
-        return response;
     }
 }

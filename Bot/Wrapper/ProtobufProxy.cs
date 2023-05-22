@@ -9,8 +9,9 @@ using SC2APIProtocol;
 
 namespace Bot.Wrapper;
 
+// TODO GD ProtobufProxy sounds like a rather bad name, and GameConnection is already something else
 [ExcludeFromCodeCoverage]
-public class ProtobufProxy {
+public class ProtobufProxy : IProtobufProxy {
     private ClientWebSocket _clientSocket;
     private const int ConnectTimeout = 20000;
     private const int ReadWriteTimeout = 120000;
@@ -44,27 +45,27 @@ public class ProtobufProxy {
         });
     }
 
-    public async Task Quit() {
-        await WriteMessage(new Request
+    public Task Quit() {
+        Logger.Info("Quitting game...");
+        return SendRequest(new Request
         {
             Quit = new RequestQuit()
         });
     }
 
-    private async Task WriteMessage(Request request) {
+    private async Task WriteMessage(IMessage request) {
         var sendBuf = new byte[1024 * 1024];
         var outStream = new CodedOutputStream(sendBuf);
         request.WriteTo(outStream);
 
-        using (var cancellationSource = new CancellationTokenSource()) {
-            cancellationSource.CancelAfter(ReadWriteTimeout);
-            await _clientSocket.SendAsync(
-                new ArraySegment<byte>(sendBuf, 0, (int)outStream.Position),
-                WebSocketMessageType.Binary,
-                true,
-                cancellationSource.Token
-            );
-        }
+        using var cancellationSource = new CancellationTokenSource();
+        cancellationSource.CancelAfter(ReadWriteTimeout);
+        await _clientSocket.SendAsync(
+            new ArraySegment<byte>(sendBuf, 0, (int)outStream.Position),
+            WebSocketMessageType.Binary,
+            true,
+            cancellationSource.Token
+        );
     }
 
     private async Task<Response> ReadMessage() {
@@ -73,25 +74,24 @@ public class ProtobufProxy {
         var curPos = 0;
 
         while (!finished) {
-            using (var cancellationSource = new CancellationTokenSource()) {
-                var left = receiveBuf.Length - curPos;
-                if (left < 0) {
-                    // No space left in the array, enlarge the array by doubling its size.
-                    var temp = new byte[receiveBuf.Length * 2];
-                    Array.Copy(receiveBuf, temp, receiveBuf.Length);
-                    receiveBuf = temp;
-                    left = receiveBuf.Length - curPos;
-                }
-
-                cancellationSource.CancelAfter(ReadWriteTimeout);
-                var result = await _clientSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuf, curPos, left), cancellationSource.Token);
-                if (result.MessageType != WebSocketMessageType.Binary) {
-                    throw new Exception("Expected Binary message type.");
-                }
-
-                curPos += result.Count;
-                finished = result.EndOfMessage;
+            using var cancellationSource = new CancellationTokenSource();
+            var left = receiveBuf.Length - curPos;
+            if (left < 0) {
+                // No space left in the array, enlarge the array by doubling its size.
+                var temp = new byte[receiveBuf.Length * 2];
+                Array.Copy(receiveBuf, temp, receiveBuf.Length);
+                receiveBuf = temp;
+                left = receiveBuf.Length - curPos;
             }
+
+            cancellationSource.CancelAfter(ReadWriteTimeout);
+            var result = await _clientSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuf, curPos, left), cancellationSource.Token);
+            if (result.MessageType != WebSocketMessageType.Binary) {
+                throw new Exception("Expected Binary message type.");
+            }
+
+            curPos += result.Count;
+            finished = result.EndOfMessage;
         }
 
         var response = Response.Parser.ParseFrom(new MemoryStream(receiveBuf, 0, curPos));

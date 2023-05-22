@@ -2,7 +2,7 @@
 using System.Numerics;
 using SC2APIProtocol;
 
-namespace Bot.Wrapper;
+namespace Bot.Requests;
 
 public interface IRequestBuilder {
     public Request RequestAction(IEnumerable<Action> actions);
