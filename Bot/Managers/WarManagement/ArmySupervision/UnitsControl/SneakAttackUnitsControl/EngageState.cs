@@ -8,27 +8,12 @@ namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUni
 
 public partial class SneakAttack {
     public class EngageState : SneakAttackState {
-        private readonly IUnitsTracker _unitsTracker;
-        private readonly ITerrainTracker _terrainTracker;
-        private readonly IFrameClock _frameClock;
-        private readonly IDetectionTracker _detectionTracker;
-        private readonly IUnitEvaluator _unitEvaluator;
-        private readonly IClustering _clustering;
+        private readonly ISneakAttackStateFactory _sneakAttackStateFactory;
 
         public EngageState(
-            IUnitsTracker unitsTracker,
-            ITerrainTracker terrainTracker,
-            IFrameClock frameClock,
-            IDetectionTracker detectionTracker,
-            IUnitEvaluator unitEvaluator,
-            IClustering clustering
+            ISneakAttackStateFactory sneakAttackStateFactory
         ) {
-            _unitsTracker = unitsTracker;
-            _terrainTracker = terrainTracker;
-            _frameClock = frameClock;
-            _detectionTracker = detectionTracker;
-            _unitEvaluator = unitEvaluator;
-            _clustering = clustering;
+            _sneakAttackStateFactory = sneakAttackStateFactory;
         }
 
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
@@ -38,7 +23,7 @@ public partial class SneakAttack {
         protected override void Execute() {
             UnburrowUnderlings(Context._army);
 
-            NextState = new TerminalState(_unitsTracker, _terrainTracker, _frameClock, _detectionTracker, _unitEvaluator, _clustering);
+            NextState = _sneakAttackStateFactory.CreateTerminalState();
         }
 
         private static void UnburrowUnderlings(IEnumerable<Unit> army) {

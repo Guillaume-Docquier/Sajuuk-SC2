@@ -22,6 +22,7 @@ using Bot.Managers.WarManagement;
 using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.Managers.WarManagement.ArmySupervision.RegionalArmySupervision;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
+using Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
 using Bot.Managers.WarManagement.States;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
@@ -188,6 +189,15 @@ public class Program {
             services.UnitsTracker
         );
 
+        var sneakAttackStateFactory = new SneakAttackStateFactory(
+            services.UnitsTracker,
+            services.TerrainTracker,
+            services.FrameClock,
+            services.DetectionTracker,
+            services.Clustering,
+            services.UnitEvaluator
+        );
+
         var unitsControlFactory = new UnitsControlFactory(
             services.UnitsTracker,
             services.TerrainTracker,
@@ -198,7 +208,8 @@ public class Program {
             services.Controller,
             services.DetectionTracker,
             services.UnitEvaluator,
-            services.Clustering
+            services.Clustering,
+            sneakAttackStateFactory
         );
 
         var armySupervisorStateFactory = new ArmySupervisorStateFactory(

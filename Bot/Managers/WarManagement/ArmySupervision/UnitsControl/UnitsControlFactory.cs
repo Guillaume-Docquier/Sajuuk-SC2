@@ -18,6 +18,7 @@ public class UnitsControlFactory : IUnitsControlFactory {
     private readonly IDetectionTracker _detectionTracker;
     private readonly IUnitEvaluator _unitEvaluator;
     private readonly IClustering _clustering;
+    private readonly ISneakAttackStateFactory _sneakAttackStateFactory;
 
     public UnitsControlFactory(
         IUnitsTracker unitsTracker,
@@ -29,7 +30,8 @@ public class UnitsControlFactory : IUnitsControlFactory {
         IController controller,
         IDetectionTracker detectionTracker,
         IUnitEvaluator unitEvaluator,
-        IClustering clustering
+        IClustering clustering,
+        ISneakAttackStateFactory sneakAttackStateFactory
     ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
@@ -41,10 +43,11 @@ public class UnitsControlFactory : IUnitsControlFactory {
         _detectionTracker = detectionTracker;
         _unitEvaluator = unitEvaluator;
         _clustering = clustering;
+        _sneakAttackStateFactory = sneakAttackStateFactory;
     }
 
     public SneakAttack CreateSneakAttack() {
-        return new SneakAttack(_unitsTracker, _terrainTracker, _graphicalDebugger, _frameClock, _controller, _detectionTracker, _unitEvaluator, _clustering);
+        return new SneakAttack(_unitsTracker, _terrainTracker, _graphicalDebugger, _frameClock, _controller, _detectionTracker, _sneakAttackStateFactory);
     }
 
     public StutterStep CreateStutterStep() {

@@ -19,8 +19,7 @@ public partial class SneakAttack : IUnitsControl {
     private readonly IFrameClock _frameClock;
     private readonly IController _controller;
     private readonly IDetectionTracker _detectionTracker;
-    private readonly IUnitEvaluator _unitEvaluator;
-    private readonly IClustering _clustering;
+    private readonly ISneakAttackStateFactory _sneakAttackStateFactory;
 
     private const float TankRange = 13;
 
@@ -48,8 +47,7 @@ public partial class SneakAttack : IUnitsControl {
         IFrameClock frameClock,
         IController controller,
         IDetectionTracker detectionTracker,
-        IUnitEvaluator unitEvaluator,
-        IClustering clustering
+        ISneakAttackStateFactory sneakAttackStateFactory
     ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
@@ -57,10 +55,9 @@ public partial class SneakAttack : IUnitsControl {
         _frameClock = frameClock;
         _controller = controller;
         _detectionTracker = detectionTracker;
-        _unitEvaluator = unitEvaluator;
-        _clustering = clustering;
+        _sneakAttackStateFactory = sneakAttackStateFactory;
 
-        _stateMachine = new StateMachine<SneakAttack, SneakAttackState>(this, new InactiveState(_unitsTracker, _terrainTracker, _frameClock, _detectionTracker, _unitEvaluator, _clustering));
+        _stateMachine = new StateMachine<SneakAttack, SneakAttackState>(this, _sneakAttackStateFactory.CreateInactiveState());
     }
 
     public bool IsExecuting() {
@@ -118,7 +115,7 @@ public partial class SneakAttack : IUnitsControl {
 
         _targetPosition = default;
 
-        _stateMachine.TransitionTo(new InactiveState(_unitsTracker, _terrainTracker, _frameClock, _detectionTracker, _unitEvaluator, _clustering));
+        _stateMachine.TransitionTo(_sneakAttackStateFactory.CreateInactiveState());
     }
 
     private bool HasProperTech() {

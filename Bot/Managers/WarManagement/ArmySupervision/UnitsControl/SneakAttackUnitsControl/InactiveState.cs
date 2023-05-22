@@ -14,7 +14,7 @@ public partial class SneakAttack {
         private readonly IFrameClock _frameClock;
         private readonly IDetectionTracker _detectionTracker;
         private readonly IUnitEvaluator _unitEvaluator;
-        private readonly IClustering _clustering;
+        private readonly ISneakAttackStateFactory _sneakAttackStateFactory;
 
         private const float MinimumEngagementArmyThreshold = 0.75f;
         private const float OverwhelmingForceRatio = 4f;
@@ -27,14 +27,14 @@ public partial class SneakAttack {
             IFrameClock frameClock,
             IDetectionTracker detectionTracker,
             IUnitEvaluator unitEvaluator,
-            IClustering clustering
+            ISneakAttackStateFactory sneakAttackStateFactory
         ) {
             _unitsTracker = unitsTracker;
             _terrainTracker = terrainTracker;
             _frameClock = frameClock;
             _detectionTracker = detectionTracker;
             _unitEvaluator = unitEvaluator;
-            _clustering = clustering;
+            _sneakAttackStateFactory = sneakAttackStateFactory;
         }
 
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
@@ -85,7 +85,7 @@ public partial class SneakAttack {
                 var closestTarget = Context.GetGroundEnemiesInSight(Context._army).MinBy(enemy => enemy.DistanceTo(Context._armyCenter));
                 if (closestTarget == null) {
                     Logger.Error("BurrowSurprise: Went from None -> Fight because no enemies nearby");
-                    NextState = new TerminalState(_unitsTracker, _terrainTracker, _frameClock, _detectionTracker, _unitEvaluator, _clustering);
+                    NextState = _sneakAttackStateFactory.CreateTerminalState();
                     return;
                 }
 
@@ -93,7 +93,7 @@ public partial class SneakAttack {
                 Context._isTargetPriority = false;
             }
 
-            NextState = new ApproachState(_unitsTracker, _terrainTracker, _frameClock, _detectionTracker, _clustering, _unitEvaluator);
+            NextState = _sneakAttackStateFactory.CreateApproachState();
         }
     }
 }
