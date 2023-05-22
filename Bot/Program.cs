@@ -87,7 +87,22 @@ public class Program {
 
         foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
             var services = CreateServices(graphicalDebugging: false, dataGeneration: true);
-            var gameConnection = CreateGameConnection(services, stepSize: 1);
+            // TODO GD Create a game connection for data analysis
+            var gameConnection = new DeprecatedGameConnection(
+                services.UnitsTracker,
+                services.ExpandAnalyzer,
+                services.RegionAnalyzer,
+                services.GraphicalDebugger,
+                services.KnowledgeBase,
+                services.FrameClock,
+                services.Controller,
+                services.RequestBuilder,
+                services.Pathfinder,
+                services.ActionService,
+                services.ProtobufProxy,
+                services.RequestService,
+                stepSize: 1
+            );
 
             Logger.Important($"Generating data for {mapFileName}");
             gameConnection.RunLocal(
@@ -105,8 +120,6 @@ public class Program {
         DebugEnabled = true;
 
         var services = CreateServices(graphicalDebugging: true);
-        var gameConnection = CreateGameConnection(services, stepSize: 1);
-
         var videoClipPlayer = new VideoClipPlayer(
             services.DebuggingFlagsTracker,
             services.UnitsTracker,
@@ -120,46 +133,81 @@ public class Program {
             MapFileName
         );
 
+        var gameConnection = new LocalGameConnection(
+            services.ProtobufProxy,
+            services.RequestService,
+            services.RequestBuilder,
+            services.KnowledgeBase,
+            services.FrameClock,
+            services.Controller,
+            services.ActionService,
+            services.GraphicalDebugger,
+            services.UnitsTracker,
+            services.Pathfinder,
+            videoClipPlayer,
+            MapFileName,
+            Race.Terran,
+            Difficulty.VeryEasy,
+            stepSize: 1,
+            realTime: true
+        );
+
         Logger.Info("Game launched in video clip mode");
-        gameConnection.RunLocal(videoClipPlayer, MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
+        gameConnection.PlayGame().Wait();
     }
 
     private static void PlayLocalGame() {
         DebugEnabled = true;
 
         var services = CreateServices(graphicalDebugging: true);
-        var gameConnection = CreateGameConnection(services);
+        var gameConnection = new LocalGameConnection(
+            services.ProtobufProxy,
+            services.RequestService,
+            services.RequestBuilder,
+            services.KnowledgeBase,
+            services.FrameClock,
+            services.Controller,
+            services.ActionService,
+            services.GraphicalDebugger,
+            services.UnitsTracker,
+            services.Pathfinder,
+            CreateSajuuk(services, Version, Scenarios),
+            MapFileName,
+            OpponentRace,
+            OpponentDifficulty,
+            stepSize: 2,
+            RealTime
+        );
 
         Logger.Info("Game launched in local play mode");
-        gameConnection.RunLocal(CreateSajuuk(services, Version, Scenarios), MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
+        gameConnection.PlayGame().Wait();
     }
 
     private static void PlayLadderGame(string[] args) {
         DebugEnabled = false;
 
         var services = CreateServices(graphicalDebugging: false);
-        var gameConnection = CreateGameConnection(services);
-
-        Logger.Info("Game launched in ladder play mode");
-        gameConnection.RunLadder(CreateSajuuk(services, Version, Scenarios), args).Wait();
-    }
-
-    private static GameConnection CreateGameConnection(Services services, uint stepSize = 2) {
-        return new GameConnection(
-            services.UnitsTracker,
-            services.ExpandAnalyzer,
-            services.RegionAnalyzer,
-            services.GraphicalDebugger,
+        var commandLineArgs = new CommandLineArguments(args);
+        var gameConnection = new LadderGameConnection(
+            services.ProtobufProxy,
+            services.RequestService,
+            services.RequestBuilder,
             services.KnowledgeBase,
             services.FrameClock,
             services.Controller,
-            services.RequestBuilder,
-            services.Pathfinder,
             services.ActionService,
-            services.ProtobufProxy,
-            services.RequestService,
-            stepSize
+            services.GraphicalDebugger,
+            services.UnitsTracker,
+            services.Pathfinder,
+            CreateSajuuk(services, Version, Scenarios),
+            stepSize: 2,
+            commandLineArgs.LadderServer,
+            commandLineArgs.GamePort,
+            commandLineArgs.StartPort
         );
+
+        Logger.Info("Game launched in ladder play mode");
+        gameConnection.PlayGame().Wait();
     }
 
     private static IBot CreateSajuuk(Services services, string version, List<IScenario> scenarios) {
