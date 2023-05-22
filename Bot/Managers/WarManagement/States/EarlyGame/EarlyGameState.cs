@@ -7,16 +7,19 @@ public class EarlyGameState : WarManagerState {
 
     private readonly IWarManagerStateFactory _warManagerStateFactory;
     private readonly IWarManagerBehaviourFactory _warManagerBehaviourFactory;
+    private readonly IFrameClock _frameClock;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
 
     public EarlyGameState(
         IWarManagerStateFactory warManagerStateFactory,
-        IWarManagerBehaviourFactory warManagerBehaviourFactory
+        IWarManagerBehaviourFactory warManagerBehaviourFactory,
+        IFrameClock frameClock
     ) {
         _warManagerStateFactory = warManagerStateFactory;
         _warManagerBehaviourFactory = warManagerBehaviourFactory;
+        _frameClock = frameClock;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
@@ -47,8 +50,8 @@ public class EarlyGameState : WarManagerState {
         return false;
     }
 
-    private static bool ShouldTransitionToMidGame() {
-        return Controller.Frame > TimeUtils.SecsToFrames(EarlyGameEndInSeconds);
+    private bool ShouldTransitionToMidGame() {
+        return _frameClock.CurrentFrame > TimeUtils.SecsToFrames(EarlyGameEndInSeconds);
     }
 
     private void TransitionToMidGame() {

@@ -6,8 +6,14 @@ using SC2APIProtocol;
 
 namespace Bot.Wrapper;
 
-public static class RequestBuilder {
-    public static Request RequestAction(IEnumerable<Action> actions) {
+public class RequestBuilder : IRequestBuilder {
+    private readonly KnowledgeBase _knowledgeBase;
+
+    public RequestBuilder(KnowledgeBase knowledgeBase) {
+        _knowledgeBase = knowledgeBase;
+    }
+
+    public Request RequestAction(IEnumerable<Action> actions) {
         var actionRequest = new Request
         {
             Action = new RequestAction(),
@@ -18,7 +24,7 @@ public static class RequestBuilder {
         return actionRequest;
     }
 
-    public static Request RequestStep(uint stepSize) {
+    public Request RequestStep(uint stepSize) {
         return new Request
         {
             Step = new RequestStep
@@ -28,7 +34,7 @@ public static class RequestBuilder {
         };
     }
 
-    public static Request DebugDraw(IEnumerable<DebugText> debugTexts, IEnumerable<DebugSphere> debugSpheres, IEnumerable<DebugBox> debugBoxes, IEnumerable<DebugLine> debugLines) {
+    public Request DebugDraw(IEnumerable<DebugText> debugTexts, IEnumerable<DebugSphere> debugSpheres, IEnumerable<DebugBox> debugBoxes, IEnumerable<DebugLine> debugLines) {
         return new Request
         {
             Debug = new RequestDebug
@@ -50,7 +56,7 @@ public static class RequestBuilder {
         };
     }
 
-    public static Request RequestCreateComputerGame(bool realTime, string mapPath, Race opponentRace, Difficulty opponentDifficulty) {
+    public Request RequestCreateComputerGame(bool realTime, string mapPath, Race opponentRace, Difficulty opponentDifficulty) {
         var requestCreateGame = new RequestCreateGame
         {
             Realtime = realTime,
@@ -78,7 +84,7 @@ public static class RequestBuilder {
         };
     }
 
-    public static Request RequestJoinLadderGame(Race race, int startPort) {
+    public Request RequestJoinLadderGame(Race race, int startPort) {
         var requestJoinGame = new RequestJoinGame
         {
             Race = race,
@@ -103,7 +109,7 @@ public static class RequestBuilder {
         };
     }
 
-    public static Request RequestJoinLocalGame(Race race) {
+    public Request RequestJoinLocalGame(Race race) {
         return new Request
         {
             JoinGame = new RequestJoinGame
@@ -125,13 +131,13 @@ public static class RequestBuilder {
         };
     }
 
-    public static Request RequestQueryBuildingPlacement(uint buildingType, Vector2 position) {
+    public Request RequestQueryBuildingPlacement(uint buildingType, Vector2 position) {
         var requestQuery = new RequestQuery();
 
         // TODO GD Can I send multiple placements at the same time?
         requestQuery.Placements.Add(new RequestQueryBuildingPlacement
         {
-            AbilityId = (int)KnowledgeBase.GetUnitTypeData(buildingType).AbilityId,
+            AbilityId = (int)_knowledgeBase.GetUnitTypeData(buildingType).AbilityId,
             TargetPos = position.ToPoint2D(),
         });
 
@@ -141,7 +147,7 @@ public static class RequestBuilder {
         };
     }
 
-    public static Request RequestObservation(uint waitUntilFrame) {
+    public Request RequestObservation(uint waitUntilFrame) {
         return new Request
         {
             Observation = new RequestObservation
@@ -151,14 +157,14 @@ public static class RequestBuilder {
         };
     }
 
-    public static Request RequestGameInfo() {
+    public Request RequestGameInfo() {
         return new Request
         {
             GameInfo = new RequestGameInfo(),
         };
     }
 
-    public static Request DebugCreateUnit(Owner owner, uint unitType, uint quantity, Vector3 position) {
+    public Request DebugCreateUnit(Owner owner, uint unitType, uint quantity, Vector3 position) {
         return new Request
         {
             Debug = new RequestDebug
@@ -185,7 +191,7 @@ public static class RequestBuilder {
     /// </summary>
     /// <param name="moveTo">The point to center the camera on</param>
     /// <returns></returns>
-    public static Request DebugMoveCamera(Point moveTo) {
+    public Request DebugMoveCamera(Point moveTo) {
         var moveCameraAction = new Action
         {
             ActionRaw = new ActionRaw
@@ -205,7 +211,7 @@ public static class RequestBuilder {
     /// You only need to set this once.
     /// </summary>
     /// <returns>A debug request to reveal the map</returns>
-    public static Request DebugRevealMap() {
+    public Request DebugRevealMap() {
         return new Request
         {
             Debug = new RequestDebug

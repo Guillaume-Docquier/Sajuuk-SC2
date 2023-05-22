@@ -21,7 +21,12 @@ public class AnalyzedRegion : Region {
         Colors.Magenta
     };
 
-    public AnalyzedRegion(IEnumerable<Vector2> cells, RegionType type, IEnumerable<ExpandLocation> expandLocations) {
+    public AnalyzedRegion(
+        IClustering clustering,
+        IEnumerable<Vector2> cells,
+        RegionType type,
+        IEnumerable<ExpandLocation> expandLocations
+    ) {
         Cells = cells.ToHashSet();
 
         // The approximated radius is the diagonal of the cells as if they were a square
@@ -44,7 +49,7 @@ public class AnalyzedRegion : Region {
         }
 
         if (Center == default) {
-            var regionCenter = Clustering.Instance.GetCenter(Cells.ToList());
+            var regionCenter = clustering.GetCenter(Cells.ToList());
             Center = Cells.MinBy(cell => cell.DistanceTo(regionCenter));
         }
     }

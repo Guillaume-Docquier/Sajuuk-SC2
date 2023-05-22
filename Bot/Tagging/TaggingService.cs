@@ -1,23 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Bot.Utils;
 using SC2APIProtocol;
 
 namespace Bot.Tagging;
 
 public class TaggingService : ITaggingService {
-    /// <summary>
-    /// DI: ✔️ The only usages are for static instance creations
-    /// </summary>
-    public static readonly TaggingService Instance = new TaggingService(() => Controller.Frame);
+    private readonly IFrameClock _frameClock;
+    private readonly IChatService _chatService;
 
     private const int MaximumTagLength = 32;
 
-    private readonly Func<uint> _getCurrentFrame;
     private readonly HashSet<Tag> _tagsSent = new HashSet<Tag>();
 
-    private TaggingService(Func<uint> getCurrentFrame) {
-        _getCurrentFrame = getCurrentFrame;
+    public TaggingService(
+        IFrameClock frameClock,
+        IChatService chatService
+    ) {
+        _frameClock = frameClock;
+        _chatService = chatService;
     }
 
     public bool HasTagged(Tag tag) {
@@ -26,28 +26,28 @@ public class TaggingService : ITaggingService {
 
     public void TagEarlyAttack() {
         const Tag tag = Tag.EarlyAttack;
-        var gameTimeString = TimeUtils.GetGameTimeString(_getCurrentFrame());
+        var gameTimeString = TimeUtils.GetGameTimeString(_frameClock.CurrentFrame);
 
         TagGame(tag, $"{tag}_{gameTimeString}");
     }
 
     public void TagTerranFinisher() {
         const Tag tag = Tag.TerranFinisher;
-        var gameTimeString = TimeUtils.GetGameTimeString(_getCurrentFrame());
+        var gameTimeString = TimeUtils.GetGameTimeString(_frameClock.CurrentFrame);
 
         TagGame(tag, $"{tag}_{gameTimeString}");
     }
 
     public void TagBuildDone(uint supply, float collectedMinerals, float collectedVespene) {
         const Tag tag = Tag.BuildDone;
-        var gameTimeString = TimeUtils.GetGameTimeString(_getCurrentFrame());
+        var gameTimeString = TimeUtils.GetGameTimeString(_frameClock.CurrentFrame);
 
         TagGame(tag, $"{tag}_{gameTimeString}_S{supply}_M{collectedMinerals}_V{collectedVespene}");
     }
 
     public void TagEnemyStrategy(string enemyStrategy) {
         const Tag tag = Tag.BuildDone;
-        var gameTimeString = TimeUtils.GetGameTimeString(_getCurrentFrame());
+        var gameTimeString = TimeUtils.GetGameTimeString(_frameClock.CurrentFrame);
 
         // We print "EnemyStrategy" as "Enemy" to have more space for the enemy strategy name, otherwise it gets truncated
         TagGame(tag, $"Enemy_{enemyStrategy}_{gameTimeString}");
@@ -83,7 +83,7 @@ public class TaggingService : ITaggingService {
         }
 
         Logger.Tag($"Tagging game with {cleanTagString} ({tag})");
-        Controller.Chat($"Tag:{cleanTagString}", toTeam: true);
+        _chatService.Chat($"Tag:{cleanTagString}", toTeam: true);
         _tagsSent.Add(tag);
     }
 

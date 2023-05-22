@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.Algorithms;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 
@@ -9,6 +10,10 @@ public partial class SneakAttack {
     public class ApproachState : SneakAttackState {
         private readonly IUnitsTracker _unitsTracker;
         private readonly ITerrainTracker _terrainTracker;
+        private readonly IFrameClock _frameClock;
+        private readonly IDetectionTracker _detectionTracker;
+        private readonly IClustering _clustering;
+        private readonly IUnitEvaluator _unitEvaluator;
 
         private const float SetupDistance = 1.25f;
 
@@ -16,13 +21,24 @@ public partial class SneakAttack {
 
         private readonly StuckDetector _stuckDetector = new StuckDetector();
 
-        public ApproachState(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker) {
+        public ApproachState(
+            IUnitsTracker unitsTracker,
+            ITerrainTracker terrainTracker,
+            IFrameClock frameClock,
+            IDetectionTracker detectionTracker,
+            IClustering clustering,
+            IUnitEvaluator unitEvaluator
+        ) {
             _unitsTracker = unitsTracker;
             _terrainTracker = terrainTracker;
+            _frameClock = frameClock;
+            _detectionTracker = detectionTracker;
+            _clustering = clustering;
+            _unitEvaluator = unitEvaluator;
         }
 
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
-            if (DetectionTracker.Instance.IsDetected(army)) {
+            if (_detectionTracker.IsDetected(army)) {
                 return false;
             }
 
@@ -39,7 +55,7 @@ public partial class SneakAttack {
             _stuckDetector.Tick(Context._armyCenter);
             if (_stuckDetector.IsStuck) {
                 Logger.Warning("{0} army is stuck", Name);
-                NextState = new TerminalState(_unitsTracker, _terrainTracker);
+                NextState = new TerminalState(_unitsTracker, _terrainTracker, _frameClock, _detectionTracker, _unitEvaluator, _clustering);
 
                 return;
             }
@@ -60,7 +76,7 @@ public partial class SneakAttack {
             if (Context._targetPosition == default) {
                 Logger.Warning("{0} has no target", Name);
                 Context._isTargetPriority = false;
-                NextState = new TerminalState(_unitsTracker, _terrainTracker);
+                NextState = new TerminalState(_unitsTracker, _terrainTracker, _frameClock, _detectionTracker, _unitEvaluator, _clustering);
 
                 return;
             }
@@ -73,7 +89,7 @@ public partial class SneakAttack {
                 }
             }
             else {
-                NextState = new SetupState(_unitsTracker, _terrainTracker);
+                NextState = new SetupState(_unitsTracker, _terrainTracker, _frameClock, _detectionTracker, _clustering, _unitEvaluator);
             }
         }
     }

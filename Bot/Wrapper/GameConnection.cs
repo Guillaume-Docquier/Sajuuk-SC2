@@ -21,6 +21,12 @@ public class GameConnection {
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IRegionAnalyzer _regionAnalyzer;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly KnowledgeBase _knowledgeBase;
+    private readonly IFrameClock _frameClock;
+    private readonly IController _controller;
+    private readonly IRequestBuilder _requestBuilder;
+    private readonly IPathfinder _pathfinder;
+    private readonly IActionService _actionService;
 
     private const string Address = "127.0.0.1";
     private readonly ProtobufProxy _proxy = new ProtobufProxy();
@@ -38,11 +44,29 @@ public class GameConnection {
     // On the ladder, for some reason, actions have a 1 frame delay before being received and applied
     // We will run every 2 frames by default, this way we won't notice the delay
     // Lower than 2 is not recommended unless your code is crazy good and can handle the inevitable desync
-    public GameConnection(IUnitsTracker unitsTracker, IExpandAnalyzer expandAnalyzer, IRegionAnalyzer regionAnalyzer, IGraphicalDebugger graphicalDebugger, uint stepSize) {
+    public GameConnection(
+        IUnitsTracker unitsTracker,
+        IExpandAnalyzer expandAnalyzer,
+        IRegionAnalyzer regionAnalyzer,
+        IGraphicalDebugger graphicalDebugger,
+        KnowledgeBase knowledgeBase,
+        IFrameClock frameClock,
+        IController controller,
+        IRequestBuilder requestBuilder,
+        IPathfinder pathfinder,
+        IActionService actionService,
+        uint stepSize
+    ) {
         _unitsTracker = unitsTracker;
         _expandAnalyzer = expandAnalyzer;
         _regionAnalyzer = regionAnalyzer;
         _graphicalDebugger = graphicalDebugger;
+        _knowledgeBase = knowledgeBase;
+        _frameClock = frameClock;
+        _controller = controller;
+        _requestBuilder = requestBuilder;
+        _pathfinder = pathfinder;
+        _actionService = actionService;
 
         _stepSize = stepSize;
     }
@@ -135,7 +159,7 @@ public class GameConnection {
             throw new Exception($"Unable to locate map: {mapPath}");
         }
 
-        var createGameResponse = await SendRequest(RequestBuilder.RequestCreateComputerGame(realTime, mapPath, opponentRace, opponentDifficulty), logErrors: true);
+        var createGameResponse = await SendRequest(_requestBuilder.RequestCreateComputerGame(realTime, mapPath, opponentRace, opponentDifficulty), logErrors: true);
 
         // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
         if (createGameResponse.CreateGame.Error != ResponseCreateGame.Types.Error.MissingMap) {
@@ -147,7 +171,7 @@ public class GameConnection {
     }
 
     private async Task<uint> JoinGame(Race race) {
-        var joinGameResponse = await SendRequest(RequestBuilder.RequestJoinLocalGame(race), logErrors: true);
+        var joinGameResponse = await SendRequest(_requestBuilder.RequestJoinLocalGame(race), logErrors: true);
 
         // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
         if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.MissingParticipation) {
@@ -177,7 +201,7 @@ public class GameConnection {
     }
 
     private async Task<uint> JoinGameLadder(Race race, int startPort) {
-        var joinGameResponse = await SendRequest(RequestBuilder.RequestJoinLadderGame(race, startPort), logErrors: true);
+        var joinGameResponse = await SendRequest(_requestBuilder.RequestJoinLadderGame(race, startPort), logErrors: true);
 
         // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
         if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.MissingParticipation) {
@@ -203,12 +227,12 @@ public class GameConnection {
             }
         };
         var dataResponse = await SendRequest(dataRequest);
-        KnowledgeBase.Data = dataResponse.Data;
+        _knowledgeBase.Data = dataResponse.Data;
 
         while (true) {
-            // Controller.Frame is uint.MaxValue until we request frame 0
-            var nextFrame = Controller.Frame == uint.MaxValue ? 0 : Controller.Frame + _stepSize;
-            var observationResponse = await SendRequest(RequestBuilder.RequestObservation(nextFrame));
+            // _frameClock.CurrentFrame is uint.MaxValue until we request frame 0
+            var nextFrame = _frameClock.CurrentFrame == uint.MaxValue ? 0 : _frameClock.CurrentFrame + _stepSize;
+            var observationResponse = await SendRequest(_requestBuilder.RequestObservation(nextFrame));
 
             if (observationResponse.Status is Status.Quit) {
                 Logger.Info("Game was terminated.");
@@ -241,18 +265,18 @@ public class GameConnection {
                 _quitAt = nextFrame + _stepSize * 10; // Just give a few frames to debug the analysis
             }
             else {
-                await SendRequest(RequestBuilder.RequestStep(_stepSize));
+                await SendRequest(_requestBuilder.RequestStep(_stepSize));
             }
         }
     }
 
     private async Task RunBot(IBot bot, ResponseObservation observation) {
-        var gameInfoResponse = await SendRequest(RequestBuilder.RequestGameInfo());
+        var gameInfoResponse = await SendRequest(_requestBuilder.RequestGameInfo());
 
         _performanceDebugger.FrameStopwatch.Start();
 
         _performanceDebugger.ControllerStopwatch.Start();
-        Controller.NewFrame(gameInfoResponse.GameInfo, observation);
+        _controller.NewFrame(gameInfoResponse.GameInfo, observation);
         _performanceDebugger.ControllerStopwatch.Stop();
 
         _performanceDebugger.BotStopwatch.Start();
@@ -260,15 +284,15 @@ public class GameConnection {
         _performanceDebugger.BotStopwatch.Stop();
 
         _performanceDebugger.ActionsStopwatch.Start();
-        var actions = Controller.GetActions().ToList();
+        var actions = _actionService.GetActions().ToList();
 
         if (actions.Count > 0) {
-            var response = await SendRequest(RequestBuilder.RequestAction(actions));
+            var response = await SendRequest(_requestBuilder.RequestAction(actions));
 
             var unsuccessfulActions = actions
                 .Zip(response.Action.Result, (action, result) => (action, result))
                 .Where(action => action.result != ActionResult.Success)
-                .Select(action => $"({KnowledgeBase.GetAbilityData(action.action.ActionRaw.UnitCommand.AbilityId).FriendlyName}, {action.result})")
+                .Select(action => $"({_knowledgeBase.GetAbilityData(action.action.ActionRaw.UnitCommand.AbilityId).FriendlyName}, {action.result})")
                 .ToList();
 
             if (unsuccessfulActions.Count > 0) {
@@ -301,8 +325,8 @@ public class GameConnection {
             Logger.Performance("Units: {0} owned, {1} neutral, {2} enemy", _unitsTracker.OwnedUnits.Count, _unitsTracker.NeutralUnits.Count, _unitsTracker.EnemyUnits.Count);
             Logger.Performance(
                 "Pathfinding cache: {0} paths, {1} tiles",
-                Pathfinder.Instance.CellPathsMemory.Values.Sum(destinations => destinations.Keys.Count),
-                Pathfinder.Instance.CellPathsMemory.Values.SelectMany(destinations => destinations.Values).Sum(path => path.Count));
+                _pathfinder.CellPathsMemory.Values.Sum(destinations => destinations.Keys.Count),
+                _pathfinder.CellPathsMemory.Values.SelectMany(destinations => destinations.Values).Sum(path => path.Count));
             Logger.Performance("==== Memory Debug End ====");
         }
     }

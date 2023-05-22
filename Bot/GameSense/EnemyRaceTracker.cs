@@ -7,17 +7,15 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class EnemyRaceTracker : IEnemyRaceTracker, INeedUpdating {
-    /// <summary>
-    /// DI: ✔️ The only usages are for static instance creations
-    /// </summary>
-    public static readonly EnemyRaceTracker Instance = new EnemyRaceTracker(TaggingService.Instance, UnitsTracker.Instance);
-
     private readonly ITaggingService _taggingService;
     private readonly IUnitsTracker _unitsTracker;
 
     public Race EnemyRace { get; private set; } = Race.NoRace;
 
-    public EnemyRaceTracker(ITaggingService taggingService, IUnitsTracker unitsTracker) {
+    public EnemyRaceTracker(
+        ITaggingService taggingService,
+        IUnitsTracker unitsTracker
+    ) {
         _taggingService = taggingService;
         _unitsTracker = unitsTracker;
     }

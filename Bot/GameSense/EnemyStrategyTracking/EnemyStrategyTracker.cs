@@ -1,25 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Bot.GameData;
 using Bot.Tagging;
 using SC2APIProtocol;
 
 namespace Bot.GameSense.EnemyStrategyTracking;
 
 public class EnemyStrategyTracker : IEnemyStrategyTracker, INeedUpdating {
-    /// <summary>
-    /// DI: ✔️ The only usages are for static instance creations
-    /// </summary>
-    public static EnemyStrategyTracker Instance { get; private set; } = new EnemyStrategyTracker(
-        TaggingService.Instance,
-        EnemyRaceTracker.Instance,
-        UnitsTracker.Instance,
-        RegionsTracker.Instance
-    );
-
     private readonly ITaggingService _taggingService;
     private readonly IEnemyRaceTracker _enemyRaceTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IRegionsTracker _regionsTracker;
+    private readonly KnowledgeBase _knowledgeBase;
+    private readonly IFrameClock _frameClock;
 
     private readonly HashSet<ISubscriber<EnemyStrategyTransition>> _subscribers = new HashSet<ISubscriber<EnemyStrategyTransition>>();
 
@@ -27,16 +20,20 @@ public class EnemyStrategyTracker : IEnemyStrategyTracker, INeedUpdating {
 
     public EnemyStrategy CurrentEnemyStrategy { get; private set; } = EnemyStrategy.Unknown;
 
-    private EnemyStrategyTracker(
+    public EnemyStrategyTracker(
         ITaggingService taggingService,
         IEnemyRaceTracker enemyRaceTracker,
         IUnitsTracker unitsTracker,
-        IRegionsTracker regionsTracker
+        IRegionsTracker regionsTracker,
+        KnowledgeBase knowledgeBase,
+        IFrameClock frameClock
     ) {
         _taggingService = taggingService;
         _enemyRaceTracker = enemyRaceTracker;
         _unitsTracker = unitsTracker;
         _regionsTracker = regionsTracker;
+        _knowledgeBase = knowledgeBase;
+        _frameClock = frameClock;
     }
 
     public void Reset() {
@@ -49,7 +46,7 @@ public class EnemyStrategyTracker : IEnemyStrategyTracker, INeedUpdating {
         _strategyInterpreter ??= _enemyRaceTracker.EnemyRace switch
         {
             Race.Terran => new TerranStrategyInterpreter(),
-            Race.Zerg => new ZergStrategyInterpreter(_regionsTracker),
+            Race.Zerg => new ZergStrategyInterpreter(_regionsTracker, _knowledgeBase, _frameClock),
             Race.Protoss => new ProtossStrategyInterpreter(),
             _ => null,
         };

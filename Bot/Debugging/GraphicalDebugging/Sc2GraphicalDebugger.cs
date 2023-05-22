@@ -16,6 +16,7 @@ namespace Bot.Debugging.GraphicalDebugging;
 /// </summary>
 public class Sc2GraphicalDebugger: IGraphicalDebugger {
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IRequestBuilder _requestBuilder;
 
     private const float CreepHeight = 0.02f;
     private const float Padding = 0.05f;
@@ -25,12 +26,16 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
     private readonly Dictionary<Vector3, List<DebugBox>> _debugBoxes = new Dictionary<Vector3, List<DebugBox>>();
     private readonly List<DebugLine> _debugLines = new List<DebugLine>();
 
-    public Sc2GraphicalDebugger(ITerrainTracker terrainTracker) {
+    public Sc2GraphicalDebugger(
+        ITerrainTracker terrainTracker,
+        IRequestBuilder requestBuilder
+    ) {
         _terrainTracker = terrainTracker;
+        _requestBuilder = requestBuilder;
     }
 
     public Request GetDebugRequest() {
-        var debugRequest = RequestBuilder.DebugDraw(
+        var debugRequest = _requestBuilder.DebugDraw(
             _debugTexts,
             _debugSpheres,
             _debugBoxes.SelectMany(kv => kv.Value),

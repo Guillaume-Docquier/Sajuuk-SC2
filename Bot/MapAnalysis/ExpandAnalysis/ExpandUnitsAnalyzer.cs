@@ -11,12 +11,21 @@ namespace Bot.MapAnalysis.ExpandAnalysis;
 public class ExpandUnitsAnalyzer : IExpandUnitsAnalyzer {
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
+    private readonly KnowledgeBase _knowledgeBase;
+    private readonly IClustering _clustering;
 
     private List<List<Unit>> _resourceClusters;
 
-    public ExpandUnitsAnalyzer(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker) {
+    public ExpandUnitsAnalyzer(
+        IUnitsTracker unitsTracker,
+        ITerrainTracker terrainTracker,
+        KnowledgeBase knowledgeBase,
+        IClustering clustering
+    ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
+        _knowledgeBase = knowledgeBase;
+        _clustering = clustering;
     }
 
     /// <summary>
@@ -29,11 +38,11 @@ public class ExpandUnitsAnalyzer : IExpandUnitsAnalyzer {
     public IEnumerable<List<Unit>> FindResourceClusters() {
         if (_resourceClusters == null) {
             // See note on MineralField450
-            var minerals = Controller.GetUnits(_unitsTracker.NeutralUnits, Units.MineralFields.Except(new[] { Units.MineralField450 }).ToHashSet());
-            var gasses = Controller.GetUnits(_unitsTracker.NeutralUnits, Units.GasGeysers);
+            var minerals = _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, Units.MineralFields.Except(new[] { Units.MineralField450 }).ToHashSet());
+            var gasses = _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, Units.GasGeysers);
             var resources = minerals.Concat(gasses).ToList();
 
-            _resourceClusters = Clustering.Instance.DBSCAN(resources, epsilon: 8, minPoints: 4).clusters;
+            _resourceClusters = _clustering.DBSCAN(resources, epsilon: 8, minPoints: 4).clusters;
         }
 
         return _resourceClusters;
@@ -56,7 +65,7 @@ public class ExpandUnitsAnalyzer : IExpandUnitsAnalyzer {
     /// <param name="expandLocation"></param>
     /// <returns></returns>
     public HashSet<Unit> FindExpandBlockers(Vector2 expandLocation) {
-        var hatcheryRadius = KnowledgeBase.GetBuildingRadius(Units.Hatchery);
+        var hatcheryRadius = _knowledgeBase.GetBuildingRadius(Units.Hatchery);
 
         return _unitsTracker.NeutralUnits
             .Where(neutralUnit => neutralUnit.DistanceTo(expandLocation) <= neutralUnit.Radius + hatcheryRadius)

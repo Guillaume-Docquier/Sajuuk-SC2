@@ -11,6 +11,10 @@ public partial class SneakAttack {
     public class SetupState : SneakAttackState {
         private readonly IUnitsTracker _unitsTracker;
         private readonly ITerrainTracker _terrainTracker;
+        private readonly IFrameClock _frameClock;
+        private readonly IDetectionTracker _detectionTracker;
+        private readonly IClustering _clustering;
+        private readonly IUnitEvaluator _unitEvaluator;
 
         private const float EngageDistance = 1f;
         private const float MinimumArmyThresholdToEngage = 0.80f;
@@ -20,13 +24,24 @@ public partial class SneakAttack {
 
         private readonly StuckDetector _stuckDetector = new StuckDetector();
 
-        public SetupState(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker) {
+        public SetupState(
+            IUnitsTracker unitsTracker,
+            ITerrainTracker terrainTracker,
+            IFrameClock frameClock,
+            IDetectionTracker detectionTracker,
+            IClustering clustering,
+            IUnitEvaluator unitEvaluator
+        ) {
             _unitsTracker = unitsTracker;
             _terrainTracker = terrainTracker;
+            _frameClock = frameClock;
+            _detectionTracker = detectionTracker;
+            _clustering = clustering;
+            _unitEvaluator = unitEvaluator;
         }
 
         public override bool IsViable(IReadOnlyCollection<Unit> army) {
-            if (DetectionTracker.Instance.IsDetected(army)) {
+            if (_detectionTracker.IsDetected(army)) {
                 return false;
             }
 
@@ -48,7 +63,7 @@ public partial class SneakAttack {
             _stuckDetector.Tick(Context._armyCenter);
             if (_stuckDetector.IsStuck) {
                 Logger.Warning("{0} army is stuck", Name);
-                NextState = new TerminalState(_unitsTracker, _terrainTracker);
+                NextState = new TerminalState(_unitsTracker, _terrainTracker, _frameClock, _detectionTracker, _unitEvaluator, _clustering);
 
                 return;
             }
@@ -57,14 +72,14 @@ public partial class SneakAttack {
 
             if (Context._targetPosition == default) {
                 Logger.Warning("{0} has no target", Name);
-                NextState = new TerminalState(_unitsTracker, _terrainTracker);
+                NextState = new TerminalState(_unitsTracker, _terrainTracker, _frameClock, _detectionTracker, _unitEvaluator, _clustering);
                 Context._isTargetPriority = false;
 
                 return;
             }
 
             if (IsReadyToEngage()) {
-                NextState = new EngageState(_unitsTracker, _terrainTracker);
+                NextState = new EngageState(_unitsTracker, _terrainTracker, _frameClock, _detectionTracker, _unitEvaluator, _clustering);
             }
             else {
                 MoveArmyIntoPosition();
@@ -81,8 +96,8 @@ public partial class SneakAttack {
                 Context._isTargetPriority = true;
             }
             else {
-                var enemies = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Military).ToList();
-                var closestEnemyCluster = Clustering.Instance.DBSCAN(enemies, 5, 2)
+                var enemies = _unitsTracker.GetUnits(_unitsTracker.EnemyUnits, Units.Military).ToList();
+                var closestEnemyCluster = _clustering.DBSCAN(enemies, 5, 2)
                     .clusters
                     .MinBy(cluster => _terrainTracker.GetClosestWalkable(cluster.GetCenter(), searchRadius: 3).DistanceTo(Context._armyCenter));
 
@@ -108,7 +123,7 @@ public partial class SneakAttack {
                 nbSoldiersInRange = Context._army.Count(soldier => soldier.IsInAttackRangeOf(Context._targetPosition));
             }
             else {
-                var enemyMilitaryUnits = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Military)
+                var enemyMilitaryUnits = _unitsTracker.GetUnits(_unitsTracker.EnemyUnits, Units.Military)
                     .OrderBy(enemy => enemy.DistanceTo(Context._armyCenter))
                     .ToList();
 

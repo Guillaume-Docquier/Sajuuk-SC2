@@ -14,6 +14,8 @@ public interface IUnitsTracker {
     public Dictionary<ulong, Unit> EnemyGhostUnits { get; }
     public Dictionary<ulong, Unit> EnemyMemorizedUnits { get; }
 
+    public IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, uint unitTypeToGet);
+    public IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, HashSet<uint> unitTypesToGet, bool includeCloaked = false);
     public List<Unit> GetUnits(Alliance alliance);
     public List<Unit> GetGhostUnits(Alliance alliance);
 }

@@ -14,7 +14,8 @@ namespace Bot.MapAnalysis.RegionAnalysis.ChokePoints;
 // TODO GD Considering the obstacles (resources, rocks) might be interesting at some point
 public partial class RayCastingChokeFinder {
     private readonly ITerrainTracker _terrainTracker;
-    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
+    private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IClustering _clustering;
 
     private const bool DrawEnabled = true; // TODO GD Flag this
 
@@ -23,8 +24,14 @@ public partial class RayCastingChokeFinder {
     private const int MaxAngle = 175;
     private const int AngleIncrement = 5;
 
-    public RayCastingChokeFinder(ITerrainTracker terrainTracker) {
+    public RayCastingChokeFinder(
+        ITerrainTracker terrainTracker,
+        IGraphicalDebugger graphicalDebugger,
+        IClustering clustering
+    ) {
         _terrainTracker = terrainTracker;
+        _graphicalDebugger = graphicalDebugger;
+        _clustering = clustering;
     }
 
     public List<ChokePoint> FindChokePoints() {
@@ -70,7 +77,7 @@ public partial class RayCastingChokeFinder {
         return allLines;
     }
 
-    private static List<VisionLine> CreateLinesAtAnAngle(int angleInDegrees, int maxX, int maxY) {
+    private List<VisionLine> CreateLinesAtAnAngle(int angleInDegrees, int maxX, int maxY) {
         var origin = new Vector2 { X = maxX / 2f, Y = maxY / 2f };
 
         var lineLength = (int)Math.Ceiling(Math.Sqrt(maxX * maxX + maxY * maxY));
@@ -84,7 +91,7 @@ public partial class RayCastingChokeFinder {
             var start = new Vector2(-paddingX, y).RotateAround(origin, angleInRadians);
             var end = new Vector2(maxX + paddingX, y).RotateAround(origin, angleInRadians);
 
-            lines.Add(new VisionLine(start, end, angleInDegrees));
+            lines.Add(new VisionLine(_terrainTracker, start, end, angleInDegrees));
         }
 
         return lines;
@@ -180,7 +187,7 @@ public partial class RayCastingChokeFinder {
         LogDistribution(nodes.Values.Select(node => node.ChokeScore).ToList());
 
         var initialChokeNodes = nodes.Values.Where(node => node.ChokeScore > ChokeScoreCutOff).ToList();
-        var (chokeNodeClusters, _) = Clustering.Instance.DBSCAN(initialChokeNodes, 1.5f, 4);
+        var (chokeNodeClusters, _) = _clustering.DBSCAN(initialChokeNodes, 1.5f, 4);
 
         // Eliminate outliers from node clusters.
         // We compute a dispersion score based on the average, median and std.
@@ -210,9 +217,9 @@ public partial class RayCastingChokeFinder {
                 $"Dsp: {dispersionScore,4:F2}",
                 $"Cut: {cut,4:F2}",
             };
-            var chokeNodeClusterCenter = _terrainTracker.WithWorldHeight(Clustering.Instance.GetCenter(chokeNodeCluster));
-            GraphicalDebugger.AddTextGroup(textGroup, worldPos: chokeNodeClusterCenter.ToPoint(zOffset: 5));
-            GraphicalDebugger.AddLink(chokeNodeClusterCenter, chokeNodeClusterCenter.Translate(zTranslation: 5), Colors.SunbrightOrange);
+            var chokeNodeClusterCenter = _terrainTracker.WithWorldHeight(_clustering.GetCenter(chokeNodeCluster));
+            _graphicalDebugger.AddTextGroup(textGroup, worldPos: chokeNodeClusterCenter.ToPoint(zOffset: 5));
+            _graphicalDebugger.AddLink(chokeNodeClusterCenter, chokeNodeClusterCenter.Translate(zTranslation: 5), Colors.SunbrightOrange);
 
             DebugScores(chokeNodeCluster, cut);
 
@@ -230,10 +237,10 @@ public partial class RayCastingChokeFinder {
 
         DebugLines(chokeLines);
 
-        var (lineCentersClusters, _) = Clustering.Instance.DBSCAN(chokeLines, 1.5f, 1);
+        var (lineCentersClusters, _) = _clustering.DBSCAN(chokeLines, 1.5f, 1);
         var chokePoints = new List<ChokePoint>();
         foreach (var lineCentersCluster in lineCentersClusters) {
-            var clusterCenter = Clustering.Instance.GetCenter(lineCentersCluster);
+            var clusterCenter = _clustering.GetCenter(lineCentersCluster);
 
             var shortestCenterLine = lineCentersCluster.MinBy(line => line.Length + line.Position.ToVector2().DistanceTo(clusterCenter) * 0.5)!;
             DebugLines(new List<VisionLine> { shortestCenterLine }, color: Colors.LimeGreen);
@@ -257,7 +264,7 @@ public partial class RayCastingChokeFinder {
                 textColor = Colors.Blue;
             }
 
-            GraphicalDebugger.AddText($"{node.ChokeScore:F1}", worldPos: _terrainTracker.WithWorldHeight(node.Position).ToPoint(), color: textColor, size: 13);
+            _graphicalDebugger.AddText($"{node.ChokeScore:F1}", worldPos: _terrainTracker.WithWorldHeight(node.Position).ToPoint(), color: textColor, size: 13);
         }
     }
 
@@ -267,7 +274,7 @@ public partial class RayCastingChokeFinder {
         }
 
         foreach (var line in lines) {
-            GraphicalDebugger.AddLink(_terrainTracker.WithWorldHeight(line.Start, zOffset: 0.5f), _terrainTracker.WithWorldHeight(line.End, zOffset: 0.5f), color ?? Colors.Orange);
+            _graphicalDebugger.AddLink(_terrainTracker.WithWorldHeight(line.Start, zOffset: 0.5f), _terrainTracker.WithWorldHeight(line.End, zOffset: 0.5f), color ?? Colors.Orange);
         }
     }
 

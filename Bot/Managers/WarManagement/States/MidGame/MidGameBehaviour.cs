@@ -40,6 +40,10 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
     private readonly IBuildRequestFactory _buildRequestFactory;
     private readonly IScoutingTaskFactory _scoutingTaskFactory;
+    private readonly TechTree _techTree;
+    private readonly IController _controller;
+    private readonly IUnitEvaluator _unitEvaluator;
+    private readonly IPathfinder _pathfinder;
 
     private readonly MidGameBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
@@ -65,7 +69,11 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         IWarSupervisorFactory warSupervisorFactory,
         IBuildRequestFactory buildRequestFactory,
         IGraphicalDebugger graphicalDebugger,
-        IScoutingTaskFactory scoutingTaskFactory
+        IScoutingTaskFactory scoutingTaskFactory,
+        TechTree techTree,
+        IController controller,
+        IUnitEvaluator unitEvaluator,
+        IPathfinder pathfinder
     ) {
         _warManager = warManager;
         _visibilityTracker = visibilityTracker;
@@ -75,6 +83,10 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         _scoutSupervisorFactory = scoutSupervisorFactory;
         _buildRequestFactory = buildRequestFactory;
         _scoutingTaskFactory = scoutingTaskFactory;
+        _techTree = techTree;
+        _controller = controller;
+        _unitEvaluator = unitEvaluator;
+        _pathfinder = pathfinder;
 
         _debugger = new MidGameBehaviourDebugger(debuggingFlagsTracker, graphicalDebugger);
         _armySupervisors = _regionsTracker.Regions.ToDictionary(region => region, warSupervisorFactory.CreateRegionalArmySupervisor);
@@ -91,7 +103,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             return;
         }
 
-        _warManager.Assign(Controller.GetUnits(_unitsTracker.NewOwnedUnits, ManageableUnitTypes));
+        _warManager.Assign(_unitsTracker.GetUnits(_unitsTracker.NewOwnedUnits, ManageableUnitTypes));
     }
 
     public void DispatchPhase() {
@@ -140,7 +152,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         }
 
         // TODO GD The war manager could do most of that
-        _debugger.OwnForce = _warManager.ManagedUnits.GetForce();
+        _debugger.OwnForce = _unitEvaluator.EvaluateForce(_warManager.ManagedUnits);
         _debugger.EnemyForce = GetTotalEnemyForce();
         _debugger.BuildPriority = BuildRequests.FirstOrDefault()?.Priority ?? BuildRequestPriority.Low;
         _debugger.BuildBlockCondition = BuildRequests.FirstOrDefault()?.BlockCondition ?? BuildBlockCondition.None;
@@ -290,7 +302,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             var regionThreat = _regionsEvaluationsTracker.GetThreat(reachableRegion, Alliance.Enemy);
             var regionValue = _regionsEvaluationsTracker.GetValue(reachableRegion, Alliance.Enemy);
 
-            var distance = Pathfinder.Instance.FindPath(unitRegion, reachableRegion, regionsToAvoid).GetPathDistance();
+            var distance = _pathfinder.FindPath(unitRegion, reachableRegion, regionsToAvoid).GetPathDistance();
 
             return (regionThreat + regionValue) / (distance + 1f); // Add 1 to ensure non zero division
         });
@@ -298,7 +310,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
 
     private void ReleaseUnitsFromUnachievableGoals(Dictionary<IRegion, List<Unit>> plannedUnitsAllocation) {
         foreach (var (region, army) in plannedUnitsAllocation) {
-            var hasEnoughForce = army.GetForce() >= _regionsEvaluationsTracker.GetForce(region, Alliance.Enemy) * 2;
+            var hasEnoughForce = _unitEvaluator.EvaluateForce(army) >= _regionsEvaluationsTracker.GetForce(region, Alliance.Enemy) * 2;
             if (IsAGoal(region) && hasEnoughForce) {
                 continue;
             }
@@ -321,7 +333,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     }
 
     private void RecallUnsupervisedUnits() {
-        var safeRegions = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls)
+        var safeRegions = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls)
             .Select(townHall => townHall.GetRegion())
             .ToHashSet();
 
@@ -336,8 +348,8 @@ public class MidGameBehaviour : IWarManagerBehaviour {
             }
 
             var regionToGoTo = safeRegions.MinBy(safeRegion => {
-                var safeToDangerDistance = Pathfinder.Instance.FindPath(safeRegion, enemyMainRegion).GetPathDistance();
-                var unitToSafeDistance =  Pathfinder.Instance.FindPath(unitRegion, safeRegion).GetPathDistance();
+                var safeToDangerDistance = _pathfinder.FindPath(safeRegion, enemyMainRegion).GetPathDistance();
+                var unitToSafeDistance =  _pathfinder.FindPath(unitRegion, safeRegion).GetPathDistance();
 
                 return unitToSafeDistance + safeToDangerDistance;
             });
@@ -359,7 +371,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
         }
 
         // TODO GD Consider units in production too
-        var ourForce = _warManager.ManagedUnits.GetForce();
+        var ourForce = _unitEvaluator.EvaluateForce(_warManager.ManagedUnits);
         // TODO GD Exclude buildings?
         var enemyForce = GetTotalEnemyForce();
 
@@ -385,12 +397,12 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// </summary>
     /// <returns>The unit type id to produce.</returns>
     private uint GetUnitTypeToProduce() {
-        if (Controller.IsUnlocked(Units.Roach, TechTree.UnitPrerequisites)) {
+        if (_controller.IsUnlocked(Units.Roach, _techTree.UnitPrerequisites)) {
             return Units.Roach;
         }
 
         // This will include spawning pool in progress. We'll want to start saving larvae for drones
-        if (Controller.GetUnits(_unitsTracker.OwnedUnits, Units.SpawningPool).Any()) {
+        if (_unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.SpawningPool).Any()) {
             return Units.Zergling;
         }
 
@@ -403,7 +415,7 @@ public class MidGameBehaviour : IWarManagerBehaviour {
     /// </summary>
     /// <returns>The total enemy force.</returns>
     private float GetTotalEnemyForce() {
-        return _unitsTracker.EnemyMemorizedUnits.Values.Concat(_unitsTracker.EnemyUnits).GetForce();
+        return _unitEvaluator.EvaluateForce(_unitsTracker.EnemyMemorizedUnits.Values.Concat(_unitsTracker.EnemyUnits));
     }
 
     /// <summary>

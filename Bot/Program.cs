@@ -6,6 +6,7 @@ using Bot.Builds;
 using Bot.Builds.BuildOrders;
 using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
+using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
 using Bot.GameSense.RegionsEvaluationsTracking;
@@ -41,7 +42,7 @@ public class Program {
 
     private const string Version = "4_0_4";
 
-    public static string MapFileName = Maps.Season_2022_4.FileNames.Berlingrad;
+    private const string MapFileName = Maps.Season_2022_4.FileNames.Berlingrad;
     private const Race OpponentRace = Race.Random;
     private const Difficulty OpponentDifficulty = Difficulty.CheatInsane;
 
@@ -78,205 +79,412 @@ public class Program {
         Logger.Info("Game launched in data generation mode");
         DebugEnabled = true;
 
-        // TODO GD Kinda whack but won't be needed once DI is finished
-        var getThoseWhoNeedUpdating = () => new List<INeedUpdating>
-        {
-            VisibilityTracker.Instance, // DI: ✔️ Depends on nothing
-
-            UnitsTracker.Instance,      // DI: ✔️ Depends on VisibilityTracker
-            TerrainTracker.Instance,    // DI: ✔️ Depends on VisibilityTracker and UnitsTracker
-
-            BuildingTracker.Instance,   // DI: ✔️ Depends on UnitsTracker and TerrainTracker
-
-            ExpandAnalyzer.Instance,    // DI: ✔️ Depends on UnitsTracker, TerrainTracker and BuildingTracker
-            RegionAnalyzer.Instance,    // DI: ✔️ Depends on TerrainTracker and ExpandAnalyzer
-        };
-
         foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
-            MapFileName = mapFileName;
-
-            // Ensure clean state
-            Controller.Reset();
-            getThoseWhoNeedUpdating().ForEach(needsUpdating => needsUpdating.Reset()); // We need to reset so that the analyzers get the right file name
-
-            // Those are not yet injected
-            Pathfinder.Instance.Reset();
-            Clustering.Instance.Reset();
-
-            GraphicalDebugger.Instance = new Sc2GraphicalDebugger(TerrainTracker.Instance);
-
-            // TODO GD Instead of doing this, we should be able to use a different Controller and another GameConnection
-            // DI Should create new instances for each run
-            Controller.ThoseWhoNeedUpdating = getThoseWhoNeedUpdating();
+            var services = CreateServices(graphicalDebugging: false, dataGeneration: true);
+            GameConnection = CreateGameConnection(services, stepSize: 1);
 
             Logger.Important($"Generating data for {mapFileName}");
-            GameConnection = CreateGameConnection();
-            GameConnection.RunLocal(new MapAnalysisRunner(() => Controller.Frame), mapFileName, Race.Zerg, Difficulty.VeryEasy, realTime: false, runDataAnalyzersOnly: true).Wait();
+            GameConnection.RunLocal(
+                new MapAnalysisRunner(services.FrameClock),
+                mapFileName,
+                Race.Zerg,
+                Difficulty.VeryEasy,
+                realTime: false,
+                runDataAnalyzersOnly: true // TODO GD Should be handled by a specialized game connection instead
+            ).Wait();
         }
     }
 
     private static void PlayVideoClip() {
-        Logger.Info("Game launched in video clip mode");
-
         DebugEnabled = true;
-        GraphicalDebugger.Instance = new Sc2GraphicalDebugger(TerrainTracker.Instance);
 
-        GameConnection = CreateGameConnection(stepSize: 1);
-        GameConnection.RunLocal(new VideoClipPlayer(MapFileName, DebuggingFlagsTracker.Instance, UnitsTracker.Instance, TerrainTracker.Instance, GraphicalDebugger.Instance), MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
+        var services = CreateServices(graphicalDebugging: true);
+        GameConnection = CreateGameConnection(services, stepSize: 1);
+
+        var videoClipPlayer = new VideoClipPlayer(
+            services.DebuggingFlagsTracker,
+            services.UnitsTracker,
+            services.TerrainTracker,
+            services.GraphicalDebugger,
+            services.FrameClock,
+            services.Controller,
+            services.RequestBuilder,
+            MapFileName
+        );
+
+        Logger.Info("Game launched in video clip mode");
+        GameConnection.RunLocal(videoClipPlayer, MapFileName, Race.Terran, Difficulty.VeryEasy, realTime: true).Wait();
     }
 
     private static void PlayLocalGame() {
         DebugEnabled = true;
-        GraphicalDebugger.Instance = new Sc2GraphicalDebugger(TerrainTracker.Instance);
 
-        GameConnection = CreateGameConnection();
-        GameConnection.RunLocal(CreateSajuuk(Version, Scenarios), MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
+        var services = CreateServices(graphicalDebugging: true);
+        GameConnection = CreateGameConnection(services);
+
+        Logger.Info("Game launched in local play mode");
+        GameConnection.RunLocal(CreateSajuuk(services, Version, Scenarios), MapFileName, OpponentRace, OpponentDifficulty, RealTime).Wait();
     }
 
     private static void PlayLadderGame(string[] args) {
         DebugEnabled = false;
-        // TODO GD That doesn't work because static trackers will get an undefined reference
-        GraphicalDebugger.Instance = new NullGraphicalDebugger();
 
-        GameConnection = CreateGameConnection();
-        GameConnection.RunLadder(CreateSajuuk(Version, Scenarios), args).Wait();
+        var services = CreateServices(graphicalDebugging: false);
+        GameConnection = CreateGameConnection(services);
+
+        Logger.Info("Game launched in ladder play mode");
+        GameConnection.RunLadder(CreateSajuuk(services, Version, Scenarios), args).Wait();
     }
 
-    private static IBot CreateSajuuk(string version, List<IScenario> scenarios) {
-        var buildRequestFactory = new BuildRequestFactory(UnitsTracker.Instance);
+    private static GameConnection CreateGameConnection(Services services, uint stepSize = 2) {
+        return new GameConnection(
+            services.UnitsTracker,
+            services.ExpandAnalyzer,
+            services.RegionAnalyzer,
+            services.GraphicalDebugger,
+            services.KnowledgeBase,
+            services.FrameClock,
+            services.Controller,
+            services.RequestBuilder,
+            services.Pathfinder,
+            services.ActionService,
+            stepSize
+        );
+    }
 
-        var buildOrderFactory = new BuildOrderFactory(UnitsTracker.Instance, buildRequestFactory);
+    private static IBot CreateSajuuk(Services services, string version, List<IScenario> scenarios) {
+        var buildRequestFactory = new BuildRequestFactory(
+            services.UnitsTracker,
+            services.Controller,
+            services.KnowledgeBase
+        );
+
+        var buildOrderFactory = new BuildOrderFactory(
+            services.UnitsTracker,
+            services.Controller,
+            buildRequestFactory
+        );
 
         var economySupervisorFactory = new EconomySupervisorFactory(
-            UnitsTracker.Instance,
-            BuildingTracker.Instance,
-            RegionsTracker.Instance,
-            CreepTracker.Instance,
+            services.UnitsTracker,
+            services.BuildingTracker,
+            services.RegionsTracker,
+            services.CreepTracker,
             buildRequestFactory,
-            GraphicalDebugger.Instance
+            services.GraphicalDebugger,
+            services.FrameClock,
+            services.Pathfinder
         );
 
         var scoutSupervisorFactory = new ScoutSupervisorFactory(
-            UnitsTracker.Instance
+            services.UnitsTracker
         );
 
         var unitsControlFactory = new UnitsControlFactory(
-            UnitsTracker.Instance,
-            TerrainTracker.Instance,
-            GraphicalDebugger.Instance,
-            RegionsTracker.Instance,
-            RegionsEvaluationsTracker.Instance
+            services.UnitsTracker,
+            services.TerrainTracker,
+            services.GraphicalDebugger,
+            services.RegionsTracker,
+            services.RegionsEvaluationsTracker,
+            services.FrameClock,
+            services.Controller,
+            services.DetectionTracker,
+            services.UnitEvaluator,
+            services.Clustering
         );
 
         var armySupervisorStateFactory = new ArmySupervisorStateFactory(
-            VisibilityTracker.Instance,
-            UnitsTracker.Instance,
-            TerrainTracker.Instance,
-            RegionsTracker.Instance,
-            RegionsEvaluationsTracker.Instance,
-            GraphicalDebugger.Instance,
-            unitsControlFactory
+            services.VisibilityTracker,
+            services.UnitsTracker,
+            services.TerrainTracker,
+            services.RegionsTracker,
+            services.RegionsEvaluationsTracker,
+            services.GraphicalDebugger,
+            unitsControlFactory,
+            services.FrameClock,
+            services.Controller,
+            services.UnitEvaluator,
+            services.Pathfinder
         );
 
         var regionalArmySupervisorStateFactory = new RegionalArmySupervisorStateFactory(
-            RegionsTracker.Instance,
-            RegionsEvaluationsTracker.Instance,
-            unitsControlFactory
+            services.RegionsTracker,
+            services.RegionsEvaluationsTracker,
+            unitsControlFactory,
+            services.UnitEvaluator,
+            services.Pathfinder
         );
 
         var warSupervisorFactory = new WarSupervisorFactory(
-            UnitsTracker.Instance,
-            GraphicalDebugger.Instance,
+            services.UnitsTracker,
+            services.GraphicalDebugger,
             armySupervisorStateFactory,
             unitsControlFactory,
-            regionalArmySupervisorStateFactory
+            regionalArmySupervisorStateFactory,
+            services.Clustering,
+            services.UnitEvaluator
         );
 
         var scoutingTaskFactory = new ScoutingTaskFactory(
-            VisibilityTracker.Instance,
-            UnitsTracker.Instance,
-            TerrainTracker.Instance,
-            GraphicalDebugger.Instance
+            services.VisibilityTracker,
+            services.UnitsTracker,
+            services.TerrainTracker,
+            services.GraphicalDebugger,
+            services.KnowledgeBase,
+            services.FrameClock
         );
 
         var warManagerBehaviourFactory = new WarManagerBehaviourFactory(
-            TaggingService.Instance,
-            DebuggingFlagsTracker.Instance,
-            UnitsTracker.Instance,
-            RegionsTracker.Instance,
-            RegionsEvaluationsTracker.Instance,
-            VisibilityTracker.Instance,
-            TerrainTracker.Instance,
-            EnemyRaceTracker.Instance,
+            services.TaggingService,
+            services.DebuggingFlagsTracker,
+            services.UnitsTracker,
+            services.RegionsTracker,
+            services.RegionsEvaluationsTracker,
+            services.VisibilityTracker,
+            services.TerrainTracker,
+            services.EnemyRaceTracker,
             scoutSupervisorFactory,
             warSupervisorFactory,
             buildRequestFactory,
-            GraphicalDebugger.Instance,
-            scoutingTaskFactory
+            services.GraphicalDebugger,
+            scoutingTaskFactory,
+            services.TechTree,
+            services.Controller,
+            services.FrameClock,
+            services.UnitEvaluator,
+            services.Pathfinder
         );
 
         var warManagerStateFactory = new WarManagerStateFactory(
-            UnitsTracker.Instance,
-            TerrainTracker.Instance,
-            warManagerBehaviourFactory
+            services.UnitsTracker,
+            services.TerrainTracker,
+            warManagerBehaviourFactory,
+            services.FrameClock,
+            services.UnitEvaluator
         );
 
         var scoutingStrategyFactory = new ScoutingStrategyFactory(
-            RegionsTracker.Instance,
+            services.RegionsTracker,
             scoutingTaskFactory,
-            UnitsTracker.Instance,
-            EnemyRaceTracker.Instance
+            services.UnitsTracker,
+            services.EnemyRaceTracker,
+            services.FrameClock
         );
 
         var managerFactory = new ManagerFactory(
-            TaggingService.Instance,
-            EnemyStrategyTracker.Instance,
-            UnitsTracker.Instance,
-            EnemyRaceTracker.Instance,
-            VisibilityTracker.Instance,
-            TerrainTracker.Instance,
-            RegionsTracker.Instance,
-            BuildingTracker.Instance,
-            CreepTracker.Instance,
+            services.TaggingService,
+            services.EnemyStrategyTracker,
+            services.UnitsTracker,
+            services.EnemyRaceTracker,
+            services.VisibilityTracker,
+            services.TerrainTracker,
+            services.RegionsTracker,
+            services.BuildingTracker,
+            services.CreepTracker,
             economySupervisorFactory,
             scoutSupervisorFactory,
             warManagerStateFactory,
             buildRequestFactory,
-            GraphicalDebugger.Instance,
-            scoutingStrategyFactory
+            services.GraphicalDebugger,
+            scoutingStrategyFactory,
+            services.Controller,
+            services.FrameClock,
+            services.KnowledgeBase,
+            services.SpendingTracker,
+            services.Pathfinder
         );
 
         var botDebugger = new BotDebugger(
-            VisibilityTracker.Instance,
-            DebuggingFlagsTracker.Instance,
-            UnitsTracker.Instance,
-            IncomeTracker.Instance,
-            TerrainTracker.Instance,
-            EnemyStrategyTracker.Instance,
-            EnemyRaceTracker.Instance,
-            GraphicalDebugger.Instance
+            services.VisibilityTracker,
+            services.DebuggingFlagsTracker,
+            services.UnitsTracker,
+            services.IncomeTracker,
+            services.TerrainTracker,
+            services.EnemyStrategyTracker,
+            services.EnemyRaceTracker,
+            services.GraphicalDebugger,
+            services.Controller,
+            services.KnowledgeBase,
+            services.SpendingTracker
         );
 
         return new SajuukBot(
             version,
             scenarios,
-            TaggingService.Instance,
-            UnitsTracker.Instance,
-            TerrainTracker.Instance,
+            services.TaggingService,
+            services.UnitsTracker,
+            services.TerrainTracker,
             managerFactory,
             buildRequestFactory,
             buildOrderFactory,
-            botDebugger
+            botDebugger,
+            services.FrameClock,
+            services.Controller,
+            services.SpendingTracker,
+            services.ChatService
         );
     }
 
-    private static GameConnection CreateGameConnection(uint stepSize = 2) {
-        return new GameConnection(
-            UnitsTracker.Instance,
-            ExpandAnalyzer.Instance,
-            RegionAnalyzer.Instance,
-            GraphicalDebugger.Instance,
-            stepSize
+    private static Services CreateServices(bool graphicalDebugging, bool dataGeneration = false) {
+        var frameClock = new FrameClock();
+        var visibilityTracker = new VisibilityTracker(frameClock);
+
+        var knowledgeBase = new KnowledgeBase();
+        var actionBuilder = new ActionBuilder(knowledgeBase);
+        var actionService = new ActionService();
+        var unitsTracker = new UnitsTracker(visibilityTracker);
+
+        var prerequisiteFactory = new PrerequisiteFactory(unitsTracker);
+        var techTree = new TechTree(prerequisiteFactory);
+
+        var terrainTracker = new TerrainTracker(visibilityTracker, unitsTracker, knowledgeBase);
+
+        var requestBuilder = new RequestBuilder(knowledgeBase);
+        IGraphicalDebugger graphicalDebugger = graphicalDebugging ? new Sc2GraphicalDebugger(terrainTracker, requestBuilder) : new NullGraphicalDebugger();
+
+        var pathfinder = new Pathfinder(terrainTracker, graphicalDebugger);
+        var clustering = new Clustering(terrainTracker, graphicalDebugger);
+
+        var buildingTracker = new BuildingTracker(unitsTracker, terrainTracker, knowledgeBase, graphicalDebugger, requestBuilder);
+
+        var chatTracker = new ChatTracker();
+        var debuggingFlagsTracker = new DebuggingFlagsTracker(chatTracker);
+        var regionsDataRepository = new RegionsDataRepository(terrainTracker, clustering, pathfinder);
+        var expandUnitsAnalyzer = new ExpandUnitsAnalyzer(unitsTracker, terrainTracker, knowledgeBase, clustering);
+        var regionsTracker = new RegionsTracker(terrainTracker, debuggingFlagsTracker, unitsTracker, regionsDataRepository, expandUnitsAnalyzer, graphicalDebugger);
+
+        var creepTracker = new CreepTracker(visibilityTracker, unitsTracker, terrainTracker, frameClock, graphicalDebugger);
+        var unitEvaluator = new UnitEvaluator(regionsTracker);
+        var regionsEvaluationsTracker = new RegionsEvaluationsTracker(debuggingFlagsTracker, unitsTracker, terrainTracker, regionsTracker, frameClock, graphicalDebugger, unitEvaluator, pathfinder);
+
+        var chatService = new ChatService(actionService, actionBuilder);
+        var taggingService = new TaggingService(frameClock, chatService);
+        var enemyRaceTracker = new EnemyRaceTracker(taggingService, unitsTracker);
+        var enemyStrategyTracker = new EnemyStrategyTracker(taggingService, enemyRaceTracker, unitsTracker, regionsTracker, knowledgeBase, frameClock);
+
+        var incomeTracker = new IncomeTracker(taggingService, unitsTracker, frameClock);
+
+        var expandAnalyzer = new ExpandAnalyzer(terrainTracker, buildingTracker, expandUnitsAnalyzer, frameClock, graphicalDebugger, clustering, pathfinder);
+        var regionAnalyzer = new RegionAnalyzer(terrainTracker, expandAnalyzer, graphicalDebugger, clustering, regionsDataRepository);
+
+        var spendingTracker = new SpendingTracker(incomeTracker, knowledgeBase);
+
+        // TODO GD Compute update order. For now they are in declaration order (which is fine, but prone to errors)
+        // TODO GD Kinda whack but that'll do until we get multiple controllers and game connections
+        var trackers = dataGeneration
+            ? new List<INeedUpdating>
+            {
+                frameClock,
+                actionService,
+                visibilityTracker,
+                unitsTracker,
+                terrainTracker,
+                buildingTracker,
+                expandAnalyzer,
+                regionAnalyzer,
+            }
+            : new List<INeedUpdating>
+            {
+                frameClock,
+                actionService,
+                visibilityTracker,
+                unitsTracker,
+                terrainTracker,
+                buildingTracker,
+                chatTracker,
+                debuggingFlagsTracker,
+                regionsTracker,
+                creepTracker,
+                regionsEvaluationsTracker,
+                enemyRaceTracker,
+                enemyStrategyTracker,
+                incomeTracker,
+            };
+
+        var controller = new Controller(
+            unitsTracker,
+            buildingTracker,
+            terrainTracker,
+            regionsTracker,
+            techTree,
+            knowledgeBase,
+            pathfinder,
+            chatService,
+            trackers
         );
+
+        var detectionTracker = new DetectionTracker(unitsTracker, controller, knowledgeBase);
+
+        // We do this to avoid circular dependencies between unit, unitsTracker, terrainTracker and regionsTracker
+        // I don't 100% like it but it seems worth it.
+        var unitsFactory = new UnitFactory(frameClock, knowledgeBase, actionBuilder, actionService, terrainTracker, regionsTracker, unitsTracker);
+        unitsTracker.WithUnitsFactory(unitsFactory);
+
+        // Logger is not yet an instance
+        Logger.SetFrameClock(frameClock);
+
+        return new Services
+        {
+            FrameClock = frameClock,
+            VisibilityTracker = visibilityTracker,
+            UnitsTracker = unitsTracker,
+            TechTree = techTree,
+            KnowledgeBase = knowledgeBase,
+            TerrainTracker= terrainTracker,
+            BuildingTracker = buildingTracker,
+            ChatTracker = chatTracker,
+            DebuggingFlagsTracker = debuggingFlagsTracker,
+            RegionsTracker = regionsTracker,
+            CreepTracker = creepTracker,
+            GraphicalDebugger = graphicalDebugger,
+            RegionsEvaluationsTracker = regionsEvaluationsTracker,
+            TaggingService = taggingService,
+            EnemyRaceTracker = enemyRaceTracker,
+            EnemyStrategyTracker = enemyStrategyTracker,
+            IncomeTracker = incomeTracker,
+            RequestBuilder = requestBuilder,
+            Controller = controller,
+            SpendingTracker = spendingTracker,
+            Clustering = clustering,
+            Pathfinder = pathfinder,
+            UnitEvaluator = unitEvaluator,
+            DetectionTracker = detectionTracker,
+            ChatService = chatService,
+            ActionService = actionService,
+            ExpandAnalyzer = expandAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different GameConnection implementation
+            RegionAnalyzer = regionAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different GameConnection implementation
+        };
+    }
+
+    private readonly struct Services {
+        public IFrameClock FrameClock { get; init; }
+        public IVisibilityTracker VisibilityTracker { get; init; }
+        public IUnitsTracker UnitsTracker { get; init; }
+        public TechTree TechTree { get; init; } // TODO GD Needs interface
+        public KnowledgeBase KnowledgeBase { get; init; } // TODO GD Needs interface
+        public ITerrainTracker TerrainTracker { get; init; }
+        public IBuildingTracker BuildingTracker { get; init; }
+        public IChatTracker ChatTracker { get; init; }
+        public IDebuggingFlagsTracker DebuggingFlagsTracker { get; init; }
+        public IRegionsTracker RegionsTracker { get; init; }
+        public ICreepTracker CreepTracker { get; init; }
+        public IGraphicalDebugger GraphicalDebugger { get; init; }
+        public IRegionsEvaluationsTracker RegionsEvaluationsTracker { get; init; }
+        public ITaggingService TaggingService { get; init; }
+        public IEnemyRaceTracker EnemyRaceTracker { get; init; }
+        public IEnemyStrategyTracker EnemyStrategyTracker { get; init; }
+        public IIncomeTracker IncomeTracker { get; init; }
+        public IRequestBuilder RequestBuilder { get; init; }
+        public IController Controller { get; init; }
+        public ISpendingTracker SpendingTracker { get; init; }
+        public IClustering Clustering { get; init; }
+        public IPathfinder Pathfinder { get; init; }
+        public IUnitEvaluator UnitEvaluator { get; init; }
+        public IDetectionTracker DetectionTracker { get; init; }
+        public IChatService ChatService { get; init; }
+        public IActionService ActionService { get; init; }
+
+        public IExpandAnalyzer ExpandAnalyzer { get; init; }
+        public IRegionAnalyzer RegionAnalyzer { get; init; }
     }
 }

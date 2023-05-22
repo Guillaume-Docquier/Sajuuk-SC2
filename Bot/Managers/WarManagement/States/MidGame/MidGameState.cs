@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using Bot.ExtensionMethods;
 using Bot.GameSense;
 
 namespace Bot.Managers.WarManagement.States.MidGame;
@@ -9,6 +8,7 @@ public class MidGameState : WarManagerState {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IWarManagerStateFactory _warManagerStateFactory;
     private readonly IWarManagerBehaviourFactory _warManagerBehaviourFactory;
+    private readonly IUnitEvaluator _unitEvaluator;
 
     private TransitionState _transitionState = TransitionState.NotTransitioning;
     private IWarManagerBehaviour _behaviour;
@@ -17,12 +17,14 @@ public class MidGameState : WarManagerState {
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IWarManagerStateFactory warManagerStateFactory,
-        IWarManagerBehaviourFactory warManagerBehaviourFactory
+        IWarManagerBehaviourFactory warManagerBehaviourFactory,
+        IUnitEvaluator unitEvaluator
     ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _warManagerStateFactory = warManagerStateFactory;
         _warManagerBehaviourFactory = warManagerBehaviourFactory;
+        _unitEvaluator = unitEvaluator;
     }
 
     public override IWarManagerBehaviour Behaviour => _behaviour;
@@ -62,7 +64,7 @@ public class MidGameState : WarManagerState {
             return false;
         }
 
-        var ourForce = Context.ManagedUnits.GetForce();
+        var ourForce = _unitEvaluator.EvaluateForce(Context.ManagedUnits);
         var enemyForce = GetEnemyForce();
         if (ourForce < enemyForce * 3) {
             return false;
@@ -82,6 +84,6 @@ public class MidGameState : WarManagerState {
     /// </summary>
     /// <returns></returns>
     private float GetEnemyForce() {
-        return _unitsTracker.EnemyMemorizedUnits.Values.Concat(_unitsTracker.EnemyUnits).GetForce();
+        return _unitEvaluator.EvaluateForce(_unitsTracker.EnemyMemorizedUnits.Values.Concat(_unitsTracker.EnemyUnits));
     }
 }

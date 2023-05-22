@@ -13,17 +13,23 @@ public class EngageState : RegionalArmySupervisionState {
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IRegionalArmySupervisorStateFactory _regionalArmySupervisorStateFactory;
+    private readonly IUnitEvaluator _unitEvaluator;
+    private readonly IPathfinder _pathfinder;
 
     private HashSet<Unit> _unitsReadyToAttack = new HashSet<Unit>();
 
     public EngageState(
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IRegionalArmySupervisorStateFactory regionalArmySupervisorStateFactory
+        IRegionalArmySupervisorStateFactory regionalArmySupervisorStateFactory,
+        IUnitEvaluator unitEvaluator,
+        IPathfinder pathfinder
     ) {
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _regionalArmySupervisorStateFactory = regionalArmySupervisorStateFactory;
+        _unitEvaluator = unitEvaluator;
+        _pathfinder = pathfinder;
     }
 
     /// <summary>
@@ -44,7 +50,7 @@ public class EngageState : RegionalArmySupervisionState {
     protected override bool TryTransitioning() {
         // TODO GD We should consider if retreating is even possible
         // TODO GD Sometimes you have to commit
-        if (_unitsReadyToAttack.GetForce() < EnemyArmy.GetForce() * 0.75) {
+        if (_unitEvaluator.EvaluateForce(_unitsReadyToAttack) < _unitEvaluator.EvaluateForce(EnemyArmy) * 0.75) {
             StateMachine.TransitionTo(_regionalArmySupervisorStateFactory.CreateDisengageState());
             return true;
         }
@@ -57,7 +63,7 @@ public class EngageState : RegionalArmySupervisionState {
     /// </summary>
     /// <returns>The units that can be released</returns>
     public override IEnumerable<Unit> GetReleasableUnits() {
-        return EnemyArmy.Where(enemy => !enemy.IsCloaked).GetForce() == 0
+        return _unitEvaluator.EvaluateForce(EnemyArmy.Where(enemy => !enemy.IsCloaked)) == 0
             ? SupervisedUnits
             : SupervisedUnits.Except(_unitsReadyToAttack);
     }
@@ -138,7 +144,7 @@ public class EngageState : RegionalArmySupervisionState {
                     return float.MaxValue;
                 }
 
-                return Pathfinder.Instance.FindPath(unitRegion, approachRegion, blockedRegions).GetPathDistance();
+                return _pathfinder.FindPath(unitRegion, approachRegion, blockedRegions).GetPathDistance();
             }));
 
         foreach (var unitGroup in unitGroups) {
@@ -155,7 +161,7 @@ public class EngageState : RegionalArmySupervisionState {
     /// <param name="approachRegion">The region to go though to get to the target region</param>
     /// <param name="blockedRegions">The regions to avoid going through</param>
     /// <param name="enemyArmy">The enemy units to get in range of but avoid engaging</param>
-    private static void MoveTowards(IEnumerable<Unit> units, IRegion targetRegion, IRegion approachRegion, IDictionary<IRegion, HashSet<IRegion>> blockedRegions, IReadOnlyCollection<Unit> enemyArmy) {
+    private void MoveTowards(IEnumerable<Unit> units, IRegion targetRegion, IRegion approachRegion, IDictionary<IRegion, HashSet<IRegion>> blockedRegions, IReadOnlyCollection<Unit> enemyArmy) {
         foreach (var unit in units) {
             var unitRegion = unit.GetRegion();
 
@@ -164,7 +170,7 @@ public class EngageState : RegionalArmySupervisionState {
                 continue;
             }
 
-            var path = Pathfinder.Instance.FindPath(unitRegion, approachRegion, blockedRegions[unitRegion]);
+            var path = _pathfinder.FindPath(unitRegion, approachRegion, blockedRegions[unitRegion]);
             if (path == null) {
                 // Trying to gracefully handle a case that I don't think should happen
                 unit.Move(approachRegion.Center);

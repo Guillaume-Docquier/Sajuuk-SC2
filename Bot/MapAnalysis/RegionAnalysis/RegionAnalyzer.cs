@@ -15,18 +15,9 @@ using SC2APIProtocol;
 namespace Bot.MapAnalysis.RegionAnalysis;
 
 public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
-    /// <summary>
-    /// DI: ✔️ The only usages are for static instance creations
-    /// </summary>
-    public static RegionAnalyzer Instance { get; private set; } = new RegionAnalyzer(
-        TerrainTracker.Instance,
-        ExpandAnalyzer.Instance,
-        new RegionsDataRepository(TerrainTracker.Instance, Program.MapFileName)
-    );
-    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
-
     private readonly ITerrainTracker _terrainTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
+    private readonly IClustering _clustering;
 
     private readonly IMapDataRepository<RegionsData> _regionsRepository;
 
@@ -41,25 +32,20 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     public bool IsAnalysisComplete => _regionsData != null;
     public List<IRegion> Regions => _regionsData.Regions.Select(region => region as IRegion).ToList();
 
-    private RegionAnalyzer(
+    public RegionAnalyzer(
         ITerrainTracker terrainTracker,
         IExpandAnalyzer expandAnalyzer,
+        IGraphicalDebugger graphicalDebugger,
+        IClustering clustering,
         IMapDataRepository<RegionsData> regionsRepository
     ) {
         _terrainTracker = terrainTracker;
         _expandAnalyzer = expandAnalyzer;
+        _clustering = clustering;
         _regionsRepository = regionsRepository;
 
         // TODO GD Inject this as well, probably?
-        _rayCastingChokeFinder = new RayCastingChokeFinder(_terrainTracker);
-    }
-
-    public void Reset() {
-        Instance = new RegionAnalyzer(
-            TerrainTracker.Instance,
-            ExpandAnalyzer.Instance,
-            new RegionsDataRepository(TerrainTracker.Instance, Program.MapFileName)
-        );
+        _rayCastingChokeFinder = new RayCastingChokeFinder(_terrainTracker, graphicalDebugger, _clustering);
     }
 
     /// <summary>
@@ -98,7 +84,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         }
 
         _regionsData = new RegionsData(regions.Select(region => region as Region).ToList(), ramps, noise, chokePoints);
-        _regionsRepository.Save(_regionsData);
+        _regionsRepository.Save(_regionsData, gameInfo.MapName);
 
         var nbRegions = _regionsData.Regions.Count;
         var nbObstructed = _regionsData.Regions.Count(region => region.IsObstructed);
@@ -144,7 +130,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         });
 
         var noise = new HashSet<MapCell>();
-        var clusteringResult = Clustering.Instance.DBSCAN(cells, epsilon: _diagonalDistance + 0.04f, minPoints: RegionMinPoints);
+        var clusteringResult = _clustering.DBSCAN(cells, epsilon: _diagonalDistance + 0.04f, minPoints: RegionMinPoints);
         foreach (var mapCell in clusteringResult.noise) {
             noise.Add(mapCell);
         }
@@ -178,7 +164,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var noise = new HashSet<MapCell>();
 
         // We cluster once for an initial split
-        var weakClusteringResult = Clustering.Instance.DBSCAN(cells, epsilon: 1, minPoints: 1);
+        var weakClusteringResult = _clustering.DBSCAN(cells, epsilon: 1, minPoints: 1);
         foreach (var mapCell in weakClusteringResult.noise) {
             noise.Add(mapCell);
         }
@@ -194,7 +180,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             // Some ramps touch each other (berlingrad)
             // We do a 2nd round of clustering based on the connectivity of the cluster
             // This is because ramps have low connectivity, so we need it to be variable
-            var rampClusterResult = Clustering.Instance.DBSCAN(weakCluster, epsilon: _diagonalDistance, minPoints: maxConnections);
+            var rampClusterResult = _clustering.DBSCAN(weakCluster, epsilon: _diagonalDistance, minPoints: maxConnections);
 
             foreach (var mapCell in rampClusterResult.noise) {
                 noise.Add(mapCell);
@@ -252,10 +238,10 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var regions = new List<AnalyzedRegion>();
         foreach (var region in potentialRegions) {
             var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints);
-            regions.AddRange(subregions.Select(subregion => new AnalyzedRegion(subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
+            regions.AddRange(subregions.Select(subregion => new AnalyzedRegion(_clustering, subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
         }
 
-        regions.AddRange(ramps.Select(ramp => new AnalyzedRegion(ramp, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
+        regions.AddRange(ramps.Select(ramp => new AnalyzedRegion(_clustering, ramp, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
 
         return regions;
     }
@@ -278,7 +264,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <returns>
     /// A list of subregions.
     /// </returns>
-    private static List<List<Vector2>> BreakDownIntoSubregions(IReadOnlySet<Vector2> region, List<ChokePoint> potentialChokePoints) {
+    private List<List<Vector2>> BreakDownIntoSubregions(IReadOnlySet<Vector2> region, List<ChokePoint> potentialChokePoints) {
         // Get chokes in region
         // Consider shortest chokes first
         var chokesInRegion = potentialChokePoints
@@ -341,14 +327,14 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <param name="subregion"></param>
     /// <param name="cutLength"></param>
     /// <returns>True if the split is valid, false otherwise</returns>
-    private static bool IsValidSplit(IReadOnlyCollection<Vector2> subregion, float cutLength) {
+    private bool IsValidSplit(IReadOnlyCollection<Vector2> subregion, float cutLength) {
         // If the split region is too small compared to the cut, it might not be worth a cut
         if (subregion.Count <= Math.Max(10, cutLength * cutLength / 2)) {
             return false;
         }
 
         // A region should form a single cluster of cells
-        var floodFill = Clustering.Instance.FloodFill(subregion, subregion.First());
+        var floodFill = _clustering.FloodFill(subregion, subregion.First());
         return floodFill.Count() == subregion.Count;
     }
 }

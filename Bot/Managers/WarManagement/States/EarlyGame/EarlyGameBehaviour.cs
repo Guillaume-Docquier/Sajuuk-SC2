@@ -29,6 +29,10 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IBuildRequestFactory _buildRequestFactory;
+    private readonly TechTree _techTree;
+    private readonly IController _controller;
+    private readonly IUnitEvaluator _unitEvaluator;
+    private readonly IPathfinder _pathfinder;
 
     private BuildRequest _armyBuildRequest;
 
@@ -53,7 +57,11 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
         IWarSupervisorFactory warSupervisorFactory,
         IBuildRequestFactory buildRequestFactory,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        TechTree techTree,
+        IController controller,
+        IUnitEvaluator unitEvaluator,
+        IPathfinder pathfinder
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
@@ -61,6 +69,10 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _buildRequestFactory = buildRequestFactory;
+        _techTree = techTree;
+        _controller = controller;
+        _unitEvaluator = unitEvaluator;
+        _pathfinder = pathfinder;
 
         _debugger = new EarlyGameBehaviourDebugger(debuggingFlagsTracker, graphicalDebugger);
         DefenseSupervisor = warSupervisorFactory.CreateArmySupervisor();
@@ -74,7 +86,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
         var main = _regionsTracker.GetRegion(_regionsTracker.GetExpand(Alliance.Self, ExpandType.Main).Position);
         var natural = _regionsTracker.GetRegion(_regionsTracker.GetExpand(Alliance.Self, ExpandType.Natural).Position);
-        _startingRegions = Pathfinder.Instance.FindPath(main, natural).ToHashSet();
+        _startingRegions = _pathfinder.FindPath(main, natural).ToHashSet();
     }
 
     public void RecruitmentPhase() {
@@ -82,7 +94,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
             return;
         }
 
-        _warManager.Assign(Controller.GetUnits(_unitsTracker.NewOwnedUnits, ManageableUnitTypes));
+        _warManager.Assign(_unitsTracker.GetUnits(_unitsTracker.NewOwnedUnits, ManageableUnitTypes));
         RecruitEcoUnitsIfNecessary();
     }
 
@@ -105,7 +117,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
         AdjustBuildRequests();
 
-        _debugger.OwnForce = _warManager.ManagedUnits.GetForce();
+        _debugger.OwnForce = _unitEvaluator.EvaluateForce(_warManager.ManagedUnits);
         _debugger.EnemyForce = GetEnemyForce();
         _debugger.Target = regionToDefend;
         _debugger.CurrentStance = Stance.Defend;
@@ -146,7 +158,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     private IRegion GetRegionToDefend() {
         if (GetEnemyForce(_startingRegions) == 0) {
             var enemyMain = _regionsTracker.GetRegion(_regionsTracker.GetExpand(Alliance.Enemy, ExpandType.Main).Position);
-            return _startingRegions.MinBy(region => Pathfinder.Instance.FindPath(region, enemyMain).GetPathDistance());
+            return _startingRegions.MinBy(region => _pathfinder.FindPath(region, enemyMain).GetPathDistance());
         }
 
         return _startingRegions.MaxBy(region => _regionsEvaluationsTracker.GetForce(region, Alliance.Enemy))!;
@@ -172,7 +184,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
             _rushTagged = true;
         }
 
-        var townHallSupervisors = Controller
+        var townHallSupervisors = _unitsTracker
             .GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls)
             .Where(unit => unit.Supervisor != null)
             .Select(supervisedTownHall => supervisedTownHall.Supervisor)
@@ -180,10 +192,10 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
         var draftableDrones = new List<Unit>();
         foreach (var townHallSupervisor in townHallSupervisors) {
-            _warManager.Assign(Controller.GetUnits(townHallSupervisor.SupervisedUnits, Units.Queen));
+            _warManager.Assign(_unitsTracker.GetUnits(townHallSupervisor.SupervisedUnits, Units.Queen));
 
             draftableDrones
-                .AddRange(Controller.GetUnits(townHallSupervisor.SupervisedUnits, Units.Drone)
+                .AddRange(_unitsTracker.GetUnits(townHallSupervisor.SupervisedUnits, Units.Drone)
                 // TODO GD Maybe sometimes we should take all of them
                 .Skip(2));
         }
@@ -196,7 +208,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
 
         var enemyForce = GetEnemyForce();
         var draftIndex = 0;
-        while (draftIndex < draftableDrones.Count && _warManager.ManagedUnits.GetForce(areWorkersOffensive: true) < enemyForce) {
+        while (draftIndex < draftableDrones.Count && _unitEvaluator.EvaluateForce(_warManager.ManagedUnits, areWorkersOffensive: true) < enemyForce) {
             _warManager.Assign(draftableDrones[draftIndex]);
             draftIndex++;
         }
@@ -215,7 +227,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         }
 
         // TODO GD Consider units in production too
-        var ourForce = _warManager.ManagedUnits.GetForce();
+        var ourForce = _unitEvaluator.EvaluateForce(_warManager.ManagedUnits);
         // TODO GD Exclude buildings?
         var enemyForce = GetEnemyForce();
 
@@ -247,11 +259,11 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     /// </summary>
     /// <returns>The unit type id to produce.</returns>
     private uint GetUnitTypeToProduce() {
-        if (Controller.IsUnlocked(Units.Roach, TechTree.UnitPrerequisites)) {
+        if (_controller.IsUnlocked(Units.Roach, _techTree.UnitPrerequisites)) {
             return Units.Roach;
         }
 
-        if (Controller.GetUnits(_unitsTracker.OwnedUnits, Units.SpawningPool).Any()) {
+        if (_unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.SpawningPool).Any()) {
             return Units.Zergling;
         }
 
@@ -269,7 +281,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
             enemyUnits = enemyUnits.Where(enemy => regionsFilter.Contains(enemy.GetRegion()));
         }
 
-        return enemyUnits.GetForce();
+        return _unitEvaluator.EvaluateForce(enemyUnits);
     }
 
     /// <summary>
@@ -279,9 +291,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
     /// <returns></returns>
     private bool IsRushInProgress(IEnumerable<Unit> ownArmy) {
         var enemyForce = GetEnemyForce(_startingRegions);
-        var ownForce = ownArmy
-            .Where(soldier => _startingRegions.Contains(soldier.GetRegion()))
-            .GetForce();
+        var ownForce = _unitEvaluator.EvaluateForce(ownArmy.Where(soldier => _startingRegions.Contains(soldier.GetRegion())));
 
         return enemyForce > ownForce;
     }

@@ -5,24 +5,31 @@ using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
+using Bot.Wrapper;
 
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class NaiveRayCastClip : Clip {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IController _controller;
+    private readonly IRequestBuilder _requestBuilder;
 
     public NaiveRayCastClip(
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
+        IController controller,
+        IRequestBuilder requestBuilder,
         Vector2 sceneLocation,
         float stepSize,
         int pauseAtEndOfClipDurationSeconds = 5
     ) : base(pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
+        _controller = controller;
+        _requestBuilder = requestBuilder;
 
-        var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
+        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
         var showGridEndFrame = ShowGrid(sceneLocation, centerCameraAnimation.AnimationEndFrame);
@@ -67,7 +74,7 @@ public class NaiveRayCastClip : Clip {
             previousAnimationEnd = sphereDrawingAnimation.AnimationEndFrame;
         }
 
-        var cameraMoveToEndAnimation = new CenterCameraAnimation(previousIntersection, startFrame)
+        var cameraMoveToEndAnimation = new CenterCameraAnimation(_controller, _requestBuilder, previousIntersection, startFrame)
             .WithEndFrame(previousAnimationEnd);
 
         AddAnimation(cameraMoveToEndAnimation);

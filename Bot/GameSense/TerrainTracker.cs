@@ -11,13 +11,9 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
-    /// <summary>
-    /// DI: ✔️ The only usages are for static instance creations
-    /// </summary>
-    public static TerrainTracker Instance  { get; private set; } = new TerrainTracker(VisibilityTracker.Instance, UnitsTracker.Instance);
-
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly KnowledgeBase _knowledgeBase;
 
     private readonly FootprintCalculator _footprintCalculator;
 
@@ -69,35 +65,36 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         }
     }
 
-    private TerrainTracker(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker) {
+    public TerrainTracker(
+        IVisibilityTracker visibilityTracker,
+        IUnitsTracker unitsTracker,
+        KnowledgeBase knowledgeBase
+    ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
+        _knowledgeBase = knowledgeBase;
 
         _footprintCalculator = new FootprintCalculator(this);
     }
 
-    public void Reset() {
-        Instance = new TerrainTracker(VisibilityTracker.Instance, UnitsTracker.Instance);
-    }
-
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         if (_isInitialized) {
-            _currentWalkMap = ParseWalkMap();
+            _currentWalkMap = ParseWalkMap(gameInfo);
             return;
         }
 
-        MaxX = Controller.GameInfo.StartRaw.MapSize.X;
-        MaxY = Controller.GameInfo.StartRaw.MapSize.Y;
+        MaxX = gameInfo.StartRaw.MapSize.X;
+        MaxY = gameInfo.StartRaw.MapSize.Y;
         DiagonalLength = (float)Math.Sqrt(MaxX * MaxX + MaxY * MaxY);
 
-        _currentWalkMap = ParseWalkMap();
+        _currentWalkMap = ParseWalkMap(gameInfo);
 
-        InitSpawnLocations();
+        InitSpawnLocations(gameInfo);
         InitObstacles();
 
-        InitHeightMap();
-        InitTerrainWalkMap();
-        InitTerrainBuildMap();
+        InitHeightMap(gameInfo);
+        InitTerrainWalkMap(gameInfo);
+        InitTerrainBuildMap(gameInfo);
 
         InitWalkableCells();
 
@@ -124,7 +121,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         var obstacleIds = new HashSet<uint>(Units.Obstacles.Concat(Units.MineralFields).Concat(Units.GasGeysers));
         obstacleIds.Remove(Units.UnbuildablePlatesDestructible); // It is destructible but you can walk on it
 
-        _obstacles = Controller.GetUnits(_unitsTracker.NeutralUnits, obstacleIds).ToList();
+        _obstacles = _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, obstacleIds).ToList();
 
         _obstacles.ForEach(obstacle => {
             obstacle.AddDeathWatcher(this);
@@ -139,28 +136,22 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         foreach (var cell in _footprintCalculator.GetFootprint(obstacle)) {
             _obstructionMap.Remove(cell);
         }
-
-        // TODO GD Pathfinder can now watch units death
-        Logger.Info("Obstacle removed, invalidating Pathfinder cache and updating region obstruction");
-
-        // This is a bit ugly, the pathfinder should know about this
-        Pathfinder.Instance.InvalidateCache();
     }
 
-    private void InitSpawnLocations() {
-        StartingLocation = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls).First().Position.ToVector2();
-        EnemyStartingLocation = Controller.GameInfo.StartRaw.StartLocations
+    private void InitSpawnLocations(ResponseGameInfo gameInfo) {
+        StartingLocation = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls).First().Position.ToVector2();
+        EnemyStartingLocation = gameInfo.StartRaw.StartLocations
             .Select(startLocation => new Vector2(startLocation.X, startLocation.Y))
             .MaxBy(enemyLocation => StartingLocation.DistanceTo(enemyLocation));
     }
 
-    private void InitHeightMap() {
+    private void InitHeightMap(ResponseGameInfo gameInfo) {
         HeightMap = new List<List<float>>();
         for (var x = 0; x < MaxX; x++) {
             HeightMap.Add(new List<float>(new float[MaxY]));
         }
 
-        var heightVector = Controller.GameInfo.StartRaw.TerrainHeight.Data
+        var heightVector = gameInfo.StartRaw.TerrainHeight.Data
             .ToByteArray()
             .Select(ImageDataUtils.ByteToFloat)
             .ToList();
@@ -172,13 +163,13 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         }
     }
 
-    private void InitTerrainWalkMap() {
-        _terrainWalkMap = ParseWalkMap();
+    private void InitTerrainWalkMap(ResponseGameInfo gameInfo) {
+        _terrainWalkMap = ParseWalkMap(gameInfo);
 
         // The walk data makes cells occupied by buildings impassable
         // However, if I want to find a path from my hatch to the enemy, the pathfinding will fail because the hatchery is impassable
         // Lucky for us, when we init the walk map, there's only 1 building so we'll make its cells walkable
-        var startingTownHall = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery).First();
+        var startingTownHall = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery).First();
         var townHallCells = BuildSearchGrid(startingTownHall.Position, (int)startingTownHall.Radius);
 
         foreach (var cell in townHallCells) {
@@ -186,13 +177,13 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         }
     }
 
-    private void InitTerrainBuildMap() {
+    private void InitTerrainBuildMap(ResponseGameInfo gameInfo) {
         _buildMap = new List<List<bool>>();
         for (var x = 0; x < MaxX; x++) {
             _buildMap.Add(new List<bool>(new bool[MaxY]));
         }
 
-        var buildVector = Controller.GameInfo.StartRaw.PlacementGrid.Data
+        var buildVector = gameInfo.StartRaw.PlacementGrid.Data
             .ToByteArray()
             .SelectMany(ImageDataUtils.ByteToBoolArray)
             .ToList();
@@ -204,13 +195,13 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         }
     }
 
-    private List<List<bool>> ParseWalkMap() {
+    private List<List<bool>> ParseWalkMap(ResponseGameInfo gameInfo) {
         var walkMap = new List<List<bool>>();
         for (var x = 0; x < MaxX; x++) {
             walkMap.Add(new List<bool>(new bool[MaxY]));
         }
 
-        var walkVector = Controller.GameInfo.StartRaw.PathingGrid.Data
+        var walkVector = gameInfo.StartRaw.PathingGrid.Data
             .ToByteArray()
             .SelectMany(ImageDataUtils.ByteToBoolArray)
             .ToList();
@@ -259,7 +250,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
 
     // TODO GD Might not work with 2x2 buildings
     public IEnumerable<Vector2> GetBuildingFootprint(Vector2 buildingCenter, uint buildingType) {
-        return BuildSearchGrid(buildingCenter, (int)KnowledgeBase.GetBuildingRadius(buildingType));
+        return BuildSearchGrid(buildingCenter, (int)_knowledgeBase.GetBuildingRadius(buildingType));
     }
 
     /// <summary>

@@ -9,23 +9,29 @@ public class WarManagerStateFactory : IWarManagerStateFactory {
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IWarManagerBehaviourFactory _warManagerBehaviourFactory;
+    private readonly IFrameClock _frameClock;
+    private readonly IUnitEvaluator _unitEvaluator;
 
     public WarManagerStateFactory(
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
-        IWarManagerBehaviourFactory warManagerBehaviourFactory
+        IWarManagerBehaviourFactory warManagerBehaviourFactory,
+        IFrameClock frameClock,
+        IUnitEvaluator unitEvaluator
     ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _warManagerBehaviourFactory = warManagerBehaviourFactory;
+        _frameClock = frameClock;
+        _unitEvaluator = unitEvaluator;
     }
 
     public EarlyGameState CreateEarlyGameState() {
-        return new EarlyGameState(this, _warManagerBehaviourFactory);
+        return new EarlyGameState(this, _warManagerBehaviourFactory, _frameClock);
     }
 
     public MidGameState CreateMidGameState() {
-        return new MidGameState(_unitsTracker, _terrainTracker, this, _warManagerBehaviourFactory);
+        return new MidGameState(_unitsTracker, _terrainTracker, this, _warManagerBehaviourFactory, _unitEvaluator);
     }
 
     public FinisherState CreateFinisherState() {

@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.MapAnalysis.ExpandAnalysis;
@@ -6,9 +7,7 @@ using SC2APIProtocol;
 
 namespace Bot.GameSense;
 
-public class UnitEvaluator {
-    public static readonly UnitEvaluator Instance = new UnitEvaluator(RegionsTracker.Instance);
-
+public class UnitEvaluator : IUnitEvaluator {
     private readonly IRegionsTracker _regionsTracker;
 
     public static class Force {
@@ -47,6 +46,10 @@ public class UnitEvaluator {
         var integrityFactor = unit.IsOperational ? unit.Integrity : 1;
 
         return GetUnitForce(unit, areWorkersOffensive) * integrityFactor;
+    }
+
+    public float EvaluateForce(IEnumerable<Unit> army, bool areWorkersOffensive = false) {
+        return army.Sum(soldier => EvaluateForce(soldier, areWorkersOffensive));
     }
 
     private float GetUnitForce(Unit unit, bool areWorkersOffensive = false) {

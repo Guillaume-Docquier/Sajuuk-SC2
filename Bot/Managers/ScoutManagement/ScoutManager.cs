@@ -43,7 +43,7 @@ public partial class ScoutManager : Manager {
     }
 
     protected override void RecruitmentPhase() {
-        Assign(Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Overlord).Where(unit => unit.Manager == null));
+        Assign(_unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Overlord).Where(unit => unit.Manager == null));
 
         // TODO GD Add some condition to request a Drone / Zergling?
     }

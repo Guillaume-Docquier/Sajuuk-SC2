@@ -1,4 +1,5 @@
-﻿using Bot.Debugging.GraphicalDebugging;
+﻿using Bot.Algorithms;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
@@ -12,23 +13,38 @@ public class UnitsControlFactory : IUnitsControlFactory {
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+    private readonly IFrameClock _frameClock;
+    private readonly IController _controller;
+    private readonly IDetectionTracker _detectionTracker;
+    private readonly IUnitEvaluator _unitEvaluator;
+    private readonly IClustering _clustering;
 
     public UnitsControlFactory(
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
         IRegionsTracker regionsTracker,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IFrameClock frameClock,
+        IController controller,
+        IDetectionTracker detectionTracker,
+        IUnitEvaluator unitEvaluator,
+        IClustering clustering
     ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
+        _frameClock = frameClock;
+        _controller = controller;
+        _detectionTracker = detectionTracker;
+        _unitEvaluator = unitEvaluator;
+        _clustering = clustering;
     }
 
     public SneakAttack CreateSneakAttack() {
-        return new SneakAttack(_unitsTracker, _terrainTracker, _graphicalDebugger);
+        return new SneakAttack(_unitsTracker, _terrainTracker, _graphicalDebugger, _frameClock, _controller, _detectionTracker, _unitEvaluator, _clustering);
     }
 
     public StutterStep CreateStutterStep() {
@@ -36,7 +52,7 @@ public class UnitsControlFactory : IUnitsControlFactory {
     }
 
     public BurrowHealing CreateBurrowHealing() {
-        return new BurrowHealing(_unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker);
+        return new BurrowHealing(_unitsTracker, _terrainTracker, _regionsTracker, _regionsEvaluationsTracker, _controller, _detectionTracker);
     }
 
     public DefensiveUnitsControl CreateDefensiveUnitsControl() {
@@ -48,7 +64,7 @@ public class UnitsControlFactory : IUnitsControlFactory {
     }
 
     public MineralWalkKiting CreateMineralWalkKiting() {
-        return new MineralWalkKiting(_unitsTracker, _terrainTracker, _graphicalDebugger);
+        return new MineralWalkKiting(_unitsTracker, _terrainTracker, _graphicalDebugger, _clustering);
     }
 
     public OffensiveUnitsControl CreateOffensiveUnitsControl() {

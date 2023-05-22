@@ -22,6 +22,9 @@ public partial class ArmySupervisor {
         private readonly ITerrainTracker _terrainTracker;
         private readonly IGraphicalDebugger _graphicalDebugger;
         private readonly IArmySupervisorStateFactory _armySupervisorStateFactory;
+        private readonly IFrameClock _frameClock;
+        private readonly IUnitEvaluator _unitEvaluator;
+        private readonly IPathfinder _pathfinder;
 
         private const float RocksDestructionRange = 9f;
         private const float AcceptableDistanceToTarget = 3;
@@ -31,7 +34,7 @@ public partial class ArmySupervisor {
         private readonly StuckDetector _stuckDetector = new StuckDetector();
 
         private static readonly ulong MaximumPathfindingLockDelay = TimeUtils.SecsToFrames(15);
-        private bool PathfindingIsUnlocked => _pathfindingLock < Controller.Frame;
+        private bool PathfindingIsUnlocked => _pathfindingLock < _frameClock.CurrentFrame;
         private ulong _pathfindingLock = 0;
         private ulong _pathfindingLockDelay = TimeUtils.SecsToFrames(4);
 
@@ -42,12 +45,18 @@ public partial class ArmySupervisor {
             ITerrainTracker terrainTracker,
             IGraphicalDebugger graphicalDebugger,
             IArmySupervisorStateFactory armySupervisorStateFactory,
-            IUnitsControlFactory unitsControlFactory
+            IUnitsControlFactory unitsControlFactory,
+            IFrameClock frameClock,
+            IUnitEvaluator unitEvaluator,
+            IPathfinder pathfinder
         ) {
             _unitsTracker = unitsTracker;
             _terrainTracker = terrainTracker;
             _graphicalDebugger = graphicalDebugger;
             _armySupervisorStateFactory = armySupervisorStateFactory;
+            _frameClock = frameClock;
+            _unitEvaluator = unitEvaluator;
+            _pathfinder = pathfinder;
 
             _unitsController = unitsControlFactory.CreateOffensiveUnitsControl();
         }
@@ -70,7 +79,7 @@ public partial class ArmySupervisor {
         }
 
         protected override void Execute() {
-            Context._strongestForce = Math.Max(Context._strongestForce, Context._mainArmy.GetForce());
+            Context._strongestForce = Math.Max(Context._strongestForce, _unitEvaluator.EvaluateForce(Context._mainArmy));
 
             DrawArmyData(Context._mainArmy);
 
@@ -90,7 +99,7 @@ public partial class ArmySupervisor {
             _graphicalDebugger.AddTextGroup(
                 new[]
                 {
-                    $"Force: {soldiers.GetForce()}",
+                    $"Force: {_unitEvaluator.EvaluateForce(soldiers)}",
                 },
                 worldPos: _terrainTracker.WithWorldHeight(_terrainTracker.GetClosestWalkable(soldiers.GetCenter(), searchRadius: 3).Translate(1f, 1f)).ToPoint());
         }
@@ -121,7 +130,7 @@ public partial class ArmySupervisor {
             if (_stuckDetector.IsStuck) {
                 Logger.Warning("{0} army is stuck", Name);
 
-                var closestRock = Controller.GetUnits(_unitsTracker.NeutralUnits, Units.Destructibles).MinBy(rock => rock.DistanceTo(armyLocation));
+                var closestRock = _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, Units.Destructibles).MinBy(rock => rock.DistanceTo(armyLocation));
                 if (closestRock != null) {
                     Logger.Info("{0} closest rock is {1:F2} units away", Name, closestRock.DistanceTo(armyLocation));
                     if (closestRock.DistanceTo(armyLocation) <= RocksDestructionRange) {
@@ -141,7 +150,7 @@ public partial class ArmySupervisor {
             else {
                 if (_stuckDetector.IsStuck) {
                     Logger.Warning("{0} disabling pathfinding for {1:F2} seconds", Name, _pathfindingLockDelay / TimeUtils.FramesPerSecond);
-                    _pathfindingLock = Controller.Frame + _pathfindingLockDelay;
+                    _pathfindingLock = _frameClock.CurrentFrame + _pathfindingLockDelay;
                     _pathfindingLockDelay = Math.Min(MaximumPathfindingLockDelay, (ulong)(_pathfindingLockDelay * 1.25));
 
                     _stuckDetector.Reset(armyLocation);
@@ -164,7 +173,7 @@ public partial class ArmySupervisor {
         }
 
         private void WalkAlongThePath(Vector2 targetToAttack, Vector2 armyLocation, IEnumerable<Unit> soldiers) {
-            var path = Pathfinder.Instance.FindPath(armyLocation, targetToAttack);
+            var path = _pathfinder.FindPath(armyLocation, targetToAttack);
             if (path != null && path.Count > 0) {
                 targetToAttack = path[Math.Min(path.Count - 1, PathfindingStep)];
             }

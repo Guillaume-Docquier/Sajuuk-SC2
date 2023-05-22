@@ -10,15 +10,23 @@ namespace Bot.GameSense.RegionsEvaluationsTracking;
 
 public class RegionsForceEvaluator : RegionsEvaluator {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IFrameClock _frameClock;
+    private readonly IUnitEvaluator _unitEvaluator;
 
     private readonly Alliance _alliance;
 
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(120);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
-    public RegionsForceEvaluator(IUnitsTracker unitsTracker, Alliance alliance, Func<uint> getCurrentFrame)
-        : base("force", getCurrentFrame) {
+    public RegionsForceEvaluator(
+        IUnitsTracker unitsTracker,
+        IFrameClock frameClock,
+        IUnitEvaluator unitEvaluator,
+        Alliance alliance
+    ) : base(frameClock, "force") {
         _unitsTracker = unitsTracker;
+        _frameClock = frameClock;
+        _unitEvaluator = unitEvaluator;
 
         _alliance = alliance;
     }
@@ -44,7 +52,7 @@ public class RegionsForceEvaluator : RegionsEvaluator {
                 continue;
             }
 
-            var forceEvaluation = unitsByRegion[region].Sum(unit => UnitEvaluator.Instance.EvaluateForce(unit) * GetUnitUncertaintyPenalty(unit));
+            var forceEvaluation = unitsByRegion[region].Sum(unit => _unitEvaluator.EvaluateForce(unit) * GetUnitUncertaintyPenalty(unit));
 
             yield return (region, forceEvaluation);
         }
@@ -55,7 +63,7 @@ public class RegionsForceEvaluator : RegionsEvaluator {
     /// </summary>
     /// <param name="enemy"></param>
     /// <returns>The force penalty, within ]0, 1]</returns>
-    private static float GetUnitUncertaintyPenalty(Unit enemy) {
+    private float GetUnitUncertaintyPenalty(Unit enemy) {
         // TODO GD Maybe make terran building that can fly uncertain, but not so much
         // Buildings can be considered static
         if (Units.Buildings.Contains(enemy.UnitType)) {
@@ -63,11 +71,11 @@ public class RegionsForceEvaluator : RegionsEvaluator {
         }
 
         // Avoid computing decay for nothing
-        if (Controller.Frame == enemy.LastSeen) {
+        if (_frameClock.CurrentFrame == enemy.LastSeen) {
             return 1;
         }
 
-        return ExponentialDecayFactor(Controller.Frame - enemy.LastSeen);
+        return ExponentialDecayFactor(_frameClock.CurrentFrame - enemy.LastSeen);
     }
 
     /// <summary>

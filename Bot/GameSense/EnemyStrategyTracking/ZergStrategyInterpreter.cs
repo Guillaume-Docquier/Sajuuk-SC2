@@ -10,6 +10,7 @@ namespace Bot.GameSense.EnemyStrategyTracking;
 
 public class ZergStrategyInterpreter : IStrategyInterpreter {
     private readonly IRegionsTracker _regionsTracker;
+    private readonly IFrameClock _frameClock;
 
     private bool _isInitialized = false;
 
@@ -25,11 +26,11 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
 
     private readonly ulong _vulnerabilityWindow = TimeUtils.SecsToFrames(4 * 60);
 
-    private static readonly ulong SpawningPoolBuildTime = (ulong)KnowledgeBase.GetUnitTypeData(Units.SpawningPool).BuildTime;
-    private static readonly ulong ZerglingBuildTime = (ulong)KnowledgeBase.GetUnitTypeData(Units.Zergling).BuildTime;
-    private static readonly ulong HatcheryBuildTime = (ulong)KnowledgeBase.GetUnitTypeData(Units.Hatchery).BuildTime;
+    private readonly ulong _spawningPoolBuildTime;
+    private readonly ulong _zerglingBuildTime;
+    private readonly ulong _hatcheryBuildTime;
 
-    private static readonly float HatcheryRadius = KnowledgeBase.GetBuildingRadius(Units.Hatchery);
+    private readonly float _hatcheryRadius;
 
     private static readonly ulong TwelvePoolTiming = TimeUtils.SecsToFrames(15);
     private static readonly ulong TwelvePoolZerglingTiming = TimeUtils.SecsToFrames(1 * 60 + 19);
@@ -39,8 +40,18 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
 
     private static readonly ulong OneBaseTiming = TimeUtils.SecsToFrames(2 * 60 + 30);
 
-    public ZergStrategyInterpreter(IRegionsTracker regionsTracker) {
+    public ZergStrategyInterpreter(
+        IRegionsTracker regionsTracker,
+        KnowledgeBase knowledgeBase,
+        IFrameClock frameClock
+    ) {
         _regionsTracker = regionsTracker;
+        _frameClock = frameClock;
+
+        _spawningPoolBuildTime = (ulong)knowledgeBase.GetUnitTypeData(Units.SpawningPool).BuildTime;
+        _zerglingBuildTime = (ulong)knowledgeBase.GetUnitTypeData(Units.Zergling).BuildTime;
+        _hatcheryBuildTime = (ulong)knowledgeBase.GetUnitTypeData(Units.Hatchery).BuildTime;
+        _hatcheryRadius = knowledgeBase.GetBuildingRadius(Units.Hatchery);
     }
 
     public EnemyStrategy Interpret(List<Unit> enemyUnits) {
@@ -69,26 +80,26 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
         if (_poolTiming == 0) {
             var spawningPool = enemyUnits.FirstOrDefault(unit => unit.UnitType == Units.SpawningPool);
             if (spawningPool != null) {
-                _poolTiming = Controller.Frame - (ulong)(SpawningPoolBuildTime * spawningPool.RawUnitData.BuildProgress);
+                _poolTiming = _frameClock.CurrentFrame - (ulong)(_spawningPoolBuildTime * spawningPool.RawUnitData.BuildProgress);
             }
             else if (enemyZerglings.Count > 0) {
-                _poolTiming = Controller.Frame - SpawningPoolBuildTime - ZerglingBuildTime; // TODO GD Consider distance to base?
+                _poolTiming = _frameClock.CurrentFrame - _spawningPoolBuildTime - _zerglingBuildTime; // TODO GD Consider distance to base?
             }
         }
 
         if (_expandTiming == 0) {
             var hatchery = enemyUnits
                 .Where(unit => unit.UnitType == Units.Hatchery)
-                .FirstOrDefault(hatchery => hatchery.DistanceTo(_enemyNatural.Position) <= HatcheryRadius);
+                .FirstOrDefault(hatchery => hatchery.DistanceTo(_enemyNatural.Position) <= _hatcheryRadius);
 
             if (hatchery != null) {
-                _expandTiming = Controller.Frame - (ulong)(HatcheryBuildTime * hatchery.RawUnitData.BuildProgress);
+                _expandTiming = _frameClock.CurrentFrame - (ulong)(_hatcheryBuildTime * hatchery.RawUnitData.BuildProgress);
             }
         }
 
         if (_zerglingAttackTiming == 0) {
             if (enemyZerglings.Count(zergling => zergling.GetRegion() != _enemyMainRegion && zergling.GetRegion() != _enemyNaturalRegion) >= 6) {
-                _zerglingAttackTiming = Controller.Frame;
+                _zerglingAttackTiming = _frameClock.CurrentFrame;
             }
         }
     }
@@ -114,7 +125,7 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
             return EnemyStrategy.SixteenHatch;
         }
 
-        if (_expandTiming == 0 && Controller.Frame >= OneBaseTiming) {
+        if (_expandTiming == 0 && _frameClock.CurrentFrame >= OneBaseTiming) {
             return EnemyStrategy.OneBase;
         }
 

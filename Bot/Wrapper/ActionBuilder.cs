@@ -6,61 +6,67 @@ using SC2APIProtocol;
 
 namespace Bot.Wrapper;
 
-public static class ActionBuilder {
-    public static Action TrainUnit(uint unitType, ulong producerTag) {
-        var unitAbilityId = KnowledgeBase.GetUnitTypeData(unitType).AbilityId;
+public class ActionBuilder : IActionBuilder {
+    private readonly KnowledgeBase _knowledgeBase;
+
+    public ActionBuilder(KnowledgeBase knowledgeBase) {
+        _knowledgeBase = knowledgeBase;
+    }
+
+    public Action TrainUnit(uint unitType, ulong producerTag) {
+        var unitAbilityId = _knowledgeBase.GetUnitTypeData(unitType).AbilityId;
 
         return UnitCommand(unitAbilityId, producerTag);
     }
 
-    public static Action PlaceBuilding(uint buildingType, ulong producerTag, Vector2 position) {
-        var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingType).AbilityId;
+    public Action PlaceBuilding(uint buildingType, ulong producerTag, Vector2 position) {
+        var buildingAbilityId = _knowledgeBase.GetUnitTypeData(buildingType).AbilityId;
 
         return UnitCommand(buildingAbilityId, producerTag, position: position.ToPoint2D());
     }
 
-    public static Action PlaceExtractor(uint buildingType, ulong producerTag, ulong gasTag) {
-        var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingType).AbilityId;
+    public Action PlaceExtractor(uint buildingType, ulong producerTag, ulong gasTag) {
+        var buildingAbilityId = _knowledgeBase.GetUnitTypeData(buildingType).AbilityId;
 
         return UnitCommand(buildingAbilityId, producerTag, targetUnitTag: gasTag);
     }
 
-    public static Action ResearchUpgrade(uint upgradeType, ulong producerTag) {
-        var upgradeAbilityId = KnowledgeBase.GetUpgradeData(upgradeType).AbilityId;
+    public Action ResearchUpgrade(uint upgradeType, ulong producerTag) {
+        var upgradeAbilityId = _knowledgeBase.GetUpgradeData(upgradeType).AbilityId;
 
         return UnitCommand(upgradeAbilityId, producerTag, queueCommand: true);
     }
 
-    public static Action Stop(ulong unitTag) {
+    public Action Stop(ulong unitTag) {
         return UnitCommand(Abilities.Stop, unitTag);
     }
 
-    public static Action Move(ulong unitTag, Vector2 position) {
+    public Action Move(ulong unitTag, Vector2 position) {
         return UnitCommand(Abilities.Move, unitTag, position: position.ToPoint2D());
     }
 
     // TODO GD Might be better to use a single order
-    public static Action AttackMove(ulong unitTag, Vector2 position) {
+    public Action AttackMove(ulong unitTag, Vector2 position) {
         return UnitCommand(Abilities.Attack, unitTag, position: position.ToPoint2D());
     }
 
-    public static Action Attack(ulong unitTag, ulong targetTag) {
+    public Action Attack(ulong unitTag, ulong targetTag) {
         return UnitCommand(Abilities.Attack, unitTag, targetUnitTag: targetTag);
     }
 
-    public static Action Smart(ulong unitTag, ulong targetUnitTag) {
+    public Action Smart(ulong unitTag, ulong targetUnitTag) {
         return UnitCommand(Abilities.Smart, unitTag, targetUnitTag: targetUnitTag);
     }
 
-    public static Action Gather(ulong unitTag, ulong mineralOrGasTag) {
+    public Action Gather(ulong unitTag, ulong mineralOrGasTag) {
         return UnitCommand(Abilities.HarvestGather, unitTag, targetUnitTag: mineralOrGasTag);
     }
 
-    public static Action ReturnCargo(ulong unitTag) {
+    public Action ReturnCargo(ulong unitTag) {
         return UnitCommand(Abilities.HarvestReturn, unitTag);
     }
 
-    public static Action Chat(string message, bool toTeam = false) {
+    public Action Chat(string message, bool toTeam = false) {
         return new Action
         {
             ActionChat = new ActionChat
@@ -71,7 +77,7 @@ public static class ActionBuilder {
         };
     }
 
-    public static Action UnitCommand(uint abilityId, ulong unitTag, Point2D position = null, ulong targetUnitTag = ulong.MaxValue, bool queueCommand = false) {
+    public Action UnitCommand(uint abilityId, ulong unitTag, Point2D position = null, ulong targetUnitTag = ulong.MaxValue, bool queueCommand = false) {
         return UnitCommand(abilityId, new List<ulong> { unitTag }, position, targetUnitTag, queueCommand);
     }
 

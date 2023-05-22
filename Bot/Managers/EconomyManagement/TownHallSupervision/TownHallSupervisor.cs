@@ -6,6 +6,7 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.MapAnalysis;
 using Bot.UnitModules;
 using SC2APIProtocol;
 
@@ -17,6 +18,8 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
     private readonly IRegionsTracker _regionsTracker;
     private readonly ICreepTracker _creepTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IFrameClock _frameClock;
+    private readonly IPathfinder _pathfinder;
 
     private readonly ulong _id;
     private readonly Color _color;
@@ -71,6 +74,8 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
         ICreepTracker creepTracker,
         IBuildRequestFactory buildRequestFactory,
         IGraphicalDebugger graphicalDebugger,
+        IFrameClock frameClock,
+        IPathfinder pathfinder,
         Unit townHall,
         Color color
     ) {
@@ -79,6 +84,8 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
         _regionsTracker = regionsTracker;
         _creepTracker = creepTracker;
         _graphicalDebugger = graphicalDebugger;
+        _frameClock = frameClock;
+        _pathfinder = pathfinder;
 
         _id = townHall.Tag;
         _color = color;
@@ -107,7 +114,7 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
     protected override void Supervise() {
         DrawTownHallInfo();
 
-        if (Controller.Frame == 0) {
+        if (_frameClock.CurrentFrame == 0) {
             SplitInitialWorkers();
             return;
         }

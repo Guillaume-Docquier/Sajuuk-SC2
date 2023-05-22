@@ -9,6 +9,7 @@ namespace Bot.Managers;
 
 public class SupplyManager : UnitlessManager {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IController _controller;
 
     private const int SupplyPerHatchery = 6;
     private const int SupplyPerOverlord = 8;
@@ -23,8 +24,14 @@ public class SupplyManager : UnitlessManager {
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
-    public SupplyManager(BuildManager buildManager, IUnitsTracker unitsTracker, IBuildRequestFactory buildRequestFactory) {
+    public SupplyManager(
+        IUnitsTracker unitsTracker,
+        IBuildRequestFactory buildRequestFactory,
+        IController controller,
+        BuildManager buildManager
+    ) {
         _unitsTracker = unitsTracker;
+        _controller = controller;
 
         _buildManager = buildManager;
 
@@ -42,7 +49,7 @@ public class SupplyManager : UnitlessManager {
     }
 
     private void MaintainOverlords() {
-        var supplyNeededFromOverlords = Controller.CurrentSupply - GetSupplyFromHatcheries();
+        var supplyNeededFromOverlords = _controller.CurrentSupply - GetSupplyFromHatcheries();
         var requiredOverlords = (int)Math.Ceiling((float)supplyNeededFromOverlords / SupplyPerOverlord);
 
         _overlordsBuildRequest.Requested = requiredOverlords;
@@ -58,11 +65,11 @@ public class SupplyManager : UnitlessManager {
     private bool ShouldRequestMoreOverlords() {
         var requestedSupportedSupply = GetRequestedSupportedSupply();
 
-        return requestedSupportedSupply < KnowledgeBase.MaxSupplyAllowed && requestedSupportedSupply <= Controller.CurrentSupply + SupplyCushion;
+        return requestedSupportedSupply < KnowledgeBase.MaxSupplyAllowed && requestedSupportedSupply <= _controller.CurrentSupply + SupplyCushion;
     }
 
     private int GetSupplyFromHatcheries() {
-        return Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery).Count(hatchery => hatchery.IsOperational) * SupplyPerHatchery;
+        return _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery).Count(hatchery => hatchery.IsOperational) * SupplyPerHatchery;
     }
 
     private int GetRequestedSupportedSupply() {

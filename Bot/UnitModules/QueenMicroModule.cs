@@ -11,6 +11,7 @@ public class QueenMicroModule: UnitModule, IWatchUnitsDie {
     private readonly IRegionsTracker _regionsTracker;
 
     private readonly ICreepTracker _creepTracker;
+    private readonly IPathfinder _pathfinder;
 
     public const string Tag = "QueenMicroModule";
 
@@ -22,12 +23,14 @@ public class QueenMicroModule: UnitModule, IWatchUnitsDie {
         Unit assignedTownHall,
         IBuildingTracker buildingTracker,
         IRegionsTracker regionsTracker,
-        ICreepTracker creepTracker
+        ICreepTracker creepTracker,
+        IPathfinder pathfinder
     ) {
         _queen = queen;
         _buildingTracker = buildingTracker;
         _regionsTracker = regionsTracker;
         _creepTracker = creepTracker;
+        _pathfinder = pathfinder;
 
         _queen.AddDeathWatcher(this);
         AssignTownHall(assignedTownHall);
@@ -38,10 +41,11 @@ public class QueenMicroModule: UnitModule, IWatchUnitsDie {
         Unit assignedTownHall,
         IBuildingTracker buildingTracker,
         IRegionsTracker regionsTracker,
-        ICreepTracker creepTracker
+        ICreepTracker creepTracker,
+        IPathfinder pathfinder
     ) {
         if (PreInstallCheck(Tag, queen)) {
-            queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall, buildingTracker, regionsTracker, creepTracker));
+            queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall, buildingTracker, regionsTracker, creepTracker, pathfinder));
         }
     }
 
@@ -66,7 +70,7 @@ public class QueenMicroModule: UnitModule, IWatchUnitsDie {
             var tumorPosition = _creepTracker.GetCreepFrontier()
                 .Where(creepNode => !_regionsTracker.IsBlockingExpand(creepNode))
                 .OrderBy(creepNode => _queen.DistanceTo(creepNode)) // TODO GD Try to favor between bases and towards the enemy
-                .FirstOrDefault(creepNode => _buildingTracker.CanPlace(Units.CreepTumor, creepNode) && Pathfinder.Instance.FindPath(_queen.Position.ToVector2(), creepNode) != null);
+                .FirstOrDefault(creepNode => _buildingTracker.CanPlace(Units.CreepTumor, creepNode) && _pathfinder.FindPath(_queen.Position.ToVector2(), creepNode) != null);
 
             if (tumorPosition != default) {
                 _queen.UseAbility(Abilities.SpawnCreepTumor, position: tumorPosition.ToPoint2D());

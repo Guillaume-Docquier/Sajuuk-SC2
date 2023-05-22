@@ -12,6 +12,14 @@ public class TestUnitsTracker : IUnitsTracker {
     public Dictionary<ulong, Unit> EnemyGhostUnits { get; private set; } = new Dictionary<ulong, Unit>();
     public Dictionary<ulong, Unit> EnemyMemorizedUnits { get; private set; } = new Dictionary<ulong, Unit>();
 
+    public IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, uint unitTypeToGet) {
+        return GetUnits(unitPool, new HashSet<uint>{ unitTypeToGet });
+    }
+
+    public IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, HashSet<uint> unitTypesToGet, bool includeCloaked = false) {
+        return unitPool.Where(unit => unitTypesToGet.Contains(unit.UnitType));
+    }
+
     public List<Unit> GetUnits(Alliance alliance) {
         return alliance switch
         {

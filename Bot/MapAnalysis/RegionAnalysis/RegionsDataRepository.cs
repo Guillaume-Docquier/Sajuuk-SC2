@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Linq;
+using Bot.Algorithms;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Persistence;
@@ -11,10 +11,10 @@ namespace Bot.MapAnalysis.RegionAnalysis;
 
 public class RegionsDataRepository : IMapDataRepository<RegionsData> {
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IClustering _clustering;
+    private readonly IPathfinder _pathfinder;
 
     private readonly JsonMapDataRepository<RegionsData> _jsonMapDataRepository;
-
-    private readonly string _fileName;
 
     private const int UpscalingFactor = 4;
     private static readonly HashSet<Color> RegionColors = new HashSet<Color>
@@ -27,36 +27,46 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
         Color.Magenta
     };
 
-    // TODO GD Can we know the map name before starting the game on the ladder?
-    public RegionsDataRepository(ITerrainTracker terrainTracker, string mapFileName) {
+    public RegionsDataRepository(
+        ITerrainTracker terrainTracker,
+        IClustering clustering,
+        IPathfinder pathfinder
+    ) {
         _terrainTracker = terrainTracker;
+        _clustering = clustering;
+        _pathfinder = pathfinder;
 
-        _fileName = $"Data/Regions_{mapFileName.Replace(".SC2Map", "").Replace(" ", "").ToLower()}";
-        _jsonMapDataRepository = new JsonMapDataRepository<RegionsData>($"{_fileName}.json");
+        _jsonMapDataRepository = new JsonMapDataRepository<RegionsData>(mapFileName => GetFileName(mapFileName, "json"));
     }
 
     /// <summary>
     /// Saves the regions data as JSON, and saves a PNG image of the saved regions.
     /// </summary>
     /// <param name="regionsData">The regions data to save.</param>
-    public void Save(RegionsData regionsData) {
-        _jsonMapDataRepository.Save(regionsData);
-        SaveAsImage(regionsData.Regions);
+    /// <param name="mapFileName"></param>
+    public void Save(RegionsData regionsData, string mapFileName) {
+        _jsonMapDataRepository.Save(regionsData, mapFileName);
+        SaveAsImage(regionsData.Regions, mapFileName);
     }
 
     /// <summary>
     /// Loads the regions data.
     /// </summary>
     /// <returns>The loaded regions data.</returns>
-    public RegionsData Load() {
-        return _jsonMapDataRepository.Load();
+    public RegionsData Load(string mapFileName) {
+        var regionsData = _jsonMapDataRepository.Load(mapFileName);
+
+        regionsData.Regions.ForEach(region => region.SetDependencies(_terrainTracker, _clustering, _pathfinder));
+
+        return regionsData;
     }
 
     /// <summary>
     /// Saves the regions as an image where each region has a different color than its neighbors.
     /// </summary>
     /// <param name="regions"></param>
-    private void SaveAsImage(List<Region> regions) {
+    /// <param name="mapFileName"></param>
+    private void SaveAsImage(List<Region> regions, string mapFileName) {
         if (!OperatingSystem.IsWindows()) {
             return;
         }
@@ -94,7 +104,7 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
 
         var scaledImage = ScaleImage(image, UpscalingFactor);
         scaledImage.RotateFlip(RotateFlipType.RotateNoneFlipY);
-        scaledImage.Save($"{_fileName}.png", ImageFormat.Png);
+        scaledImage.Save(GetFileName(mapFileName, "png"));
     }
 
     /// <summary>
@@ -128,5 +138,9 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
         }
 
         return scaledImage;
+    }
+
+    private static string GetFileName(string mapFileName, string extension) {
+        return $"Data/Regions_{mapFileName.Replace(".SC2Map", "").Replace(" ", "").ToLower()}.{extension}";
     }
 }

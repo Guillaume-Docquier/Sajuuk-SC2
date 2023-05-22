@@ -1,16 +1,17 @@
-﻿using Bot.Tests.Fixtures;
+﻿using Bot.GameData;
+using Bot.Tests.Fixtures;
 
 namespace Bot.Tests;
 
 public class BaseTestClass :
     IClassFixture<NoLoggerFixture>,
-    IClassFixture<KnowledgeBaseFixture>,
-    IClassFixture<GraphicalDebuggerFixture>,
     IDisposable {
+    protected readonly KnowledgeBase KnowledgeBase;
 
     // TODO GD Remove/replace the commented code once the DI refactor is complete
     protected BaseTestClass() {
-        //ControllerSetup();
+        KnowledgeBase = new KnowledgeBase();
+        KnowledgeBase.Data = KnowledgeBaseDataStore.Load();
     }
 
     public void Dispose() {

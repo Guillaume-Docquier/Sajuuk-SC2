@@ -4,6 +4,7 @@ using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers.WarManagement.ArmySupervision.UnitsControl;
+using Bot.MapAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;
 
@@ -13,6 +14,7 @@ public class DisengageState : RegionalArmySupervisionState {
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IRegionalArmySupervisorStateFactory _regionalArmySupervisorStateFactory;
+    private readonly IPathfinder _pathfinder;
 
     private const float SafetyDistance = 5;
     private const float SafetyDistanceTolerance = SafetyDistance / 2;
@@ -25,11 +27,13 @@ public class DisengageState : RegionalArmySupervisionState {
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
         IUnitsControlFactory unitsControlFactory,
-        IRegionalArmySupervisorStateFactory regionalArmySupervisorStateFactory
+        IRegionalArmySupervisorStateFactory regionalArmySupervisorStateFactory,
+        IPathfinder pathfinder
     ) {
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _regionalArmySupervisorStateFactory = regionalArmySupervisorStateFactory;
+        _pathfinder = pathfinder;
 
         _fleeKiting = unitsControlFactory.CreateDisengagementKiting();
     }
@@ -42,7 +46,7 @@ public class DisengageState : RegionalArmySupervisionState {
         _unitsInSafePosition = GetUnitsInSafePosition(SupervisedUnits, EnemyArmy);
         var unitsInDanger = SupervisedUnits.Except(_unitsInSafePosition).ToList();
 
-        ApproachState.MoveIntoStrikingPosition(_unitsInSafePosition, TargetRegion, EnemyArmy, SafetyDistance + SafetyDistanceTolerance, DefensiveUnitsController, _regionsTracker.Regions.ToHashSet(), _regionsEvaluationsTracker);
+        ApproachState.MoveIntoStrikingPosition(_unitsInSafePosition, TargetRegion, EnemyArmy, SafetyDistance + SafetyDistanceTolerance, DefensiveUnitsController, _regionsTracker.Regions.ToHashSet(), _regionsEvaluationsTracker, _pathfinder);
         MoveIntoSafePosition(unitsInDanger, EnemyArmy, _fleeKiting);
     }
 

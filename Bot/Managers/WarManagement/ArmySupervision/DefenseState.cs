@@ -16,6 +16,7 @@ public partial class ArmySupervisor {
         private readonly ITerrainTracker _terrainTracker;
         private readonly IGraphicalDebugger _graphicalDebugger;
         private readonly IArmySupervisorStateFactory _armySupervisorStateFactory;
+        private readonly IUnitEvaluator _unitEvaluator;
 
         private const bool Debug = true;
 
@@ -27,12 +28,14 @@ public partial class ArmySupervisor {
             ITerrainTracker terrainTracker,
             IGraphicalDebugger graphicalDebugger,
             IArmySupervisorStateFactory armySupervisorStateFactory,
-            IUnitsControlFactory unitsControlFactory
+            IUnitsControlFactory unitsControlFactory,
+            IUnitEvaluator unitEvaluator
         ) {
             _unitsTracker = unitsTracker;
             _terrainTracker = terrainTracker;
             _graphicalDebugger = graphicalDebugger;
             _armySupervisorStateFactory = armySupervisorStateFactory;
+            _unitEvaluator = unitEvaluator;
 
             _unitsController = unitsControlFactory.CreateOffensiveUnitsControl();
         }
@@ -79,7 +82,7 @@ public partial class ArmySupervisor {
             _graphicalDebugger.AddTextGroup(
                 new[]
                 {
-                    $"Force: {soldiers.GetForce()}",
+                    $"Force: {_unitEvaluator.EvaluateForce(soldiers)}",
                 },
                 worldPos: _terrainTracker.WithWorldHeight(_terrainTracker.GetClosestWalkable(soldiers.GetCenter(), searchRadius: 3).Translate(1f, 1f)).ToPoint());
         }

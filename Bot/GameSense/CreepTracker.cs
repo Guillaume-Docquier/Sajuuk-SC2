@@ -9,15 +9,11 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class CreepTracker : ICreepTracker, INeedUpdating {
-    /// <summary>
-    /// DI: ✔️ The only usages are for static instance creations
-    /// </summary>
-    public static readonly CreepTracker Instance = new CreepTracker(VisibilityTracker.Instance, UnitsTracker.Instance, TerrainTracker.Instance);
-    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
-
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IFrameClock _frameClock;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private ulong _creepMapLastGeneratedAt = ulong.MaxValue;
     private List<List<bool>> _creepMap;
@@ -30,21 +26,29 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
     private int _maxX;
     private int _maxY;
 
-    private CreepTracker(IVisibilityTracker visibilityTracker, IUnitsTracker unitsTracker, ITerrainTracker terrainTracker) {
+    public CreepTracker(
+        IVisibilityTracker visibilityTracker,
+        IUnitsTracker unitsTracker,
+        ITerrainTracker terrainTracker,
+        IFrameClock frameClock,
+        IGraphicalDebugger graphicalDebugger
+    ) {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
+        _frameClock = frameClock;
+        _graphicalDebugger = graphicalDebugger;
     }
 
     public void Reset() {}
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
-        _maxX = Controller.GameInfo.StartRaw.MapSize.X;
-        _maxY = Controller.GameInfo.StartRaw.MapSize.Y;
+        _maxX = gameInfo.StartRaw.MapSize.X;
+        _maxY = gameInfo.StartRaw.MapSize.Y;
 
         _rawCreepMap = observation.Observation.RawData.MapState.Creep;
 
-        _creepFrontier.ForEach(creepFrontierNode => GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(creepFrontierNode), Colors.Orange));
+        _creepFrontier.ForEach(creepFrontierNode => _graphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(creepFrontierNode), Colors.Orange));
     }
 
     public bool HasCreep(Vector2 position) {
@@ -53,7 +57,7 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
             return false;
         }
 
-        if (_creepMapLastGeneratedAt != Controller.Frame) {
+        if (_creepMapLastGeneratedAt != _frameClock.CurrentFrame) {
             GenerateCreepMap();
         }
 
@@ -61,7 +65,7 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
     }
 
     public List<Vector2> GetCreepFrontier() {
-        if (_creepFrontierLastGeneratedAt != Controller.Frame) {
+        if (_creepFrontierLastGeneratedAt != _frameClock.CurrentFrame) {
             GenerateCreepFrontier();
         }
 
@@ -72,12 +76,12 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
         // TODO GD At this point, we don't need to calculate the frontier until a hatch or creep tumor dies
         if (_terrainTracker.WalkableCells.All(HasCreep)) {
             _creepFrontier = new List<Vector2>();
-            _creepFrontierLastGeneratedAt = Controller.Frame;
+            _creepFrontierLastGeneratedAt = _frameClock.CurrentFrame;
 
             return;
         }
 
-        var creepTumors = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.CreepTumor).ToList();
+        var creepTumors = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.CreepTumor).ToList();
         _creepFrontier = _terrainTracker.WalkableCells
             .Where(_visibilityTracker.IsVisible)
             .Where(HasCreep)
@@ -85,7 +89,7 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
             .Where(frontierCell => !IsTooCrowded(frontierCell, creepTumors))
             .ToList();
 
-        _creepFrontierLastGeneratedAt = Controller.Frame;
+        _creepFrontierLastGeneratedAt = _frameClock.CurrentFrame;
     }
 
     private bool IsFrontier(Vector2 position) {
@@ -121,7 +125,7 @@ public class CreepTracker : ICreepTracker, INeedUpdating {
             }
         }
 
-        _creepMapLastGeneratedAt = Controller.Frame;
+        _creepMapLastGeneratedAt = _frameClock.CurrentFrame;
     }
 
     private static bool[] ByteToBoolArray(byte byteValue)

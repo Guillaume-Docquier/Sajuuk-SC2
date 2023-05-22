@@ -4,6 +4,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers;
+using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot.Tests;
@@ -35,22 +36,25 @@ public static class TestUtils {
         return rawUnit;
     }
 
+    // TODO GD Create a factory instead of this helper function
     public static Unit CreateUnit(
+        IFrameClock frameClock,
+        KnowledgeBase knowledgeBase,
+        IActionBuilder actionBuilder,
+        IActionService actionService,
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker,
         IUnitsTracker unitsTracker,
         uint unitType,
         uint frame = 0,
         Alliance alliance = Alliance.Self,
         Vector3 position = default,
         int vespeneContents = 0,
-        float buildProgress = 1f
-    ) {
+        float buildProgress = 1f) {
         var rawUnit = CreateUnitRaw(unitType, alliance, position, vespeneContents, buildProgress);
 
-        return new Unit(unitsTracker, rawUnit, frame);
-    }
-
-    public static void NewFrame(ResponseObservation observation) {
-        Controller.NewFrame(ResponseGameInfoUtils.CreateResponseGameInfo(), observation);
+        // TODO GD I really need an IUnit interface
+        return new Unit(frameClock, knowledgeBase, actionBuilder, actionService, terrainTracker, regionsTracker, unitsTracker, rawUnit, frame);
     }
 
     public class DummyManager: Manager {

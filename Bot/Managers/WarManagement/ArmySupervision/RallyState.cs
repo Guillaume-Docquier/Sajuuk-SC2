@@ -14,6 +14,8 @@ public partial class ArmySupervisor {
         private readonly ITerrainTracker _terrainTracker;
         private readonly IGraphicalDebugger _graphicalDebugger;
         private readonly IArmySupervisorStateFactory _armySupervisorStateFactory;
+        private readonly IController _controller;
+        private readonly IUnitEvaluator _unitEvaluator;
 
         private const float AcceptableDistanceToTarget = 3;
 
@@ -22,11 +24,15 @@ public partial class ArmySupervisor {
         public RallyState(
             ITerrainTracker terrainTracker,
             IGraphicalDebugger graphicalDebugger,
-            IArmySupervisorStateFactory armySupervisorStateFactory
+            IArmySupervisorStateFactory armySupervisorStateFactory,
+            IController controller,
+            IUnitEvaluator unitEvaluator
         ) {
             _terrainTracker = terrainTracker;
             _graphicalDebugger = graphicalDebugger;
             _armySupervisorStateFactory = armySupervisorStateFactory;
+            _controller = controller;
+            _unitEvaluator = unitEvaluator;
         }
 
         protected override void OnContextSet() {
@@ -34,7 +40,7 @@ public partial class ArmySupervisor {
         }
 
         protected override bool TryTransitioning() {
-            if (Context._mainArmy.GetForce() >= _attackAtForce || Controller.SupportedSupply + 1 >= KnowledgeBase.MaxSupplyAllowed) {
+            if (_unitEvaluator.EvaluateForce(Context._mainArmy) >= _attackAtForce || _controller.SupportedSupply + 1 >= KnowledgeBase.MaxSupplyAllowed) {
                 StateMachine.TransitionTo(_armySupervisorStateFactory.CreateAttackState());
                 return true;
             }
@@ -52,7 +58,7 @@ public partial class ArmySupervisor {
             _graphicalDebugger.AddTextGroup(
                 new[]
                 {
-                    $"Force: {Context._mainArmy.GetForce()}",
+                    $"Force: {_unitEvaluator.EvaluateForce(Context._mainArmy)}",
                     $"Strongest: {Context._strongestForce}",
                     $"Attack at: {_attackAtForce}"
                 },

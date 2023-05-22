@@ -2,9 +2,7 @@
 
 namespace Bot;
 
+// TODO GD We need a better name for this, trackers seems like the best option
 public interface INeedUpdating {
-    // TODO GD Once DI is done, we shouldn't need to reset
-    void Reset();
-
     void Update(ResponseObservation observation, ResponseGameInfo gameInfo);
 }

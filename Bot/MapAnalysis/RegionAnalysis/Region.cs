@@ -11,6 +11,10 @@ using SC2APIProtocol;
 namespace Bot.MapAnalysis.RegionAnalysis;
 
 public class Region : IRegion {
+    private ITerrainTracker _terrainTracker;
+    private IClustering _clustering;
+    private IPathfinder _pathfinder;
+
     [JsonInclude] public int Id { get; set; }
     [JsonInclude] public Color Color { get; set; }
     [JsonInclude] public Vector2 Center { get; set; }
@@ -26,6 +30,16 @@ public class Region : IRegion {
     [JsonIgnore] public IEnumerable<INeighboringRegion> Neighbors => ConcreteNeighbors;
 
     [JsonConstructor] public Region() {}
+
+    public void SetDependencies(
+        ITerrainTracker terrainTracker,
+        IClustering clustering,
+        IPathfinder pathfinder
+    ) {
+        _terrainTracker = terrainTracker;
+        _clustering = clustering;
+        _pathfinder = pathfinder;
+    }
 
     public IEnumerable<IRegion> GetReachableNeighbors() {
         return Neighbors
@@ -45,18 +59,18 @@ public class Region : IRegion {
             return false;
         }
 
-        if (!Cells.Any(cell => TerrainTracker.Instance.IsWalkable(cell))) {
+        if (!Cells.Any(cell => _terrainTracker.IsWalkable(cell))) {
             return true;
         }
 
         var frontier = Neighbors.SelectMany(neighbor => neighbor.Frontier).ToList();
-        var clusteringResult = Clustering.Instance.DBSCAN(frontier, epsilon: (float)Math.Sqrt(2), minPoints: 1);
+        var clusteringResult = _clustering.DBSCAN(frontier, epsilon: (float)Math.Sqrt(2), minPoints: 1);
         if (clusteringResult.clusters.Count != 2) {
             Logger.Error("This ramp has {0} frontiers instead of the expected 2", clusteringResult.clusters.Count);
             return false;
         }
 
-        var pathThrough = Pathfinder.Instance.FindPath(
+        var pathThrough = _pathfinder.FindPath(
             GetWalkableCellNearFrontier(clusteringResult.clusters[0]),
             GetWalkableCellNearFrontier(clusteringResult.clusters[1])
         );
@@ -71,12 +85,12 @@ public class Region : IRegion {
         return portionPassingThrough <= 0.5f;
     }
 
-    private static Vector2 GetWalkableCellNearFrontier(IReadOnlyCollection<Vector2> frontier) {
-        var walkableCell = frontier.FirstOrDefault(cell => TerrainTracker.Instance.IsWalkable(cell));
+    private Vector2 GetWalkableCellNearFrontier(IReadOnlyCollection<Vector2> frontier) {
+        var walkableCell = frontier.FirstOrDefault(cell => _terrainTracker.IsWalkable(cell));
 
         return walkableCell != default
             ? walkableCell
-            : TerrainTracker.Instance.GetClosestWalkable(frontier.First());
+            : _terrainTracker.GetClosestWalkable(frontier.First());
     }
 
     public override string ToString() {

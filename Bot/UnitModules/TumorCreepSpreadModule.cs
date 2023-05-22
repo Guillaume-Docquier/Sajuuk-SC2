@@ -16,6 +16,7 @@ public class TumorCreepSpreadModule: UnitModule {
     private readonly ICreepTracker _creepTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IFrameClock _frameClock;
 
     public const string Tag = "TumorCreepSpreadModule";
 
@@ -32,7 +33,8 @@ public class TumorCreepSpreadModule: UnitModule {
         IBuildingTracker buildingTracker,
         ICreepTracker creepTracker,
         IRegionsTracker regionsTracker,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        IFrameClock frameClock
     ) {
         _creepTumor = creepTumor;
 
@@ -42,6 +44,7 @@ public class TumorCreepSpreadModule: UnitModule {
         _creepTracker = creepTracker;
         _regionsTracker = regionsTracker;
         _graphicalDebugger = graphicalDebugger;
+        _frameClock = frameClock;
     }
 
     public static void Install(
@@ -51,10 +54,11 @@ public class TumorCreepSpreadModule: UnitModule {
         IBuildingTracker buildingTracker,
         ICreepTracker creepTracker,
         IRegionsTracker regionsTracker,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        IFrameClock frameClock
     ) {
         if (PreInstallCheck(Tag, creepTumor)) {
-            creepTumor.Modules.Add(Tag, new TumorCreepSpreadModule(creepTumor, visibilityTracker, terrainTracker, buildingTracker, creepTracker, regionsTracker, graphicalDebugger));
+            creepTumor.Modules.Add(Tag, new TumorCreepSpreadModule(creepTumor, visibilityTracker, terrainTracker, buildingTracker, creepTracker, regionsTracker, graphicalDebugger, frameClock));
         }
     }
 
@@ -62,10 +66,10 @@ public class TumorCreepSpreadModule: UnitModule {
     protected override void DoExecute() {
         if (_spreadAt == default) {
             if (_creepTumor.UnitType == Units.CreepTumorBurrowed) {
-                _spreadAt = Controller.Frame + TimeUtils.SecsToFrames(CreepSpreadCooldown);
+                _spreadAt = _frameClock.CurrentFrame + TimeUtils.SecsToFrames(CreepSpreadCooldown);
             }
         }
-        else if (_spreadAt <= Controller.Frame) {
+        else if (_spreadAt <= _frameClock.CurrentFrame) {
             var creepFrontier = _creepTracker.GetCreepFrontier();
             if (creepFrontier.Count == 0) {
                 return;

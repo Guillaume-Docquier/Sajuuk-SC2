@@ -21,6 +21,9 @@ public class BotDebugger : IBotDebugger {
     private readonly IEnemyStrategyTracker _enemyStrategyTracker;
     private readonly IEnemyRaceTracker _enemyRaceTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IController _controller;
+    private readonly KnowledgeBase _knowledgeBase;
+    private readonly ISpendingTracker _spendingTracker;
 
     public BotDebugger(
         IVisibilityTracker visibilityTracker,
@@ -30,7 +33,10 @@ public class BotDebugger : IBotDebugger {
         ITerrainTracker terrainTracker,
         IEnemyStrategyTracker enemyStrategyTracker,
         IEnemyRaceTracker enemyRaceTracker,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        IController controller,
+        KnowledgeBase knowledgeBase,
+        ISpendingTracker spendingTracker
     ) {
         _visibilityTracker = visibilityTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
@@ -40,6 +46,9 @@ public class BotDebugger : IBotDebugger {
         _enemyStrategyTracker = enemyStrategyTracker;
         _enemyRaceTracker = enemyRaceTracker;
         _graphicalDebugger = graphicalDebugger;
+        _controller = controller;
+        _knowledgeBase = knowledgeBase;
+        _spendingTracker = spendingTracker;
     }
 
     public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus) {
@@ -104,7 +113,7 @@ public class BotDebugger : IBotDebugger {
             return;
         }
 
-        var detectors = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Detectors);
+        var detectors = _unitsTracker.GetUnits(_unitsTracker.EnemyUnits, Units.Detectors);
         foreach (var detector in detectors) {
             _graphicalDebugger.AddText("!", size: 20, worldPos: detector.Position.AsWorldGridCenter().ToPoint(), color: Colors.Purple);
             _graphicalDebugger.AddGridSquaresInRadius(detector.Position.AsWorldGridCenter(), (int)detector.UnitTypeData.SightRange, Colors.Purple);
@@ -140,7 +149,7 @@ public class BotDebugger : IBotDebugger {
             "Resource income rates - past 30s",
         }, virtualPos: new Point { X = 0.315f, Y = 0.700f });
 
-        var activeMiningModules = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Drone)
+        var activeMiningModules = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Drone)
             .Select(UnitModule.Get<MiningModule>)
             .Where(module => module != null)
             .ToList();
@@ -171,14 +180,14 @@ public class BotDebugger : IBotDebugger {
             return;
         }
 
-        var mineralsToGasRatio = SpendingTracker.Instance.ExpectedFutureMineralsSpending / SpendingTracker.Instance.ExpectedFutureVespeneSpending;
+        var mineralsToGasRatio = _spendingTracker.ExpectedFutureMineralsSpending / _spendingTracker.ExpectedFutureVespeneSpending;
         _graphicalDebugger.AddTextGroup(new[]
         {
             "Future spending",
-            $"Minerals: {SpendingTracker.Instance.ExpectedFutureMineralsSpending, 8:F0}",
-            $"Gas: {SpendingTracker.Instance.ExpectedFutureVespeneSpending, 13:F0}",
+            $"Minerals: {_spendingTracker.ExpectedFutureMineralsSpending, 8:F0}",
+            $"Gas: {_spendingTracker.ExpectedFutureVespeneSpending, 13:F0}",
             // SC2 cannot render the infinity character, so we show "INF" instead
-            $"Minerals/Gas: {(SpendingTracker.Instance.ExpectedFutureVespeneSpending == 0 ? "INF" : mineralsToGasRatio), 4:F1}",
+            $"Minerals/Gas: {(_spendingTracker.ExpectedFutureVespeneSpending == 0 ? "INF" : mineralsToGasRatio), 4:F1}",
         }, virtualPos: new Point { X = 0.505f, Y = 0.740f });
     }
 
@@ -256,9 +265,9 @@ public class BotDebugger : IBotDebugger {
             _graphicalDebugger.AddText(unitText, size: 11, worldPos: unit.Position.ToPoint(xOffset: -0.4f));
         }
 
-        foreach (var effect in Controller.Observation.Observation.RawData.Effects) {
+        foreach (var effect in _controller.Observation.Observation.RawData.Effects) {
             foreach (var effectPosition in effect.Pos.Select(effectPosition => _terrainTracker.WithWorldHeight(new Vector3(effectPosition.X, effectPosition.Y, 0)))) {
-                var effectText = $"{KnowledgeBase.GetEffectData(effect.EffectId).FriendlyName} ({effect.EffectId})";
+                var effectText = $"{_knowledgeBase.GetEffectData(effect.EffectId).FriendlyName} ({effect.EffectId})";
                 _graphicalDebugger.AddText(effectText, size: 11, worldPos: effectPosition.ToPoint(xOffset: -0.4f));
                 _graphicalDebugger.AddSphere(effectPosition, effect.Radius, Colors.Cyan);
             }

@@ -27,6 +27,9 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IBuildRequestFactory _buildRequestFactory;
+    private readonly IFrameClock _frameClock;
+    private readonly IController _controller;
+    private readonly IUnitEvaluator _unitEvaluator;
 
     private readonly FinisherBehaviourDebugger _debugger;
     private readonly WarManager _warManager;
@@ -55,7 +58,10 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         IRegionsTracker regionsTracker,
         IWarSupervisorFactory warSupervisorFactory,
         IBuildRequestFactory buildRequestFactory,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        IFrameClock frameClock,
+        IController controller,
+        IUnitEvaluator unitEvaluator
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
@@ -65,6 +71,9 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
         _buildRequestFactory = buildRequestFactory;
+        _frameClock = frameClock;
+        _controller = controller;
+        _unitEvaluator = unitEvaluator;
 
         _debugger = new FinisherBehaviourDebugger(debuggingFlagsTracker, graphicalDebugger);
         AttackSupervisor = warSupervisorFactory.CreateArmySupervisor();
@@ -84,7 +93,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     }
 
     public void RecruitmentPhase() {
-        _warManager.Assign(Controller.GetUnits(_unitsTracker.NewOwnedUnits, ManageableUnitTypes));
+        _warManager.Assign(_unitsTracker.GetUnits(_unitsTracker.NewOwnedUnits, ManageableUnitTypes));
     }
 
     public void DispatchPhase() {
@@ -105,7 +114,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
 
         TerranFinisherSupervisor.OnFrame();
 
-        _debugger.OwnForce = _warManager.ManagedUnits.GetForce();
+        _debugger.OwnForce = _unitEvaluator.EvaluateForce(_warManager.ManagedUnits);
         _debugger.EnemyForce = GetEnemyForce();
         _debugger.Debug();
     }
@@ -124,11 +133,11 @@ public class FinisherBehaviour : IWarManagerBehaviour {
             return false;
         }
 
-        if (Controller.Frame < TimeUtils.SecsToFrames(10 * 60)) {
+        if (_frameClock.CurrentFrame < TimeUtils.SecsToFrames(10 * 60)) {
             return false;
         }
 
-        if (Controller.Frame % TimeUtils.SecsToFrames(5) != 0) {
+        if (_frameClock.CurrentFrame % TimeUtils.SecsToFrames(5) != 0) {
             return false;
         }
 
@@ -136,7 +145,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
             return false;
         }
 
-        return Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Buildings).All(building => building.IsFlying);
+        return _unitsTracker.GetUnits(_unitsTracker.EnemyUnits, Units.Buildings).All(building => building.IsFlying);
     }
 
     /// <summary>
@@ -161,7 +170,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     /// </summary>
     /// <returns></returns>
     private bool ShouldFreeSomeSupply() {
-        return Controller.AvailableSupply < 2 && _corruptorsBuildRequest.Fulfillment.Remaining > 0;
+        return _controller.AvailableSupply < 2 && _corruptorsBuildRequest.Fulfillment.Remaining > 0;
     }
 
     /// <summary>
@@ -186,6 +195,6 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     /// </summary>
     /// <returns></returns>
     private float GetEnemyForce() {
-        return _unitsTracker.EnemyMemorizedUnits.Values.Concat(_unitsTracker.EnemyUnits).GetForce();
+        return _unitEvaluator.EvaluateForce(_unitsTracker.EnemyMemorizedUnits.Values.Concat(_unitsTracker.EnemyUnits));
     }
 }

@@ -7,10 +7,7 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class VisibilityTracker : IVisibilityTracker, INeedUpdating {
-    /// <summary>
-    /// DI: ✔️ The only usages are for static instance creations
-    /// </summary>
-    public static VisibilityTracker Instance { get; private set; } = new VisibilityTracker();
+    private readonly IFrameClock _frameClock;
 
     // TODO GD Put these in a class to hide the backing fields?
     private ulong _lastGeneratedAt = ulong.MaxValue;
@@ -18,7 +15,7 @@ public class VisibilityTracker : IVisibilityTracker, INeedUpdating {
     private List<List<Visibility>> _visibilityMap;
     private List<List<Visibility>> VisibilityMap {
         get {
-            if (_lastGeneratedAt != Controller.Frame) {
+            if (_lastGeneratedAt != _frameClock.CurrentFrame) {
                 GenerateVisibilityData();
             }
 
@@ -29,7 +26,7 @@ public class VisibilityTracker : IVisibilityTracker, INeedUpdating {
     private List<Vector2> _visibleCells;
     public List<Vector2> VisibleCells {
         get {
-            if (_lastGeneratedAt != Controller.Frame) {
+            if (_lastGeneratedAt != _frameClock.CurrentFrame) {
                 GenerateVisibilityData();
             }
 
@@ -40,7 +37,7 @@ public class VisibilityTracker : IVisibilityTracker, INeedUpdating {
     private List<Vector2> _exploredCells;
     public List<Vector2> ExploredCells {
         get {
-            if (_lastGeneratedAt != Controller.Frame) {
+            if (_lastGeneratedAt != _frameClock.CurrentFrame) {
                 GenerateVisibilityData();
             }
 
@@ -49,19 +46,20 @@ public class VisibilityTracker : IVisibilityTracker, INeedUpdating {
     }
 
     private ImageData _rawVisibilityMap;
+    private ResponseGameInfo _gameInfo;
 
     private enum Visibility {
         NotExplored = 0,
         Explored = 1,
         Visible = 2,
     }
-    private VisibilityTracker() {}
 
-    public void Reset() {
-        Instance = new VisibilityTracker();
+    public VisibilityTracker(IFrameClock frameClock) {
+        _frameClock = frameClock;
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
+        _gameInfo = gameInfo;
         _rawVisibilityMap = observation.Observation.RawData.MapState.Visibility;
     }
 
@@ -92,8 +90,8 @@ public class VisibilityTracker : IVisibilityTracker, INeedUpdating {
     }
 
     private void GenerateVisibilityData() {
-        var maxX = Controller.GameInfo.StartRaw.MapSize.X;
-        var maxY = Controller.GameInfo.StartRaw.MapSize.Y;
+        var maxX = _gameInfo.StartRaw.MapSize.X;
+        var maxY = _gameInfo.StartRaw.MapSize.Y;
 
         _visibilityMap = new List<List<Visibility>>();
         _visibleCells = new List<Vector2>();
@@ -121,6 +119,6 @@ public class VisibilityTracker : IVisibilityTracker, INeedUpdating {
             }
         }
 
-        _lastGeneratedAt = Controller.Frame;
+        _lastGeneratedAt = _frameClock.CurrentFrame;
     }
 }

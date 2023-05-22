@@ -10,6 +10,8 @@ namespace Bot.Managers;
 public class UpgradesManager : UnitlessManager {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IBuildRequestFactory _buildRequestFactory;
+    private readonly IController _controller;
+    private readonly KnowledgeBase _knowledgeBase;
 
     private readonly HashSet<uint> _requestedUpgrades = new HashSet<uint>();
 
@@ -17,9 +19,16 @@ public class UpgradesManager : UnitlessManager {
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(request => request.Fulfillment);
 
-    public UpgradesManager(IUnitsTracker unitsTracker, IBuildRequestFactory buildRequestFactory) {
+    public UpgradesManager(
+        IUnitsTracker unitsTracker,
+        IBuildRequestFactory buildRequestFactory,
+        IController controller,
+        KnowledgeBase knowledgeBase
+    ) {
         _unitsTracker = unitsTracker;
         _buildRequestFactory = buildRequestFactory;
+        _controller = controller;
+        _knowledgeBase = knowledgeBase;
 
         _evolutionChamberBuildRequest = _buildRequestFactory.CreateTargetBuildRequest(BuildType.Build, Units.EvolutionChamber, targetQuantity: 0);
         _buildRequests.Add(_evolutionChamberBuildRequest);
@@ -27,7 +36,7 @@ public class UpgradesManager : UnitlessManager {
 
     protected override void ManagementPhase() {
         // We assume the build order takes care of ZergMissileWeaponsLevel1
-        if (!Controller.ResearchedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel1)) {
+        if (!_controller.ResearchedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel1)) {
             return;
         }
 
@@ -38,7 +47,7 @@ public class UpgradesManager : UnitlessManager {
             return;
         }
 
-        var roachCount = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Roach).Count();
+        var roachCount = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Roach).Count();
 
         // TODO GD We could probably use a state machine, these are always done sequentially
         AttemptResearchTier1(roachCount);
@@ -121,24 +130,24 @@ public class UpgradesManager : UnitlessManager {
         }
     }
 
-    private static uint GetBuildTime(uint unitId) {
-        var unitData = KnowledgeBase.GetUnitTypeData(unitId);
+    private uint GetBuildTime(uint unitId) {
+        var unitData = _knowledgeBase.GetUnitTypeData(unitId);
 
         return (uint)(unitData.BuildTime / TimeUtils.FramesPerSecond);
     }
 
-    private static uint GetRemainingResearchTime(uint upgradeId) {
-        if (Controller.ResearchedUpgrades.Contains(upgradeId)) {
+    private uint GetRemainingResearchTime(uint upgradeId) {
+        if (_controller.ResearchedUpgrades.Contains(upgradeId)) {
             return 0;
         }
 
-        var remainingPercent = 1 - Controller.GetResearchProgress(upgradeId);
-        var upgradeData = KnowledgeBase.GetUpgradeData(upgradeId);
+        var remainingPercent = 1 - _controller.GetResearchProgress(upgradeId);
+        var upgradeData = _knowledgeBase.GetUpgradeData(upgradeId);
 
         return (uint)(upgradeData.ResearchTime / TimeUtils.FramesPerSecond * remainingPercent);
     }
 
-    private static bool AreResearchedOrInProgress(IEnumerable<uint> upgradeIds) {
-        return upgradeIds.All(upgradeId => Controller.ResearchedUpgrades.Contains(upgradeId) || Controller.IsResearchInProgress(upgradeId));
+    private bool AreResearchedOrInProgress(IEnumerable<uint> upgradeIds) {
+        return upgradeIds.All(upgradeId => _controller.ResearchedUpgrades.Contains(upgradeId) || _controller.IsResearchInProgress(upgradeId));
     }
 }

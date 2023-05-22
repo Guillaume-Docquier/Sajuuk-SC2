@@ -11,6 +11,7 @@ public class ExpandScoutingTask : ScoutingTask {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
+    private readonly KnowledgeBase _knowledgeBase;
 
     private readonly bool _waitForExpand;
     private readonly float _expandRadius;
@@ -22,6 +23,7 @@ public class ExpandScoutingTask : ScoutingTask {
         IVisibilityTracker visibilityTracker,
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
+        KnowledgeBase knowledgeBase,
         Vector2 scoutLocation,
         int priority,
         int maxScouts,
@@ -30,13 +32,14 @@ public class ExpandScoutingTask : ScoutingTask {
         _visibilityTracker = visibilityTracker;
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
+        _knowledgeBase = knowledgeBase;
 
         _waitForExpand = waitForExpand;
 
         // We make the expand radius 0 if we don't wait for confirmation just to
         // gain a bit of extra vision since we'll be on our way right away
         _expandRadius = _waitForExpand
-            ? KnowledgeBase.GetBuildingRadius(Units.Hatchery)
+            ? _knowledgeBase.GetBuildingRadius(Units.Hatchery)
             : 0;
     }
 
@@ -49,7 +52,7 @@ public class ExpandScoutingTask : ScoutingTask {
             return true;
         }
 
-        return Controller.GetUnits(_unitsTracker.EnemyUnits, Units.TownHalls)
+        return _unitsTracker.GetUnits(_unitsTracker.EnemyUnits, Units.TownHalls)
             .Where(enemyTownHall => enemyTownHall.IsVisible)
             .Any(enemyTownHall => enemyTownHall.DistanceTo(ScoutLocation) <= enemyTownHall.Radius);
     }

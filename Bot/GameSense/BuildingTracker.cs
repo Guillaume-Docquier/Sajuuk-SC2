@@ -11,30 +11,32 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
-    /// <summary>
-    /// DI: ✔️ The only usages are for static instance creations
-    /// </summary>
-    public static BuildingTracker Instance { get; private set; } = new BuildingTracker(UnitsTracker.Instance, TerrainTracker.Instance);
-    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
-
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
+    private readonly KnowledgeBase _knowledgeBase;
+    private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly RequestBuilder _requestBuilder;
 
     private readonly Dictionary<Vector2, Unit> _reservedBuildingCells = new Dictionary<Vector2, Unit>();
     private readonly Dictionary<Unit, (uint buildingType, Vector2 position, List<Vector2> cells)> _ongoingBuildingOrders = new();
 
-    private BuildingTracker(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker) {
+    public BuildingTracker(
+        IUnitsTracker unitsTracker,
+        ITerrainTracker terrainTracker,
+        KnowledgeBase knowledgeBase,
+        IGraphicalDebugger graphicalDebugger,
+        RequestBuilder requestBuilder
+    ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
-    }
-
-    public void Reset() {
-        Instance = new BuildingTracker(UnitsTracker.Instance, TerrainTracker.Instance);
+        _knowledgeBase = knowledgeBase;
+        _graphicalDebugger = graphicalDebugger;
+        _requestBuilder = requestBuilder;
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         foreach (var reservedBuildingCell in _reservedBuildingCells.Keys) {
-            GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(reservedBuildingCell), Colors.Yellow);
+            _graphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(reservedBuildingCell), Colors.Yellow);
         }
 
         foreach (var worker in _ongoingBuildingOrders.Keys) {
@@ -63,7 +65,7 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
     public Vector2 FindConstructionSpot(uint buildingType) {
         var startingSpot = _terrainTracker.StartingLocation;
         var searchGrid = _terrainTracker.BuildSearchGrid(startingSpot, gridRadius: 12, stepSize: 2);
-        var mineralFields = Controller.GetUnits(_unitsTracker.NeutralUnits, Units.MineralFields).ToList();
+        var mineralFields = _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, Units.MineralFields).ToList();
 
         foreach (var constructionCandidate in searchGrid) {
             // Avoid building in the mineral line
@@ -77,7 +79,7 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
             }
         }
 
-        Logger.Error("Could not find a construction spot for {0}", KnowledgeBase.GetUnitTypeData(buildingType).Name);
+        Logger.Error("Could not find a construction spot for {0}", _knowledgeBase.GetUnitTypeData(buildingType).Name);
 
         return default;
     }
@@ -119,7 +121,7 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
         }
 
         // TODO GD Check with MapAnalyzer._currentWalkMap before checking with the query
-        var queryBuildingPlacementResponse = Program.GameConnection.SendRequest(RequestBuilder.RequestQueryBuildingPlacement(buildingType, position)).Result;
+        var queryBuildingPlacementResponse = Program.GameConnection.SendRequest(_requestBuilder.RequestQueryBuildingPlacement(buildingType, position)).Result;
         if (queryBuildingPlacementResponse.Query.Placements.Count == 0) {
             return ActionResult.NotSupported;
         }
@@ -152,20 +154,20 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
 
     private void DebugBuildingPlacementResult(ActionResult actionResult, Vector3 targetPos) {
         if (actionResult == ActionResult.NotSupported) {
-            GraphicalDebugger.AddGridSquare(targetPos, Colors.Black);
+            _graphicalDebugger.AddGridSquare(targetPos, Colors.Black);
         }
         else if (actionResult == ActionResult.CantBuildLocationInvalid) {
-            GraphicalDebugger.AddGridSquare(targetPos, Colors.Red);
+            _graphicalDebugger.AddGridSquare(targetPos, Colors.Red);
         }
         else if (actionResult == ActionResult.CantBuildTooCloseToResources) {
-            GraphicalDebugger.AddGridSquare(targetPos, Colors.Cyan);
+            _graphicalDebugger.AddGridSquare(targetPos, Colors.Cyan);
         }
         else if (actionResult == ActionResult.Success) {
-            GraphicalDebugger.AddGridSquare(targetPos, Colors.Green);
+            _graphicalDebugger.AddGridSquare(targetPos, Colors.Green);
         }
         else {
             Logger.Warning("[CanPlace] Unexpected placement result: {0}", actionResult);
-            GraphicalDebugger.AddGridSquare(targetPos, Colors.Magenta);
+            _graphicalDebugger.AddGridSquare(targetPos, Colors.Magenta);
         }
     }
 
@@ -199,6 +201,6 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
         // Leave at least 1 cell around town halls
         var minDistance = buildingDimension.Radius + townHallDimension.Radius + 1;
 
-        return Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery).Any(townHall => townHall.DistanceTo(position) <= minDistance);
+        return _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery).Any(townHall => townHall.DistanceTo(position) <= minDistance);
     }
 }

@@ -8,12 +8,8 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class UnitsTracker : IUnitsTracker, INeedUpdating {
-    /// <summary>
-    /// DI: ✔️ The only usages are for static instance creations
-    /// </summary>
-    public static UnitsTracker Instance { get; private set; } = new UnitsTracker(VisibilityTracker.Instance);
-
     private readonly IVisibilityTracker _visibilityTracker;
+    private IUnitFactory _unitFactory;
 
     private const int EnemyDeathDelaySeconds = 4 * 60;
 
@@ -38,8 +34,47 @@ public class UnitsTracker : IUnitsTracker, INeedUpdating {
     // TODO GD Change EnemyMemorizedUnits to include all units that we know of (Units + Ghosts + Unaccounted for)
     public Dictionary<ulong, Unit> EnemyMemorizedUnits { get; } = new Dictionary<ulong, Unit>();
 
-    private UnitsTracker(IVisibilityTracker visibilityTracker) {
+    public UnitsTracker(
+        IVisibilityTracker visibilityTracker
+    ) {
         _visibilityTracker = visibilityTracker;
+    }
+
+    public void WithUnitsFactory(IUnitFactory unitFactory) {
+        _unitFactory = unitFactory;
+    }
+
+    /**
+     * Returns all units of a certain type from the provided unitPool, including units of equivalent types.
+     * Buildings that are in production are included.
+     */
+    public IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, uint unitTypeToGet) {
+        return GetUnits(unitPool, new HashSet<uint>{ unitTypeToGet });
+    }
+
+    /**
+     * Returns all units that match a certain set of types from the provided unitPool, including units of equivalent types.
+     * Buildings that are in production are included.
+     */
+    public IEnumerable<Unit> GetUnits(IEnumerable<Unit> unitPool, HashSet<uint> unitTypesToGet, bool includeCloaked = false) {
+        var equivalentUnitTypes = unitTypesToGet
+            .Where(unitTypeToGet => Units.EquivalentTo.ContainsKey(unitTypeToGet))
+            .SelectMany(unitTypeToGet => Units.EquivalentTo[unitTypeToGet])
+            .ToList();
+
+        unitTypesToGet.UnionWith(equivalentUnitTypes);
+
+        foreach (var unit in unitPool) {
+            if (!unitTypesToGet.Contains(unit.UnitType)) {
+                continue;
+            }
+
+            if (unit.IsCloaked && !includeCloaked) {
+                continue;
+            }
+
+            yield return unit;
+        }
     }
 
     public List<Unit> GetUnits(Alliance alliance) {
@@ -58,10 +93,6 @@ public class UnitsTracker : IUnitsTracker, INeedUpdating {
             Alliance.Enemy => EnemyGhostUnits.Values.ToList(),
             _ => new List<Unit>()
         };
-    }
-
-    public void Reset() {
-        Instance = new UnitsTracker(VisibilityTracker.Instance);
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
@@ -97,7 +128,7 @@ public class UnitsTracker : IUnitsTracker, INeedUpdating {
     }
 
     private void Init(IEnumerable<SC2APIProtocol.Unit> rawUnits, ulong frame) {
-        var units = rawUnits.Select(rawUnit => new Unit(this, rawUnit, frame)).ToList();
+        var units = rawUnits.Select(rawUnit => _unitFactory.CreateUnit(rawUnit, frame)).ToList();
 
         UnitsByTag = units.ToDictionary(unit => unit.Tag);
 
@@ -118,7 +149,7 @@ public class UnitsTracker : IUnitsTracker, INeedUpdating {
     }
 
     private void HandleNewUnit(SC2APIProtocol.Unit newRawUnit, ulong currentFrame) {
-        var newUnit = new Unit(this, newRawUnit, currentFrame);
+        var newUnit = _unitFactory.CreateUnit(newRawUnit, currentFrame);
 
         if (newUnit.Alliance == Alliance.Self) {
             Logger.Info("{0} was born", newUnit);

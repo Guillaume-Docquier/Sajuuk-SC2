@@ -2,18 +2,29 @@
 using Bot.GameSense;
 using Bot.Tagging;
 using Bot.Tests.Mocks;
+using Bot.Wrapper;
 using Moq;
 using SC2APIProtocol;
 
 namespace Bot.Tests.GameSense;
 
 public class EnemyRaceTrackerTests : BaseTestClass {
-    private readonly Mock<ITaggingService> _taggingServiceMock;
+    private readonly Mock<IFrameClock> _frameClockMock;
+    private readonly IActionBuilder _actionBuilder;
+    private readonly Mock<IActionService> _actionServiceMock;
+    private readonly Mock<ITerrainTracker> _terrainTrackerMock;
+    private readonly Mock<IRegionsTracker> _regionsTrackerMock;
     private readonly TestUnitsTracker _unitsTracker;
+    private readonly Mock<ITaggingService> _taggingServiceMock;
 
     public EnemyRaceTrackerTests() {
-        _taggingServiceMock = new Mock<ITaggingService>();
+        _frameClockMock = new Mock<IFrameClock>();
+        _actionBuilder = new ActionBuilder(KnowledgeBase);
+        _actionServiceMock = new Mock<IActionService>();
+        _terrainTrackerMock = new Mock<ITerrainTracker>();
+        _regionsTrackerMock = new Mock<IRegionsTracker>();
         _unitsTracker = new TestUnitsTracker();
+        _taggingServiceMock = new Mock<ITaggingService>();
     }
 
     [Theory]
@@ -85,7 +96,7 @@ public class EnemyRaceTrackerTests : BaseTestClass {
 
         var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
 
-        var units = rawUnits.Select(rawUnit => new Unit(_unitsTracker, rawUnit, frame: 0)).ToList();
+        var units = rawUnits.Select(rawUnit => new Unit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, rawUnit, lastSeen: 0)).ToList();
         _unitsTracker.SetUnits(units);
 
         // Act
@@ -105,7 +116,7 @@ public class EnemyRaceTrackerTests : BaseTestClass {
         var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
         enemyRaceTracker.Update(observation, gameInfo); // Race.Random
 
-        var units = rawUnits.Select(rawUnit => new Unit(_unitsTracker, rawUnit, frame: 0)).ToList();
+        var units = rawUnits.Select(rawUnit => new Unit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, rawUnit, lastSeen: 0)).ToList();
         _unitsTracker.SetUnits(units);
 
         // Act
@@ -125,7 +136,7 @@ public class EnemyRaceTrackerTests : BaseTestClass {
         var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
         enemyRaceTracker.Update(observation, gameInfo); // Race.Random
 
-        var units = rawUnits.Select(rawUnit => new Unit(_unitsTracker, rawUnit, frame: 0)).ToList();
+        var units = rawUnits.Select(rawUnit => new Unit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, rawUnit, lastSeen: 0)).ToList();
         _unitsTracker.SetUnits(units);
         enemyRaceTracker.Update(observation, gameInfo); // expectedRace
 
@@ -192,7 +203,7 @@ public class EnemyRaceTrackerTests : BaseTestClass {
         enemyRaceTracker.Update(observation, gameInfo); // Race.Random
 
         _taggingServiceMock.Reset();
-        var units = rawUnits.Select(rawUnit => new Unit(_unitsTracker, rawUnit, frame: 0)).ToList();
+        var units = rawUnits.Select(rawUnit => new Unit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, rawUnit, lastSeen: 0)).ToList();
         _unitsTracker.SetUnits(units);
 
         // Act
@@ -213,7 +224,7 @@ public class EnemyRaceTrackerTests : BaseTestClass {
         var enemyRaceTracker = new EnemyRaceTracker(_taggingServiceMock.Object, _unitsTracker);
         enemyRaceTracker.Update(observation, gameInfo); // Race.Random
 
-        var units = rawUnits.Select(rawUnit => new Unit(_unitsTracker, rawUnit, 0)).ToList();
+        var units = rawUnits.Select(rawUnit => new Unit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, rawUnit, 0)).ToList();
         _unitsTracker.SetUnits(units);
         enemyRaceTracker.Update(observation, gameInfo); // expectedRace
 

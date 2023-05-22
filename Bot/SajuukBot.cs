@@ -23,6 +23,9 @@ public class SajuukBot : PoliteBot {
     private readonly IBuildOrderFactory _buildOrderFactory;
 
     private readonly IBotDebugger _debugger;
+    private readonly IFrameClock _frameClock;
+    private readonly IController _controller;
+    private readonly ISpendingTracker _spendingTracker;
 
     public override string Name => "Sajuuk";
     public override Race Race => Race.Zerg;
@@ -36,17 +39,24 @@ public class SajuukBot : PoliteBot {
         IManagerFactory managerFactory,
         IBuildRequestFactory buildRequestFactory,
         IBuildOrderFactory buildOrderFactory,
-        IBotDebugger botDebugger
-    ) : base(version, scenarios, taggingService, unitsTracker, terrainTracker) {
+        IBotDebugger botDebugger,
+        IFrameClock frameClock,
+        IController controller,
+        ISpendingTracker spendingTracker,
+        IChatService chatService
+    ) : base(version, scenarios, taggingService, unitsTracker, terrainTracker, frameClock, controller, chatService) {
         _managerFactory = managerFactory;
         _buildRequestFactory = buildRequestFactory;
         _buildOrderFactory = buildOrderFactory;
 
         _debugger = botDebugger;
+        _frameClock = frameClock;
+        _controller = controller;
+        _spendingTracker = spendingTracker;
     }
 
     protected override Task DoOnFrame() {
-        if (Controller.Frame == 0) {
+        if (_frameClock.CurrentFrame == 0) {
             InitManagers();
         }
 
@@ -60,7 +70,7 @@ public class SajuukBot : PoliteBot {
             .SelectMany(groupedBySupply => groupedBySupply.SelectMany(request => request))
             .ToList();
 
-        SpendingTracker.Instance.UpdateExpectedFutureSpending(flatManagerRequests);
+        _spendingTracker.UpdateExpectedFutureSpending(flatManagerRequests);
 
         _debugger.Debug(flatManagerRequests, buildBlockStatus);
 
@@ -90,11 +100,11 @@ public class SajuukBot : PoliteBot {
     /// </summary>
     /// <param name="groupedManagersBuildRequests"></param>
     /// <returns>The blocking build fulfillment with the block reason, or (null, None) if nothing was blocking</returns>
-    private static (BuildFulfillment, BuildBlockCondition) AddressManagerRequests(List<List<List<BuildFulfillment>>> groupedManagersBuildRequests) {
+    private (BuildFulfillment, BuildBlockCondition) AddressManagerRequests(List<List<List<BuildFulfillment>>> groupedManagersBuildRequests) {
         var lookBackSupplyTarget = long.MaxValue;
         foreach (var priorityGroups in groupedManagersBuildRequests) {
             foreach (var supplyGroups in priorityGroups) {
-                if (supplyGroups[0].AtSupply > Controller.CurrentSupply) {
+                if (supplyGroups[0].AtSupply > _controller.CurrentSupply) {
                     lookBackSupplyTarget = Math.Min(lookBackSupplyTarget, supplyGroups[0].AtSupply);
                     continue;
                 }
@@ -102,11 +112,11 @@ public class SajuukBot : PoliteBot {
                 // TODO GD Interweave requests (i.e if we have 2 requests, 10 roaches and 10 drones, do 1 roach 1 drone, 1 roach 1 drone, etc)
                 foreach (var buildStep in supplyGroups) {
                     while (buildStep.Remaining > 0) {
-                        var buildStepResult = Controller.ExecuteBuildStep(buildStep);
+                        var buildStepResult = _controller.ExecuteBuildStep(buildStep);
                         if (buildStepResult == BuildRequestResult.Ok) {
                             buildStep.Fulfill(1);
 
-                            if (Controller.CurrentSupply >= lookBackSupplyTarget) {
+                            if (_controller.CurrentSupply >= lookBackSupplyTarget) {
                                 return AddressManagerRequests(groupedManagersBuildRequests);
                             }
                         }
@@ -192,18 +202,18 @@ public class SajuukBot : PoliteBot {
     }
 
     private void EnsureNoSupplyBlock() {
-        if (!Controller.IsSupplyBlocked) {
+        if (!_controller.IsSupplyBlocked) {
             return;
         }
 
-        if (Controller.GetProducersCarryingOrders(Units.Overlord).Any()) {
+        if (_controller.GetProducersCarryingOrders(Units.Overlord).Any()) {
             return;
         }
 
-        if (Controller.GetProducersCarryingOrders(Units.Hatchery).Any()) {
+        if (_controller.GetProducersCarryingOrders(Units.Hatchery).Any()) {
             return;
         }
 
-        Controller.ExecuteBuildStep(_buildRequestFactory.CreateQuantityBuildRequest(BuildType.Train, Units.Overlord).Fulfillment);
+        _controller.ExecuteBuildStep(_buildRequestFactory.CreateQuantityBuildRequest(BuildType.Train, Units.Overlord).Fulfillment);
     }
 }

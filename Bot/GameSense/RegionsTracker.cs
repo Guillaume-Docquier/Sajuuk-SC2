@@ -13,22 +13,11 @@ using SC2APIProtocol;
 namespace Bot.GameSense;
 
 public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
-    /// <summary>
-    /// DI: ✔️ The only usages are for static instance creations
-    /// </summary>
-    public static readonly RegionsTracker Instance = new RegionsTracker(
-        TerrainTracker.Instance,
-        DebuggingFlagsTracker.Instance,
-        UnitsTracker.Instance,
-        new RegionsDataRepository(TerrainTracker.Instance, Program.MapFileName),
-        new ExpandUnitsAnalyzer(UnitsTracker.Instance, TerrainTracker.Instance)
-    );
-    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
-
     private readonly ITerrainTracker _terrainTracker;
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
-    private readonly IMapDataRepository<RegionsData> _regionsRepository;
+    private readonly IMapDataRepository<RegionsData> _regionsDataRepository;
     private readonly IExpandUnitsAnalyzer _expandUnitsAnalyzer;
+    private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IUnitsTracker _unitsTracker;
 
     private const int ExpandRadius = 3; // It's 2.5, we put 3 to be safe
@@ -46,19 +35,20 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
         ITerrainTracker terrainTracker,
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
-        IMapDataRepository<RegionsData> regionsRepository,
-        IExpandUnitsAnalyzer expandUnitsAnalyzer
+        IMapDataRepository<RegionsData> regionsDataRepository,
+        IExpandUnitsAnalyzer expandUnitsAnalyzer,
+        IGraphicalDebugger graphicalDebugger
     ) {
         _terrainTracker = terrainTracker;
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
-        _regionsRepository = regionsRepository;
+        _regionsDataRepository = regionsDataRepository;
         _expandUnitsAnalyzer = expandUnitsAnalyzer;
+        _graphicalDebugger = graphicalDebugger;
     }
 
-    public void Reset() {
-        // TODO GD Load the data before the game starts
-        _regionsData = _regionsRepository.Load();
+    private void Init(string mapName) {
+        _regionsData = _regionsDataRepository.Load(mapName);
 
         _regionsLookupMap = BuildRegionsLookupMap(_regionsData.Regions);
 
@@ -78,14 +68,14 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
 
         var obstacleIds = new HashSet<uint>(Units.Obstacles.Concat(Units.MineralFields).Concat(Units.GasGeysers));
         obstacleIds.Remove(Units.UnbuildablePlatesDestructible); // It is destructible but you can walk on it
-        foreach (var obstacle in Controller.GetUnits(_unitsTracker.NeutralUnits, obstacleIds)) {
+        foreach (var obstacle in _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, obstacleIds)) {
             obstacle.AddDeathWatcher(this);
         }
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         if (observation.Observation.GameLoop == 0) {
-            Reset();
+            Init(gameInfo.MapName);
 
             var nbRegions = _regionsData.Regions.Count;
             var nbObstructed = _regionsData.Regions.Count(region => region.IsObstructed);
@@ -184,13 +174,13 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
             var frontier = region.Neighbors.SelectMany(neighboringRegion => neighboringRegion.Frontier).ToList();
 
             foreach (var position in region.Cells.Except(frontier)) {
-                GraphicalDebugger.AddText($"{region.Id}", size: 12, worldPos: _terrainTracker.WithWorldHeight(position).ToPoint(), color: region.Color);
-                GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(position), region.Color);
+                _graphicalDebugger.AddText($"{region.Id}", size: 12, worldPos: _terrainTracker.WithWorldHeight(position).ToPoint(), color: region.Color);
+                _graphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(position), region.Color);
             }
 
             foreach (var position in frontier) {
-                GraphicalDebugger.AddText($"F{region.Id}", size: 12, worldPos: _terrainTracker.WithWorldHeight(position).ToPoint(), color: region.Color);
-                GraphicalDebugger.AddGridSphere(_terrainTracker.WithWorldHeight(position), region.Color);
+                _graphicalDebugger.AddText($"F{region.Id}", size: 12, worldPos: _terrainTracker.WithWorldHeight(position).ToPoint(), color: region.Color);
+                _graphicalDebugger.AddGridSphere(_terrainTracker.WithWorldHeight(position), region.Color);
             }
         }
     }
@@ -202,8 +192,8 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
     /// </summary>
     private void DrawNoise() {
         foreach (var position in _regionsData.Noise) {
-            GraphicalDebugger.AddText("?", size: 12, worldPos: _terrainTracker.WithWorldHeight(position).ToPoint(), color: Colors.Red);
-            GraphicalDebugger.AddGridSphere(_terrainTracker.WithWorldHeight(position), Colors.Red);
+            _graphicalDebugger.AddText("?", size: 12, worldPos: _terrainTracker.WithWorldHeight(position).ToPoint(), color: Colors.Red);
+            _graphicalDebugger.AddGridSphere(_terrainTracker.WithWorldHeight(position), Colors.Red);
         }
     }
 
@@ -212,7 +202,7 @@ public class RegionsTracker : IRegionsTracker, INeedUpdating, IWatchUnitsDie {
     /// </summary>
     private void DrawChokePoints() {
         foreach (var chokePoint in _regionsData.ChokePoints) {
-            GraphicalDebugger.AddPath(chokePoint.Edge.Select(edge => _terrainTracker.WithWorldHeight(edge)).ToList(), Colors.LightRed, Colors.LightRed);
+            _graphicalDebugger.AddPath(chokePoint.Edge.Select(edge => _terrainTracker.WithWorldHeight(edge)).ToList(), Colors.LightRed, Colors.LightRed);
         }
     }
 

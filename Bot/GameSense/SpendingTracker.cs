@@ -9,16 +9,19 @@ namespace Bot.GameSense;
 // It could be created by Sajuuk and given to the EconomyManager
 // But at the same time, we don't want two of these
 // Soooo... yeah, whatever!
-public class SpendingTracker {
-    public static readonly SpendingTracker Instance = new SpendingTracker(IncomeTracker.Instance);
-
+public class SpendingTracker : ISpendingTracker {
     private readonly IIncomeTracker _incomeTracker;
+    private readonly KnowledgeBase _knowledgeBase;
 
     public float ExpectedFutureMineralsSpending { get; private set; }
     public float ExpectedFutureVespeneSpending { get; private set; }
 
-    public SpendingTracker(IIncomeTracker incomeTracker) {
+    public SpendingTracker(
+        IIncomeTracker incomeTracker,
+        KnowledgeBase knowledgeBase
+    ) {
         _incomeTracker = incomeTracker;
+        _knowledgeBase = knowledgeBase;
     }
 
     /// <summary>
@@ -42,12 +45,12 @@ public class SpendingTracker {
             var vespeneSpending = 0f;
 
             if (buildRequest.BuildType == BuildType.Research) {
-                var upgradeTypeData = KnowledgeBase.GetUpgradeData(buildRequest.UnitOrUpgradeType);
+                var upgradeTypeData = _knowledgeBase.GetUpgradeData(buildRequest.UnitOrUpgradeType);
                 mineralSpending += buildRequest.Remaining * upgradeTypeData.MineralCost;
                 vespeneSpending += buildRequest.Remaining * upgradeTypeData.VespeneCost;
             }
             else {
-                var unitTypeData = KnowledgeBase.GetUnitTypeData(buildRequest.UnitOrUpgradeType);
+                var unitTypeData = _knowledgeBase.GetUnitTypeData(buildRequest.UnitOrUpgradeType);
                 mineralSpending += buildRequest.Remaining * unitTypeData.MineralCost;
                 vespeneSpending += buildRequest.Remaining * unitTypeData.VespeneCost;
             }

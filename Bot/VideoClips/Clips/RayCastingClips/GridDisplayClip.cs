@@ -6,6 +6,7 @@ using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
+using Bot.Wrapper;
 
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
@@ -16,13 +17,15 @@ public class GridDisplayClip : Clip {
     public GridDisplayClip(
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
+        IController controller,
+        IRequestBuilder requestBuilder,
         Vector2 sceneLocation,
         int pauseAtEndOfClipDurationSeconds = 5
     ) : base(pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
 
-        var centerCameraAnimation = new CenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
+        var centerCameraAnimation = new CenterCameraAnimation(controller, requestBuilder, sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
         ShowGridClosestFirst(sceneLocation, centerCameraAnimation.AnimationEndFrame);

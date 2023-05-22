@@ -9,14 +9,23 @@ namespace Bot.Managers;
 public class BuildManager : UnitlessManager, ISubscriber<EnemyStrategyTransition> {
     private readonly IBuildOrder _buildOrder;
     private readonly ITaggingService _taggingService;
+    private readonly IController _controller;
 
     public bool IsBuildOrderDone { get; private set; } = false;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildOrder.BuildRequests.Select(buildRequest => buildRequest.Fulfillment);
 
-    public BuildManager(IBuildOrder buildOrder, ITaggingService taggingService, IEnemyStrategyTracker enemyStrategyTracker) {
-        _buildOrder = buildOrder;
+    public BuildManager(
+        ITaggingService taggingService,
+        IEnemyStrategyTracker enemyStrategyTracker,
+        IController controller,
+        IBuildOrder buildOrder
+    ) {
         _taggingService = taggingService;
+        _controller = controller;
+
+        _buildOrder = buildOrder;
+
         enemyStrategyTracker.Register(this);
     }
 
@@ -24,8 +33,8 @@ public class BuildManager : UnitlessManager, ISubscriber<EnemyStrategyTransition
         _buildOrder.PruneRequests();
 
         if (!IsBuildOrderDone && _buildOrder.BuildRequests.All(request => request.Fulfillment.Remaining <= 0)) {
-            var scoreDetails = Controller.Observation.Observation.Score.ScoreDetails;
-            _taggingService.TagBuildDone(Controller.CurrentSupply, scoreDetails.CollectedMinerals, scoreDetails.CollectedVespene);
+            var scoreDetails = _controller.Observation.Observation.Score.ScoreDetails;
+            _taggingService.TagBuildDone(_controller.CurrentSupply, scoreDetails.CollectedMinerals, scoreDetails.CollectedVespene);
             IsBuildOrderDone = true;
         }
     }

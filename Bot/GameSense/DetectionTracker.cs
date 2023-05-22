@@ -5,15 +5,21 @@ using Bot.GameData;
 
 namespace Bot.GameSense;
 
-public class DetectionTracker {
-    public static readonly DetectionTracker Instance = new DetectionTracker(UnitsTracker.Instance);
-
+public class DetectionTracker : IDetectionTracker {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IController _controller;
+    private readonly KnowledgeBase _knowledgeBase;
 
     private static bool _enemyHasDetectors = false;
 
-    private DetectionTracker(IUnitsTracker unitsTracker) {
+    public DetectionTracker(
+        IUnitsTracker unitsTracker,
+        IController controller,
+        KnowledgeBase knowledgeBase
+    ) {
         _unitsTracker = unitsTracker;
+        _controller = controller;
+        _knowledgeBase = knowledgeBase;
     }
 
     public bool IsStealthEffective() {
@@ -22,7 +28,7 @@ public class DetectionTracker {
         }
 
         // We can't kill flying units for now, so we can cache this value
-        _enemyHasDetectors = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.MobileDetectors, includeCloaked: true).Any();
+        _enemyHasDetectors = _unitsTracker.GetUnits(_unitsTracker.EnemyUnits, Units.MobileDetectors, includeCloaked: true).Any();
 
         return !_enemyHasDetectors;
     }
@@ -35,16 +41,16 @@ public class DetectionTracker {
         return IsArmyScanned(army) || IsArmyInDetectorRange(army);
     }
 
-    private static bool IsArmyScanned(IReadOnlyCollection<Unit> army) {
-        var scanRadius = KnowledgeBase.GetEffectData(Effects.ScanSweep).Radius;
+    private bool IsArmyScanned(IReadOnlyCollection<Unit> army) {
+        var scanRadius = _knowledgeBase.GetEffectData(Effects.ScanSweep).Radius;
 
-        return Controller.GetEffects(Effects.ScanSweep)
+        return _controller.GetEffects(Effects.ScanSweep)
             .SelectMany(scanEffect => scanEffect.Pos.ToList())
             .Any(scan => army.Any(soldier => scan.ToVector2().DistanceTo(soldier.Position.ToVector2()) <= scanRadius));
     }
 
     private bool IsArmyInDetectorRange(IReadOnlyCollection<Unit> army) {
-        return Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Detectors)
+        return _unitsTracker.GetUnits(_unitsTracker.EnemyUnits, Units.Detectors)
             .Any(detector => army.Any(soldier => soldier.DistanceTo(detector) <= detector.UnitTypeData.SightRange));
     }
 }

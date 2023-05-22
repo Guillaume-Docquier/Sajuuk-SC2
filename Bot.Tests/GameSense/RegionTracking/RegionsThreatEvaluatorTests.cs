@@ -1,6 +1,8 @@
 ﻿using System.Numerics;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
 using Bot.GameSense.RegionsEvaluationsTracking;
+using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
 using Moq;
@@ -9,11 +11,16 @@ using SC2APIProtocol;
 namespace Bot.Tests.GameSense.RegionTracking;
 
 public class RegionsThreatEvaluatorTests : BaseTestClass {
-    private static readonly Func<uint> GetCurrentFrame = () => 1;
+    private readonly Mock<IFrameClock> _frameClockMock;
+    private readonly IPathfinder _pathfinder;
     private readonly Mock<IUnitsTracker> _unitsTrackerMock;
+    private readonly Mock<IUnitEvaluator> _unitEvaluatorMock;
 
     public RegionsThreatEvaluatorTests() {
+        _frameClockMock = new Mock<IFrameClock>();
+        _pathfinder = new Pathfinder(new Mock<ITerrainTracker>().Object, new Mock<IGraphicalDebugger>().Object);
         _unitsTrackerMock = new Mock<IUnitsTracker>();
+        _unitEvaluatorMock = new Mock<IUnitEvaluator>();
     }
 
     [Fact]
@@ -40,15 +47,17 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
 
         var regions = new[] { region1, region2, region3, region4, region5, region6 };
 
-        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object);
-        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object);
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object);
+        var threatEvaluator = new RegionsThreatEvaluator(_frameClockMock.Object, _pathfinder, enemyForceEvaluator, selfValueEvaluator);
 
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(0);
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
         threatEvaluator.Init(regions);
 
         // Act
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(1);
         threatEvaluator.UpdateEvaluations();
 
         // Assert
@@ -90,7 +99,7 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
             { region5, 0 },
             { region6, 0 },
         };
-        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, forceEvaluations);
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object, forceEvaluations);
 
         var valueEvaluations = new Dictionary<IRegion, float>
         {
@@ -101,14 +110,16 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
             { region5, 1 },
             { region6, 0 },
         };
-        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, valueEvaluations);
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object, valueEvaluations);
+        var threatEvaluator = new RegionsThreatEvaluator(_frameClockMock.Object, _pathfinder, enemyForceEvaluator, selfValueEvaluator);
 
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(0);
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
         threatEvaluator.Init(regions);
 
         // Act
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(1);
         threatEvaluator.UpdateEvaluations();
 
         // Assert
@@ -155,15 +166,17 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
             { region5, 5 },
             { region6, 6 },
         };
-        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, forceEvaluations);
-        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object);
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object, forceEvaluations);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object);
+        var threatEvaluator = new RegionsThreatEvaluator(_frameClockMock.Object, _pathfinder, enemyForceEvaluator, selfValueEvaluator);
 
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(0);
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
         threatEvaluator.Init(regions);
 
         // Act
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(1);
         threatEvaluator.UpdateEvaluations();
 
         // Assert
@@ -205,7 +218,7 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
             { region5, 0 },
             { region6, 0 },
         };
-        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, forceEvaluations);
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object, forceEvaluations);
 
         var valueEvaluations = new Dictionary<IRegion, float>
         {
@@ -216,14 +229,16 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
             { region5, 1 },
             { region6, 0 },
         };
-        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, valueEvaluations);
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object, valueEvaluations);
+        var threatEvaluator = new RegionsThreatEvaluator(_frameClockMock.Object, _pathfinder, enemyForceEvaluator, selfValueEvaluator);
 
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(0);
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
         threatEvaluator.Init(regions);
 
         // Act
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(1);
         threatEvaluator.UpdateEvaluations();
 
         // Assert
@@ -264,7 +279,7 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
             { region5, 0 },
             { region6, 0 },
         };
-        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, forceEvaluations);
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object, forceEvaluations);
 
         var valueEvaluations = new Dictionary<IRegion, float>
         {
@@ -275,14 +290,16 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
             { region5, 1 },
             { region6, 0 },
         };
-        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, valueEvaluations);
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object, valueEvaluations);
+        var threatEvaluator = new RegionsThreatEvaluator(_frameClockMock.Object, _pathfinder, enemyForceEvaluator, selfValueEvaluator);
 
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(0);
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
         threatEvaluator.Init(regions);
 
         // Act
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(1);
         threatEvaluator.UpdateEvaluations();
 
         // Assert
@@ -323,7 +340,7 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
             { region5, 0 },
             { region6, 0 },
         };
-        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, forceEvaluations);
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object, forceEvaluations);
 
         var valueEvaluations = new Dictionary<IRegion, float>
         {
@@ -334,14 +351,16 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
             { region5, 0 },
             { region6, 0 },
         };
-        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, valueEvaluations);
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object, valueEvaluations);
+        var threatEvaluator = new RegionsThreatEvaluator(_frameClockMock.Object, _pathfinder, enemyForceEvaluator, selfValueEvaluator);
 
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(0);
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
         threatEvaluator.Init(regions);
 
         // Act
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(1);
         threatEvaluator.UpdateEvaluations();
 
         // Assert
@@ -382,7 +401,7 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
             { region5, 0 },
             { region6, 0 },
         };
-        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, forceEvaluations);
+        var enemyForceEvaluator = new TestRegionsForceEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object, forceEvaluations);
 
         var valueEvaluations = new Dictionary<IRegion, float>
         {
@@ -393,14 +412,16 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
             { region5, 0 },
             { region6, 0 },
         };
-        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, valueEvaluations);
-        var threatEvaluator = new RegionsThreatEvaluator(enemyForceEvaluator, selfValueEvaluator, GetCurrentFrame);
+        var selfValueEvaluator = new TestRegionsValueEvaluator(_unitsTrackerMock.Object, _frameClockMock.Object, _unitEvaluatorMock.Object, valueEvaluations);
+        var threatEvaluator = new RegionsThreatEvaluator(_frameClockMock.Object, _pathfinder, enemyForceEvaluator, selfValueEvaluator);
 
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(0);
         enemyForceEvaluator.Init(regions);
         selfValueEvaluator.Init(regions);
         threatEvaluator.Init(regions);
 
         // Act
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(1);
         threatEvaluator.UpdateEvaluations();
         var threat = threatEvaluator.GetEvaluation(region2);
 
@@ -412,13 +433,13 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
     private class TestRegionsForceEvaluator : RegionsForceEvaluator {
         private readonly Dictionary<IRegion, float>? _evaluations;
 
-        public TestRegionsForceEvaluator(IUnitsTracker unitsTracker)
-            : base(unitsTracker, Alliance.Enemy, GetCurrentFrame) {
+        public TestRegionsForceEvaluator(IUnitsTracker unitsTracker, IFrameClock frameClock, IUnitEvaluator unitEvaluator)
+            : base(unitsTracker, frameClock, unitEvaluator, Alliance.Enemy) {
             _evaluations = null;
         }
 
-        public TestRegionsForceEvaluator(IUnitsTracker unitsTracker, Dictionary<IRegion, float> evaluations)
-            : base(unitsTracker, Alliance.Enemy, GetCurrentFrame) {
+        public TestRegionsForceEvaluator(IUnitsTracker unitsTracker, IFrameClock frameClock, IUnitEvaluator unitEvaluator, Dictionary<IRegion, float> evaluations)
+            : base(unitsTracker, frameClock, unitEvaluator, Alliance.Enemy) {
             _evaluations = evaluations;
         }
 
@@ -430,13 +451,13 @@ public class RegionsThreatEvaluatorTests : BaseTestClass {
     private class TestRegionsValueEvaluator : RegionsValueEvaluator {
         private readonly Dictionary<IRegion, float>? _evaluations;
 
-        public TestRegionsValueEvaluator(IUnitsTracker unitsTracker)
-            : base(unitsTracker, Alliance.Self, GetCurrentFrame) {
+        public TestRegionsValueEvaluator(IUnitsTracker unitsTracker, IFrameClock frameClock, IUnitEvaluator unitEvaluator)
+            : base(unitsTracker, frameClock, unitEvaluator, Alliance.Self) {
             _evaluations = null;
         }
 
-        public TestRegionsValueEvaluator(IUnitsTracker unitsTracker, Dictionary<IRegion, float> evaluations)
-            : base(unitsTracker, Alliance.Self, GetCurrentFrame) {
+        public TestRegionsValueEvaluator(IUnitsTracker unitsTracker, IFrameClock frameClock, IUnitEvaluator unitEvaluator, Dictionary<IRegion, float> evaluations)
+            : base(unitsTracker, frameClock, unitEvaluator, Alliance.Self) {
             _evaluations = evaluations;
         }
 

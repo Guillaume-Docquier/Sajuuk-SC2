@@ -13,6 +13,8 @@ public class ApproachState : RegionalArmySupervisionState {
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
     private readonly IRegionalArmySupervisorStateFactory _regionalArmySupervisorStateFactory;
+    private readonly IUnitEvaluator _unitEvaluator;
+    private readonly IPathfinder _pathfinder;
 
     public const float SafetyDistance = 5;
     public const float SafetyDistanceTolerance = SafetyDistance / 2;
@@ -20,11 +22,15 @@ public class ApproachState : RegionalArmySupervisionState {
     public ApproachState(
         IRegionsTracker regionsTracker,
         IRegionsEvaluationsTracker regionsEvaluationsTracker,
-        IRegionalArmySupervisorStateFactory regionalArmySupervisorStateFactory
+        IRegionalArmySupervisorStateFactory regionalArmySupervisorStateFactory,
+        IUnitEvaluator unitEvaluator,
+        IPathfinder pathfinder
     ) {
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
         _regionalArmySupervisorStateFactory = regionalArmySupervisorStateFactory;
+        _unitEvaluator = unitEvaluator;
+        _pathfinder = pathfinder;
     }
 
     /// <summary>
@@ -32,7 +38,7 @@ public class ApproachState : RegionalArmySupervisionState {
     /// Units will only route through safe regions and stay at a safe distance of enemies in the target region.
     /// </summary>
     protected override void Execute() {
-        MoveIntoStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy, SafetyDistance, DefensiveUnitsController, _regionsTracker.Regions.ToHashSet(), _regionsEvaluationsTracker);
+        MoveIntoStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy, SafetyDistance, DefensiveUnitsController, _regionsTracker.Regions.ToHashSet(), _regionsEvaluationsTracker, _pathfinder);
     }
 
     /// <summary>
@@ -42,7 +48,7 @@ public class ApproachState : RegionalArmySupervisionState {
     protected override bool TryTransitioning() {
         var unitsInStrikingPosition = GetUnitsInStrikingPosition(SupervisedUnits, TargetRegion, EnemyArmy);
         // TODO GD If maxed out, we have to trade
-        if (unitsInStrikingPosition.GetForce() >= EnemyArmy.GetForce() * 1.25) {
+        if (_unitEvaluator.EvaluateForce(unitsInStrikingPosition) >= _unitEvaluator.EvaluateForce(EnemyArmy) * 1.25) {
             StateMachine.TransitionTo(_regionalArmySupervisorStateFactory.CreateEngageState());
             return true;
         }
@@ -95,6 +101,7 @@ public class ApproachState : RegionalArmySupervisionState {
     /// <param name="unitsController">The units controller</param>
     /// <param name="allRegions">All the regions</param>
     /// <param name="regionsEvaluationsTracker">TODO GD Review this parameter</param>
+    /// <param name="pathfinder">TODO GD Review this parameter</param>
     public static void MoveIntoStrikingPosition(
         IReadOnlyCollection<Unit> units,
         IRegion targetRegion,
@@ -104,7 +111,8 @@ public class ApproachState : RegionalArmySupervisionState {
         // TODO GD This signature is crap, but I want MoveIntoStrikingPosition to be shareable
         // TODO GD I should use composition, but right now it's hard to see properly
         IReadOnlySet<IRegion> allRegions,
-        IRegionsEvaluationsTracker regionsEvaluationsTracker
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IPathfinder pathfinder
     ) {
         var approachRegions = targetRegion.GetReachableNeighbors().ToList();
 
@@ -124,11 +132,11 @@ public class ApproachState : RegionalArmySupervisionState {
                     return float.MaxValue;
                 }
 
-                return Pathfinder.Instance.FindPath(unitRegion, approachRegion, blockedRegions).GetPathDistance();
+                return pathfinder.FindPath(unitRegion, approachRegion, blockedRegions).GetPathDistance();
             }));
 
         foreach (var unitGroup in unitGroups) {
-            MoveTowards(unitGroup, targetRegion, unitGroup.Key, regionsOutOfReach, enemyArmy, safetyDistance, unitsController);
+            MoveTowards(unitGroup, targetRegion, unitGroup.Key, regionsOutOfReach, enemyArmy, safetyDistance, unitsController, pathfinder);
         }
     }
 
@@ -144,6 +152,7 @@ public class ApproachState : RegionalArmySupervisionState {
     /// <param name="enemyArmy">The enemy units to get in range of but avoid engaging</param>
     /// <param name="safetyDistance">A safety distance to keep between the enemy</param>
     /// <param name="unitsController">The units controller</param>
+    /// <param name="pathfinder">TODO GD Review this parameter</param>
     private static void MoveTowards(
         IEnumerable<Unit> units,
         IRegion targetRegion,
@@ -151,7 +160,8 @@ public class ApproachState : RegionalArmySupervisionState {
         IDictionary<IRegion, HashSet<IRegion>> blockedRegions,
         IReadOnlyCollection<Unit> enemyArmy,
         float safetyDistance,
-        IUnitsControl unitsController
+        IUnitsControl unitsController,
+        IPathfinder pathfinder
     ) {
         var uncontrolledUnits = unitsController.Execute(units.ToHashSet());
         foreach (var unit in uncontrolledUnits) {
@@ -170,7 +180,7 @@ public class ApproachState : RegionalArmySupervisionState {
                 continue;
             }
 
-            var path = Pathfinder.Instance.FindPath(unitRegion, approachRegion, blockedRegions[unitRegion]);
+            var path = pathfinder.FindPath(unitRegion, approachRegion, blockedRegions[unitRegion]);
             if (path == null) {
                 // Trying to gracefully handle a case that I don't think should happen
                 unit.Move(approachRegion.Center);

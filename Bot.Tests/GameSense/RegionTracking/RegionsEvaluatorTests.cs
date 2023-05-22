@@ -6,12 +6,20 @@ namespace Bot.Tests.GameSense.RegionTracking;
 
 // TODO GD Test that it updates automatically and once per frame
 public class RegionsEvaluatorTests : BaseTestClass {
+    private readonly Mock<IFrameClock> _frameClockMock;
+
+    public RegionsEvaluatorTests() {
+        _frameClockMock = new Mock<IFrameClock>();
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(1);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public void GivenMultipleRegions_WhenInit_ThenAllEvaluationsAreInitializedWithZero(bool normalized) {
         // Arrange
-        var regionsEvaluator = new TestRegionsEvaluator();
+        _frameClockMock.Setup(frameClock => frameClock.CurrentFrame).Returns(1);
+        var regionsEvaluator = new TestRegionsEvaluator(_frameClockMock.Object);
         var regions = new IRegion[]
         {
             new Mock<IRegion>().Object,
@@ -39,7 +47,7 @@ public class RegionsEvaluatorTests : BaseTestClass {
             { new Mock<IRegion>().Object, 2 },
             { new Mock<IRegion>().Object, 3 },
         };
-        var regionsEvaluator = new TestRegionsEvaluator(evaluations);
+        var regionsEvaluator = new TestRegionsEvaluator(_frameClockMock.Object, evaluations);
 
         regionsEvaluator.Init(evaluations.Keys);
         regionsEvaluator.UpdateEvaluations();
@@ -61,7 +69,7 @@ public class RegionsEvaluatorTests : BaseTestClass {
             { new Mock<IRegion>().Object, 2 },
             { new Mock<IRegion>().Object, 3 },
         };
-        var regionsEvaluator = new TestRegionsEvaluator(evaluations);
+        var regionsEvaluator = new TestRegionsEvaluator(_frameClockMock.Object, evaluations);
 
         regionsEvaluator.Init(evaluations.Keys);
 
@@ -84,7 +92,7 @@ public class RegionsEvaluatorTests : BaseTestClass {
             { new Mock<IRegion>().Object, 3 },
             { new Mock<IRegion>().Object, 4 },
         };
-        var regionsEvaluator = new TestRegionsEvaluator(evaluations);
+        var regionsEvaluator = new TestRegionsEvaluator(_frameClockMock.Object, evaluations);
 
         regionsEvaluator.Init(evaluations.Keys);
 
@@ -108,7 +116,7 @@ public class RegionsEvaluatorTests : BaseTestClass {
             { new Mock<IRegion>().Object, 0 },
             { new Mock<IRegion>().Object, 0 },
         };
-        var regionsEvaluator = new TestRegionsEvaluator(evaluations);
+        var regionsEvaluator = new TestRegionsEvaluator(_frameClockMock.Object, evaluations);
 
         regionsEvaluator.Init(evaluations.Keys);
 
@@ -124,13 +132,13 @@ public class RegionsEvaluatorTests : BaseTestClass {
     private class TestRegionsEvaluator : RegionsEvaluator {
         private readonly Dictionary<IRegion, float>? _evaluations;
 
-        public TestRegionsEvaluator()
-            : base("test", () => 1) {
+        public TestRegionsEvaluator(IFrameClock frameClock)
+            : base(frameClock, "test") {
             _evaluations = null;
         }
 
-        public TestRegionsEvaluator(Dictionary<IRegion, float> evaluations)
-            : base("test", () => 1) {
+        public TestRegionsEvaluator(IFrameClock frameClock, Dictionary<IRegion, float> evaluations)
+            : base(frameClock, "test") {
             _evaluations = evaluations;
         }
 

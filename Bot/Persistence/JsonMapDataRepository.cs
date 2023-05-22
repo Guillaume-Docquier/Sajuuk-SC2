@@ -1,10 +1,13 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Bot.Persistence;
 
 public class JsonMapDataRepository<TData> : IMapDataRepository<TData> {
+    private readonly Func<string, string> _getFileName;
+
     private readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions
     {
         ReferenceHandler = ReferenceHandler.Preserve,
@@ -16,29 +19,29 @@ public class JsonMapDataRepository<TData> : IMapDataRepository<TData> {
         },
     };
 
-    private readonly string _fileName;
-
-    public JsonMapDataRepository(string fileName) {
-        _fileName = fileName;
+    public JsonMapDataRepository(Func<string, string> getFileName) {
+        _getFileName = getFileName;
     }
 
-    public void Save(TData data) {
+    public void Save(TData data, string mapFileName) {
         var jsonString = JsonSerializer.Serialize(data, _jsonSerializerOptions);
 
         // Make sure to copy and set properties to 'Copy if newer'
         // TODO GD Print it?
 
-        CreateDirectoryIfNotExists(_fileName);
-        File.WriteAllText(_fileName, jsonString);
-        Logger.Success($"JSON data saved to {_fileName}");
+        var fileName = _getFileName(mapFileName);
+        CreateDirectoryIfNotExists(fileName);
+        File.WriteAllText(fileName, jsonString);
+        Logger.Success($"JSON data saved to {fileName}");
     }
 
-    public TData Load() {
-        if (!File.Exists(_fileName)) {
+    public TData Load(string mapFileName) {
+        var fileName = _getFileName(mapFileName);
+        if (!File.Exists(fileName)) {
             return default;
         }
 
-        var jsonString = File.ReadAllText(_fileName);
+        var jsonString = File.ReadAllText(fileName);
         return JsonSerializer.Deserialize<TData>(jsonString, _jsonSerializerOptions)!;
     }
 

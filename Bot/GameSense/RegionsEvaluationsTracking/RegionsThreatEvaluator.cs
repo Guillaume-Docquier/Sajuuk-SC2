@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Bot.ExtensionMethods;
 using Bot.MapAnalysis;
@@ -8,13 +7,20 @@ using Bot.MapAnalysis.RegionAnalysis;
 namespace Bot.GameSense.RegionsEvaluationsTracking;
 
 public class RegionsThreatEvaluator : RegionsEvaluator {
-    private readonly IRegionsEvaluator _forceEvaluator;
-    private readonly IRegionsEvaluator _opponentValueEvaluator;
+    private readonly IPathfinder _pathfinder;
+    private readonly IRegionsEvaluator _enemyForceEvaluator;
+    private readonly IRegionsEvaluator _selfValueEvaluator;
 
-    public RegionsThreatEvaluator(RegionsForceEvaluator forceEvaluator, RegionsValueEvaluator opponentValueEvaluator, Func<uint> getCurrentFrame)
-        : base("threat", getCurrentFrame, new List<IRegionsEvaluator> { forceEvaluator, opponentValueEvaluator }) {
-        _forceEvaluator = forceEvaluator;
-        _opponentValueEvaluator = opponentValueEvaluator;
+    public RegionsThreatEvaluator(
+        IFrameClock frameClock,
+        IPathfinder pathfinder,
+        RegionsForceEvaluator enemyForceEvaluator,
+        RegionsValueEvaluator selfValueEvaluator
+    ) : base(frameClock, "threat", new List<IRegionsEvaluator> { enemyForceEvaluator, selfValueEvaluator }) {
+        _pathfinder = pathfinder;
+
+        _enemyForceEvaluator = enemyForceEvaluator;
+        _selfValueEvaluator = selfValueEvaluator;
     }
 
     /// <summary>
@@ -27,10 +33,10 @@ public class RegionsThreatEvaluator : RegionsEvaluator {
     /// <param name="regions"></param>
     /// <returns></returns>
     protected override IEnumerable<(IRegion region, float evaluation)> DoUpdateEvaluations(IReadOnlyCollection<IRegion> regions) {
-        var valuableRegions = regions.Where(region => _opponentValueEvaluator.GetEvaluation(region) > 0).ToList();
+        var valuableRegions = regions.Where(region => _selfValueEvaluator.GetEvaluation(region) > 0).ToList();
 
         foreach (var region in regions) {
-            var normalizedForce = _forceEvaluator.GetEvaluation(region, normalized: true);
+            var normalizedForce = _enemyForceEvaluator.GetEvaluation(region, normalized: true);
             if (normalizedForce == 0) {
                 yield return (region, 0);
             }
@@ -39,8 +45,8 @@ public class RegionsThreatEvaluator : RegionsEvaluator {
                 // Pathfinding far regions first will leverage the pathfinding cache
                 .OrderByDescending(valuableRegion => valuableRegion.Center.DistanceTo(region.Center))
                 .Sum(valuableRegion => {
-                    var normalizedValue = _opponentValueEvaluator.GetEvaluation(valuableRegion, normalized: true);
-                    var path = Pathfinder.Instance.FindPath(region, valuableRegion);
+                    var normalizedValue = _selfValueEvaluator.GetEvaluation(valuableRegion, normalized: true);
+                    var path = _pathfinder.FindPath(region, valuableRegion);
                     if (path == null) {
                         return 0;
                     }

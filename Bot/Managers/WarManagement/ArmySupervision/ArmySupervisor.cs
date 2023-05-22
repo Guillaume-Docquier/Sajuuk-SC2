@@ -3,13 +3,15 @@ using System.Linq;
 using System.Numerics;
 using Bot.Algorithms;
 using Bot.Builds;
-using Bot.ExtensionMethods;
+using Bot.GameSense;
 using Bot.StateManagement;
 
 namespace Bot.Managers.WarManagement.ArmySupervision;
 
 public partial class ArmySupervisor: Supervisor {
     private readonly IArmySupervisorStateFactory _armySupervisorStateFactory;
+    private readonly IClustering _clustering;
+    private readonly IUnitEvaluator _unitEvaluator;
 
     private readonly StateMachine<ArmySupervisor> _stateMachine;
 
@@ -29,8 +31,14 @@ public partial class ArmySupervisor: Supervisor {
     protected override IAssigner Assigner { get; }
     protected override IReleaser Releaser { get; }
 
-    public ArmySupervisor(IArmySupervisorStateFactory armySupervisorStateFactory) {
+    public ArmySupervisor(
+        IArmySupervisorStateFactory armySupervisorStateFactory,
+        IClustering clustering,
+        IUnitEvaluator unitEvaluator
+    ) {
         _armySupervisorStateFactory = armySupervisorStateFactory;
+        _clustering = clustering;
+        _unitEvaluator = unitEvaluator;
 
         Assigner = new ArmySupervisorAssigner(this);
         Releaser = new ArmySupervisorReleaser(this);
@@ -47,7 +55,7 @@ public partial class ArmySupervisor: Supervisor {
             return;
         }
 
-        _mainArmy = Clustering.Instance.DBSCAN(Army, 4, 2).clusters.MaxBy(army => army.GetForce());
+        _mainArmy = _clustering.DBSCAN(Army, 4, 2).clusters.MaxBy(army => _unitEvaluator.EvaluateForce(army));
         _mainArmy ??= Army; // TODO GD This is bad, let the states do what they want
 
         _stateMachine.OnFrame();
@@ -60,7 +68,7 @@ public partial class ArmySupervisor: Supervisor {
         }
 
         _blastRadius = blastRadius;
-        _strongestForce = Army.GetForce();
+        _strongestForce = _unitEvaluator.EvaluateForce(Army);
         _canHuntTheEnemy = canHuntTheEnemy;
     }
 

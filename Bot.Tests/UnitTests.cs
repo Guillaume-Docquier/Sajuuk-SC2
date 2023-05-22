@@ -1,14 +1,25 @@
 using System.Numerics;
 using Bot.GameData;
 using Bot.GameSense;
+using Bot.Wrapper;
 using Moq;
 
 namespace Bot.Tests;
 
 public class UnitTests : BaseTestClass {
+    private readonly Mock<IFrameClock> _frameClockMock;
+    private readonly IActionBuilder _actionBuilder;
+    private readonly Mock<IActionService> _actionServiceMock;
+    private readonly Mock<ITerrainTracker> _terrainTrackerMock;
+    private readonly Mock<IRegionsTracker> _regionsTrackerMock;
     private readonly Mock<IUnitsTracker> _unitsTrackerMock;
 
     public UnitTests() {
+        _frameClockMock = new Mock<IFrameClock>();
+        _actionBuilder = new ActionBuilder(KnowledgeBase);
+        _actionServiceMock = new Mock<IActionService>();
+        _terrainTrackerMock = new Mock<ITerrainTracker>();
+        _regionsTrackerMock = new Mock<IRegionsTracker>();
         _unitsTrackerMock = new Mock<IUnitsTracker>();
     }
 
@@ -18,7 +29,7 @@ public class UnitTests : BaseTestClass {
     [InlineData(2, true)]
     public void Given1FrameDeathDelay_WhenOutOfVision_DiesAfter1Frame(ulong outOfVisionTime, bool expected) {
         // Arrange
-        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling, frame: 0);
+        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling, frame: 0);
 
         // Act
         var isDead = unit.IsDead(outOfVisionTime);
@@ -30,7 +41,7 @@ public class UnitTests : BaseTestClass {
     [Fact]
     public void GivenDeathWatcherThatRemovesItself_WhenDies_DoesNotThrow() {
         // Arrange
-        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Zergling);
+        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
 
         var deathWatcher = new DeathWatcherThatRemovesItself();
         unit.AddDeathWatcher(deathWatcher);
@@ -47,7 +58,7 @@ public class UnitTests : BaseTestClass {
     [Fact]
     public void GivenManager_WhenPlaceBuilding_IsReleased() {
         // Arrange
-        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Drone);
+        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Drone);
 
         var manager = new TestUtils.DummyManager();
         manager.Assign(unit);
@@ -64,8 +75,8 @@ public class UnitTests : BaseTestClass {
     [Fact]
     public void GivenManager_WhenPlaceExtractor_IsReleased() {
         // Arrange
-        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Drone);
-        var geyser = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.VespeneGeyser);
+        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Drone);
+        var geyser = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.VespeneGeyser);
 
         var manager = new TestUtils.DummyManager();
         manager.Assign(unit);
@@ -82,7 +93,7 @@ public class UnitTests : BaseTestClass {
     [Fact]
     public void GivenNoManager_WhenPlaceBuilding_DoesNotThrow() {
         // Arrange
-        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Drone);
+        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Drone);
 
         // Act
         Assert.Null(unit.Manager);
@@ -95,8 +106,8 @@ public class UnitTests : BaseTestClass {
     [Fact]
     public void GivenNoManager_WhenPlaceExtractor_DoesNotThrow() {
         // Arrange
-        var unit = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.Drone);
-        var geyser = TestUtils.CreateUnit(_unitsTrackerMock.Object, Units.VespeneGeyser);
+        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Drone);
+        var geyser = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.VespeneGeyser);
 
         // Act
         Assert.Null(unit.Manager);

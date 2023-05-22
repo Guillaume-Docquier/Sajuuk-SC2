@@ -23,7 +23,7 @@ public class ChangelingTargetingModule: UnitModule {
     }
 
     protected override void DoExecute() {
-        var changelings = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Changelings).ToList();
+        var changelings = _unitsTracker.GetUnits(_unitsTracker.EnemyUnits, Units.Changelings).ToList();
         if (changelings.Count <= 0) {
             return;
         }

@@ -10,7 +10,7 @@ public partial class TownHallSupervisor {
     private const int MaxMinerals = 8;
 
     private IEnumerable<Unit> DiscoverMinerals() {
-        return Controller.GetUnits(_unitsTracker.NeutralUnits, Units.MineralFields)
+        return _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, Units.MineralFields)
             .Where(mineral => mineral.Supervisor == null)
             .Where(mineral => mineral.GetRegion() == TownHall.GetRegion())
             .Where(mineral => mineral.DistanceTo(TownHall) < MaxDistanceToExpand)
@@ -18,7 +18,7 @@ public partial class TownHallSupervisor {
     }
 
     private IEnumerable<Unit> DiscoverGasses() {
-        return Controller.GetUnits(_unitsTracker.NeutralUnits, Units.GasGeysers)
+        return _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, Units.GasGeysers)
             .Where(gas => gas.Supervisor == null)
             .Where(gas => gas.GetRegion() == TownHall.GetRegion())
             .Where(gas => gas.DistanceTo(TownHall) < MaxDistanceToExpand)
@@ -37,7 +37,7 @@ public partial class TownHallSupervisor {
             return new List<Unit>();
         }
 
-        return Controller.GetUnits(unitPool, Units.Extractor)
+        return _unitsTracker.GetUnits(unitPool, Units.Extractor)
             .Where(extractor => extractor.Supervisor == null)
             .Where(extractor => _gasses.Any(gas => extractor.DistanceTo(gas) < 1)); // Should be 0, we chose 1 just in case
     }

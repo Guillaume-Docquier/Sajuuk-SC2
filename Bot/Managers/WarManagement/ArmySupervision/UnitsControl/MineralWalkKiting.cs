@@ -18,11 +18,18 @@ public class MineralWalkKiting : IUnitsControl {
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IClustering _clustering;
 
-    public MineralWalkKiting(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker, IGraphicalDebugger graphicalDebugger) {
+    public MineralWalkKiting(
+        IUnitsTracker unitsTracker,
+        ITerrainTracker terrainTracker,
+        IGraphicalDebugger graphicalDebugger,
+        IClustering clustering
+    ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
+        _clustering = clustering;
     }
 
     public bool IsExecuting() {
@@ -59,7 +66,7 @@ public class MineralWalkKiting : IUnitsControl {
         }
 
         // Filter out some enemies for performance
-        var regimentCenter = Clustering.Instance.GetCenter(dronesThatNeedToKite);
+        var regimentCenter = _clustering.GetCenter(dronesThatNeedToKite);
         var potentialEnemiesToAvoid = _unitsTracker.EnemyUnits.Where(enemy => enemy.DistanceTo(regimentCenter) <= 13).ToList();
         if (potentialEnemiesToAvoid.Count <= 0) {
             return uncontrolledUnits;
@@ -187,7 +194,7 @@ public class MineralWalkKiting : IUnitsControl {
         }
 
         // Get the enemy-drone vector
-        var enemiesCenter = Clustering.Instance.GetCenter(enemiesToAvoid);
+        var enemiesCenter = _clustering.GetCenter(enemiesToAvoid);
         var enemyVector = enemiesCenter.DirectionTo(drone.Position);
 
         // Find the mineral field with the minimum angle to the enemy-drone vector (angle 0 = directly fleeing the enemy

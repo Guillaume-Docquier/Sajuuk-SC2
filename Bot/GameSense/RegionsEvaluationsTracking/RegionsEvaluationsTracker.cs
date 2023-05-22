@@ -4,27 +4,17 @@ using System.Numerics;
 using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
+using Bot.MapAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;
 
 namespace Bot.GameSense.RegionsEvaluationsTracking;
 
 public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdating {
-    /// <summary>
-    /// DI: ✔️ The only usages are for static instance creations
-    /// </summary>
-    public static RegionsEvaluationsTracker Instance { get; } = new RegionsEvaluationsTracker(
-        DebuggingFlagsTracker.Instance,
-        UnitsTracker.Instance,
-        TerrainTracker.Instance,
-        RegionsTracker.Instance
-    );
-    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
-
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
-    private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private bool _isInitialized = false;
 
@@ -48,18 +38,33 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
         Colors.LightRed,
     };
 
-    private RegionsEvaluationsTracker(
+    public RegionsEvaluationsTracker(
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
-        IRegionsTracker regionsTracker
+        IRegionsTracker regionsTracker,
+        IFrameClock frameClock,
+        IGraphicalDebugger graphicalDebugger,
+        IUnitEvaluator unitEvaluator,
+        IPathfinder pathfinder
     ) {
         _debuggingFlagsTracker = debuggingFlagsTracker;
-        _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
+        _graphicalDebugger = graphicalDebugger;
 
-        Reset();
+        _regionForceEvaluators[Alliance.Self] = new RegionsForceEvaluator(unitsTracker, frameClock, unitEvaluator, Alliance.Self);
+        _regionForceEvaluators[Alliance.Enemy] = new RegionsForceEvaluator(unitsTracker, frameClock, unitEvaluator, Alliance.Enemy);
+
+        _regionValueEvaluators[Alliance.Self] = new RegionsValueEvaluator(unitsTracker, frameClock, unitEvaluator, Alliance.Self);
+        _regionValueEvaluators[Alliance.Enemy] = new RegionsValueEvaluator(unitsTracker, frameClock, unitEvaluator, Alliance.Enemy);
+
+        _regionThreatEvaluators[Alliance.Enemy] = new RegionsThreatEvaluator(
+            frameClock,
+            pathfinder,
+            _regionForceEvaluators[Alliance.Enemy],
+            _regionValueEvaluators[Alliance.Self]
+        );
     }
 
     /// <summary>
@@ -81,11 +86,11 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
     /// <param name="normalized">Whether or not to get the normalized force between 0 and 1</param>
     /// <returns>The force of the region</returns>
     public float GetForce(IRegion region, Alliance alliance, bool normalized = false) {
-        if (!Instance._regionForceEvaluators.ContainsKey(alliance)) {
+        if (!_regionForceEvaluators.ContainsKey(alliance)) {
             Logger.Error($"Cannot get force for alliance {alliance}. We don't track that");
         }
 
-        return Instance._regionForceEvaluators[alliance].GetEvaluation(region, normalized);
+        return _regionForceEvaluators[alliance].GetEvaluation(region, normalized);
     }
 
     /// <summary>
@@ -107,11 +112,11 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
     /// <param name="normalized">Whether or not to get the normalized value between 0 and 1</param>
     /// <returns>The value of the region</returns>
     public float GetValue(IRegion region, Alliance alliance, bool normalized = false) {
-        if (!Instance._regionValueEvaluators.ContainsKey(alliance)) {
+        if (!_regionValueEvaluators.ContainsKey(alliance)) {
             Logger.Error($"Cannot get value for alliance {alliance}. We don't track that");
         }
 
-        return Instance._regionValueEvaluators[alliance].GetEvaluation(region, normalized);
+        return _regionValueEvaluators[alliance].GetEvaluation(region, normalized);
     }
 
     /// <summary>
@@ -135,28 +140,11 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
     /// <param name="normalized">Whether or not to get the normalized threat between 0 and 1</param>
     /// <returns>The threat of the region</returns>
     public float GetThreat(IRegion region, Alliance alliance, bool normalized = false) {
-        if (!Instance._regionThreatEvaluators.ContainsKey(alliance)) {
+        if (!_regionThreatEvaluators.ContainsKey(alliance)) {
             Logger.Error($"Cannot get threat for alliance {alliance}. We don't track that");
         }
 
-        return Instance._regionThreatEvaluators[alliance].GetEvaluation(region, normalized);
-    }
-
-    public void Reset() {
-        _isInitialized = false;
-
-        var getCurrentFrame = () => Controller.Frame;
-        _regionForceEvaluators[Alliance.Self] = new RegionsForceEvaluator(_unitsTracker, Alliance.Self, getCurrentFrame);
-        _regionForceEvaluators[Alliance.Enemy] = new RegionsForceEvaluator(_unitsTracker, Alliance.Enemy, getCurrentFrame);
-
-        _regionValueEvaluators[Alliance.Self] = new RegionsValueEvaluator(_unitsTracker, Alliance.Self, getCurrentFrame);
-        _regionValueEvaluators[Alliance.Enemy] = new RegionsValueEvaluator(_unitsTracker, Alliance.Enemy, getCurrentFrame);
-
-        _regionThreatEvaluators[Alliance.Enemy] = new RegionsThreatEvaluator(
-            _regionForceEvaluators[Alliance.Enemy],
-            _regionValueEvaluators[Alliance.Self],
-            getCurrentFrame
-        );
+        return _regionThreatEvaluators[alliance].GetEvaluation(region, normalized);
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
@@ -254,15 +242,15 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
         var offsetRegionCenter = _terrainTracker.WithWorldHeight(region.Center, zOffset: zOffset);
 
         // Draw the marker
-        GraphicalDebugger.AddLink(_terrainTracker.WithWorldHeight(region.Center), offsetRegionCenter, color: regionColor);
-        GraphicalDebugger.AddTextGroup(texts, size: 14, worldPos: offsetRegionCenter.ToPoint(xOffset: textXOffset), color: regionColor);
+        _graphicalDebugger.AddLink(_terrainTracker.WithWorldHeight(region.Center), offsetRegionCenter, color: regionColor);
+        _graphicalDebugger.AddTextGroup(texts, size: 14, worldPos: offsetRegionCenter.ToPoint(xOffset: textXOffset), color: regionColor);
 
         // Draw lines to neighbors
         foreach (var neighbor in region.Neighbors) {
             var neighborOffsetCenter = _terrainTracker.WithWorldHeight(neighbor.Region.Center, zOffset: zOffset);
             var regionSizeRatio = (float)region.Cells.Count / (region.Cells.Count + neighbor.Region.Cells.Count);
             var lineEnd = Vector3.Lerp(offsetRegionCenter, neighborOffsetCenter, regionSizeRatio);
-            GraphicalDebugger.AddLine(offsetRegionCenter, lineEnd, color: regionColor);
+            _graphicalDebugger.AddLine(offsetRegionCenter, lineEnd, color: regionColor);
         }
     }
 }

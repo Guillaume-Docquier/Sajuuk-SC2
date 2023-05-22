@@ -7,6 +7,7 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.EconomyManagement.TownHallSupervision;
+using Bot.MapAnalysis;
 using Bot.Utils;
 
 namespace Bot.Managers.EconomyManagement;
@@ -19,9 +20,14 @@ public sealed partial class EconomyManager : Manager {
     private readonly ICreepTracker _creepTracker;
     private readonly IEconomySupervisorFactory _economySupervisorFactory;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IController _controller;
+    private readonly IFrameClock _frameClock;
+    private readonly KnowledgeBase _knowledgeBase;
 
     private const int MaxDroneCount = 70;
     private readonly BuildManager _buildManager;
+    private readonly ISpendingTracker _spendingTracker;
+    private readonly IPathfinder _pathfinder;
 
     private const uint GasDroneCountLoweringDelay = (int)(TimeUtils.FramesPerSecond * 15);
     private int _requiredDronesInGas = 0;
@@ -49,7 +55,6 @@ public sealed partial class EconomyManager : Manager {
     protected override IReleaser Releaser { get; }
 
     public EconomyManager(
-        BuildManager buildManager,
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IBuildingTracker buildingTracker,
@@ -57,9 +62,14 @@ public sealed partial class EconomyManager : Manager {
         ICreepTracker creepTracker,
         IEconomySupervisorFactory economySupervisorFactory,
         IBuildRequestFactory buildRequestFactory,
-        IGraphicalDebugger graphicalDebugger
+        IGraphicalDebugger graphicalDebugger,
+        IController controller,
+        IFrameClock frameClock,
+        KnowledgeBase knowledgeBase,
+        ISpendingTracker spendingTracker,
+        IPathfinder pathfinder,
+        BuildManager buildManager
     ) {
-        _buildManager = buildManager;
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _buildingTracker = buildingTracker;
@@ -67,6 +77,13 @@ public sealed partial class EconomyManager : Manager {
         _creepTracker = creepTracker;
         _economySupervisorFactory = economySupervisorFactory;
         _graphicalDebugger = graphicalDebugger;
+        _controller = controller;
+        _frameClock = frameClock;
+        _knowledgeBase = knowledgeBase;
+        _spendingTracker = spendingTracker;
+        _pathfinder = pathfinder;
+
+        _buildManager = buildManager;
 
         Assigner = new EconomyManagerAssigner(this);
         Dispatcher = new EconomyManagerDispatcher(this);
@@ -90,13 +107,13 @@ public sealed partial class EconomyManager : Manager {
     }
 
     protected override void RecruitmentPhase() {
-        var unmanagedTownHalls = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls).Where(unit => unit.Manager == null);
+        var unmanagedTownHalls = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls).Where(unit => unit.Manager == null);
         Assign(unmanagedTownHalls);
 
-        var unmanagedQueens = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Queen).Where(unit => unit.Manager == null);
+        var unmanagedQueens = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Queen).Where(unit => unit.Manager == null);
         Assign(unmanagedQueens);
 
-        var unmanagedIdleWorkers = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Workers)
+        var unmanagedIdleWorkers = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Workers)
             .Where(unit => unit.Manager == null)
             // We do this to not select drones that are going to build something
             // TODO GD This is problematic because we need to send a stop order whenever we release a drone
@@ -126,15 +143,15 @@ public sealed partial class EconomyManager : Manager {
 
         AdjustCreepQueensCount();
 
-        _queenBuildRequest.Requested = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery).Count() + _creepQueensCount;
+        _queenBuildRequest.Requested = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery).Count() + _creepQueensCount;
         _dronesBuildRequest.Requested = Math.Min(MaxDroneCount, _townHallSupervisors.Sum(supervisor => !supervisor.TownHall.IsOperational ? 0 : supervisor.SaturatedCapacity));
     }
 
     private void AdjustCreepQueensCount() {
-        if (Controller.CurrentSupply >= 130) {
+        if (_controller.CurrentSupply >= 130) {
             _creepQueensCount = 3;
         }
-        else if (Controller.CurrentSupply >= 100) {
+        else if (_controller.CurrentSupply >= 100) {
             _creepQueensCount = 2;
         }
     }
@@ -158,7 +175,7 @@ public sealed partial class EconomyManager : Manager {
         }
 
         var requiredDronesInGas = ComputeRequiredGasDroneCount();
-        if (requiredDronesInGas == _requiredDronesInGas || Controller.Frame < _doNotChangeGasDroneCountBefore) {
+        if (requiredDronesInGas == _requiredDronesInGas || _frameClock.CurrentFrame < _doNotChangeGasDroneCountBefore) {
             return;
         }
 
@@ -166,7 +183,7 @@ public sealed partial class EconomyManager : Manager {
         _extractorsBuildRequest.Requested = extractorsNeeded;
 
         _requiredDronesInGas = requiredDronesInGas;
-        _doNotChangeGasDroneCountBefore = Controller.Frame + GasDroneCountLoweringDelay;
+        _doNotChangeGasDroneCountBefore = _frameClock.CurrentFrame + GasDroneCountLoweringDelay;
 
         foreach (var townHallSupervisor in _townHallSupervisors) {
             var newGasWorkersCap = Math.Min(requiredDronesInGas, townHallSupervisor.MaxGasCapacity);
@@ -180,21 +197,21 @@ public sealed partial class EconomyManager : Manager {
     /// Compute the ideal number of drones that should mine gas based on our future spend and current income.
     /// </summary>
     /// <returns>The number of drones that should be sent to gas mining.</returns>
-    private static int ComputeRequiredGasDroneCount() {
-        var totalSpend = SpendingTracker.Instance.ExpectedFutureMineralsSpending + SpendingTracker.Instance.ExpectedFutureVespeneSpending;
+    private int ComputeRequiredGasDroneCount() {
+        var totalSpend = _spendingTracker.ExpectedFutureMineralsSpending + _spendingTracker.ExpectedFutureVespeneSpending;
         if (totalSpend == 0) {
             return 0;
         }
 
-        var gasSpendRatio = SpendingTracker.Instance.ExpectedFutureVespeneSpending / totalSpend;
+        var gasSpendRatio = _spendingTracker.ExpectedFutureVespeneSpending / totalSpend;
 
-        var totalIncome = SpendingTracker.Instance.ExpectedFutureMineralsSpending + SpendingTracker.Instance.ExpectedFutureVespeneSpending;
+        var totalIncome = _spendingTracker.ExpectedFutureMineralsSpending + _spendingTracker.ExpectedFutureVespeneSpending;
 
         // We subtract the available gas to offset any income/spend evaluation error.
         // If our resource management is perfect, we'll have near 0 gas all the time, so subtracting will have no impact at all.
         // Otherwise, if we start flooding gas, we'll just diminish our target gas income.
         // The current implementation won't work if we need more gas than minerals, we'll fix it if it ever happens.
-        var gasFlood = Math.Max(0, Controller.AvailableVespene - Controller.AvailableMinerals);
+        var gasFlood = Math.Max(0, _controller.AvailableVespene - _controller.AvailableMinerals);
         var targetGasIncome = Math.Max(0, totalIncome * gasSpendRatio - gasFlood);
         var oneDroneInGasIncome = IncomeTracker.ComputeResourceNodeExpectedCollectionRate(Resources.ResourceType.Gas, 1);
 
@@ -280,26 +297,26 @@ public sealed partial class EconomyManager : Manager {
     }
 
     private IEnumerable<Unit> GetIdleLarvae() {
-        return Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Larva)
+        return _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Larva)
             .Where(larva => !larva.Orders.Any());
     }
 
     // TODO GD Should this increase for every macro hatch built?
-    private static bool BankIsTooBig() {
-        return Controller.AvailableMinerals > KnowledgeBase.GetUnitTypeData(Units.Hatchery).MineralCost * 2;
+    private bool BankIsTooBig() {
+        return _controller.AvailableMinerals > _knowledgeBase.GetUnitTypeData(Units.Hatchery).MineralCost * 2;
     }
 
     private bool HasReachedMaximumMacroTownHalls() {
         var nbTownHalls = _townHalls.Count
-                          + Controller.GetProducersCarryingOrders(Units.Hatchery).Count();
+                          + _controller.GetProducersCarryingOrders(Units.Hatchery).Count();
 
-        return nbTownHalls >= Controller.GetMiningTownHalls().Count() * 2;
+        return nbTownHalls >= _controller.GetMiningTownHalls().Count() * 2;
     }
 
     private IEnumerable<Unit> GetTownHallsInConstruction() {
-        return Controller.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery)
+        return _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery)
             .Where(townHall => !townHall.IsOperational)
-            .Concat(Controller.GetProducersCarryingOrders(Units.Hatchery));
+            .Concat(_controller.GetProducersCarryingOrders(Units.Hatchery));
     }
 
     public override string ToString() {

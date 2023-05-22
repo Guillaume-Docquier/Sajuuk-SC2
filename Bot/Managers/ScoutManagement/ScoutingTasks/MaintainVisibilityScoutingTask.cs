@@ -14,6 +14,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IFrameClock _frameClock;
 
     private const bool DrawEnabled = false;
 
@@ -28,6 +29,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
         IVisibilityTracker visibilityTracker,
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
+        IFrameClock frameClock,
         IReadOnlyCollection<Vector2> area,
         int priority,
         int maxScouts
@@ -35,6 +37,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
         _visibilityTracker = visibilityTracker;
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
+        _frameClock = frameClock;
 
         // Lower the resolution for better time performance on large areas
         // The algorithm results are virtually unaffected by this
@@ -67,7 +70,7 @@ public class MaintainVisibilityScoutingTask : ScoutingTask {
         }
 
         // For performance reasons, execute scarcely
-        if (Controller.Frame % ExecuteEvery != 0) {
+        if (_frameClock.CurrentFrame % ExecuteEvery != 0) {
             return;
         }
 

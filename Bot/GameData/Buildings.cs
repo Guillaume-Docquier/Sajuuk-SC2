@@ -4,12 +4,6 @@ using System.Collections.Generic;
 namespace Bot.GameData;
 
 public static class Buildings {
-    public static float GetRadius(uint buildingType) {
-        var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingType).AbilityId;
-
-        return KnowledgeBase.GetAbilityData(buildingAbilityId).FootprintRadius;
-    }
-
     public class Dimension {
         public int Width { get; }
         public int Height { get; }

@@ -21,7 +21,10 @@ public class FourBasesRoach : IBuildOrder {
     private List<BuildRequest> _buildRequests;
     public IReadOnlyCollection<BuildRequest> BuildRequests => _buildRequests;
 
-    public FourBasesRoach(IUnitsTracker unitsTracker, IBuildRequestFactory buildRequestFactory) {
+    public FourBasesRoach(
+        IUnitsTracker unitsTracker,
+        IBuildRequestFactory buildRequestFactory
+    ) {
         _unitsTracker = unitsTracker;
 
         _buildRequests = new List<BuildRequest>
@@ -102,7 +105,7 @@ public class FourBasesRoach : IBuildOrder {
     }
 
     private void TransitionToRushDefense() {
-        if (Controller.GetUnits(_unitsTracker.OwnedUnits, Units.RoachWarren).Any()) {
+        if (_unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.RoachWarren).Any()) {
             return;
         }
 

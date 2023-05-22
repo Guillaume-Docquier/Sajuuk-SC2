@@ -16,7 +16,14 @@ using Action = SC2APIProtocol.Action;
 namespace Bot;
 
 public class Unit: ICanDie, IHavePosition {
+    private readonly IFrameClock _frameClock;
+    private readonly KnowledgeBase _knowledgeBase;
+    private readonly IActionBuilder _actionBuilder;
+    private readonly IActionService _actionService;
+    private readonly ITerrainTracker _terrainTracker;
+    private readonly IRegionsTracker _regionsTracker;
     private readonly IUnitsTracker _unitsTracker;
+
     public readonly HashSet<IWatchUnitsDie> DeathWatchers = new HashSet<IWatchUnitsDie>();
     public UnitTypeData UnitTypeData;
 
@@ -149,41 +156,57 @@ public class Unit: ICanDie, IHavePosition {
     public bool IsOperational => _buildProgress >= 1;
 
     // Units inside extractors are not available. We keep them in memory but they're not in the game for some time
-    public bool IsAvailable => LastSeen >= Controller.Frame;
+    public bool IsAvailable => LastSeen >= _frameClock.CurrentFrame;
 
     public IEnumerable<UnitOrder> OrdersExceptMining => Orders.Where(order => order.AbilityId != Abilities.Move
                                                                               && !Abilities.Gather.Contains(order.AbilityId)
                                                                               && !Abilities.ReturnCargo.Contains(order.AbilityId));
 
     // TODO GD I don't know if I like needing a unitsTracker here. Maybe the logic should be extracted out.
-    public Unit(IUnitsTracker unitsTracker, SC2APIProtocol.Unit unit, ulong frame) {
+    public Unit(
+        IFrameClock frameClock,
+        KnowledgeBase knowledgeBase,
+        IActionBuilder actionBuilder,
+        IActionService actionService,
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker,
+        IUnitsTracker unitsTracker,
+        SC2APIProtocol.Unit rawUnit,
+        ulong lastSeen
+    ) {
+        _frameClock = frameClock;
+        _knowledgeBase = knowledgeBase;
+        _actionBuilder = actionBuilder;
+        _actionService = actionService;
+        _terrainTracker = terrainTracker;
+        _regionsTracker = regionsTracker;
         _unitsTracker = unitsTracker;
 
-        Update(unit, frame);
+        Update(rawUnit, lastSeen);
     }
 
-    public void Update(SC2APIProtocol.Unit unit, ulong frame) {
-        var unitTypeChanged = unit.UnitType != UnitType;
+    public void Update(SC2APIProtocol.Unit rawUnit, ulong lastSeen) {
+        var unitTypeChanged = rawUnit.UnitType != UnitType;
 
-        RawUnitData = unit;
-        _buildProgress = unit.BuildProgress;
+        RawUnitData = rawUnit;
+        _buildProgress = rawUnit.BuildProgress;
 
-        Tag = unit.Tag;
-        UnitType = unit.UnitType;
-        Radius = unit.Radius;
-        Alliance = unit.Alliance;
-        Position = unit.Pos.ToVector3();
-        Orders = unit.Orders;
-        IsVisible = unit.DisplayType == DisplayType.Visible; // TODO GD This is not actually visible as in cloaked
-        LastSeen = frame;
-        Buffs = new HashSet<uint>(unit.BuffIds);
+        Tag = rawUnit.Tag;
+        UnitType = rawUnit.UnitType;
+        Radius = rawUnit.Radius;
+        Alliance = rawUnit.Alliance;
+        Position = rawUnit.Pos.ToVector3();
+        Orders = rawUnit.Orders;
+        IsVisible = rawUnit.DisplayType == DisplayType.Visible; // TODO GD This is not actually visible as in cloaked
+        LastSeen = lastSeen;
+        Buffs = new HashSet<uint>(rawUnit.BuffIds);
 
         if (unitTypeChanged) {
-            UnitTypeData = KnowledgeBase.GetUnitTypeData(unit.UnitType);
+            UnitTypeData = _knowledgeBase.GetUnitTypeData(rawUnit.UnitType);
             Name = UnitTypeData.Name;
             FoodRequired = UnitTypeData.FoodRequired;
 
-            AliasUnitTypeData = UnitTypeData.HasUnitAlias ? KnowledgeBase.GetUnitTypeData(UnitTypeData.UnitAlias) : null;
+            AliasUnitTypeData = UnitTypeData.HasUnitAlias ? _knowledgeBase.GetUnitTypeData(UnitTypeData.UnitAlias) : null;
 
             UpdateWeaponsData(UnitTypeData.Weapons.ToList());
         }
@@ -239,22 +262,22 @@ public class Unit: ICanDie, IHavePosition {
 
     public IRegion GetRegion() {
         // TODO GD I'm not convinced I want to inject stuff into unit, we'll have to revisit that
-        var unitRegion = RegionsTracker.Instance.GetRegion(Position);
+        var unitRegion = _regionsTracker.GetRegion(Position);
         if (unitRegion != null) {
             return unitRegion;
         }
 
         // TODO GD Injecting TerrainTracker here means a circular dependency between the UnitsTracker and TerrainTracker
-        return TerrainTracker.Instance.BuildSearchGrid(Position, gridRadius: 3)
-            .Where(cell => TerrainTracker.Instance.IsWalkable(cell))
-            .Select(cell => RegionsTracker.Instance.GetRegion(cell))
+        return _terrainTracker.BuildSearchGrid(Position, gridRadius: 3)
+            .Where(cell => _terrainTracker.IsWalkable(cell))
+            .Select(cell => _regionsTracker.GetRegion(cell))
             .FirstOrDefault(region => region != null);
     }
 
     // TODO GD Make sure to cancel any other order and prevent orders to be added for this frame
     public void Stop() {
         if (Orders.Any()) {
-            ProcessAction(ActionBuilder.Stop(Tag));
+            ProcessAction(_actionBuilder.Stop(Tag));
         }
     }
 
@@ -302,7 +325,7 @@ public class Unit: ICanDie, IHavePosition {
             return;
         }
 
-        ProcessAction(ActionBuilder.Move(Tag, target));
+        ProcessAction(_actionBuilder.Move(Tag, target));
     }
 
     /// <summary>
@@ -321,7 +344,7 @@ public class Unit: ICanDie, IHavePosition {
             return;
         }
 
-        ProcessAction(ActionBuilder.Attack(Tag, targetUnit.Tag));
+        ProcessAction(_actionBuilder.Attack(Tag, targetUnit.Tag));
     }
 
     /// <summary>
@@ -343,63 +366,63 @@ public class Unit: ICanDie, IHavePosition {
             return;
         }
 
-        ProcessAction(ActionBuilder.AttackMove(Tag, target));
+        ProcessAction(_actionBuilder.AttackMove(Tag, target));
     }
 
     public void TrainUnit(uint unitType, bool queue = false) {
         // TODO GD This should be handled when choosing a producer
         if (!queue && Orders.Count > 0) {
-            var nameOfUnitToTrain = KnowledgeBase.GetUnitTypeData(unitType).Name;
+            var nameOfUnitToTrain = _knowledgeBase.GetUnitTypeData(unitType).Name;
             var orders = string.Join(",", Orders.Select(order => order.AbilityId));
             Logger.Error("A {0} is trying to train {1}, but it already has the orders {2} and queue is false", this, nameOfUnitToTrain, orders);
 
             return;
         }
 
-        ProcessAction(ActionBuilder.TrainUnit(unitType, Tag));
+        ProcessAction(_actionBuilder.TrainUnit(unitType, Tag));
 
-        var targetName = KnowledgeBase.GetUnitTypeData(unitType).Name;
+        var targetName = _knowledgeBase.GetUnitTypeData(unitType).Name;
         Logger.Info("{0} started training {1}", this, targetName);
     }
 
     public void UpgradeInto(uint unitOrBuildingType) {
         // You upgrade a unit or building by training the upgrade from the producer
-        ProcessAction(ActionBuilder.TrainUnit(unitOrBuildingType, Tag));
+        ProcessAction(_actionBuilder.TrainUnit(unitOrBuildingType, Tag));
 
-        var upgradeName = KnowledgeBase.GetUnitTypeData(unitOrBuildingType).Name;
+        var upgradeName = _knowledgeBase.GetUnitTypeData(unitOrBuildingType).Name;
         Logger.Info("Upgrading {0} into {1}", this, upgradeName);
     }
 
     public void PlaceBuilding(uint buildingType, Vector2 target) {
         Manager?.Release(this);
-        ProcessAction(ActionBuilder.PlaceBuilding(buildingType, Tag, target));
+        ProcessAction(_actionBuilder.PlaceBuilding(buildingType, Tag, target));
 
-        var buildingName = KnowledgeBase.GetUnitTypeData(buildingType).Name;
+        var buildingName = _knowledgeBase.GetUnitTypeData(buildingType).Name;
         Logger.Info("{0} started building {1} at {2}", this, buildingName, target);
     }
 
     public void PlaceExtractor(uint buildingType, Unit gas) {
         Manager?.Release(this);
-        ProcessAction(ActionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
+        ProcessAction(_actionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
 
-        var buildingName = KnowledgeBase.GetUnitTypeData(buildingType).Name;
+        var buildingName = _knowledgeBase.GetUnitTypeData(buildingType).Name;
         Logger.Info("{0} started building {1} on gas at {2}", this, buildingName, gas.Position);
     }
 
     public void ResearchUpgrade(uint upgradeType)
     {
-        ProcessAction(ActionBuilder.ResearchUpgrade(upgradeType, Tag));
+        ProcessAction(_actionBuilder.ResearchUpgrade(upgradeType, Tag));
 
-        var researchName = KnowledgeBase.GetUpgradeData(upgradeType).Name;
+        var researchName = _knowledgeBase.GetUpgradeData(upgradeType).Name;
         Logger.Info("{0} started researching {1}", this, researchName);
     }
 
     public void Gather(Unit mineralOrGas) {
-        ProcessAction(ActionBuilder.Gather(Tag, mineralOrGas.Tag));
+        ProcessAction(_actionBuilder.Gather(Tag, mineralOrGas.Tag));
     }
 
     public void ReturnCargo() {
-        ProcessAction(ActionBuilder.ReturnCargo(Tag));
+        ProcessAction(_actionBuilder.ReturnCargo(Tag));
     }
 
     public void UseAbility(uint abilityId, Point2D position = null, ulong targetUnitTag = ulong.MaxValue) {
@@ -411,9 +434,9 @@ public class Unit: ICanDie, IHavePosition {
             RawUnitData.Energy -= energyCost;
         }
 
-        ProcessAction(ActionBuilder.UnitCommand(abilityId, Tag, position, targetUnitTag));
+        ProcessAction(_actionBuilder.UnitCommand(abilityId, Tag, position, targetUnitTag));
 
-        var abilityName = KnowledgeBase.GetAbilityData(abilityId).FriendlyName;
+        var abilityName = _knowledgeBase.GetAbilityData(abilityId).FriendlyName;
         if (targetUnitTag != ulong.MaxValue) {
             if (!_unitsTracker.UnitsByTag.ContainsKey(targetUnitTag)) {
                 Logger.Error("Error with {0} trying to {1} on {2}: The target doesn't exist", this, abilityName, Tag);
@@ -434,7 +457,7 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     private void ProcessAction(Action action) {
-        Controller.AddAction(action);
+        _actionService.AddAction(action);
 
         var order = new UnitOrder
         {
@@ -512,7 +535,7 @@ public class Unit: ICanDie, IHavePosition {
 
     // TODO GD This doesn't work with upgrades
     public bool IsProducing(uint buildingOrUnitType, Vector2 atLocation = default) {
-        var buildingAbilityId = KnowledgeBase.GetUnitTypeData(buildingOrUnitType).AbilityId;
+        var buildingAbilityId = _knowledgeBase.GetUnitTypeData(buildingOrUnitType).AbilityId;
 
         var producingOrder = Orders.FirstOrDefault(order => order.AbilityId == buildingAbilityId);
 

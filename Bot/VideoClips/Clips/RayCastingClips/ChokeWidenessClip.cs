@@ -6,24 +6,31 @@ using Bot.ExtensionMethods;
 using Bot.GameSense;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
+using Bot.Wrapper;
 
 namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class ChokeWidenessClip : Clip {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IController _controller;
+    private readonly IRequestBuilder _requestBuilder;
 
     public ChokeWidenessClip(
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
+        IController controller,
+        IRequestBuilder requestBuilder,
         Vector2 origin,
         Vector2 destination,
         int pauseAtEndOfClipDurationSeconds
     ) : base(pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
+        _controller = controller;
+        _requestBuilder = requestBuilder;
 
-        var centerCameraAnimation = new CenterCameraAnimation(origin, startFrame: 0)
+        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, origin, startFrame: 0)
             .WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
@@ -54,7 +61,7 @@ public class ChokeWidenessClip : Clip {
             previousAnimationEndFrame = rightRayAnimation.PostAnimationEndFrame;
         }
 
-        var panCameraAnimation = new CenterCameraAnimation(destination, startFrame)
+        var panCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, destination, startFrame)
             .WithEndFrame(previousAnimationEndFrame);
         AddAnimation(panCameraAnimation);
     }

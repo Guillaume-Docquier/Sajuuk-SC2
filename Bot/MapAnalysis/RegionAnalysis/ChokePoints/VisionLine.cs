@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Text.Json.Serialization;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
 
@@ -9,26 +8,23 @@ namespace Bot.MapAnalysis.RegionAnalysis.ChokePoints;
 
 public partial class RayCastingChokeFinder {
     public class VisionLine: IHavePosition {
+        private readonly ITerrainTracker _terrainTracker;
+
         public List<Vector2> OrderedTraversedCells { get; }
         public int Angle { get; }
-
         public Vector2 Start { get; }
         public Vector2 End { get; }
-        // TODO GD Get rid of MapAnalyzer.Instance, provide and serialize Position
-        public Vector3 Position => Vector3.Lerp(TerrainTracker.Instance.WithWorldHeight(Start), TerrainTracker.Instance.WithWorldHeight(End), 0.5f);
+        public Vector3 Position => Vector3.Lerp(_terrainTracker.WithWorldHeight(Start), _terrainTracker.WithWorldHeight(End), 0.5f);
         public float Length { get; }
 
-        [JsonConstructor]
-        public VisionLine(List<Vector2> orderedTraversedCells, int angle, Vector2 start, Vector2 end, float length) {
-            OrderedTraversedCells = orderedTraversedCells;
-            Angle = angle;
+        public VisionLine(
+            ITerrainTracker terrainTracker,
+            Vector2 start,
+            Vector2 end,
+            int angle
+        ) {
+            _terrainTracker = terrainTracker;
 
-            Start = start;
-            End = end;
-            Length = length;
-        }
-
-        public VisionLine(Vector2 start, Vector2 end, int angle) {
             var centerOfStart = start.AsWorldGridCenter();
 
             OrderedTraversedCells = start.GetPointsInBetween(end)

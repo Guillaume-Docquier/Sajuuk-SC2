@@ -1,20 +1,23 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using Bot.Algorithms;
-using Bot.GameSense;
 using Bot.MapAnalysis.RegionAnalysis;
 
 namespace Bot.ExtensionMethods;
 
 public static class ArmyExtensions {
-    public static float GetForce(this IEnumerable<Unit> army, bool areWorkersOffensive = false) {
-        return army.Sum(soldier => UnitEvaluator.Instance.EvaluateForce(soldier, areWorkersOffensive));
-    }
-
     public static Vector2 GetCenter(this IEnumerable<Unit> army) {
         var armyList = army.ToList();
-        var armyCenter = Clustering.Instance.GetCenter(armyList);
+        if (armyList.Count <= 0) {
+            Logger.Error("Trying to GetCenter of an empty army");
+
+            return default;
+        }
+
+        var avgX = armyList.Average(soldier => soldier.Position.X);
+        var avgY = armyList.Average(soldier => soldier.Position.Y);
+
+        var armyCenter = new Vector2(avgX, avgY);
 
         return armyList
             .MinBy(soldier => soldier.Position.ToVector2().DistanceTo(armyCenter))!

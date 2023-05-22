@@ -14,15 +14,26 @@ public class BurrowHealing : IUnitsControl {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IRegionsEvaluationsTracker _regionsEvaluationsTracker;
+    private readonly IController _controller;
+    private readonly IDetectionTracker _detectionTracker;
 
     private const double BurrowDownThreshold = 0.5;
     private const double BurrowUpThreshold = 0.6;
 
-    public BurrowHealing(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker, IRegionsTracker regionsTracker, IRegionsEvaluationsTracker regionsEvaluationsTracker) {
+    public BurrowHealing(
+        IUnitsTracker unitsTracker,
+        ITerrainTracker terrainTracker,
+        IRegionsTracker regionsTracker,
+        IRegionsEvaluationsTracker regionsEvaluationsTracker,
+        IController controller,
+        IDetectionTracker detectionTracker
+    ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
         _regionsEvaluationsTracker = regionsEvaluationsTracker;
+        _controller = controller;
+        _detectionTracker = detectionTracker;
     }
 
     public bool IsExecuting() {
@@ -34,18 +45,18 @@ public class BurrowHealing : IUnitsControl {
     // TODO GD We could split this IUnitsControl into 3 distinct ones (Burrow, resurface, tunnel)
     // TODO GD BurrowHealing would execute the 3 sub-controls
     public IReadOnlySet<Unit> Execute(IReadOnlySet<Unit> army) {
-        if (!Controller.ResearchedUpgrades.Contains(Upgrades.Burrow)) {
+        if (!_controller.ResearchedUpgrades.Contains(Upgrades.Burrow)) {
             return army;
         }
 
         var uncontrolledUnits = new HashSet<Unit>(army);
-        var roaches = Controller.GetUnits(army, Units.Roach).ToList();
+        var roaches = _unitsTracker.GetUnits(army, Units.Roach).ToList();
 
         // Burrow
         var roachesThatNeedBurrowing = roaches
             .Where(roach => !roach.IsBurrowed)
             .Where(roach => roach.Integrity <= BurrowDownThreshold)
-            .Where(roach => !DetectionTracker.Instance.IsDetected(roach))
+            .Where(roach => !_detectionTracker.IsDetected(roach))
             .Where(roach => !GetCollidingUnits(roach, checkUnderground: true).Any());
 
         foreach (var roach in roachesThatNeedBurrowing) {
@@ -53,12 +64,12 @@ public class BurrowHealing : IUnitsControl {
             uncontrolledUnits.Remove(roach);
         }
 
-        var canTunnel = Controller.ResearchedUpgrades.Contains(Upgrades.TunnelingClaws);
+        var canTunnel = _controller.ResearchedUpgrades.Contains(Upgrades.TunnelingClaws);
 
         // Resurface
         var roachesThatNeedResurfacing = roaches
             .Where(roach => roach.IsBurrowed)
-            .Where(roach => roach.Integrity >= BurrowUpThreshold || DetectionTracker.Instance.IsDetected(roach));
+            .Where(roach => roach.Integrity >= BurrowUpThreshold || _detectionTracker.IsDetected(roach));
 
         foreach (var roach in roachesThatNeedResurfacing) {
             Resurface(roach, canTunnel);
@@ -70,7 +81,7 @@ public class BurrowHealing : IUnitsControl {
             var roachesThatNeedToTunnel = roaches
                 .Where(roach => roach.IsBurrowed)
                 .Where(roach => roach.Integrity <= BurrowUpThreshold)
-                .Where(roach => !DetectionTracker.Instance.IsDetected(roach));
+                .Where(roach => !_detectionTracker.IsDetected(roach));
 
             foreach (var roach in roachesThatNeedToTunnel) {
                 if (TunnelToSafety(roach)) {
@@ -84,8 +95,8 @@ public class BurrowHealing : IUnitsControl {
 
     // TODO GD Is this necessary? Must we ensure that all roaches properly resurface?
     public void Reset(IReadOnlyCollection<Unit> army) {
-        var canTunnel = Controller.ResearchedUpgrades.Contains(Upgrades.TunnelingClaws);
-        var burrowedRoaches = Controller.GetUnits(army, Units.Roach).Where(roach => roach.IsBurrowed);
+        var canTunnel = _controller.ResearchedUpgrades.Contains(Upgrades.TunnelingClaws);
+        var burrowedRoaches = _unitsTracker.GetUnits(army, Units.Roach).Where(roach => roach.IsBurrowed);
 
         foreach (var burrowedRoach in burrowedRoaches) {
             Resurface(burrowedRoach, canTunnel);
@@ -136,13 +147,13 @@ public class BurrowHealing : IUnitsControl {
     /// <param name="roach">The roach that needs to tunnel out of enemy range.</param>
     /// <returns>True if the unit was given an order, false otherwise.</returns>
     private bool TunnelOutOfEnemyRange(Unit roach) {
-        var enemiesCanHitUs = Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Military).Any(enemy => enemy.IsInAttackRangeOf(roach));
+        var enemiesCanHitUs = _unitsTracker.GetUnits(_unitsTracker.EnemyUnits, Units.Military).Any(enemy => enemy.IsInAttackRangeOf(roach));
         if (!enemiesCanHitUs) {
             return false;
         }
 
         // Run to safety
-        var safestRegion = Controller.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls)
+        var safestRegion = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.TownHalls)
             .Select(townHall => townHall.GetRegion())
             .MinBy(region => _regionsEvaluationsTracker.GetForce(region, Alliance.Enemy));
 

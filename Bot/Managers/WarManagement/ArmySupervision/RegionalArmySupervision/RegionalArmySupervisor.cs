@@ -21,6 +21,7 @@ public class RegionalArmySupervisor : Supervisor {
     private readonly IUnitsControl _offensiveUnitsController;
     private readonly IUnitsControl _defensiveUnitsController;
     private readonly IRegion _targetRegion;
+    private readonly IClustering _clustering;
     private readonly StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState> _stateMachine;
 
     public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
@@ -30,10 +31,12 @@ public class RegionalArmySupervisor : Supervisor {
         IGraphicalDebugger graphicalDebugger,
         IUnitsControlFactory unitsControlFactory,
         IRegionalArmySupervisorStateFactory regionalArmySupervisorStateFactory,
+        IClustering clustering,
         IRegion targetRegion
     ) {
         _unitsTracker = unitsTracker;
         _graphicalDebugger = graphicalDebugger;
+        _clustering = clustering;
 
         _targetRegion = targetRegion;
 
@@ -74,7 +77,7 @@ public class RegionalArmySupervisor : Supervisor {
             .Where(enemy => !enemy.IsFlying) // TODO GD Bad bad hardcode
             .ToList();
 
-        var clusteringResult = Clustering.Instance.DBSCAN(enemies, 2, 3);
+        var clusteringResult = _clustering.DBSCAN(enemies, 2, 3);
 
         return clusteringResult.clusters
             // TODO GD We should also consider any unit in range of the region (like siege tanks up a ramp)

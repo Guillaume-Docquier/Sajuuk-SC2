@@ -13,19 +13,13 @@ using SC2APIProtocol;
 namespace Bot.MapAnalysis.ExpandAnalysis;
 
 public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
-    /// <summary>
-    /// DI: ✔️ The only usages are for static instance creations
-    /// </summary>
-    public static ExpandAnalyzer Instance { get; private set; } = new ExpandAnalyzer(
-        TerrainTracker.Instance,
-        BuildingTracker.Instance,
-        new ExpandUnitsAnalyzer(UnitsTracker.Instance, TerrainTracker.Instance)
-    );
-    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
-
     private readonly ITerrainTracker _terrainTracker;
     private readonly IBuildingTracker _buildingTracker;
     private readonly IExpandUnitsAnalyzer _expandUnitsAnalyzer;
+    private readonly IFrameClock _frameClock;
+    private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IClustering _clustering;
+    private readonly IPathfinder _pathfinder;
 
     private readonly FootprintCalculator _footprintCalculator;
 
@@ -40,17 +34,25 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
     public bool IsAnalysisComplete { get; private set; }  = false;
     public IEnumerable<ExpandLocation> ExpandLocations => _expandLocations;
 
-    private ExpandAnalyzer(ITerrainTracker terrainTracker, IBuildingTracker buildingTracker, IExpandUnitsAnalyzer expandUnitsAnalyzer) {
+    public ExpandAnalyzer(
+        ITerrainTracker terrainTracker,
+        IBuildingTracker buildingTracker,
+        IExpandUnitsAnalyzer expandUnitsAnalyzer,
+        IFrameClock frameClock,
+        IGraphicalDebugger graphicalDebugger,
+        IClustering clustering,
+        IPathfinder pathfinder
+    ) {
         _terrainTracker = terrainTracker;
         _buildingTracker = buildingTracker;
         _expandUnitsAnalyzer = expandUnitsAnalyzer;
+        _frameClock = frameClock;
+        _graphicalDebugger = graphicalDebugger;
+        _clustering = clustering;
+        _pathfinder = pathfinder;
 
         // TODO GD Inject that, probably?
         _footprintCalculator = new FootprintCalculator(_terrainTracker);
-    }
-
-    public void Reset() {
-        Instance = new ExpandAnalyzer(TerrainTracker.Instance, BuildingTracker.Instance, new ExpandUnitsAnalyzer(UnitsTracker.Instance, TerrainTracker.Instance));
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
@@ -59,7 +61,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
         }
 
         // For some reason querying for placement doesn't work before a few seconds after the game starts
-        if (Controller.Frame < TimeUtils.SecsToFrames(5)) {
+        if (_frameClock.CurrentFrame < TimeUtils.SecsToFrames(5)) {
             return;
         }
 
@@ -88,14 +90,14 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
 
         var expandLocations = new List<Vector2>();
         foreach (var resourceCluster in resourceClusters) {
-            var centerPosition = Clustering.Instance.GetBoundingBoxCenter(resourceCluster).AsWorldGridCenter().ToVector2();
+            var centerPosition = _clustering.GetBoundingBoxCenter(resourceCluster).AsWorldGridCenter().ToVector2();
             var searchGrid = _terrainTracker.BuildSearchGrid(centerPosition, gridRadius: ExpandSearchRadius);
 
             var goodBuildSpot = searchGrid.FirstOrDefault(IsValidExpandPlacement);
             if (goodBuildSpot != default) {
                 expandLocations.Add(goodBuildSpot);
-                GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(goodBuildSpot), KnowledgeBase.GameGridCellRadius, Colors.Green);
-                GraphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(centerPosition), KnowledgeBase.GameGridCellRadius, Colors.Yellow);
+                _graphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(goodBuildSpot), KnowledgeBase.GameGridCellRadius, Colors.Green);
+                _graphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(centerPosition), KnowledgeBase.GameGridCellRadius, Colors.Yellow);
             }
         }
 
@@ -119,7 +121,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
 
         foreach (var cell in cellsTooCloseToResource) {
             if (DrawEnabled) {
-                GraphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(cell.AsWorldGridCenter()), Colors.SunbrightOrange);
+                _graphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(cell.AsWorldGridCenter()), Colors.SunbrightOrange);
             }
 
             _tooCloseToResourceGrid[(int)cell.X][(int)cell.Y] = true;
@@ -161,7 +163,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
 
         // ExpandType based on distance to own base
         var rank = 0;
-        foreach (var expandPosition in expandPositions.OrderBy(expandPosition => Pathfinder.Instance.FindPath(expandPosition, _terrainTracker.StartingLocation).Count)) {
+        foreach (var expandPosition in expandPositions.OrderBy(expandPosition => _pathfinder.FindPath(expandPosition, _terrainTracker.StartingLocation).Count)) {
             var (expandType, newRank) = CalculateExpandType(resourceClustersByExpand[expandPosition], blockersByExpand[expandPosition], rank);
             expandTypes[expandPosition] = expandType;
             rank = newRank;
@@ -169,7 +171,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
 
         // ExpandType based on distance to enemy base
         rank = 0;
-        foreach (var expandPosition in expandPositions.OrderBy(expandPosition => Pathfinder.Instance.FindPath(expandPosition, _terrainTracker.EnemyStartingLocation).Count)) {
+        foreach (var expandPosition in expandPositions.OrderBy(expandPosition => _pathfinder.FindPath(expandPosition, _terrainTracker.EnemyStartingLocation).Count)) {
             // Already set, skip
             if (expandTypes.ContainsKey(expandPosition) && expandTypes[expandPosition] != ExpandType.Far) {
                 continue;

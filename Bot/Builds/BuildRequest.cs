@@ -4,6 +4,9 @@ using Bot.GameSense;
 namespace Bot.Builds;
 
 public abstract class BuildRequest {
+    private readonly IController _controller;
+    private readonly KnowledgeBase _knowledgeBase;
+
     private BuildFulfillment _buildFulfillment;
     public BuildFulfillment Fulfillment => _buildFulfillment ??= GenerateBuildFulfillment();
 
@@ -18,6 +21,8 @@ public abstract class BuildRequest {
     public BuildRequestPriority Priority;
 
     protected BuildRequest(
+        IController controller,
+        KnowledgeBase knowledgeBase,
         BuildType buildType,
         uint unitOrUpgradeType,
         int quantity,
@@ -26,6 +31,9 @@ public abstract class BuildRequest {
         BuildBlockCondition blockCondition,
         BuildRequestPriority priority
     ) {
+        _controller = controller;
+        _knowledgeBase = knowledgeBase;
+
         BuildType = buildType;
         UnitOrUpgradeType = unitOrUpgradeType;
         AtSupply = atSupply;
@@ -37,14 +45,14 @@ public abstract class BuildRequest {
 
     public override string ToString() {
         var buildStepUnitOrUpgradeName = BuildType == BuildType.Research
-            ? KnowledgeBase.GetUpgradeData(UnitOrUpgradeType).Name
-            : $"{Fulfillment.Fulfilled}/{Requested} {KnowledgeBase.GetUnitTypeData(UnitOrUpgradeType).Name}";
+            ? _knowledgeBase.GetUpgradeData(UnitOrUpgradeType).Name
+            : $"{Fulfillment.Fulfilled}/{Requested} {_knowledgeBase.GetUnitTypeData(UnitOrUpgradeType).Name}";
 
         var when = $"at {AtSupply} supply";
         if (AtSupply == 0) {
             when = "";
         }
-        else if (AtSupply <= Controller.CurrentSupply) {
+        else if (AtSupply <= _controller.CurrentSupply) {
             when = "now";
         }
 
@@ -53,10 +61,9 @@ public abstract class BuildRequest {
 }
 
 public class QuantityBuildRequest: BuildRequest {
-    private readonly IUnitsTracker _unitsTracker;
-
     public QuantityBuildRequest(
-        IUnitsTracker unitsTracker,
+        IController controller,
+        KnowledgeBase knowledgeBase,
         BuildType buildType,
         uint unitOrUpgradeType,
         int quantity,
@@ -65,20 +72,21 @@ public class QuantityBuildRequest: BuildRequest {
         BuildBlockCondition blockCondition,
         BuildRequestPriority priority
     )
-        : base(buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority) {
-        _unitsTracker = unitsTracker;
-    }
+        : base(controller, knowledgeBase, buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority) {}
 
     protected override BuildFulfillment GenerateBuildFulfillment() {
-        return new QuantityFulfillment(this, _unitsTracker);
+        return new QuantityFulfillment(this);
     }
 }
 
 public class TargetBuildRequest: BuildRequest {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IController _controller;
 
     public TargetBuildRequest(
         IUnitsTracker unitsTracker,
+        IController controller,
+        KnowledgeBase knowledgeBase,
         BuildType buildType,
         uint unitOrUpgradeType,
         int targetQuantity,
@@ -87,11 +95,12 @@ public class TargetBuildRequest: BuildRequest {
         BuildBlockCondition blockCondition,
         BuildRequestPriority priority
     )
-        : base(buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority) {
+        : base(controller, knowledgeBase, buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority) {
         _unitsTracker = unitsTracker;
+        _controller = controller;
     }
 
     protected override BuildFulfillment GenerateBuildFulfillment() {
-        return new TargetFulfillment(this, _unitsTracker);
+        return new TargetFulfillment(_unitsTracker, _controller, this);
     }
 }

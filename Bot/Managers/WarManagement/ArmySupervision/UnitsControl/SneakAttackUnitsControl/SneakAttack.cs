@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.Algorithms;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
@@ -15,6 +16,11 @@ public partial class SneakAttack : IUnitsControl {
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IFrameClock _frameClock;
+    private readonly IController _controller;
+    private readonly IDetectionTracker _detectionTracker;
+    private readonly IUnitEvaluator _unitEvaluator;
+    private readonly IClustering _clustering;
 
     private const float TankRange = 13;
 
@@ -35,12 +41,26 @@ public partial class SneakAttack : IUnitsControl {
         Units.Immortal,
     };
 
-    public SneakAttack(IUnitsTracker unitsTracker, ITerrainTracker terrainTracker, IGraphicalDebugger graphicalDebugger) {
+    public SneakAttack(
+        IUnitsTracker unitsTracker,
+        ITerrainTracker terrainTracker,
+        IGraphicalDebugger graphicalDebugger,
+        IFrameClock frameClock,
+        IController controller,
+        IDetectionTracker detectionTracker,
+        IUnitEvaluator unitEvaluator,
+        IClustering clustering
+    ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
+        _frameClock = frameClock;
+        _controller = controller;
+        _detectionTracker = detectionTracker;
+        _unitEvaluator = unitEvaluator;
+        _clustering = clustering;
 
-        _stateMachine = new StateMachine<SneakAttack, SneakAttackState>(this, new InactiveState(_unitsTracker, _terrainTracker));
+        _stateMachine = new StateMachine<SneakAttack, SneakAttackState>(this, new InactiveState(_unitsTracker, _terrainTracker, _frameClock, _detectionTracker, _unitEvaluator, _clustering));
     }
 
     public bool IsExecuting() {
@@ -48,14 +68,14 @@ public partial class SneakAttack : IUnitsControl {
     }
 
     public IReadOnlySet<Unit> Execute(IReadOnlySet<Unit> army) {
-        var effectiveArmy = Controller.GetUnits(army, Units.Roach).ToList();
+        var effectiveArmy = _unitsTracker.GetUnits(army, Units.Roach).ToList();
         if (!IsViable(effectiveArmy)) {
             Reset(army);
 
             return army;
         }
 
-        _coolDownUntil = Controller.Frame + TimeUtils.SecsToFrames(5);
+        _coolDownUntil = _frameClock.CurrentFrame + TimeUtils.SecsToFrames(5);
 
         _army = effectiveArmy;
         if (_army.Count <= 0) {
@@ -80,7 +100,7 @@ public partial class SneakAttack : IUnitsControl {
             return false;
         }
 
-        if (!DetectionTracker.Instance.IsStealthEffective()) {
+        if (!_detectionTracker.IsStealthEffective()) {
             return false;
         }
 
@@ -98,11 +118,11 @@ public partial class SneakAttack : IUnitsControl {
 
         _targetPosition = default;
 
-        _stateMachine.TransitionTo(new InactiveState(_unitsTracker, _terrainTracker));
+        _stateMachine.TransitionTo(new InactiveState(_unitsTracker, _terrainTracker, _frameClock, _detectionTracker, _unitEvaluator, _clustering));
     }
 
-    private static bool HasProperTech() {
-        return Controller.ResearchedUpgrades.Contains(Upgrades.TunnelingClaws) && Controller.ResearchedUpgrades.Contains(Upgrades.Burrow);
+    private bool HasProperTech() {
+        return _controller.ResearchedUpgrades.Contains(Upgrades.TunnelingClaws) && _controller.ResearchedUpgrades.Contains(Upgrades.Burrow);
     }
 
     private static bool IsArmyGettingEngaged(IEnumerable<Unit> army) {
@@ -112,7 +132,7 @@ public partial class SneakAttack : IUnitsControl {
     }
 
     private IEnumerable<Unit> GetGroundEnemiesInSight(IReadOnlyCollection<Unit> army) {
-        return Controller.GetUnits(_unitsTracker.EnemyUnits, Units.Military)
+        return _unitsTracker.GetUnits(_unitsTracker.EnemyUnits, Units.Military)
             .Where(enemy => enemy.IsVisible)
             .Where(enemy => !enemy.IsFlying)
             .Where(enemy => army.Any(soldier => enemy.DistanceTo(soldier) <= Math.Max(enemy.UnitTypeData.SightRange, soldier.UnitTypeData.SightRange)));
@@ -125,7 +145,7 @@ public partial class SneakAttack : IUnitsControl {
     }
 
     private IEnumerable<Unit> GetPriorityTargetsInOperationRadius(IReadOnlyCollection<Unit> army, float operationRadius) {
-        return Controller
+        return _unitsTracker
             .GetUnits(_unitsTracker.EnemyUnits.Concat(_unitsTracker.EnemyGhostUnits.Values), PriorityTargets)
             .Where(enemy => army.Min(soldier => soldier.DistanceTo(enemy)) <= operationRadius);
     }

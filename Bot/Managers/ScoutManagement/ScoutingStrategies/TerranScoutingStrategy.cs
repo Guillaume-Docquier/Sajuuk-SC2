@@ -14,6 +14,7 @@ namespace Bot.Managers.ScoutManagement.ScoutingStrategies;
 public class TerranScoutingStrategy : IScoutingStrategy {
     private readonly IRegionsTracker _regionsTracker;
     private readonly IScoutingTaskFactory _scoutingTaskFactory;
+    private readonly IFrameClock _frameClock;
 
     private const int TopPriority = 100;
 
@@ -23,16 +24,18 @@ public class TerranScoutingStrategy : IScoutingStrategy {
 
     public TerranScoutingStrategy(
         IRegionsTracker regionsTracker,
-        IScoutingTaskFactory scoutingTaskFactory
+        IScoutingTaskFactory scoutingTaskFactory,
+        IFrameClock frameClock
     ) {
         _regionsTracker = regionsTracker;
         _scoutingTaskFactory = scoutingTaskFactory;
+        _frameClock = frameClock;
     }
 
     public IEnumerable<ScoutingTask> GetNextScoutingTasks() {
         // Stop after 4 minutes just in case to avoid sending overlords to their death
         // We'll need smarter checks to determine if we're safe
-        if (Controller.Frame >= TimeUtils.SecsToFrames(4 * 60)) {
+        if (_frameClock.CurrentFrame >= TimeUtils.SecsToFrames(4 * 60)) {
             if (_isInitialized) {
                 _enemyNaturalScoutingTask.Cancel();
             }

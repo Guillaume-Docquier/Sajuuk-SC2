@@ -15,6 +15,7 @@ public partial class ArmySupervisor {
         private readonly ITerrainTracker _terrainTracker;
         private readonly IRegionsTracker _regionsTracker;
         private readonly IArmySupervisorStateFactory _armySupervisorStateFactory;
+        private readonly IPathfinder _pathfinder;
 
         private static Dictionary<Vector2, bool> _checkedExpandLocations;
         private static readonly Dictionary<Vector2, bool> CheckedPositions = new Dictionary<Vector2, bool>();
@@ -26,13 +27,15 @@ public partial class ArmySupervisor {
             IUnitsTracker unitsTracker,
             ITerrainTracker terrainTracker,
             IRegionsTracker regionsTracker,
-            IArmySupervisorStateFactory armySupervisorStateFactory
+            IArmySupervisorStateFactory armySupervisorStateFactory,
+            IPathfinder pathfinder
         ) {
             _visibilityTracker = visibilityTracker;
             _unitsTracker = unitsTracker;
             _terrainTracker = terrainTracker;
             _regionsTracker = regionsTracker;
             _armySupervisorStateFactory = armySupervisorStateFactory;
+            _pathfinder = pathfinder;
         }
 
         protected override bool TryTransitioning() {
@@ -147,7 +150,7 @@ public partial class ArmySupervisor {
             var nextReachableUncheckedLocations = _regionsTracker.ExpandLocations
                 .Select(expandLocation => expandLocation.Position)
                 .Where(expandLocation => !_checkedExpandLocations[expandLocation])
-                .Where(expandLocation => Pathfinder.Instance.FindPath(armyCenter, expandLocation) != null)
+                .Where(expandLocation => _pathfinder.FindPath(armyCenter, expandLocation) != null)
                 .ToList();
 
             if (nextReachableUncheckedLocations.Count == 0) {
@@ -155,7 +158,7 @@ public partial class ArmySupervisor {
                 ResetCheckedExpandLocations();
             }
             else {
-                var nextTarget = nextReachableUncheckedLocations.MinBy(expandLocation => Pathfinder.Instance.FindPath(armyCenter, expandLocation).Count);
+                var nextTarget = nextReachableUncheckedLocations.MinBy(expandLocation => _pathfinder.FindPath(armyCenter, expandLocation).Count);
                 Logger.Info("<HuntState> next target is: {0}", nextTarget);
                 Context._target = nextTarget;
                 _isNextTargetSet = true;

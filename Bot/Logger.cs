@@ -4,18 +4,23 @@ using System.IO;
 using System.Linq;
 using Bot.Utils;
 
-// ReSharper disable AssignNullToNotNullAttribute
-
 namespace Bot;
 
+// TODO GD Turn Logger into an injected instance
 public static class Logger {
     private static bool _isDisabled = false;
+    private static IFrameClock _frameClock;
+
     private static StreamWriter _fileStream;
     private static bool _stdoutOpen = true;
 
     // Mostly used for tests
     public static void Disable() {
         _isDisabled = true;
+    }
+
+    public static void SetFrameClock(IFrameClock frameClock) {
+        _frameClock = frameClock;
     }
 
     /// <summary>
@@ -25,7 +30,7 @@ public static class Logger {
     /// </summary>
     private static void Initialize() {
         var logFile = "Logs/" + DateTime.UtcNow.ToString("yyyy-MM-dd HH.mm.ss") + ".log";
-        Directory.CreateDirectory(Path.GetDirectoryName(logFile));
+        Directory.CreateDirectory(Path.GetDirectoryName(logFile)!);
 
         _fileStream = new StreamWriter(logFile, append: true);
         _fileStream.AutoFlush = true;
@@ -40,10 +45,11 @@ public static class Logger {
             Initialize();
         }
 
-        var msg = $"[{DateTime.UtcNow:HH:mm:ss} | {TimeUtils.GetGameTimeString(Controller.Frame)} @ {Controller.Frame,5}] {logLevel,7}: {string.Format(line, parameters)}";
+        var msg = $"[{DateTime.UtcNow:HH:mm:ss} | {TimeUtils.GetGameTimeString(_frameClock.CurrentFrame)} @ {_frameClock.CurrentFrame,5}] {logLevel,7}: {string.Format(line, parameters)}";
 
         _fileStream!.WriteLine(msg);
 
+        // TODO GD This is a use case for different logger instances based on mode (ladder vs local)
         // Only write to stdout if it is open (typically in dev)
         if (_stdoutOpen) {
             try {

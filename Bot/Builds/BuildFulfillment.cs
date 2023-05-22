@@ -13,13 +13,10 @@ namespace Bot.Builds;
 /// i.e: Fulfill
 /// </summary>
 public abstract class BuildFulfillment {
-    protected readonly IUnitsTracker UnitsTracker;
-
     protected readonly BuildRequest BuildRequest;
 
-    protected BuildFulfillment(BuildRequest buildRequest, IUnitsTracker unitsTracker) {
+    protected BuildFulfillment(BuildRequest buildRequest) {
         BuildRequest = buildRequest;
-        UnitsTracker = unitsTracker;
     }
 
     public BuildType BuildType => BuildRequest.BuildType;
@@ -41,8 +38,8 @@ public abstract class BuildFulfillment {
 }
 
 public class QuantityFulfillment: BuildFulfillment {
-    public QuantityFulfillment(BuildRequest buildRequest, IUnitsTracker unitsTracker)
-        : base(buildRequest, unitsTracker) {}
+    public QuantityFulfillment(BuildRequest buildRequest)
+        : base(buildRequest) {}
 
     private int _fulfilled = 0;
     public override int Fulfilled => _fulfilled;
@@ -53,25 +50,34 @@ public class QuantityFulfillment: BuildFulfillment {
 }
 
 public class TargetFulfillment: BuildFulfillment {
-    public TargetFulfillment(BuildRequest buildRequest, IUnitsTracker unitsTracker)
-        : base(buildRequest, unitsTracker) {}
+    private readonly IUnitsTracker _unitsTracker;
+    private readonly IController _controller;
+
+    public TargetFulfillment(
+        IUnitsTracker unitsTracker,
+        IController controller,
+        BuildRequest buildRequest)
+        : base(buildRequest) {
+        _unitsTracker = unitsTracker;
+        _controller = controller;
+    }
 
     private int _granted = 0;
 
     public override int Fulfilled {
         get {
             if (BuildRequest.BuildType == BuildType.Research) {
-                return Controller.ResearchedUpgrades.Contains(BuildRequest.UnitOrUpgradeType) || Controller.IsResearchInProgress(BuildRequest.UnitOrUpgradeType) ? 1 : 0;
+                return _controller.ResearchedUpgrades.Contains(BuildRequest.UnitOrUpgradeType) || _controller.IsResearchInProgress(BuildRequest.UnitOrUpgradeType) ? 1 : 0;
             }
 
-            var existingUnitsOrBuildings = Controller.GetUnits(UnitsTracker.OwnedUnits, BuildRequest.UnitOrUpgradeType);
+            var existingUnitsOrBuildings = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, BuildRequest.UnitOrUpgradeType);
             if (Units.Extractors.Contains(BuildRequest.UnitOrUpgradeType)) {
                 // TODO GD When losing the natural, this causes the build to be stuck because it will try to replace gasses that are already taken
                 // Ignore extractors that are not assigned to a townhall. This way we can target X working extractors
                 existingUnitsOrBuildings = existingUnitsOrBuildings.Where(extractor => extractor.Supervisor != null);
             }
 
-            return existingUnitsOrBuildings.Count() + Controller.GetProducersCarryingOrders(BuildRequest.UnitOrUpgradeType).Count();
+            return existingUnitsOrBuildings.Count() + _controller.GetProducersCarryingOrders(BuildRequest.UnitOrUpgradeType).Count();
         }
     }
 

@@ -10,15 +10,23 @@ namespace Bot.GameSense.RegionsEvaluationsTracking;
 
 public class RegionsValueEvaluator : RegionsEvaluator {
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IFrameClock _frameClock;
+    private readonly IUnitEvaluator _unitEvaluator;
 
     private readonly Alliance _alliance;
 
     private static readonly ulong HalfLife = TimeUtils.SecsToFrames(240);
     private static readonly double ExponentialDecayConstant = Math.Log(2) / HalfLife;
 
-    public RegionsValueEvaluator(IUnitsTracker unitsTracker, Alliance alliance, Func<uint> getCurrentFrame)
-        : base("value", getCurrentFrame) {
+    public RegionsValueEvaluator(
+        IUnitsTracker unitsTracker,
+        IFrameClock frameClock,
+        IUnitEvaluator unitEvaluator,
+        Alliance alliance
+    ) : base(frameClock, "value") {
         _unitsTracker = unitsTracker;
+        _frameClock = frameClock;
+        _unitEvaluator = unitEvaluator;
 
         _alliance = alliance;
     }
@@ -43,7 +51,7 @@ public class RegionsValueEvaluator : RegionsEvaluator {
                 continue;
             }
 
-            var forceEvaluation = unitsByRegion[region].Sum(unit => UnitEvaluator.Instance.EvaluateValue(unit) * GetUnitUncertaintyPenalty(unit));
+            var forceEvaluation = unitsByRegion[region].Sum(unit => _unitEvaluator.EvaluateValue(unit) * GetUnitUncertaintyPenalty(unit));
 
             yield return (region, forceEvaluation);
         }
@@ -54,7 +62,7 @@ public class RegionsValueEvaluator : RegionsEvaluator {
     /// </summary>
     /// <param name="unit"></param>
     /// <returns>The value penalty, within ]0, 1]</returns>
-    private static float GetUnitUncertaintyPenalty(Unit unit) {
+    private float GetUnitUncertaintyPenalty(Unit unit) {
         // TODO GD Maybe make terran building that can fly uncertain, but not so much
         // Buildings can be considered static
         if (Units.Buildings.Contains(unit.UnitType)) {
@@ -62,11 +70,11 @@ public class RegionsValueEvaluator : RegionsEvaluator {
         }
 
         // Avoid computing decay for nothing
-        if (Controller.Frame == unit.LastSeen) {
+        if (_frameClock.CurrentFrame == unit.LastSeen) {
             return 1;
         }
 
-        return ExponentialDecayFactor(Controller.Frame - unit.LastSeen);
+        return ExponentialDecayFactor(_frameClock.CurrentFrame - unit.LastSeen);
     }
 
     /// <summary>

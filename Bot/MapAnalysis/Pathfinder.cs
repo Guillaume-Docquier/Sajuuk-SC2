@@ -12,18 +12,16 @@ namespace Bot.MapAnalysis;
 using CellPath = List<Vector2>;
 using IRegionPath = List<IRegion>;
 
-public class Pathfinder {
-    public static Pathfinder Instance { get; private set; } = new Pathfinder(TerrainTracker.Instance);
-    private static IGraphicalDebugger GraphicalDebugger => Debugging.GraphicalDebugging.GraphicalDebugger.Instance;
-
+public class Pathfinder : IPathfinder {
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IGraphicalDebugger _graphicalDebugger;
 
     private const bool DrawEnabled = false; // TODO GD Flag this
 
     /// <summary>
     /// This is public for the performance debugging report, please don't rely on this
     /// </summary>
-    public readonly Dictionary<Vector2, Dictionary<Vector2, CellPath>> CellPathsMemory = new ();
+    public Dictionary<Vector2, Dictionary<Vector2, CellPath>> CellPathsMemory { get; } = new();
 
     /// <summary>
     /// A multi-level cache for region pathfinding
@@ -31,12 +29,12 @@ public class Pathfinder {
     /// </summary>
     private readonly Dictionary<string, Dictionary<IRegion, Dictionary<IRegion, IRegionPath>>> _regionPathsMemory = new ();
 
-    public Pathfinder(ITerrainTracker terrainTracker) {
+    public Pathfinder(
+        ITerrainTracker terrainTracker,
+        IGraphicalDebugger graphicalDebugger
+    ) {
         _terrainTracker = terrainTracker;
-    }
-
-    public void Reset() {
-        Instance = new Pathfinder(TerrainTracker.Instance);
+        _graphicalDebugger = graphicalDebugger;
     }
 
     /// <summary>
@@ -148,7 +146,9 @@ public class Pathfinder {
     /// Invalidate the pathfinding memory.
     /// This is useful if rocks are broken because new paths might be available.
     /// </summary>
-    public void InvalidateCache() {
+    private void InvalidateCache() {
+        // TODO GD Watch neutral units death, check terrain tracker RemoveObstacle
+        Logger.Info("Obstacle removed, invalidating Pathfinder cache and updating region obstruction");
         CellPathsMemory.Clear();
         _regionPathsMemory.Clear();
     }
@@ -159,16 +159,16 @@ public class Pathfinder {
     /// </summary>
     /// <param name="path"></param>
     /// <param name="isKnown"></param>
-    private static void DebugPath(List<Vector2> path, bool isKnown) {
+    private void DebugPath(List<Vector2> path, bool isKnown) {
         if (!DrawEnabled) {
             return;
         }
 
         if (isKnown) {
-            GraphicalDebugger.AddPath(path, Colors.LightGreen, Colors.DarkGreen);
+            _graphicalDebugger.AddPath(path, Colors.LightGreen, Colors.DarkGreen);
         }
         else {
-            GraphicalDebugger.AddPath(path, Colors.LightBlue, Colors.DarkBlue);
+            _graphicalDebugger.AddPath(path, Colors.LightBlue, Colors.DarkBlue);
         }
     }
 
