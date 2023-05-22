@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Bot.Actions;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
@@ -8,7 +9,6 @@ using Bot.Managers;
 using Bot.MapAnalysis.RegionAnalysis;
 using Bot.UnitModules;
 using Bot.Utils;
-using Bot.Wrapper;
 using Google.Protobuf.Collections;
 using SC2APIProtocol;
 using Action = SC2APIProtocol.Action;

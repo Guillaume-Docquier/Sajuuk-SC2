@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Bot.Actions;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;

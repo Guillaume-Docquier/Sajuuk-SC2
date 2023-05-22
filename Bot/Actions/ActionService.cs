@@ -2,7 +2,7 @@
 using SC2APIProtocol;
 using Action = SC2APIProtocol.Action;
 
-namespace Bot;
+namespace Bot.Actions;
 
 public class ActionService : IActionService, INeedUpdating {
     private readonly List<Action> _actions = new List<Action>();

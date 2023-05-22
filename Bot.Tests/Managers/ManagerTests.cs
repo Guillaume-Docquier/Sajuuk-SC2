@@ -1,7 +1,7 @@
-﻿using Bot.GameData;
+﻿using Bot.Actions;
+using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers;
-using Bot.Wrapper;
 using Moq;
 
 namespace Bot.Tests.Managers;

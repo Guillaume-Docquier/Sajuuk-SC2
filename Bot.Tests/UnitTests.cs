@@ -1,7 +1,7 @@
 using System.Numerics;
+using Bot.Actions;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.Wrapper;
 using Moq;
 
 namespace Bot.Tests;

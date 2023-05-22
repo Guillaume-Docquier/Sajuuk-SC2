@@ -1,8 +1,8 @@
-﻿using Bot.GameData;
+﻿using Bot.Actions;
+using Bot.GameData;
 using Bot.GameSense;
 using Bot.Tagging;
 using Bot.Tests.Mocks;
-using Bot.Wrapper;
 using Moq;
 using SC2APIProtocol;
 

@@ -1,5 +1,5 @@
-﻿using Bot.GameData;
-using Bot.Wrapper;
+﻿using Bot.Actions;
+using Bot.GameData;
 
 namespace Bot.GameSense;
 

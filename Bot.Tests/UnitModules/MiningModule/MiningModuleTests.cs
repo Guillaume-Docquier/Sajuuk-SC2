@@ -1,8 +1,8 @@
-﻿using Bot.Debugging.GraphicalDebugging;
+﻿using Bot.Actions;
+using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Tests.Mocks;
-using Bot.Wrapper;
 using Moq;
 
 namespace Bot.Tests.UnitModules.MiningModule;

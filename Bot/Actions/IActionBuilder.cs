@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using SC2APIProtocol;
 
-namespace Bot.Wrapper;
+namespace Bot.Actions;
 
 public interface IActionBuilder {
     public Action TrainUnit(uint unitType, ulong producerTag);
