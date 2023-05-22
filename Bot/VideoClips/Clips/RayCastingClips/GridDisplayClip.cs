@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Numerics;
-using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense;
-using Bot.Requests;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
 

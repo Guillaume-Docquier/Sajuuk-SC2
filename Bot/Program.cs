@@ -10,6 +10,7 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
+using Bot.GameSense.EnemyStrategyTracking.StrategyInterpretation;
 using Bot.GameSense.RegionsEvaluationsTracking;
 using Bot.Managers;
 using Bot.Managers.EconomyManagement;
@@ -369,7 +370,8 @@ public class Program {
         var chatService = new ChatService(actionService, actionBuilder);
         var taggingService = new TaggingService(frameClock, chatService);
         var enemyRaceTracker = new EnemyRaceTracker(taggingService, unitsTracker);
-        var enemyStrategyTracker = new EnemyStrategyTracker(taggingService, enemyRaceTracker, unitsTracker, regionsTracker, knowledgeBase, frameClock);
+        var strategyInterpreterFactory = new StrategyInterpreterFactory(frameClock, knowledgeBase, enemyRaceTracker, regionsTracker);
+        var enemyStrategyTracker = new EnemyStrategyTracker(taggingService, unitsTracker, strategyInterpreterFactory);
 
         var incomeTracker = new IncomeTracker(taggingService, unitsTracker, frameClock);
 

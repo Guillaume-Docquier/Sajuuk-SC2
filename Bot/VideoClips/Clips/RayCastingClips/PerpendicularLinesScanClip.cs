@@ -4,7 +4,6 @@ using System.Numerics;
 using Bot.Algorithms;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
-using Bot.Requests;
 using Bot.Utils;
 using Bot.VideoClips.Manim.Animations;
 using SC2APIProtocol;

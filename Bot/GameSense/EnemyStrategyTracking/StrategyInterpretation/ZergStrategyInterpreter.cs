@@ -6,11 +6,11 @@ using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Utils;
 using SC2APIProtocol;
 
-namespace Bot.GameSense.EnemyStrategyTracking;
+namespace Bot.GameSense.EnemyStrategyTracking.StrategyInterpretation;
 
 public class ZergStrategyInterpreter : IStrategyInterpreter {
-    private readonly IRegionsTracker _regionsTracker;
     private readonly IFrameClock _frameClock;
+    private readonly IRegionsTracker _regionsTracker;
 
     private bool _isInitialized = false;
 
@@ -41,12 +41,12 @@ public class ZergStrategyInterpreter : IStrategyInterpreter {
     private static readonly ulong OneBaseTiming = TimeUtils.SecsToFrames(2 * 60 + 30);
 
     public ZergStrategyInterpreter(
-        IRegionsTracker regionsTracker,
+        IFrameClock frameClock,
         KnowledgeBase knowledgeBase,
-        IFrameClock frameClock
+        IRegionsTracker regionsTracker
     ) {
-        _regionsTracker = regionsTracker;
         _frameClock = frameClock;
+        _regionsTracker = regionsTracker;
 
         _spawningPoolBuildTime = (ulong)knowledgeBase.GetUnitTypeData(Units.SpawningPool).BuildTime;
         _zerglingBuildTime = (ulong)knowledgeBase.GetUnitTypeData(Units.Zergling).BuildTime;
