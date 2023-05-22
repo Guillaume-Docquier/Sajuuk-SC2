@@ -13,29 +13,26 @@ namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class PerpendicularLinesScanClip : Clip {
     private readonly ITerrainTracker _terrainTracker;
-    private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IAnimationFactory _animationFactory;
 
     public PerpendicularLinesScanClip(
         ITerrainTracker terrainTracker,
-        IGraphicalDebugger graphicalDebugger,
-        IController controller,
-        IRequestBuilder requestBuilder,
-        IRequestService requestService,
+        IAnimationFactory animationFactory,
         Vector2 sceneLocation,
         int pauseAtEndOfClipDurationSeconds
-    ) : base(pauseAtEndOfClipDurationSeconds) {
+    ) : base(animationFactory, pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
-        _graphicalDebugger = graphicalDebugger;
+        _animationFactory = animationFactory;
 
-        var centerCameraAnimation = new CenterCameraAnimation(controller, requestBuilder, requestService, sceneLocation, startFrame: 0)
+        var centerCameraAnimation = _animationFactory.CreateCenterCameraAnimation(sceneLocation, startFrame: 0)
             .WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
-        var locationAnimation = new CellDrawingAnimation(_terrainTracker, _graphicalDebugger, _terrainTracker.WithWorldHeight(sceneLocation), centerCameraAnimation.AnimationEndFrame)
+        var locationAnimation = _animationFactory.CreateCellDrawingAnimation(_terrainTracker.WithWorldHeight(sceneLocation), centerCameraAnimation.AnimationEndFrame)
             .WithDurationInSeconds(1);
         AddAnimation(locationAnimation);
 
-        var pauseAnimation = new PauseAnimation(locationAnimation.AnimationEndFrame)
+        var pauseAnimation = _animationFactory.CreatePauseAnimation(locationAnimation.AnimationEndFrame)
             .WithDurationInSeconds(2);
         AddAnimation(pauseAnimation);
 
@@ -68,7 +65,7 @@ public class PerpendicularLinesScanClip : Clip {
     }
 
     private int DrawRay(Vector2 origin, Vector2 destination, int startFrame, Color color) {
-        var lineDrawingAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(origin), _terrainTracker.WithWorldHeight(destination), color, startFrame)
+        var lineDrawingAnimation = _animationFactory.CreateLineDrawingAnimation(_terrainTracker.WithWorldHeight(origin), _terrainTracker.WithWorldHeight(destination), color, startFrame)
             .WithPostAnimationDurationInFrames(1);
 
         AddAnimation(lineDrawingAnimation);

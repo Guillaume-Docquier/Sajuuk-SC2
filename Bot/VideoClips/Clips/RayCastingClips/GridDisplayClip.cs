@@ -12,21 +12,18 @@ namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class GridDisplayClip : Clip {
     private readonly ITerrainTracker _terrainTracker;
-    private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IAnimationFactory _animationFactory;
 
     public GridDisplayClip(
         ITerrainTracker terrainTracker,
-        IGraphicalDebugger graphicalDebugger,
-        IController controller,
-        IRequestBuilder requestBuilder,
-        IRequestService requestService,
+        IAnimationFactory animationFactory,
         Vector2 sceneLocation,
         int pauseAtEndOfClipDurationSeconds = 5
-    ) : base(pauseAtEndOfClipDurationSeconds) {
+    ) : base(animationFactory, pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
-        _graphicalDebugger = graphicalDebugger;
+        _animationFactory = animationFactory;
 
-        var centerCameraAnimation = new CenterCameraAnimation(controller, requestBuilder, requestService, sceneLocation, startFrame: 0).WithDurationInSeconds(1);
+        var centerCameraAnimation = _animationFactory.CreateCenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
         ShowGridClosestFirst(sceneLocation, centerCameraAnimation.AnimationEndFrame);
@@ -42,7 +39,7 @@ public class GridDisplayClip : Clip {
             var relativeDistance = cell.DistanceTo(origin) / maxDistance;
             var startFrame = startAt + (int)(relativeDistance * animationTotalDuration);
 
-            var squareAnimation = new CellDrawingAnimation(_terrainTracker, _graphicalDebugger, _terrainTracker.WithWorldHeight(cell), startFrame).WithDurationInSeconds(0.5f);
+            var squareAnimation = _animationFactory.CreateCellDrawingAnimation(_terrainTracker.WithWorldHeight(cell), startFrame).WithDurationInSeconds(0.5f);
             AddAnimation(squareAnimation);
 
             endFrame = Math.Max(endFrame, squareAnimation.AnimationEndFrame);

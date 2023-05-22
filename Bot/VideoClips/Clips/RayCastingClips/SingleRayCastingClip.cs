@@ -12,30 +12,21 @@ namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class SingleRayCastingClip : Clip {
     private readonly ITerrainTracker _terrainTracker;
-    private readonly IGraphicalDebugger _graphicalDebugger;
-    private readonly IController _controller;
-    private readonly IRequestBuilder _requestBuilder;
-    private readonly IRequestService _requestService;
+    private readonly IAnimationFactory _animationFactory;
 
     public SingleRayCastingClip(
         ITerrainTracker terrainTracker,
-        IGraphicalDebugger graphicalDebugger,
-        IController controller,
-        IRequestBuilder requestBuilder,
-        IRequestService requestService,
+        IAnimationFactory animationFactory,
         Vector2 sceneLocation,
         int pauseAtEndOfClipDurationSeconds = 5
-    ) : base(pauseAtEndOfClipDurationSeconds) {
+    ) : base(animationFactory, pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
-        _graphicalDebugger = graphicalDebugger;
-        _controller = controller;
-        _requestBuilder = requestBuilder;
-        _requestService = requestService;
+        _animationFactory = animationFactory;
 
-        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, _requestService, sceneLocation, startFrame: 0).WithDurationInSeconds(1);
+        var centerCameraAnimation = _animationFactory.CreateCenterCameraAnimation(sceneLocation, startFrame: 0).WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
-        var pauseAnimation = new PauseAnimation(centerCameraAnimation.AnimationEndFrame).WithDurationInSeconds(1);
+        var pauseAnimation = _animationFactory.CreatePauseAnimation(centerCameraAnimation.AnimationEndFrame).WithDurationInSeconds(1);
         AddAnimation(pauseAnimation);
 
         var rayCast = RayCasting.RayCast(sceneLocation, MathUtils.DegToRad(30), cell => !_terrainTracker.IsWalkable(cell)).ToList();
@@ -47,15 +38,15 @@ public class SingleRayCastingClip : Clip {
     private int CastRay(Vector2 rayStart, Vector2 rayEnd, int startAt) {
         var showPointReadyFrame = ShowPoint(rayStart, startAt);
 
-        var pauseAnimation = new PauseAnimation(showPointReadyFrame).WithDurationInSeconds(1);
+        var pauseAnimation = _animationFactory.CreatePauseAnimation(showPointReadyFrame).WithDurationInSeconds(1);
         AddAnimation(pauseAnimation);
 
-        var lineDrawingAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(rayStart), _terrainTracker.WithWorldHeight(rayEnd), ColorService.Instance.RayColor, pauseAnimation.AnimationEndFrame)
+        var lineDrawingAnimation = _animationFactory.CreateLineDrawingAnimation(_terrainTracker.WithWorldHeight(rayStart), _terrainTracker.WithWorldHeight(rayEnd), ColorService.Instance.RayColor, pauseAnimation.AnimationEndFrame)
             .WithConstantRate(3);
 
         AddAnimation(lineDrawingAnimation);
 
-        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, _requestService, rayEnd, lineDrawingAnimation.StartFrame).WithEndFrame(lineDrawingAnimation.AnimationEndFrame);
+        var centerCameraAnimation = _animationFactory.CreateCenterCameraAnimation(rayEnd, lineDrawingAnimation.StartFrame).WithEndFrame(lineDrawingAnimation.AnimationEndFrame);
         AddAnimation(centerCameraAnimation);
 
         ShowPoint(rayEnd, lineDrawingAnimation.AnimationEndFrame);
@@ -64,14 +55,14 @@ public class SingleRayCastingClip : Clip {
     }
 
     private void ShowWall(Vector2 wall, int startAt) {
-        var squareAnimation = new CellDrawingAnimation(_terrainTracker, _graphicalDebugger, _terrainTracker.WithWorldHeight(wall), startAt)
+        var squareAnimation = _animationFactory.CreateCellDrawingAnimation(_terrainTracker.WithWorldHeight(wall), startAt)
             .WithDurationInSeconds(0.5f);
 
         AddAnimation(squareAnimation);
     }
 
     private int ShowPoint(Vector2 origin, int startAt) {
-        var sphereAnimation = new SphereDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(origin), radius: 0.15f, ColorService.Instance.PointColor, startAt)
+        var sphereAnimation = _animationFactory.CreateSphereDrawingAnimation(_terrainTracker.WithWorldHeight(origin), radius: 0.15f, ColorService.Instance.PointColor, startAt)
             .WithDurationInSeconds(0.5f);
 
         AddAnimation(sphereAnimation);

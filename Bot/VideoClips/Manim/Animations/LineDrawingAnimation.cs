@@ -18,7 +18,14 @@ public class LineDrawingAnimation : Animation<LineDrawingAnimation> {
 
     private readonly float _lineLength;
 
-    public LineDrawingAnimation(IGraphicalDebugger graphicalDebugger, Vector3 lineStart, Vector3 lineEnd, Color color, int startFrame, int thickness = 3): base(startFrame) {
+    public LineDrawingAnimation(
+        IGraphicalDebugger graphicalDebugger,
+        Vector3 lineStart,
+        Vector3 lineEnd,
+        Color color,
+        int startFrame,
+        int thickness
+    ) : base(startFrame) {
         _graphicalDebugger = graphicalDebugger;
 
         _lineStart = lineStart;

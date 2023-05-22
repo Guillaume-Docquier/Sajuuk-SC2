@@ -15,7 +15,13 @@ public class CellDrawingAnimation : Animation<CellDrawingAnimation> {
     private readonly float _padding;
     private readonly Color _cellColor;
 
-    public CellDrawingAnimation(ITerrainTracker terrainTracker, IGraphicalDebugger graphicalDebugger, Vector3 cell, int startFrame, float padding = 0f) : base(startFrame) {
+    public CellDrawingAnimation(
+        ITerrainTracker terrainTracker,
+        IGraphicalDebugger graphicalDebugger,
+        Vector3 cell,
+        int startFrame,
+        float padding
+    ) : base(startFrame) {
         _graphicalDebugger = graphicalDebugger;
 
         _cell = cell;

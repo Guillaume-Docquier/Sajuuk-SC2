@@ -12,8 +12,11 @@ public abstract class Clip {
 
     public bool IsDone { get; private set; } = false;
 
-    protected Clip(int pauseAtEndOfClipDurationSeconds) {
-        _pauseAtEndOfClipAnimation = new PauseAnimation(startFrame: 0).WithDurationInSeconds(pauseAtEndOfClipDurationSeconds);
+    protected Clip(
+        IAnimationFactory animationFactory,
+        int pauseAtEndOfClipDurationSeconds
+    ) {
+        _pauseAtEndOfClipAnimation = animationFactory.CreatePauseAnimation(startFrame: 0).WithDurationInSeconds(pauseAtEndOfClipDurationSeconds);
         _animations.Add(_pauseAtEndOfClipAnimation);
     }
 

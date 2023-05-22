@@ -28,6 +28,7 @@ using Bot.Requests;
 using Bot.Scenarios;
 using Bot.Tagging;
 using Bot.VideoClips;
+using Bot.VideoClips.Manim.Animations;
 using Bot.Wrapper;
 using SC2APIProtocol;
 
@@ -111,6 +112,7 @@ public class Program {
             services.Controller,
             services.RequestBuilder,
             services.RequestService,
+            new AnimationFactory(services.TerrainTracker, services.GraphicalDebugger, services.Controller, services.RequestBuilder, services.RequestService),
             MapFileName
         );
 

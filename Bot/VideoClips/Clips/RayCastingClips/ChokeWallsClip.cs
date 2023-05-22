@@ -14,21 +14,18 @@ namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class ChokeWallsClip : Clip {
     private readonly ITerrainTracker _terrainTracker;
-    private readonly IGraphicalDebugger _graphicalDebugger;
+    private readonly IAnimationFactory _animationFactory;
 
     public ChokeWallsClip(
         ITerrainTracker terrainTracker,
-        IGraphicalDebugger graphicalDebugger,
-        IController controller,
-        IRequestBuilder requestBuilder,
-        IRequestService requestService,
+        IAnimationFactory animationFactory,
         Vector2 sceneLocation,
         int pauseAtEndOfClipDurationSeconds
-    ) : base(pauseAtEndOfClipDurationSeconds) {
+    ) : base(animationFactory, pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
-        _graphicalDebugger = graphicalDebugger;
+        _animationFactory = animationFactory;
 
-        var centerCameraAnimation = new CenterCameraAnimation(controller, requestBuilder, requestService, sceneLocation, startFrame: 0)
+        var centerCameraAnimation = _animationFactory.CreateCenterCameraAnimation(sceneLocation, startFrame: 0)
             .WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
@@ -40,7 +37,7 @@ public class ChokeWallsClip : Clip {
             }
         }
 
-        var pauseAnimation = new PauseAnimation(centerCameraAnimation.AnimationEndFrame).WithDurationInSeconds(2);
+        var pauseAnimation = _animationFactory.CreatePauseAnimation(centerCameraAnimation.AnimationEndFrame).WithDurationInSeconds(2);
         AddAnimation(pauseAnimation);
 
         var showWallsAnimationEndFrame = ShowCells(sceneLocation, visibleCells.Where(cell => !terrainTracker.IsWalkable(cell)).ToList(), pauseAnimation.AnimationEndFrame);
@@ -56,7 +53,7 @@ public class ChokeWallsClip : Clip {
             var relativeDistance = cell.DistanceTo(origin) / maxDistance;
             var startFrame = startAt + (int)(relativeDistance * animationTotalDuration);
 
-            var squareAnimation = new CellDrawingAnimation(_terrainTracker, _graphicalDebugger, _terrainTracker.WithWorldHeight(cell), startFrame).WithDurationInSeconds(1f);
+            var squareAnimation = _animationFactory.CreateCellDrawingAnimation(_terrainTracker.WithWorldHeight(cell), startFrame).WithDurationInSeconds(1f);
             AddAnimation(squareAnimation);
 
             endFrame = Math.Max(endFrame, squareAnimation.AnimationEndFrame);

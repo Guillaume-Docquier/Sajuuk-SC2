@@ -11,7 +11,13 @@ public class SphereDrawingAnimation : Animation<SphereDrawingAnimation> {
     private readonly float _radius;
     private readonly Color _color;
 
-    public SphereDrawingAnimation(IGraphicalDebugger graphicalDebugger, Vector3 center, float radius, Color color, int startFrame) : base(startFrame) {
+    public SphereDrawingAnimation(
+        IGraphicalDebugger graphicalDebugger,
+        Vector3 center,
+        float radius,
+        Color color,
+        int startFrame
+    ) : base(startFrame) {
         _graphicalDebugger = graphicalDebugger;
         _center = center;
         _radius = radius;

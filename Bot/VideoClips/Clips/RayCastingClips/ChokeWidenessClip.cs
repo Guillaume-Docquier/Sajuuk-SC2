@@ -12,32 +12,23 @@ namespace Bot.VideoClips.Clips.RayCastingClips;
 
 public class ChokeWidenessClip : Clip {
     private readonly ITerrainTracker _terrainTracker;
-    private readonly IGraphicalDebugger _graphicalDebugger;
-    private readonly IController _controller;
-    private readonly IRequestBuilder _requestBuilder;
-    private readonly IRequestService _requestService;
+    private readonly IAnimationFactory _animationFactory;
 
     public ChokeWidenessClip(
         ITerrainTracker terrainTracker,
-        IGraphicalDebugger graphicalDebugger,
-        IController controller,
-        IRequestBuilder requestBuilder,
-        IRequestService requestService,
+        IAnimationFactory animationFactory,
         Vector2 origin,
         Vector2 destination,
         int pauseAtEndOfClipDurationSeconds
-    ) : base(pauseAtEndOfClipDurationSeconds) {
+    ) : base(animationFactory, pauseAtEndOfClipDurationSeconds) {
         _terrainTracker = terrainTracker;
-        _graphicalDebugger = graphicalDebugger;
-        _controller = controller;
-        _requestBuilder = requestBuilder;
-        _requestService = requestService;
+        _animationFactory = animationFactory;
 
-        var centerCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, _requestService, origin, startFrame: 0)
+        var centerCameraAnimation = _animationFactory.CreateCenterCameraAnimation(origin, startFrame: 0)
             .WithDurationInSeconds(1);
         AddAnimation(centerCameraAnimation);
 
-        var pauseAnimation = new PauseAnimation(centerCameraAnimation.AnimationEndFrame)
+        var pauseAnimation = _animationFactory.CreatePauseAnimation(centerCameraAnimation.AnimationEndFrame)
             .WithDurationInSeconds(5);
         AddAnimation(pauseAnimation);
 
@@ -51,20 +42,20 @@ public class ChokeWidenessClip : Clip {
 
             var left = currentPosition.TranslateTowards(destination, 1).RotateAround(currentPosition, MathUtils.DegToRad(90));
             var leftRayEnd = RayCasting.RayCast(currentPosition, left, cell => !_terrainTracker.IsWalkable(cell)).Last();
-            var leftRayAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(currentPosition), _terrainTracker.WithWorldHeight(leftRayEnd.RayIntersection), Colors.DarkRed, previousAnimationEndFrame)
+            var leftRayAnimation = _animationFactory.CreateLineDrawingAnimation(_terrainTracker.WithWorldHeight(currentPosition), _terrainTracker.WithWorldHeight(leftRayEnd.RayIntersection), Colors.DarkRed, previousAnimationEndFrame)
                 .WithPostAnimationDurationInFrames(1);
             AddAnimation(leftRayAnimation);
 
             var right = currentPosition.TranslateTowards(destination, 1).RotateAround(currentPosition, MathUtils.DegToRad(-90));
             var rightRayEnd = RayCasting.RayCast(currentPosition, right, cell => !_terrainTracker.IsWalkable(cell)).Last();
-            var rightRayAnimation = new LineDrawingAnimation(_graphicalDebugger, _terrainTracker.WithWorldHeight(currentPosition), _terrainTracker.WithWorldHeight(rightRayEnd.RayIntersection), Colors.DarkRed, previousAnimationEndFrame)
+            var rightRayAnimation = _animationFactory.CreateLineDrawingAnimation(_terrainTracker.WithWorldHeight(currentPosition), _terrainTracker.WithWorldHeight(rightRayEnd.RayIntersection), Colors.DarkRed, previousAnimationEndFrame)
                 .WithPostAnimationDurationInFrames(1);
             AddAnimation(rightRayAnimation);
 
             previousAnimationEndFrame = rightRayAnimation.PostAnimationEndFrame;
         }
 
-        var panCameraAnimation = new CenterCameraAnimation(_controller, _requestBuilder, _requestService, destination, startFrame)
+        var panCameraAnimation = _animationFactory.CreateCenterCameraAnimation(destination, startFrame)
             .WithEndFrame(previousAnimationEndFrame);
         AddAnimation(panCameraAnimation);
     }
