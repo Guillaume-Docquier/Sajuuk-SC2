@@ -5,9 +5,10 @@ using Bot.ExtensionMethods;
 namespace Bot.UnitModules;
 
 public class CapacityModule: UnitModule, IWatchUnitsDie {
-    public const string Tag = "CapacityModule";
+    public const string ModuleTag = "CapacityModule";
 
     private readonly IGraphicalDebugger _graphicalDebugger;
+
     private readonly Unit _unit;
     private readonly bool _showDebugInfo;
 
@@ -29,18 +30,12 @@ public class CapacityModule: UnitModule, IWatchUnitsDie {
 
     public int AvailableCapacity => MaxCapacity - AssignedUnits.Count;
 
-    public static CapacityModule Install(IGraphicalDebugger graphicalDebugger, Unit unit, int maxCapacity, bool showDebugInfo = true) {
-        if (!PreInstallCheck(Tag, unit)) {
-            return null;
-        }
-
-        var capacityModule = new CapacityModule(graphicalDebugger, unit, maxCapacity, showDebugInfo);
-        unit.Modules.Add(Tag, capacityModule);
-
-        return capacityModule;
-    }
-
-    private CapacityModule(IGraphicalDebugger graphicalDebugger, Unit unit, int maxCapacity, bool showDebugInfo) {
+    public CapacityModule(
+        IGraphicalDebugger graphicalDebugger,
+        Unit unit,
+        int maxCapacity,
+        bool showDebugInfo = true
+    ) : base(ModuleTag) {
         _graphicalDebugger = graphicalDebugger;
         _unit = unit;
         MaxCapacity = maxCapacity;

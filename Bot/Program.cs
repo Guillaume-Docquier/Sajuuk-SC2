@@ -30,6 +30,7 @@ using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Requests;
 using Bot.Scenarios;
 using Bot.Tagging;
+using Bot.UnitModules;
 using Bot.VideoClips;
 using Bot.VideoClips.Manim.Animations;
 using Bot.Wrapper;
@@ -176,13 +177,10 @@ public class Program {
 
         var economySupervisorFactory = new EconomySupervisorFactory(
             services.UnitsTracker,
-            services.BuildingTracker,
-            services.RegionsTracker,
-            services.CreepTracker,
             buildRequestFactory,
             services.GraphicalDebugger,
             services.FrameClock,
-            services.Pathfinder
+            services.UnitModuleInstaller
         );
 
         var scoutSupervisorFactory = new ScoutSupervisorFactory(
@@ -271,7 +269,8 @@ public class Program {
             services.Controller,
             services.FrameClock,
             services.UnitEvaluator,
-            services.Pathfinder
+            services.Pathfinder,
+            services.UnitModuleInstaller
         );
 
         var warManagerStateFactory = new WarManagerStateFactory(
@@ -295,11 +294,7 @@ public class Program {
             services.EnemyStrategyTracker,
             services.UnitsTracker,
             services.EnemyRaceTracker,
-            services.VisibilityTracker,
             services.TerrainTracker,
-            services.RegionsTracker,
-            services.BuildingTracker,
-            services.CreepTracker,
             economySupervisorFactory,
             scoutSupervisorFactory,
             warManagerStateFactory,
@@ -310,7 +305,7 @@ public class Program {
             services.FrameClock,
             services.KnowledgeBase,
             services.SpendingTracker,
-            services.Pathfinder
+            services.UnitModuleInstaller
         );
 
         var botDebugger = new BotDebugger(
@@ -438,6 +433,7 @@ public class Program {
         );
 
         var detectionTracker = new DetectionTracker(unitsTracker, controller, knowledgeBase);
+        var unitModuleInstaller = new UnitModuleInstaller(unitsTracker, graphicalDebugger, buildingTracker, regionsTracker, creepTracker, pathfinder, visibilityTracker, terrainTracker, frameClock);
 
         // We do this to avoid circular dependencies between unit, unitsTracker, terrainTracker and regionsTracker
         // I don't 100% like it but it seems worth it.
@@ -477,6 +473,7 @@ public class Program {
             ActionService = actionService,
             RequestService = requestService,
             ProtobufProxy = protobufProxy,
+            UnitModuleInstaller = unitModuleInstaller,
             ExpandAnalyzer = expandAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different GameConnection implementation
             RegionAnalyzer = regionAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different GameConnection implementation
         };
@@ -511,6 +508,7 @@ public class Program {
         public IActionService ActionService { get; init; }
         public IRequestService RequestService { get; init; }
         public IProtobufProxy ProtobufProxy { get; init; }
+        public IUnitModuleInstaller UnitModuleInstaller { get; init; }
 
         public IExpandAnalyzer ExpandAnalyzer { get; init; }
         public IRegionAnalyzer RegionAnalyzer { get; init; }

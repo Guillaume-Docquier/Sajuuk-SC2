@@ -6,9 +6,9 @@ using Bot.GameSense;
 namespace Bot.UnitModules;
 
 public class AttackPriorityModule: UnitModule {
-    private readonly IUnitsTracker _unitsTracker;
+    public const string ModuleTag = "AttackPriorityModule";
 
-    public const string Tag = "AttackPriorityModule";
+    private readonly IUnitsTracker _unitsTracker;
 
     // TODO GD Get Unit specific priorities
     private static readonly HashSet<uint> PriorityTargets = new HashSet<uint>
@@ -21,15 +21,12 @@ public class AttackPriorityModule: UnitModule {
 
     private readonly Unit _unit;
 
-    private AttackPriorityModule(Unit unit, IUnitsTracker unitsTracker) {
-        _unit = unit;
+    public AttackPriorityModule(
+        IUnitsTracker unitsTracker,
+        Unit unit
+    ) : base(ModuleTag) {
         _unitsTracker = unitsTracker;
-    }
-
-    public static void Install(Unit unit, IUnitsTracker unitsTracker) {
-        if (PreInstallCheck(Tag, unit)) {
-            unit.Modules.Add(Tag, new AttackPriorityModule(unit, unitsTracker));
-        }
+        _unit = unit;
     }
 
     protected override void DoExecute() {

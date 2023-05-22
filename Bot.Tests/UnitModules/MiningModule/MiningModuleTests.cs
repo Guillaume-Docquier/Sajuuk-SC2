@@ -27,21 +27,12 @@ public class MiningModuleTests : BaseTestClass {
     }
 
     [Fact]
-    public void GivenNullWorker_WhenInstalling_DoesNotInstall() {
-        // Act
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, null, null);
-
-        // Assert
-        Assert.Null(miningModule);
-    }
-
-    [Fact]
-    public void GivenNullResource_WhenInstalling_DoesNotAssignResource() {
+    public void GivenNullResource_WhenNewMiningModule_DoesNotAssignResource() {
         // Arrange
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
 
         // Act
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, null);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, null);
 
         // Assert
         Assert.NotNull(miningModule);
@@ -50,12 +41,12 @@ public class MiningModuleTests : BaseTestClass {
     }
 
     [Fact]
-    public void GivenNullResource_WhenInstalling_DisablesModule() {
+    public void GivenNullResource_WhenNewMiningModule_DisablesModule() {
         // Arrange
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, null);
 
         // Act
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, null);
         var executed = miningModule.Execute();
 
         // Assert
@@ -68,15 +59,16 @@ public class MiningModuleTests : BaseTestClass {
 
     [Theory]
     [MemberData(nameof(MineralsTestData))]
-    public void GivenMineralFieldWithCapacityModule_WhenInstalling_AssignsMineralFieldAndUpdatesCapacityModule(uint mineralFieldType) {
+    public void GivenMineralFieldWithCapacityModule_WhenNewMiningModule_AssignsMineralFieldAndUpdatesCapacityModule(uint mineralFieldType) {
         // Arrange
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
 
         var resource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, mineralFieldType);
-        var capacityModule = Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, resource, 1);
+        var capacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, resource, 1);
+        resource.Modules.Add(capacityModule.Tag, capacityModule);
 
         // Act
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, resource);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, resource);
 
         // Assert
         Assert.NotNull(miningModule);
@@ -91,15 +83,16 @@ public class MiningModuleTests : BaseTestClass {
 
     [Theory]
     [MemberData(nameof(GasGeysersTestData))]
-    public void GivenGasGeyserWithCapacityModule_WhenInstalling_AssignsGasGeyserAndUpdatesCapacityModule(uint gasGeyserType) {
+    public void GivenGasGeyserWithCapacityModule_WhenNewMiningModule_AssignsGasGeyserAndUpdatesCapacityModule(uint gasGeyserType) {
         // Arrange
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
 
         var resource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, gasGeyserType);
-        var capacityModule = Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, resource, 1);
+        var capacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, resource, 1);
+        resource.Modules.Add(capacityModule.Tag, capacityModule);
 
         // Act
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, resource);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, resource);
 
         // Assert
         Assert.NotNull(miningModule);
@@ -111,15 +104,14 @@ public class MiningModuleTests : BaseTestClass {
     [Theory]
     [MemberData(nameof(MineralsTestData))]
     [MemberData(nameof(GasGeysersTestData))]
-    public void GivenResourceWithCapacityModule_WhenInstalling_EnablesModule(uint resourceType) {
+    public void GivenResourceWithCapacityModule_WhenNewMiningModule_EnablesModule(uint resourceType) {
         // Arrange
         var resource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
-        Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, resource, 1);
+        var capacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, resource, 1);
+        resource.Modules.Add(capacityModule.Tag, capacityModule);
 
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, resource);
-
-        var miningModule = Bot.UnitModules.UnitModule.Get<Bot.UnitModules.MiningModule>(worker);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, resource);
 
         // Act
         var executed = miningModule.Execute();
@@ -131,25 +123,26 @@ public class MiningModuleTests : BaseTestClass {
     [Theory]
     [MemberData(nameof(MineralsTestData))]
     [MemberData(nameof(GasGeysersTestData))]
-    public void GivenResourceWithoutCapacityModule_WhenInstalling_Throws(uint resourceType) {
+    public void GivenResourceWithoutCapacityModule_WhenNewMiningModule_Throws(uint resourceType) {
         // Arrange
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
         var resource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
 
         // Act & Assert
-        Assert.Throws<NullReferenceException>(() => Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, resource));
+        Assert.Throws<NullReferenceException>(() => new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, resource));
     }
 
     [Fact]
-    public void GivenNotAResourceResource_WhenInstalling_Throws() {
+    public void GivenNotAResourceResource_WhenNewMiningModule_Throws() {
         // Arrange
         var notAResource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Zergling);
-        Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, notAResource, 1);
+        var capacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, notAResource, 1);
+        notAResource.Modules.Add(capacityModule.Tag, capacityModule);
 
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, notAResource));
+        Assert.Throws<ArgumentException>(() => new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, notAResource));
     }
 
     [Theory]
@@ -158,13 +151,15 @@ public class MiningModuleTests : BaseTestClass {
     public void GivenResourceWithCapacityModule_WhenAssigningResourceWithoutAllowingReleasingPreviousOne_DoesNothing(uint resourceType) {
         // Arrange
         var initialResource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
-        var initialCapacityModule = Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, initialResource, 1);
+        var initialCapacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, initialResource, 1);
+        initialResource.Modules.Add(initialCapacityModule.Tag, initialCapacityModule);
 
         var newResource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
-        var newCapacityModule = Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, newResource, 1);
+        var newCapacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, newResource, 1);
+        newResource.Modules.Add(newCapacityModule.Tag, newCapacityModule);
 
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, initialResource);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, initialResource);
 
         // Act
         miningModule.AssignResource(newResource, releasePreviouslyAssignedResource: false);
@@ -181,13 +176,15 @@ public class MiningModuleTests : BaseTestClass {
     public void GivenResourceWithCapacityModule_WhenAssigningResourceAndAllowingReleasingPreviousOne_ReleasesThePreviousResourceAndUpdatesCapacityModule(uint resourceType) {
         // Arrange
         var initialResource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
-        var initialCapacityModule = Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, initialResource, 1);
+        var initialCapacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, initialResource, 1);
+        initialResource.Modules.Add(initialCapacityModule.Tag, initialCapacityModule);
 
         var newResource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
-        var newCapacityModule = Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, newResource, 1);
+        var newCapacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, newResource, 1);
+        newResource.Modules.Add(newCapacityModule.Tag, newCapacityModule);
 
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, initialResource);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, initialResource);
 
         // Act
         miningModule.AssignResource(newResource, releasePreviouslyAssignedResource: true);
@@ -203,11 +200,12 @@ public class MiningModuleTests : BaseTestClass {
     [MemberData(nameof(GasGeysersTestData))]
     public void GivenResourceWithCapacityModule_WhenAssigningNullResourceAndAllowingReleasingPreviousOne_ReleasesThePreviousResourceAndUpdatesCapacityModule(uint resourceType) {
         // Arrange
-        var initialResource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
-        var initialCapacityModule = Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, initialResource, 1);
+        var resource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
+        var capacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, resource, 1);
+        resource.Modules.Add(capacityModule.Tag, capacityModule);
 
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, initialResource);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, resource);
 
         // Act
         miningModule.AssignResource(null, releasePreviouslyAssignedResource: true);
@@ -215,7 +213,7 @@ public class MiningModuleTests : BaseTestClass {
         // Assert
         Assert.Null(miningModule.AssignedResource);
         Assert.Equal(Resources.ResourceType.None, miningModule.ResourceType);
-        Assert.Empty(initialCapacityModule.AssignedUnits);
+        Assert.Empty(capacityModule.AssignedUnits);
     }
 
     [Theory]
@@ -223,32 +221,35 @@ public class MiningModuleTests : BaseTestClass {
     [MemberData(nameof(GasGeysersTestData))]
     public void GivenResourceWithCapacityModule_WhenAssigningNullResourceWithoutAllowingReleasingPreviousOne_DoesNothing(uint resourceType) {
         // Arrange
-        var initialResource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
-        var initialCapacityModule = Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, initialResource, 1);
+        var resource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
+        var capacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, resource, 1);
+        resource.Modules.Add(capacityModule.Tag, capacityModule);
 
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, initialResource);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, resource);
 
         // Act
         miningModule.AssignResource(null, releasePreviouslyAssignedResource: false);
 
         // Assert
-        Assert.Equal(initialResource, miningModule.AssignedResource);
-        Assert.Equal(Resources.GetResourceType(initialResource), miningModule.ResourceType);
-        Assert.Single(initialCapacityModule.AssignedUnits);
+        Assert.Equal(resource, miningModule.AssignedResource);
+        Assert.Equal(Resources.GetResourceType(resource), miningModule.ResourceType);
+        Assert.Single(capacityModule.AssignedUnits);
     }
 
     [Fact]
     public void GivenNullResource_WhenAssigningNotAResourceWithCapacityModule_Throws() {
         // Arrange
         var initialResource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.MineralField);
-        Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, initialResource, 1);
+        var initialCapacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, initialResource, 1);
+        initialResource.Modules.Add(initialCapacityModule.Tag, initialCapacityModule);
 
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, initialResource);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, initialResource);
 
         var notAResource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Zergling);
-        Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, notAResource, 1);
+        var capacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, notAResource, 1);
+        notAResource.Modules.Add(capacityModule.Tag, capacityModule);
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() => miningModule.AssignResource(notAResource, releasePreviouslyAssignedResource: true));
@@ -259,11 +260,12 @@ public class MiningModuleTests : BaseTestClass {
     [MemberData(nameof(GasGeysersTestData))]
     public void GivenResourceWithCapacityModule_WhenReleasingResourceWithoutAllowingToUpdateCapacityModule_UnsetsAssignedResourceButDoesntUpdateCapacityModule(uint resourceType) {
         // Arrange
-        var initialResource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
-        var initialCapacityModule = Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, initialResource, 1);
+        var resource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
+        var capacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, resource, 1);
+        resource.Modules.Add(capacityModule.Tag, capacityModule);
 
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, initialResource);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, resource);
 
         // Act
         miningModule.ReleaseResource(updateCapacityModule: false);
@@ -271,7 +273,7 @@ public class MiningModuleTests : BaseTestClass {
         // Assert
         Assert.Null(miningModule.AssignedResource);
         Assert.Equal(Resources.ResourceType.None, miningModule.ResourceType);
-        Assert.Single(initialCapacityModule.AssignedUnits);
+        Assert.Single(capacityModule.AssignedUnits);
     }
 
     [Theory]
@@ -279,11 +281,12 @@ public class MiningModuleTests : BaseTestClass {
     [MemberData(nameof(GasGeysersTestData))]
     public void GivenResourceWithCapacityModule_WhenReleasingResourceAndAllowingToUpdateCapacityModule_UnsetsAssignedResourceAndUpdatesCapacityModule(uint resourceType) {
         // Arrange
-        var initialResource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
-        var initialCapacityModule = Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, initialResource, 1);
+        var resource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
+        var capacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, resource, 1);
+        resource.Modules.Add(capacityModule.Tag, capacityModule);
 
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, initialResource);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, resource);
 
         // Act
         miningModule.ReleaseResource(updateCapacityModule: true);
@@ -291,7 +294,7 @@ public class MiningModuleTests : BaseTestClass {
         // Assert
         Assert.Null(miningModule.AssignedResource);
         Assert.Equal(Resources.ResourceType.None, miningModule.ResourceType);
-        Assert.Empty(initialCapacityModule.AssignedUnits);
+        Assert.Empty(capacityModule.AssignedUnits);
     }
 
     [Theory]
@@ -300,10 +303,11 @@ public class MiningModuleTests : BaseTestClass {
     public void GivenResourceWithCapacityModule_WhenReleasingResource_DisablesModule(uint resourceType) {
         // Arrange
         var resource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
-        Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, resource, 1);
+        var capacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, resource, 1);
+        resource.Modules.Add(capacityModule.Tag, capacityModule);
 
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, resource);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, resource);
 
         // Act
         miningModule.ReleaseResource(updateCapacityModule: false);
@@ -319,10 +323,12 @@ public class MiningModuleTests : BaseTestClass {
     public void GivenResourceWithCapacityModule_WhenUninstalling_ReleasesWorkerFromResourceCapacityModule(uint resourceType) {
         // Arrange
         var resource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
-        var capacityModule =  Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, resource, 1);
+        var capacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, resource, 1);
+        resource.Modules.Add(capacityModule.Tag, capacityModule);
 
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, resource);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, resource);
+        worker.Modules.Add(miningModule.Tag, miningModule);
 
         // Act
         Bot.UnitModules.UnitModule.Uninstall<Bot.UnitModules.MiningModule>(worker);
@@ -337,10 +343,12 @@ public class MiningModuleTests : BaseTestClass {
     public void GivenResourceWithoutCapacityModule_WhenUninstalling_DoesNothing(uint resourceType) {
         // Arrange
         var resource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, resourceType);
-        Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, resource, 1);
+        var capacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, resource, 1);
+        resource.Modules.Add(capacityModule.Tag, capacityModule);
 
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, resource);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, resource);
+        worker.Modules.Add(miningModule.Tag, miningModule);
 
         Bot.UnitModules.UnitModule.Uninstall<Bot.UnitModules.CapacityModule>(resource);
 
@@ -355,7 +363,8 @@ public class MiningModuleTests : BaseTestClass {
     public void GivenNullResource_WhenUninstalling_DoesNothing() {
         // Arrange
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, null);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, null);
+        worker.Modules.Add(miningModule.Tag, miningModule);
 
         // Act
         var exception = Record.Exception(() => Bot.UnitModules.UnitModule.Uninstall<Bot.UnitModules.MiningModule>(worker));
@@ -368,15 +377,16 @@ public class MiningModuleTests : BaseTestClass {
     public void GivenResourceWithCapacityModule_WhenToString_ThenReturnsStringWithWorkerInfo() {
         // Arrange
         var resource = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.MineralField);
-        Bot.UnitModules.CapacityModule.Install(_graphicalDebuggerMock.Object, resource, 1);
+        var capacityModule = new Bot.UnitModules.CapacityModule(_graphicalDebuggerMock.Object, resource, 1);
+        resource.Modules.Add(capacityModule.Tag, capacityModule);
 
         var worker = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, Units.Drone);
-        var miningModule = Bot.UnitModules.MiningModule.Install(_graphicalDebuggerMock.Object, worker, resource);
+        var miningModule = new Bot.UnitModules.MiningModule(_graphicalDebuggerMock.Object, worker, resource);
 
         // Act
         var stringRepresentation = miningModule.ToString();
 
         // Assert
-        Assert.Equal($"{worker}_{Bot.UnitModules.MiningModule.Tag}", stringRepresentation);
+        Assert.Equal($"{worker}_{miningModule.Tag}", stringRepresentation);
     }
 }

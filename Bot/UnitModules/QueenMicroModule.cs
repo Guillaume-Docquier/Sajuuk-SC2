@@ -7,46 +7,32 @@ using Bot.MapAnalysis;
 namespace Bot.UnitModules;
 
 public class QueenMicroModule: UnitModule, IWatchUnitsDie {
+    public const string ModuleTag = "QueenMicroModule";
+
     private readonly IBuildingTracker _buildingTracker;
     private readonly IRegionsTracker _regionsTracker;
-
     private readonly ICreepTracker _creepTracker;
     private readonly IPathfinder _pathfinder;
-
-    public const string Tag = "QueenMicroModule";
 
     private Unit _queen;
     private Unit _assignedTownHall;
 
-    private QueenMicroModule(
-        Unit queen,
-        Unit assignedTownHall,
+    public QueenMicroModule(
         IBuildingTracker buildingTracker,
         IRegionsTracker regionsTracker,
         ICreepTracker creepTracker,
-        IPathfinder pathfinder
-    ) {
-        _queen = queen;
+        IPathfinder pathfinder,
+        Unit queen,
+        Unit assignedTownHall
+    ) : base(ModuleTag) {
         _buildingTracker = buildingTracker;
         _regionsTracker = regionsTracker;
         _creepTracker = creepTracker;
         _pathfinder = pathfinder;
 
+        _queen = queen;
         _queen.AddDeathWatcher(this);
         AssignTownHall(assignedTownHall);
-    }
-
-    public static void Install(
-        Unit queen,
-        Unit assignedTownHall,
-        IBuildingTracker buildingTracker,
-        IRegionsTracker regionsTracker,
-        ICreepTracker creepTracker,
-        IPathfinder pathfinder
-    ) {
-        if (PreInstallCheck(Tag, queen)) {
-            queen.Modules.Add(Tag, new QueenMicroModule(queen, assignedTownHall, buildingTracker, regionsTracker, creepTracker, pathfinder));
-        }
     }
 
     public void AssignTownHall(Unit townHall) {

@@ -8,6 +8,7 @@ using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.WarManagement.ArmySupervision;
 using Bot.Tagging;
+using Bot.UnitModules;
 using Bot.Utils;
 using SC2APIProtocol;
 
@@ -61,7 +62,8 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         IGraphicalDebugger graphicalDebugger,
         IFrameClock frameClock,
         IController controller,
-        IUnitEvaluator unitEvaluator
+        IUnitEvaluator unitEvaluator,
+        IUnitModuleInstaller unitModuleInstaller
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
@@ -83,7 +85,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
         _armyBuildRequest = _buildRequestFactory.CreateTargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Normal);
         BuildRequests.Add(_armyBuildRequest);
 
-        Assigner = new WarManagerAssigner<FinisherBehaviour>(this, _unitsTracker);
+        Assigner = new WarManagerAssigner<FinisherBehaviour>(unitModuleInstaller, this);
         Dispatcher = new FinisherDispatcher(this);
         Releaser = new WarManagerReleaser<FinisherBehaviour>(this);
 

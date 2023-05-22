@@ -11,6 +11,7 @@ using Bot.Managers.WarManagement.States.Finisher;
 using Bot.Managers.WarManagement.States.MidGame;
 using Bot.MapAnalysis;
 using Bot.Tagging;
+using Bot.UnitModules;
 
 namespace Bot.Managers.WarManagement.States;
 
@@ -33,6 +34,7 @@ public class WarManagerBehaviourFactory : IWarManagerBehaviourFactory {
     private readonly IFrameClock _frameClock;
     private readonly IUnitEvaluator _unitEvaluator;
     private readonly IPathfinder _pathfinder;
+    private readonly IUnitModuleInstaller _unitModuleInstaller;
 
     public WarManagerBehaviourFactory(
         ITaggingService taggingService,
@@ -52,7 +54,8 @@ public class WarManagerBehaviourFactory : IWarManagerBehaviourFactory {
         IController controller,
         IFrameClock frameClock,
         IUnitEvaluator unitEvaluator,
-        IPathfinder pathfinder
+        IPathfinder pathfinder,
+        IUnitModuleInstaller unitModuleInstaller
     ) {
         _taggingService = taggingService;
         _debuggingFlagsTracker = debuggingFlagsTracker;
@@ -72,17 +75,18 @@ public class WarManagerBehaviourFactory : IWarManagerBehaviourFactory {
         _frameClock = frameClock;
         _unitEvaluator = unitEvaluator;
         _pathfinder = pathfinder;
+        _unitModuleInstaller = unitModuleInstaller;
     }
 
     public EarlyGameBehaviour CreateEarlyGameBehaviour(WarManager warManager) {
-        return new EarlyGameBehaviour(warManager, _taggingService, _debuggingFlagsTracker, _unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _warSupervisorFactory, _buildRequestFactory, _graphicalDebugger, _techTree, _controller, _unitEvaluator, _pathfinder);
+        return new EarlyGameBehaviour(warManager, _taggingService, _debuggingFlagsTracker, _unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _warSupervisorFactory, _buildRequestFactory, _graphicalDebugger, _techTree, _controller, _unitEvaluator, _pathfinder, _unitModuleInstaller);
     }
 
     public MidGameBehaviour CreateMidGameBehaviour(WarManager warManager) {
-        return new MidGameBehaviour(warManager, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _scoutSupervisorFactory, _warSupervisorFactory, _buildRequestFactory, _graphicalDebugger, _scoutingTaskFactory, _techTree, _controller, _unitEvaluator, _pathfinder);
+        return new MidGameBehaviour(warManager, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _regionsTracker, _regionsEvaluationsTracker, _scoutSupervisorFactory, _warSupervisorFactory, _buildRequestFactory, _graphicalDebugger, _scoutingTaskFactory, _techTree, _controller, _unitEvaluator, _pathfinder, _unitModuleInstaller);
     }
 
     public FinisherBehaviour CreateFinisherBehaviour(WarManager warManager) {
-        return new FinisherBehaviour(warManager, _taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _warSupervisorFactory, _buildRequestFactory, _graphicalDebugger, _frameClock, _controller, _unitEvaluator);
+        return new FinisherBehaviour(warManager, _taggingService, _enemyRaceTracker, _visibilityTracker, _debuggingFlagsTracker, _unitsTracker, _terrainTracker, _regionsTracker, _warSupervisorFactory, _buildRequestFactory, _graphicalDebugger, _frameClock, _controller, _unitEvaluator, _unitModuleInstaller);
     }
 }

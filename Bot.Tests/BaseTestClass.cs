@@ -10,8 +10,10 @@ public class BaseTestClass :
 
     // TODO GD Remove/replace the commented code once the DI refactor is complete
     protected BaseTestClass() {
-        KnowledgeBase = new KnowledgeBase();
-        KnowledgeBase.Data = KnowledgeBaseDataStore.Load();
+        KnowledgeBase = new KnowledgeBase
+        {
+            Data = KnowledgeBaseDataStore.Load()
+        };
     }
 
     public void Dispose() {

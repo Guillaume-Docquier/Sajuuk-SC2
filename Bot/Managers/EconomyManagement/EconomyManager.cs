@@ -7,7 +7,7 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.Managers.EconomyManagement.TownHallSupervision;
-using Bot.MapAnalysis;
+using Bot.UnitModules;
 using Bot.Utils;
 
 namespace Bot.Managers.EconomyManagement;
@@ -15,19 +15,16 @@ namespace Bot.Managers.EconomyManagement;
 public sealed partial class EconomyManager : Manager {
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
-    private readonly IBuildingTracker _buildingTracker;
-    private readonly IRegionsTracker _regionsTracker;
-    private readonly ICreepTracker _creepTracker;
     private readonly IEconomySupervisorFactory _economySupervisorFactory;
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IController _controller;
     private readonly IFrameClock _frameClock;
     private readonly KnowledgeBase _knowledgeBase;
+    private readonly BuildManager _buildManager;
+    private readonly IUnitModuleInstaller _unitModuleInstaller;
+    private readonly ISpendingTracker _spendingTracker;
 
     private const int MaxDroneCount = 70;
-    private readonly BuildManager _buildManager;
-    private readonly ISpendingTracker _spendingTracker;
-    private readonly IPathfinder _pathfinder;
 
     private const uint GasDroneCountLoweringDelay = (int)(TimeUtils.FramesPerSecond * 15);
     private int _requiredDronesInGas = 0;
@@ -57,9 +54,6 @@ public sealed partial class EconomyManager : Manager {
     public EconomyManager(
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
-        IBuildingTracker buildingTracker,
-        IRegionsTracker regionsTracker,
-        ICreepTracker creepTracker,
         IEconomySupervisorFactory economySupervisorFactory,
         IBuildRequestFactory buildRequestFactory,
         IGraphicalDebugger graphicalDebugger,
@@ -67,23 +61,19 @@ public sealed partial class EconomyManager : Manager {
         IFrameClock frameClock,
         KnowledgeBase knowledgeBase,
         ISpendingTracker spendingTracker,
-        IPathfinder pathfinder,
-        BuildManager buildManager
+        BuildManager buildManager,
+        IUnitModuleInstaller unitModuleInstaller
     ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
-        _buildingTracker = buildingTracker;
-        _regionsTracker = regionsTracker;
-        _creepTracker = creepTracker;
         _economySupervisorFactory = economySupervisorFactory;
         _graphicalDebugger = graphicalDebugger;
         _controller = controller;
         _frameClock = frameClock;
         _knowledgeBase = knowledgeBase;
         _spendingTracker = spendingTracker;
-        _pathfinder = pathfinder;
-
         _buildManager = buildManager;
+        _unitModuleInstaller = unitModuleInstaller;
 
         Assigner = new EconomyManagerAssigner(this);
         Dispatcher = new EconomyManagerDispatcher(this);

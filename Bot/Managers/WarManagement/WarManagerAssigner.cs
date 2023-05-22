@@ -1,18 +1,20 @@
-﻿using Bot.GameSense;
-using Bot.UnitModules;
+﻿using Bot.UnitModules;
 
 namespace Bot.Managers.WarManagement;
 
 public class WarManagerAssigner<T>: Assigner<T> {
-    private readonly IUnitsTracker _unitsTracker;
+    private readonly IUnitModuleInstaller _unitModuleInstaller;
 
-    public WarManagerAssigner(T client, IUnitsTracker unitsTracker) : base(client) {
-        _unitsTracker = unitsTracker;
+    public WarManagerAssigner(
+        IUnitModuleInstaller unitModuleInstaller,
+        T client
+    ) : base(client) {
+        _unitModuleInstaller = unitModuleInstaller;
     }
 
     public override void Assign(Unit unit) {
         Logger.Debug("({0}) Assigned {1}", Client, unit);
-        ChangelingTargetingModule.Install(unit, _unitsTracker);
-        AttackPriorityModule.Install(unit, _unitsTracker);
+        _unitModuleInstaller.InstallChangelingTargetingModule(unit);
+        _unitModuleInstaller.InstallAttackPriorityModule(unit);
     }
 }

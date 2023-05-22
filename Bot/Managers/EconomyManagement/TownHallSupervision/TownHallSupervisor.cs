@@ -6,7 +6,6 @@ using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.MapAnalysis;
 using Bot.UnitModules;
 using SC2APIProtocol;
 
@@ -14,12 +13,9 @@ namespace Bot.Managers.EconomyManagement.TownHallSupervision;
 
 public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IBuildingTracker _buildingTracker;
-    private readonly IRegionsTracker _regionsTracker;
-    private readonly ICreepTracker _creepTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IFrameClock _frameClock;
-    private readonly IPathfinder _pathfinder;
+    private readonly IUnitModuleInstaller _unitModuleInstaller;
 
     private readonly ulong _id;
     private readonly Color _color;
@@ -69,23 +65,17 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
 
     public TownHallSupervisor(
         IUnitsTracker unitsTracker,
-        IBuildingTracker buildingTracker,
-        IRegionsTracker regionsTracker,
-        ICreepTracker creepTracker,
         IBuildRequestFactory buildRequestFactory,
         IGraphicalDebugger graphicalDebugger,
         IFrameClock frameClock,
-        IPathfinder pathfinder,
+        IUnitModuleInstaller unitModuleInstaller,
         Unit townHall,
         Color color
     ) {
         _unitsTracker = unitsTracker;
-        _buildingTracker = buildingTracker;
-        _regionsTracker = regionsTracker;
-        _creepTracker = creepTracker;
         _graphicalDebugger = graphicalDebugger;
         _frameClock = frameClock;
-        _pathfinder = pathfinder;
+        _unitModuleInstaller = unitModuleInstaller;
 
         _id = townHall.Tag;
         _color = color;

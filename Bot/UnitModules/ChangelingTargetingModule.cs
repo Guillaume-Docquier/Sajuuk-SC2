@@ -5,21 +5,18 @@ using Bot.GameSense;
 namespace Bot.UnitModules;
 
 public class ChangelingTargetingModule: UnitModule {
-    private readonly IUnitsTracker _unitsTracker;
+    public const string ModuleTag = "ChangelingTargetingModule";
 
-    public const string Tag = "ChangelingTargetingModule";
+    private readonly IUnitsTracker _unitsTracker;
 
     private readonly Unit _unit;
 
-    private ChangelingTargetingModule(Unit unit, IUnitsTracker unitsTracker) {
+    public ChangelingTargetingModule(
+        IUnitsTracker unitsTracker,
+        Unit unit
+    ) : base(ModuleTag) {
         _unit = unit;
         _unitsTracker = unitsTracker;
-    }
-
-    public static void Install(Unit unit, IUnitsTracker unitsTracker) {
-        if (PreInstallCheck(Tag, unit)) {
-            unit.Modules.Add(Tag, new ChangelingTargetingModule(unit, unitsTracker));
-        }
     }
 
     protected override void DoExecute() {

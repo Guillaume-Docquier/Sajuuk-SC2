@@ -13,6 +13,7 @@ using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
 using Bot.Tagging;
+using Bot.UnitModules;
 using SC2APIProtocol;
 
 namespace Bot.Managers.WarManagement.States.EarlyGame;
@@ -61,7 +62,8 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         TechTree techTree,
         IController controller,
         IUnitEvaluator unitEvaluator,
-        IPathfinder pathfinder
+        IPathfinder pathfinder,
+        IUnitModuleInstaller unitModuleInstaller
     ) {
         _warManager = warManager;
         _taggingService = taggingService;
@@ -80,7 +82,7 @@ public class EarlyGameBehaviour : IWarManagerBehaviour {
         _armyBuildRequest = _buildRequestFactory.CreateTargetBuildRequest(BuildType.Train, Units.Roach, targetQuantity: 100, priority: BuildRequestPriority.Low);
         BuildRequests.Add(_armyBuildRequest);
 
-        Assigner = new WarManagerAssigner<EarlyGameBehaviour>(this, _unitsTracker);
+        Assigner = new WarManagerAssigner<EarlyGameBehaviour>(unitModuleInstaller, this);
         Dispatcher = new EarlyGameDispatcher(this);
         Releaser = new WarManagerReleaser<EarlyGameBehaviour>(this);
 

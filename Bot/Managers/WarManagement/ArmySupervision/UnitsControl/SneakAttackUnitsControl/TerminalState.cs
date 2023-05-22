@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using Bot.Algorithms;
-using Bot.GameSense;
 
 namespace Bot.Managers.WarManagement.ArmySupervision.UnitsControl.SneakAttackUnitsControl;
 

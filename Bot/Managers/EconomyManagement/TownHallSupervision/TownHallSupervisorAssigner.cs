@@ -5,7 +5,7 @@ using Bot.UnitModules;
 namespace Bot.Managers.EconomyManagement.TownHallSupervision;
 
 public partial class TownHallSupervisor {
-    private class TownHallSupervisorAssigner: IAssigner {
+    private class TownHallSupervisorAssigner : IAssigner {
         private const int MaxExtractorsPerGas = 1;
 
         private readonly TownHallSupervisor _supervisor;
@@ -58,8 +58,7 @@ public partial class TownHallSupervisor {
             }
 
             _supervisor.TownHall = townHall;
-
-            DebugLocationModule.Install(_supervisor._graphicalDebugger, _supervisor.TownHall, _supervisor._color);
+            _supervisor._unitModuleInstaller.InstallDebugLocationModule(_supervisor.TownHall, _supervisor._color);
 
             LogAssignment(townHall);
         }
@@ -71,15 +70,14 @@ public partial class TownHallSupervisor {
             }
 
             _supervisor.Queen = queen;
-
-            DebugLocationModule.Install(_supervisor._graphicalDebugger, queen, _supervisor._color);
+            _supervisor._unitModuleInstaller.InstallDebugLocationModule(queen, _supervisor._color);
 
             var queenMicroModule = UnitModule.Get<QueenMicroModule>(queen);
             if (queenMicroModule != null) {
                 queenMicroModule.AssignTownHall(_supervisor.TownHall);
             }
             else {
-                QueenMicroModule.Install(queen, _supervisor.TownHall, _supervisor._buildingTracker, _supervisor._regionsTracker, _supervisor._creepTracker, _supervisor._pathfinder);
+                _supervisor._unitModuleInstaller.InstallQueenMicroModule(queen, _supervisor.TownHall);
             }
 
             LogAssignment(queen);
@@ -88,8 +86,8 @@ public partial class TownHallSupervisor {
         private void AssignWorker(Unit worker) {
             _supervisor._workers.Add(worker);
 
-            DebugLocationModule.Install(_supervisor._graphicalDebugger, worker, _supervisor._color);
-            MiningModule.Install(_supervisor._graphicalDebugger, worker, null);
+            _supervisor._unitModuleInstaller.InstallDebugLocationModule(worker, _supervisor._color);
+            _supervisor._unitModuleInstaller.InstallMiningModule(worker, null);
 
             LogAssignment(worker);
         }
@@ -99,8 +97,8 @@ public partial class TownHallSupervisor {
 
             _supervisor._extractors.Add(extractor);
 
-            DebugLocationModule.Install(_supervisor._graphicalDebugger, extractor, _supervisor._color);
-            CapacityModule.Install(_supervisor._graphicalDebugger, extractor, Resources.MaxDronesPerExtractor);
+            _supervisor._unitModuleInstaller.InstallDebugLocationModule(extractor, _supervisor._color);
+            _supervisor._unitModuleInstaller.InstallCapacityModule(extractor, Resources.MaxDronesPerExtractor);
 
             UnitModule.Get<CapacityModule>(_supervisor._gasses.First(gas => gas.DistanceTo(extractor) < 1)).Assign(extractor); // TODO GD Make this cleaner
 
@@ -112,8 +110,8 @@ public partial class TownHallSupervisor {
 
             _supervisor._minerals.Add(mineral);
 
-            DebugLocationModule.Install(_supervisor._graphicalDebugger, mineral, _supervisor._color);
-            CapacityModule.Install(_supervisor._graphicalDebugger, mineral, Resources.MaxDronesPerMinerals);
+            _supervisor._unitModuleInstaller.InstallDebugLocationModule(mineral, _supervisor._color);
+            _supervisor._unitModuleInstaller.InstallCapacityModule(mineral, Resources.MaxDronesPerMinerals);
 
             LogAssignment(mineral);
         }
@@ -122,8 +120,8 @@ public partial class TownHallSupervisor {
         private void AssignGas(Unit gas) {
             _supervisor._gasses.Add(gas);
 
-            DebugLocationModule.Install(_supervisor._graphicalDebugger, gas, _supervisor._color);
-            CapacityModule.Install(_supervisor._graphicalDebugger, gas, MaxExtractorsPerGas, showDebugInfo: false);
+            _supervisor._unitModuleInstaller.InstallDebugLocationModule(gas, _supervisor._color);
+            _supervisor._unitModuleInstaller.InstallCapacityModule(gas, MaxExtractorsPerGas, showDebugInfo: false);
 
             LogAssignment(gas);
         }

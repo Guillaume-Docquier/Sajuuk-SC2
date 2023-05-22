@@ -9,16 +9,15 @@ using Bot.Utils;
 namespace Bot.UnitModules;
 
 public class TumorCreepSpreadModule: UnitModule {
+    public const string ModuleTag = "TumorCreepSpreadModule";
+
     private readonly IVisibilityTracker _visibilityTracker;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IBuildingTracker _buildingTracker;
-
     private readonly ICreepTracker _creepTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IFrameClock _frameClock;
-
-    public const string Tag = "TumorCreepSpreadModule";
 
     private const int CreepSpreadCooldown = 12;
     private const double EnemyBaseConvergenceFactor = 0.33;
@@ -26,18 +25,16 @@ public class TumorCreepSpreadModule: UnitModule {
     private readonly Unit _creepTumor;
     private ulong _spreadAt = default;
 
-    private TumorCreepSpreadModule(
-        Unit creepTumor,
+    public TumorCreepSpreadModule(
         IVisibilityTracker visibilityTracker,
         ITerrainTracker terrainTracker,
         IBuildingTracker buildingTracker,
         ICreepTracker creepTracker,
         IRegionsTracker regionsTracker,
         IGraphicalDebugger graphicalDebugger,
-        IFrameClock frameClock
-    ) {
-        _creepTumor = creepTumor;
-
+        IFrameClock frameClock,
+        Unit creepTumor
+    ) : base(ModuleTag) {
         _visibilityTracker = visibilityTracker;
         _terrainTracker = terrainTracker;
         _buildingTracker = buildingTracker;
@@ -45,21 +42,8 @@ public class TumorCreepSpreadModule: UnitModule {
         _regionsTracker = regionsTracker;
         _graphicalDebugger = graphicalDebugger;
         _frameClock = frameClock;
-    }
 
-    public static void Install(
-        Unit creepTumor,
-        IVisibilityTracker visibilityTracker,
-        ITerrainTracker terrainTracker,
-        IBuildingTracker buildingTracker,
-        ICreepTracker creepTracker,
-        IRegionsTracker regionsTracker,
-        IGraphicalDebugger graphicalDebugger,
-        IFrameClock frameClock
-    ) {
-        if (PreInstallCheck(Tag, creepTumor)) {
-            creepTumor.Modules.Add(Tag, new TumorCreepSpreadModule(creepTumor, visibilityTracker, terrainTracker, buildingTracker, creepTracker, regionsTracker, graphicalDebugger, frameClock));
-        }
+        _creepTumor = creepTumor;
     }
 
     // TODO GD Move this code in CreepManager

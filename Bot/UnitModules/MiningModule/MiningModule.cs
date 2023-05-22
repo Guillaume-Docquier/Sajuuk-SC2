@@ -4,7 +4,7 @@ using Bot.Debugging.GraphicalDebugging;
 namespace Bot.UnitModules;
 
 public class MiningModule: UnitModule {
-    public const string Tag = "MiningModule";
+    public const string ModuleTag = "MiningModule";
 
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly Unit _worker;
@@ -13,18 +13,11 @@ public class MiningModule: UnitModule {
     public Resources.ResourceType ResourceType;
     public Unit AssignedResource;
 
-    public static MiningModule Install(IGraphicalDebugger graphicalDebugger, Unit worker, Unit assignedResource) {
-        if (!PreInstallCheck(Tag, worker)) {
-            return null;
-        }
-
-        var miningModule = new MiningModule(graphicalDebugger, worker, assignedResource);
-        worker.Modules.Add(Tag, miningModule);
-
-        return miningModule;
-    }
-
-    private MiningModule(IGraphicalDebugger graphicalDebugger, Unit worker, Unit assignedResource) {
+    public MiningModule(
+        IGraphicalDebugger graphicalDebugger,
+        Unit worker,
+        Unit assignedResource
+    ) : base(ModuleTag) {
         _graphicalDebugger = graphicalDebugger;
         _worker = worker;
 

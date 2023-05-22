@@ -5,20 +5,20 @@ using SC2APIProtocol;
 namespace Bot.UnitModules;
 
 public class DebugLocationModule: UnitModule {
-    public const string Tag = "DebugLocationModule";
+    public const string ModuleTag = "DebugLocationModule";
 
     private readonly IGraphicalDebugger _graphicalDebugger;
+
     private readonly Unit _unit;
     private readonly Color _color;
     private readonly bool _showName;
 
-    public static void Install(IGraphicalDebugger graphicalDebugger, Unit unit, Color color = null, bool showName = false) {
-        if (PreInstallCheck(Tag, unit)) {
-            unit.Modules.Add(Tag, new DebugLocationModule(graphicalDebugger, unit, color, showName));
-        }
-    }
-
-    private DebugLocationModule(IGraphicalDebugger graphicalDebugger, Unit unit, Color color = null, bool showName = false) {
+    public DebugLocationModule(
+        IGraphicalDebugger graphicalDebugger,
+        Unit unit,
+        Color color,
+        bool showName
+    ) : base(ModuleTag) {
         _graphicalDebugger = graphicalDebugger;
         _unit = unit;
         _color = color ?? Colors.White;

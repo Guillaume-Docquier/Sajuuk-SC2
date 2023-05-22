@@ -1,5 +1,4 @@
 ﻿using Bot.GameData;
-using Bot.UnitModules;
 
 namespace Bot.Managers.EconomyManagement;
 
@@ -41,8 +40,8 @@ public sealed partial class EconomyManager {
         }
 
         private bool AssignQueen(Unit queen) {
-            QueenMicroModule.Install(queen, null, Client._buildingTracker, Client._regionsTracker, Client._creepTracker, Client._pathfinder);
-            ChangelingTargetingModule.Install(queen, Client._unitsTracker);
+            Client._unitModuleInstaller.InstallQueenMicroModule(queen, null);
+            Client._unitModuleInstaller.InstallChangelingTargetingModule(queen);
 
             return true;
         }

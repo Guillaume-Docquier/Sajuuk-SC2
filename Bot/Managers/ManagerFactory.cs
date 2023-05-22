@@ -8,8 +8,8 @@ using Bot.Managers.ScoutManagement;
 using Bot.Managers.ScoutManagement.ScoutingStrategies;
 using Bot.Managers.WarManagement;
 using Bot.Managers.WarManagement.States;
-using Bot.MapAnalysis;
 using Bot.Tagging;
+using Bot.UnitModules;
 
 namespace Bot.Managers;
 
@@ -18,11 +18,7 @@ public class ManagerFactory : IManagerFactory {
     private readonly IEnemyStrategyTracker _enemyStrategyTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IEnemyRaceTracker _enemyRaceTracker;
-    private readonly IVisibilityTracker _visibilityTracker;
     private readonly ITerrainTracker _terrainTracker;
-    private readonly IRegionsTracker _regionsTracker;
-    private readonly IBuildingTracker _buildingTracker;
-    private readonly ICreepTracker _creepTracker;
     private readonly IEconomySupervisorFactory _economySupervisorFactory;
     private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
     private readonly IWarManagerStateFactory _warManagerStateFactory;
@@ -33,18 +29,14 @@ public class ManagerFactory : IManagerFactory {
     private readonly IFrameClock _frameClock;
     private readonly KnowledgeBase _knowledgeBase;
     private readonly ISpendingTracker _spendingTracker;
-    private readonly IPathfinder _pathfinder;
+    private readonly IUnitModuleInstaller _unitModuleInstaller;
 
     public ManagerFactory(
         ITaggingService taggingService,
         IEnemyStrategyTracker enemyStrategyTracker,
         IUnitsTracker unitsTracker,
         IEnemyRaceTracker enemyRaceTracker,
-        IVisibilityTracker visibilityTracker,
         ITerrainTracker terrainTracker,
-        IRegionsTracker regionsTracker,
-        IBuildingTracker buildingTracker,
-        ICreepTracker creepTracker,
         IEconomySupervisorFactory economySupervisorFactory,
         IScoutSupervisorFactory scoutSupervisorFactory,
         IWarManagerStateFactory warManagerStateFactory,
@@ -55,17 +47,13 @@ public class ManagerFactory : IManagerFactory {
         IFrameClock frameClock,
         KnowledgeBase knowledgeBase,
         ISpendingTracker spendingTracker,
-        IPathfinder pathfinder
+        IUnitModuleInstaller unitModuleInstaller
     ) {
         _taggingService = taggingService;
         _enemyStrategyTracker = enemyStrategyTracker;
         _unitsTracker = unitsTracker;
         _enemyRaceTracker = enemyRaceTracker;
-        _visibilityTracker = visibilityTracker;
         _terrainTracker = terrainTracker;
-        _regionsTracker = regionsTracker;
-        _buildingTracker = buildingTracker;
-        _creepTracker = creepTracker;
         _economySupervisorFactory = economySupervisorFactory;
         _scoutSupervisorFactory = scoutSupervisorFactory;
         _warManagerStateFactory = warManagerStateFactory;
@@ -76,7 +64,7 @@ public class ManagerFactory : IManagerFactory {
         _frameClock = frameClock;
         _knowledgeBase = knowledgeBase;
         _spendingTracker = spendingTracker;
-        _pathfinder = pathfinder;
+        _unitModuleInstaller = unitModuleInstaller;
     }
 
     public BuildManager CreateBuildManager(IBuildOrder buildOrder) {
@@ -92,7 +80,7 @@ public class ManagerFactory : IManagerFactory {
     }
 
     public EconomyManager CreateEconomyManager(BuildManager buildManager) {
-        return new EconomyManager(_unitsTracker, _terrainTracker, _buildingTracker, _regionsTracker, _creepTracker, _economySupervisorFactory, _buildRequestFactory, _graphicalDebugger, _controller, _frameClock, _knowledgeBase, _spendingTracker, _pathfinder, buildManager);
+        return new EconomyManager(_unitsTracker, _terrainTracker, _economySupervisorFactory, _buildRequestFactory, _graphicalDebugger, _controller, _frameClock, _knowledgeBase, _spendingTracker, buildManager, _unitModuleInstaller);
     }
 
     public WarManager CreateWarManager() {
@@ -100,7 +88,7 @@ public class ManagerFactory : IManagerFactory {
     }
 
     public CreepManager CreateCreepManager() {
-        return new CreepManager(_visibilityTracker, _unitsTracker, _terrainTracker, _buildingTracker, _regionsTracker, _creepTracker, _graphicalDebugger, _frameClock);
+        return new CreepManager(_unitsTracker, _unitModuleInstaller);
     }
 
     public UpgradesManager CreateUpgradesManager() {

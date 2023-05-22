@@ -6,6 +6,12 @@ namespace Bot.UnitModules;
 public abstract class UnitModule: IUnitModule {
     private bool _isModuleEnabled = true;
 
+    public readonly string Tag;
+
+    protected UnitModule(string tag) {
+        Tag = tag;
+    }
+
     public void Enable() {
         _isModuleEnabled = true;
     }
@@ -28,36 +34,21 @@ public abstract class UnitModule: IUnitModule {
 
     protected abstract void DoExecute();
 
-    private static readonly Dictionary<Type, string> Tags = new Dictionary<Type, string>()
+    private static readonly Dictionary<Type, string> ModuleTags = new Dictionary<Type, string>()
     {
-        { typeof(AttackPriorityModule), AttackPriorityModule.Tag },
-        { typeof(CapacityModule), CapacityModule.Tag },
-        { typeof(ChangelingTargetingModule), ChangelingTargetingModule.Tag },
-        { typeof(DebugLocationModule), DebugLocationModule.Tag },
-        { typeof(MiningModule), MiningModule.Tag },
-        { typeof(QueenMicroModule), QueenMicroModule.Tag },
-        { typeof(TargetingModule), TargetingModule.Tag },
-        { typeof(TumorCreepSpreadModule), TumorCreepSpreadModule.Tag },
+        { typeof(AttackPriorityModule), AttackPriorityModule.ModuleTag },
+        { typeof(CapacityModule), CapacityModule.ModuleTag },
+        { typeof(ChangelingTargetingModule), ChangelingTargetingModule.ModuleTag },
+        { typeof(DebugLocationModule), DebugLocationModule.ModuleTag },
+        { typeof(MiningModule), MiningModule.ModuleTag },
+        { typeof(QueenMicroModule), QueenMicroModule.ModuleTag },
+        { typeof(TumorCreepSpreadModule), TumorCreepSpreadModule.ModuleTag },
     };
-
-    public static bool PreInstallCheck(string moduleTag, Unit unit) {
-        if (unit == null) {
-            Logger.Error($"Pre-install: Unit was null when trying to install {moduleTag}.");
-
-            return false;
-        }
-
-        if (unit.Modules.Remove(moduleTag)) {
-            Logger.Error($"Pre-install: Removed {moduleTag} from {unit}.");
-        }
-
-        return true;
-    }
 
     public static T Uninstall<T>(Unit unit) where T: UnitModule {
         var module = Get<T>(unit);
         if (module != null) {
-            unit.Modules.Remove(Tags[typeof(T)]);
+            unit.Modules.Remove(module.Tag);
             module.OnUninstall();
         }
 
@@ -70,7 +61,7 @@ public abstract class UnitModule: IUnitModule {
             return null;
         }
 
-        if (unit.Modules.TryGetValue(Tags[typeof(T)], out var module)) {
+        if (unit.Modules.TryGetValue(ModuleTags[typeof(T)], out var module)) {
             return module as T;
         }
 
