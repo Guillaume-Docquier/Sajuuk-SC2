@@ -12,6 +12,7 @@ using Bot.GameSense;
 using Bot.GameSense.EnemyStrategyTracking;
 using Bot.GameSense.EnemyStrategyTracking.StrategyInterpretation;
 using Bot.GameSense.RegionsEvaluationsTracking;
+using Bot.GameSense.RegionsEvaluationsTracking.RegionsEvaluations;
 using Bot.Managers;
 using Bot.Managers.EconomyManagement;
 using Bot.Managers.ScoutManagement;
@@ -365,7 +366,8 @@ public class Program {
 
         var creepTracker = new CreepTracker(visibilityTracker, unitsTracker, terrainTracker, frameClock, graphicalDebugger);
         var unitEvaluator = new UnitEvaluator(regionsTracker);
-        var regionsEvaluationsTracker = new RegionsEvaluationsTracker(debuggingFlagsTracker, unitsTracker, terrainTracker, regionsTracker, frameClock, graphicalDebugger, unitEvaluator, pathfinder);
+        var regionsEvaluatorFactory = new RegionsEvaluatorFactory(unitsTracker, frameClock, unitEvaluator, pathfinder);
+        var regionsEvaluationsTracker = new RegionsEvaluationsTracker(debuggingFlagsTracker, terrainTracker, regionsTracker, graphicalDebugger, regionsEvaluatorFactory);
 
         var chatService = new ChatService(actionService, actionBuilder);
         var taggingService = new TaggingService(frameClock, chatService);

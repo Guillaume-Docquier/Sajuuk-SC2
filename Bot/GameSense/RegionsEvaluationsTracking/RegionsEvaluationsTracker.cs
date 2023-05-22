@@ -5,7 +5,6 @@ using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameSense.RegionsEvaluationsTracking.RegionsEvaluations;
-using Bot.MapAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;
 
@@ -41,28 +40,23 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
 
     public RegionsEvaluationsTracker(
         IDebuggingFlagsTracker debuggingFlagsTracker,
-        IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
-        IFrameClock frameClock,
         IGraphicalDebugger graphicalDebugger,
-        IUnitEvaluator unitEvaluator,
-        IPathfinder pathfinder
+        IRegionsEvaluatorFactory regionsEvaluatorFactory
     ) {
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
         _graphicalDebugger = graphicalDebugger;
 
-        _regionForceEvaluators[Alliance.Self] = new RegionsForceEvaluator(unitsTracker, frameClock, unitEvaluator, Alliance.Self);
-        _regionForceEvaluators[Alliance.Enemy] = new RegionsForceEvaluator(unitsTracker, frameClock, unitEvaluator, Alliance.Enemy);
+        _regionForceEvaluators[Alliance.Self] = regionsEvaluatorFactory.CreateRegionsForceEvaluator(Alliance.Self);
+        _regionForceEvaluators[Alliance.Enemy] = regionsEvaluatorFactory.CreateRegionsForceEvaluator(Alliance.Enemy);
 
-        _regionValueEvaluators[Alliance.Self] = new RegionsValueEvaluator(unitsTracker, frameClock, unitEvaluator, Alliance.Self);
-        _regionValueEvaluators[Alliance.Enemy] = new RegionsValueEvaluator(unitsTracker, frameClock, unitEvaluator, Alliance.Enemy);
+        _regionValueEvaluators[Alliance.Self] = regionsEvaluatorFactory.CreateRegionsValueEvaluator(Alliance.Self);
+        _regionValueEvaluators[Alliance.Enemy] = regionsEvaluatorFactory.CreateRegionsValueEvaluator(Alliance.Enemy);
 
-        _regionThreatEvaluators[Alliance.Enemy] = new RegionsThreatEvaluator(
-            frameClock,
-            pathfinder,
+        _regionThreatEvaluators[Alliance.Enemy] = regionsEvaluatorFactory.CreateRegionsThreatEvaluator(
             _regionForceEvaluators[Alliance.Enemy],
             _regionValueEvaluators[Alliance.Self]
         );
