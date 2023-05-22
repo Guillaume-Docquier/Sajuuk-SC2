@@ -1,4 +1,4 @@
-using Bot.GameSense.RegionsEvaluationsTracking;
+using Bot.GameSense.RegionsEvaluationsTracking.RegionsEvaluations;
 using Bot.MapAnalysis.RegionAnalysis;
 using Moq;
 

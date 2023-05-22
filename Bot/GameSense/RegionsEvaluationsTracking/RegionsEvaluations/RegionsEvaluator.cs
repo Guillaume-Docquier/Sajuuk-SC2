@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Bot.MapAnalysis.RegionAnalysis;
 
-namespace Bot.GameSense.RegionsEvaluationsTracking;
+namespace Bot.GameSense.RegionsEvaluationsTracking.RegionsEvaluations;
 
 public abstract class RegionsEvaluator : IRegionsEvaluator {
     private readonly IFrameClock _frameClock;

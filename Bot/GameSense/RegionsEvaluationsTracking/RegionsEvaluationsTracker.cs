@@ -4,6 +4,7 @@ using System.Numerics;
 using Bot.Debugging;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
+using Bot.GameSense.RegionsEvaluationsTracking.RegionsEvaluations;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
 using SC2APIProtocol;

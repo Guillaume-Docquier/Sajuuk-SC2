@@ -4,7 +4,7 @@ using Bot.ExtensionMethods;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
 
-namespace Bot.GameSense.RegionsEvaluationsTracking;
+namespace Bot.GameSense.RegionsEvaluationsTracking.RegionsEvaluations;
 
 public class RegionsThreatEvaluator : RegionsEvaluator {
     private readonly IPathfinder _pathfinder;

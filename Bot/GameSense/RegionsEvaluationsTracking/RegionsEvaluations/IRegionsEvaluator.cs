@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Bot.MapAnalysis.RegionAnalysis;
 
-namespace Bot.GameSense.RegionsEvaluationsTracking;
+namespace Bot.GameSense.RegionsEvaluationsTracking.RegionsEvaluations;
 
 public interface IRegionsEvaluator {
     void Init(IEnumerable<IRegion> regions);

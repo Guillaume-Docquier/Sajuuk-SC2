@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
-using Bot.GameSense.RegionsEvaluationsTracking;
+using Bot.GameSense.RegionsEvaluationsTracking.RegionsEvaluations;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
