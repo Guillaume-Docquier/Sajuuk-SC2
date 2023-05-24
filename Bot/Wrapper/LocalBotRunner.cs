@@ -17,7 +17,7 @@ using SC2APIProtocol;
 namespace Bot.Wrapper;
 
 public class LocalBotRunner : IBotRunner {
-    private readonly IProtobufProxy _protobufProxy;
+    private readonly ISc2Client _sc2Client;
     private readonly IRequestService _requestService;
     private readonly IRequestBuilder _requestBuilder;
     private readonly KnowledgeBase _knowledgeBase;
@@ -46,7 +46,7 @@ public class LocalBotRunner : IBotRunner {
     private static readonly ulong DebugMemoryEvery = TimeUtils.SecsToFrames(5);
 
     public LocalBotRunner(
-        IProtobufProxy protobufProxy,
+        ISc2Client sc2Client,
         IRequestService requestService,
         IRequestBuilder requestBuilder,
         KnowledgeBase knowledgeBase,
@@ -63,7 +63,7 @@ public class LocalBotRunner : IBotRunner {
         uint stepSize,
         bool realTime
     ) {
-        _protobufProxy = protobufProxy;
+        _sc2Client = sc2Client;
         _requestService = requestService;
         _requestBuilder = requestBuilder;
         _knowledgeBase = knowledgeBase;
@@ -148,7 +148,7 @@ public class LocalBotRunner : IBotRunner {
         const int timeout = 60;
         for (var i = 0; i < timeout * 2; i++) {
             try {
-                await _protobufProxy.Connect(serverAddress, gamePort);
+                await _sc2Client.Connect(serverAddress, gamePort);
                 Logger.Info("--> Connected");
 
                 return;

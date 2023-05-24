@@ -5,14 +5,14 @@ using SC2APIProtocol;
 namespace Bot.Requests;
 
 public class RequestService : IRequestService {
-    private readonly IProtobufProxy _protobufProxy;
+    private readonly ISc2Client _sc2Client;
 
-    public RequestService(IProtobufProxy protobufProxy) {
-        _protobufProxy = protobufProxy;
+    public RequestService(ISc2Client sc2Client) {
+        _sc2Client = sc2Client;
     }
 
     public async Task<Response> SendRequest(Request request, bool logErrors = false) {
-        var response = await _protobufProxy.SendRequest(request);
+        var response = await _sc2Client.SendRequest(request);
         if (logErrors) {
             LogResponseErrors(response);
         }

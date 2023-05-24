@@ -29,7 +29,7 @@ public class DeprecatedBotRunner {
     private readonly IRequestBuilder _requestBuilder;
     private readonly IPathfinder _pathfinder;
     private readonly IActionService _actionService;
-    private readonly IProtobufProxy _protobufProxy;
+    private readonly ISc2Client _sc2Client;
     private readonly IRequestService _requestService;
 
     private const string Address = "127.0.0.1";
@@ -58,7 +58,7 @@ public class DeprecatedBotRunner {
         IRequestBuilder requestBuilder,
         IPathfinder pathfinder,
         IActionService actionService,
-        IProtobufProxy protobufProxy,
+        ISc2Client sc2Client,
         IRequestService requestService,
         uint stepSize
     ) {
@@ -72,7 +72,7 @@ public class DeprecatedBotRunner {
         _requestBuilder = requestBuilder;
         _pathfinder = pathfinder;
         _actionService = actionService;
-        _protobufProxy = protobufProxy;
+        _sc2Client = sc2Client;
         _requestService = requestService;
 
         _stepSize = stepSize;
@@ -144,7 +144,7 @@ public class DeprecatedBotRunner {
         const int timeout = 60;
         for (var i = 0; i < timeout * 2; i++) {
             try {
-                await _protobufProxy.Connect(Address, port);
+                await _sc2Client.Connect(Address, port);
                 Logger.Info("--> Connected");
 
                 return;
@@ -263,7 +263,7 @@ public class DeprecatedBotRunner {
             }
 
             if (_quitAt <= nextFrame) {
-                await _protobufProxy.Quit();
+                await _sc2Client.Quit();
             }
             else if (runDataAnalyzersOnly && _expandAnalyzer.IsAnalysisComplete && _regionAnalyzer.IsAnalysisComplete && _quitAt == ulong.MaxValue) {
                 _quitAt = nextFrame + _stepSize * 10; // Just give a few frames to debug the analysis

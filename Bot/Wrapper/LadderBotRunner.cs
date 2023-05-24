@@ -16,7 +16,7 @@ using SC2APIProtocol;
 namespace Bot.Wrapper;
 
 public class LadderBotRunner : IBotRunner {
-    private readonly IProtobufProxy _protobufProxy;
+    private readonly ISc2Client _sc2Client;
     private readonly IRequestService _requestService;
     private readonly IRequestBuilder _requestBuilder;
     private readonly KnowledgeBase _knowledgeBase;
@@ -38,7 +38,7 @@ public class LadderBotRunner : IBotRunner {
     private static readonly ulong DebugMemoryEvery = TimeUtils.SecsToFrames(5);
 
     public LadderBotRunner(
-        IProtobufProxy protobufProxy,
+        ISc2Client sc2Client,
         IRequestService requestService,
         IRequestBuilder requestBuilder,
         KnowledgeBase knowledgeBase,
@@ -54,7 +54,7 @@ public class LadderBotRunner : IBotRunner {
         int gamePort,
         int startPort
     ) {
-        _protobufProxy = protobufProxy;
+        _sc2Client = sc2Client;
         _requestService = requestService;
         _requestBuilder = requestBuilder;
         _knowledgeBase = knowledgeBase;
@@ -84,7 +84,7 @@ public class LadderBotRunner : IBotRunner {
         const int timeout = 60;
         for (var i = 0; i < timeout * 2; i++) {
             try {
-                await _protobufProxy.Connect(serverAddress, gamePort);
+                await _sc2Client.Connect(serverAddress, gamePort);
                 Logger.Info("--> Connected");
 
                 return;

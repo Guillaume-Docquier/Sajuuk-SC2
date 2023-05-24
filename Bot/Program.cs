@@ -99,7 +99,7 @@ public class Program {
                 services.RequestBuilder,
                 services.Pathfinder,
                 services.ActionService,
-                services.ProtobufProxy,
+                services.Sc2Client,
                 services.RequestService,
                 stepSize: 1
             );
@@ -134,7 +134,7 @@ public class Program {
         );
 
         var botRunner = new LocalBotRunner(
-            services.ProtobufProxy,
+            services.Sc2Client,
             services.RequestService,
             services.RequestBuilder,
             services.KnowledgeBase,
@@ -161,7 +161,7 @@ public class Program {
 
         var services = CreateServices(graphicalDebugging: true);
         var botRunner = new LocalBotRunner(
-            services.ProtobufProxy,
+            services.Sc2Client,
             services.RequestService,
             services.RequestBuilder,
             services.KnowledgeBase,
@@ -189,7 +189,7 @@ public class Program {
         var services = CreateServices(graphicalDebugging: false);
         var commandLineArgs = new CommandLineArguments(args);
         var botRunner = new LadderBotRunner(
-            services.ProtobufProxy,
+            services.Sc2Client,
             services.RequestService,
             services.RequestBuilder,
             services.KnowledgeBase,
@@ -388,7 +388,7 @@ public class Program {
     }
 
     private static Services CreateServices(bool graphicalDebugging, bool dataGeneration = false) {
-        var protobufProxy = new ProtobufProxy();
+        var protobufProxy = new Sc2Client();
         var requestService = new RequestService(protobufProxy);
 
         var frameClock = new FrameClock();
@@ -520,7 +520,7 @@ public class Program {
             ChatService = chatService,
             ActionService = actionService,
             RequestService = requestService,
-            ProtobufProxy = protobufProxy,
+            Sc2Client = protobufProxy,
             UnitModuleInstaller = unitModuleInstaller,
             ExpandAnalyzer = expandAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different BotRunner implementation
             RegionAnalyzer = regionAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different BotRunner implementation
@@ -555,7 +555,7 @@ public class Program {
         public IChatService ChatService { get; init; }
         public IActionService ActionService { get; init; }
         public IRequestService RequestService { get; init; }
-        public IProtobufProxy ProtobufProxy { get; init; }
+        public ISc2Client Sc2Client { get; init; }
         public IUnitModuleInstaller UnitModuleInstaller { get; init; }
 
         public IExpandAnalyzer ExpandAnalyzer { get; init; }
