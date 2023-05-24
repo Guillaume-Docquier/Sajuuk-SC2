@@ -88,7 +88,7 @@ public class Program {
         foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
             var services = CreateServices(graphicalDebugging: false, dataGeneration: true);
             // TODO GD Create a game connection for data analysis
-            var gameConnection = new DeprecatedGameConnection(
+            var botRunner = new DeprecatedBotRunner(
                 services.UnitsTracker,
                 services.ExpandAnalyzer,
                 services.RegionAnalyzer,
@@ -105,7 +105,7 @@ public class Program {
             );
 
             Logger.Important($"Generating data for {mapFileName}");
-            gameConnection.RunLocal(
+            botRunner.RunLocal(
                 new MapAnalysisRunner(services.FrameClock),
                 mapFileName,
                 Race.Zerg,
@@ -133,7 +133,7 @@ public class Program {
             MapFileName
         );
 
-        var gameConnection = new LocalGameConnection(
+        var botRunner = new LocalBotRunner(
             services.ProtobufProxy,
             services.RequestService,
             services.RequestBuilder,
@@ -153,14 +153,14 @@ public class Program {
         );
 
         Logger.Info("Game launched in video clip mode");
-        gameConnection.PlayGame().Wait();
+        botRunner.PlayGame().Wait();
     }
 
     private static void PlayLocalGame() {
         DebugEnabled = true;
 
         var services = CreateServices(graphicalDebugging: true);
-        var gameConnection = new LocalGameConnection(
+        var botRunner = new LocalBotRunner(
             services.ProtobufProxy,
             services.RequestService,
             services.RequestBuilder,
@@ -180,7 +180,7 @@ public class Program {
         );
 
         Logger.Info("Game launched in local play mode");
-        gameConnection.PlayGame().Wait();
+        botRunner.PlayGame().Wait();
     }
 
     private static void PlayLadderGame(string[] args) {
@@ -188,7 +188,7 @@ public class Program {
 
         var services = CreateServices(graphicalDebugging: false);
         var commandLineArgs = new CommandLineArguments(args);
-        var gameConnection = new LadderGameConnection(
+        var botRunner = new LadderBotRunner(
             services.ProtobufProxy,
             services.RequestService,
             services.RequestBuilder,
@@ -207,7 +207,7 @@ public class Program {
         );
 
         Logger.Info("Game launched in ladder play mode");
-        gameConnection.PlayGame().Wait();
+        botRunner.PlayGame().Wait();
     }
 
     private static IBot CreateSajuuk(Services services, string version, List<IScenario> scenarios) {
@@ -522,8 +522,8 @@ public class Program {
             RequestService = requestService,
             ProtobufProxy = protobufProxy,
             UnitModuleInstaller = unitModuleInstaller,
-            ExpandAnalyzer = expandAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different GameConnection implementation
-            RegionAnalyzer = regionAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different GameConnection implementation
+            ExpandAnalyzer = expandAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different BotRunner implementation
+            RegionAnalyzer = regionAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different BotRunner implementation
         };
     }
 

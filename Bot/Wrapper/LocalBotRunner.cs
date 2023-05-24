@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Threading;
@@ -15,7 +16,7 @@ using SC2APIProtocol;
 
 namespace Bot.Wrapper;
 
-public class LadderGameConnection : IGameConnection {
+public class LocalBotRunner : IBotRunner {
     private readonly IProtobufProxy _protobufProxy;
     private readonly IRequestService _requestService;
     private readonly IRequestBuilder _requestBuilder;
@@ -28,16 +29,23 @@ public class LadderGameConnection : IGameConnection {
     private readonly IPathfinder _pathfinder;
 
     private readonly IBot _bot;
+    private readonly string _mapFileName;
+    private readonly Race _opponentRace;
+    private readonly Difficulty _opponentDifficulty;
     private readonly uint _stepSize;
-    private readonly string _serverAddress;
-    private readonly int _gamePort;
-    private readonly int _startPort;
+    private readonly bool _realTime;
+
+    private const string ServerAddress = "127.0.0.1";
+
+    private string _starcraftExe;
+    private string _starcraftDir;
+    private string _starcraftMapsDir;
 
     // TODO GD Could be injected
     private readonly PerformanceDebugger _performanceDebugger = new PerformanceDebugger();
     private static readonly ulong DebugMemoryEvery = TimeUtils.SecsToFrames(5);
 
-    public LadderGameConnection(
+    public LocalBotRunner(
         IProtobufProxy protobufProxy,
         IRequestService requestService,
         IRequestBuilder requestBuilder,
@@ -49,10 +57,11 @@ public class LadderGameConnection : IGameConnection {
         IUnitsTracker unitsTracker,
         IPathfinder pathfinder,
         IBot bot,
+        string mapFileName,
+        Race opponentRace,
+        Difficulty opponentDifficulty,
         uint stepSize,
-        string serverAddress,
-        int gamePort,
-        int startPort
+        bool realTime
     ) {
         _protobufProxy = protobufProxy;
         _requestService = requestService;
@@ -66,17 +75,72 @@ public class LadderGameConnection : IGameConnection {
         _pathfinder = pathfinder;
 
         _bot = bot;
+        _mapFileName = mapFileName;
+        _opponentRace = opponentRace;
+        _opponentDifficulty = opponentDifficulty;
         _stepSize = stepSize;
-        _serverAddress = serverAddress;
-        _gamePort = gamePort;
-        _startPort = startPort;
+        _realTime = realTime;
     }
 
     public async Task PlayGame() {
-        await ConnectToSc2Instance(_serverAddress, _gamePort);
+        const int port = 5678;
 
-        var playerId = await JoinGame(_bot.Race, _startPort);
+        Logger.Info("Finding the SC2 executable info");
+        FindExecutableInfo();
+
+        Logger.Info("Starting SinglePlayer Instance");
+        StartSc2Instance(port);
+
+        Logger.Info($"Connecting to port: {port}");
+        await ConnectToSc2Instance(ServerAddress, port);
+
+        Logger.Info($"Creating game on map: {_mapFileName}");
+        await CreateGame(_mapFileName, _opponentRace, _opponentDifficulty, _realTime);
+
+        Logger.Info("Joining game");
+        var playerId = await JoinGame(_bot.Race);
         await Run(_bot, playerId);
+    }
+
+    private void FindExecutableInfo() {
+        var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        var executeInfo = Path.Combine(myDocuments, "StarCraft II", "ExecuteInfo.txt");
+
+        if (File.Exists(executeInfo)) {
+            var lines = File.ReadAllLines(executeInfo);
+            foreach (var line in lines) {
+                if (line.Trim().StartsWith("executable")) {
+                    _starcraftExe = line.Substring(line.IndexOf('=') + 1).Trim();
+                    _starcraftDir = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(_starcraftExe))); //we need 2 folders down
+                    if (_starcraftDir != null) {
+                        _starcraftMapsDir = Path.Combine(_starcraftDir, "Maps");
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        if (_starcraftExe == default) {
+            throw new Exception($"Unable to find:{executeInfo}. Make sure you started the game successfully at least once.");
+        }
+    }
+
+    private void StartSc2Instance(int port) {
+        var processStartInfo = new ProcessStartInfo(_starcraftExe)
+        {
+            // TODO GD Make and enum for this
+            // DisplayMode 0: Windowed
+            // DisplayMode 1: Full screen
+            Arguments = $"-listen {ServerAddress} -port {port} -displayMode 1",
+            WorkingDirectory = Path.Combine(_starcraftDir, "Support64")
+        };
+
+        Logger.Info("Launching SC2:");
+        Logger.Info("--> File: {0}", _starcraftExe);
+        Logger.Info("--> Working Dir: {0}", processStartInfo.WorkingDirectory);
+        Logger.Info("--> Arguments: {0}", processStartInfo.Arguments);
+        Process.Start(processStartInfo);
     }
 
     // TODO GD That retry logic should probably go into the proxy
@@ -96,16 +160,34 @@ public class LadderGameConnection : IGameConnection {
             Thread.Sleep(500);
         }
 
-        Logger.Error("Unable to connect to SC2 after {0} seconds.", timeout);
+        Logger.Error($"Unable to connect to SC2 after {timeout} seconds.");
         throw new Exception("Unable to make a connection.");
     }
 
-    private async Task<uint> JoinGame(Race race, int startPort) {
-        var joinGameResponse = await _requestService.SendRequest(_requestBuilder.RequestJoinLadderGame(race, startPort), logErrors: true);
+    private async Task CreateGame(string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {;
+        var mapPath = Path.Combine(_starcraftMapsDir, mapFileName);
+        if (!File.Exists(mapPath)) {
+            Logger.Error($"Unable to locate map: {mapPath}");
+            throw new Exception($"Unable to locate map: {mapPath}");
+        }
+
+        var createGameResponse = await _requestService.SendRequest(_requestBuilder.RequestCreateComputerGame(realTime, mapPath, opponentRace, opponentDifficulty), logErrors: true);
+
+        // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
+        if (createGameResponse.CreateGame.Error != ResponseCreateGame.Types.Error.MissingMap) {
+            Logger.Error($"CreateGame error: {createGameResponse.CreateGame.Error.ToString()}");
+            if (!string.IsNullOrEmpty(createGameResponse.CreateGame.ErrorDetails)) {
+                Logger.Error(createGameResponse.CreateGame.ErrorDetails);
+            }
+        }
+    }
+
+    private async Task<uint> JoinGame(Race race) {
+        var joinGameResponse = await _requestService.SendRequest(_requestBuilder.RequestJoinLocalGame(race), logErrors: true);
 
         // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
         if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.MissingParticipation) {
-            Logger.Error("JoinGame error: {0}", joinGameResponse.JoinGame.Error.ToString());
+            Logger.Error($"JoinGame error: {joinGameResponse.JoinGame.Error.ToString()}");
             if (!string.IsNullOrEmpty(joinGameResponse.JoinGame.ErrorDetails)) {
                 Logger.Error(joinGameResponse.JoinGame.ErrorDetails);
             }
@@ -114,7 +196,8 @@ public class LadderGameConnection : IGameConnection {
         return joinGameResponse.JoinGame.PlayerId;
     }
 
-    private async Task Run(IBot bot, uint playerId, bool runDataAnalyzersOnly = false) {
+    // TODO GD This must be shared with the ladder game connection
+    private async Task Run(IBot bot, uint playerId) {
         var dataRequest = new Request
         {
             Data = new RequestData
@@ -162,6 +245,7 @@ public class LadderGameConnection : IGameConnection {
         }
     }
 
+    // TODO GD This must be shared with the ladder game connection
     private async Task RunBot(IBot bot, ResponseObservation observation) {
         var gameInfoResponse = await _requestService.SendRequest(_requestBuilder.RequestGameInfo());
 
@@ -209,6 +293,7 @@ public class LadderGameConnection : IGameConnection {
         _performanceDebugger.CompileData();
     }
 
+    // TODO GD This must be shared with the ladder game connection
     private void PrintMemoryInfo() {
         var memoryUsedMb = Process.GetCurrentProcess().WorkingSet64 * 1e-6;
         if (memoryUsedMb > 200) {
@@ -218,7 +303,8 @@ public class LadderGameConnection : IGameConnection {
             Logger.Performance(
                 "Pathfinding cache: {0} paths, {1} tiles",
                 _pathfinder.CellPathsMemory.Values.Sum(destinations => destinations.Keys.Count),
-                _pathfinder.CellPathsMemory.Values.SelectMany(destinations => destinations.Values).Sum(path => path.Count));
+                _pathfinder.CellPathsMemory.Values.SelectMany(destinations => destinations.Values).Sum(path => path.Count)
+            );
             Logger.Performance("==== Memory Debug End ====");
         }
     }

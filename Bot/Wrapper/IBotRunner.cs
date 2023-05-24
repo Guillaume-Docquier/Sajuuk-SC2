@@ -2,6 +2,6 @@
 
 namespace Bot.Wrapper;
 
-public interface IGameConnection {
+public interface IBotRunner {
     public Task PlayGame();
 }

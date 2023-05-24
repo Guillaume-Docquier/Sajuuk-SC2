@@ -9,7 +9,7 @@ using SC2APIProtocol;
 
 namespace Bot.Wrapper;
 
-// TODO GD ProtobufProxy sounds like a rather bad name, and GameConnection is already something else
+// TODO GD ProtobufProxy sounds like a rather bad name
 [ExcludeFromCodeCoverage]
 public class ProtobufProxy : IProtobufProxy {
     private ClientWebSocket _clientSocket;
