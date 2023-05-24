@@ -83,16 +83,15 @@ public class LocalBotRunner : IBotRunner {
     }
 
     public async Task PlayGame() {
-        const int port = 5678;
+        const int gamePort = 5678;
 
         Logger.Info("Finding the SC2 executable info");
         FindExecutableInfo();
 
         Logger.Info("Starting SinglePlayer Instance");
-        StartSc2Instance(port);
+        StartSc2Instance(gamePort);
 
-        Logger.Info($"Connecting to port: {port}");
-        await ConnectToSc2Instance(ServerAddress, port);
+        await _sc2Client.Connect(ServerAddress, gamePort);
 
         Logger.Info($"Creating game on map: {_mapFileName}");
         await CreateGame(_mapFileName, _opponentRace, _opponentDifficulty, _realTime);
@@ -141,27 +140,6 @@ public class LocalBotRunner : IBotRunner {
         Logger.Info("--> Working Dir: {0}", processStartInfo.WorkingDirectory);
         Logger.Info("--> Arguments: {0}", processStartInfo.Arguments);
         Process.Start(processStartInfo);
-    }
-
-    // TODO GD That retry logic should probably go into the proxy
-    private async Task ConnectToSc2Instance(string serverAddress, int gamePort) {
-        const int timeout = 60;
-        for (var i = 0; i < timeout * 2; i++) {
-            try {
-                await _sc2Client.Connect(serverAddress, gamePort);
-                Logger.Info("--> Connected");
-
-                return;
-            }
-            catch (WebSocketException) {
-                Logger.Warning("Failed. Retrying...");
-            }
-
-            Thread.Sleep(500);
-        }
-
-        Logger.Error($"Unable to connect to SC2 after {timeout} seconds.");
-        throw new Exception("Unable to make a connection.");
     }
 
     private async Task CreateGame(string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {;

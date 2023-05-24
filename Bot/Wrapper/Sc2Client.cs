@@ -11,21 +11,42 @@ namespace Bot.Wrapper;
 
 [ExcludeFromCodeCoverage]
 public class Sc2Client : ISc2Client {
-    private ClientWebSocket _clientSocket;
+    private ClientWebSocket _clientSocket; // TODO GD Do we need to dispose of the websocket?
     private const int ConnectTimeout = 20000;
     private const int ReadWriteTimeout = 120000;
 
-    public async Task Connect(string address, int port) {
+    public async Task Connect(string serverAddress, int gamePort, int maxRetries = 60) {
+        Logger.Info($"Attempting to connect to Sc2 instance at {serverAddress}:{gamePort}");
+
+        for (var i = 0; i < maxRetries; i++) {
+            try {
+                await TryConnect(serverAddress, gamePort);
+                Logger.Info("--> Connected");
+
+                return;
+            }
+            catch (WebSocketException) {
+                Logger.Debug("Failed. Retrying...");
+            }
+
+            Thread.Sleep(1000);
+        }
+
+        Logger.Error($"Unable to connect to SC2 after {maxRetries} retries.");
+        throw new Exception("Unable to make a connection.");
+    }
+
+    private async Task TryConnect(string serverAddress, int gamePort) {
         _clientSocket = new ClientWebSocket();
         // Disable PING control frames (https://tools.ietf.org/html/rfc6455#section-5.5.2).
         // It seems SC2 built in websocket server does not do PONG but tries to process ping as
         // request and then sends empty response to client.
         _clientSocket.Options.KeepAliveInterval = TimeSpan.FromDays(30);
-        var adr = $"ws://{address}:{port}/sc2api";
-        var uri = new Uri(adr);
+
+        var websocketUri = new Uri($"ws://{serverAddress}:{gamePort}/sc2api");
         using (var cancellationSource = new CancellationTokenSource()) {
             cancellationSource.CancelAfter(ConnectTimeout);
-            await _clientSocket.ConnectAsync(uri, cancellationSource.Token);
+            await _clientSocket.ConnectAsync(websocketUri, cancellationSource.Token);
         }
 
         await Ping();
@@ -37,18 +58,18 @@ public class Sc2Client : ISc2Client {
         return await ReadMessage();
     }
 
-    public async Task Ping() {
-        await SendRequest(new Request
-        {
-            Ping = new RequestPing()
-        });
-    }
-
     public Task Quit() {
         Logger.Info("Quitting game...");
         return SendRequest(new Request
         {
             Quit = new RequestQuit()
+        });
+    }
+
+    private async Task Ping() {
+        await SendRequest(new Request
+        {
+            Ping = new RequestPing()
         });
     }
 

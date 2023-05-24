@@ -73,31 +73,10 @@ public class LadderBotRunner : IBotRunner {
     }
 
     public async Task PlayGame() {
-        await ConnectToSc2Instance(_serverAddress, _gamePort);
+        await _sc2Client.Connect(_serverAddress, _gamePort);
 
         var playerId = await JoinGame(_bot.Race, _startPort);
         await Run(_bot, playerId);
-    }
-
-    // TODO GD That retry logic should probably go into the proxy
-    private async Task ConnectToSc2Instance(string serverAddress, int gamePort) {
-        const int timeout = 60;
-        for (var i = 0; i < timeout * 2; i++) {
-            try {
-                await _sc2Client.Connect(serverAddress, gamePort);
-                Logger.Info("--> Connected");
-
-                return;
-            }
-            catch (WebSocketException) {
-                Logger.Warning("Failed. Retrying...");
-            }
-
-            Thread.Sleep(500);
-        }
-
-        Logger.Error("Unable to connect to SC2 after {0} seconds.", timeout);
-        throw new Exception("Unable to make a connection.");
     }
 
     private async Task<uint> JoinGame(Race race, int startPort) {
