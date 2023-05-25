@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net.WebSockets;
@@ -11,17 +12,78 @@ namespace Bot.Wrapper;
 
 [ExcludeFromCodeCoverage]
 public class Sc2Client : ISc2Client {
+    private readonly IRequestBuilder _requestBuilder;
+
     private ClientWebSocket _clientSocket; // TODO GD Do we need to dispose of the websocket?
     private const int ConnectTimeout = 20000;
     private const int ReadWriteTimeout = 120000;
 
+    // TODO GD Group these 3 into a struct and extract the FindExecutableInfo from here?
+    private string _starcraftExe;
+    private string _starcraftDir;
+    private string _starcraftMapsDir;
+
+    public Sc2Client(IRequestBuilder requestBuilder) {
+        _requestBuilder = requestBuilder;
+    }
+
+    public Task LaunchSc2(string serverAddress, int gamePort) {
+        Logger.Info("Finding the SC2 executable info");
+        FindExecutableInfo();
+
+        Logger.Info("Launching SC2 instance");
+        StartInstance(serverAddress, gamePort);
+
+        return Task.CompletedTask;
+    }
+
+    private void StartInstance(string serverAddress, int gamePort) {
+        var processStartInfo = new ProcessStartInfo(_starcraftExe)
+        {
+            // TODO GD Make and enum for this
+            // DisplayMode 0: Windowed
+            // DisplayMode 1: Full screen
+            Arguments = $"-listen {serverAddress} -port {gamePort} -displayMode 1",
+            WorkingDirectory = Path.Combine(_starcraftDir, "Support64")
+        };
+
+        Logger.Debug($"SC2.exe: {_starcraftExe}");
+        Logger.Debug($"Working Dir: {processStartInfo.WorkingDirectory}");
+        Logger.Debug($"Arguments: {processStartInfo.Arguments}");
+        Process.Start(processStartInfo);
+    }
+
+    private void FindExecutableInfo() {
+        var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        var executeInfo = Path.Combine(myDocuments, "StarCraft II", "ExecuteInfo.txt");
+
+        if (File.Exists(executeInfo)) {
+            var lines = File.ReadAllLines(executeInfo);
+            foreach (var line in lines) {
+                if (line.Trim().StartsWith("executable")) {
+                    _starcraftExe = line.Substring(line.IndexOf('=') + 1).Trim();
+                    _starcraftDir = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(_starcraftExe))); //we need 2 folders down
+                    if (_starcraftDir != null) {
+                        _starcraftMapsDir = Path.Combine(_starcraftDir, "Maps");
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        if (_starcraftExe == default) {
+            throw new Exception($"Unable to find:{executeInfo}. Make sure you started the game successfully at least once.");
+        }
+    }
+
     public async Task Connect(string serverAddress, int gamePort, int maxRetries = 60) {
-        Logger.Info($"Attempting to connect to Sc2 instance at {serverAddress}:{gamePort}");
+        Logger.Info($"Attempting to connect to SC2 instance at {serverAddress}:{gamePort}");
 
         for (var i = 0; i < maxRetries; i++) {
             try {
                 await TryConnect(serverAddress, gamePort);
-                Logger.Info("--> Connected");
+                Logger.Info("Connected to SC2 instance");
 
                 return;
             }
@@ -52,13 +114,71 @@ public class Sc2Client : ISc2Client {
         await Ping();
     }
 
-    public async Task<Response> SendRequest(Request request) {
+    public async Task<Response> SendRequest(Request request, bool logErrors = false) {
         await WriteMessage(request);
 
-        return await ReadMessage();
+        var response = await ReadMessage();
+        if (logErrors) {
+            LogResponseErrors(response);
+        }
+
+        return response;
     }
 
-    public Task Quit() {
+    private static void LogResponseErrors(Response response) {
+        if (response.Error.Count > 0) {
+            Logger.Error("Response errors:");
+            foreach (var error in response.Error) {
+                Logger.Error(error);
+            }
+        }
+    }
+
+    public async Task CreateGame(string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {
+        Logger.Info($"Creating game on map: {mapFileName}");
+
+        var mapPath = Path.Combine(_starcraftMapsDir, mapFileName);
+        if (!File.Exists(mapPath)) {
+            Logger.Error($"Unable to locate map: {mapPath}");
+            throw new Exception($"Unable to locate map: {mapPath}");
+        }
+
+        var createGameResponse = await SendRequest(_requestBuilder.RequestCreateComputerGame(realTime, mapPath, opponentRace, opponentDifficulty), logErrors: true);
+
+        // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
+        if (createGameResponse.CreateGame.Error != ResponseCreateGame.Types.Error.MissingMap) {
+            Logger.Error($"CreateGame error: {createGameResponse.CreateGame.Error.ToString()}");
+            if (!string.IsNullOrEmpty(createGameResponse.CreateGame.ErrorDetails)) {
+                Logger.Error(createGameResponse.CreateGame.ErrorDetails);
+            }
+        }
+    }
+
+    public Task<uint> JoinLocalGame(Race race) {
+        Logger.Info("Joining local game");
+        return JoinGame(_requestBuilder.RequestJoinLocalGame(race));
+    }
+
+    public Task<uint> JoinLadderGame(Race race, int startPort) {
+        Logger.Info("Joining ladder game");
+        return JoinGame(_requestBuilder.RequestJoinLadderGame(race, startPort));
+    }
+
+    private async Task<uint> JoinGame(Request joinGameRequest) {
+        var joinGameResponse = await SendRequest(joinGameRequest, logErrors: true);
+
+        // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
+        if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.MissingParticipation) {
+            Logger.Error($"JoinGame error: {joinGameResponse.JoinGame.Error.ToString()}");
+            if (!string.IsNullOrEmpty(joinGameResponse.JoinGame.ErrorDetails)) {
+                Logger.Error(joinGameResponse.JoinGame.ErrorDetails);
+            }
+        }
+
+        return joinGameResponse.JoinGame.PlayerId;
+    }
+
+    public Task LeaveCurrentGame() {
         Logger.Info("Quitting game...");
         return SendRequest(new Request
         {

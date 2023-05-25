@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.GameSense;
-using Bot.Requests;
+using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot.VideoClips.Manim.Animations;
@@ -11,20 +11,20 @@ public class AnimationFactory : IAnimationFactory {
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IController _controller;
     private readonly IRequestBuilder _requestBuilder;
-    private readonly IRequestService _requestService;
+    private readonly ISc2Client _sc2Client;
 
     public AnimationFactory(
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
         IController controller,
         IRequestBuilder requestBuilder,
-        IRequestService requestService
+        ISc2Client sc2Client
     ) {
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
         _controller = controller;
         _requestBuilder = requestBuilder;
-        _requestService = requestService;
+        _sc2Client = sc2Client;
     }
 
     public CellDrawingAnimation CreateCellDrawingAnimation(Vector3 cell, int startFrame, float padding = 0f) {
@@ -32,7 +32,7 @@ public class AnimationFactory : IAnimationFactory {
     }
 
     public CenterCameraAnimation CreateCenterCameraAnimation(Vector2 destination, int startFrame) {
-        return new CenterCameraAnimation(_controller, _requestBuilder, _requestService, destination, startFrame);
+        return new CenterCameraAnimation(_controller, _requestBuilder, _sc2Client, destination, startFrame);
     }
 
     public LineDrawingAnimation CreateLineDrawingAnimation(Vector3 lineStart, Vector3 lineEnd, Color color, int startFrame, int thickness = 3) {
@@ -40,7 +40,7 @@ public class AnimationFactory : IAnimationFactory {
     }
 
     public MoveCameraAnimation CreateMoveCameraAnimation(Vector2 origin, Vector2 destination, int startFrame) {
-        return new MoveCameraAnimation(_requestBuilder, _requestService, origin, destination, startFrame);
+        return new MoveCameraAnimation(_requestBuilder, _sc2Client, origin, destination, startFrame);
     }
 
     public PauseAnimation CreatePauseAnimation(int startFrame) {

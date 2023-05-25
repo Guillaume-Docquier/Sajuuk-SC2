@@ -27,7 +27,6 @@ using Bot.Managers.WarManagement.States;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
-using Bot.Requests;
 using Bot.Scenarios;
 using Bot.Tagging;
 using Bot.UnitModules;
@@ -100,7 +99,6 @@ public class Program {
                 services.Pathfinder,
                 services.ActionService,
                 services.Sc2Client,
-                services.RequestService,
                 stepSize: 1
             );
 
@@ -124,18 +122,15 @@ public class Program {
             services.DebuggingFlagsTracker,
             services.UnitsTracker,
             services.TerrainTracker,
-            services.GraphicalDebugger,
             services.FrameClock,
-            services.Controller,
             services.RequestBuilder,
-            services.RequestService,
-            new AnimationFactory(services.TerrainTracker, services.GraphicalDebugger, services.Controller, services.RequestBuilder, services.RequestService),
+            services.Sc2Client,
+            new AnimationFactory(services.TerrainTracker, services.GraphicalDebugger, services.Controller, services.RequestBuilder, services.Sc2Client),
             MapFileName
         );
 
         var botRunner = new LocalBotRunner(
             services.Sc2Client,
-            services.RequestService,
             services.RequestBuilder,
             services.KnowledgeBase,
             services.FrameClock,
@@ -162,7 +157,6 @@ public class Program {
         var services = CreateServices(graphicalDebugging: true);
         var botRunner = new LocalBotRunner(
             services.Sc2Client,
-            services.RequestService,
             services.RequestBuilder,
             services.KnowledgeBase,
             services.FrameClock,
@@ -190,7 +184,6 @@ public class Program {
         var commandLineArgs = new CommandLineArguments(args);
         var botRunner = new LadderBotRunner(
             services.Sc2Client,
-            services.RequestService,
             services.RequestBuilder,
             services.KnowledgeBase,
             services.FrameClock,
@@ -388,13 +381,13 @@ public class Program {
     }
 
     private static Services CreateServices(bool graphicalDebugging, bool dataGeneration = false) {
-        var protobufProxy = new Sc2Client();
-        var requestService = new RequestService(protobufProxy);
+        var knowledgeBase = new KnowledgeBase();
+        var requestBuilder = new RequestBuilder(knowledgeBase);
+        var sc2Client = new Sc2Client(requestBuilder);
 
         var frameClock = new FrameClock();
         var visibilityTracker = new VisibilityTracker(frameClock);
 
-        var knowledgeBase = new KnowledgeBase();
         var actionBuilder = new ActionBuilder(knowledgeBase);
         var actionService = new ActionService();
         var unitsTracker = new UnitsTracker(visibilityTracker);
@@ -404,13 +397,12 @@ public class Program {
 
         var terrainTracker = new TerrainTracker(visibilityTracker, unitsTracker, knowledgeBase);
 
-        var requestBuilder = new RequestBuilder(knowledgeBase);
         IGraphicalDebugger graphicalDebugger = graphicalDebugging ? new Sc2GraphicalDebugger(terrainTracker, requestBuilder) : new NullGraphicalDebugger();
 
         var pathfinder = new Pathfinder(terrainTracker, graphicalDebugger);
         var clustering = new Clustering(terrainTracker, graphicalDebugger);
 
-        var buildingTracker = new BuildingTracker(unitsTracker, terrainTracker, knowledgeBase, graphicalDebugger, requestBuilder, requestService);
+        var buildingTracker = new BuildingTracker(unitsTracker, terrainTracker, knowledgeBase, graphicalDebugger, requestBuilder, sc2Client);
 
         var chatTracker = new ChatTracker();
         var debuggingFlagsTracker = new DebuggingFlagsTracker(chatTracker);
@@ -519,8 +511,7 @@ public class Program {
             DetectionTracker = detectionTracker,
             ChatService = chatService,
             ActionService = actionService,
-            RequestService = requestService,
-            Sc2Client = protobufProxy,
+            Sc2Client = sc2Client,
             UnitModuleInstaller = unitModuleInstaller,
             ExpandAnalyzer = expandAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different BotRunner implementation
             RegionAnalyzer = regionAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different BotRunner implementation
@@ -554,7 +545,6 @@ public class Program {
         public IDetectionTracker DetectionTracker { get; init; }
         public IChatService ChatService { get; init; }
         public IActionService ActionService { get; init; }
-        public IRequestService RequestService { get; init; }
         public ISc2Client Sc2Client { get; init; }
         public IUnitModuleInstaller UnitModuleInstaller { get; init; }
 

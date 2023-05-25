@@ -2,8 +2,8 @@
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapAnalysis.ExpandAnalysis;
-using Bot.Requests;
 using Bot.Utils;
+using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot.Scenarios;
@@ -15,7 +15,7 @@ public class WorkerRushScenario : IScenario {
     private readonly IFrameClock _frameClock;
     private readonly IController _controller;
     private readonly IRequestBuilder _requestBuilder;
-    private readonly IRequestService _requestService;
+    private readonly ISc2Client _sc2Client;
 
     private const int DefaultTimingInSeconds = 50;
 
@@ -28,7 +28,7 @@ public class WorkerRushScenario : IScenario {
         IFrameClock frameClock,
         IController controller,
         IRequestBuilder requestBuilder,
-        IRequestService requestService,
+        ISc2Client sc2Client,
         int timingInSeconds = DefaultTimingInSeconds
     ) {
         _terrainTracker = terrainTracker;
@@ -36,7 +36,7 @@ public class WorkerRushScenario : IScenario {
         _frameClock = frameClock;
         _controller = controller;
         _requestBuilder = requestBuilder;
-        _requestService = requestService;
+        _sc2Client = sc2Client;
 
         _timingInSeconds = timingInSeconds;
     }
@@ -52,7 +52,7 @@ public class WorkerRushScenario : IScenario {
             Logger.Debug("Spawning 12 zerglings {0} units away from main", 0);
 
             // Spawned drones wouldn't be aggressive so we spawn zerglings instead
-            await _requestService.SendRequest(_requestBuilder.DebugCreateUnit(Owner.Enemy, Units.Zergling, 12, _terrainTracker.WithWorldHeight(mainPosition)));
+            await _sc2Client.SendRequest(_requestBuilder.DebugCreateUnit(Owner.Enemy, Units.Zergling, 12, _terrainTracker.WithWorldHeight(mainPosition)));
             _controller.SetRealTime("Worker rush started");
 
             _isScenarioDone = true;

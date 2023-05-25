@@ -12,7 +12,6 @@ using Bot.GameSense;
 using Bot.MapAnalysis;
 using Bot.MapAnalysis.ExpandAnalysis;
 using Bot.MapAnalysis.RegionAnalysis;
-using Bot.Requests;
 using Bot.Utils;
 using SC2APIProtocol;
 
@@ -30,7 +29,6 @@ public class DeprecatedBotRunner {
     private readonly IPathfinder _pathfinder;
     private readonly IActionService _actionService;
     private readonly ISc2Client _sc2Client;
-    private readonly IRequestService _requestService;
 
     private const string Address = "127.0.0.1";
 
@@ -59,7 +57,6 @@ public class DeprecatedBotRunner {
         IPathfinder pathfinder,
         IActionService actionService,
         ISc2Client sc2Client,
-        IRequestService requestService,
         uint stepSize
     ) {
         _unitsTracker = unitsTracker;
@@ -73,7 +70,6 @@ public class DeprecatedBotRunner {
         _pathfinder = pathfinder;
         _actionService = actionService;
         _sc2Client = sc2Client;
-        _requestService = requestService;
 
         _stepSize = stepSize;
     }
@@ -167,7 +163,7 @@ public class DeprecatedBotRunner {
             throw new Exception($"Unable to locate map: {mapPath}");
         }
 
-        var createGameResponse = await _requestService.SendRequest(_requestBuilder.RequestCreateComputerGame(realTime, mapPath, opponentRace, opponentDifficulty), logErrors: true);
+        var createGameResponse = await _sc2Client.SendRequest(_requestBuilder.RequestCreateComputerGame(realTime, mapPath, opponentRace, opponentDifficulty), logErrors: true);
 
         // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
         if (createGameResponse.CreateGame.Error != ResponseCreateGame.Types.Error.MissingMap) {
@@ -179,7 +175,7 @@ public class DeprecatedBotRunner {
     }
 
     private async Task<uint> JoinGame(Race race) {
-        var joinGameResponse = await _requestService.SendRequest(_requestBuilder.RequestJoinLocalGame(race), logErrors: true);
+        var joinGameResponse = await _sc2Client.SendRequest(_requestBuilder.RequestJoinLocalGame(race), logErrors: true);
 
         // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
         if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.MissingParticipation) {
@@ -205,7 +201,7 @@ public class DeprecatedBotRunner {
     }
 
     private async Task<uint> JoinGameLadder(Race race, int startPort) {
-        var joinGameResponse = await _requestService.SendRequest(_requestBuilder.RequestJoinLadderGame(race, startPort), logErrors: true);
+        var joinGameResponse = await _sc2Client.SendRequest(_requestBuilder.RequestJoinLadderGame(race, startPort), logErrors: true);
 
         // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
         if (joinGameResponse.JoinGame.Error != ResponseJoinGame.Types.Error.MissingParticipation) {
@@ -230,13 +226,13 @@ public class DeprecatedBotRunner {
                 UpgradeId = true,
             }
         };
-        var dataResponse = await _requestService.SendRequest(dataRequest);
+        var dataResponse = await _sc2Client.SendRequest(dataRequest);
         _knowledgeBase.Data = dataResponse.Data;
 
         while (true) {
             // _frameClock.CurrentFrame is uint.MaxValue until we request frame 0
             var nextFrame = _frameClock.CurrentFrame == uint.MaxValue ? 0 : _frameClock.CurrentFrame + _stepSize;
-            var observationResponse = await _requestService.SendRequest(_requestBuilder.RequestObservation(nextFrame));
+            var observationResponse = await _sc2Client.SendRequest(_requestBuilder.RequestObservation(nextFrame));
 
             if (observationResponse.Status is Status.Quit) {
                 Logger.Info("Game was terminated.");
@@ -263,19 +259,19 @@ public class DeprecatedBotRunner {
             }
 
             if (_quitAt <= nextFrame) {
-                await _sc2Client.Quit();
+                await _sc2Client.LeaveCurrentGame();
             }
             else if (runDataAnalyzersOnly && _expandAnalyzer.IsAnalysisComplete && _regionAnalyzer.IsAnalysisComplete && _quitAt == ulong.MaxValue) {
                 _quitAt = nextFrame + _stepSize * 10; // Just give a few frames to debug the analysis
             }
             else {
-                await _requestService.SendRequest(_requestBuilder.RequestStep(_stepSize));
+                await _sc2Client.SendRequest(_requestBuilder.RequestStep(_stepSize));
             }
         }
     }
 
     private async Task RunBot(IBot bot, ResponseObservation observation) {
-        var gameInfoResponse = await _requestService.SendRequest(_requestBuilder.RequestGameInfo());
+        var gameInfoResponse = await _sc2Client.SendRequest(_requestBuilder.RequestGameInfo());
 
         _performanceDebugger.FrameStopwatch.Start();
 
@@ -291,7 +287,7 @@ public class DeprecatedBotRunner {
         var actions = _actionService.GetActions().ToList();
 
         if (actions.Count > 0) {
-            var response = await _requestService.SendRequest(_requestBuilder.RequestAction(actions));
+            var response = await _sc2Client.SendRequest(_requestBuilder.RequestAction(actions));
 
             var unsuccessfulActions = actions
                 .Zip(response.Action.Result, (action, result) => (action, result))
@@ -308,7 +304,7 @@ public class DeprecatedBotRunner {
         _performanceDebugger.DebuggerStopwatch.Start();
         var request = _graphicalDebugger.GetDebugRequest();
         if (request != null) {
-            await _requestService.SendRequest(request);
+            await _sc2Client.SendRequest(request);
         }
         _performanceDebugger.DebuggerStopwatch.Stop();
 

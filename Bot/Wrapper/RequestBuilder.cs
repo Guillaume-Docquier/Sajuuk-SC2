@@ -4,7 +4,7 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using SC2APIProtocol;
 
-namespace Bot.Requests;
+namespace Bot.Wrapper;
 
 public class RequestBuilder : IRequestBuilder {
     private readonly KnowledgeBase _knowledgeBase;

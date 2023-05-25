@@ -4,8 +4,8 @@ using Bot.ExtensionMethods;
 using Bot.GameData;
 using Bot.GameSense;
 using Bot.MapAnalysis;
-using Bot.Requests;
 using Bot.Utils;
+using Bot.Wrapper;
 
 namespace Bot.Scenarios;
 
@@ -16,7 +16,7 @@ public class SpawnStuffScenario : IScenario {
     private readonly IController _controller;
     private readonly IPathfinder _pathfinder;
     private readonly IRequestBuilder _requestBuilder;
-    private readonly IRequestService _requestService;
+    private readonly ISc2Client _sc2Client;
 
     private bool _isScenarioDone = false;
 
@@ -27,7 +27,7 @@ public class SpawnStuffScenario : IScenario {
         IController controller,
         IPathfinder pathfinder,
         IRequestBuilder requestBuilder,
-        IRequestService requestService
+        ISc2Client sc2Client
     ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
@@ -35,7 +35,7 @@ public class SpawnStuffScenario : IScenario {
         _controller = controller;
         _pathfinder = pathfinder;
         _requestBuilder = requestBuilder;
-        _requestService = requestService;
+        _sc2Client = sc2Client;
     }
 
     public async Task OnFrame() {
@@ -49,7 +49,7 @@ public class SpawnStuffScenario : IScenario {
 
             Logger.Debug("Spawning 1 probe on the main");
 
-            await _requestService.SendRequest(_requestBuilder.DebugCreateUnit(Owner.Enemy, Units.Probe, 3, main!.Position));
+            await _sc2Client.SendRequest(_requestBuilder.DebugCreateUnit(Owner.Enemy, Units.Probe, 3, main!.Position));
             _controller.SetRealTime("SpawnStuffScenario");
 
             _isScenarioDone = true;

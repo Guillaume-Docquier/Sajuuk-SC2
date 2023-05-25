@@ -1,4 +1,4 @@
-﻿namespace Bot;
+﻿namespace Bot.Wrapper;
 
 // Used when spawning debug units
 public enum Owner {

@@ -3,10 +3,8 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Bot.Debugging;
-using Bot.Debugging.GraphicalDebugging;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.Requests;
 using Bot.Utils;
 using Bot.VideoClips.Clips.RayCastingClips;
 using Bot.VideoClips.Manim.Animations;
@@ -19,11 +17,9 @@ public class VideoClipPlayer : IBot {
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
-    private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IFrameClock _frameClock;
-    private readonly IController _controller;
     private readonly IRequestBuilder _requestBuilder;
-    private readonly IRequestService _requestService;
+    private readonly ISc2Client _sc2Client;
     private readonly IAnimationFactory _animationFactory;
 
     private readonly string _mapName;
@@ -40,22 +36,18 @@ public class VideoClipPlayer : IBot {
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
-        IGraphicalDebugger graphicalDebugger,
         IFrameClock frameClock,
-        IController controller,
         IRequestBuilder requestBuilder,
-        IRequestService requestService,
+        ISc2Client sc2Client,
         IAnimationFactory animationFactory,
         string mapName
     ) {
         _debuggingFlagsTracker = debuggingFlagsTracker;
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
-        _graphicalDebugger = graphicalDebugger;
         _frameClock = frameClock;
-        _controller = controller;
         _requestBuilder = requestBuilder;
-        _requestService = requestService;
+        _sc2Client = sc2Client;
         _animationFactory = animationFactory;
 
         _mapName = mapName;
@@ -89,7 +81,7 @@ public class VideoClipPlayer : IBot {
             return;
         }
 
-        await _requestService.SendRequest(_requestBuilder.DebugRevealMap());
+        await _sc2Client.SendRequest(_requestBuilder.DebugRevealMap());
         _debuggingFlagsTracker.HandleMessage(DebuggingCommands.Off);
 
         ColorService.SetMap(_mapName);

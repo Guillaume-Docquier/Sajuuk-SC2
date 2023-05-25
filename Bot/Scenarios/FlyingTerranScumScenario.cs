@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
 using Bot.GameData;
 using Bot.GameSense;
-using Bot.Requests;
 using Bot.Utils;
+using Bot.Wrapper;
 
 namespace Bot.Scenarios;
 
@@ -10,18 +10,18 @@ public class FlyingTerranScumScenario : IScenario {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IFrameClock _frameClock;
     private readonly IRequestBuilder _requestBuilder;
-    private readonly IRequestService _requestService;
+    private readonly ISc2Client _sc2Client;
 
     public FlyingTerranScumScenario(
         ITerrainTracker terrainTracker,
         IFrameClock frameClock,
         IRequestBuilder requestBuilder,
-        IRequestService requestService
+        ISc2Client sc2Client
     ) {
         _terrainTracker = terrainTracker;
         _frameClock = frameClock;
         _requestBuilder = requestBuilder;
-        _requestService = requestService;
+        _sc2Client = sc2Client;
     }
 
     public async Task OnFrame() {
@@ -29,6 +29,6 @@ public class FlyingTerranScumScenario : IScenario {
             return;
         }
 
-        await _requestService.SendRequest(_requestBuilder.DebugCreateUnit(Owner.Enemy, Units.CommandCenterFlying, 1, _terrainTracker.WithWorldHeight(_terrainTracker.EnemyStartingLocation)));
+        await _sc2Client.SendRequest(_requestBuilder.DebugCreateUnit(Owner.Enemy, Units.CommandCenterFlying, 1, _terrainTracker.WithWorldHeight(_terrainTracker.EnemyStartingLocation)));
     }
 }

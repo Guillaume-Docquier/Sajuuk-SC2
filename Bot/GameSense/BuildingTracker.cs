@@ -5,7 +5,7 @@ using System.Numerics;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
 using Bot.GameData;
-using Bot.Requests;
+using Bot.Wrapper;
 using SC2APIProtocol;
 
 namespace Bot.GameSense;
@@ -16,7 +16,7 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
     private readonly KnowledgeBase _knowledgeBase;
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IRequestBuilder _requestBuilder;
-    private readonly IRequestService _requestService;
+    private readonly ISc2Client _sc2Client;
 
     private readonly Dictionary<Vector2, Unit> _reservedBuildingCells = new Dictionary<Vector2, Unit>();
     private readonly Dictionary<Unit, (uint buildingType, Vector2 position, List<Vector2> cells)> _ongoingBuildingOrders = new();
@@ -27,14 +27,14 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
         KnowledgeBase knowledgeBase,
         IGraphicalDebugger graphicalDebugger,
         IRequestBuilder requestBuilder,
-        IRequestService requestService
+        ISc2Client sc2Client
     ) {
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
         _knowledgeBase = knowledgeBase;
         _graphicalDebugger = graphicalDebugger;
         _requestBuilder = requestBuilder;
-        _requestService = requestService;
+        _sc2Client = sc2Client;
     }
 
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
@@ -124,7 +124,7 @@ public class BuildingTracker : IBuildingTracker, INeedUpdating, IWatchUnitsDie {
         }
 
         // TODO GD Check with MapAnalyzer._currentWalkMap before checking with the query
-        var queryBuildingPlacementResponse = _requestService.SendRequest(_requestBuilder.RequestQueryBuildingPlacement(buildingType, position)).Result;
+        var queryBuildingPlacementResponse = _sc2Client.SendRequest(_requestBuilder.RequestQueryBuildingPlacement(buildingType, position)).Result;
         if (queryBuildingPlacementResponse.Query.Placements.Count == 0) {
             return ActionResult.NotSupported;
         }
