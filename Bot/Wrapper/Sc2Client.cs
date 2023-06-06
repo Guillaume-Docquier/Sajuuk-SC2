@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -184,7 +185,7 @@ public class Sc2Client : ISc2Client {
     }
 
     private async Task WriteMessage(IMessage request) {
-        var sendBuf = new byte[1024 * 1024];
+        var sendBuf = ArrayPool<byte>.Shared.Rent(1024 * 1024);
         var outStream = new CodedOutputStream(sendBuf);
         request.WriteTo(outStream);
 
@@ -196,10 +197,11 @@ public class Sc2Client : ISc2Client {
             true,
             cancellationSource.Token
         );
+        ArrayPool<byte>.Shared.Return(sendBuf);
     }
 
     private async Task<Response> ReadMessage() {
-        var receiveBuf = new byte[1024 * 1024];
+        var receiveBuf = ArrayPool<byte>.Shared.Rent(1024 * 1024);
         var finished = false;
         var curPos = 0;
 
@@ -210,6 +212,7 @@ public class Sc2Client : ISc2Client {
                 // No space left in the array, enlarge the array by doubling its size.
                 var temp = new byte[receiveBuf.Length * 2];
                 Array.Copy(receiveBuf, temp, receiveBuf.Length);
+                ArrayPool<byte>.Shared.Return(receiveBuf);
                 receiveBuf = temp;
                 left = receiveBuf.Length - curPos;
             }
@@ -225,7 +228,7 @@ public class Sc2Client : ISc2Client {
         }
 
         var response = Response.Parser.ParseFrom(new MemoryStream(receiveBuf, 0, curPos));
-
+        ArrayPool<byte>.Shared.Return(receiveBuf);
         return response;
     }
 }
