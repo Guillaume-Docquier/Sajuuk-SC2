@@ -27,7 +27,6 @@ public class VideoClipPlayer : IBot {
     private Clip _currentlyPlayingClip;
     private bool _isInitialized = false;
 
-    public string Name => "VideoClipPlayer";
     public Race Race => Race.Zerg;
 
     private ulong _startAt;

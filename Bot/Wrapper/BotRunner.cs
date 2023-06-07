@@ -23,7 +23,6 @@ public abstract class BotRunner : IBotRunner {
     private readonly IPathfinder _pathfinder;
     private readonly uint _stepSize;
 
-
     // TODO GD Could be injected
     private readonly PerformanceDebugger _performanceDebugger = new PerformanceDebugger();
     private static readonly ulong DebugMemoryEvery = TimeUtils.SecsToFrames(5);

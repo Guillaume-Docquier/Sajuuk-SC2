@@ -11,7 +11,7 @@ using SC2APIProtocol;
 
 namespace Bot;
 
-public abstract class PoliteBot: IBot {
+public abstract class PoliteBot : IBot {
     private readonly ITaggingService _taggingService;
     protected readonly IUnitsTracker UnitsTracker;
     private readonly ITerrainTracker _terrainTracker;

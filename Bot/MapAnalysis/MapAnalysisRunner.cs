@@ -7,7 +7,6 @@ namespace Bot.MapAnalysis;
 public class MapAnalysisRunner : IBot {
     private readonly IFrameClock _frameClock;
 
-    public string Name => "MapAnalysisRunner";
     public Race Race => Race.Zerg;
 
     public MapAnalysisRunner(IFrameClock frameClock) {
