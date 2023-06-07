@@ -118,7 +118,7 @@ public partial class RayCastingChokeFinder {
                 .Take(endCellIndex - startCellIndex + 1)
                 .ToList();
 
-            lines.Add(new VisionLine(cells, visionLine.Angle));
+            lines.Add(new VisionLine(_terrainTracker, cells, visionLine.Angle));
 
             cellIndex = endCellIndex + 1;
         }

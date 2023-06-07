@@ -38,7 +38,13 @@ public partial class RayCastingChokeFinder {
             Angle = angle;
         }
 
-        public VisionLine(List<Vector2> orderedTraversedCells, int angle) {
+        public VisionLine(
+            ITerrainTracker terrainTracker,
+            List<Vector2> orderedTraversedCells,
+            int angle
+        ) {
+            _terrainTracker = terrainTracker;
+
             OrderedTraversedCells = orderedTraversedCells;
 
             Start = OrderedTraversedCells[0];
