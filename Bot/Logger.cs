@@ -9,7 +9,7 @@ namespace Bot;
 // TODO GD Turn Logger into an injected instance
 public static class Logger {
     private static bool _isDisabled = false;
-    private static IFrameClock _frameClock;
+    private static IFrameClock _frameClock = new DummyFrameClock();
 
     private static StreamWriter _fileStream;
     private static bool _stdoutOpen = true;
@@ -146,5 +146,9 @@ public static class Logger {
 
         // Remove the namespaces, just keep the class name
         return fullName.Split(".").Last();
+    }
+
+    private class DummyFrameClock : IFrameClock {
+        public uint CurrentFrame => uint.MaxValue;
     }
 }
