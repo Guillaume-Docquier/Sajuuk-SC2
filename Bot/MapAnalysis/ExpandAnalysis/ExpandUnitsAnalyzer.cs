@@ -42,7 +42,12 @@ public class ExpandUnitsAnalyzer : IExpandUnitsAnalyzer {
             var gasses = _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, Units.GasGeysers);
             var resources = minerals.Concat(gasses).ToList();
 
-            _resourceClusters = _clustering.DBSCAN(resources, epsilon: 8, minPoints: 4).clusters;
+            _resourceClusters = _clustering.DBSCAN(resources, epsilon: 8, minPoints: 4)
+                .clusters
+                // Expand clusters have at least a gas, and a minimum of 5 minerals (maybe more, but at least 5)
+                .Where(cluster => cluster.Any(resource => Units.GasGeysers.Contains(resource.UnitType)))
+                .Where(cluster => cluster.Count(resource => Units.MineralFields.Contains(resource.UnitType)) >= 5)
+                .ToList();
         }
 
         return _resourceClusters;
