@@ -232,9 +232,15 @@ public static class Units {
     public const uint DestructibleRockEx1HorizontalHuge = 643;
     public const uint DestructibleCityDebris6x6 = 629;
     public const uint DestructibleCityDebrisHugeDiagonalBLUR = 630;
+    public const uint CollapsibleTerranTowerDiagonal = 589;
+    public const uint CollapsibleRockTowerDiagonal = 588;
+    public const uint DestructibleRockEx1DiagonalHugeBLUR = 641;
+    public const uint CollapsiblePurifierTowerDiagonal = 882;
 
+    public const uint UnbuildableBricksDestructible = 473;
     public const uint UnbuildablePlatesDestructible = 474;
     public const uint UnbuildableRocksDestructible = 472;
+    public const uint Rocks2x2NonConjoined = 312;
 
     public const uint ReaperMine = 831; // KD8Charge
 
@@ -646,6 +652,8 @@ public static class Units {
     {
         UnbuildablePlatesDestructible,
         UnbuildableRocksDestructible,
+        UnbuildableBricksDestructible,
+        Rocks2x2NonConjoined,
     };
 
     public static readonly HashSet<uint> Obstacles = new HashSet<uint>
@@ -688,6 +696,10 @@ public static class Units {
         DestructibleRockEx1HorizontalHuge,
         DestructibleCityDebris6x6,
         DestructibleCityDebrisHugeDiagonalBLUR,
+        CollapsibleTerranTowerDiagonal,
+        CollapsibleRockTowerDiagonal,
+        DestructibleRockEx1DiagonalHugeBLUR,
+        CollapsiblePurifierTowerDiagonal,
     };
 
     public static readonly HashSet<uint> Destructibles = new HashSet<uint>(

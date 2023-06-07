@@ -67,6 +67,7 @@ public class FootprintCalculator {
             case Units.DestructibleRampDiagonalHugeBLUR:
             case Units.DestructibleDebrisRampDiagonalHugeBLUR:
             case Units.DestructibleCityDebrisHugeDiagonalBLUR:
+            case Units.DestructibleRockEx1DiagonalHugeBLUR:
                 footprint.AddRange(new Vector2[]
                 {
                                                                                                                                      new(1.5f,  4.5f), new(2.5f,  4.5f), new(3.5f,  4.5f),
