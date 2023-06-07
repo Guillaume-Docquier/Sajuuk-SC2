@@ -60,7 +60,7 @@ public class Program {
         try {
             switch (args.Length) {
                 case 1 when args[0] == "--generateData":
-                    PlayDataGeneration();
+                    PlayDataGeneration(Maps.Season_2022_4.FileNames.GetAll());
                     break;
                 case 1 when args[0] == "--videoClip":
                     PlayVideoClip();
@@ -80,11 +80,11 @@ public class Program {
         Logger.Info("Terminated.");
     }
 
-    private static void PlayDataGeneration() {
+    private static void PlayDataGeneration(IEnumerable<string> mapFileNames) {
         Logger.Info("Game launched in data generation mode");
         DebugEnabled = true;
 
-        foreach (var mapFileName in Maps.Season_2022_4.FileNames.GetAll()) {
+        foreach (var mapFileName in mapFileNames) {
             var services = CreateServices(graphicalDebugging: false, dataGeneration: true);
             // TODO GD Create a game connection for data analysis
             var botRunner = new DeprecatedBotRunner(
