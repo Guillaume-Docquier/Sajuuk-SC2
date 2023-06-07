@@ -18,6 +18,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IClustering _clustering;
+    private readonly IPathfinder _pathfinder;
 
     private readonly IMapDataRepository<RegionsData> _regionsRepository;
 
@@ -37,11 +38,13 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         IExpandAnalyzer expandAnalyzer,
         IGraphicalDebugger graphicalDebugger,
         IClustering clustering,
+        IPathfinder pathfinder,
         IMapDataRepository<RegionsData> regionsRepository
     ) {
         _terrainTracker = terrainTracker;
         _expandAnalyzer = expandAnalyzer;
         _clustering = clustering;
+        _pathfinder = pathfinder;
         _regionsRepository = regionsRepository;
 
         // TODO GD Inject this as well, probably?
@@ -238,10 +241,10 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var regions = new List<AnalyzedRegion>();
         foreach (var region in potentialRegions) {
             var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints);
-            regions.AddRange(subregions.Select(subregion => new AnalyzedRegion(_clustering, subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
+            regions.AddRange(subregions.Select(subregion => new AnalyzedRegion(_terrainTracker, _clustering, _pathfinder, subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
         }
 
-        regions.AddRange(ramps.Select(ramp => new AnalyzedRegion(_clustering, ramp, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
+        regions.AddRange(ramps.Select(ramp => new AnalyzedRegion(_terrainTracker, _clustering, _pathfinder, ramp, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
 
         return regions;
     }

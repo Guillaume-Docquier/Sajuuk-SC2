@@ -5,6 +5,7 @@ using System.Numerics;
 using Bot.Algorithms;
 using Bot.Debugging.GraphicalDebugging;
 using Bot.ExtensionMethods;
+using Bot.GameSense;
 using Bot.MapAnalysis.ExpandAnalysis;
 using SC2APIProtocol;
 
@@ -22,11 +23,13 @@ public class AnalyzedRegion : Region {
     };
 
     public AnalyzedRegion(
+        ITerrainTracker terrainTracker,
         IClustering clustering,
+        IPathfinder pathfinder,
         IEnumerable<Vector2> cells,
         RegionType type,
         IEnumerable<ExpandLocation> expandLocations
-    ) {
+    ) : base(terrainTracker, clustering, pathfinder) {
         Cells = cells.ToHashSet();
 
         // The approximated radius is the diagonal of the cells as if they were a square

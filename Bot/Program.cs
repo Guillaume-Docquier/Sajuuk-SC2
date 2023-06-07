@@ -424,7 +424,7 @@ public class Program {
         var incomeTracker = new IncomeTracker(taggingService, unitsTracker, frameClock);
 
         var expandAnalyzer = new ExpandAnalyzer(terrainTracker, buildingTracker, expandUnitsAnalyzer, frameClock, graphicalDebugger, clustering, pathfinder);
-        var regionAnalyzer = new RegionAnalyzer(terrainTracker, expandAnalyzer, graphicalDebugger, clustering, regionsDataRepository);
+        var regionAnalyzer = new RegionAnalyzer(terrainTracker, expandAnalyzer, graphicalDebugger, clustering, pathfinder, regionsDataRepository);
 
         var spendingTracker = new SpendingTracker(incomeTracker, knowledgeBase);
 

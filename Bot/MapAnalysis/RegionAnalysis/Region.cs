@@ -29,7 +29,19 @@ public class Region : IRegion {
     [JsonInclude] public HashSet<NeighboringRegion> ConcreteNeighbors { get; set; }
     [JsonIgnore] public IEnumerable<INeighboringRegion> Neighbors => ConcreteNeighbors;
 
-    [JsonConstructor] public Region() {}
+    [JsonConstructor]
+    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
+    public Region() {}
+
+    public Region(
+        ITerrainTracker terrainTracker,
+        IClustering clustering,
+        IPathfinder pathfinder
+    ) {
+        _terrainTracker = terrainTracker;
+        _clustering = clustering;
+        _pathfinder = pathfinder;
+    }
 
     public void SetDependencies(
         ITerrainTracker terrainTracker,
