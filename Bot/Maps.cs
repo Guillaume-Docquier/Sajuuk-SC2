@@ -32,4 +32,20 @@ public static class Maps {
             }
         }
     }
+
+    public static class Season_2023_2 {
+        public static class FileNames {
+            public const string Altitude = "AltitudeAIE.SC2Map";
+            public const string AncientCistern = "AncientCisternAIE.SC2Map";
+            public const string Babylon = "BabylonAIE.SC2Map";
+            public const string DragonScales = "DragonScalesAIE.SC2Map";
+            public const string Gresvan = "GresvanAIE.SC2Map";
+            public const string NeoHumanity = "NeoHumanityAIE.SC2Map";
+            public const string RoyalBlood = "RoyalBloodAIE.SC2Map";
+
+            public static IEnumerable<string> GetAll() {
+                return typeof(FileNames).GetFields().Select(x => x.GetValue(null)).Cast<string>();
+            }
+        }
+    }
 }
