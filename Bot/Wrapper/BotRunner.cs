@@ -11,8 +11,9 @@ using SC2APIProtocol;
 
 namespace Bot.Wrapper;
 
-public abstract class BotRunner : IBotRunner {
+public class BotRunner : IBotRunner {
     private readonly ISc2Client _sc2Client;
+    private readonly IGame _game;
     private readonly IRequestBuilder _requestBuilder;
     private readonly KnowledgeBase _knowledgeBase;
     private readonly IFrameClock _frameClock;
@@ -27,8 +28,9 @@ public abstract class BotRunner : IBotRunner {
     private readonly PerformanceDebugger _performanceDebugger = new PerformanceDebugger();
     private static readonly ulong DebugMemoryEvery = TimeUtils.SecsToFrames(5);
 
-    protected BotRunner(
+    public BotRunner(
         ISc2Client sc2Client,
+        IGame game,
         IRequestBuilder requestBuilder,
         KnowledgeBase knowledgeBase,
         IFrameClock frameClock,
@@ -40,6 +42,7 @@ public abstract class BotRunner : IBotRunner {
         uint stepSize
     ) {
         _sc2Client = sc2Client;
+        _game = game;
         _requestBuilder = requestBuilder;
         _knowledgeBase = knowledgeBase;
         _frameClock = frameClock;
@@ -51,10 +54,14 @@ public abstract class BotRunner : IBotRunner {
         _stepSize = stepSize;
     }
 
-    public abstract Task PlayGame();
+    public async Task RunBot(IBot bot) {
+        await _game.Setup();
+        var playerId = await _game.Join(bot.Race);
 
-    // TODO GD This must be shared with the ladder game connection
-    protected async Task Run(IBot bot, uint playerId) {
+        await RunGameLoops(bot, playerId);
+    }
+
+    private async Task RunGameLoops(IBot bot, uint playerId) {
         var dataRequest = new Request
         {
             Data = new RequestData
@@ -92,7 +99,7 @@ public abstract class BotRunner : IBotRunner {
                 break;
             }
 
-            await RunBot(bot, observation);
+            await RunBotFrame(bot, observation);
 
             if (observation.Observation.GameLoop % DebugMemoryEvery == 0) {
                 PrintMemoryInfo();
@@ -102,8 +109,7 @@ public abstract class BotRunner : IBotRunner {
         }
     }
 
-    // TODO GD This must be shared with the ladder game connection
-    private async Task RunBot(IBot bot, ResponseObservation observation) {
+    private async Task RunBotFrame(IBot bot, ResponseObservation observation) {
         var gameInfoResponse = await _sc2Client.SendRequest(_requestBuilder.RequestGameInfo());
 
         _performanceDebugger.FrameStopwatch.Start();
@@ -150,7 +156,6 @@ public abstract class BotRunner : IBotRunner {
         _performanceDebugger.CompileData();
     }
 
-    // TODO GD This must be shared with the ladder game connection
     private void PrintMemoryInfo() {
         var memoryUsedMb = Process.GetCurrentProcess().WorkingSet64 * 1e-6;
         if (memoryUsedMb > 200) {

@@ -4,12 +4,12 @@ using SC2APIProtocol;
 
 namespace Bot.MapAnalysis;
 
-public class MapAnalysisRunner : IBot {
+public class MapAnalysisBot : IBot {
     private readonly IFrameClock _frameClock;
 
     public Race Race => Race.Zerg;
 
-    public MapAnalysisRunner(IFrameClock frameClock) {
+    public MapAnalysisBot(IFrameClock frameClock) {
         _frameClock = frameClock;
     }
 

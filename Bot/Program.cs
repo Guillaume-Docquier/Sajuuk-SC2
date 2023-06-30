@@ -104,7 +104,7 @@ public class Program {
 
             Logger.Important($"Generating data for {mapFileName}");
             botRunner.RunLocal(
-                new MapAnalysisRunner(services.FrameClock),
+                new MapAnalysisBot(services.FrameClock),
                 mapFileName,
                 Race.Zerg,
                 Difficulty.VeryEasy,
@@ -118,7 +118,31 @@ public class Program {
         DebugEnabled = true;
 
         var services = CreateServices(graphicalDebugging: true);
-        var videoClipPlayer = new VideoClipPlayer(
+
+        var game = new LocalGame(
+            services.Sc2Client,
+            services.RequestBuilder,
+            MapFileName,
+            Race.Terran,
+            Difficulty.VeryEasy,
+            realTime: true
+        );
+
+        var botRunner = new BotRunner(
+            services.Sc2Client,
+            game,
+            services.RequestBuilder,
+            services.KnowledgeBase,
+            services.FrameClock,
+            services.Controller,
+            services.ActionService,
+            services.GraphicalDebugger,
+            services.UnitsTracker,
+            services.Pathfinder,
+            stepSize: 1
+        );
+
+        var videoClipBot = new VideoClipBot(
             services.DebuggingFlagsTracker,
             services.UnitsTracker,
             services.TerrainTracker,
@@ -129,34 +153,27 @@ public class Program {
             MapFileName
         );
 
-        var botRunner = new LocalBotRunner(
-            services.Sc2Client,
-            services.RequestBuilder,
-            services.KnowledgeBase,
-            services.FrameClock,
-            services.Controller,
-            services.ActionService,
-            services.GraphicalDebugger,
-            services.UnitsTracker,
-            services.Pathfinder,
-            videoClipPlayer,
-            MapFileName,
-            Race.Terran,
-            Difficulty.VeryEasy,
-            stepSize: 1,
-            realTime: true
-        );
-
         Logger.Info("Game launched in video clip mode");
-        botRunner.PlayGame().Wait();
+        botRunner.RunBot(videoClipBot).Wait();
     }
 
     private static void PlayLocalGame() {
         DebugEnabled = true;
 
         var services = CreateServices(graphicalDebugging: true);
-        var botRunner = new LocalBotRunner(
+
+        var game = new LocalGame(
             services.Sc2Client,
+            services.RequestBuilder,
+            MapFileName,
+            OpponentRace,
+            OpponentDifficulty,
+            RealTime
+        );
+
+        var botRunner = new BotRunner(
+            services.Sc2Client,
+            game,
             services.RequestBuilder,
             services.KnowledgeBase,
             services.FrameClock,
@@ -165,25 +182,32 @@ public class Program {
             services.GraphicalDebugger,
             services.UnitsTracker,
             services.Pathfinder,
-            CreateSajuuk(services, Version, Scenarios),
-            MapFileName,
-            OpponentRace,
-            OpponentDifficulty,
-            stepSize: 2,
-            RealTime
+            stepSize: 2
         );
 
+        var sajuuk = CreateSajuuk(services, Version, Scenarios);
+
         Logger.Info("Game launched in local play mode");
-        botRunner.PlayGame().Wait();
+        botRunner.RunBot(sajuuk).Wait();
     }
 
     private static void PlayLadderGame(string[] args) {
         DebugEnabled = false;
 
         var services = CreateServices(graphicalDebugging: false);
+
         var commandLineArgs = new CommandLineArguments(args);
-        var botRunner = new LadderBotRunner(
+        var game = new LadderGame(
             services.Sc2Client,
+            services.RequestBuilder,
+            commandLineArgs.LadderServer,
+            commandLineArgs.GamePort,
+            commandLineArgs.StartPort
+        );
+
+        var botRunner = new BotRunner(
+            services.Sc2Client,
+            game,
             services.RequestBuilder,
             services.KnowledgeBase,
             services.FrameClock,
@@ -192,15 +216,13 @@ public class Program {
             services.GraphicalDebugger,
             services.UnitsTracker,
             services.Pathfinder,
-            CreateSajuuk(services, Version, Scenarios),
-            stepSize: 2,
-            commandLineArgs.LadderServer,
-            commandLineArgs.GamePort,
-            commandLineArgs.StartPort
+            stepSize: 2
         );
 
+        var sajuuk = CreateSajuuk(services, Version, Scenarios);
+
         Logger.Info("Game launched in ladder play mode");
-        botRunner.PlayGame().Wait();
+        botRunner.RunBot(sajuuk).Wait();
     }
 
     private static IBot CreateSajuuk(Services services, string version, List<IScenario> scenarios) {
@@ -429,7 +451,7 @@ public class Program {
         var spendingTracker = new SpendingTracker(incomeTracker, knowledgeBase);
 
         // TODO GD Compute update order. For now they are in declaration order (which is fine, but prone to errors)
-        // TODO GD Kinda whack but that'll do until we get multiple controllers and game connections
+        // TODO GD It's whack but that'll do until we get multiple controllers and game connections
         var trackers = dataGeneration
             ? new List<INeedUpdating>
             {

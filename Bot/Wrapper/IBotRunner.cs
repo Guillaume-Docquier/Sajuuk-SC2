@@ -3,5 +3,5 @@
 namespace Bot.Wrapper;
 
 public interface IBotRunner {
-    public Task PlayGame();
+    public Task RunBot(IBot bot);
 }

@@ -32,25 +32,9 @@ public class Sc2Client : ISc2Client {
         FindExecutableInfo();
 
         Logger.Info("Launching SC2 instance");
-        StartInstance(serverAddress, gamePort);
+        StartGameClient(serverAddress, gamePort);
 
         return Task.CompletedTask;
-    }
-
-    private void StartInstance(string serverAddress, int gamePort) {
-        var processStartInfo = new ProcessStartInfo(_starcraftExe)
-        {
-            // TODO GD Make and enum for this
-            // DisplayMode 0: Windowed
-            // DisplayMode 1: Full screen
-            Arguments = $"-listen {serverAddress} -port {gamePort} -displayMode 1",
-            WorkingDirectory = Path.Combine(_starcraftDir, "Support64")
-        };
-
-        Logger.Debug($"SC2.exe: {_starcraftExe}");
-        Logger.Debug($"Working Dir: {processStartInfo.WorkingDirectory}");
-        Logger.Debug($"Arguments: {processStartInfo.Arguments}");
-        Process.Start(processStartInfo);
     }
 
     private void FindExecutableInfo() {
@@ -75,6 +59,22 @@ public class Sc2Client : ISc2Client {
         if (_starcraftExe == default) {
             throw new Exception($"Unable to find:{executeInfo}. Make sure you started the game successfully at least once.");
         }
+    }
+
+    private void StartGameClient(string serverAddress, int gamePort) {
+        var processStartInfo = new ProcessStartInfo(_starcraftExe)
+        {
+            // TODO GD Make and enum for this
+            // DisplayMode 0: Windowed
+            // DisplayMode 1: Full screen
+            Arguments = $"-listen {serverAddress} -port {gamePort} -displayMode 1",
+            WorkingDirectory = Path.Combine(_starcraftDir, "Support64")
+        };
+
+        Logger.Debug($"SC2.exe: {_starcraftExe}");
+        Logger.Debug($"Working Dir: {processStartInfo.WorkingDirectory}");
+        Logger.Debug($"Arguments: {processStartInfo.Arguments}");
+        Process.Start(processStartInfo);
     }
 
     public async Task Connect(string serverAddress, int gamePort, int maxRetries = 60) {
@@ -154,17 +154,7 @@ public class Sc2Client : ISc2Client {
         }
     }
 
-    public Task<uint> JoinLocalGame(Race race) {
-        Logger.Info("Joining local game");
-        return JoinGame(_requestBuilder.RequestJoinLocalGame(race));
-    }
-
-    public Task<uint> JoinLadderGame(Race race, int startPort) {
-        Logger.Info("Joining ladder game");
-        return JoinGame(_requestBuilder.RequestJoinLadderGame(race, startPort));
-    }
-
-    private async Task<uint> JoinGame(Request joinGameRequest) {
+    public async Task<uint> JoinGame(Request joinGameRequest) {
         var joinGameResponse = await SendRequest(joinGameRequest, logErrors: true);
 
         // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore

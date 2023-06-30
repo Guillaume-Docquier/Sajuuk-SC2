@@ -13,7 +13,7 @@ using SC2APIProtocol;
 
 namespace Bot.VideoClips;
 
-public class VideoClipPlayer : IBot {
+public class VideoClipBot : IBot {
     private readonly IDebuggingFlagsTracker _debuggingFlagsTracker;
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
@@ -31,7 +31,7 @@ public class VideoClipPlayer : IBot {
 
     private ulong _startAt;
 
-    public VideoClipPlayer(
+    public VideoClipBot(
         IDebuggingFlagsTracker debuggingFlagsTracker,
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker,
