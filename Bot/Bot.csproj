@@ -4,8 +4,8 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
         <LangVersion>10</LangVersion>
-        <AssemblyName>Bot</AssemblyName>
-        <RootNamespace>Bot</RootNamespace>
+        <AssemblyName>Sajuuk</AssemblyName>
+        <RootNamespace>Sajuuk</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
