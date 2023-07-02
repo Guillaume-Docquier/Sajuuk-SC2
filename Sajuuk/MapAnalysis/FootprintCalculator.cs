@@ -129,7 +129,7 @@ public class FootprintCalculator {
                 // You can walk on it, no footprint (please I hope I never rely on this for placement, yikes)
                 break;
             default:
-                Logger.Warning("No footprint found for rock {0} at {1}", rock.Name, rock.Position);
+                Logger.Warning($"No footprint found for rock {rock.Name}[{rock.UnitType}] at {rock.Position}");
                 return GetGenericFootprint(rock);
         }
 

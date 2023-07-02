@@ -60,7 +60,7 @@ public class Program {
         try {
             switch (args.Length) {
                 case 1 when args[0] == "--mapAnalysis":
-                    PlayMapAnalysis(Maps.Season_2022_4.FileNames.GetAll());
+                    PlayMapAnalysis(Maps.Season_2023_2.FileNames.GetAll());
                     break;
                 case 1 when args[0] == "--videoClip":
                     PlayVideoClip();
