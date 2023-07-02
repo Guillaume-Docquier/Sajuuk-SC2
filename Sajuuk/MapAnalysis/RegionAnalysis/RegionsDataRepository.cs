@@ -5,6 +5,7 @@ using System.Linq;
 using Sajuuk.ExtensionMethods;
 using Sajuuk.Algorithms;
 using Sajuuk.GameSense;
+using Sajuuk.MapAnalysis.ExpandAnalysis;
 using Sajuuk.Persistence;
 
 namespace Sajuuk.MapAnalysis.RegionAnalysis;
@@ -13,28 +14,35 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IClustering _clustering;
     private readonly IPathfinder _pathfinder;
+    private readonly FootprintCalculator _footprintCalculator;
 
     private readonly JsonMapDataRepository<RegionsData> _jsonMapDataRepository;
 
     private const int UpscalingFactor = 4;
+
+    private static readonly Color MineralColor = Color.Cyan;
+    private static readonly Color GasColor = Color.Lime;
+    private static readonly Color ExpandColor = Color.Magenta;
     private static readonly HashSet<Color> RegionColors = new HashSet<Color>
     {
-        Color.Cyan,
-        Color.Red,
-        Color.Lime,
-        Color.Blue,
-        Color.Orange,
-        Color.Magenta
+        Color.Teal,
+        Color.Green,
+        Color.Purple,
+        Color.Navy,
+        Color.Olive,
+        Color.Maroon,
     };
 
     public RegionsDataRepository(
         ITerrainTracker terrainTracker,
         IClustering clustering,
-        IPathfinder pathfinder
+        IPathfinder pathfinder,
+        FootprintCalculator footprintCalculator
     ) {
         _terrainTracker = terrainTracker;
         _clustering = clustering;
         _pathfinder = pathfinder;
+        _footprintCalculator = footprintCalculator;
 
         _jsonMapDataRepository = new JsonMapDataRepository<RegionsData>(mapFileName => GetFileName(mapFileName, "json"));
     }
@@ -72,8 +80,9 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
         }
 
         var regionsColors = new Dictionary<IRegion, Color>();
+        var baseColor = RegionColors.First();
         foreach (var region in regions) {
-            regionsColors[region] = Color.Cyan;
+            regionsColors[region] = baseColor;
         }
 
         var rng = new Random();
@@ -100,11 +109,41 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
             foreach (var cell in region.Cells.Select(cell => cell.AsWorldGridCorner())) {
                 image.SetPixel((int)cell.X, (int)cell.Y, pixelColor);
             }
+
+            if (region.ConcreteExpandLocation != null) {
+                PaintExpandLocation(image, region.ConcreteExpandLocation);
+            }
         }
 
         var scaledImage = ScaleImage(image, UpscalingFactor);
         scaledImage.RotateFlip(RotateFlipType.RotateNoneFlipY);
         scaledImage.Save(GetFileName(mapFileName, "png"));
+    }
+
+    /// <summary>
+    /// Paints the expand location and its resources on the image.
+    /// </summary>
+    /// <param name="image">The image to paint on.</param>
+    /// <param name="expandLocation">The expand location data to paint.</param>
+    private void PaintExpandLocation(Bitmap image, IExpandLocation expandLocation) {
+        if (!OperatingSystem.IsWindows()) {
+            return;
+        }
+
+        image.SetPixel((int)expandLocation.Position.X, (int)expandLocation.Position.Y, ExpandColor);
+
+        foreach (var resource in expandLocation.Resources) {
+            var resourceColor = Resources.GetResourceType(resource) switch
+            {
+                Resources.ResourceType.Mineral => MineralColor,
+                Resources.ResourceType.Gas => GasColor,
+                _ => Color.Black
+            };
+
+            foreach (var cell in _footprintCalculator.GetFootprint(resource)) {
+                image.SetPixel((int)cell.X, (int)cell.Y, resourceColor);
+            }
+        }
     }
 
     /// <summary>

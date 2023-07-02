@@ -21,9 +21,10 @@ public class ExpandLocation : IExpandLocation, IWatchUnitsDie {
 
     [JsonConstructor] public ExpandLocation() {}
 
-    public ExpandLocation(Vector2 position, ExpandType expandType) {
+    public ExpandLocation(Vector2 position, ExpandType expandType, HashSet<Unit> resources) {
         Position = position;
         ExpandType = expandType;
+        Resources = resources;
     }
 
     public void SetResources(HashSet<Unit> resourceCluster) {

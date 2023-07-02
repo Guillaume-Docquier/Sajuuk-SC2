@@ -183,7 +183,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, INeedUpdating {
         }
 
         return expandPositions
-            .Select(expandPosition => new ExpandLocation(expandPosition, expandTypes[expandPosition]))
+            .Select(expandPosition => new ExpandLocation(expandPosition, expandTypes[expandPosition], resourceClustersByExpand[expandPosition]))
             .ToList();
     }
 
