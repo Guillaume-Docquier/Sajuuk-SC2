@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bot", "Bot\Bot.csproj", "{50579668-A3FB-43F4-B88C-05995BE4C8CC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sajuuk", "Sajuuk\Sajuuk.csproj", "{50579668-A3FB-43F4-B88C-05995BE4C8CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bot.Tests", "Bot.Tests\Bot.Tests.csproj", "{D904D33D-48C9-416F-8524-7D487BA5B3AA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sajuuk.Tests", "Sajuuk.Tests\Sajuuk.Tests.csproj", "{D904D33D-48C9-416F-8524-7D487BA5B3AA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "S2ClientProtocol", "S2ClientProtocol\S2ClientProtocol.csproj", "{FCC1604F-C1E1-4754-AA7A-4CAAB27DF9BF}"
 EndProject
