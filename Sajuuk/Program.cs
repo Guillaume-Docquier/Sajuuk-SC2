@@ -59,8 +59,8 @@ public class Program {
     public static void Main(string[] args) {
         try {
             switch (args.Length) {
-                case 1 when args[0] == "--generateData":
-                    PlayDataGeneration(Maps.Season_2022_4.FileNames.GetAll());
+                case 1 when args[0] == "--mapAnalysis":
+                    PlayMapAnalysis(Maps.Season_2022_4.FileNames.GetAll());
                     break;
                 case 1 when args[0] == "--videoClip":
                     PlayVideoClip();
@@ -80,13 +80,13 @@ public class Program {
         Logger.Info("Terminated.");
     }
 
-    private static void PlayDataGeneration(IEnumerable<string> mapFileNames) {
-        Logger.Info("Game launched in data generation mode");
+    private static void PlayMapAnalysis(IEnumerable<string> mapFileNames) {
+        Logger.Info("Game launched in map analysis mode");
         DebugEnabled = true;
 
         foreach (var mapFileName in mapFileNames) {
             var services = CreateServices(graphicalDebugging: false, dataGeneration: true);
-            // TODO GD Create a game connection for data analysis
+            // TODO GD Create a game connection for map analysis
             var botRunner = new DeprecatedBotRunner(
                 services.UnitsTracker,
                 services.ExpandAnalyzer,
@@ -102,7 +102,7 @@ public class Program {
                 stepSize: 1
             );
 
-            Logger.Important($"Generating data for {mapFileName}");
+            Logger.Important($"Analyzing map: {mapFileName}");
             botRunner.RunLocal(
                 new MapAnalysisBot(services.FrameClock),
                 mapFileName,
@@ -428,7 +428,7 @@ public class Program {
 
         var chatTracker = new ChatTracker();
         var debuggingFlagsTracker = new DebuggingFlagsTracker(chatTracker);
-        var regionsDataRepository = new RegionsDataRepository(terrainTracker, clustering, pathfinder);
+        var regionsDataRepository = new RegionsDataRepository(terrainTracker, clustering, pathfinder, new FootprintCalculator(terrainTracker));
         var expandUnitsAnalyzer = new ExpandUnitsAnalyzer(unitsTracker, terrainTracker, knowledgeBase, clustering);
         var regionsTracker = new RegionsTracker(terrainTracker, debuggingFlagsTracker, unitsTracker, regionsDataRepository, expandUnitsAnalyzer, graphicalDebugger);
 
