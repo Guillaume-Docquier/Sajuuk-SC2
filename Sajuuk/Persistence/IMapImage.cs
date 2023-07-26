@@ -5,19 +5,19 @@ namespace Sajuuk.Persistence;
 
 public interface IMapImage {
     /// <summary>
-    /// Sets the color of the pixel associated with the given game grid cell.
+    /// Sets the color of the given game grid cell.
     /// </summary>
     /// <param name="cell">The cell to color.</param>
     /// <param name="color">The color to set.</param>
-    void SetPixel(Vector2 cell, Color color);
+    void SetCellColor(Vector2 cell, Color color);
 
     /// <summary>
-    /// Sets the color of the pixel at the (x, y) coordinates.
+    /// Sets the color of the game grid cell at the (x, y) coordinates.
     /// </summary>
     /// <param name="x">The pixel X.</param>
     /// <param name="y">The pixel Y.</param>
     /// <param name="color">The color to set.</param>
-    void SetPixel(int x, int y, Color color);
+    void SetCellColor(int x, int y, Color color);
 
     /// <summary>
     /// Saves the image of the map.
