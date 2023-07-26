@@ -430,7 +430,8 @@ public class Program {
 
         var chatTracker = new ChatTracker();
         var debuggingFlagsTracker = new DebuggingFlagsTracker(chatTracker);
-        var regionsDataRepository = new RegionsDataRepository(terrainTracker, clustering, pathfinder, new FootprintCalculator(terrainTracker));
+        var mapImageFactory = new MapImageFactory(terrainTracker);
+        var regionsDataRepository = new RegionsDataRepository(terrainTracker, clustering, pathfinder, new FootprintCalculator(terrainTracker), mapImageFactory);
         var expandUnitsAnalyzer = new ExpandUnitsAnalyzer(unitsTracker, terrainTracker, knowledgeBase, clustering);
         var regionsTracker = new RegionsTracker(terrainTracker, debuggingFlagsTracker, unitsTracker, regionsDataRepository, expandUnitsAnalyzer, graphicalDebugger);
 
@@ -449,7 +450,6 @@ public class Program {
 
         var expandAnalyzer = new ExpandAnalyzer(terrainTracker, buildingTracker, expandUnitsAnalyzer, frameClock, graphicalDebugger, clustering, pathfinder);
 
-        var mapImageFactory = new MapImageFactory(terrainTracker);
         var chokeFinder = new RayCastingChokeFinder(terrainTracker, graphicalDebugger, clustering, mapImageFactory, mapFileName);
         var regionAnalyzer = new RegionAnalyzer(terrainTracker, expandAnalyzer, clustering, pathfinder, regionsDataRepository, chokeFinder);
 

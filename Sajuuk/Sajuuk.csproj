@@ -24,68 +24,44 @@
     <ItemGroup>
         <Folder Include="Data" />
         <Folder Include="VideoClips\Clips" />
-        <None Update="Data\Expands_BerlingradAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="Data\Regions_waterfallaie.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Data\Expands_HardwireAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="Data\Regions_ancientcisternaie.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Data\Expands_InsideandOutAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="Data\Regions_berlingradaie.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Data\Expands_MoondanceAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="Data\Regions_cosmicsapphireaie.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Data\Expands_WaterfallAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="Data\Regions_dragonscalesaie.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Data\Expands_StargazersAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="Data\Regions_goldenauraaie.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Data\VisionLines_StargazersAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="Data\Regions_gresvanaie.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Data\VisionLines_InsideandOutAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="Data\Regions_hardwireaie.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Data\VisionLines_BerlingradAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="Data\Regions_infestationstationaie.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Data\Regions_InsideandOutAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="Data\Regions_insideandoutaie.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Data\Regions_StargazersAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="Data\Regions_moondanceaie.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Data\VisionLines_HardwireAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="Data\Regions_royalbloodaie.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Data\Regions_WaterfallAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Data\VisionLines_WaterfallAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Data\Regions_HardwireAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Data\Regions_BerlingradAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Data\VisionLines_MoondanceAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Data\Regions_MoondanceAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Data\Expands_CosmicSapphireAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Data\Regions_CosmicSapphireAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Data\VisionLines_CosmicSapphireAIE.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="Data\Regions_stargazersaie.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
 
