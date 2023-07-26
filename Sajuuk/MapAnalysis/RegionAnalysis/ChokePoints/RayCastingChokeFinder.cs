@@ -48,9 +48,7 @@ public class RayCastingChokeFinder : IChokeFinder {
         var lines = CreateVisionLines(chokePointCells.Count);
         Logger.Info($"Computed {lines.Count} total vision lines");
 
-        MarkTraversedChokePointCells(chokePointCells, lines);
-
-        var chokePoints = ComputeChokePoints(chokePointCells);
+        var chokePoints = ComputeChokePoints(chokePointCells, lines);
 
         SaveChokePointsImage(chokePoints);
 
@@ -188,22 +186,73 @@ public class RayCastingChokeFinder : IChokeFinder {
         return currentCellIndex - 1;
     }
 
-    private static void MarkTraversedChokePointCells(IReadOnlyDictionary<Vector2, ChokePointCell> chokePointCells, List<VisionLine> lines) {
-        foreach (var line in lines) {
-            foreach (var cell in line.OrderedTraversedCells) {
-                chokePointCells[cell].VisionLines.Add(line);
+    /// <summary>
+    /// Computes the choke points given the choke point cells and the vision lines.
+    /// </summary>
+    /// <param name="potentialChokePointCells">All the cells that could be part of a choke point.</param>
+    /// <param name="visionLines">All the vision lines</param>
+    /// <returns></returns>
+    private List<ChokePoint> ComputeChokePoints(Dictionary<Vector2, ChokePointCell> potentialChokePointCells, List<VisionLine> visionLines) {
+        AddLinesToTraversedChokePointCells(potentialChokePointCells, visionLines);
+        UpdateChokeScores(potentialChokePointCells);
+
+        LogChokeScoresDistribution(potentialChokePointCells.Values.Select(chokePointCell => chokePointCell.ChokeScore).ToList());
+
+        var chokePointCells = EliminateChokePointCellOutliers(potentialChokePointCells.Values);
+        var chokeLines = chokePointCells
+            .SelectMany(chokePointCell => chokePointCell.MostLikelyChokeLines)
+            .GroupBy(line => line)
+            .Where(group => group.Count() >= 2) // Some lines are length 0, some touch the same wall. This discards them but might also discard too many.
+            .Where(group => group.Count() >= group.Key.Length * 0.5)
+            .Select(group => group.Key)
+            .ToList();
+
+        DebugLines(chokeLines, Colors.Orange);
+
+        var (lineCentersClusters, _) = _clustering.DBSCAN(chokeLines, 1.5f, 1);
+        var chokePoints = new List<ChokePoint>();
+        foreach (var lineCentersCluster in lineCentersClusters) {
+            var clusterCenter = _clustering.GetCenter(lineCentersCluster);
+
+            var shortestCenterLine = lineCentersCluster.MinBy(line => line.Length + line.Position.ToVector2().DistanceTo(clusterCenter) * 0.5)!;
+            DebugLines(new[] { shortestCenterLine }, Colors.LimeGreen);
+            chokePoints.Add(new ChokePoint(shortestCenterLine.Start, shortestCenterLine.End, _terrainTracker));
+        }
+
+        return chokePoints;
+    }
+
+    /// <summary>
+    /// Takes all vision lines and adds them to the cell that they traverse.
+    /// </summary>
+    /// <param name="chokePointCells">The choke point cells to add the lines to.</param>
+    /// <param name="visionLines">The vision lines.</param>
+    private static void AddLinesToTraversedChokePointCells(IReadOnlyDictionary<Vector2, ChokePointCell> chokePointCells, List<VisionLine> visionLines) {
+        foreach (var visionLine in visionLines) {
+            foreach (var traversedCell in visionLine.OrderedTraversedCells) {
+                chokePointCells[traversedCell].VisionLines.Add(visionLine);
             }
         }
     }
 
-    private List<ChokePoint> ComputeChokePoints(Dictionary<Vector2, ChokePointCell> potentialChokePointCells) {
-        foreach (var potentialChokePointCell in potentialChokePointCells.Values) {
-            potentialChokePointCell.UpdateChokeScore();
+    /// <summary>
+    /// Updates the choke scores of all the choke point cells.
+    /// </summary>
+    /// <param name="chokePointCells">The choke point cells to update the choke scores of.</param>
+    private static void UpdateChokeScores(Dictionary<Vector2, ChokePointCell> chokePointCells) {
+        foreach (var chokePointCell in chokePointCells.Values) {
+            chokePointCell.UpdateChokeScore();
         }
+    }
 
-        LogChokeScoresDistribution(potentialChokePointCells.Values.Select(chokePointCell => chokePointCell.ChokeScore).ToList());
-
-        var initialChokePointCells = potentialChokePointCells.Values.Where(chokePointCell => chokePointCell.ChokeScore > ChokeScoreCutOff).ToList();
+    /// <summary>
+    /// Eliminates the choke point cell outliers and returns the list of all valid choke point cells.
+    /// This is done by clustering the cells and comparing the scores within each cluster, discarding scores that are too far from the cluster average.
+    /// </summary>
+    /// <param name="potentialChokePointCells">The choke point cells to remove outliers from.</param>
+    /// <returns>The choke point cells that can be considered part of a choke point.</returns>
+    private List<ChokePointCell> EliminateChokePointCellOutliers(IEnumerable<ChokePointCell> potentialChokePointCells) {
+        var initialChokePointCells = potentialChokePointCells.Where(chokePointCell => chokePointCell.ChokeScore > ChokeScoreCutOff).ToList();
         var (chokePointCellsClusters, _) = _clustering.DBSCAN(initialChokePointCells, 1.5f, 4);
 
         // Eliminate outliers from choke cells clusters.
@@ -226,45 +275,13 @@ public class RayCastingChokeFinder : IChokeFinder {
             // A low cut means an inclusive cluster
             var cut = Math.Min(average, median) - (1 - dispersionScore) * std;
 
-            var textGroup = new []
-            {
-                $"Avg: {average,4:F2}",
-                $"Med: {median,4:F2}",
-                $"Std: {std,4:F2}",
-                $"Dsp: {dispersionScore,4:F2}",
-                $"Cut: {cut,4:F2}",
-            };
-            var chokePointCellsClusterCenter = _terrainTracker.WithWorldHeight(_clustering.GetCenter(chokePointCellsCluster));
-            _graphicalDebugger.AddTextGroup(textGroup, worldPos: chokePointCellsClusterCenter.ToPoint(zOffset: 5));
-            _graphicalDebugger.AddLink(chokePointCellsClusterCenter, chokePointCellsClusterCenter.Translate(zTranslation: 5), Colors.SunbrightOrange);
-
-            DebugScores(chokePointCellsCluster, cut);
+            DebugScores(chokePointCellsCluster, average, median, std, dispersionScore, cut);
 
             // Keep the cells that make the cut
             chokePointCells.AddRange(chokePointCellsCluster.Where(chokePointCell => chokePointCell.ChokeScore >= cut));
         }
 
-        var chokeLines = chokePointCells
-            .SelectMany(chokePointCell => chokePointCell.MostLikelyChokeLines)
-            .GroupBy(line => line)
-            .Where(group => group.Count() >= 2) // Some lines are length 0, some touch the same wall. This discards them but might also discard too many.
-            .Where(group => group.Count() >= group.Key.Length * 0.5)
-            .Select(group => group.Key)
-            .ToList();
-
-        DebugLines(chokeLines);
-
-        var (lineCentersClusters, _) = _clustering.DBSCAN(chokeLines, 1.5f, 1);
-        var chokePoints = new List<ChokePoint>();
-        foreach (var lineCentersCluster in lineCentersClusters) {
-            var clusterCenter = _clustering.GetCenter(lineCentersCluster);
-
-            var shortestCenterLine = lineCentersCluster.MinBy(line => line.Length + line.Position.ToVector2().DistanceTo(clusterCenter) * 0.5)!;
-            DebugLines(new List<VisionLine> { shortestCenterLine }, color: Colors.LimeGreen);
-            chokePoints.Add(new ChokePoint(shortestCenterLine.Start, shortestCenterLine.End, _terrainTracker));
-        }
-
-        return chokePoints;
+        return chokePointCells;
     }
 
     private void SaveChokePointsImage(IEnumerable<ChokePoint> chokePoints) {
@@ -281,13 +298,30 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// <summary>
     /// Displays the choke scores using the graphical debugger using a gradient from grey (low score) to red (high score).
     /// Cells that are under the given cutScore will be blue (not part of their choke cluster).
+    /// Additionally, the provided stats about the cells are displayed.
     /// </summary>
     /// <param name="chokePointCells">The cells to display the scores of.</param>
+    /// <param name="average">The average choke score of the cells.</param>
+    /// <param name="median">The median choke score of the cells.</param>
+    /// <param name="std">The standard deviation of the choke score of the cells.</param>
+    /// <param name="dispersionScore">A score representing the dispersion of scores of the cells.</param>
     /// <param name="cutScore">The minimum score to reach to be considered part of a choke point.</param>
-    private void DebugScores(List<ChokePointCell> chokePointCells, double cutScore) {
+    private void DebugScores(List<ChokePointCell> chokePointCells, double average, double median, double std, double dispersionScore, double cutScore) {
         if (!Program.DebugEnabled || !DrawEnabled) {
             return;
         }
+
+        var textGroup = new []
+        {
+            $"Avg: {average,4:F2}",
+            $"Med: {median,4:F2}",
+            $"Std: {std,4:F2}",
+            $"Dsp: {dispersionScore,4:F2}",
+            $"Cut: {cutScore,4:F2}",
+        };
+        var chokePointCellsClusterCenter = _terrainTracker.WithWorldHeight(_clustering.GetCenter(chokePointCells));
+        _graphicalDebugger.AddTextGroup(textGroup, worldPos: chokePointCellsClusterCenter.ToPoint(zOffset: 5));
+        _graphicalDebugger.AddLink(chokePointCellsClusterCenter, chokePointCellsClusterCenter.Translate(zTranslation: 5), Colors.SunbrightOrange);
 
         var minScore = chokePointCells.Min(chokePointCell => chokePointCell.ChokeScore);
         var maxScore = chokePointCells.Max(chokePointCell => chokePointCell.ChokeScore);
@@ -306,8 +340,8 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// Displays the given VisionLines with the given color using the graphical debugger.
     /// </summary>
     /// <param name="lines">The lines to display.</param>
-    /// <param name="color">The color to use. Defaults to Orange.</param>
-    private void DebugLines(List<VisionLine> lines, Color color = null) {
+    /// <param name="color">The color to use.</param>
+    private void DebugLines(IEnumerable<VisionLine> lines, Color color) {
         if (!Program.DebugEnabled || !DrawEnabled) {
             return;
         }
@@ -316,7 +350,7 @@ public class RayCastingChokeFinder : IChokeFinder {
             _graphicalDebugger.AddLink(
                 _terrainTracker.WithWorldHeight(line.Start, zOffset: 0.5f),
                 _terrainTracker.WithWorldHeight(line.End, zOffset: 0.5f),
-                color ?? Colors.Orange
+                color
             );
         }
     }
