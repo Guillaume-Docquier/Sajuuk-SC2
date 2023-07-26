@@ -10,11 +10,6 @@ public static class ColorExtensions {
         var deltaG = end.G - start.G;
         var deltaB = end.B - start.B;
 
-        var debugA = Math.Round(start.A + deltaA * percent);
-        if ((int)debugA < 0) {
-            var stop = 1;
-        }
-
         var gradient = Color.FromArgb(
             (int)Math.Round(start.A + deltaA * percent),
             (int)Math.Round(start.R + deltaR * percent),
