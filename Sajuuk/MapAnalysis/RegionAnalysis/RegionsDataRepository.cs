@@ -18,6 +18,7 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
 
     private readonly JsonMapDataRepository<RegionsData> _jsonMapDataRepository;
 
+    private const string FileNameId = "Regions";
     private const int UpscalingFactor = 4;
 
     private static readonly Color MineralColor = Color.Cyan;
@@ -44,7 +45,7 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
         _pathfinder = pathfinder;
         _footprintCalculator = footprintCalculator;
 
-        _jsonMapDataRepository = new JsonMapDataRepository<RegionsData>(mapFileName => GetFileName(mapFileName, "json"));
+        _jsonMapDataRepository = new JsonMapDataRepository<RegionsData>(mapFileName => FileNameFormatter.FormatDataFileName(FileNameId, mapFileName, "json"));
     }
 
     /// <summary>
@@ -117,7 +118,7 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
 
         var scaledImage = ScaleImage(image, UpscalingFactor);
         scaledImage.RotateFlip(RotateFlipType.RotateNoneFlipY);
-        scaledImage.Save(GetFileName(mapFileName, "png"));
+        scaledImage.Save(FileNameFormatter.FormatDataFileName(FileNameId, mapFileName, "png"));
     }
 
     /// <summary>
@@ -177,9 +178,5 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
         }
 
         return scaledImage;
-    }
-
-    private static string GetFileName(string mapFileName, string extension) {
-        return $"Data/Regions_{mapFileName.Replace(".SC2Map", "").Replace(" ", "").ToLower()}.{extension}";
     }
 }

@@ -6,6 +6,7 @@ using Sajuuk.ExtensionMethods;
 using Sajuuk.Algorithms;
 using Sajuuk.Debugging.GraphicalDebugging;
 using Sajuuk.GameSense;
+using Sajuuk.Persistence;
 using Sajuuk.Utils;
 using SC2APIProtocol;
 
@@ -16,6 +17,8 @@ public partial class RayCastingChokeFinder {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IClustering _clustering;
+    private readonly IMapImageFactory _mapImageFactory;
+    private readonly string _mapFileName;
 
     private const bool DrawEnabled = true; // TODO GD Flag this
 
@@ -27,11 +30,15 @@ public partial class RayCastingChokeFinder {
     public RayCastingChokeFinder(
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
-        IClustering clustering
+        IClustering clustering,
+        IMapImageFactory mapImageFactory,
+        string mapFileName
     ) {
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
         _clustering = clustering;
+        _mapImageFactory = mapImageFactory;
+        _mapFileName = mapFileName;
     }
 
     public List<ChokePoint> FindChokePoints() {
@@ -247,7 +254,19 @@ public partial class RayCastingChokeFinder {
             chokePoints.Add(new ChokePoint(shortestCenterLine.Start, shortestCenterLine.End, _terrainTracker));
         }
 
+        SaveChokePointsImage(chokePoints);
+
         return chokePoints;
+    }
+
+    private void SaveChokePointsImage(IEnumerable<ChokePoint> chokePoints) {
+        var mapImage = _mapImageFactory.CreateMapImage();
+        var chokePointCells = chokePoints.SelectMany(chokePoint => chokePoint.Edge);
+        foreach (var chokePointCell in chokePointCells) {
+            mapImage.SetPixel(chokePointCell, System.Drawing.Color.Lime);
+        }
+
+        mapImage.Save(FileNameFormatter.FormatDataFileName("ChokePoints", _mapFileName, "png"));
     }
 
     private void DebugScores(List<Node> nodes, double cutScore) {

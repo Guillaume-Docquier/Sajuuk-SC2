@@ -39,7 +39,9 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         IGraphicalDebugger graphicalDebugger,
         IClustering clustering,
         IPathfinder pathfinder,
-        IMapDataRepository<RegionsData> regionsRepository
+        IMapDataRepository<RegionsData> regionsRepository,
+        IMapImageFactory mapImageFactory,
+        string mapFileName
     ) {
         _terrainTracker = terrainTracker;
         _expandAnalyzer = expandAnalyzer;
@@ -47,8 +49,8 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         _pathfinder = pathfinder;
         _regionsRepository = regionsRepository;
 
-        // TODO GD Inject this as well, probably?
-        _rayCastingChokeFinder = new RayCastingChokeFinder(_terrainTracker, graphicalDebugger, _clustering);
+        // TODO GD Inject this as well
+        _rayCastingChokeFinder = new RayCastingChokeFinder(_terrainTracker, graphicalDebugger, _clustering, mapImageFactory, mapFileName);
     }
 
     /// <summary>
