@@ -4,7 +4,6 @@ using System.Linq;
 using System.Numerics;
 using Sajuuk.ExtensionMethods;
 using Sajuuk.Algorithms;
-using Sajuuk.Debugging.GraphicalDebugging;
 using Sajuuk.GameSense;
 using Sajuuk.MapAnalysis.ExpandAnalysis;
 using Sajuuk.MapAnalysis.RegionAnalysis.ChokePoints;
@@ -19,10 +18,8 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IClustering _clustering;
     private readonly IPathfinder _pathfinder;
-
     private readonly IMapDataRepository<RegionsData> _regionsRepository;
-
-    private readonly RayCastingChokeFinder _rayCastingChokeFinder;
+    private readonly IChokeFinder _chokeFinder;
 
     private const int RegionMinPoints = 6;
     private const float RegionZMultiplier = 8;
@@ -36,21 +33,17 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     public RegionAnalyzer(
         ITerrainTracker terrainTracker,
         IExpandAnalyzer expandAnalyzer,
-        IGraphicalDebugger graphicalDebugger,
         IClustering clustering,
         IPathfinder pathfinder,
         IMapDataRepository<RegionsData> regionsRepository,
-        IMapImageFactory mapImageFactory,
-        string mapFileName
+        IChokeFinder chokeFinder
     ) {
         _terrainTracker = terrainTracker;
         _expandAnalyzer = expandAnalyzer;
         _clustering = clustering;
         _pathfinder = pathfinder;
         _regionsRepository = regionsRepository;
-
-        // TODO GD Inject this as well
-        _rayCastingChokeFinder = new RayCastingChokeFinder(_terrainTracker, graphicalDebugger, _clustering, mapImageFactory, mapFileName);
+        _chokeFinder = chokeFinder;
     }
 
     /// <summary>
@@ -236,7 +229,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     }
 
     private List<ChokePoint> ComputePotentialChokePoints() {
-        return _rayCastingChokeFinder.FindChokePoints();
+        return _chokeFinder.FindChokePoints();
     }
 
     private List<AnalyzedRegion> BuildRegions(List<HashSet<Vector2>> potentialRegions, List<HashSet<Vector2>> ramps, List<ChokePoint> potentialChokePoints) {
