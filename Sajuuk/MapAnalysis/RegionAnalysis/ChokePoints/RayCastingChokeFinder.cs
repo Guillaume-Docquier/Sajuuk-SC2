@@ -13,7 +13,7 @@ using SC2APIProtocol;
 namespace Sajuuk.MapAnalysis.RegionAnalysis.ChokePoints;
 
 // TODO GD Considering the obstacles (resources, rocks) might be interesting at some point
-public class RayCastingChokeFinder {
+public class RayCastingChokeFinder : IChokeFinder {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IClustering _clustering;

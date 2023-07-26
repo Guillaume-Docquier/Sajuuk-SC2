@@ -27,6 +27,7 @@ using Sajuuk.Managers.WarManagement.States;
 using Sajuuk.MapAnalysis;
 using Sajuuk.MapAnalysis.ExpandAnalysis;
 using Sajuuk.MapAnalysis.RegionAnalysis;
+using Sajuuk.MapAnalysis.RegionAnalysis.ChokePoints;
 using Sajuuk.Persistence;
 using Sajuuk.Scenarios;
 using Sajuuk.Tagging;
@@ -447,8 +448,10 @@ public class Program {
         var incomeTracker = new IncomeTracker(taggingService, unitsTracker, frameClock);
 
         var expandAnalyzer = new ExpandAnalyzer(terrainTracker, buildingTracker, expandUnitsAnalyzer, frameClock, graphicalDebugger, clustering, pathfinder);
+
         var mapImageFactory = new MapImageFactory(terrainTracker);
-        var regionAnalyzer = new RegionAnalyzer(terrainTracker, expandAnalyzer, graphicalDebugger, clustering, pathfinder, regionsDataRepository, mapImageFactory, mapFileName);
+        var chokeFinder = new RayCastingChokeFinder(terrainTracker, graphicalDebugger, clustering, mapImageFactory, mapFileName);
+        var regionAnalyzer = new RegionAnalyzer(terrainTracker, expandAnalyzer, clustering, pathfinder, regionsDataRepository, chokeFinder);
 
         var spendingTracker = new SpendingTracker(incomeTracker, knowledgeBase);
 
