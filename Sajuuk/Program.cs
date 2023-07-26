@@ -27,6 +27,7 @@ using Sajuuk.Managers.WarManagement.States;
 using Sajuuk.MapAnalysis;
 using Sajuuk.MapAnalysis.ExpandAnalysis;
 using Sajuuk.MapAnalysis.RegionAnalysis;
+using Sajuuk.Persistence;
 using Sajuuk.Scenarios;
 using Sajuuk.Tagging;
 using Sajuuk.UnitModules;
@@ -63,10 +64,10 @@ public class Program {
                     PlayMapAnalysis(Maps.Season_2023_2.FileNames.GetAll());
                     break;
                 case 1 when args[0] == "--videoClip":
-                    PlayVideoClip();
+                    PlayVideoClip(MapFileName);
                     break;
                 case 0:
-                    PlayLocalGame();
+                    PlayLocalGame(MapFileName);
                     break;
                 default:
                     PlayLadderGame(args);
@@ -85,7 +86,7 @@ public class Program {
         DebugEnabled = true;
 
         foreach (var mapFileName in mapFileNames) {
-            var services = CreateServices(graphicalDebugging: false, dataGeneration: true);
+            var services = CreateServices(mapFileName, graphicalDebugging: true, dataGeneration: true);
             // TODO GD Create a game connection for map analysis
             var botRunner = new DeprecatedBotRunner(
                 services.UnitsTracker,
@@ -114,10 +115,10 @@ public class Program {
         }
     }
 
-    private static void PlayVideoClip() {
+    private static void PlayVideoClip(string mapFileName) {
         DebugEnabled = true;
 
-        var services = CreateServices(graphicalDebugging: true);
+        var services = CreateServices(mapFileName, graphicalDebugging: true);
 
         var game = new LocalGame(
             services.Sc2Client,
@@ -157,10 +158,10 @@ public class Program {
         botRunner.RunBot(videoClipBot).Wait();
     }
 
-    private static void PlayLocalGame() {
+    private static void PlayLocalGame(string mapFileName) {
         DebugEnabled = true;
 
-        var services = CreateServices(graphicalDebugging: true);
+        var services = CreateServices(mapFileName, graphicalDebugging: true);
 
         var game = new LocalGame(
             services.Sc2Client,
@@ -194,7 +195,7 @@ public class Program {
     private static void PlayLadderGame(string[] args) {
         DebugEnabled = false;
 
-        var services = CreateServices(graphicalDebugging: false);
+        var services = CreateServices(null, graphicalDebugging: false);
 
         var commandLineArgs = new CommandLineArguments(args);
         var game = new LadderGame(
@@ -402,7 +403,7 @@ public class Program {
         );
     }
 
-    private static Services CreateServices(bool graphicalDebugging, bool dataGeneration = false) {
+    private static Services CreateServices(string mapFileName, bool graphicalDebugging, bool dataGeneration = false) {
         var knowledgeBase = new KnowledgeBase();
         var requestBuilder = new RequestBuilder(knowledgeBase);
         var sc2Client = new Sc2Client(requestBuilder);
@@ -446,7 +447,8 @@ public class Program {
         var incomeTracker = new IncomeTracker(taggingService, unitsTracker, frameClock);
 
         var expandAnalyzer = new ExpandAnalyzer(terrainTracker, buildingTracker, expandUnitsAnalyzer, frameClock, graphicalDebugger, clustering, pathfinder);
-        var regionAnalyzer = new RegionAnalyzer(terrainTracker, expandAnalyzer, graphicalDebugger, clustering, pathfinder, regionsDataRepository);
+        var mapImageFactory = new MapImageFactory(terrainTracker);
+        var regionAnalyzer = new RegionAnalyzer(terrainTracker, expandAnalyzer, graphicalDebugger, clustering, pathfinder, regionsDataRepository, mapImageFactory, mapFileName);
 
         var spendingTracker = new SpendingTracker(incomeTracker, knowledgeBase);
 
