@@ -29,13 +29,13 @@ public class MapImage : IMapImage {
         }
     }
 
-    public void SetPixel(Vector2 cell, Color color) {
+    public void SetCellColor(Vector2 cell, Color color) {
         var adjustedCell = cell.AsWorldGridCorner();
 
-        SetPixel((int)adjustedCell.X, (int)adjustedCell.Y, color);
+        SetCellColor((int)adjustedCell.X, (int)adjustedCell.Y, color);
     }
 
-    public void SetPixel(int x, int y, Color color) {
+    public void SetCellColor(int x, int y, Color color) {
         if (!OperatingSystem.IsWindows()) {
             return;
         }
