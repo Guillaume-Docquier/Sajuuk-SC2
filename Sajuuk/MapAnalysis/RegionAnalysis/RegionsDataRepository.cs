@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using Sajuuk.ExtensionMethods;
 using Sajuuk.Algorithms;
 using Sajuuk.GameSense;
 using Sajuuk.MapAnalysis.ExpandAnalysis;
@@ -15,11 +14,11 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
     private readonly IClustering _clustering;
     private readonly IPathfinder _pathfinder;
     private readonly FootprintCalculator _footprintCalculator;
+    private readonly IMapImageFactory _mapImageFactory;
 
     private readonly JsonMapDataRepository<RegionsData> _jsonMapDataRepository;
 
     private const string FileNameId = "Regions";
-    private const int UpscalingFactor = 4;
 
     private static readonly Color MineralColor = Color.Cyan;
     private static readonly Color GasColor = Color.Lime;
@@ -38,12 +37,14 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
         ITerrainTracker terrainTracker,
         IClustering clustering,
         IPathfinder pathfinder,
-        FootprintCalculator footprintCalculator
+        FootprintCalculator footprintCalculator,
+        IMapImageFactory mapImageFactory
     ) {
         _terrainTracker = terrainTracker;
         _clustering = clustering;
         _pathfinder = pathfinder;
         _footprintCalculator = footprintCalculator;
+        _mapImageFactory = mapImageFactory;
 
         _jsonMapDataRepository = new JsonMapDataRepository<RegionsData>(mapFileName => FileNameFormatter.FormatDataFileName(FileNameId, mapFileName, "json"));
     }
@@ -73,13 +74,9 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
     /// <summary>
     /// Saves the regions as an image where each region has a different color than its neighbors.
     /// </summary>
-    /// <param name="regions"></param>
-    /// <param name="mapFileName"></param>
+    /// <param name="regions">The regions to represent.</param>
+    /// <param name="mapFileName">The file name of the current map.</param>
     private void SaveAsImage(List<Region> regions, string mapFileName) {
-        if (!OperatingSystem.IsWindows()) {
-            return;
-        }
-
         var regionsColors = new Dictionary<IRegion, Color>();
         var baseColor = RegionColors.First();
         foreach (var region in regions) {
@@ -98,40 +95,28 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
             }
         }
 
-        var image = new Bitmap(_terrainTracker.MaxX, _terrainTracker.MaxY);
-        for (var x = 0; x < image.Width; x++) {
-            for (var y = 0; y < image.Height; y++) {
-                image.SetPixel(x, y, Color.Black);
-            }
-        }
-
+        var mapImage = _mapImageFactory.CreateMapImage();
         foreach (var region in regions) {
-            var pixelColor = regionsColors[region];
-            foreach (var cell in region.Cells.Select(cell => cell.AsWorldGridCorner())) {
-                image.SetPixel((int)cell.X, (int)cell.Y, pixelColor);
+            var regionColor = regionsColors[region];
+            foreach (var cell in region.Cells) {
+                mapImage.SetCellColor(cell, regionColor);
             }
 
             if (region.ConcreteExpandLocation != null) {
-                PaintExpandLocation(image, region.ConcreteExpandLocation);
+                PaintExpandLocation(mapImage, region.ConcreteExpandLocation);
             }
         }
 
-        var scaledImage = ScaleImage(image, UpscalingFactor);
-        scaledImage.RotateFlip(RotateFlipType.RotateNoneFlipY);
-        scaledImage.Save(FileNameFormatter.FormatDataFileName(FileNameId, mapFileName, "png"));
+        mapImage.Save(FileNameFormatter.FormatDataFileName(FileNameId, mapFileName, "png"));
     }
 
     /// <summary>
-    /// Paints the expand location and its resources on the image.
+    /// Paints the expand location and its resources on the map image.
     /// </summary>
-    /// <param name="image">The image to paint on.</param>
+    /// <param name="mapImage">The map image to paint on.</param>
     /// <param name="expandLocation">The expand location data to paint.</param>
-    private void PaintExpandLocation(Bitmap image, IExpandLocation expandLocation) {
-        if (!OperatingSystem.IsWindows()) {
-            return;
-        }
-
-        image.SetPixel((int)expandLocation.Position.X, (int)expandLocation.Position.Y, ExpandColor);
+    private void PaintExpandLocation(IMapImage mapImage, IExpandLocation expandLocation) {
+        mapImage.SetCellColor(expandLocation.Position, ExpandColor);
 
         foreach (var resource in expandLocation.Resources) {
             var resourceColor = Resources.GetResourceType(resource) switch
@@ -141,42 +126,9 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
                 _ => Color.Black
             };
 
-            foreach (var cell in _footprintCalculator.GetFootprint(resource)) {
-                image.SetPixel((int)cell.X, (int)cell.Y, resourceColor);
+            foreach (var resourceCell in _footprintCalculator.GetFootprint(resource)) {
+                mapImage.SetCellColor(resourceCell, resourceColor);
             }
         }
-    }
-
-    /// <summary>
-    /// Scales the image so that it is bigger.
-    /// This method only works on windows.
-    /// </summary>
-    /// <param name="originalImage">The original image.</param>
-    /// <param name="scalingFactor">A scaling multiplier to indicate how much to scale the image.</param>
-    /// <returns>The new, scaled, image.</returns>
-    private static Bitmap ScaleImage(Bitmap originalImage, int scalingFactor) {
-        if (!OperatingSystem.IsWindows()) {
-            return originalImage;
-        }
-
-        var scaledWidth = originalImage.Width * scalingFactor;
-        var scaledHeight = originalImage.Height * scalingFactor;
-        var scaledImage = new Bitmap(scaledWidth, scaledHeight);
-
-        for (var x = 0; x < originalImage.Width; x++) {
-            for (var y = 0; y < originalImage.Height; y++) {
-                for (var virtualX = 0; virtualX < scalingFactor; virtualX++) {
-                    for (var virtualY = 0; virtualY < scalingFactor; virtualY++) {
-                        scaledImage.SetPixel(
-                            x * scalingFactor + virtualX,
-                            y * scalingFactor + virtualY,
-                            originalImage.GetPixel(x, y)
-                        );
-                    }
-                }
-            }
-        }
-
-        return scaledImage;
     }
 }
