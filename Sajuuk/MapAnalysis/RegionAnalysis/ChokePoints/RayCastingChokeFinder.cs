@@ -51,6 +51,7 @@ public class RayCastingChokeFinder : IChokeFinder {
         var chokePoints = ComputeChokePoints(chokePointCells, lines);
 
         SaveChokePointsImage(chokePoints);
+        SaveChokeScoresImage(chokePointCells.Values.ToList());
 
         return chokePoints;
     }
@@ -190,8 +191,8 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// Computes the choke points given the choke point cells and the vision lines.
     /// </summary>
     /// <param name="potentialChokePointCells">All the cells that could be part of a choke point.</param>
-    /// <param name="visionLines">All the vision lines</param>
-    /// <returns></returns>
+    /// <param name="visionLines">All the vision lines.</param>
+    /// <returns>All the computed choke points.</returns>
     private List<ChokePoint> ComputeChokePoints(Dictionary<Vector2, ChokePointCell> potentialChokePointCells, List<VisionLine> visionLines) {
         AddLinesToTraversedChokePointCells(potentialChokePointCells, visionLines);
         UpdateChokeScores(potentialChokePointCells);
@@ -284,6 +285,10 @@ public class RayCastingChokeFinder : IChokeFinder {
         return chokePointCells;
     }
 
+    /// <summary>
+    /// Saves an image representing the choke points as green lines.
+    /// </summary>
+    /// <param name="chokePoints">All the choke points.</param>
     private void SaveChokePointsImage(IEnumerable<ChokePoint> chokePoints) {
         var mapImage = _mapImageFactory.CreateMapImage();
 
@@ -293,6 +298,26 @@ public class RayCastingChokeFinder : IChokeFinder {
         }
 
         mapImage.Save(FileNameFormatter.FormatDataFileName("ChokePoints", _mapFileName, "png"));
+    }
+
+    /// <summary>
+    /// Saves a png image representing the choke scores.
+    /// High scores will be red, low scores will be grey.
+    /// Only the choke scores within choke points are shown.
+    /// </summary>
+    /// <param name="chokePointCells">All the cells to display the choke scores of.</param>
+    private void SaveChokeScoresImage(List<ChokePointCell> chokePointCells) {
+        var mapImage = _mapImageFactory.CreateMapImage();
+        var minChokeScore = chokePointCells.Min(chokePointCell => chokePointCell.ChokeScore);
+        var maxChokeScore = chokePointCells.Max(chokePointCell => chokePointCell.ChokeScore);
+
+        foreach (var chokePointCell in chokePointCells) {
+            var gradientStrength = MathUtils.LogScale(chokePointCell.ChokeScore, minChokeScore, maxChokeScore);
+            var textColor = System.Drawing.Color.White.Gradient(System.Drawing.Color.DarkRed, gradientStrength);
+            mapImage.SetCellColor(chokePointCell.Position.ToVector2(), textColor);
+        }
+
+        mapImage.Save(FileNameFormatter.FormatDataFileName("ChokeScores", _mapFileName, "png"));
     }
 
     /// <summary>
