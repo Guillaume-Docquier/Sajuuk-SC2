@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Sajuuk.Actions;
 using Sajuuk.Algorithms;
 using Sajuuk.Builds;
@@ -62,7 +63,11 @@ public class Program {
         try {
             switch (args.Length) {
                 case 1 when args[0] == "--mapAnalysis":
-                    PlayMapAnalysis(Maps.Season_2023_2.FileNames.GetAll());
+                    PlayMapAnalysis(
+                        Maps.GetAllFileNames()
+                            // Blackburn has an isolated expand that breaks the analysis, we'll fix it if it comes back to the map pool
+                            .Except(new [] { Maps.Season_2022_3.FileNames.Blackburn })
+                    );
                     break;
                 case 1 when args[0] == "--videoClip":
                     PlayVideoClip(MapFileName);
