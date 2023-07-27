@@ -316,58 +316,67 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     /// </para>
     /// <para>This is a game detail.</para>
     /// </summary>
-    /// <param name="position">The position to get the neighbors of</param>
+    /// <param name="position">The position to get the neighbors of.</param>
+    /// <param name="potentialNeighbors">The cells that are allowed to be neighbors. Defaults to all cells in the map.</param>
     /// <param name="includeObstacles">If you're wondering if you should be using this, you shouldn't.</param>
     /// <returns>Up to 8 neighbors</returns>
-    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 position, bool includeObstacles = true) {
+    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 position, IReadOnlySet<Vector2> potentialNeighbors = null, bool includeObstacles = true) {
+        bool IsReachable(Vector2 pos) {
+            if (potentialNeighbors != null && !potentialNeighbors.Contains(pos)) {
+                return false;
+            }
+
+            return IsInBounds(pos) && IsWalkable(pos, includeObstacles);
+        }
+
         var leftPos = position.Translate(xTranslation: -1);
-        var isLeftOk = IsInBounds(leftPos) && IsWalkable(leftPos, includeObstacles);
-        if (isLeftOk) {
+        var isLeftReachable = IsReachable(leftPos);
+        if (isLeftReachable) {
             yield return leftPos;
         }
 
         var rightPos = position.Translate(xTranslation: 1);
-        var isRightOk = IsInBounds(rightPos) && IsWalkable(rightPos, includeObstacles);
-        if (isRightOk) {
+        var isRightReachable = IsReachable(rightPos);
+        if (isRightReachable) {
             yield return rightPos;
         }
 
         var upPos = position.Translate(yTranslation: 1);
-        var isUpOk = IsInBounds(upPos) && IsWalkable(upPos, includeObstacles);
-        if (isUpOk) {
+        var isUpReachable = IsReachable(upPos);
+        if (isUpReachable) {
             yield return upPos;
         }
 
         var downPos = position.Translate(yTranslation: -1);
-        var isDownOk = IsInBounds(downPos) && IsWalkable(downPos, includeObstacles);
-        if (isDownOk) {
+        var isDownReachable = IsReachable(downPos);
+        if (isDownReachable) {
             yield return downPos;
         }
 
-        if (isLeftOk || isUpOk) {
+        if (isLeftReachable || isUpReachable) {
             var leftUpPos = position.Translate(xTranslation: -1, yTranslation: 1);
-            if (IsInBounds(leftUpPos) && IsWalkable(leftUpPos, includeObstacles)) {
+            if (IsReachable(leftUpPos)) {
                 yield return leftUpPos;
             }
         }
 
-        if (isLeftOk || isDownOk) {
+        if (isLeftReachable || isDownReachable) {
             var leftDownPos = position.Translate(xTranslation: -1, yTranslation: -1);
-            if (IsInBounds(leftDownPos) && IsWalkable(leftDownPos, includeObstacles)) {
+            if (IsReachable(leftDownPos)) {
                 yield return leftDownPos;
             }
         }
 
-        if (isRightOk || isUpOk) {
+        if (isRightReachable || isUpReachable) {
             var rightUpPos = position.Translate(xTranslation: 1, yTranslation: 1);
-            if (IsInBounds(rightUpPos) && IsWalkable(rightUpPos, includeObstacles)) {
+            if (IsReachable(rightUpPos)) {
                 yield return rightUpPos;
             }
         }
 
-        if (isRightOk || isDownOk) {
+        if (isRightReachable || isDownReachable) {
             var rightDownPos = position.Translate(xTranslation: 1, yTranslation: -1);
-            if (IsInBounds(rightDownPos) && IsWalkable(rightDownPos, includeObstacles)) {
+            if (IsReachable(rightDownPos)) {
                 yield return rightDownPos;
             }
         }

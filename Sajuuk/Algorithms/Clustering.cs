@@ -33,7 +33,7 @@ public class Clustering : IClustering {
     /// <param name="cells"></param>
     /// <param name="startingPoint"></param>
     /// <returns>The cells reached by the flood fill</returns>
-    public IEnumerable<Vector2> FloodFill(IEnumerable<Vector2> cells, Vector2 startingPoint) {
+    public IEnumerable<Vector2> FloodFill(IReadOnlySet<Vector2> cells, Vector2 startingPoint) {
         var toExplore = cells.ToHashSet();
         toExplore.Remove(startingPoint);
 
@@ -46,7 +46,7 @@ public class Clustering : IClustering {
             var cellToExplore = explorationQueue.Dequeue();
             explored.Add(cellToExplore);
 
-            foreach (var neighbor in _terrainTracker.GetReachableNeighbors(cellToExplore, includeObstacles: false).Where(toExplore.Contains)) {
+            foreach (var neighbor in _terrainTracker.GetReachableNeighbors(cellToExplore, cells, includeObstacles: false).Where(toExplore.Contains)) {
                 explorationQueue.Enqueue(neighbor);
                 toExplore.Remove(neighbor);
             }

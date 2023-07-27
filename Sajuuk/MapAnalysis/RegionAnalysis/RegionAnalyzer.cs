@@ -322,30 +322,17 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         return new List<List<Vector2>> { region.ToList() };
     }
 
-    private static (HashSet<Vector2> subregion1, HashSet<Vector2> subregion2) SplitRegion(IReadOnlySet<Vector2> region, IReadOnlyCollection<Vector2> separations) {
-        var startingPoint = region.First(point => !separations.Contains(point));
-
-        var subregion1 = new HashSet<Vector2>();
-
-        var pointsToExplore = new Queue<Vector2>();
-        pointsToExplore.Enqueue(startingPoint);
-
-        while (pointsToExplore.Any()) {
-            var point = pointsToExplore.Dequeue();
-            if (subregion1.Add(point)) {
-                var nextNeighbors = point.GetNeighbors()
-                    .Where(neighbor => neighbor.DistanceTo(point) <= 1) // Disallow diagonals
-                    .Where(region.Contains)
-                    .Where(neighbor => !separations.Contains(neighbor))
-                    .Where(neighbor => !subregion1.Contains(neighbor));
-
-                foreach (var neighbor in nextNeighbors) {
-                    pointsToExplore.Enqueue(neighbor);
-                }
-            }
-        }
-
-        var subregion2 = region.Except(subregion1).ToHashSet();
+    /// <summary>
+    /// Splits a region into 2 subregions using the given set of separation cells.
+    /// This can produce an empty subregion if the separation cells do not cut the region into two parts.
+    /// </summary>
+    /// <param name="regionToSplit">The region to split.</param>
+    /// <param name="separations">The cells to use to split the region.</param>
+    /// <returns>The two subregions.</returns>
+    private (HashSet<Vector2> subregion1, HashSet<Vector2> subregion2) SplitRegion(IReadOnlySet<Vector2> regionToSplit, IReadOnlyCollection<Vector2> separations) {
+        var startingPoint = regionToSplit.First(point => !separations.Contains(point));
+        var subregion1 = _clustering.FloodFill(regionToSplit.Except(separations).ToHashSet(), startingPoint).ToHashSet();
+        var subregion2 = regionToSplit.Except(subregion1).ToHashSet();
 
         return (subregion1, subregion2);
     }
