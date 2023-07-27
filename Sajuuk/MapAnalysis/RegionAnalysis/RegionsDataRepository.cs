@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using Sajuuk.Algorithms;
+using Sajuuk.Debugging.GraphicalDebugging;
 using Sajuuk.GameSense;
 using Sajuuk.MapAnalysis.ExpandAnalysis;
 using Sajuuk.Persistence;
@@ -23,14 +22,16 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
     private static readonly Color MineralColor = Color.Cyan;
     private static readonly Color GasColor = Color.Lime;
     private static readonly Color ExpandColor = Color.Magenta;
-    private static readonly HashSet<Color> RegionColors = new HashSet<Color>
+
+    // The colors match those used in AnalyzedRegion
+    private static readonly Dictionary<SC2APIProtocol.Color, Color> RegionColorsMapping = new Dictionary<SC2APIProtocol.Color, Color>
     {
-        Color.Teal,
-        Color.Green,
-        Color.Purple,
-        Color.Navy,
-        Color.Olive,
-        Color.Maroon,
+        { Colors.Cyan, Color.Teal},
+        { Colors.Magenta, Color.Purple},
+        { Colors.Orange, Color.Olive},
+        { Colors.Blue, Color.MediumBlue},
+        { Colors.Red, Color.Maroon},
+        { Colors.LimeGreen, Color.Green},
     };
 
     public RegionsDataRepository(
@@ -77,29 +78,10 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
     /// <param name="regions">The regions to represent.</param>
     /// <param name="mapFileName">The file name of the current map.</param>
     private void SaveAsImage(List<Region> regions, string mapFileName) {
-        var regionsColors = new Dictionary<IRegion, Color>();
-        var baseColor = RegionColors.First();
-        foreach (var region in regions) {
-            regionsColors[region] = baseColor;
-        }
-
-        var rng = new Random();
-        foreach (var region in regions) {
-            var neighborColors = region.Neighbors.Select(neighbor => regionsColors[neighbor.Region]).ToHashSet();
-            if (neighborColors.Contains(regionsColors[region])) {
-                // There should be enough colors so that one is always available
-                var availableColors = RegionColors.Except(neighborColors).ToList();
-
-                var randomColorIndex = rng.Next(availableColors.Count);
-                regionsColors[region] = availableColors[randomColorIndex];
-            }
-        }
-
         var mapImage = _mapImageFactory.CreateMapImage();
         foreach (var region in regions) {
-            var regionColor = regionsColors[region];
             foreach (var cell in region.Cells) {
-                mapImage.SetCellColor(cell, regionColor);
+                mapImage.SetCellColor(cell, RegionColorsMapping[region.Color]);
             }
 
             if (region.ConcreteExpandLocation != null) {

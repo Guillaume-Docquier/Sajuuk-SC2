@@ -15,11 +15,11 @@ public class AnalyzedRegion : Region {
     private static readonly List<Color> RegionColors = new List<Color>
     {
         Colors.Cyan,
+        Colors.Magenta,
+        Colors.Orange,
+        Colors.Blue,
         Colors.Red,
         Colors.LimeGreen,
-        Colors.Blue,
-        Colors.Orange,
-        Colors.Magenta
     };
 
     public AnalyzedRegion(
@@ -31,6 +31,7 @@ public class AnalyzedRegion : Region {
         IEnumerable<ExpandLocation> expandLocations
     ) : base(terrainTracker, clustering, pathfinder) {
         Cells = cells.ToHashSet();
+        Color = RegionColors.First();
 
         // The approximated radius is the diagonal of the cells as if they were a square
         // We also scale them by ^1.05 because this estimation tends to be worse for large regions
@@ -61,7 +62,7 @@ public class AnalyzedRegion : Region {
         Id = id;
         ConcreteNeighbors = ComputeNeighboringRegions(Cells, allRegions.Where(region => region != this).ToHashSet());
         IsObstructed = IsRegionObstructed();
-        Color = ComputeDistinctColor();
+        Color = GetDifferentColorFromNeighbors();
     }
 
     private static HashSet<NeighboringRegion> ComputeNeighboringRegions(IEnumerable<Vector2> cells, IReadOnlyCollection<AnalyzedRegion> allOtherRegions) {
@@ -86,23 +87,19 @@ public class AnalyzedRegion : Region {
         return neighborsMap.Values.ToHashSet();
     }
 
-    private Color ComputeDistinctColor() {
-        // Get a random color that's not the same as our neighbors
-        var rng = new Random();
-        var color = RegionColors[rng.Next(RegionColors.Count)];
-        var neighborColors = GetReachableNeighbors()
-            .Where(neighbor => neighbor.Color != default)
-            .Select(neighbor => neighbor.Color)
-            .ToHashSet();
+    /// <summary>
+    /// Gets a color that's different from the neighbors colors.
+    /// </summary>
+    /// <returns>A color that's different from the colors of all neighbors.</returns>
+    private Color GetDifferentColorFromNeighbors() {
+        var neighborColors = GetReachableNeighbors().Select(neighbor => neighbor.Color);
 
-        if (neighborColors.Contains(color)) {
-            // There should be enough colors so that one is always available
-            var availableColors = RegionColors.Except(neighborColors).ToList();
+        // There should be enough colors so that one is always available
+        var distinctRegionColor = RegionColors
+            .Except(neighborColors)
+            .Take(1)
+            .First();
 
-            var randomColorIndex = rng.Next(availableColors.Count);
-            color = availableColors[randomColorIndex];
-        }
-
-        return color;
+        return distinctRegionColor;
     }
 }

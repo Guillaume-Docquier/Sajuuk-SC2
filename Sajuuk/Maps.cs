@@ -6,6 +6,13 @@ namespace Sajuuk;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
 public static class Maps {
+    public static IEnumerable<string> GetAllFileNames() {
+        return Season_2022_3.FileNames.GetAll()
+            .Concat(Season_2022_4.FileNames.GetAll())
+            .Concat(Season_2023_2.FileNames.GetAll())
+            .ToHashSet();
+    }
+
     public static class Season_2022_3 {
         public static class FileNames {
             public const string TwoThousandAtmospheres = "2000AtmospheresAIE.SC2Map";
@@ -14,6 +21,10 @@ public static class Maps {
             public const string CuriousMinds = "CuriousMindsAIE.SC2Map";
             public const string GlitteringAshes = "GlitteringAshesAIE.SC2Map";
             public const string Hardwire = "HardwireAIE.SC2Map";
+
+            public static IEnumerable<string> GetAll() {
+                return typeof(FileNames).GetFields().Select(x => x.GetValue(null)).Cast<string>();
+            }
         }
     }
 
