@@ -17,9 +17,9 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IClustering _clustering;
-    private readonly IPathfinder _pathfinder;
     private readonly IMapDataRepository<RegionsData> _regionsRepository;
     private readonly IChokeFinder _chokeFinder;
+    private readonly IRegionFactory _regionFactory;
 
     private const int RegionMinPoints = 6;
     private const float RegionZMultiplier = 8;
@@ -34,16 +34,16 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         ITerrainTracker terrainTracker,
         IExpandAnalyzer expandAnalyzer,
         IClustering clustering,
-        IPathfinder pathfinder,
         IMapDataRepository<RegionsData> regionsRepository,
-        IChokeFinder chokeFinder
+        IChokeFinder chokeFinder,
+        IRegionFactory regionFactory
     ) {
         _terrainTracker = terrainTracker;
         _expandAnalyzer = expandAnalyzer;
         _clustering = clustering;
-        _pathfinder = pathfinder;
         _regionsRepository = regionsRepository;
         _chokeFinder = chokeFinder;
+        _regionFactory = regionFactory;
     }
 
     /// <summary>
@@ -240,10 +240,10 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var regions = new List<AnalyzedRegion>();
         foreach (var region in potentialRegions) {
             var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints);
-            regions.AddRange(subregions.Select(subregion => new AnalyzedRegion(_terrainTracker, _clustering, _pathfinder, subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
+            regions.AddRange(subregions.Select(subregion => _regionFactory.CreateAnalyzedRegion(subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
         }
 
-        regions.AddRange(ramps.Select(ramp => new AnalyzedRegion(_terrainTracker, _clustering, _pathfinder, ramp, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
+        regions.AddRange(ramps.Select(ramp => _regionFactory.CreateAnalyzedRegion(ramp, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
 
         return regions;
     }
