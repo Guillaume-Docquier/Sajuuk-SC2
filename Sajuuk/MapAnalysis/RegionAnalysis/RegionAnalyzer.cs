@@ -72,13 +72,9 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var rampsPotentialCells = walkableMap.Where(cell => !_terrainTracker.IsBuildable(cell.Position, includeObstacles: false)).ToList();
         var (ramps, rampsNoise) = ComputeRamps(rampsPotentialCells);
 
-        var regionsPotentialCells = walkableMap
-            .Where(cell => _terrainTracker.IsBuildable(cell.Position, includeObstacles: false))
-            .Concat(rampsNoise)
-            .ToList();
+        var (regionsPotentialCells, potentialRegionCellsNoise) = ComputePotentialRegionCells(walkableMap, rampsNoise);
         var (potentialRegions, regionNoise) = ComputePotentialRegions(regionsPotentialCells);
 
-        var noise = regionNoise.Select(mapCell => mapCell.Position.ToVector2()).ToList();
         var chokePoints = ComputePotentialChokePoints();
 
         // We order the regions to have a deterministic regions order.
@@ -92,6 +88,11 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             regions[regionId].FinalizeCreation(regionId, regions);
         }
 
+        var noise = regionNoise
+            .Concat(potentialRegionCellsNoise)
+            .Select(mapCell => mapCell.Position.ToVector2())
+            .ToList();
+
         _regionsData = new RegionsData(regions.Select(region => region as Region).ToList(), ramps, noise, chokePoints);
         _regionsRepository.Save(_regionsData, gameInfo.MapName);
 
@@ -102,6 +103,28 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var nbChokePoints = _regionsData.ChokePoints.Count;
         Logger.Metric($"{nbRegions} regions ({nbObstructed} obstructed), {nbRamps} ramps, {nbNoise} unclassified cells and {nbChokePoints} choke points");
         Logger.Success("Region analysis done and saved");
+    }
+
+    /// <summary>
+    /// Computes the potential region cells.
+    /// This computation will consider cells that have no reachable neighbors (isolated cells) as noise.
+    /// </summary>
+    /// <param name="walkableMapCells">The map cells that can be walked on.</param>
+    /// <param name="rampsNoise">The noise from ramp detection.</param>
+    /// <returns></returns>
+    private (List<MapCell> potentialRegionCells, List<MapCell> potentialRegionCellsNoise) ComputePotentialRegionCells(IEnumerable<MapCell> walkableMapCells, IEnumerable<MapCell> rampsNoise) {
+        var potentialRegionCells = walkableMapCells
+            .Where(cell => _terrainTracker.IsBuildable(cell.Position, includeObstacles: false))
+            .Concat(rampsNoise)
+            .ToHashSet();
+
+        // Some cells have 0 reachable neighbors, which messes up the use of FloodFill.
+        // DragonScalesAIE has 2 cells like that.
+        var isolatedCells = potentialRegionCells
+            .Where(mapCell => !_terrainTracker.GetReachableNeighbors(mapCell.Position.ToVector2(), includeObstacles: false).Any())
+            .ToList();
+
+        return (potentialRegionCells.Except(isolatedCells).ToList(), isolatedCells);
     }
 
     /// <summary>
