@@ -10,6 +10,7 @@ using Sajuuk.MapAnalysis.RegionAnalysis.ChokePoints;
 using Sajuuk.Persistence;
 using Sajuuk.Utils;
 using SC2APIProtocol;
+using Color = System.Drawing.Color;
 
 namespace Sajuuk.MapAnalysis.RegionAnalysis;
 
@@ -20,6 +21,8 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     private readonly IMapDataRepository<RegionsData> _regionsRepository;
     private readonly IChokeFinder _chokeFinder;
     private readonly IRegionFactory _regionFactory;
+    private readonly IMapImageFactory _mapImageFactory;
+    private readonly string _mapFileName;
 
     private const int RegionMinPoints = 6;
     private const float RegionZMultiplier = 8;
@@ -36,7 +39,9 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         IClustering clustering,
         IMapDataRepository<RegionsData> regionsRepository,
         IChokeFinder chokeFinder,
-        IRegionFactory regionFactory
+        IRegionFactory regionFactory,
+        IMapImageFactory mapImageFactory,
+        string mapFileName
     ) {
         _terrainTracker = terrainTracker;
         _expandAnalyzer = expandAnalyzer;
@@ -44,6 +49,8 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         _regionsRepository = regionsRepository;
         _chokeFinder = chokeFinder;
         _regionFactory = regionFactory;
+        _mapImageFactory = mapImageFactory;
+        _mapFileName = mapFileName;
     }
 
     /// <summary>
@@ -239,7 +246,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     private List<AnalyzedRegion> BuildRegions(List<HashSet<Vector2>> potentialRegions, List<HashSet<Vector2>> ramps, List<ChokePoint> potentialChokePoints) {
         var regions = new List<AnalyzedRegion>();
         foreach (var region in potentialRegions) {
-            var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints);
+            var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints, saveSplitsAsImage: false);
             regions.AddRange(subregions.Select(subregion => _regionFactory.CreateAnalyzedRegion(subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
         }
 
@@ -256,7 +263,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <returns>
     /// A list of subregions.
     /// </returns>
-    private List<List<Vector2>> BreakDownIntoSubregions(IReadOnlySet<Vector2> region, List<ChokePoint> potentialChokePoints) {
+    private List<List<Vector2>> BreakDownIntoSubregions(IReadOnlySet<Vector2> region, List<ChokePoint> potentialChokePoints, bool saveSplitsAsImage) {
         // Get chokes in region
         // Consider shortest chokes first
         var chokesInRegion = potentialChokePoints
@@ -268,13 +275,21 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         // Sometimes we will need more than 1 choke to split a region into two
         var nbChokesToConsider = 1;
         while (nbChokesToConsider <= chokesInRegion.Count) {
-            var chokePointCombinations = MathUtils.Combinations(chokesInRegion, nbChokesToConsider).Select(setOfChokes => setOfChokes.ToList());
+            var chokePointCombinations = MathUtils.Combinations(chokesInRegion, nbChokesToConsider)
+                .Select(setOfChokes => setOfChokes.ToList())
+                .ToList();
+
             foreach (var chokePointCombination in chokePointCombinations) {
                 var (subregion1, subregion2) = SplitRegion(region, chokePointCombination.SelectMany(choke => choke.Edge).ToList());
+                if (saveSplitsAsImage) {
+                    SaveSplitAsImage(region, chokePointCombination, subregion1, subregion2);
+                }
 
                 var maxChokeLength = chokePointCombination.Max(choke => choke.Edge.Count);
                 if (IsValidSplit(subregion1, maxChokeLength) && IsValidSplit(subregion2, maxChokeLength)) {
-                    return BreakDownIntoSubregions(subregion1, potentialChokePoints).Concat(BreakDownIntoSubregions(subregion2, potentialChokePoints)).ToList();
+                    return BreakDownIntoSubregions(subregion1, potentialChokePoints, saveSplitsAsImage)
+                        .Concat(BreakDownIntoSubregions(subregion2, potentialChokePoints, saveSplitsAsImage))
+                        .ToList();
                 }
             }
 
@@ -313,12 +328,12 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     }
 
     /// <summary>
-    /// Determines if a subregion is the result of a valid split given the cut length
-    /// A subregion should be a single cluster of cells that's big enough compared to the cut
+    /// Determines if a subregion is the result of a valid split given the cut length.
+    /// A subregion should be a single cluster of cells that's big enough compared to the cut.
     /// </summary>
-    /// <param name="subregion"></param>
-    /// <param name="cutLength"></param>
-    /// <returns>True if the split is valid, false otherwise</returns>
+    /// <param name="subregion">The subregion to validate.</param>
+    /// <param name="cutLength">The length of the cut used to create this region.</param>
+    /// <returns>True if the split is valid, false otherwise.</returns>
     private bool IsValidSplit(IReadOnlyCollection<Vector2> subregion, float cutLength) {
         // If the split region is too small compared to the cut, it might not be worth a cut
         if (subregion.Count <= Math.Max(10, cutLength * cutLength / 2)) {
@@ -326,7 +341,36 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         }
 
         // A region should form a single cluster of cells
-        var floodFill = _clustering.FloodFill(subregion, subregion.First());
+        var floodFill = _clustering.FloodFill(subregion.ToHashSet(), subregion.First());
         return floodFill.Count() == subregion.Count;
+    }
+
+    /// <summary>
+    /// A debugging function that will produce a png image of a region split.
+    /// </summary>
+    /// <param name="region">The region that was split.</param>
+    /// <param name="chokePointCombination">The choke points used to split the region.</param>
+    /// <param name="subregion1">The first subregion.</param>
+    /// <param name="subregion2">The second subregion.</param>
+    private void SaveSplitAsImage(IReadOnlySet<Vector2> region, List<ChokePoint> chokePointCombination, HashSet<Vector2> subregion1, HashSet<Vector2> subregion2) {
+        var mapImage = _mapImageFactory.CreateMapImage();
+        foreach (var cell in region) {
+            mapImage.SetCellColor(cell, Color.Cyan);
+        }
+
+        foreach (var cell in subregion1) {
+            mapImage.SetCellColor(cell, Color.Blue);
+        }
+
+        foreach (var cell in subregion2) {
+            mapImage.SetCellColor(cell, Color.Red);
+        }
+
+        // We paint the choke point last otherwise we wouldn't see it because it is included in the subregions.
+        foreach (var cell in chokePointCombination.SelectMany(chokePoint => chokePoint.Edge)) {
+            mapImage.SetCellColor(cell, Color.Lime);
+        }
+
+        mapImage.Save(FileNameFormatter.FormatDataFileName($"RegionSplit_{Guid.NewGuid()}", _mapFileName, "png"));
     }
 }

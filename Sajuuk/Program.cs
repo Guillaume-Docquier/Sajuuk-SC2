@@ -457,7 +457,7 @@ public class Program {
 
         var chokeFinder = new RayCastingChokeFinder(terrainTracker, graphicalDebugger, clustering, mapImageFactory, mapFileName);
         var regionFactory = new RegionFactory(terrainTracker, clustering, pathfinder);
-        var regionAnalyzer = new RegionAnalyzer(terrainTracker, expandAnalyzer, clustering, regionsDataRepository, chokeFinder, regionFactory);
+        var regionAnalyzer = new RegionAnalyzer(terrainTracker, expandAnalyzer, clustering, regionsDataRepository, chokeFinder, regionFactory, mapImageFactory, mapFileName);
 
         var spendingTracker = new SpendingTracker(incomeTracker, knowledgeBase);
 
