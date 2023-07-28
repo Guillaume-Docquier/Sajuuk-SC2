@@ -69,9 +69,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var walkableMap = GenerateWalkableMap();
         Logger.Info($"Starting region analysis on {walkableMap.Count} cells ({_terrainTracker.MaxX}x{_terrainTracker.MaxY})");
 
-        var rampsPotentialCells = walkableMap.Where(cell => !_terrainTracker.IsBuildable(cell.Position, includeObstacles: false)).ToList();
-        var (ramps, rampsNoise) = ComputeRamps(rampsPotentialCells);
-
+        var (ramps, rampsNoise) = ComputeRamps(walkableMap);
         var (regionsPotentialCells, potentialRegionCellsNoise) = ComputePotentialRegionCells(walkableMap, rampsNoise);
         var (potentialRegions, regionNoise) = ComputePotentialRegions(regionsPotentialCells);
 
@@ -183,20 +181,24 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     }
 
     /// <summary>
-    /// Identify ramps given cells that should be walkable but not buildable.
+    /// Identify ramps given cells that are walkable but not buildable.
     /// Some noise will be produced because some unbuildable cells are vision blockers and they should be used to find regions.
     /// </summary>
     /// <returns>
     /// The ramps and the cells that are not part of any ramp.
     /// </returns>
-    private (List<HashSet<Vector2>> ramps, IEnumerable<MapCell> rampsNoise) ComputeRamps(List<MapCell> cells) {
-        cells.ForEach(mapCell => mapCell.Position = mapCell.Position with { Z = 0 }); // Ignore Z
+    private (List<HashSet<Vector2>> ramps, IEnumerable<MapCell> rampsNoise) ComputeRamps(IEnumerable<MapCell> walkableCells) {
+        var potentialRampCells = walkableCells.Where(cell => !_terrainTracker.IsBuildable(cell.Position, includeObstacles: false)).ToList();
+        foreach (var potentialRampCell in potentialRampCells) {
+            // We ignore the Z component to simplify clustering
+            potentialRampCell.Position = potentialRampCell.Position with { Z = 0 };
+        }
 
         var ramps = new List<HashSet<Vector2>>();
         var noise = new HashSet<MapCell>();
 
         // We cluster once for an initial split
-        var weakClusteringResult = _clustering.DBSCAN(cells, epsilon: 1, minPoints: 1);
+        var weakClusteringResult = _clustering.DBSCAN(potentialRampCells, epsilon: 1, minPoints: 1);
         foreach (var mapCell in weakClusteringResult.noise) {
             noise.Add(mapCell);
         }
@@ -240,18 +242,28 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             }
         }
 
+        foreach (var potentialRampCell in potentialRampCells) {
+            potentialRampCell.Position = _terrainTracker.WithWorldHeight(potentialRampCell.Position); // Restore Z
+        }
+
         return (ramps, noise);
     }
 
     /// <summary>
-    /// A real ramp connects two different height layers
-    /// If all the tiles in the given ramp are roughly on the same height, this is not a ramp
+    /// A real ramp connects two different height layers with a progressive slope.
+    /// If all the tiles in the given ramp are roughly on the same height, this is not a ramp.
+    /// - It is probably a group of vision blockers, with are also walkable and unbuildable.
     /// </summary>
-    /// <param name="rampCluster"></param>
+    /// <param name="rampCluster">The cells in a ramp</param>
     /// <returns>True if the tiles have varied heights, false otherwise</returns>
     private bool IsReallyARamp(IReadOnlyCollection<MapCell> rampCluster) {
-        // This fixes some glitches
-        if (rampCluster.Count < 7) {
+        var nbDifferentHeights = rampCluster
+            .Select(cell => _terrainTracker.WithWorldHeight(cell.Position).Z)
+            .ToHashSet()
+            .Count;
+
+        // Ramps typically have nbDifferentHeights = [8, 9]
+        if (nbDifferentHeights < 6) {
             return false;
         }
 
@@ -259,7 +271,8 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var maxHeight = rampCluster.Max(cell => _terrainTracker.WithWorldHeight(cell.Position).Z);
         var heightDifference = Math.Abs(minHeight - maxHeight);
 
-        return 0.05 < heightDifference && heightDifference < 10;
+        // Ramps typically have heightDifference = [1.75, 2]
+        return heightDifference > 1f;
     }
 
     private List<ChokePoint> ComputePotentialChokePoints() {
@@ -269,7 +282,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     private List<AnalyzedRegion> BuildRegions(List<HashSet<Vector2>> potentialRegions, List<HashSet<Vector2>> ramps, List<ChokePoint> potentialChokePoints) {
         var regions = new List<AnalyzedRegion>();
         foreach (var region in potentialRegions) {
-            var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints, saveSplitsAsImage: true);
+            var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints, saveSplitsAsImage: false);
             regions.AddRange(subregions.Select(subregion => _regionFactory.CreateAnalyzedRegion(subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
         }
 
