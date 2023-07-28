@@ -395,7 +395,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         }
 
         var isSubRegion2Valid = IsValidSplit(subregion2, cutLength);
-        var subregion2Color = isSubRegion2Valid ? Color.RoyalBlue : Color.DarkBlue;
+        var subregion2Color = isSubRegion2Valid ? Color.RoyalBlue : Color.MediumBlue;
         foreach (var cell in subregion2) {
             mapImage.SetCellColor(cell, subregion2Color);
         }
