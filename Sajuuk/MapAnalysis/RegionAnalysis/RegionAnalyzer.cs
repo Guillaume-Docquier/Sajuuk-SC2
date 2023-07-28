@@ -262,8 +262,8 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             .ToHashSet()
             .Count;
 
-        // Ramps typically have nbDifferentHeights = [8, 9]
-        if (nbDifferentHeights < 6) {
+        // Ramps typically have nbDifferentHeights = [5, 9]
+        if (nbDifferentHeights < 4) {
             return false;
         }
 
