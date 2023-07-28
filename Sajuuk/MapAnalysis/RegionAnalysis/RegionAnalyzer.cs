@@ -73,10 +73,14 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
 
         var noise = regionNoise.Select(mapCell => mapCell.Position.ToVector2()).ToList();
         var chokePoints = ComputePotentialChokePoints();
-        var regions = BuildRegions(potentialRegions, ramps, chokePoints);
-        SetExpandLocations(regions, _expandAnalyzer.ExpandLocations.ToList());
 
-        // TODO GD Sort regions so that ids are in a predictable order, like left to right instead of seemingly random
+        // We order the regions to have a deterministic regions order.
+        // It'll also make it easier to find a region by its id because they're going to be left to right, bottom to top.
+        var regions = BuildRegions(potentialRegions, ramps, chokePoints)
+            .OrderBy(region => region.Center.Y)
+            .ThenBy(region => region.Center.X)
+            .ToList();
+
         for (var regionId = 0; regionId < regions.Count; regionId++) {
             regions[regionId].FinalizeCreation(regionId, regions);
         }
@@ -242,16 +246,6 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         regions.AddRange(ramps.Select(ramp => new AnalyzedRegion(_terrainTracker, _clustering, _pathfinder, ramp, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
 
         return regions;
-    }
-
-    private static void SetExpandLocations(List<AnalyzedRegion> regions, IReadOnlyCollection<ExpandLocation> expandLocations) {
-        foreach (var region in regions) {
-            var expandInRegion = expandLocations.FirstOrDefault(expandLocation => region.Cells.Contains(expandLocation.Position));
-            if (expandInRegion != null) {
-                region.ConcreteExpandLocation = expandInRegion;
-                expandInRegion.Region = region;
-            }
-        }
     }
 
     /// <summary>

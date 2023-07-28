@@ -18,7 +18,7 @@ public class Region : IRegion {
     [JsonInclude] public int Id { get; set; }
     [JsonInclude] public Color Color { get; set; }
     [JsonInclude] public Vector2 Center { get; set; }
-    [JsonInclude] public HashSet<Vector2> Cells { get; set; }
+    [JsonInclude] public HashSet<Vector2> Cells { get; protected set; }
     [JsonInclude] public float ApproximatedRadius { get; set; }
     [JsonInclude] public RegionType Type { get; set; }
     [JsonInclude] public bool IsObstructed { get; set; }

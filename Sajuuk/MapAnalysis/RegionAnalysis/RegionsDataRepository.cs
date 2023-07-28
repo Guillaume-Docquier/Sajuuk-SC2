@@ -84,8 +84,8 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
                 mapImage.SetCellColor(cell, RegionColorsMapping[region.Color]);
             }
 
-            if (region.ConcreteExpandLocation != null) {
-                PaintExpandLocation(mapImage, region.ConcreteExpandLocation);
+            if (region.ExpandLocation != null) {
+                PaintExpandLocation(mapImage, region.ExpandLocation);
             }
         }
 
