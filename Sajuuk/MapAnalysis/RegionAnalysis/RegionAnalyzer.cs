@@ -316,6 +316,10 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
                 .Select(setOfChokes => setOfChokes.ToList())
                 .ToList();
 
+            if (chokePointCombinations.Count > 20_000) {
+                Logger.Warning($"We are about to try {chokePointCombinations.Count} choke point combinations ({nbChokesToConsider} from {chokesInRegion.Count}). There is most likely an issue.");
+            }
+
             foreach (var chokePointCombination in chokePointCombinations) {
                 var (subregion1, subregion2) = SplitRegion(region, chokePointCombination.SelectMany(choke => choke.Edge).ToList());
                 var maxChokeLength = chokePointCombination.Max(choke => choke.Edge.Count);
