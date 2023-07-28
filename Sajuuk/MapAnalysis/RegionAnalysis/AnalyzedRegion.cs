@@ -12,9 +12,9 @@ using SC2APIProtocol;
 namespace Sajuuk.MapAnalysis.RegionAnalysis;
 
 public class AnalyzedRegion : Region {
+    private static readonly Color RampColor = Colors.Cyan;
     private static readonly List<Color> RegionColors = new List<Color>
     {
-        Colors.Cyan,
         Colors.Magenta,
         Colors.Orange,
         Colors.Blue,
@@ -30,8 +30,12 @@ public class AnalyzedRegion : Region {
         RegionType type,
         IEnumerable<ExpandLocation> expandLocations
     ) : base(terrainTracker, clustering, pathfinder) {
-        Cells = cells.ToHashSet();
-        Color = RegionColors.First();
+        // We order the cells to have a deterministic structure when persisting.
+        // When enumerated, hashsets keep the insertion order.
+        Cells = cells
+            .OrderBy(cell => cell.X)
+            .ThenBy(cell => cell.Y)
+            .ToHashSet();
 
         // The approximated radius is the diagonal of the cells as if they were a square
         // We also scale them by ^1.05 because this estimation tends to be worse for large regions
@@ -46,11 +50,17 @@ public class AnalyzedRegion : Region {
             if (expandInRegion != default) {
                 Type = RegionType.Expand;
                 Center = expandInRegion.Position;
+                ConcreteExpandLocation = expandInRegion;
+                expandInRegion.Region = this;
             }
             else {
                 Type = RegionType.OpenArea;
             }
         }
+
+        Color = Type == RegionType.Ramp
+            ? RampColor
+            : RegionColors.First();
 
         if (Center == default) {
             var regionCenter = clustering.GetCenter(Cells.ToList());
@@ -58,9 +68,13 @@ public class AnalyzedRegion : Region {
         }
     }
 
-    public void FinalizeCreation(int id, IEnumerable<AnalyzedRegion> allRegions) {
+    public void FinalizeCreation(int id, IEnumerable<AnalyzedRegion> allRegions, IEnumerable<ExpandLocation> allExpandLocations) {
         Id = id;
-        ConcreteNeighbors = ComputeNeighboringRegions(Cells, allRegions.Where(region => region != this).ToHashSet());
+
+        ConcreteNeighbors = ComputeNeighboringRegions(Cells, allRegions.Where(region => region != this).ToHashSet())
+            .OrderBy(neighbor => neighbor.Region.Id)
+            .ToHashSet();
+
         IsObstructed = IsRegionObstructed();
         Color = GetDifferentColorFromNeighbors();
     }
@@ -92,7 +106,10 @@ public class AnalyzedRegion : Region {
     /// </summary>
     /// <returns>A color that's different from the colors of all neighbors.</returns>
     private Color GetDifferentColorFromNeighbors() {
-        var neighborColors = GetReachableNeighbors().Select(neighbor => neighbor.Color);
+        var neighborColors = GetReachableNeighbors().Select(neighbor => neighbor.Color).ToHashSet();
+        if (!neighborColors.Contains(Color)) {
+            return Color;
+        }
 
         // There should be enough colors so that one is always available
         var distinctRegionColor = RegionColors
