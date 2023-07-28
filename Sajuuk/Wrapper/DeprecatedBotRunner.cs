@@ -17,6 +17,7 @@ using SC2APIProtocol;
 
 namespace Sajuuk.Wrapper;
 
+[Obsolete("This is only used by the map analysis and should be replaced by a proper BotRunner")]
 public class DeprecatedBotRunner {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;

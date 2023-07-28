@@ -111,7 +111,12 @@ public class Program {
 
             Logger.Important($"Analyzing map: {mapFileName}");
             botRunner.RunLocal(
-                new MapAnalysisBot(services.FrameClock),
+                new MapAnalysisBot(
+                    services.FrameClock,
+                    services.TerrainTracker,
+                    services.GraphicalDebugger,
+                    services.RegionAnalyzer
+                ),
                 mapFileName,
                 Race.Zerg,
                 Difficulty.VeryEasy,
