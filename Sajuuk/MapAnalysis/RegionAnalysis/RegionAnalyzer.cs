@@ -82,7 +82,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             .ToList();
 
         for (var regionId = 0; regionId < regions.Count; regionId++) {
-            regions[regionId].FinalizeCreation(regionId, regions, _expandAnalyzer.ExpandLocations);
+            regions[regionId].FinalizeCreation(regionId, regions);
         }
 
         _regionsData = new RegionsData(regions.Select(region => region as Region).ToList(), ramps, noise, chokePoints);

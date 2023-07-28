@@ -68,7 +68,7 @@ public class AnalyzedRegion : Region {
         }
     }
 
-    public void FinalizeCreation(int id, IEnumerable<AnalyzedRegion> allRegions, IEnumerable<ExpandLocation> allExpandLocations) {
+    public void FinalizeCreation(int id, IEnumerable<AnalyzedRegion> allRegions) {
         Id = id;
 
         ConcreteNeighbors = ComputeNeighboringRegions(Cells, allRegions.Where(region => region != this).ToHashSet())
