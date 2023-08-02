@@ -27,6 +27,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     private const int RegionMinPoints = 6;
     private const float RegionZMultiplier = 8;
     private readonly float _diagonalDistance = (float)Math.Sqrt(2);
+    private const int MinRegionSize = 16;
 
     private RegionsData _regionsData;
 
@@ -368,6 +369,11 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <param name="cutLength">The length of the cut used to create this region.</param>
     /// <returns>True if the split is valid, false otherwise.</returns>
     private bool IsValidSplit(IReadOnlyCollection<Vector2> subregion, float cutLength) {
+        // The smallest ramps are 16 cells and they're pretty small, let's not make regions smaller than that
+        if (subregion.Count < MinRegionSize) {
+            return false;
+        }
+
         // If the split region is too small compared to the cut, it might not be worth a cut
         if (subregion.Count <= Math.Max(10, cutLength * cutLength / 2)) {
             return false;
