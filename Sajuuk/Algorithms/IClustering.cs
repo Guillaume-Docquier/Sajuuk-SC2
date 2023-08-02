@@ -10,7 +10,7 @@ public interface IClustering {
     /// <param name="cells"></param>
     /// <param name="startingPoint"></param>
     /// <returns>The cells reached by the flood fill</returns>
-    IEnumerable<Vector2> FloodFill(IEnumerable<Vector2> cells, Vector2 startingPoint);
+    IEnumerable<Vector2> FloodFill(IReadOnlySet<Vector2> cells, Vector2 startingPoint);
 
     /// <summary>
     /// <para>A textbook implementation of the DBSCAN clustering algorithm.</para>

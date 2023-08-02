@@ -10,6 +10,7 @@ using Sajuuk.MapAnalysis.RegionAnalysis.ChokePoints;
 using Sajuuk.Persistence;
 using Sajuuk.Utils;
 using SC2APIProtocol;
+using Color = System.Drawing.Color;
 
 namespace Sajuuk.MapAnalysis.RegionAnalysis;
 
@@ -17,13 +18,16 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
     private readonly IClustering _clustering;
-    private readonly IPathfinder _pathfinder;
     private readonly IMapDataRepository<RegionsData> _regionsRepository;
     private readonly IChokeFinder _chokeFinder;
+    private readonly IRegionFactory _regionFactory;
+    private readonly IMapImageFactory _mapImageFactory;
+    private readonly string _mapFileName;
 
     private const int RegionMinPoints = 6;
     private const float RegionZMultiplier = 8;
     private readonly float _diagonalDistance = (float)Math.Sqrt(2);
+    private const int MinRegionSize = 16;
 
     private RegionsData _regionsData;
 
@@ -34,16 +38,20 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         ITerrainTracker terrainTracker,
         IExpandAnalyzer expandAnalyzer,
         IClustering clustering,
-        IPathfinder pathfinder,
         IMapDataRepository<RegionsData> regionsRepository,
-        IChokeFinder chokeFinder
+        IChokeFinder chokeFinder,
+        IRegionFactory regionFactory,
+        IMapImageFactory mapImageFactory,
+        string mapFileName
     ) {
         _terrainTracker = terrainTracker;
         _expandAnalyzer = expandAnalyzer;
         _clustering = clustering;
-        _pathfinder = pathfinder;
         _regionsRepository = regionsRepository;
         _chokeFinder = chokeFinder;
+        _regionFactory = regionFactory;
+        _mapImageFactory = mapImageFactory;
+        _mapFileName = mapFileName;
     }
 
     /// <summary>
@@ -62,16 +70,10 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var walkableMap = GenerateWalkableMap();
         Logger.Info($"Starting region analysis on {walkableMap.Count} cells ({_terrainTracker.MaxX}x{_terrainTracker.MaxY})");
 
-        var rampsPotentialCells = walkableMap.Where(cell => !_terrainTracker.IsBuildable(cell.Position, includeObstacles: false)).ToList();
-        var (ramps, rampsNoise) = ComputeRamps(rampsPotentialCells);
-
-        var regionsPotentialCells = walkableMap
-            .Where(cell => _terrainTracker.IsBuildable(cell.Position, includeObstacles: false))
-            .Concat(rampsNoise)
-            .ToList();
+        var (ramps, rampsNoise) = ComputeRamps(walkableMap);
+        var (regionsPotentialCells, potentialRegionCellsNoise) = ComputePotentialRegionCells(walkableMap, rampsNoise);
         var (potentialRegions, regionNoise) = ComputePotentialRegions(regionsPotentialCells);
 
-        var noise = regionNoise.Select(mapCell => mapCell.Position.ToVector2()).ToList();
         var chokePoints = ComputePotentialChokePoints();
 
         // We order the regions to have a deterministic regions order.
@@ -85,6 +87,11 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             regions[regionId].FinalizeCreation(regionId, regions);
         }
 
+        var noise = regionNoise
+            .Concat(potentialRegionCellsNoise)
+            .Select(mapCell => mapCell.Position.ToVector2())
+            .ToList();
+
         _regionsData = new RegionsData(regions.Select(region => region as Region).ToList(), ramps, noise, chokePoints);
         _regionsRepository.Save(_regionsData, gameInfo.MapName);
 
@@ -95,6 +102,28 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var nbChokePoints = _regionsData.ChokePoints.Count;
         Logger.Metric($"{nbRegions} regions ({nbObstructed} obstructed), {nbRamps} ramps, {nbNoise} unclassified cells and {nbChokePoints} choke points");
         Logger.Success("Region analysis done and saved");
+    }
+
+    /// <summary>
+    /// Computes the potential region cells.
+    /// This computation will consider cells that have no reachable neighbors (isolated cells) as noise.
+    /// </summary>
+    /// <param name="walkableMapCells">The map cells that can be walked on.</param>
+    /// <param name="rampsNoise">The noise from ramp detection.</param>
+    /// <returns></returns>
+    private (List<MapCell> potentialRegionCells, List<MapCell> potentialRegionCellsNoise) ComputePotentialRegionCells(IEnumerable<MapCell> walkableMapCells, IEnumerable<MapCell> rampsNoise) {
+        var potentialRegionCells = walkableMapCells
+            .Where(cell => _terrainTracker.IsBuildable(cell.Position, includeObstacles: false))
+            .Concat(rampsNoise)
+            .ToHashSet();
+
+        // Some cells have 0 reachable neighbors, which messes up the use of FloodFill.
+        // DragonScalesAIE has 2 cells like that.
+        var isolatedCells = potentialRegionCells
+            .Where(mapCell => !_terrainTracker.GetReachableNeighbors(mapCell.Position.ToVector2(), includeObstacles: false).Any())
+            .ToList();
+
+        return (potentialRegionCells.Except(isolatedCells).ToList(), isolatedCells);
     }
 
     /// <summary>
@@ -153,20 +182,24 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     }
 
     /// <summary>
-    /// Identify ramps given cells that should be walkable but not buildable.
+    /// Identify ramps given cells that are walkable but not buildable.
     /// Some noise will be produced because some unbuildable cells are vision blockers and they should be used to find regions.
     /// </summary>
     /// <returns>
     /// The ramps and the cells that are not part of any ramp.
     /// </returns>
-    private (List<HashSet<Vector2>> ramps, IEnumerable<MapCell> rampsNoise) ComputeRamps(List<MapCell> cells) {
-        cells.ForEach(mapCell => mapCell.Position = mapCell.Position with { Z = 0 }); // Ignore Z
+    private (List<HashSet<Vector2>> ramps, IEnumerable<MapCell> rampsNoise) ComputeRamps(IEnumerable<MapCell> walkableCells) {
+        var potentialRampCells = walkableCells.Where(cell => !_terrainTracker.IsBuildable(cell.Position, includeObstacles: false)).ToList();
+        foreach (var potentialRampCell in potentialRampCells) {
+            // We ignore the Z component to simplify clustering
+            potentialRampCell.Position = potentialRampCell.Position with { Z = 0 };
+        }
 
         var ramps = new List<HashSet<Vector2>>();
         var noise = new HashSet<MapCell>();
 
         // We cluster once for an initial split
-        var weakClusteringResult = _clustering.DBSCAN(cells, epsilon: 1, minPoints: 1);
+        var weakClusteringResult = _clustering.DBSCAN(potentialRampCells, epsilon: 1, minPoints: 1);
         foreach (var mapCell in weakClusteringResult.noise) {
             noise.Add(mapCell);
         }
@@ -210,18 +243,28 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             }
         }
 
+        foreach (var potentialRampCell in potentialRampCells) {
+            potentialRampCell.Position = _terrainTracker.WithWorldHeight(potentialRampCell.Position); // Restore Z
+        }
+
         return (ramps, noise);
     }
 
     /// <summary>
-    /// A real ramp connects two different height layers
-    /// If all the tiles in the given ramp are roughly on the same height, this is not a ramp
+    /// A real ramp connects two different height layers with a progressive slope.
+    /// If all the tiles in the given ramp are roughly on the same height, this is not a ramp.
+    /// - It is probably a group of vision blockers, with are also walkable and unbuildable.
     /// </summary>
-    /// <param name="rampCluster"></param>
+    /// <param name="rampCluster">The cells in a ramp</param>
     /// <returns>True if the tiles have varied heights, false otherwise</returns>
     private bool IsReallyARamp(IReadOnlyCollection<MapCell> rampCluster) {
-        // This fixes some glitches
-        if (rampCluster.Count < 7) {
+        var nbDifferentHeights = rampCluster
+            .Select(cell => _terrainTracker.WithWorldHeight(cell.Position).Z)
+            .ToHashSet()
+            .Count;
+
+        // Ramps typically have nbDifferentHeights = [5, 9]
+        if (nbDifferentHeights < 4) {
             return false;
         }
 
@@ -229,7 +272,8 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var maxHeight = rampCluster.Max(cell => _terrainTracker.WithWorldHeight(cell.Position).Z);
         var heightDifference = Math.Abs(minHeight - maxHeight);
 
-        return 0.05 < heightDifference && heightDifference < 10;
+        // Ramps typically have heightDifference = [1.75, 2]
+        return heightDifference > 1f;
     }
 
     private List<ChokePoint> ComputePotentialChokePoints() {
@@ -239,11 +283,11 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     private List<AnalyzedRegion> BuildRegions(List<HashSet<Vector2>> potentialRegions, List<HashSet<Vector2>> ramps, List<ChokePoint> potentialChokePoints) {
         var regions = new List<AnalyzedRegion>();
         foreach (var region in potentialRegions) {
-            var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints);
-            regions.AddRange(subregions.Select(subregion => new AnalyzedRegion(_terrainTracker, _clustering, _pathfinder, subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
+            var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints, saveSplitsAsImage: false);
+            regions.AddRange(subregions.Select(subregion => _regionFactory.CreateAnalyzedRegion(subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
         }
 
-        regions.AddRange(ramps.Select(ramp => new AnalyzedRegion(_terrainTracker, _clustering, _pathfinder, ramp, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
+        regions.AddRange(ramps.Select(ramp => _regionFactory.CreateAnalyzedRegion(ramp, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
 
         return regions;
     }
@@ -253,10 +297,11 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <para>We might use more than one choke point to break down a single region</para>
     /// <para>Regions that are broken down must be big enough to be considered a valid split</para>
     /// </summary>
-    /// <returns>
-    /// A list of subregions.
-    /// </returns>
-    private List<List<Vector2>> BreakDownIntoSubregions(IReadOnlySet<Vector2> region, List<ChokePoint> potentialChokePoints) {
+    /// <param name="region">The region to break down into 2 sub regions.</param>
+    /// <param name="potentialChokePoints">The choke points to use for the split.</param>
+    /// <param name="saveSplitsAsImage">Whether to save the splits as images for debugging.</param>
+    /// <returns>A list of subregions created by splitting the region with the choke points.</returns>
+    private List<List<Vector2>> BreakDownIntoSubregions(IReadOnlySet<Vector2> region, IReadOnlyCollection<ChokePoint> potentialChokePoints, bool saveSplitsAsImage) {
         // Get chokes in region
         // Consider shortest chokes first
         var chokesInRegion = potentialChokePoints
@@ -268,13 +313,30 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         // Sometimes we will need more than 1 choke to split a region into two
         var nbChokesToConsider = 1;
         while (nbChokesToConsider <= chokesInRegion.Count) {
-            var chokePointCombinations = MathUtils.Combinations(chokesInRegion, nbChokesToConsider).Select(setOfChokes => setOfChokes.ToList());
+            var chokePointCombinations = MathUtils.Combinations(chokesInRegion, nbChokesToConsider)
+                .Select(setOfChokes => setOfChokes.ToList())
+                .ToList();
+
+            if (chokePointCombinations.Count > 20_000) {
+                Logger.Warning($"We are about to try {chokePointCombinations.Count} choke point combinations ({nbChokesToConsider} from {chokesInRegion.Count}). There is most likely an issue.");
+            }
+
             foreach (var chokePointCombination in chokePointCombinations) {
                 var (subregion1, subregion2) = SplitRegion(region, chokePointCombination.SelectMany(choke => choke.Edge).ToList());
-
                 var maxChokeLength = chokePointCombination.Max(choke => choke.Edge.Count);
+
+                if (saveSplitsAsImage) {
+                    SaveSplitAsImage(region, chokePointCombination, subregion1, subregion2, maxChokeLength);
+                }
+
                 if (IsValidSplit(subregion1, maxChokeLength) && IsValidSplit(subregion2, maxChokeLength)) {
-                    return BreakDownIntoSubregions(subregion1, potentialChokePoints).Concat(BreakDownIntoSubregions(subregion2, potentialChokePoints)).ToList();
+                    var unusedChokePoints = potentialChokePoints
+                        .Except(chokePointCombination)
+                        .ToList();
+
+                    return BreakDownIntoSubregions(subregion1, unusedChokePoints, saveSplitsAsImage)
+                        .Concat(BreakDownIntoSubregions(subregion2, unusedChokePoints, saveSplitsAsImage))
+                        .ToList();
                 }
             }
 
@@ -284,49 +346,77 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         return new List<List<Vector2>> { region.ToList() };
     }
 
-    private static (HashSet<Vector2> subregion1, HashSet<Vector2> subregion2) SplitRegion(IReadOnlySet<Vector2> region, IReadOnlyCollection<Vector2> separations) {
-        var startingPoint = region.First(point => !separations.Contains(point));
-
-        var subregion1 = new HashSet<Vector2>();
-
-        var pointsToExplore = new Queue<Vector2>();
-        pointsToExplore.Enqueue(startingPoint);
-
-        while (pointsToExplore.Any()) {
-            var point = pointsToExplore.Dequeue();
-            if (subregion1.Add(point)) {
-                var nextNeighbors = point.GetNeighbors()
-                    .Where(neighbor => neighbor.DistanceTo(point) <= 1) // Disallow diagonals
-                    .Where(region.Contains)
-                    .Where(neighbor => !separations.Contains(neighbor))
-                    .Where(neighbor => !subregion1.Contains(neighbor));
-
-                foreach (var neighbor in nextNeighbors) {
-                    pointsToExplore.Enqueue(neighbor);
-                }
-            }
-        }
-
-        var subregion2 = region.Except(subregion1).ToHashSet();
+    /// <summary>
+    /// Splits a region into 2 subregions using the given set of separation cells.
+    /// This can produce an empty subregion if the separation cells do not cut the region into two parts.
+    /// </summary>
+    /// <param name="regionToSplit">The region to split.</param>
+    /// <param name="separations">The cells to use to split the region.</param>
+    /// <returns>The two subregions.</returns>
+    private (HashSet<Vector2> subregion1, HashSet<Vector2> subregion2) SplitRegion(IReadOnlySet<Vector2> regionToSplit, IReadOnlyCollection<Vector2> separations) {
+        var startingPoint = regionToSplit.First(point => !separations.Contains(point));
+        var subregion1 = _clustering.FloodFill(regionToSplit.Except(separations).ToHashSet(), startingPoint).ToHashSet();
+        var subregion2 = regionToSplit.Except(subregion1).ToHashSet();
 
         return (subregion1, subregion2);
     }
 
     /// <summary>
-    /// Determines if a subregion is the result of a valid split given the cut length
-    /// A subregion should be a single cluster of cells that's big enough compared to the cut
+    /// Determines if a subregion is the result of a valid split given the cut length.
+    /// A subregion should be a single cluster of cells that's big enough compared to the cut.
     /// </summary>
-    /// <param name="subregion"></param>
-    /// <param name="cutLength"></param>
-    /// <returns>True if the split is valid, false otherwise</returns>
+    /// <param name="subregion">The subregion to validate.</param>
+    /// <param name="cutLength">The length of the cut used to create this region.</param>
+    /// <returns>True if the split is valid, false otherwise.</returns>
     private bool IsValidSplit(IReadOnlyCollection<Vector2> subregion, float cutLength) {
+        // The smallest ramps are 16 cells and they're pretty small, let's not make regions smaller than that
+        if (subregion.Count < MinRegionSize) {
+            return false;
+        }
+
         // If the split region is too small compared to the cut, it might not be worth a cut
         if (subregion.Count <= Math.Max(10, cutLength * cutLength / 2)) {
             return false;
         }
 
         // A region should form a single cluster of cells
-        var floodFill = _clustering.FloodFill(subregion, subregion.First());
+        var floodFill = _clustering.FloodFill(subregion.ToHashSet(), subregion.First());
         return floodFill.Count() == subregion.Count;
+    }
+
+    /// <summary>
+    /// A debugging function that will produce a png image of a region split.
+    /// </summary>
+    /// <param name="region">The region that was split.</param>
+    /// <param name="chokePointCombination">The choke points used to split the region.</param>
+    /// <param name="subregion1">The first subregion.</param>
+    /// <param name="subregion2">The second subregion.</param>
+    /// <param name="cutLength">The cut length, for split validation.</param>
+    private void SaveSplitAsImage(IEnumerable<Vector2> region, IEnumerable<ChokePoint> chokePointCombination, HashSet<Vector2> subregion1, HashSet<Vector2> subregion2, int cutLength) {
+        var mapImage = _mapImageFactory.CreateMapImage();
+        foreach (var cell in region) {
+            mapImage.SetCellColor(cell, Color.Cyan);
+        }
+
+        var isSubRegion1Valid = IsValidSplit(subregion1, cutLength);
+        var subregion1Color = isSubRegion1Valid ? Color.Plum : Color.Purple;
+        foreach (var cell in subregion1) {
+            mapImage.SetCellColor(cell, subregion1Color);
+        }
+
+        var isSubRegion2Valid = IsValidSplit(subregion2, cutLength);
+        var subregion2Color = isSubRegion2Valid ? Color.RoyalBlue : Color.MediumBlue;
+        foreach (var cell in subregion2) {
+            mapImage.SetCellColor(cell, subregion2Color);
+        }
+
+        // We paint the choke point last otherwise we wouldn't see it because it is included in the subregions.
+        var isValidSplit = isSubRegion1Valid && isSubRegion2Valid;
+        var splitColor = isValidSplit ? Color.Lime : Color.Red;
+        foreach (var cell in chokePointCombination.SelectMany(chokePoint => chokePoint.Edge)) {
+            mapImage.SetCellColor(cell, splitColor);
+        }
+
+        mapImage.Save(FileNameFormatter.FormatDataFileName($"RegionSplit_{DateTime.UtcNow.Ticks}", _mapFileName, "png"));
     }
 }

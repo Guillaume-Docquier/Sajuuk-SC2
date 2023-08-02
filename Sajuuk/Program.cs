@@ -111,7 +111,12 @@ public class Program {
 
             Logger.Important($"Analyzing map: {mapFileName}");
             botRunner.RunLocal(
-                new MapAnalysisBot(services.FrameClock),
+                new MapAnalysisBot(
+                    services.FrameClock,
+                    services.TerrainTracker,
+                    services.GraphicalDebugger,
+                    services.RegionAnalyzer
+                ),
                 mapFileName,
                 Race.Zerg,
                 Difficulty.VeryEasy,
@@ -456,7 +461,8 @@ public class Program {
         var expandAnalyzer = new ExpandAnalyzer(terrainTracker, buildingTracker, expandUnitsAnalyzer, frameClock, graphicalDebugger, clustering, pathfinder);
 
         var chokeFinder = new RayCastingChokeFinder(terrainTracker, graphicalDebugger, clustering, mapImageFactory, mapFileName);
-        var regionAnalyzer = new RegionAnalyzer(terrainTracker, expandAnalyzer, clustering, pathfinder, regionsDataRepository, chokeFinder);
+        var regionFactory = new RegionFactory(terrainTracker, clustering, pathfinder);
+        var regionAnalyzer = new RegionAnalyzer(terrainTracker, expandAnalyzer, clustering, regionsDataRepository, chokeFinder, regionFactory, mapImageFactory, mapFileName);
 
         var spendingTracker = new SpendingTracker(incomeTracker, knowledgeBase);
 
