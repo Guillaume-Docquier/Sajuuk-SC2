@@ -170,9 +170,6 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
 
         var regionIndex = 0;
         foreach (var region in _regionsTracker.Regions) {
-            // TODO GD Set colors on each region directly, with a color different from its neighbors
-            var regionColor = RegionColors[regionIndex % RegionColors.Count];
-
             var regionTypeText = region.Type.ToString();
             if (region.Type == RegionType.Expand) {
                 regionTypeText += $" - {region.ExpandLocation.ExpandType}";
@@ -180,7 +177,7 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
 
             var obstructedText = region.IsObstructed ? "OBSTRUCTED" : "";
 
-            DrawRegionMarker(region, regionColor, new[]
+            DrawRegionMarker(region, region.Color, new[]
             {
                 $"R{regionIndex} ({regionTypeText}) {obstructedText}",
                 $"Self:  {GetForceLabel(region, Alliance.Self),-7} ({GetForce(region, Alliance.Self),5:F2}) | {GetValueLabel(region, Alliance.Self),-10} ({GetValue(region, Alliance.Self),5:F2})",
