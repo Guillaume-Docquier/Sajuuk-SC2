@@ -87,6 +87,10 @@ public class Program {
         Logger.Info("Terminated.");
     }
 
+    private static void PlayMapAnalysis(string mapFileName) {
+        PlayMapAnalysis(new [] { mapFileName });
+    }
+
     private static void PlayMapAnalysis(IEnumerable<string> mapFileNames) {
         Logger.Info("Game launched in map analysis mode");
         DebugEnabled = true;
