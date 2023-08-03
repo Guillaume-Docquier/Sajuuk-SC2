@@ -26,18 +26,6 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
     private readonly Dictionary<Alliance, RegionsValueEvaluator> _regionValueEvaluators = new Dictionary<Alliance, RegionsValueEvaluator>();
     private readonly Dictionary<Alliance, RegionsThreatEvaluator> _regionThreatEvaluators = new Dictionary<Alliance, RegionsThreatEvaluator>();
 
-    private static readonly List<Color> RegionColors = new List<Color>
-    {
-        Colors.MulberryRed,
-        Colors.MediumTurquoise,
-        Colors.SunbrightOrange,
-        Colors.PeachPink,
-        Colors.Purple,
-        Colors.LimeGreen,
-        Colors.BurlywoodBeige,
-        Colors.LightRed,
-    };
-
     public RegionsEvaluationsTracker(
         IDebuggingFlagsTracker debuggingFlagsTracker,
         ITerrainTracker terrainTracker,
