@@ -198,7 +198,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var noise = new HashSet<MapCell>();
 
         // We cluster once for an initial split
-        var weakClusteringResult = _clustering.DBSCAN(potentialRampCells, epsilon: 1, minPoints: 2);
+        var weakClusteringResult = _clustering.DBSCAN(potentialRampCells, epsilon: 1, minPoints: 1);
         foreach (var mapCell in weakClusteringResult.noise) {
             noise.Add(mapCell);
         }
