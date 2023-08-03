@@ -24,10 +24,9 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     private readonly IMapImageFactory _mapImageFactory;
     private readonly string _mapFileName;
 
-    private const int RegionMinPoints = 6;
     private const float RegionZMultiplier = 8;
     private readonly float _diagonalDistance = (float)Math.Sqrt(2);
-    private const int MinRegionSize = 16;
+    private const int MinRampSize = 14; // Empirical
 
     private RegionsData _regionsData;
 
@@ -161,7 +160,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         });
 
         var noise = new HashSet<MapCell>();
-        var clusteringResult = _clustering.DBSCAN(cells, epsilon: _diagonalDistance + 0.04f, minPoints: RegionMinPoints);
+        var clusteringResult = _clustering.DBSCAN(cells, epsilon: _diagonalDistance + 0.04f, minPoints: 6);
         foreach (var mapCell in clusteringResult.noise) {
             noise.Add(mapCell);
         }
@@ -369,8 +368,8 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <param name="cutLength">The length of the cut used to create this region.</param>
     /// <returns>True if the split is valid, false otherwise.</returns>
     private bool IsValidSplit(IReadOnlyCollection<Vector2> subregion, float cutLength) {
-        // The smallest ramps are 16 cells and they're pretty small, let's not make regions smaller than that
-        if (subregion.Count < MinRegionSize) {
+        // The smallest ramps are pretty small, let's not make regions smaller than that
+        if (subregion.Count < MinRampSize) {
             return false;
         }
 
