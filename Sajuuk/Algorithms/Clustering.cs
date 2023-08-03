@@ -46,7 +46,8 @@ public class Clustering : IClustering {
             var cellToExplore = explorationQueue.Dequeue();
             explored.Add(cellToExplore);
 
-            foreach (var neighbor in _terrainTracker.GetReachableNeighbors(cellToExplore, cells, includeObstacles: false).Where(toExplore.Contains)) {
+            var neighbors = _terrainTracker.GetReachableNeighbors(cellToExplore, toExplore, considerObstaclesObstructions: false).ToList();
+            foreach (var neighbor in neighbors) {
                 explorationQueue.Enqueue(neighbor);
                 toExplore.Remove(neighbor);
             }

@@ -66,7 +66,7 @@ public class RayCastingChokeFinder : IChokeFinder {
         for (var x = 0; x < _terrainTracker.MaxX; x++) {
             for (var y = 0; y < _terrainTracker.MaxY; y++) {
                 var position = new Vector2(x, y).AsWorldGridCenter();
-                if (_terrainTracker.IsWalkable(position, includeObstacles: false)) {
+                if (_terrainTracker.IsWalkable(position, considerObstaclesObstructions: false)) {
                     chokePointCells[position] = new ChokePointCell(position);
                 }
             }
@@ -152,7 +152,7 @@ public class RayCastingChokeFinder : IChokeFinder {
     private int GoToStartOfNextLine(VisionLine visionLine, int startCellIndex) {
         var currentCellIndex = startCellIndex;
         while (currentCellIndex < visionLine.OrderedTraversedCells.Count) {
-            if (_terrainTracker.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], includeObstacles: false)) {
+            if (_terrainTracker.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], considerObstaclesObstructions: false)) {
                 return currentCellIndex;
             }
 
@@ -177,7 +177,7 @@ public class RayCastingChokeFinder : IChokeFinder {
         var currentCellIndex = startCellIndex;
 
         while (currentCellIndex < visionLine.OrderedTraversedCells.Count) {
-            if (!_terrainTracker.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], includeObstacles: false)) {
+            if (!_terrainTracker.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], considerObstaclesObstructions: false)) {
                 return currentCellIndex - 1;
             }
 

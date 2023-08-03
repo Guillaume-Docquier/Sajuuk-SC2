@@ -277,32 +277,32 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         return x >= 0 && x < MaxX && y >= 0 && y < MaxY;
     }
 
-    public bool IsWalkable(Vector3 position, bool includeObstacles = true) {
-        return IsWalkable(position.ToVector2(), includeObstacles);
+    public bool IsWalkable(Vector3 position, bool considerObstaclesObstructions = true) {
+        return IsWalkable(position.ToVector2(), considerObstaclesObstructions);
     }
 
-    public bool IsWalkable(Vector2 position, bool includeObstacles = true) {
+    public bool IsWalkable(Vector2 position, bool considerObstaclesObstructions = true) {
         if (!IsInBounds(position)) {
             return false;
         }
 
         var isWalkable = _terrainWalkMap[(int)position.X][(int)position.Y];
-        var isObstructed = includeObstacles && _obstructionMap.Contains(position.AsWorldGridCenter());
+        var isObstructed = considerObstaclesObstructions && _obstructionMap.Contains(position.AsWorldGridCenter());
 
         return isWalkable && !isObstructed;
     }
 
-    public bool IsBuildable(Vector3 position, bool includeObstacles = true) {
-        return IsBuildable(position.ToVector2(), includeObstacles);
+    public bool IsBuildable(Vector3 position, bool considerObstaclesObstructions = true) {
+        return IsBuildable(position.ToVector2(), considerObstaclesObstructions);
     }
 
-    public bool IsBuildable(Vector2 position, bool includeObstacles = true) {
+    public bool IsBuildable(Vector2 position, bool considerObstaclesObstructions = true) {
         if (!IsInBounds(position)) {
             return false;
         }
 
         var isBuildable = _buildMap[(int)position.X][(int)position.Y];
-        var isObstructed = includeObstacles && _obstructionMap.Contains(position.AsWorldGridCenter());
+        var isObstructed = considerObstaclesObstructions && _obstructionMap.Contains(position.AsWorldGridCenter());
 
         return isBuildable && !isObstructed;
     }
@@ -318,15 +318,15 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     /// </summary>
     /// <param name="position">The position to get the neighbors of.</param>
     /// <param name="potentialNeighbors">The cells that are allowed to be neighbors. Defaults to all cells in the map.</param>
-    /// <param name="includeObstacles">If you're wondering if you should be using this, you shouldn't.</param>
+    /// <param name="considerObstaclesObstructions">If you're wondering if you should be using this, you shouldn't.</param>
     /// <returns>Up to 8 neighbors</returns>
-    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 position, IReadOnlySet<Vector2> potentialNeighbors = null, bool includeObstacles = true) {
+    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 position, IReadOnlySet<Vector2> potentialNeighbors = null, bool considerObstaclesObstructions = true) {
         bool IsReachable(Vector2 pos) {
             if (potentialNeighbors != null && !potentialNeighbors.Contains(pos)) {
                 return false;
             }
 
-            return IsInBounds(pos) && IsWalkable(pos, includeObstacles);
+            return IsInBounds(pos) && IsWalkable(pos, considerObstaclesObstructions);
         }
 
         var leftPos = position.Translate(xTranslation: -1);

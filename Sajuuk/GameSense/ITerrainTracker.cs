@@ -30,13 +30,13 @@ public interface ITerrainTracker {
     public bool IsInBounds(Vector3 position);
     public bool IsInBounds(float x, float y);
 
-    public bool IsWalkable(Vector3 position, bool includeObstacles = true);
-    public bool IsWalkable(Vector2 position, bool includeObstacles = true);
+    public bool IsWalkable(Vector3 position, bool considerObstaclesObstructions = true);
+    public bool IsWalkable(Vector2 position, bool considerObstaclesObstructions = true);
 
-    public bool IsBuildable(Vector3 position, bool includeObstacles = true);
-    public bool IsBuildable(Vector2 position, bool includeObstacles = true);
+    public bool IsBuildable(Vector3 position, bool considerObstaclesObstructions = true);
+    public bool IsBuildable(Vector2 position, bool considerObstaclesObstructions = true);
 
-    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 position, IReadOnlySet<Vector2> potentialNeighbors = null, bool includeObstacles = true);
+    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 position, IReadOnlySet<Vector2> potentialNeighbors = null, bool considerObstaclesObstructions = true);
 
     public Vector2 GetClosestWalkable(Vector2 position, int searchRadius = 8, HashSet<Vector2> allowedCells = null);
     public Vector3 GetClosestWalkable(Vector3 position);

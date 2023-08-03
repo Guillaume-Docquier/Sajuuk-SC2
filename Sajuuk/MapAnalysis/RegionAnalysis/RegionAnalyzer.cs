@@ -113,14 +113,14 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <returns></returns>
     private (List<MapCell> potentialRegionCells, List<MapCell> potentialRegionCellsNoise) ComputePotentialRegionCells(IEnumerable<MapCell> walkableMapCells, IEnumerable<MapCell> rampsNoise) {
         var potentialRegionCells = walkableMapCells
-            .Where(cell => _terrainTracker.IsBuildable(cell.Position, includeObstacles: false))
+            .Where(cell => _terrainTracker.IsBuildable(cell.Position, considerObstaclesObstructions: false))
             .Concat(rampsNoise)
             .ToHashSet();
 
         // Some cells have 0 reachable neighbors, which messes up the use of FloodFill.
         // DragonScalesAIE has 2 cells like that.
         var isolatedCells = potentialRegionCells
-            .Where(mapCell => !_terrainTracker.GetReachableNeighbors(mapCell.Position.ToVector2(), includeObstacles: false).Any())
+            .Where(mapCell => !_terrainTracker.GetReachableNeighbors(mapCell.Position.ToVector2(), considerObstaclesObstructions: false).Any())
             .ToList();
 
         return (potentialRegionCells.Except(isolatedCells).ToList(), isolatedCells);
@@ -134,7 +134,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         for (var x = 0; x < _terrainTracker.MaxX; x++) {
             for (var y = 0; y < _terrainTracker.MaxY; y++) {
                 var mapCell = new MapCell(_terrainTracker.WithWorldHeight(new Vector2(x, y)).AsWorldGridCenter());
-                if (_terrainTracker.IsWalkable(mapCell.Position, includeObstacles: false)) {
+                if (_terrainTracker.IsWalkable(mapCell.Position, considerObstaclesObstructions: false)) {
                     map.Add(mapCell);
                 }
             }
@@ -189,7 +189,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// The ramps and the cells that are not part of any ramp.
     /// </returns>
     private (List<HashSet<Vector2>> ramps, IEnumerable<MapCell> rampsNoise) ComputeRamps(IEnumerable<MapCell> walkableCells) {
-        var potentialRampCells = walkableCells.Where(cell => !_terrainTracker.IsBuildable(cell.Position, includeObstacles: false)).ToList();
+        var potentialRampCells = walkableCells.Where(cell => !_terrainTracker.IsBuildable(cell.Position, considerObstaclesObstructions: false)).ToList();
         foreach (var potentialRampCell in potentialRampCells) {
             // We ignore the Z component to simplify clustering
             potentialRampCell.Position = potentialRampCell.Position with { Z = 0 };
