@@ -233,8 +233,9 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         }
 
         // Add noise to a neighboring ramp, if any
+        // This is because some cells have wrong heights and are considered noise (I think)
         foreach (var mapCell in noise.ToList()) {
-            var mapCellNeighbors = mapCell.Position.ToVector2().GetNeighbors();
+            var mapCellNeighbors = _terrainTracker.GetReachableNeighbors(mapCell.Position.ToVector2());
             var rampToAddTo = ramps.FirstOrDefault(ramp => mapCellNeighbors.Any(ramp.Contains));
             if (rampToAddTo != default) {
                 rampToAddTo.Add(mapCell.Position.ToVector2());
