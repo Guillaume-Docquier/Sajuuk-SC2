@@ -24,9 +24,13 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     private readonly IMapImageFactory _mapImageFactory;
     private readonly string _mapFileName;
 
-    private const int RegionMinPoints = 6;
     private const float RegionZMultiplier = 8;
     private readonly float _diagonalDistance = (float)Math.Sqrt(2);
+
+    /// <summary>
+    /// The smallest ramps are pretty small (14 cells), let's not make regions smaller than that.
+    /// Increased for better results.
+    /// </summary>
     private const int MinRegionSize = 16;
 
     private RegionsData _regionsData;
@@ -113,14 +117,14 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <returns></returns>
     private (List<MapCell> potentialRegionCells, List<MapCell> potentialRegionCellsNoise) ComputePotentialRegionCells(IEnumerable<MapCell> walkableMapCells, IEnumerable<MapCell> rampsNoise) {
         var potentialRegionCells = walkableMapCells
-            .Where(cell => _terrainTracker.IsBuildable(cell.Position, includeObstacles: false))
+            .Where(cell => _terrainTracker.IsBuildable(cell.Position, considerObstaclesObstructions: false))
             .Concat(rampsNoise)
             .ToHashSet();
 
         // Some cells have 0 reachable neighbors, which messes up the use of FloodFill.
         // DragonScalesAIE has 2 cells like that.
         var isolatedCells = potentialRegionCells
-            .Where(mapCell => !_terrainTracker.GetReachableNeighbors(mapCell.Position.ToVector2(), includeObstacles: false).Any())
+            .Where(mapCell => !_terrainTracker.GetReachableNeighbors(mapCell.Position.ToVector2(), considerObstaclesObstructions: false).Any())
             .ToList();
 
         return (potentialRegionCells.Except(isolatedCells).ToList(), isolatedCells);
@@ -134,7 +138,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         for (var x = 0; x < _terrainTracker.MaxX; x++) {
             for (var y = 0; y < _terrainTracker.MaxY; y++) {
                 var mapCell = new MapCell(_terrainTracker.WithWorldHeight(new Vector2(x, y)).AsWorldGridCenter());
-                if (_terrainTracker.IsWalkable(mapCell.Position, includeObstacles: false)) {
+                if (_terrainTracker.IsWalkable(mapCell.Position, considerObstaclesObstructions: false)) {
                     map.Add(mapCell);
                 }
             }
@@ -161,7 +165,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         });
 
         var noise = new HashSet<MapCell>();
-        var clusteringResult = _clustering.DBSCAN(cells, epsilon: _diagonalDistance + 0.04f, minPoints: RegionMinPoints);
+        var clusteringResult = _clustering.DBSCAN(cells, epsilon: _diagonalDistance + 0.04f, minPoints: 6);
         foreach (var mapCell in clusteringResult.noise) {
             noise.Add(mapCell);
         }
@@ -189,7 +193,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// The ramps and the cells that are not part of any ramp.
     /// </returns>
     private (List<HashSet<Vector2>> ramps, IEnumerable<MapCell> rampsNoise) ComputeRamps(IEnumerable<MapCell> walkableCells) {
-        var potentialRampCells = walkableCells.Where(cell => !_terrainTracker.IsBuildable(cell.Position, includeObstacles: false)).ToList();
+        var potentialRampCells = walkableCells.Where(cell => !_terrainTracker.IsBuildable(cell.Position, considerObstaclesObstructions: false)).ToList();
         foreach (var potentialRampCell in potentialRampCells) {
             // We ignore the Z component to simplify clustering
             potentialRampCell.Position = potentialRampCell.Position with { Z = 0 };
@@ -234,12 +238,18 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         }
 
         // Add noise to a neighboring ramp, if any
-        foreach (var mapCell in noise.ToList()) {
-            var mapCellNeighbors = mapCell.Position.ToVector2().GetNeighbors();
-            var rampToAddTo = ramps.FirstOrDefault(ramp => mapCellNeighbors.Any(ramp.Contains));
+        // This is because some cells have wrong heights and are considered noise (I think)
+        var allRampCells = ramps.SelectMany(cells => cells).ToHashSet();
+        var orderedNoise = noise.OrderBy(noisyCell => allRampCells.Min(rampCell => rampCell.DistanceTo(noisyCell.Position.ToVector2())));
+        foreach (var noisyCell in orderedNoise) {
+            var noisyCellAsVector2 = noisyCell.Position.ToVector2();
+            var noisyCellRampNeighbors = _terrainTracker.GetReachableNeighbors(noisyCellAsVector2, allRampCells, considerObstaclesObstructions: false);
+
+            var rampToAddTo = ramps.FirstOrDefault(ramp => noisyCellRampNeighbors.Any(ramp.Contains));
             if (rampToAddTo != default) {
-                rampToAddTo.Add(mapCell.Position.ToVector2());
-                noise.Remove(mapCell);
+                rampToAddTo.Add(noisyCellAsVector2);
+                allRampCells.Add(noisyCellAsVector2);
+                noise.Remove(noisyCell);
             }
         }
 
@@ -256,14 +266,14 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// - It is probably a group of vision blockers, with are also walkable and unbuildable.
     /// </summary>
     /// <param name="rampCluster">The cells in a ramp</param>
-    /// <returns>True if the tiles have varied heights, false otherwise</returns>
+    /// <returns>True if the tiles have varied heights that correspond to typical ramp characteristics, false otherwise</returns>
     private bool IsReallyARamp(IReadOnlyCollection<MapCell> rampCluster) {
         var nbDifferentHeights = rampCluster
             .Select(cell => _terrainTracker.WithWorldHeight(cell.Position).Z)
             .ToHashSet()
             .Count;
 
-        // Ramps typically have nbDifferentHeights = [5, 9]
+        // Ramps typically have nbDifferentHeights = [4, 9]
         if (nbDifferentHeights < 4) {
             return false;
         }
@@ -272,7 +282,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var maxHeight = rampCluster.Max(cell => _terrainTracker.WithWorldHeight(cell.Position).Z);
         var heightDifference = Math.Abs(minHeight - maxHeight);
 
-        // Ramps typically have heightDifference = [1.75, 2]
+        // Ramps typically have heightDifference = [1.5, 2]
         return heightDifference > 1f;
     }
 
@@ -369,7 +379,6 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <param name="cutLength">The length of the cut used to create this region.</param>
     /// <returns>True if the split is valid, false otherwise.</returns>
     private bool IsValidSplit(IReadOnlyCollection<Vector2> subregion, float cutLength) {
-        // The smallest ramps are 16 cells and they're pretty small, let's not make regions smaller than that
         if (subregion.Count < MinRegionSize) {
             return false;
         }

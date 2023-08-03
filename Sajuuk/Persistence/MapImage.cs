@@ -20,7 +20,7 @@ public class MapImage : IMapImage {
         _image = new Bitmap(terrainTracker.MaxX, terrainTracker.MaxY);
         for (var x = 0; x < _image.Width; x++) {
             for (var y = 0; y < _image.Height; y++) {
-                var color = terrainTracker.IsWalkable(new Vector2(x, y), includeObstacles: false)
+                var color = terrainTracker.IsWalkable(new Vector2(x, y), considerObstaclesObstructions: false)
                     ? Color.White
                     : Color.Black;
 

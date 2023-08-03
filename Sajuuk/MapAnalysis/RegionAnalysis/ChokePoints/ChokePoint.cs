@@ -20,7 +20,7 @@ public class ChokePoint {
 
     public ChokePoint(Vector2 start, Vector2 end, ITerrainTracker terrainTracker) {
         Edge = start.GetPointsInBetween(end)
-            .Where(cell => terrainTracker.IsWalkable(cell, includeObstacles: false))
+            .Where(cell => terrainTracker.IsWalkable(cell, considerObstaclesObstructions: false))
             .ToHashSet();
 
         Start = Edge.MinBy(edgePoint => edgePoint.DistanceTo(start));
