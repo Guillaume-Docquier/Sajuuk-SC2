@@ -26,7 +26,12 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
 
     private const float RegionZMultiplier = 8;
     private readonly float _diagonalDistance = (float)Math.Sqrt(2);
-    private const int MinRampSize = 14; // Empirical
+
+    /// <summary>
+    /// The smallest ramps are pretty small (14 cells), let's not make regions smaller than that.
+    /// Increased for better results.
+    /// </summary>
+    private const int MinRegionSize = 16;
 
     private RegionsData _regionsData;
 
@@ -259,10 +264,6 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <param name="rampCluster">The cells in a ramp</param>
     /// <returns>True if the tiles have varied heights that correspond to typical ramp characteristics, false otherwise</returns>
     private bool IsReallyARamp(IReadOnlyCollection<MapCell> rampCluster) {
-        if (rampCluster.Count < MinRampSize) {
-            return false;
-        }
-
         var nbDifferentHeights = rampCluster
             .Select(cell => _terrainTracker.WithWorldHeight(cell.Position).Z)
             .ToHashSet()
@@ -374,8 +375,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <param name="cutLength">The length of the cut used to create this region.</param>
     /// <returns>True if the split is valid, false otherwise.</returns>
     private bool IsValidSplit(IReadOnlyCollection<Vector2> subregion, float cutLength) {
-        // The smallest ramps are pretty small, let's not make regions smaller than that
-        if (subregion.Count < MinRampSize) {
+        if (subregion.Count < MinRegionSize) {
             return false;
         }
 
