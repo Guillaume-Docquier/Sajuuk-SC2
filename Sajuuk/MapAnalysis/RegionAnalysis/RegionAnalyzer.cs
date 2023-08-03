@@ -198,7 +198,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var noise = new HashSet<MapCell>();
 
         // We cluster once for an initial split
-        var weakClusteringResult = _clustering.DBSCAN(potentialRampCells, epsilon: 1, minPoints: 1);
+        var weakClusteringResult = _clustering.DBSCAN(potentialRampCells, epsilon: 1, minPoints: 2);
         foreach (var mapCell in weakClusteringResult.noise) {
             noise.Add(mapCell);
         }
@@ -255,14 +255,18 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// - It is probably a group of vision blockers, with are also walkable and unbuildable.
     /// </summary>
     /// <param name="rampCluster">The cells in a ramp</param>
-    /// <returns>True if the tiles have varied heights, false otherwise</returns>
+    /// <returns>True if the tiles have varied heights that correspond to typical ramp characteristics, false otherwise</returns>
     private bool IsReallyARamp(IReadOnlyCollection<MapCell> rampCluster) {
+        if (rampCluster.Count < MinRampSize) {
+            return false;
+        }
+
         var nbDifferentHeights = rampCluster
             .Select(cell => _terrainTracker.WithWorldHeight(cell.Position).Z)
             .ToHashSet()
             .Count;
 
-        // Ramps typically have nbDifferentHeights = [5, 9]
+        // Ramps typically have nbDifferentHeights = [4, 9]
         if (nbDifferentHeights < 4) {
             return false;
         }
@@ -271,7 +275,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var maxHeight = rampCluster.Max(cell => _terrainTracker.WithWorldHeight(cell.Position).Z);
         var heightDifference = Math.Abs(minHeight - maxHeight);
 
-        // Ramps typically have heightDifference = [1.75, 2]
+        // Ramps typically have heightDifference = [1.5, 2]
         return heightDifference > 1f;
     }
 
