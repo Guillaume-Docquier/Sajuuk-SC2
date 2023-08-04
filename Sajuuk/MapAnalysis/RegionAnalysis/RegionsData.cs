@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
 using Sajuuk.MapAnalysis.RegionAnalysis.ChokePoints;
+using Sajuuk.MapAnalysis.RegionAnalysis.Ramps;
 
 namespace Sajuuk.MapAnalysis.RegionAnalysis;
 
@@ -17,14 +18,14 @@ public class RegionsData {
     [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
     public RegionsData() {}
 
-    public RegionsData(IEnumerable<Region> regions, IEnumerable<HashSet<Vector2>> ramps, IEnumerable<Vector2> noise, IEnumerable<ChokePoint> chokePoints) {
+    public RegionsData(IEnumerable<Region> regions, IEnumerable<Ramp> ramps, IEnumerable<Vector2> noise, IEnumerable<ChokePoint> chokePoints) {
         // We sort the collections to have deterministic structures.
         Regions = regions
             .OrderBy(region => region.Id)
             .ToList();
 
         Ramps = ramps
-            .Select(set => set.OrderBy(cell => cell.Y).ThenBy(cell => cell.X).ToHashSet())
+            .Select(ramp => ramp.Cells.OrderBy(cell => cell.Y).ThenBy(cell => cell.X).ToHashSet())
             .OrderBy(set => GetCenter(set).Y)
             .ThenBy(set => GetCenter(set).X)
             .ToList();

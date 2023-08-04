@@ -5,11 +5,9 @@ namespace Sajuuk.MapAnalysis.RegionAnalysis.Ramps;
 
 public interface IRampFinder {
     /// <summary>
-    /// Identify ramps given cells that are walkable but not buildable.
-    /// Some noise will be produced because some unbuildable cells are vision blockers and they should be used to find regions.
+    /// Identify ramps within the given cells.
     /// </summary>
-    /// <returns>
-    /// The ramps and the cells that are not part of any ramp.
-    /// </returns>
-    (List<HashSet<Vector2>> ramps, IEnumerable<MapCell> rampsNoise) FindRamps(IEnumerable<MapCell> walkableCells);
+    /// <param name="cellsToConsider">The cells to use to find ramps.</param>
+    /// <returns>The ramps that were found.</returns>
+    public List<Ramp> FindRamps(IEnumerable<Vector2> cellsToConsider);
 }
