@@ -9,8 +9,17 @@ public interface ITerrainTracker {
     public Vector2 EnemyStartingLocation { get; } // TODO GD Should this be here?
     public string GetStartingCorner(); // TODO GD Should this be here?
 
-    public List<List<float>> HeightMap { get; }
+    /// <summary>
+    /// Represents all cells that were walkable when the game started.
+    /// TODO This definition is bad, some rocks can fall and block movements, making this unreliable
+    /// </summary>
     public IReadOnlySet<Vector2> WalkableCells { get; }
+
+    /// <summary>
+    /// Represents all cells that could be walked on.
+    /// This is essentially any cell that has terrain.
+    /// </summary>
+    public IReadOnlySet<Vector2> PlayableCells { get; }
 
     public int MaxX { get; } // TODO GD Should this be here?
     public int MaxY { get; } // TODO GD Should this be here?

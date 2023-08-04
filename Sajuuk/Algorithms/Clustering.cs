@@ -56,15 +56,7 @@ public class Clustering : IClustering {
         return explored;
     }
 
-    /// <summary>
-    /// <para>A textbook implementation of the DBSCAN clustering algorithm.</para>
-    /// <para>See https://en.wikipedia.org/wiki/DBSCAN</para>
-    /// </summary>
-    /// <param name="positions">The positions to cluster</param>
-    /// <param name="epsilon">How close a point needs to be to be considered nearby</param>
-    /// <param name="minPoints">How many points need to be nearby to count as a cluster node</param>
-    /// <returns>A list of clusters and the resulting noise</returns>
-    public (List<List<Vector2>> clusters, List<Vector2> noise) DBSCAN(List<Vector2> positions, float epsilon, int minPoints) {
+    public (List<List<Vector2>> clusters, List<Vector2> noise) DBSCAN(IReadOnlyCollection<Vector2> positions, float epsilon, int minPoints) {
         var clusters = new List<List<Vector2>>();
         var labels = new Dictionary<Vector2, DBSCANLabels>();
 
@@ -123,14 +115,63 @@ public class Clustering : IClustering {
         return (clusters, noise);
     }
 
-    /// <summary>
-    /// <para>A textbook implementation of the DBSCAN clustering algorithm.</para>
-    /// <para>See https://en.wikipedia.org/wiki/DBSCAN</para>
-    /// </summary>
-    /// <param name="items">The IHavePosition items to cluster</param>
-    /// <param name="epsilon">How close an item needs to be to be considered nearby</param>
-    /// <param name="minPoints">How many items need to be nearby to count as a cluster node</param>
-    /// <returns>A list of clusters and the resulting noise</returns>
+    public (List<List<Vector3>> clusters, List<Vector3> noise) DBSCAN(IReadOnlyCollection<Vector3> positions, float epsilon, int minPoints) {
+        var clusters = new List<List<Vector3>>();
+        var labels = new Dictionary<Vector3, DBSCANLabels>();
+
+        var currentCluster = new List<Vector3>();
+        foreach (var position in positions) {
+            if (labels.ContainsKey(position)) {
+                continue;
+            }
+
+            var neighbors = positions.Where(otherPosition => position != otherPosition && position.DistanceTo(otherPosition) <= epsilon).ToList();
+            if (neighbors.Count < minPoints) {
+                labels[position] = DBSCANLabels.Noise;
+                continue;
+            }
+
+            labels[position] = DBSCANLabels.CorePoint;
+            currentCluster.Add(position);
+
+            for (var i = 0; i < neighbors.Count; i++) {
+                var neighbor = neighbors[i];
+
+                if (labels.TryGetValue(neighbor, out var label)) {
+                    if (label == DBSCANLabels.Noise) {
+                        labels[neighbor] = DBSCANLabels.BorderPoint;
+                        currentCluster.Add(neighbor);
+                    }
+
+                    continue;
+                }
+
+                currentCluster.Add(neighbor);
+
+                var neighborsOfNeighbor = positions.Where(otherPosition => neighbor != otherPosition && neighbor.DistanceTo(otherPosition) <= epsilon).ToList();
+                if (neighborsOfNeighbor.Count >= minPoints) {
+                    labels[neighbor] = DBSCANLabels.CorePoint;
+                    neighbors.AddRange(neighborsOfNeighbor);
+                }
+                else {
+                    labels[neighbor] = DBSCANLabels.BorderPoint;
+                }
+            }
+
+            clusters.Add(currentCluster);
+            currentCluster = new List<Vector3>();
+        }
+
+        clusters.ForEach(DrawBoundingBox);
+
+        var noise = labels
+            .Where(kv => kv.Value == DBSCANLabels.Noise)
+            .Select(kv => kv.Key)
+            .ToList();
+
+        return (clusters, noise);
+    }
+
     public (List<List<T>> clusters, List<T> noise) DBSCAN<T>(IReadOnlyCollection<T> items, float epsilon, int minPoints) where T: class, IHavePosition {
         var clusters = new List<List<T>>();
         var labels = new Dictionary<T, DBSCANLabels>();
@@ -225,6 +266,10 @@ public class Clustering : IClustering {
 
     private void DrawBoundingBox<T>(IReadOnlyCollection<T> cluster) where T: class, IHavePosition {
         DrawBoundingBox(cluster.Select(item => item.Position.ToVector2()).ToList());
+    }
+
+    private void DrawBoundingBox(IReadOnlyCollection<Vector3> cluster) {
+        DrawBoundingBox(cluster.Select(position => position.ToVector2()).ToList());
     }
 
     private void DrawBoundingBox(IReadOnlyCollection<Vector2> cluster) {

@@ -37,6 +37,9 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     private readonly HashSet<Vector2> _walkableCells = new HashSet<Vector2>();
     public IReadOnlySet<Vector2> WalkableCells => _walkableCells;
 
+    private readonly HashSet<Vector2> _playableCells = new HashSet<Vector2>();
+    public IReadOnlySet<Vector2> PlayableCells => _playableCells;
+
     /// <summary>
     /// Returns the proportion from 0 to 1 of the walkable tiles that have been explored
     /// </summary>
@@ -96,7 +99,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         InitTerrainWalkMap(gameInfo);
         InitTerrainBuildMap(gameInfo);
 
-        InitWalkableCells();
+        InitCells();
 
         _isInitialized = true;
     }
@@ -468,12 +471,19 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         return pointsInBetween;
     }
 
-    private void InitWalkableCells() {
+    /// <summary>
+    /// Initializes playableCells and walkableCells.
+    /// </summary>
+    private void InitCells() {
         for (var x = 0; x < MaxX; x++) {
             for (var y = 0; y < MaxY; y++) {
                 var cell = new Vector2(x, y).AsWorldGridCenter();
-                if (IsWalkable(cell)) {
-                    _walkableCells.Add(cell);
+                if (IsWalkable(cell, considerObstaclesObstructions: false)) {
+                    _playableCells.Add(cell);
+
+                    if (IsWalkable(cell, considerObstaclesObstructions: true)) {
+                        _walkableCells.Add(cell);
+                    }
                 }
             }
         }

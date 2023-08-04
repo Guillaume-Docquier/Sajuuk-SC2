@@ -13,17 +13,27 @@ public interface IClustering {
     IEnumerable<Vector2> FloodFill(IReadOnlySet<Vector2> cells, Vector2 startingPoint);
 
     /// <summary>
-    /// <para>A textbook implementation of the DBSCAN clustering algorithm.</para>
+    /// <para>A textbook implementation of the DBSCAN clustering algorithm that works with Vector2.</para>
     /// <para>See https://en.wikipedia.org/wiki/DBSCAN</para>
     /// </summary>
-    /// <param name="positions">The positions to cluster</param>
+    /// <param name="positions">The collection of Vector2 to cluster</param>
     /// <param name="epsilon">How close a point needs to be to be considered nearby</param>
     /// <param name="minPoints">How many points need to be nearby to count as a cluster node</param>
     /// <returns>A list of clusters and the resulting noise</returns>
-    (List<List<Vector2>> clusters, List<Vector2> noise) DBSCAN(List<Vector2> positions, float epsilon, int minPoints);
+    (List<List<Vector2>> clusters, List<Vector2> noise) DBSCAN(IReadOnlyCollection<Vector2> positions, float epsilon, int minPoints);
 
     /// <summary>
-    /// <para>A textbook implementation of the DBSCAN clustering algorithm.</para>
+    /// <para>A textbook implementation of the DBSCAN clustering algorithm that works with Vector3.</para>
+    /// <para>See https://en.wikipedia.org/wiki/DBSCAN</para>
+    /// </summary>
+    /// <param name="positions">The collection of Vector3 to cluster</param>
+    /// <param name="epsilon">How close a point needs to be to be considered nearby</param>
+    /// <param name="minPoints">How many points need to be nearby to count as a cluster node</param>
+    /// <returns>A list of clusters and the resulting noise</returns>
+    (List<List<Vector3>> clusters, List<Vector3> noise) DBSCAN(IReadOnlyCollection<Vector3> positions, float epsilon, int minPoints);
+
+    /// <summary>
+    /// <para>A textbook implementation of the DBSCAN clustering algorithm that works with any object that has a position.</para>
     /// <para>See https://en.wikipedia.org/wiki/DBSCAN</para>
     /// </summary>
     /// <param name="items">The IHavePosition items to cluster</param>

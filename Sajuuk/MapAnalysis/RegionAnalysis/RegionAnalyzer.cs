@@ -7,6 +7,7 @@ using Sajuuk.Algorithms;
 using Sajuuk.GameSense;
 using Sajuuk.MapAnalysis.ExpandAnalysis;
 using Sajuuk.MapAnalysis.RegionAnalysis.ChokePoints;
+using Sajuuk.MapAnalysis.RegionAnalysis.Ramps;
 using Sajuuk.Persistence;
 using Sajuuk.Utils;
 using SC2APIProtocol;
@@ -20,6 +21,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     private readonly IClustering _clustering;
     private readonly IMapDataRepository<RegionsData> _regionsRepository;
     private readonly IChokeFinder _chokeFinder;
+    private readonly IRampFinder _rampFinder;
     private readonly IRegionFactory _regionFactory;
     private readonly IMapImageFactory _mapImageFactory;
     private readonly string _mapFileName;
@@ -44,6 +46,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         IClustering clustering,
         IMapDataRepository<RegionsData> regionsRepository,
         IChokeFinder chokeFinder,
+        IRampFinder rampFinder,
         IRegionFactory regionFactory,
         IMapImageFactory mapImageFactory,
         string mapFileName
@@ -53,6 +56,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         _clustering = clustering;
         _regionsRepository = regionsRepository;
         _chokeFinder = chokeFinder;
+        _rampFinder = rampFinder;
         _regionFactory = regionFactory;
         _mapImageFactory = mapImageFactory;
         _mapFileName = mapFileName;
@@ -71,14 +75,15 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             return;
         }
 
-        var walkableMap = GenerateWalkableMap();
-        Logger.Info($"Starting region analysis on {walkableMap.Count} cells ({_terrainTracker.MaxX}x{_terrainTracker.MaxY})");
+        Logger.Info($"Starting region analysis on {_terrainTracker.PlayableCells.Count} cells ({_terrainTracker.MaxX}x{_terrainTracker.MaxY})");
 
-        var (ramps, rampsNoise) = ComputeRamps(walkableMap);
-        var (regionsPotentialCells, potentialRegionCellsNoise) = ComputePotentialRegionCells(walkableMap, rampsNoise);
+        var ramps = _rampFinder.FindRamps(_terrainTracker.PlayableCells);
+
+        var allRampCells = ramps.SelectMany(ramp => ramp.Cells);
+        var (regionsPotentialCells, potentialRegionCellsNoise) = ComputePotentialRegionCells(_terrainTracker.PlayableCells.Except(allRampCells));
         var (potentialRegions, regionNoise) = ComputePotentialRegions(regionsPotentialCells);
 
-        var chokePoints = ComputePotentialChokePoints();
+        var chokePoints = _chokeFinder.FindChokePoints();
 
         // We order the regions to have a deterministic regions order.
         // It'll also make it easier to find a region by its id because they're going to be left to right, bottom to top.
@@ -93,7 +98,6 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
 
         var noise = regionNoise
             .Concat(potentialRegionCellsNoise)
-            .Select(mapCell => mapCell.Position.ToVector2())
             .ToList();
 
         _regionsData = new RegionsData(regions.Select(region => region as Region).ToList(), ramps, noise, chokePoints);
@@ -112,39 +116,19 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// Computes the potential region cells.
     /// This computation will consider cells that have no reachable neighbors (isolated cells) as noise.
     /// </summary>
-    /// <param name="walkableMapCells">The map cells that can be walked on.</param>
-    /// <param name="rampsNoise">The noise from ramp detection.</param>
-    /// <returns></returns>
-    private (List<MapCell> potentialRegionCells, List<MapCell> potentialRegionCellsNoise) ComputePotentialRegionCells(IEnumerable<MapCell> walkableMapCells, IEnumerable<MapCell> rampsNoise) {
-        var potentialRegionCells = walkableMapCells
-            .Where(cell => _terrainTracker.IsBuildable(cell.Position, considerObstaclesObstructions: false))
-            .Concat(rampsNoise)
-            .ToHashSet();
+    /// <param name="cellsToConsider">The cells to decompose into regions.</param>
+    /// <returns>The region cells and the cells that are considered noise.</returns>
+    private (List<Vector2> potentialRegionCells, List<Vector2> potentialRegionCellsNoise) ComputePotentialRegionCells(IEnumerable<Vector2> cellsToConsider) {
+        var potentialRegionCells = cellsToConsider.ToHashSet();
 
         // Some cells have 0 reachable neighbors, which messes up the use of FloodFill.
         // DragonScalesAIE has 2 cells like that.
+        // This would probably not be the case after fixing https://github.com/Guillaume-Docquier/Sajuuk-SC2/issues/43
         var isolatedCells = potentialRegionCells
-            .Where(mapCell => !_terrainTracker.GetReachableNeighbors(mapCell.Position.ToVector2(), considerObstaclesObstructions: false).Any())
+            .Where(cell => !_terrainTracker.GetReachableNeighbors(cell, considerObstaclesObstructions: false).Any())
             .ToList();
 
         return (potentialRegionCells.Except(isolatedCells).ToList(), isolatedCells);
-    }
-
-    /// <summary>
-    /// Generates a list of MapCell representing each playable tile in the map.
-    /// </summary>
-    private List<MapCell> GenerateWalkableMap() {
-        var map = new List<MapCell>();
-        for (var x = 0; x < _terrainTracker.MaxX; x++) {
-            for (var y = 0; y < _terrainTracker.MaxY; y++) {
-                var mapCell = new MapCell(_terrainTracker.WithWorldHeight(new Vector2(x, y)).AsWorldGridCenter());
-                if (_terrainTracker.IsWalkable(mapCell.Position, considerObstaclesObstructions: false)) {
-                    map.Add(mapCell);
-                }
-            }
-        }
-
-        return map;
     }
 
     /// <summary>
@@ -155,149 +139,44 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <returns>
     /// The potential regions and the cells that are not part of any region.
     /// </returns>
-    private (List<HashSet<Vector2>> potentialRegions, IEnumerable<MapCell> regionsNoise) ComputePotentialRegions(List<MapCell> cells) {
-        cells.ForEach(mapCell => {
-            // Highly penalize height differences
-            var trickPosition = _terrainTracker.WithWorldHeight(mapCell.Position);
+    private (List<HashSet<Vector2>> potentialRegions, IEnumerable<Vector2> regionsNoise) ComputePotentialRegions(IEnumerable<Vector2> regionCells) {
+        // TODO Not sure this is needed since we already computed ramps and excluded them from the given regionCells
+        var regionCells3d = regionCells.Select(cell => {
+            // Highly penalize height differences during clustering
+            var trickPosition = _terrainTracker.WithWorldHeight(cell);
             trickPosition.Z *= RegionZMultiplier;
 
-            mapCell.Position = trickPosition;
-        });
+            return trickPosition;
+        }).ToList();
 
-        var noise = new HashSet<MapCell>();
-        var clusteringResult = _clustering.DBSCAN(cells, epsilon: _diagonalDistance + 0.04f, minPoints: 6);
-        foreach (var mapCell in clusteringResult.noise) {
-            noise.Add(mapCell);
-        }
+        var clusteringResult = _clustering.DBSCAN(regionCells3d, epsilon: _diagonalDistance + 0.04f, minPoints: 6);
+        var noise = clusteringResult.noise.Select(noise => noise.ToVector2()).ToHashSet();
 
-        var potentialRegions = clusteringResult.clusters.Select(cluster => cluster.Select(mapCell => mapCell.Position.ToVector2()).ToHashSet()).ToList();
+        var potentialRegions = clusteringResult.clusters
+            .Select(cluster => cluster.Select(cell => cell.ToVector2()).ToHashSet())
+            .ToList();
 
         // Add noise to any neighboring region
-        foreach (var mapCell in noise.ToList()) {
-            var mapCellNeighbors = mapCell.Position.ToVector2().GetNeighbors();
+        foreach (var noisyCell in noise.ToList()) {
+            var mapCellNeighbors = noisyCell.GetNeighbors();
             var regionToAddTo = potentialRegions.FirstOrDefault(potentialRegion => mapCellNeighbors.Any(potentialRegion.Contains));
             if (regionToAddTo != default) {
-                regionToAddTo.Add(mapCell.Position.ToVector2());
-                noise.Remove(mapCell);
+                regionToAddTo.Add(noisyCell);
+                noise.Remove(noisyCell);
             }
         }
 
         return (potentialRegions, noise);
     }
 
-    /// <summary>
-    /// Identify ramps given cells that are walkable but not buildable.
-    /// Some noise will be produced because some unbuildable cells are vision blockers and they should be used to find regions.
-    /// </summary>
-    /// <returns>
-    /// The ramps and the cells that are not part of any ramp.
-    /// </returns>
-    private (List<HashSet<Vector2>> ramps, IEnumerable<MapCell> rampsNoise) ComputeRamps(IEnumerable<MapCell> walkableCells) {
-        var potentialRampCells = walkableCells.Where(cell => !_terrainTracker.IsBuildable(cell.Position, considerObstaclesObstructions: false)).ToList();
-        foreach (var potentialRampCell in potentialRampCells) {
-            // We ignore the Z component to simplify clustering
-            potentialRampCell.Position = potentialRampCell.Position with { Z = 0 };
-        }
-
-        var ramps = new List<HashSet<Vector2>>();
-        var noise = new HashSet<MapCell>();
-
-        // We cluster once for an initial split
-        var weakClusteringResult = _clustering.DBSCAN(potentialRampCells, epsilon: 1, minPoints: 1);
-        foreach (var mapCell in weakClusteringResult.noise) {
-            noise.Add(mapCell);
-        }
-
-        foreach (var weakCluster in weakClusteringResult.clusters) {
-            var clusterSet = weakCluster.Select(cell => cell.Position).ToHashSet();
-            var maxConnections = weakCluster.Max(cell => cell.Position.GetNeighbors().Count(neighbor => clusterSet.Contains(neighbor)));
-            if (maxConnections < 8) {
-                // This is to make ramps work
-                maxConnections = (int)Math.Floor(0.875f * maxConnections);
-            }
-
-            // Some ramps touch each other (berlingrad)
-            // We do a 2nd round of clustering based on the connectivity of the cluster
-            // This is because ramps have low connectivity, so we need it to be variable
-            var rampClusterResult = _clustering.DBSCAN(weakCluster, epsilon: _diagonalDistance, minPoints: maxConnections);
-
-            foreach (var mapCell in rampClusterResult.noise) {
-                noise.Add(mapCell);
-            }
-
-            foreach (var rampCluster in rampClusterResult.clusters) {
-                if (IsReallyARamp(rampCluster)) {
-                    ramps.Add(rampCluster.Select(mapCell => mapCell.Position.ToVector2()).ToHashSet());
-                }
-                else {
-                    foreach (var mapCell in rampCluster) {
-                        noise.Add(mapCell);
-                    }
-                }
-            }
-        }
-
-        // Add noise to a neighboring ramp, if any
-        // This is because some cells have wrong heights and are considered noise (I think)
-        var allRampCells = ramps.SelectMany(cells => cells).ToHashSet();
-        var orderedNoise = noise.OrderBy(noisyCell => allRampCells.Min(rampCell => rampCell.DistanceTo(noisyCell.Position.ToVector2())));
-        foreach (var noisyCell in orderedNoise) {
-            var noisyCellAsVector2 = noisyCell.Position.ToVector2();
-            var noisyCellRampNeighbors = _terrainTracker.GetReachableNeighbors(noisyCellAsVector2, allRampCells, considerObstaclesObstructions: false);
-
-            var rampToAddTo = ramps.FirstOrDefault(ramp => noisyCellRampNeighbors.Any(ramp.Contains));
-            if (rampToAddTo != default) {
-                rampToAddTo.Add(noisyCellAsVector2);
-                allRampCells.Add(noisyCellAsVector2);
-                noise.Remove(noisyCell);
-            }
-        }
-
-        foreach (var potentialRampCell in potentialRampCells) {
-            potentialRampCell.Position = _terrainTracker.WithWorldHeight(potentialRampCell.Position); // Restore Z
-        }
-
-        return (ramps, noise);
-    }
-
-    /// <summary>
-    /// A real ramp connects two different height layers with a progressive slope.
-    /// If all the tiles in the given ramp are roughly on the same height, this is not a ramp.
-    /// - It is probably a group of vision blockers, with are also walkable and unbuildable.
-    /// </summary>
-    /// <param name="rampCluster">The cells in a ramp</param>
-    /// <returns>True if the tiles have varied heights that correspond to typical ramp characteristics, false otherwise</returns>
-    private bool IsReallyARamp(IReadOnlyCollection<MapCell> rampCluster) {
-        var nbDifferentHeights = rampCluster
-            .Select(cell => _terrainTracker.WithWorldHeight(cell.Position).Z)
-            .ToHashSet()
-            .Count;
-
-        // Ramps typically have nbDifferentHeights = [4, 9]
-        if (nbDifferentHeights < 4) {
-            return false;
-        }
-
-        var minHeight = rampCluster.Min(cell => _terrainTracker.WithWorldHeight(cell.Position).Z);
-        var maxHeight = rampCluster.Max(cell => _terrainTracker.WithWorldHeight(cell.Position).Z);
-        var heightDifference = Math.Abs(minHeight - maxHeight);
-
-        // Ramps typically have heightDifference = [1.5, 2]
-        return heightDifference > 1f;
-    }
-
-    private List<ChokePoint> ComputePotentialChokePoints() {
-        return _chokeFinder.FindChokePoints();
-    }
-
-    private List<AnalyzedRegion> BuildRegions(List<HashSet<Vector2>> potentialRegions, List<HashSet<Vector2>> ramps, List<ChokePoint> potentialChokePoints) {
+    private List<AnalyzedRegion> BuildRegions(List<HashSet<Vector2>> potentialRegions, List<Ramp> ramps, List<ChokePoint> potentialChokePoints) {
         var regions = new List<AnalyzedRegion>();
         foreach (var region in potentialRegions) {
             var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints, saveSplitsAsImage: false);
             regions.AddRange(subregions.Select(subregion => _regionFactory.CreateAnalyzedRegion(subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
         }
 
-        regions.AddRange(ramps.Select(ramp => _regionFactory.CreateAnalyzedRegion(ramp, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
+        regions.AddRange(ramps.Select(ramp => _regionFactory.CreateAnalyzedRegion(ramp.Cells, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
 
         return regions;
     }
