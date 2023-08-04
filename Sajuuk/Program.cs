@@ -50,7 +50,7 @@ public class Program {
         //new SpawnStuffScenario(UnitsTracker.Instance, MapAnalyzer.Instance),
     };
 
-    private const string Version = "4_0_4";
+    private const string Version = "5_0_0";
 
     private const string MapFileName = Maps.Season_2022_4.FileNames.Berlingrad;
     private const Race OpponentRace = Race.Random;
