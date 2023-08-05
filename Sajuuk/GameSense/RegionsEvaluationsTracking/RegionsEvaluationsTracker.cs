@@ -226,11 +226,18 @@ public class RegionsEvaluationsTracker : IRegionsEvaluationsTracker, INeedUpdati
         _graphicalDebugger.AddTextGroup(texts, size: 14, worldPos: offsetRegionCenter.ToPoint(xOffset: textXOffset), color: regionColor);
 
         // Draw lines to neighbors
+        var reachableNeighbors = region.GetReachableNeighbors().ToHashSet();
         foreach (var neighbor in region.Neighbors) {
             var neighborOffsetCenter = _terrainTracker.WithWorldHeight(neighbor.Region.Center, zOffset: zOffset);
             var regionSizeRatio = (float)region.Cells.Count / (region.Cells.Count + neighbor.Region.Cells.Count);
             var lineEnd = Vector3.Lerp(offsetRegionCenter, neighborOffsetCenter, regionSizeRatio);
-            _graphicalDebugger.AddLine(offsetRegionCenter, lineEnd, color: regionColor);
+
+            if (reachableNeighbors.Contains(neighbor.Region)) {
+                _graphicalDebugger.AddLine(offsetRegionCenter, lineEnd, regionColor);
+            }
+            else {
+                _graphicalDebugger.AddDashedLine(offsetRegionCenter, lineEnd, regionColor);
+            }
         }
     }
 }
