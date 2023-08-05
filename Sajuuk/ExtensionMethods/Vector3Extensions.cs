@@ -32,6 +32,7 @@ public static class Vector3Extensions {
         return Vector3.Distance(origin, destination);
     }
 
+    // TODO GD I don't know why I added ignoreZAxis, but it's whack. If you don't care about Z, use Vector2!
     public static Vector3 DirectionTo(this Vector3 origin, Vector3 destination, bool ignoreZAxis = true) {
         var direction = Vector3.Normalize(destination - origin);
         if (ignoreZAxis) {
@@ -41,12 +42,14 @@ public static class Vector3Extensions {
         return direction;
     }
 
+    // TODO GD I don't know why I added ignoreZAxis, but it's whack. If you don't care about Z, use Vector2!
     public static Vector3 TranslateTowards(this Vector3 origin, Vector3 destination, float distance, bool ignoreZAxis = true) {
         var direction = origin.DirectionTo(destination, ignoreZAxis);
 
         return origin + direction * distance;
     }
 
+    // TODO GD I don't know why I added ignoreZAxis, but it's whack. If you don't care about Z, use Vector2!
     public static Vector3 TranslateAwayFrom(this Vector3 origin, Vector3 destination, float distance, bool ignoreZAxis = true) {
         var direction = origin.DirectionTo(destination, ignoreZAxis);
 

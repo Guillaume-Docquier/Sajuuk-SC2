@@ -136,6 +136,33 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
         );
     }
 
+    /// <summary>
+    /// Add a dashed line.
+    /// The dash length will be slightly adjusted so that the line starts and ends with a visible dash.
+    /// </summary>
+    /// <param name="start">The start point of the line.</param>
+    /// <param name="end">The end point of the line.</param>
+    /// <param name="color">The color of the line.</param>
+    /// <param name="dashLength">The approximate dash length.</param>
+    public void AddDashedLine(Vector3 start, Vector3 end, Color color, float dashLength = 0.25f) {
+        var lineLength = start.DistanceTo(end);
+        var numberOfDashes = (int)Math.Ceiling(lineLength / dashLength);
+        if (numberOfDashes.IsEven()) {
+            // An odd number of dashes will ensure we start and end with a visible dash
+            numberOfDashes += 1;
+        }
+
+        var correctedDashLength = lineLength / numberOfDashes;
+        var nextDashStart = start;
+        while (numberOfDashes > 0) {
+            AddLine(nextDashStart, nextDashStart.TranslateTowards(end, correctedDashLength, ignoreZAxis: false), color);
+
+            // Times 2 because of the gap between dashes
+            nextDashStart = nextDashStart.TranslateTowards(end, correctedDashLength * 2, ignoreZAxis: false);
+            numberOfDashes -= 2;
+        }
+    }
+
     public void AddArrowedLine(Vector3 start, Vector3 end, Color color) {
         AddLine(start, end, color);
 
