@@ -109,6 +109,8 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var nbNoise = _regionsData.Noise.Count;
         var nbChokePoints = _regionsData.ChokePoints.Count;
         Logger.Metric($"{nbRegions} regions ({nbObstructed} obstructed), {nbRamps} ramps, {nbNoise} unclassified cells and {nbChokePoints} choke points");
+        DebugReachableNeighbors();
+
         Logger.Success("Region analysis done and saved");
     }
 
@@ -306,5 +308,49 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         }
 
         mapImage.Save(FileNameFormatter.FormatDataFileName($"RegionSplit_{DateTime.UtcNow.Ticks}", _mapFileName, "png"));
+    }
+
+    /// <summary>
+    /// Prints information about the regions reachable neighbors.
+    /// We also save an image with red lines in between unreachable neighbors.
+    /// </summary>
+    private void DebugReachableNeighbors() {
+        var mapImage = _mapImageFactory.CreateMapImage();
+
+        // Draw obstructions (rocks, minerals)
+        var obstructedCells = _terrainTracker.PlayableCells.Except(_terrainTracker.WalkableCells);
+        foreach (var cell in obstructedCells) {
+            mapImage.SetCellColor(cell, Color.Teal);
+        }
+
+        var allRegionNeighborsAreReachable = true;
+        foreach (var region in Regions) {
+            var neighbors = region.Neighbors.Select(neighbor => neighbor.Region);
+            var reachableNeighbors = region.GetReachableNeighbors();
+            var unreachableNeighbors = neighbors.Except(reachableNeighbors).ToList();
+
+            if (unreachableNeighbors.Any()) {
+                allRegionNeighborsAreReachable = false;
+                var obstructionMessage = region.IsObstructed ? " (obstructed)" : "";
+                var unreachableNeighborsIds = unreachableNeighbors.Select(neighbor => neighbor.Id);
+                Logger.Debug($"Region {region.Id}{obstructionMessage} has {unreachableNeighbors.Count} unreachable neighbors [{string.Join(",", unreachableNeighborsIds)}]");
+
+                // Draw unreachable neighbors
+                foreach (var unreachableNeighbor in unreachableNeighbors) {
+                    foreach (var cell in region.Center.GetPointsInBetween(unreachableNeighbor.Center)) {
+                        mapImage.SetCellColor(cell, Color.Red);
+                    }
+
+                    mapImage.SetCellColor(region.Center, Color.MediumBlue);
+                    mapImage.SetCellColor(unreachableNeighbor.Center, Color.MediumBlue);
+                }
+            }
+        }
+
+        if (allRegionNeighborsAreReachable) {
+            Logger.Debug("All region neighbors are reachable");
+        }
+
+        mapImage.Save(FileNameFormatter.FormatDataFileName("UnreachableNeighbors", _mapFileName, "png"));
     }
 }

@@ -66,6 +66,8 @@ public class Region : IRegion {
                 // A single frontier contains diagonals
                 // The two frontiers form a line without diagonals
                 // An alternative would be to check if the path only goes through this region or the neighbors, but I don't know if it's always true.
+                //
+                // The real solution is to find a path with only the cells in either regions, but that's hard to cache!
                 var frontierCells = neighbor.Region.Neighbors
                     .First(mirrorNeighbor => mirrorNeighbor.Region == this)
                     .Frontier

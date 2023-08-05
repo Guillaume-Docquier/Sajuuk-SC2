@@ -106,7 +106,7 @@ public class AnalyzedRegion : Region {
     /// </summary>
     /// <returns>A color that's different from the colors of all neighbors.</returns>
     private Color GetDifferentColorFromNeighbors() {
-        var neighborColors = GetReachableNeighbors().Select(neighbor => neighbor.Color).ToHashSet();
+        var neighborColors = Neighbors.Select(neighbor => neighbor.Region.Color).ToHashSet();
         if (!neighborColors.Contains(Color)) {
             return Color;
         }
