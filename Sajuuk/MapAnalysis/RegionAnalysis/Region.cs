@@ -55,8 +55,26 @@ public class Region : IRegion {
 
     public IEnumerable<IRegion> GetReachableNeighbors() {
         return Neighbors
-            .Select(neighbor => neighbor.Region)
-            .Where(neighbor => !neighbor.IsObstructed);
+            .Where(neighbor => !neighbor.Region.IsObstructed)
+            .Where(neighbor => {
+                // A neighbor is only reachable if the path to it goes through the neighbor's frontier
+                var origin = _terrainTracker.GetClosestWalkable(Center, allowedCells: Cells);
+                var destination = _terrainTracker.GetClosestWalkable(neighbor.Region.Center, allowedCells: neighbor.Region.Cells);
+                var path = _pathfinder.FindPath(origin, destination);
+
+                // That's a bit awkward, but diagonals can cross without touching
+                // A single frontier contains diagonals
+                // The two frontiers form a line without diagonals
+                // An alternative would be to check if the path only goes through this region or the neighbors, but I don't know if it's always true.
+                var frontierCells = neighbor.Region.Neighbors
+                    .First(mirrorNeighbor => mirrorNeighbor.Region == this)
+                    .Frontier
+                    .Concat(neighbor.Frontier)
+                    .ToHashSet();
+
+                return path.Any(frontierCells.Contains);
+            })
+            .Select(neighbor => neighbor.Region);
     }
 
     public void UpdateObstruction() {
