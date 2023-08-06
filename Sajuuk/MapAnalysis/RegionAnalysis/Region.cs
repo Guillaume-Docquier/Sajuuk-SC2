@@ -57,24 +57,13 @@ public class Region : IRegion {
         return Neighbors
             .Where(neighbor => !neighbor.Region.IsObstructed)
             .Where(neighbor => {
-                // A neighbor is only reachable if the path to it goes through the neighbor's frontier
-                var origin = _terrainTracker.GetClosestWalkable(Center, allowedCells: Cells);
-                var destination = _terrainTracker.GetClosestWalkable(neighbor.Region.Center, allowedCells: neighbor.Region.Cells);
-                var path = _pathfinder.FindPath(origin, destination);
+                // A neighbor is only reachable if both regions can be merged after removing the obstructed cells
+                var cells = Cells.Concat(neighbor.Region.Cells).Except(_terrainTracker.ObstructedCells).ToHashSet();
 
-                // That's a bit awkward, but diagonals can cross without touching
-                // A single frontier contains diagonals
-                // The two frontiers form a line without diagonals
-                // An alternative would be to check if the path only goes through this region or the neighbors, but I don't know if it's always true.
-                //
-                // The real solution is to find a path with only the cells in either regions, but that's hard to cache!
-                var frontierCells = neighbor.Region.Neighbors
-                    .First(mirrorNeighbor => mirrorNeighbor.Region == this)
-                    .Frontier
-                    .Concat(neighbor.Frontier)
-                    .ToHashSet();
+                // TODO GD This should be inexpensive since regions are small, but the result will only ever change when rocks get destroyed. We should cache the result.
+                var merge = _clustering.FloodFill(cells, cells.First()).ToList();
 
-                return path.Any(frontierCells.Contains);
+                return cells.Count == merge.Count;
             })
             .Select(neighbor => neighbor.Region);
     }

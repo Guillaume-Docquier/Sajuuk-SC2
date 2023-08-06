@@ -318,8 +318,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         var mapImage = _mapImageFactory.CreateMapImage();
 
         // Draw obstructions (rocks, minerals)
-        var obstructedCells = _terrainTracker.PlayableCells.Except(_terrainTracker.WalkableCells);
-        foreach (var cell in obstructedCells) {
+        foreach (var cell in _terrainTracker.ObstructedCells) {
             mapImage.SetCellColor(cell, Color.Teal);
         }
 

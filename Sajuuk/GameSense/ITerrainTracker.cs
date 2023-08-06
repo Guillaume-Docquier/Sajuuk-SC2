@@ -21,6 +21,11 @@ public interface ITerrainTracker {
     /// </summary>
     public IReadOnlySet<Vector2> PlayableCells { get; }
 
+    /// <summary>
+    /// Represents all cells that are obstructed by neutral units (rocks, minerals, gas)
+    /// </summary>
+    public IReadOnlySet<Vector2> ObstructedCells { get; }
+
     public int MaxX { get; } // TODO GD Should this be here?
     public int MaxY { get; } // TODO GD Should this be here?
     public float DiagonalLength { get; } // TODO GD Should this be here?
