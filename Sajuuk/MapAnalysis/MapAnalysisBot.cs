@@ -42,14 +42,15 @@ public class MapAnalysisBot : IBot {
     }
 
     private void DebugCoordinates() {
-        foreach (var cell in _terrainTracker.WalkableCells) {
-            var coords = new List<string>
+        foreach (var cell in _terrainTracker.PlayableCells) {
+            var textColor = _terrainTracker.IsBuildable(cell, considerObstaclesObstructions: false) ? Colors.Yellow : Colors.Orange;
+            var coordsTextGroup = new List<string>
             {
                 $"{cell.X,5:F1}",
                 $"{cell.Y,5:F1}",
                 $"{_terrainTracker.WithWorldHeight(cell).Z,5:F1}",
             };
-            _graphicalDebugger.AddTextGroup(coords, size: 10, worldPos: _terrainTracker.WithWorldHeight(cell).ToPoint(xOffset: -0.35f, yOffset: 0.2f));
+            _graphicalDebugger.AddTextGroup(coordsTextGroup, size: 10, color: textColor, worldPos: _terrainTracker.WithWorldHeight(cell).ToPoint(xOffset: -0.35f, yOffset: 0.2f));
         }
     }
 }
