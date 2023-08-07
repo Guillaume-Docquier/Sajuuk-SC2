@@ -48,19 +48,16 @@ public static class Vector2Extensions {
     }
 
     /// <summary>
-    /// Gets all cells traversed by the ray from origin to destination using digital differential analyzer (DDA)
+    /// Gets all cells traversed by the ray from origin to destination using digital differential analyzer (DDA).
     /// </summary>
-    /// <param name="origin"></param>
-    /// <param name="destination"></param>
-    /// <returns>The cells traversed by the ray from origin to destination</returns>
-    public static HashSet<Vector2> GetPointsInBetween(this Vector2 origin, Vector2 destination) {
+    /// <param name="origin">The origin.</param>
+    /// <param name="destination">The destination.</param>
+    /// <returns>The cells traversed by the ray from origin to destination, in order.</returns>
+    public static IEnumerable<Vector2> GetPointsInBetween(this Vector2 origin, Vector2 destination) {
         var targetCellCorner = destination.AsWorldGridCorner();
 
-        var pointsInBetween = RayCasting.RayCast(origin, destination, cellCorner => cellCorner == targetCellCorner)
-            .Select(result => result.CornerOfCell.AsWorldGridCenter())
-            .ToHashSet();
-
-        return pointsInBetween;
+        return RayCasting.RayCast(origin, destination, cellCorner => cellCorner == targetCellCorner)
+            .Select(result => result.CornerOfCell.AsWorldGridCenter());
     }
 
     /// <summary>

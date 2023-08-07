@@ -314,22 +314,23 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     /// <para>Gets up to 8 reachable neighbors around the position.</para>
     /// <para>Top, left, down and right are given if they are walkable.</para>
     /// <para>
-    /// Diagonal neighbors are returned only if at least one of their components if walkable.
-    /// For example, the top right diagonal is reachable of either the top or the right is walkable.
+    /// Diagonal neighbors are returned unless both of their components are obstructed.
+    /// For example, the top right diagonal is reachable unless both the top and the right are obstructed.
     /// </para>
+    /// <para>Obstructed is not to be confused with walkable. Units can take a diagonal path between two unwalkable cells, but not between obstructed cells.</para>
     /// <para>This is a game detail.</para>
     /// </summary>
     /// <param name="position">The position to get the neighbors of.</param>
-    /// <param name="potentialNeighbors">The cells that are allowed to be neighbors. Defaults to all cells in the map.</param>
-    /// <param name="considerObstaclesObstructions">If you're wondering if you should be using this, you shouldn't.</param>
+    /// <param name="allowedNeighborhood">The cells that are allowed to be neighbors. Defaults to all cells in the map.</param>
+    /// <param name="considerObstaclesObstructions">Whether to consider obstacles when deciding if a cell is walkable.</param>
     /// <returns>Up to 8 neighbors</returns>
-    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 position, IReadOnlySet<Vector2> potentialNeighbors = null, bool considerObstaclesObstructions = true) {
+    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 position, IReadOnlySet<Vector2> allowedNeighborhood = null, bool considerObstaclesObstructions = true) {
         bool IsReachable(Vector2 pos) {
-            if (potentialNeighbors != null && !potentialNeighbors.Contains(pos)) {
+            if (allowedNeighborhood != null && !allowedNeighborhood.Contains(pos)) {
                 return false;
             }
 
-            return IsInBounds(pos) && IsWalkable(pos, considerObstaclesObstructions);
+            return IsWalkable(pos, considerObstaclesObstructions);
         }
 
         var leftPos = position.Translate(xTranslation: -1);
@@ -356,28 +357,28 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
             yield return downPos;
         }
 
-        if (isLeftReachable || isUpReachable) {
+        if (!considerObstaclesObstructions || (!_obstructionMap.Contains(leftPos) && !_obstructionMap.Contains(upPos))) {
             var leftUpPos = position.Translate(xTranslation: -1, yTranslation: 1);
             if (IsReachable(leftUpPos)) {
                 yield return leftUpPos;
             }
         }
 
-        if (isLeftReachable || isDownReachable) {
+        if (!considerObstaclesObstructions || (!_obstructionMap.Contains(leftPos) && !_obstructionMap.Contains(downPos))) {
             var leftDownPos = position.Translate(xTranslation: -1, yTranslation: -1);
             if (IsReachable(leftDownPos)) {
                 yield return leftDownPos;
             }
         }
 
-        if (isRightReachable || isUpReachable) {
+        if (!considerObstaclesObstructions || (!_obstructionMap.Contains(rightPos) && !_obstructionMap.Contains(upPos))) {
             var rightUpPos = position.Translate(xTranslation: 1, yTranslation: 1);
             if (IsReachable(rightUpPos)) {
                 yield return rightUpPos;
             }
         }
 
-        if (isRightReachable || isDownReachable) {
+        if (!considerObstaclesObstructions || (!_obstructionMap.Contains(rightPos) && !_obstructionMap.Contains(downPos))) {
             var rightDownPos = position.Translate(xTranslation: 1, yTranslation: -1);
             if (IsReachable(rightDownPos)) {
                 yield return rightDownPos;
