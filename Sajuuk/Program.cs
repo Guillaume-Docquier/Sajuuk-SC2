@@ -65,9 +65,7 @@ public class Program {
             switch (args.Length) {
                 case 1 when args[0] == "--mapAnalysis":
                     PlayMapAnalysis(
-                        Maps.GetAllFileNames()
-                            // Blackburn has an isolated expand that breaks the analysis, we'll fix it if it comes back to the map pool
-                            .Except(new [] { Maps.Season_2022_3.FileNames.Blackburn })
+                        Maps.Season_2023_2.FileNames.RoyalBlood
                     );
                     break;
                 case 1 when args[0] == "--videoClip":
@@ -120,7 +118,10 @@ public class Program {
                     services.FrameClock,
                     services.TerrainTracker,
                     services.GraphicalDebugger,
-                    services.RegionAnalyzer
+                    services.RegionAnalyzer,
+                    services.UnitsTracker,
+                    services.RequestBuilder,
+                    services.Sc2Client
                 ),
                 mapFileName,
                 Race.Zerg,

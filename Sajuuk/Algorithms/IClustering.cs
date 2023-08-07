@@ -6,9 +6,10 @@ namespace Sajuuk.Algorithms;
 public interface IClustering {
     /// <summary>
     /// Performs a flood fill on the given cells, starting from the provided starting point.
+    /// Diagonal moves are allowed.
     /// </summary>
-    /// <param name="cells"></param>
-    /// <param name="startingPoint"></param>
+    /// <param name="cells">The cells to perform flood fill on.</param>
+    /// <param name="startingPoint">The point to start flood filling from.</param>
     /// <returns>The cells reached by the flood fill</returns>
     IEnumerable<Vector2> FloodFill(IReadOnlySet<Vector2> cells, Vector2 startingPoint);
 

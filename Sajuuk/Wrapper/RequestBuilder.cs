@@ -186,6 +186,25 @@ public class RequestBuilder : IRequestBuilder {
         };
     }
 
+    public Request DebugKillUnits(IEnumerable<ulong> unitTags) {
+        var debugKillUnit = new DebugKillUnit();
+        debugKillUnit.Tag.AddRange(unitTags);
+
+        return new Request
+        {
+            Debug = new RequestDebug
+            {
+                Debug =
+                {
+                    new DebugCommand
+                    {
+                        KillUnit = debugKillUnit
+                    }
+                }
+            }
+        };
+    }
+
     /// <summary>
     /// Moves the camera somewhere on the map
     /// </summary>

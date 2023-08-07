@@ -83,6 +83,8 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         if (_isInitialized) {
             _currentWalkMap = ParseWalkMap(gameInfo);
+            _terrainWalkMap = ParseWalkMap(gameInfo);
+            InitCells();
             return;
         }
 
@@ -314,75 +316,96 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     /// <para>Gets up to 8 reachable neighbors around the position.</para>
     /// <para>Top, left, down and right are given if they are walkable.</para>
     /// <para>
-    /// Diagonal neighbors are returned only if at least one of their components if walkable.
-    /// For example, the top right diagonal is reachable of either the top or the right is walkable.
+    /// Diagonal neighbors are returned unless both of their components are obstructed.
+    /// For example, the top right diagonal is reachable unless both the top and the right are obstructed.
     /// </para>
+    /// <para>Obstructed is not to be confused with walkable. Units can take a diagonal path between two unwalkable cells, but not between obstructed cells.</para>
     /// <para>This is a game detail.</para>
     /// </summary>
     /// <param name="position">The position to get the neighbors of.</param>
-    /// <param name="potentialNeighbors">The cells that are allowed to be neighbors. Defaults to all cells in the map.</param>
-    /// <param name="considerObstaclesObstructions">If you're wondering if you should be using this, you shouldn't.</param>
+    /// <param name="allowedNeighborhood">The cells that are allowed to be neighbors. Defaults to all cells in the map.</param>
+    /// <param name="considerObstaclesObstructions">Whether to consider obstacles when deciding if a cell is walkable.</param>
     /// <returns>Up to 8 neighbors</returns>
-    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 position, IReadOnlySet<Vector2> potentialNeighbors = null, bool considerObstaclesObstructions = true) {
-        bool IsReachable(Vector2 pos) {
-            if (potentialNeighbors != null && !potentialNeighbors.Contains(pos)) {
-                return false;
-            }
-
-            return IsInBounds(pos) && IsWalkable(pos, considerObstaclesObstructions);
-        }
-
+    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 position, IReadOnlySet<Vector2> allowedNeighborhood = null, bool considerObstaclesObstructions = true) {
         var leftPos = position.Translate(xTranslation: -1);
-        var isLeftReachable = IsReachable(leftPos);
+        var isLeftReachable = IsWalkableNeighbor(leftPos, considerObstaclesObstructions, allowedNeighborhood);
         if (isLeftReachable) {
             yield return leftPos;
         }
 
         var rightPos = position.Translate(xTranslation: 1);
-        var isRightReachable = IsReachable(rightPos);
+        var isRightReachable = IsWalkableNeighbor(rightPos, considerObstaclesObstructions, allowedNeighborhood);
         if (isRightReachable) {
             yield return rightPos;
         }
 
         var upPos = position.Translate(yTranslation: 1);
-        var isUpReachable = IsReachable(upPos);
+        var isUpReachable = IsWalkableNeighbor(upPos, considerObstaclesObstructions, allowedNeighborhood);
         if (isUpReachable) {
             yield return upPos;
         }
 
         var downPos = position.Translate(yTranslation: -1);
-        var isDownReachable = IsReachable(downPos);
+        var isDownReachable = IsWalkableNeighbor(downPos, considerObstaclesObstructions, allowedNeighborhood);
         if (isDownReachable) {
             yield return downPos;
         }
 
-        if (isLeftReachable || isUpReachable) {
+        if (!considerObstaclesObstructions || !IsDiagonalObstruction(leftPos, upPos)) {
             var leftUpPos = position.Translate(xTranslation: -1, yTranslation: 1);
-            if (IsReachable(leftUpPos)) {
+            if (IsWalkableNeighbor(leftUpPos, considerObstaclesObstructions, allowedNeighborhood)) {
                 yield return leftUpPos;
             }
         }
 
-        if (isLeftReachable || isDownReachable) {
+        if (!considerObstaclesObstructions || !IsDiagonalObstruction(leftPos, downPos)) {
             var leftDownPos = position.Translate(xTranslation: -1, yTranslation: -1);
-            if (IsReachable(leftDownPos)) {
+            if (IsWalkableNeighbor(leftDownPos, considerObstaclesObstructions, allowedNeighborhood)) {
                 yield return leftDownPos;
             }
         }
 
-        if (isRightReachable || isUpReachable) {
+        if (!considerObstaclesObstructions || !IsDiagonalObstruction(rightPos, upPos)) {
             var rightUpPos = position.Translate(xTranslation: 1, yTranslation: 1);
-            if (IsReachable(rightUpPos)) {
+            if (IsWalkableNeighbor(rightUpPos, considerObstaclesObstructions, allowedNeighborhood)) {
                 yield return rightUpPos;
             }
         }
 
-        if (isRightReachable || isDownReachable) {
+        if (!considerObstaclesObstructions || !IsDiagonalObstruction(rightPos, downPos)) {
             var rightDownPos = position.Translate(xTranslation: 1, yTranslation: -1);
-            if (IsReachable(rightDownPos)) {
+            if (IsWalkableNeighbor(rightDownPos, considerObstaclesObstructions, allowedNeighborhood)) {
                 yield return rightDownPos;
             }
         }
+    }
+
+    /// <summary>
+    /// Determines is the given position is a walkable neighbor.
+    /// </summary>
+    /// <param name="pos">The position to check</param>
+    /// <param name="considerObstaclesObstructions">Whether to consider obstacles when deciding if a cell is walkable.</param>
+    /// <param name="allowedNeighborhood">The allowed neighbors. Does nothing if not specified.</param>
+    /// <returns>True if the cell is a walkable, allowed neighbor.</returns>
+    private bool IsWalkableNeighbor(Vector2 pos, bool considerObstaclesObstructions, IReadOnlySet<Vector2> allowedNeighborhood = null) {
+        if (allowedNeighborhood != null && !allowedNeighborhood.Contains(pos)) {
+            return false;
+        }
+
+        return IsWalkable(pos, considerObstaclesObstructions);
+    }
+
+    /// <summary>
+    /// Determines if the given cells would cause a diagonal obstruction.
+    /// It is assumed that that the given cells form a continuous diagonal line.
+    /// An obstruction occurs if all walkable obstructingCells are obstructed.
+    /// </summary>
+    /// <param name="obstructingCells">The cells that might cause an obstruction.</param>
+    /// <returns>True if the given cells would prevent movement.</returns>
+    private bool IsDiagonalObstruction(params Vector2[] obstructingCells) {
+        return obstructingCells
+            .Where(cell => IsWalkable(cell, considerObstaclesObstructions: false))
+            .All(cell => _obstructionMap.Contains(cell));
     }
 
     public Vector2 GetClosestWalkable(Vector2 position, int searchRadius = 8, HashSet<Vector2> allowedCells = null) {
@@ -475,6 +498,9 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     /// Initializes playableCells and walkableCells.
     /// </summary>
     private void InitCells() {
+        _playableCells.Clear();
+        _walkableCells.Clear();
+
         for (var x = 0; x < MaxX; x++) {
             for (var y = 0; y < MaxY; y++) {
                 var cell = new Vector2(x, y).AsWorldGridCenter();
