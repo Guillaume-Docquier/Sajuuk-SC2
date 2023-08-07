@@ -38,6 +38,8 @@ public class FootprintCalculator {
 
     private List<Vector2> GetRockFootprint(Unit rock) {
         var footprint = new List<Vector2>();
+        //footprint.Add(rock.Position.ToVector2().AsWorldGridCenter());
+        //return footprint;
         switch (rock.UnitType) {
             case Units.DestructibleDebris4x4:
             case Units.DestructibleRock4x4:

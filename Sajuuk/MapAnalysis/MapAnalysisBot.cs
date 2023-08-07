@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Sajuuk.Debugging.GraphicalDebugging;
 using Sajuuk.ExtensionMethods;
+using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using Sajuuk.MapAnalysis.RegionAnalysis;
 using Sajuuk.Wrapper;
@@ -14,6 +16,9 @@ public class MapAnalysisBot : IBot {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IRegionAnalyzer _regionAnalyzer;
+    private readonly IUnitsTracker _unitsTracker;
+    private readonly IRequestBuilder _requestBuilder;
+    private readonly ISc2Client _sc2Client;
 
     public Race Race => Race.Zerg;
 
@@ -21,24 +26,40 @@ public class MapAnalysisBot : IBot {
         IFrameClock frameClock,
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
-        IRegionAnalyzer regionAnalyzer
+        IRegionAnalyzer regionAnalyzer,
+        IUnitsTracker unitsTracker,
+        IRequestBuilder requestBuilder,
+        ISc2Client sc2Client
     ) {
         _frameClock = frameClock;
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
         _regionAnalyzer = regionAnalyzer;
+        _unitsTracker = unitsTracker;
+        _requestBuilder = requestBuilder;
+        _sc2Client = sc2Client;
     }
 
-    public Task OnFrame() {
+    public async Task OnFrame() {
         if (_frameClock.CurrentFrame == 0) {
             Logger.Important("Starting map analysis. Expect the game to freeze for a while.");
+
+            await _sc2Client.SendRequest(_requestBuilder.DebugRevealMap());
         }
 
+        // We need to see the rocks to kill them otherwise we use the snapshot id
+        // Revealing takes a few frames, which is why we're spamming like this
+        // We kill obstacles during map analysis because their footprint is inexact and prevent us from truly identifying walkable cells.
+        var obstaclesUnitTags = _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, Units.Obstacles).Select(unit => unit.Tag);
+        await _sc2Client.SendRequest(_requestBuilder.DebugKillUnits(obstaclesUnitTags));
+
+        // TODO GD Run Analyzers from here instead of from the controller
+        // TODO GD Save and load the playable tiles? --> Technically the region data contains all playable cells!
+        // TODO GD Killing rocks might be problematic for rocks that block expands?
+        // TODO GD We can have a different terrain tracker for map analysis that can snapshot obstacles before we kill them
         if (!_regionAnalyzer.IsAnalysisComplete) {
-            // DebugCoordinates();
+            DebugCoordinates();
         }
-
-        return Task.CompletedTask;
     }
 
     private void DebugCoordinates() {

@@ -83,6 +83,8 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
         if (_isInitialized) {
             _currentWalkMap = ParseWalkMap(gameInfo);
+            _terrainWalkMap = ParseWalkMap(gameInfo);
+            InitCells();
             return;
         }
 
@@ -496,6 +498,9 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     /// Initializes playableCells and walkableCells.
     /// </summary>
     private void InitCells() {
+        _playableCells.Clear();
+        _walkableCells.Clear();
+
         for (var x = 0; x < MaxX; x++) {
             for (var y = 0; y < MaxY; y++) {
                 var cell = new Vector2(x, y).AsWorldGridCenter();

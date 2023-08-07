@@ -17,6 +17,12 @@ public interface IRequestBuilder {
     public Request DebugCreateUnit(Owner owner, uint unitType, uint quantity, Vector3 position);
 
     /// <summary>
+    /// Creates a debug request to kill a set of units.
+    /// </summary>
+    /// <returns>A debug request to kill a set of units.</returns>
+    public Request DebugKillUnits(IEnumerable<ulong> unitTags);
+
+    /// <summary>
     /// Moves the camera somewhere on the map
     /// </summary>
     /// <param name="moveTo">The point to center the camera on</param>
