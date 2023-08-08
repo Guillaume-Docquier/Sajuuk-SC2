@@ -14,7 +14,7 @@ public interface IRequestBuilder {
     public Request RequestQueryBuildingPlacement(uint buildingType, Vector2 position);
     public Request RequestObservation(uint waitUntilFrame);
     public Request RequestGameInfo();
-    public Request DebugCreateUnit(Owner owner, uint unitType, uint quantity, Vector3 position);
+    public Request DebugCreateUnit(UnitOwner unitOwner, uint unitType, uint quantity, Vector3 position);
 
     /// <summary>
     /// Moves the camera somewhere on the map

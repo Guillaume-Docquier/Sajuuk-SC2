@@ -49,7 +49,7 @@ public class SpawnStuffScenario : IScenario {
 
             Logger.Debug("Spawning 1 probe on the main");
 
-            await _sc2Client.SendRequest(_requestBuilder.DebugCreateUnit(Owner.Enemy, Units.Probe, 3, main!.Position));
+            await _sc2Client.SendRequest(_requestBuilder.DebugCreateUnit(UnitOwner.Enemy, Units.Probe, 3, main!.Position));
             _controller.SetRealTime("SpawnStuffScenario");
 
             _isScenarioDone = true;

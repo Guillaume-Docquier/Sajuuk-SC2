@@ -164,7 +164,7 @@ public class RequestBuilder : IRequestBuilder {
         };
     }
 
-    public Request DebugCreateUnit(Owner owner, uint unitType, uint quantity, Vector3 position) {
+    public Request DebugCreateUnit(UnitOwner unitOwner, uint unitType, uint quantity, Vector3 position) {
         return new Request
         {
             Debug = new RequestDebug
@@ -175,7 +175,7 @@ public class RequestBuilder : IRequestBuilder {
                     {
                         CreateUnit = new DebugCreateUnit
                         {
-                            Owner = (int)owner,
+                            Owner = (int)unitOwner,
                             UnitType = unitType,
                             Quantity = quantity,
                             Pos = position.ToPoint2D(),
