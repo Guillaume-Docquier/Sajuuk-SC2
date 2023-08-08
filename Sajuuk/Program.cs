@@ -52,11 +52,11 @@ public class Program {
 
     private const string Version = "5_0_0";
 
-    private const string MapFileName = Maps.Season_2023_2.FileNames.AncientCistern;
+    private const string MapFileName = Maps.Season_2022_4.FileNames.CosmicSapphire;
     private const Race OpponentRace = Race.Random;
     private const Difficulty OpponentDifficulty = Difficulty.CheatInsane;
 
-    private const bool RealTime = false;
+    private const bool RealTime = true;
 
     public static bool DebugEnabled { get; private set; }
 

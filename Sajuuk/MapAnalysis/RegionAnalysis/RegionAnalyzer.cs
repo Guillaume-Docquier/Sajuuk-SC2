@@ -75,30 +75,13 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             return;
         }
 
-        Logger.Info($"Starting region analysis on {_terrainTracker.PlayableCells.Count} cells ({_terrainTracker.MaxX}x{_terrainTracker.MaxY})");
+        var cellsToConsider = _terrainTracker.PlayableCells;
+        Logger.Info($"Starting region analysis on {cellsToConsider.Count} cells ({_terrainTracker.MaxX}x{_terrainTracker.MaxY})");
 
-        var ramps = _rampFinder.FindRamps(_terrainTracker.PlayableCells);
-
-        var allRampCells = ramps.SelectMany(ramp => ramp.Cells);
-        var (regionsPotentialCells, potentialRegionCellsNoise) = ComputePotentialRegionCells(_terrainTracker.PlayableCells.Except(allRampCells));
-        var (potentialRegions, regionNoise) = ComputePotentialRegions(regionsPotentialCells);
-
+        var ramps = _rampFinder.FindRamps(cellsToConsider);
         var chokePoints = _chokeFinder.FindChokePoints();
-
-        // We order the regions to have a deterministic regions order.
-        // It'll also make it easier to find a region by its id because they're going to be left to right, bottom to top.
-        var regions = BuildRegions(potentialRegions, ramps, chokePoints)
-            .OrderBy(region => region.Center.Y)
-            .ThenBy(region => region.Center.X)
-            .ToList();
-
-        for (var regionId = 0; regionId < regions.Count; regionId++) {
-            regions[regionId].FinalizeCreation(regionId, regions);
-        }
-
-        var noise = regionNoise
-            .Concat(potentialRegionCellsNoise)
-            .ToList();
+        var regions = BuildRegions(cellsToConsider, ramps, chokePoints);
+        var noise = cellsToConsider.Except(regions.SelectMany(region => region.Cells));
 
         _regionsData = new RegionsData(regions.Select(region => region as Region).ToList(), ramps, noise, chokePoints);
         _regionsRepository.Save(_regionsData, gameInfo.MapName);
@@ -115,12 +98,47 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     }
 
     /// <summary>
+    /// Decomposes the given cells into regions, taking into account the ramps and potential choke points.
+    /// The returned regions should be deterministic, as in building the same regions should provide regions with the same ids, colors, cell order, etc.
+    /// </summary>
+    /// <param name="cellsToConsider">The cells to build regions from.</param>
+    /// <param name="ramps">The ramps on the map.</param>
+    /// <param name="potentialChokePoints">The potential choke points on the map.</param>
+    /// <returns>The detected regions.</returns>
+    private List<AnalyzedRegion> BuildRegions(IEnumerable<Vector2> cellsToConsider, IReadOnlyCollection<Ramp> ramps, IReadOnlyCollection<ChokePoint> potentialChokePoints) {
+        var allRampCells = ramps.SelectMany(ramp => ramp.Cells);
+        var regionsPotentialCells = ComputePotentialRegionCells(cellsToConsider.Except(allRampCells));
+        var potentialRegions = ComputePotentialRegions(regionsPotentialCells);
+
+        var regions = new List<AnalyzedRegion>();
+        foreach (var region in potentialRegions) {
+            var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints, saveSplitsAsImage: false);
+            regions.AddRange(subregions.Select(subregion => _regionFactory.CreateAnalyzedRegion(subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
+        }
+
+        regions.AddRange(ramps.Select(ramp => _regionFactory.CreateAnalyzedRegion(ramp.Cells, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
+
+        // We order the regions to have a deterministic regions order.
+        // It'll also make it easier to find a region by its id because they're going to be left to right, bottom to top.
+        regions = regions
+            .OrderBy(region => region.Center.Y)
+            .ThenBy(region => region.Center.X)
+            .ToList();
+
+        for (var regionId = 0; regionId < regions.Count; regionId++) {
+            regions[regionId].FinalizeCreation(regionId, regions);
+        }
+
+        return regions;
+    }
+
+    /// <summary>
     /// Computes the potential region cells.
     /// This computation will consider cells that have no reachable neighbors (isolated cells) as noise.
     /// </summary>
     /// <param name="cellsToConsider">The cells to decompose into regions.</param>
     /// <returns>The region cells and the cells that are considered noise.</returns>
-    private (List<Vector2> potentialRegionCells, List<Vector2> potentialRegionCellsNoise) ComputePotentialRegionCells(IEnumerable<Vector2> cellsToConsider) {
+    private IEnumerable<Vector2> ComputePotentialRegionCells(IEnumerable<Vector2> cellsToConsider) {
         var potentialRegionCells = cellsToConsider.ToHashSet();
 
         // Some cells have 0 reachable neighbors, which messes up the use of FloodFill.
@@ -130,7 +148,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             .Where(cell => !_terrainTracker.GetReachableNeighbors(cell, considerObstaclesObstructions: false).Any())
             .ToList();
 
-        return (potentialRegionCells.Except(isolatedCells).ToList(), isolatedCells);
+        return potentialRegionCells.Except(isolatedCells);
     }
 
     /// <summary>
@@ -141,7 +159,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <returns>
     /// The potential regions and the cells that are not part of any region.
     /// </returns>
-    private (List<HashSet<Vector2>> potentialRegions, IEnumerable<Vector2> regionsNoise) ComputePotentialRegions(IEnumerable<Vector2> regionCells) {
+    private List<HashSet<Vector2>> ComputePotentialRegions(IEnumerable<Vector2> regionCells) {
         // TODO Not sure this is needed since we already computed ramps and excluded them from the given regionCells
         var regionCells3d = regionCells.Select(cell => {
             // Highly penalize height differences during clustering
@@ -152,35 +170,20 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         }).ToList();
 
         var clusteringResult = _clustering.DBSCAN(regionCells3d, epsilon: _diagonalDistance + 0.04f, minPoints: 6);
-        var noise = clusteringResult.noise.Select(noise => noise.ToVector2()).ToHashSet();
 
         var potentialRegions = clusteringResult.clusters
             .Select(cluster => cluster.Select(cell => cell.ToVector2()).ToHashSet())
             .ToList();
 
         // Add noise to any neighboring region
-        foreach (var noisyCell in noise.ToList()) {
+        var noise = clusteringResult.noise.Select(noise => noise.ToVector2()).ToList();
+        foreach (var noisyCell in noise) {
             var mapCellNeighbors = noisyCell.GetNeighbors();
             var regionToAddTo = potentialRegions.FirstOrDefault(potentialRegion => mapCellNeighbors.Any(potentialRegion.Contains));
-            if (regionToAddTo != default) {
-                regionToAddTo.Add(noisyCell);
-                noise.Remove(noisyCell);
-            }
+            regionToAddTo?.Add(noisyCell);
         }
 
-        return (potentialRegions, noise);
-    }
-
-    private List<AnalyzedRegion> BuildRegions(List<HashSet<Vector2>> potentialRegions, List<Ramp> ramps, List<ChokePoint> potentialChokePoints) {
-        var regions = new List<AnalyzedRegion>();
-        foreach (var region in potentialRegions) {
-            var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints, saveSplitsAsImage: false);
-            regions.AddRange(subregions.Select(subregion => _regionFactory.CreateAnalyzedRegion(subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
-        }
-
-        regions.AddRange(ramps.Select(ramp => _regionFactory.CreateAnalyzedRegion(ramp.Cells, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
-
-        return regions;
+        return potentialRegions;
     }
 
     /// <summary>
