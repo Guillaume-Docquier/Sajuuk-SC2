@@ -29,6 +29,6 @@ public class FlyingTerranScumScenario : IScenario {
             return;
         }
 
-        await _sc2Client.SendRequest(_requestBuilder.DebugCreateUnit(Owner.Enemy, Units.CommandCenterFlying, 1, _terrainTracker.WithWorldHeight(_terrainTracker.EnemyStartingLocation)));
+        await _sc2Client.SendRequest(_requestBuilder.DebugCreateUnit(UnitOwner.Enemy, Units.CommandCenterFlying, 1, _terrainTracker.WithWorldHeight(_terrainTracker.EnemyStartingLocation)));
     }
 }

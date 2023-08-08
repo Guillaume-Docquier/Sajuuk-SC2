@@ -1,7 +1,7 @@
 ﻿namespace Sajuuk.Wrapper;
 
 // Used when spawning debug units
-public enum Owner {
+public enum UnitOwner {
     Neutral = 0,
     Self = 1,
     // LooksLikeEnemyNotSureWhatThisIs = 2,

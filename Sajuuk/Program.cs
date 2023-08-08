@@ -68,6 +68,7 @@ public class Program {
                         Maps.GetAllFileNames()
                             // Blackburn has an isolated expand that breaks the analysis, we'll fix it if it comes back to the map pool
                             .Except(new [] { Maps.Season_2022_3.FileNames.Blackburn })
+                            .ToList()
                     );
                     break;
                 case 1 when args[0] == "--videoClip":
@@ -92,42 +93,45 @@ public class Program {
         PlayMapAnalysis(mapFileNames.ToList());
     }
 
-    private static void PlayMapAnalysis(IEnumerable<string> mapFileNames) {
-        Logger.Info("Game launched in map analysis mode");
+    private static void PlayMapAnalysis(List<string> mapFileNames) {
+        Logger.Info($"Game launched in map analysis mode ({mapFileNames.Count} maps to analyze)");
         DebugEnabled = true;
 
+        var mapIndex = 1;
         foreach (var mapFileName in mapFileNames) {
             var services = CreateServices(mapFileName, graphicalDebugging: true, dataGeneration: true);
-            // TODO GD Create a game connection for map analysis
-            var botRunner = new DeprecatedBotRunner(
-                services.UnitsTracker,
-                services.ExpandAnalyzer,
-                services.RegionAnalyzer,
-                services.GraphicalDebugger,
-                services.KnowledgeBase,
-                services.FrameClock,
-                services.Controller,
-                services.RequestBuilder,
-                services.Pathfinder,
-                services.ActionService,
+
+            var game = new LocalGame(
                 services.Sc2Client,
-                stepSize: 1
+                services.RequestBuilder,
+                mapFileName,
+                Race.Terran,
+                Difficulty.VeryEasy,
+                realTime: false
             );
 
-            Logger.Important($"Analyzing map: {mapFileName}");
-            botRunner.RunLocal(
+            var botRunner = new MapAnalysisBotRunner(
+                game,
+                services.Sc2Client,
+                services.KnowledgeBase,
+                services.RequestBuilder,
+                services.GraphicalDebugger,
+                services.Controller
+            );
+
+            Logger.Important($"Analyzing map: {mapFileName} ({mapIndex}/{mapFileNames.Count})");
+            botRunner.RunBot(
                 new MapAnalysisBot(
                     services.FrameClock,
                     services.TerrainTracker,
                     services.GraphicalDebugger,
-                    services.RegionAnalyzer
-                ),
-                mapFileName,
-                Race.Zerg,
-                Difficulty.VeryEasy,
-                realTime: false,
-                runDataAnalyzersOnly: true // TODO GD Should be handled by a specialized game connection instead
+                    services.ExpandAnalyzer,
+                    services.RegionAnalyzer,
+                    services.Sc2Client
+                )
             ).Wait();
+
+            mapIndex++;
         }
     }
 
@@ -139,7 +143,7 @@ public class Program {
         var game = new LocalGame(
             services.Sc2Client,
             services.RequestBuilder,
-            MapFileName,
+            mapFileName,
             Race.Terran,
             Difficulty.VeryEasy,
             realTime: true
@@ -167,7 +171,7 @@ public class Program {
             services.RequestBuilder,
             services.Sc2Client,
             new AnimationFactory(services.TerrainTracker, services.GraphicalDebugger, services.Controller, services.RequestBuilder, services.Sc2Client),
-            MapFileName
+            mapFileName
         );
 
         Logger.Info("Game launched in video clip mode");
@@ -182,7 +186,7 @@ public class Program {
         var game = new LocalGame(
             services.Sc2Client,
             services.RequestBuilder,
-            MapFileName,
+            mapFileName,
             OpponentRace,
             OpponentDifficulty,
             RealTime

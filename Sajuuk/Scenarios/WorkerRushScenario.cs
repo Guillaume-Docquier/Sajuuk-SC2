@@ -52,7 +52,7 @@ public class WorkerRushScenario : IScenario {
             Logger.Debug("Spawning 12 zerglings {0} units away from main", 0);
 
             // Spawned drones wouldn't be aggressive so we spawn zerglings instead
-            await _sc2Client.SendRequest(_requestBuilder.DebugCreateUnit(Owner.Enemy, Units.Zergling, 12, _terrainTracker.WithWorldHeight(mainPosition)));
+            await _sc2Client.SendRequest(_requestBuilder.DebugCreateUnit(UnitOwner.Enemy, Units.Zergling, 12, _terrainTracker.WithWorldHeight(mainPosition)));
             _controller.SetRealTime("Worker rush started");
 
             _isScenarioDone = true;

@@ -57,11 +57,15 @@ public class BotRunner : IBotRunner {
     public async Task RunBot(IBot bot) {
         await _game.Setup();
         var playerId = await _game.Join(bot.Race);
+        await InitializeKnowledgeBase();
 
         await RunGameLoops(bot, playerId);
     }
 
-    private async Task RunGameLoops(IBot bot, uint playerId) {
+    /// <summary>
+    /// Initializes the knowledge base by requesting the data from the API.
+    /// </summary>
+    private async Task InitializeKnowledgeBase() {
         var dataRequest = new Request
         {
             Data = new RequestData
@@ -75,29 +79,25 @@ public class BotRunner : IBotRunner {
         };
         var dataResponse = await _sc2Client.SendRequest(dataRequest);
         _knowledgeBase.Data = dataResponse.Data;
+    }
 
+    /// <summary>
+    /// Runs game loops with the bot until the game is over.
+    /// </summary>
+    /// <param name="bot">The bot that plays.</param>
+    /// <param name="playerId">The player id of the bot.</param>
+    private async Task RunGameLoops(IBot bot, uint playerId) {
         while (true) {
             // _frameClock.CurrentFrame is uint.MaxValue until we request frame 0
             var nextFrame = _frameClock.CurrentFrame == uint.MaxValue ? 0 : _frameClock.CurrentFrame + _stepSize;
             var observationResponse = await _sc2Client.SendRequest(_requestBuilder.RequestObservation(nextFrame));
 
-            if (observationResponse.Status is Status.Quit) {
-                Logger.Info("Game was terminated.");
+            if (HandleGameTermination(observationResponse, playerId)) {
+                _performanceDebugger.LogAveragePerformance();
                 break;
             }
 
             var observation = observationResponse.Observation;
-            if (observationResponse.Status is Status.Ended) {
-                _performanceDebugger.LogAveragePerformance();
-
-                foreach (var result in observation.PlayerResult) {
-                    if (result.PlayerId == playerId) {
-                        Logger.Info("Result: {0}", result.Result);
-                    }
-                }
-
-                break;
-            }
 
             await RunBotFrame(bot, observation);
 
@@ -109,6 +109,31 @@ public class BotRunner : IBotRunner {
         }
     }
 
+    /// <summary>
+    /// Handles the case where the game was terminated.
+    /// </summary>
+    /// <param name="observationResponse">The game observation response.</param>
+    /// <param name="playerId">The player id of the bot.</param>
+    /// <returns>True if the game has ended, false otherwise.</returns>
+    private static bool HandleGameTermination(Response observationResponse, uint playerId) {
+        switch (observationResponse.Status) {
+            case Status.Quit:
+                Logger.Info("Game was terminated.");
+                return true;
+            case Status.Ended:
+                var gameResult = observationResponse.Observation.PlayerResult.First(result => result.PlayerId == playerId);
+                Logger.Info($"Game is over, result: {gameResult.Result}");
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Runs the bot and anything bot related and mesures their CPU time performance.
+    /// </summary>
+    /// <param name="bot">The bot that plays.</param>
+    /// <param name="observation">The game loop observation.</param>
     private async Task RunBotFrame(IBot bot, ResponseObservation observation) {
         var gameInfoResponse = await _sc2Client.SendRequest(_requestBuilder.RequestGameInfo());
 
