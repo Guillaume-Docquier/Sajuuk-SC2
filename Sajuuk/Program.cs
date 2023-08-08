@@ -56,7 +56,7 @@ public class Program {
     private const Race OpponentRace = Race.Random;
     private const Difficulty OpponentDifficulty = Difficulty.CheatInsane;
 
-    private const bool RealTime = true;
+    private const bool RealTime = false;
 
     public static bool DebugEnabled { get; private set; }
 

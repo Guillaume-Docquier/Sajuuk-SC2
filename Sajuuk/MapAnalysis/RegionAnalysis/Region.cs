@@ -58,6 +58,8 @@ public class Region : IRegion {
         return Neighbors
             .Where(neighbor => !neighbor.Region.IsObstructed)
             .Where(neighbor => {
+                // TODO GD This is super expensive, we should cache it and only run if there are obstacles in the region or the neighbors
+                return true;
                 // A neighbor is only reachable if both centers can be reached using only the regions cells
                 var cells = Cells.Concat(neighbor.Region.Cells).Except(_terrainTracker.ObstructedCells).ToHashSet();
 
@@ -74,9 +76,7 @@ public class Region : IRegion {
     }
 
     public void UpdateObstruction() {
-        if (IsObstructed) {
-            IsObstructed = IsRegionObstructed();
-        }
+        IsObstructed = IsRegionObstructed();
     }
 
     protected bool IsRegionObstructed() {
