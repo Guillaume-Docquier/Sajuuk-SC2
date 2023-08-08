@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
 using Sajuuk.Algorithms;
+using Sajuuk.ExtensionMethods;
 using Sajuuk.GameSense;
 using Sajuuk.MapAnalysis.ExpandAnalysis;
 using SC2APIProtocol;
@@ -57,13 +58,17 @@ public class Region : IRegion {
         return Neighbors
             .Where(neighbor => !neighbor.Region.IsObstructed)
             .Where(neighbor => {
-                // A neighbor is only reachable if both regions can be merged after removing the obstructed cells
+                // A neighbor is only reachable if both centers can be reached using only the regions cells
                 var cells = Cells.Concat(neighbor.Region.Cells).Except(_terrainTracker.ObstructedCells).ToHashSet();
 
-                // TODO GD This should be inexpensive since regions are small, but the result will only ever change when rocks get destroyed. We should cache the result.
-                var merge = _clustering.FloodFill(cells, cells.First()).ToList();
+                // Regions centers might be obstructed
+                var r1Center = cells.MinBy(cell => cell.DistanceTo(Center));
+                var r2Center = cells.MinBy(cell => cell.DistanceTo(neighbor.Region.Center));
 
-                return cells.Count == merge.Count;
+                // TODO GD This should be inexpensive since regions are small, but the result will only ever change when rocks get destroyed. We should cache the result.
+                var floodFill = _clustering.FloodFill(cells, r1Center).ToHashSet();
+
+                return floodFill.Contains(r2Center);
             })
             .Select(neighbor => neighbor.Region);
     }
