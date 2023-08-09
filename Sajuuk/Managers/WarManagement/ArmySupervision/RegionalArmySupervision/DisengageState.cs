@@ -87,7 +87,7 @@ public class DisengageState : RegionalArmySupervisionState {
         }
 
         return supervisedUnits
-            .Where(unit => _regionsEvaluationsTracker.GetForce(unit.GetRegion(), Alliance.Enemy) <= 0)
+            .Where(unit => _regionsEvaluationsTracker.GetForce(unit.GetRegion(), Alliance.Enemy) <= 0 || !enemyArmy.Any(enemy => enemy.IsInSightRangeOf(unit)))
             .ToHashSet();
     }
 
