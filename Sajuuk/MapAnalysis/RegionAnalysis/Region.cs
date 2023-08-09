@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Text.Json.Serialization;
 using Sajuuk.Algorithms;
 using Sajuuk.ExtensionMethods;
+using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using Sajuuk.MapAnalysis.ExpandAnalysis;
 using SC2APIProtocol;
@@ -15,6 +16,7 @@ public class Region : IRegion {
     private ITerrainTracker _terrainTracker;
     private IClustering _clustering;
     private IPathfinder _pathfinder;
+    private IUnitsTracker _unitsTracker;
 
     [JsonInclude] public int Id { get; set; }
     [JsonInclude] public Color Color { get; set; }
@@ -37,62 +39,60 @@ public class Region : IRegion {
     public Region(
         ITerrainTracker terrainTracker,
         IClustering clustering,
-        IPathfinder pathfinder
+        IPathfinder pathfinder,
+        IUnitsTracker unitsTracker
     ) {
         _terrainTracker = terrainTracker;
         _clustering = clustering;
         _pathfinder = pathfinder;
+        _unitsTracker = unitsTracker;
     }
 
     public void SetDependencies(
         ITerrainTracker terrainTracker,
         IClustering clustering,
-        IPathfinder pathfinder
+        IPathfinder pathfinder,
+        IUnitsTracker unitsTracker
     ) {
         _terrainTracker = terrainTracker;
         _clustering = clustering;
         _pathfinder = pathfinder;
+        _unitsTracker = unitsTracker;
     }
 
     public IEnumerable<IRegion> GetReachableNeighbors() {
         return Neighbors
             .Where(neighbor => !neighbor.Region.IsObstructed)
-            .Where(neighbor => {
-                // TODO GD This is super expensive, we should cache it and only run if there are obstacles in the region or the neighbors
-                return true;
-                // A neighbor is only reachable if both centers can be reached using only the regions cells
-                var cells = Cells.Concat(neighbor.Region.Cells).Except(_terrainTracker.ObstructedCells).ToHashSet();
-
-                // Regions centers might be obstructed
-                var r1Center = cells.MinBy(cell => cell.DistanceTo(Center));
-                var r2Center = cells.MinBy(cell => cell.DistanceTo(neighbor.Region.Center));
-
-                // TODO GD This should be inexpensive since regions are small, but the result will only ever change when rocks get destroyed. We should cache the result.
-                var floodFill = _clustering.FloodFill(cells, r1Center).ToHashSet();
-
-                return floodFill.Contains(r2Center);
-            })
             .Select(neighbor => neighbor.Region);
     }
 
+    // TODO GD Regions should track units in their region and update obstructions themselves when these units die
     public void UpdateObstruction() {
         IsObstructed = IsRegionObstructed();
     }
 
     protected bool IsRegionObstructed() {
-        // I **think** only ramps can be obstructed
-        if (Type != RegionType.Ramp) {
+        if (Type == RegionType.Expand) {
+            // Expands are never obstructed
             return false;
         }
 
-        if (!Cells.Any(cell => _terrainTracker.IsWalkable(cell))) {
+        if (Cells.All(cell => !_terrainTracker.IsWalkable(cell))) {
             return true;
+        }
+
+        var obstaclesInRegion = _unitsTracker
+            .GetUnits(_unitsTracker.NeutralUnits, Units.Obstacles.Concat(Units.MineralFields).ToHashSet())
+            .Where(obstacle => Cells.Contains(obstacle.Position.ToVector2().AsWorldGridCenter()));
+
+        if (!obstaclesInRegion.Any()) {
+            return false;
         }
 
         var frontier = Neighbors.SelectMany(neighbor => neighbor.Frontier).ToList();
         var clusteringResult = _clustering.DBSCAN(frontier, epsilon: (float)Math.Sqrt(2), minPoints: 1);
         if (clusteringResult.clusters.Count != 2) {
-            Logger.Error("This ramp has {0} frontiers instead of the expected 2", clusteringResult.clusters.Count);
+            Logger.Warning($"Region {Id} has {clusteringResult.clusters.Count} frontiers instead of 2, we cannot determine if it is obstructed.");
             return false;
         }
 

@@ -14,6 +14,7 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
     private readonly IPathfinder _pathfinder;
     private readonly FootprintCalculator _footprintCalculator;
     private readonly IMapImageFactory _mapImageFactory;
+    private readonly IUnitsTracker _unitsTracker;
 
     private readonly JsonMapDataRepository<RegionsData> _jsonMapDataRepository;
 
@@ -39,13 +40,15 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
         IClustering clustering,
         IPathfinder pathfinder,
         FootprintCalculator footprintCalculator,
-        IMapImageFactory mapImageFactory
+        IMapImageFactory mapImageFactory,
+        IUnitsTracker unitsTracker
     ) {
         _terrainTracker = terrainTracker;
         _clustering = clustering;
         _pathfinder = pathfinder;
         _footprintCalculator = footprintCalculator;
         _mapImageFactory = mapImageFactory;
+        _unitsTracker = unitsTracker;
 
         _jsonMapDataRepository = new JsonMapDataRepository<RegionsData>(mapFileName => FileNameFormatter.FormatDataFileName(FileNameId, mapFileName, "json"));
     }
@@ -67,7 +70,7 @@ public class RegionsDataRepository : IMapDataRepository<RegionsData> {
     public RegionsData Load(string mapFileName) {
         var regionsData = _jsonMapDataRepository.Load(mapFileName);
 
-        regionsData.Regions.ForEach(region => region.SetDependencies(_terrainTracker, _clustering, _pathfinder));
+        regionsData.Regions.ForEach(region => region.SetDependencies(_terrainTracker, _clustering, _pathfinder, _unitsTracker));
 
         return regionsData;
     }

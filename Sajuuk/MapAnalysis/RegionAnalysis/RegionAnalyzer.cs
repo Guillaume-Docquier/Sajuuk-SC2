@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using Sajuuk.ExtensionMethods;
 using Sajuuk.Algorithms;
+using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using Sajuuk.MapAnalysis.ExpandAnalysis;
 using Sajuuk.MapAnalysis.RegionAnalysis.ChokePoints;
@@ -24,6 +25,8 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     private readonly IRampFinder _rampFinder;
     private readonly IRegionFactory _regionFactory;
     private readonly IMapImageFactory _mapImageFactory;
+    private readonly IUnitsTracker _unitsTracker;
+    private readonly FootprintCalculator _footprintCalculator;
     private readonly string _mapFileName;
 
     private const float RegionZMultiplier = 8;
@@ -49,6 +52,8 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         IRampFinder rampFinder,
         IRegionFactory regionFactory,
         IMapImageFactory mapImageFactory,
+        IUnitsTracker unitsTracker,
+        FootprintCalculator footprintCalculator,
         string mapFileName
     ) {
         _terrainTracker = terrainTracker;
@@ -59,6 +64,8 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         _rampFinder = rampFinder;
         _regionFactory = regionFactory;
         _mapImageFactory = mapImageFactory;
+        _unitsTracker = unitsTracker;
+        _footprintCalculator = footprintCalculator;
         _mapFileName = mapFileName;
     }
 
@@ -80,7 +87,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
 
         var ramps = _rampFinder.FindRamps(cellsToConsider);
         var chokePoints = _chokeFinder.FindChokePoints();
-        var regions = BuildRegions(cellsToConsider, ramps, chokePoints);
+        var regions = FindRegions(cellsToConsider, ramps, chokePoints);
         var noise = cellsToConsider.Except(regions.SelectMany(region => region.Cells));
 
         _regionsData = new RegionsData(regions.Select(region => region as Region).ToList(), ramps, noise, chokePoints);
@@ -105,12 +112,16 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <param name="ramps">The ramps on the map.</param>
     /// <param name="potentialChokePoints">The potential choke points on the map.</param>
     /// <returns>The detected regions.</returns>
-    private List<AnalyzedRegion> BuildRegions(IEnumerable<Vector2> cellsToConsider, IReadOnlyCollection<Ramp> ramps, IReadOnlyCollection<ChokePoint> potentialChokePoints) {
-        var allRampCells = ramps.SelectMany(ramp => ramp.Cells);
-        var regionsPotentialCells = ComputePotentialRegionCells(cellsToConsider.Except(allRampCells));
+    private List<AnalyzedRegion> FindRegions(IReadOnlyCollection<Vector2> cellsToConsider, IReadOnlyCollection<Ramp> ramps, IReadOnlyCollection<ChokePoint> potentialChokePoints) {
+        var regions = ComputeObstaclesRegions(cellsToConsider, ramps);
+
+        var cellToConsiderForRegionSplit = cellsToConsider
+            .Except(ramps.SelectMany(ramp => ramp.Cells))
+            .Except(regions.SelectMany(region => region.Cells));
+
+        var regionsPotentialCells = ComputePotentialRegionCells(cellToConsiderForRegionSplit);
         var potentialRegions = ComputePotentialRegions(regionsPotentialCells);
 
-        var regions = new List<AnalyzedRegion>();
         foreach (var region in potentialRegions) {
             var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints, saveSplitsAsImage: false);
             regions.AddRange(subregions.Select(subregion => _regionFactory.CreateAnalyzedRegion(subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
@@ -130,6 +141,63 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         }
 
         return regions;
+    }
+
+    /// <summary>
+    /// Some obstacles create barriers between future regions.
+    /// We'll create dedicated regions for these obstacles.
+    /// It will make it easier to determine unreachable regions later on.
+    /// </summary>
+    /// <param name="cellsToConsider">The cells to find regions from.</param>
+    /// <param name="ramps">The ramps on the map.</param>
+    /// <returns>A list of regions made from obstacles.</returns>
+    private List<AnalyzedRegion> ComputeObstaclesRegions(IReadOnlyCollection<Vector2> cellsToConsider, IReadOnlyCollection<Ramp> ramps) {
+        var allRampsCells = ramps.SelectMany(ramp => ramp.Cells).ToHashSet();
+        var obstacleGroups = ComputeObstacleGroups(cellsToConsider.Except(allRampsCells));
+
+        var regions = new List<AnalyzedRegion>();
+        foreach (var obstacleGroup in obstacleGroups) {
+            var borderingCells = ComputeBorderingCells(obstacleGroup.ToHashSet());
+            var borderingCellsGroups = borderingCells.GroupBy(cell => _terrainTracker.IsWalkable(cell, considerObstaclesObstructions: false));
+
+            var nbClusters = borderingCellsGroups
+                .Select(group => _clustering.DBSCAN(group.ToList(), epsilon: (float)Math.Sqrt(2), minPoints: 1).clusters)
+                .Select(clusters => clusters.Count)
+                .Sum();
+
+            // 4 or more clusters means we have 2 sides of the obstacle that are walkable, and two sides that are unwalkable.
+            if (nbClusters >= 4) {
+                regions.Add(_regionFactory.CreateAnalyzedRegion(obstacleGroup, RegionType.OpenArea, _expandAnalyzer.ExpandLocations));
+            }
+        }
+
+        return regions;
+    }
+
+    /// <summary>
+    /// Groups adjacent obstacles together and returns the set of their footprints.
+    /// </summary>
+    /// <param name="cellsToConsider">The cells to find obstacles in.</param>
+    /// <returns>The list of all obstacle groups.</returns>
+    private List<List<Vector2>> ComputeObstacleGroups(IEnumerable<Vector2> cellsToConsider) {
+        var cells = _unitsTracker
+            .GetUnits(_unitsTracker.NeutralUnits, Units.Obstacles.Concat(Units.MineralFields).ToHashSet())
+            .SelectMany(_footprintCalculator.GetFootprint)
+            .Where(cellsToConsider.Contains)
+            .ToList();
+
+        return _clustering.DBSCAN(cells, epsilon: (float)Math.Sqrt(2), minPoints: 1).clusters;
+    }
+
+    /// <summary>
+    /// Computes the cells that outline the given cellGroup.
+    /// </summary>
+    /// <param name="cellGroup">The cells to get the bordering cells of.</param>
+    /// <returns>All cells that touch a cell in the given cell group.</returns>
+    private static IEnumerable<Vector2> ComputeBorderingCells(IReadOnlySet<Vector2> cellGroup) {
+        return cellGroup
+            .SelectMany(cell => cell.GetNeighbors())
+            .Where(neighbor => !cellGroup.Contains(neighbor));
     }
 
     /// <summary>
@@ -325,32 +393,20 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             mapImage.SetCellColor(cell, Color.Teal);
         }
 
-        var allRegionNeighborsAreReachable = true;
         foreach (var region in Regions) {
             var neighbors = region.Neighbors.Select(neighbor => neighbor.Region);
             var reachableNeighbors = region.GetReachableNeighbors();
             var unreachableNeighbors = neighbors.Except(reachableNeighbors).ToList();
 
-            if (unreachableNeighbors.Any()) {
-                allRegionNeighborsAreReachable = false;
-                var obstructionMessage = region.IsObstructed ? " (obstructed)" : "";
-                var unreachableNeighborsIds = unreachableNeighbors.Select(neighbor => neighbor.Id);
-                Logger.Debug($"Region {region.Id}{obstructionMessage} has {unreachableNeighbors.Count} unreachable neighbors [{string.Join(",", unreachableNeighborsIds)}]");
-
-                // Draw unreachable neighbors
-                foreach (var unreachableNeighbor in unreachableNeighbors) {
-                    foreach (var cell in region.Center.GetPointsInBetween(unreachableNeighbor.Center)) {
-                        mapImage.SetCellColor(cell, Color.Red);
-                    }
-
-                    mapImage.SetCellColor(region.Center, Color.MediumBlue);
-                    mapImage.SetCellColor(unreachableNeighbor.Center, Color.MediumBlue);
+            // Draw unreachable neighbors
+            foreach (var unreachableNeighbor in unreachableNeighbors) {
+                foreach (var cell in region.Center.GetPointsInBetween(unreachableNeighbor.Center)) {
+                    mapImage.SetCellColor(cell, Color.Red);
                 }
-            }
-        }
 
-        if (allRegionNeighborsAreReachable) {
-            Logger.Debug("All region neighbors are reachable");
+                mapImage.SetCellColor(region.Center, Color.MediumBlue);
+                mapImage.SetCellColor(unreachableNeighbor.Center, Color.MediumBlue);
+            }
         }
 
         mapImage.Save(FileNameFormatter.FormatDataFileName("UnreachableNeighbors", _mapFileName, "png"));

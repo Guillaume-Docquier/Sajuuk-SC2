@@ -26,10 +26,11 @@ public class AnalyzedRegion : Region {
         ITerrainTracker terrainTracker,
         IClustering clustering,
         IPathfinder pathfinder,
+        IUnitsTracker unitsTracker,
         IEnumerable<Vector2> cells,
         RegionType type,
         IEnumerable<ExpandLocation> expandLocations
-    ) : base(terrainTracker, clustering, pathfinder) {
+    ) : base(terrainTracker, clustering, pathfinder, unitsTracker) {
         // We order the cells to have a deterministic structure when persisting.
         // When enumerated, hashsets keep the insertion order.
         Cells = cells
