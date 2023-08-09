@@ -52,7 +52,7 @@ public class Program {
 
     private const string Version = "5_0_0";
 
-    private const string MapFileName = Maps.Season_2022_4.FileNames.CosmicSapphire;
+    private const string MapFileName = Maps.CosmicSapphire;
     private const Race OpponentRace = Race.Random;
     private const Difficulty OpponentDifficulty = Difficulty.CheatInsane;
 
@@ -65,9 +65,9 @@ public class Program {
             switch (args.Length) {
                 case 1 when args[0] == "--mapAnalysis":
                     PlayMapAnalysis(
-                        Maps.GetAllFileNames()
+                        Maps.GetAll()
                             // Blackburn has an isolated expand that breaks the analysis, we'll fix it if it comes back to the map pool
-                            .Except(new [] { Maps.Season_2022_3.FileNames.Blackburn })
+                            .Except(new [] { Maps.Blackburn })
                             .ToList()
                     );
                     break;

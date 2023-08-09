@@ -15,19 +15,19 @@ public class ColorService {
 
     public static void SetMap(string mapName) {
         switch (mapName) {
-            case Maps.Season_2022_4.FileNames.Stargazers:
+            case Maps.Stargazers:
                 Instance.PointColor = Colors.Purple;
                 Instance.RayColor = Colors.Green;
                 Instance.UnwalkableCellColor = Colors.LightRed;
                 Instance.WalkableCellColor = Colors.CornflowerBlue;
                 break;
-            case Maps.Season_2022_4.FileNames.CosmicSapphire:
+            case Maps.CosmicSapphire:
                 Instance.PointColor = Colors.Magenta;
                 Instance.RayColor = Colors.Green;
                 Instance.UnwalkableCellColor = Colors.Red;
                 Instance.WalkableCellColor =  Colors.Blue;
                 break;
-            case Maps.Season_2022_4.FileNames.Hardwire:
+            case Maps.Hardwire:
                 Instance.PointColor = Colors.Magenta;
                 Instance.RayColor = Colors.Green;
                 Instance.UnwalkableCellColor = Colors.BrightRed;

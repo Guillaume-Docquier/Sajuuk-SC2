@@ -103,7 +103,7 @@ public class VideoClipBot : IBot {
 
     private IEnumerable<Clip> GetClipsForMap(string mapName) {
         switch (mapName) {
-            case Maps.Season_2022_4.FileNames.Stargazers:
+            case Maps.Stargazers:
                 yield return new PerpendicularLinesScanClip (_terrainTracker, _animationFactory, new Vector2(50.5f,  92.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new SingleRayCastingClip       (_terrainTracker, _animationFactory, new Vector2(99.5f,  52.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new NaiveRayCastClip           (_terrainTracker, _animationFactory, new Vector2(99.5f,  52.5f),  stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
@@ -116,7 +116,7 @@ public class VideoClipBot : IBot {
                 yield return new FullRayCastingClip         (_terrainTracker, _animationFactory, new Vector2(111.5f, 33.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new FullRayCastingClip         (_terrainTracker, _animationFactory, new Vector2(148.5f, 91.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 break;
-            case Maps.Season_2022_4.FileNames.CosmicSapphire:
+            case Maps.CosmicSapphire:
                 yield return new SingleRayCastingClip       (_terrainTracker, _animationFactory, new Vector2(132.5f, 47.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new NaiveRayCastClip           (_terrainTracker, _animationFactory, new Vector2(132.5f, 47.5f),  stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
                 yield return new NaiveRayCastClip           (_terrainTracker, _animationFactory, new Vector2(132.5f, 47.5f),  stepSize: 1.4f, pauseAtEndOfClipDurationSeconds: 5);
@@ -129,7 +129,7 @@ public class VideoClipBot : IBot {
                 yield return new FullRayCastingClip         (_terrainTracker, _animationFactory, new Vector2(134.5f, 133.5f), pauseAtEndOfClipDurationSeconds: 5);
                 yield return new FullRayCastingClip         (_terrainTracker, _animationFactory, new Vector2(32.5f,  94.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 break;
-            case Maps.Season_2022_4.FileNames.Hardwire:
+            case Maps.Hardwire:
                 yield return new PerpendicularLinesScanClip (_terrainTracker, _animationFactory, new Vector2(126.5f, 158.5f),  pauseAtEndOfClipDurationSeconds: 5);
                 yield return new SingleRayCastingClip       (_terrainTracker, _animationFactory, new Vector2(80.5f,  82.5f),   pauseAtEndOfClipDurationSeconds: 5);
                 yield return new NaiveRayCastClip           (_terrainTracker, _animationFactory, new Vector2(80.5f,  82.5f),   stepSize: 0.1f, pauseAtEndOfClipDurationSeconds: 5);
