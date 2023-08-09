@@ -14,6 +14,7 @@ public static class RayCasting {
     /// <summary>
     /// Ray cast from an origin at an angle in radians until the provided condition is met.
     /// 0 degrees would be ray casting in the Y axis (12 o'clock).
+    /// A positive angle will result in a counter clockwise rotation.
     /// </summary>
     /// <param name="origin">The origin of the ray</param>
     /// <param name="angleInRadians">The angle to ray cast</param>

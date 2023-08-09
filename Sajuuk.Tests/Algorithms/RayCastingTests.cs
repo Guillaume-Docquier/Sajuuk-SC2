@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using Sajuuk.Algorithms;
 using Sajuuk.ExtensionMethods;
+using Sajuuk.Utils;
 
 namespace Sajuuk.Tests.Algorithms;
 
@@ -62,5 +63,95 @@ public class RayCastingTests {
             Assert.Equal(expectedCell, rayCastingResults[i].CornerOfCell);
             Assert.Equal(expectedDistance, origin.DistanceTo(rayCastingResults[i].RayIntersection));
         }
+    }
+
+    public static IEnumerable<object[]> Angles() {
+        yield return new object[]
+        {
+            new Vector2(0, 0).AsWorldGridCenter(),
+            new Vector2(0, 2).AsWorldGridCenter(),
+            0,
+            new List<Vector2> { new Vector2(0, 0).AsWorldGridCenter(), new Vector2(0, 1).AsWorldGridCenter(), new Vector2(0, 2).AsWorldGridCenter() }
+        };
+        yield return new object[] {
+            new Vector2(0, 0).AsWorldGridCenter(),
+            new Vector2(-2, 2).AsWorldGridCenter(),
+            45,
+            // Probably due to rounding errors, 45 degrees doesn't create a clean line (but 135 and 315 do)
+            new List<Vector2>
+            {
+                new Vector2(0, 0).AsWorldGridCenter(),
+                new Vector2(0, 1).AsWorldGridCenter(),
+                new Vector2(-1, 1).AsWorldGridCenter(),
+                new Vector2(-1, 2).AsWorldGridCenter(),
+                new Vector2(-2, 2).AsWorldGridCenter()
+            }
+        };
+        yield return new object[] {
+            new Vector2(0, 0).AsWorldGridCenter(),
+            new Vector2(-2, 0).AsWorldGridCenter(),
+            90,
+            new List<Vector2> { new Vector2(0, 0).AsWorldGridCenter(), new Vector2(-1, 0).AsWorldGridCenter(), new Vector2(-2, 0).AsWorldGridCenter() }
+        };
+        yield return new object[] {
+            new Vector2(0, 0).AsWorldGridCenter(),
+            new Vector2(-2, -2).AsWorldGridCenter(),
+            135,
+            new List<Vector2> { new Vector2(0, 0).AsWorldGridCenter(), new Vector2(-1, -1).AsWorldGridCenter(), new Vector2(-2, -2).AsWorldGridCenter() }
+        };
+        yield return new object[] {
+            new Vector2(0, 0).AsWorldGridCenter(),
+            new Vector2(0, -2).AsWorldGridCenter(),
+            180,
+            new List<Vector2> { new Vector2(0, 0).AsWorldGridCenter(), new Vector2(0, -1).AsWorldGridCenter(), new Vector2(0, -2).AsWorldGridCenter() }
+        };
+        yield return new object[] {
+            new Vector2(0, 0).AsWorldGridCenter(),
+            new Vector2(2, -2).AsWorldGridCenter(),
+            225,
+            // Probably due to rounding errors, 225 degrees doesn't create a clean line (but 135 and 315 do)
+            new List<Vector2>
+            {
+                new Vector2(0, 0).AsWorldGridCenter(),
+                new Vector2(1, 0).AsWorldGridCenter(),
+                new Vector2(1, -1).AsWorldGridCenter(),
+                new Vector2(2, -1).AsWorldGridCenter(),
+                new Vector2(2, -2).AsWorldGridCenter()
+            }
+        };
+        yield return new object[] {
+            new Vector2(0, 0).AsWorldGridCenter(),
+            new Vector2(2, 0).AsWorldGridCenter(),
+            270,
+            new List<Vector2> { new Vector2(0, 0).AsWorldGridCenter(), new Vector2(1, 0).AsWorldGridCenter(), new Vector2(2, 0).AsWorldGridCenter() }
+        };
+        yield return new object[] {
+            new Vector2(0, 0).AsWorldGridCenter(),
+            new Vector2(2, 2).AsWorldGridCenter(),
+            315,
+            new List<Vector2> { new Vector2(0, 0).AsWorldGridCenter(), new Vector2(1, 1).AsWorldGridCenter(), new Vector2(2, 2).AsWorldGridCenter() }
+        };
+        yield return new object[] {
+            new Vector2(0, 0).AsWorldGridCenter(),
+            new Vector2(0, 2).AsWorldGridCenter(),
+            360,
+            new List<Vector2> { new Vector2(0, 0).AsWorldGridCenter(), new Vector2(0, 1).AsWorldGridCenter(), new Vector2(0, 2).AsWorldGridCenter() }
+        };
+    }
+
+    [Theory]
+    [MemberData(nameof(Angles))]
+    public void GivenAngles_WhenRayCasting_CastsUntilTargetIsMet(Vector2 origin, Vector2 target, double degAngle, List<Vector2> expectedCrossedCells) {
+        // Arrange
+        var radAngle = MathUtils.DegToRad(degAngle);
+
+        // Act
+        var rayCastingResults = RayCasting
+            .RayCast(origin, radAngle, cell => cell.AsWorldGridCenter() == target || cell.AsWorldGridCenter().DistanceTo(origin) > target.DistanceTo(origin))
+            .Select(rayCastingResult => rayCastingResult.CornerOfCell.AsWorldGridCenter())
+            .ToList();
+
+        // Assert
+        Assert.Equal(expectedCrossedCells, rayCastingResults);
     }
 }

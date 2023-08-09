@@ -1,20 +1,17 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
-	<s:Boolean x:Key="/Default/Environment/Filtering/ExcludeCoverageFilters/=Bot_002ETests_003B_002A_003B_002A_003B_002A/@EntryIndexedValue">True</s:Boolean>
-	<s:Boolean x:Key="/Default/Environment/Filtering/ExcludeCoverageFilters/=Bot_003B_002A_003BBot_002EVideoClips_002E_002A_003B_002A/@EntryIndexedValue">True</s:Boolean>
-	<s:Boolean x:Key="/Default/Environment/Filtering/ExcludeCoverageFilters/=Bot_003B_002A_003BBot_002EWrapper_002E_002A_003B_002A/@EntryIndexedValue">True</s:Boolean>
-	<s:Boolean x:Key="/Default/Environment/Filtering/ExcludeCoverageFilters/=S2ClientProtocol_003B_002A_003B_002A_003B_002A/@EntryIndexedValue">True</s:Boolean>
-	<s:Boolean x:Key="/Default/Environment/Filtering/ExcludeCoverageFilters/=Sajuuk_002Ddebug_002Dperformance_002Dtimings_003B_002A_003B_002A_003B_002A/@EntryIndexedValue">True</s:Boolean>
-	<s:Boolean x:Key="/Default/Environment/Filtering/ExcludeCoverageFilters/=Sajuuk_003B_002A_003B_002A_003B_002A/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/Environment/Filtering/ExcludeCoverageFilters/=Sajuuk_003B_002A_003BSajuuk_002EVideoClips_002E_002A_003B_002A/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/Environment/Filtering/IncludeCoverageFilters/=Sajuuk_003B_002A_003B_002A_003B_002A/@EntryIndexedValue">True</s:Boolean>
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/BuildTool/CustomBuildToolPath/@EntryValue">C:\Program Files\dotnet\sdk\6.0.301\MSBuild.dll</s:String>
 	<s:Int64 x:Key="/Default/Environment/Hierarchy/Build/BuildTool/MsbuildVersion/@EntryValue">1114112</s:Int64>
-	
+	<s:String x:Key="/Default/Environment/Highlighting/HighlightingSourceSnapshotLocation/@EntryValue">C:\Users\Guillaume\AppData\Local\JetBrains\Rider2023.2\resharper-host\temp\Rider\vAny\CoverageData\_Sajuuk.-632409588\Snapshot\snapshot.utdcvr</s:String>
+
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=4a340e41_002D2ea1_002D4e5c_002D875b_002Dcd06e13b69bd/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="All tests from Solution" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;Solution /&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=a86f4e6c_002Df4c1_002D4c0d_002Dac4b_002Da3da928660ba/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="All tests from Solution" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=a86f4e6c_002Df4c1_002D4c0d_002Dac4b_002Da3da928660ba/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from Solution" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;Solution /&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=f1fbafb4_002D0556_002D46cd_002Db20f_002D8bc74550aa69/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from Solution" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=f1fbafb4_002D0556_002D46cd_002Db20f_002D8bc74550aa69/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="All tests from Solution" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;Solution /&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Baneling/@EntryIndexedValue">True</s:Boolean>
