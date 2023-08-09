@@ -25,7 +25,9 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     public List<List<float>> HeightMap { get; private set; }
 
     private List<Unit> _obstacles;
-    private readonly HashSet<Vector2> _obstructionMap = new HashSet<Vector2>();
+    private readonly HashSet<Vector2> _obstructedCells = new HashSet<Vector2>();
+    public IReadOnlySet<Vector2> ObstructedCells => _obstructedCells;
+
     private List<List<bool>> _terrainWalkMap;
     private List<List<bool>> _currentWalkMap;
     private List<List<bool>> _buildMap;
@@ -129,7 +131,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         _obstacles.ForEach(obstacle => {
             obstacle.AddDeathWatcher(this);
             foreach (var cell in _footprintCalculator.GetFootprint(obstacle)) {
-                _obstructionMap.Add(cell);
+                _obstructedCells.Add(cell);
             }
         });
     }
@@ -137,7 +139,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
     private void RemoveObstacle(Unit obstacle) {
         _obstacles.Remove(obstacle);
         foreach (var cell in _footprintCalculator.GetFootprint(obstacle)) {
-            _obstructionMap.Remove(cell);
+            _obstructedCells.Remove(cell);
         }
     }
 
@@ -216,7 +218,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
                 // TODO GD This is problematic for _currentWalkMap
                 // On some maps, some tiles under destructibles are not walkable
                 // We'll consider them walkable, but they won't be until the obstacle is cleared
-                if (_obstructionMap.Contains(new Vector2(x, y).AsWorldGridCenter())) {
+                if (_obstructedCells.Contains(new Vector2(x, y).AsWorldGridCenter())) {
                     walkMap[x][y] = true;
                 }
             }
@@ -290,7 +292,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         }
 
         var isWalkable = _terrainWalkMap[(int)position.X][(int)position.Y];
-        var isObstructed = considerObstaclesObstructions && _obstructionMap.Contains(position.AsWorldGridCenter());
+        var isObstructed = considerObstaclesObstructions && _obstructedCells.Contains(position.AsWorldGridCenter());
 
         return isWalkable && !isObstructed;
     }
@@ -305,7 +307,7 @@ public class TerrainTracker : ITerrainTracker, INeedUpdating, IWatchUnitsDie {
         }
 
         var isBuildable = _buildMap[(int)position.X][(int)position.Y];
-        var isObstructed = considerObstaclesObstructions && _obstructionMap.Contains(position.AsWorldGridCenter());
+        var isObstructed = considerObstaclesObstructions && _obstructedCells.Contains(position.AsWorldGridCenter());
 
         return isBuildable && !isObstructed;
     }

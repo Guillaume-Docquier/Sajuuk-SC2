@@ -26,10 +26,11 @@ public class AnalyzedRegion : Region {
         ITerrainTracker terrainTracker,
         IClustering clustering,
         IPathfinder pathfinder,
+        IUnitsTracker unitsTracker,
         IEnumerable<Vector2> cells,
         RegionType type,
         IEnumerable<ExpandLocation> expandLocations
-    ) : base(terrainTracker, clustering, pathfinder) {
+    ) : base(terrainTracker, clustering, pathfinder, unitsTracker) {
         // We order the cells to have a deterministic structure when persisting.
         // When enumerated, hashsets keep the insertion order.
         Cells = cells
@@ -106,7 +107,7 @@ public class AnalyzedRegion : Region {
     /// </summary>
     /// <returns>A color that's different from the colors of all neighbors.</returns>
     private Color GetDifferentColorFromNeighbors() {
-        var neighborColors = GetReachableNeighbors().Select(neighbor => neighbor.Color).ToHashSet();
+        var neighborColors = Neighbors.Select(neighbor => neighbor.Region.Color).ToHashSet();
         if (!neighborColors.Contains(Color)) {
             return Color;
         }

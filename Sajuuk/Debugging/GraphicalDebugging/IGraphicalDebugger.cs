@@ -27,6 +27,8 @@ public interface IGraphicalDebugger {
 
     void AddLine(Vector3 start, Vector3 end, Color color);
 
+    void AddDashedLine(Vector3 start, Vector3 end, Color color, float dashLength = 0.25f);
+
     void AddArrowedLine(Vector3 start, Vector3 end, Color color);
 
     void AddLink(Unit start, Unit end, Color color);

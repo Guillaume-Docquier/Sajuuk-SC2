@@ -4,6 +4,8 @@ using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
 using Sajuuk.Algorithms;
+using Sajuuk.ExtensionMethods;
+using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using Sajuuk.MapAnalysis.ExpandAnalysis;
 using SC2APIProtocol;
@@ -14,6 +16,7 @@ public class Region : IRegion {
     private ITerrainTracker _terrainTracker;
     private IClustering _clustering;
     private IPathfinder _pathfinder;
+    private IUnitsTracker _unitsTracker;
 
     [JsonInclude] public int Id { get; set; }
     [JsonInclude] public Color Color { get; set; }
@@ -36,49 +39,60 @@ public class Region : IRegion {
     public Region(
         ITerrainTracker terrainTracker,
         IClustering clustering,
-        IPathfinder pathfinder
+        IPathfinder pathfinder,
+        IUnitsTracker unitsTracker
     ) {
         _terrainTracker = terrainTracker;
         _clustering = clustering;
         _pathfinder = pathfinder;
+        _unitsTracker = unitsTracker;
     }
 
     public void SetDependencies(
         ITerrainTracker terrainTracker,
         IClustering clustering,
-        IPathfinder pathfinder
+        IPathfinder pathfinder,
+        IUnitsTracker unitsTracker
     ) {
         _terrainTracker = terrainTracker;
         _clustering = clustering;
         _pathfinder = pathfinder;
+        _unitsTracker = unitsTracker;
     }
 
     public IEnumerable<IRegion> GetReachableNeighbors() {
         return Neighbors
-            .Select(neighbor => neighbor.Region)
-            .Where(neighbor => !neighbor.IsObstructed);
+            .Where(neighbor => !neighbor.Region.IsObstructed)
+            .Select(neighbor => neighbor.Region);
     }
 
+    // TODO GD Regions should track units in their region and update obstructions themselves when these units die
     public void UpdateObstruction() {
-        if (IsObstructed) {
-            IsObstructed = IsRegionObstructed();
-        }
+        IsObstructed = IsRegionObstructed();
     }
 
     protected bool IsRegionObstructed() {
-        // I **think** only ramps can be obstructed
-        if (Type != RegionType.Ramp) {
+        if (Type == RegionType.Expand) {
+            // Expands are never obstructed
             return false;
         }
 
-        if (!Cells.Any(cell => _terrainTracker.IsWalkable(cell))) {
+        if (Cells.All(cell => !_terrainTracker.IsWalkable(cell))) {
             return true;
+        }
+
+        var obstaclesInRegion = _unitsTracker
+            .GetUnits(_unitsTracker.NeutralUnits, Units.Obstacles.Concat(Units.MineralFields).ToHashSet())
+            .Where(obstacle => Cells.Contains(obstacle.Position.ToVector2().AsWorldGridCenter()));
+
+        if (!obstaclesInRegion.Any()) {
+            return false;
         }
 
         var frontier = Neighbors.SelectMany(neighbor => neighbor.Frontier).ToList();
         var clusteringResult = _clustering.DBSCAN(frontier, epsilon: (float)Math.Sqrt(2), minPoints: 1);
         if (clusteringResult.clusters.Count != 2) {
-            Logger.Error("This ramp has {0} frontiers instead of the expected 2", clusteringResult.clusters.Count);
+            Logger.Warning($"Region {Id} has {clusteringResult.clusters.Count} frontiers instead of 2, we cannot determine if it is obstructed.");
             return false;
         }
 
