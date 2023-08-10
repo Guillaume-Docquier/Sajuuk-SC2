@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Sajuuk.ExtensionMethods;
@@ -232,19 +233,17 @@ public class Clustering : IClustering {
         return (clusters, noise);
     }
 
-    public Vector2 GetCenter<T>(IEnumerable<T> cluster) where T: class, IHavePosition {
-        return GetCenter(cluster.Select(item => item.Position.ToVector2()).ToList());
+    public Vector2 GetCenter(IEnumerable<IHavePosition> items) {
+        return GetCenter(items.Select(item => item.Position.ToVector2()).ToList());
     }
 
-    public Vector2 GetCenter(List<Vector2> cluster) {
-        if (cluster.Count <= 0) {
-            Logger.Error("Trying to GetCenter of an empty cluster");
-
-            return default;
+    public Vector2 GetCenter(List<Vector2> cells) {
+        if (cells.Count <= 0) {
+            throw new ArgumentException("Trying to GetCenter of an empty set of cells");
         }
 
-        var avgX = cluster.Average(position => position.X);
-        var avgY = cluster.Average(position => position.Y);
+        var avgX = cells.Average(position => position.X);
+        var avgY = cells.Average(position => position.Y);
 
         return new Vector2(avgX, avgY);
     }

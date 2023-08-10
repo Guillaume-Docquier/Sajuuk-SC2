@@ -110,4 +110,78 @@ public class ClusteringTests : IClassFixture<NoLoggerFixture> {
         var actual = floodFill.OrderBy(cell => cell.X).ThenBy(cell => cell.Y).ToList();
         Assert.Equal(expected, actual);
     }
+
+    public static IEnumerable<object[]> ListOfCells() {
+        yield return new object[] {
+            new List<Vector2> { new Vector2(0, 0), new Vector2(1, 1), new Vector2(2, 2) },
+            new Vector2(1, 1)
+        };
+        yield return new object[] {
+            new List<Vector2> { new Vector2(0, 0), new Vector2(3, 3), new Vector2(3, 3), },
+            new Vector2(2, 2)
+        };
+    }
+
+    [Theory]
+    [MemberData(nameof(ListOfCells))]
+    public void GivenListOfCells_WhenGetCenter_ThenReturnsACellAtTheCenterOfMass(List<Vector2> cells, Vector2 expectedCenter) {
+        // Arrange
+        var clustering = new Clustering(Mock.Of<ITerrainTracker>(), Mock.Of<IGraphicalDebugger>());
+
+        // Act
+        var center = clustering.GetCenter(cells);
+
+        // Assert
+        Assert.Equal(expectedCenter, center);
+    }
+
+    [Fact]
+    public void GivenEmptyListOfCells_WhenGetCenter_ThenThrows() {
+        // Arrange
+        var clustering = new Clustering(Mock.Of<ITerrainTracker>(), Mock.Of<IGraphicalDebugger>());
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => clustering.GetCenter(new List<Vector2>()));
+    }
+
+    public static IEnumerable<object[]> ListOfHasPosition() {
+        yield return new object[] {
+            new List<IHavePosition> { new DummyHasPosition(0, 0, 0), new DummyHasPosition(1, 1, 1), new DummyHasPosition(2, 2, 2) },
+            new Vector2(1, 1)
+        };
+        yield return new object[] {
+            new List<IHavePosition> { new DummyHasPosition(0, 0, 0), new DummyHasPosition(3, 3, 3), new DummyHasPosition(3, 3, 3) },
+            new Vector2(2, 2)
+        };
+    }
+
+    [Theory]
+    [MemberData(nameof(ListOfHasPosition))]
+    public void GivenListOfIHavePosition_WhenGetCenter_ThenReturnsACellAtTheCenterOfMass(List<IHavePosition> items, Vector2 expectedCenter) {
+        // Arrange
+        var clustering = new Clustering(Mock.Of<ITerrainTracker>(), Mock.Of<IGraphicalDebugger>());
+
+        // Act
+        var center = clustering.GetCenter(items);
+
+        // Assert
+        Assert.Equal(expectedCenter, center);
+    }
+
+    [Fact]
+    public void GivenEmptyListOfIHavePosition_WhenGetCenter_ThenThrows() {
+        // Arrange
+        var clustering = new Clustering(Mock.Of<ITerrainTracker>(), Mock.Of<IGraphicalDebugger>());
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => clustering.GetCenter(new List<IHavePosition>()));
+    }
+
+    private class DummyHasPosition : IHavePosition {
+        public Vector3 Position { get; }
+
+        public DummyHasPosition(float x, float y, float z) {
+            Position = new Vector3(x, y, z);
+        }
+    }
 }
