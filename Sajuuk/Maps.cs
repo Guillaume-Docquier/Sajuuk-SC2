@@ -1,10 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Sajuuk;
 
-[SuppressMessage("ReSharper", "InconsistentNaming")]
 public static class Maps {
     public const string AncientCistern = "AncientCisternAIE.SC2Map";
     public const string Berlingrad = "BerlingradAIE.SC2Map";
@@ -39,6 +37,7 @@ public static class Maps {
     /// <summary>
     /// Represents the map pool of season 3 of 2022.
     /// </summary>
+    // ReSharper disable once InconsistentNaming
     public static readonly List<string> Season_2022_3 = new List<string>
     {
         TwoThousandAtmospheres,
@@ -53,6 +52,7 @@ public static class Maps {
     /// <summary>
     /// Represents the map pool of season 4 of 2022.
     /// </summary>
+    // ReSharper disable once InconsistentNaming
     public static readonly List<string> Season_2022_4 = new List<string>
     {
         Berlingrad,
@@ -67,6 +67,7 @@ public static class Maps {
     /// <summary>
     /// Represents the map pool of season 2 of 2023.
     /// </summary>
+    // ReSharper disable once InconsistentNaming
     public static readonly List<string> Season_2023_2 = new List<string>
     {
         AncientCistern,

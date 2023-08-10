@@ -13,6 +13,7 @@ public class Clustering : IClustering {
 
     private const bool DrawEnabled = false; // TODO GD Flag this
 
+    // ReSharper disable once InconsistentNaming
     private enum DBSCANLabels {
         Noise,
         BorderPoint,
@@ -30,9 +31,9 @@ public class Clustering : IClustering {
     /// <summary>
     /// Performs a flood fill on the given cells, starting from the provided starting point.
     /// </summary>
-    /// <param name="cells"></param>
-    /// <param name="startingPoint"></param>
-    /// <returns>The cells reached by the flood fill</returns>
+    /// <param name="cells">The cells to perform flood fill on.</param>
+    /// <param name="startingPoint">The starting point for the flood fill.</param>
+    /// <returns>The cells reached by the flood fill.</returns>
     public IEnumerable<Vector2> FloodFill(IReadOnlySet<Vector2> cells, Vector2 startingPoint) {
         var toExplore = cells.ToHashSet();
         toExplore.Remove(startingPoint);
