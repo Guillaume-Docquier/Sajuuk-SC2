@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Moq;
 using Sajuuk.Actions;
 using Sajuuk.Builds;
 using Sajuuk.ExtensionMethods;
@@ -38,23 +39,34 @@ public static class TestUtils {
 
     // TODO GD Create a factory instead of this helper function
     public static Unit CreateUnit(
-        IFrameClock frameClock,
-        KnowledgeBase knowledgeBase,
-        IActionBuilder actionBuilder,
-        IActionService actionService,
-        ITerrainTracker terrainTracker,
-        IRegionsTracker regionsTracker,
-        IUnitsTracker unitsTracker,
         uint unitType,
+        KnowledgeBase knowledgeBase,
+        IFrameClock? frameClock = null,
+        IActionBuilder? actionBuilder = null,
+        IActionService? actionService = null,
+        ITerrainTracker? terrainTracker = null,
+        IRegionsTracker? regionsTracker = null,
+        IUnitsTracker? unitsTracker = null,
         uint frame = 0,
         Alliance alliance = Alliance.Self,
         Vector3 position = default,
         int vespeneContents = 0,
-        float buildProgress = 1f) {
+        float buildProgress = 1f
+    ) {
         var rawUnit = CreateUnitRaw(unitType, alliance, position, vespeneContents, buildProgress);
 
         // TODO GD I really need an IUnit interface
-        return new Unit(frameClock, knowledgeBase, actionBuilder, actionService, terrainTracker, regionsTracker, unitsTracker, rawUnit, frame);
+        return new Unit(
+            frameClock ?? Mock.Of<IFrameClock>(),
+            knowledgeBase,
+            actionBuilder ?? Mock.Of<IActionBuilder>(),
+            actionService ?? Mock.Of<IActionService>(),
+            terrainTracker ?? Mock.Of<ITerrainTracker>(),
+            regionsTracker ?? Mock.Of<IRegionsTracker>(),
+            unitsTracker ?? Mock.Of<IUnitsTracker>(),
+            rawUnit,
+            frame
+        );
     }
 
     public class DummyManager: Manager {

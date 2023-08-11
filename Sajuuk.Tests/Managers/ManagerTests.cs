@@ -1,8 +1,10 @@
-﻿using Sajuuk.Actions;
+﻿using System.Numerics;
+using Sajuuk.Actions;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using Sajuuk.Managers;
 using Moq;
+using SC2APIProtocol;
 
 namespace Sajuuk.Tests.Managers;
 
@@ -29,9 +31,9 @@ public class ManagerTests : BaseTestClass {
         var manager = new TestUtils.DummyManager();
         var units = new List<Unit>
         {
-            TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling),
-            TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Drone),
-            TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling),
+            CreateUnit(Units.Zergling),
+            CreateUnit(Units.Drone),
+            CreateUnit(Units.Zergling),
         };
 
         // Act
@@ -45,7 +47,7 @@ public class ManagerTests : BaseTestClass {
     public void GivenNothing_WhenAssigningUnit_SetsManagerOnUnit() {
         // Arrange
         var manager = new TestUtils.DummyManager();
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
 
         // Act
         manager.Assign(unit);
@@ -58,7 +60,7 @@ public class ManagerTests : BaseTestClass {
     public void GivenNothing_WhenAssigningUnit_AddsDeathWatcher() {
         // Arrange
         var manager = new TestUtils.DummyManager();
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
 
         // Act
         manager.Assign(unit);
@@ -71,7 +73,7 @@ public class ManagerTests : BaseTestClass {
     public void GivenNothing_WhenAssigningUnit_AddsToManagedUnits() {
         // Arrange
         var manager = new TestUtils.DummyManager();
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
 
         // Act
         manager.Assign(unit);
@@ -85,7 +87,7 @@ public class ManagerTests : BaseTestClass {
         // Arrange
         var assigner = new DummyAssigner();
         var manager = new TestUtils.DummyManager(assigner: assigner);
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
 
         // Act
         manager.Assign(unit);
@@ -98,10 +100,10 @@ public class ManagerTests : BaseTestClass {
     public void GivenManagedUnit_WhenAssigningOtherUnit_SetsManagerOnUnit() {
         // Arrange
         var manager = new TestUtils.DummyManager();
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
-        var otherUnit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var otherUnit = CreateUnit(Units.Zergling);
 
         // Act
         manager.Assign(otherUnit);
@@ -114,10 +116,10 @@ public class ManagerTests : BaseTestClass {
     public void GivenManagedUnit_WhenAssigningOtherUnit_AddsDeathWatcher() {
         // Arrange
         var manager = new TestUtils.DummyManager();
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
-        var otherUnit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var otherUnit = CreateUnit(Units.Zergling);
 
         // Act
         manager.Assign(otherUnit);
@@ -130,10 +132,10 @@ public class ManagerTests : BaseTestClass {
     public void GivenManagedUnit_WhenAssigningOtherUnit_AddsToManagedUnits() {
         // Arrange
         var manager = new TestUtils.DummyManager();
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
-        var otherUnit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var otherUnit = CreateUnit(Units.Zergling);
 
         // Act
         manager.Assign(otherUnit);
@@ -147,10 +149,10 @@ public class ManagerTests : BaseTestClass {
         // Arrange
         var assigner = new DummyAssigner();
         var manager = new TestUtils.DummyManager(assigner: assigner);
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
-        var otherUnit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var otherUnit = CreateUnit(Units.Zergling);
 
         // Act
         manager.Assign(otherUnit);
@@ -164,7 +166,7 @@ public class ManagerTests : BaseTestClass {
         // Arrange
         var assigner = new DummyAssigner();
         var manager = new TestUtils.DummyManager(assigner: assigner);
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
         // Act
@@ -189,9 +191,9 @@ public class ManagerTests : BaseTestClass {
         var manager = new TestUtils.DummyManager();
         var units = new List<Unit>
         {
-            TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling),
-            TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Drone),
-            TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling),
+            CreateUnit(Units.Zergling),
+            CreateUnit(Units.Drone),
+            CreateUnit(Units.Zergling),
         };
 
         manager.Assign(units);
@@ -207,7 +209,7 @@ public class ManagerTests : BaseTestClass {
     public void GivenManagedUnit_WhenReleasingUnit_UnsetsManagerFromUnit() {
         // Arrange
         var manager = new TestUtils.DummyManager();
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
 
         manager.Assign(unit);
 
@@ -222,7 +224,7 @@ public class ManagerTests : BaseTestClass {
     public void GivenManagedUnit_WhenReleasingUnit_RemovesDeathWatcher() {
         // Arrange
         var manager = new TestUtils.DummyManager();
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
 
         manager.Assign(unit);
 
@@ -237,7 +239,7 @@ public class ManagerTests : BaseTestClass {
     public void GivenManagedUnit_WhenReleasingUnit_RemovesFromManagedUnits() {
         // Arrange
         var manager = new TestUtils.DummyManager();
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
 
         manager.Assign(unit);
 
@@ -253,7 +255,7 @@ public class ManagerTests : BaseTestClass {
         // Arrange
         var manager = new TestUtils.DummyManager();
         var supervisor = new TestUtils.DummySupervisor();
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
 
         manager.Assign(unit);
         supervisor.Assign(unit);
@@ -271,7 +273,7 @@ public class ManagerTests : BaseTestClass {
         // Arrange
         var releaser = new DummyReleaser();
         var manager = new TestUtils.DummyManager(releaser: releaser);
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
 
         manager.Assign(unit);
 
@@ -286,7 +288,7 @@ public class ManagerTests : BaseTestClass {
     public void GivenNothing_WhenReleasingUnit_DoesNothing() {
         // Arrange
         var manager = new TestUtils.DummyManager();
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
 
         // Act
         var exception = Record.Exception(() => manager.Release(unit));
@@ -302,8 +304,8 @@ public class ManagerTests : BaseTestClass {
         var manager = new TestUtils.DummyManager(releaser: releaser);
         var supervisor = new TestUtils.DummySupervisor();
 
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
-        var otherUnit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
+        var otherUnit = CreateUnit(Units.Zergling);
 
         manager.Assign(unit);
         supervisor.Assign(unit);
@@ -345,9 +347,9 @@ public class ManagerTests : BaseTestClass {
         var manager = new TestUtils.DummyManager(dispatcher: dispatcher);
         var units = new List<Unit>
         {
-            TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling),
-            TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling),
-            TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling),
+            CreateUnit(Units.Zergling),
+            CreateUnit(Units.Zergling),
+            CreateUnit(Units.Zergling),
         };
 
         manager.Assign(units);
@@ -364,7 +366,7 @@ public class ManagerTests : BaseTestClass {
         // Arrange
         var dispatcher = new DummyDispatcher();
         var manager = new TestUtils.DummyManager(dispatcher: dispatcher);
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
 
         // Act
         manager.Dispatch(unit);
@@ -378,7 +380,7 @@ public class ManagerTests : BaseTestClass {
         // Arrange
         var dispatcher = new DummyDispatcher();
         var manager = new TestUtils.DummyManager(dispatcher: dispatcher);
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
         // Act
@@ -394,10 +396,10 @@ public class ManagerTests : BaseTestClass {
         // Arrange
         var dispatcher = new DummyDispatcher();
         var manager = new TestUtils.DummyManager(dispatcher: dispatcher);
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
-        var unmanagedUnit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unmanagedUnit = CreateUnit(Units.Zergling);
 
         // Act
         manager.Dispatch(unmanagedUnit);
@@ -411,7 +413,7 @@ public class ManagerTests : BaseTestClass {
         // Arrange
         var releaser = new DummyReleaser();
         var manager = new TestUtils.DummyManager(releaser: releaser);
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
         // Act
@@ -429,7 +431,7 @@ public class ManagerTests : BaseTestClass {
         // Arrange
         var releaser = new DummyReleaser();
         var manager = new TestUtils.DummyManager(releaser: releaser);
-        var unmanagedUnit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unmanagedUnit = CreateUnit(Units.Zergling);
 
         // Act
         unmanagedUnit.Died();
@@ -445,10 +447,10 @@ public class ManagerTests : BaseTestClass {
         // Arrange
         var releaser = new DummyReleaser();
         var manager = new TestUtils.DummyManager(releaser: releaser);
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
-        var unmanagedUnit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unmanagedUnit = CreateUnit(Units.Zergling);
 
         // Act
         unmanagedUnit.Died();
@@ -465,10 +467,10 @@ public class ManagerTests : BaseTestClass {
         // Arrange
         var releaser = new DummyReleaser();
         var manager = new TestUtils.DummyManager(releaser: releaser);
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
         manager.Assign(unit);
 
-        var unmanagedUnit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unmanagedUnit = CreateUnit(Units.Zergling);
         unmanagedUnit.AddDeathWatcher(manager);
 
         // Act
@@ -479,6 +481,21 @@ public class ManagerTests : BaseTestClass {
 
         Assert.Single(manager.ManagedUnits);
         Assert.Contains(unit, manager.ManagedUnits);
+    }
+
+    private Unit CreateUnit(
+        uint unitType,
+        uint frame = 0,
+        Alliance alliance = Alliance.Self,
+        Vector3 position = default,
+        int vespeneContents = 0,
+        float buildProgress = 1f
+    ) {
+        return TestUtils.CreateUnit(
+            unitType,
+            KnowledgeBase, _frameClockMock.Object, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object,
+            frame, alliance, position, vespeneContents, buildProgress
+        );
     }
 
     private class DummyAssigner: IAssigner {
