@@ -168,17 +168,34 @@ public class Controller : IController {
         return counter;
     }
 
+    /// <summary>
+    /// Gets an available producer to produce the given unit or ability type.
+    /// If the producers are drones and we only have 1 left, we will not return a producer.
+    /// There might be a case where we want to use the last drone for some cheeky plays, but we'll cross that bridge when we get there.
+    /// </summary>
+    /// <param name="unitOrAbilityType">The unit or ability type to produce.</param>
+    /// <param name="allowQueue">Whether to include produces that are already producing something else.</param>
+    /// <param name="closestTo">A location to use to help select an appropriate producer. If not defined, will choose a producer regardless of their location.</param>
+    /// <returns>The best producer, or null is none is available.</returns>
+    /// <exception cref="ArgumentException">If the tech tree does not contain an entry for the given unit or ability type to produce.</exception>
     private Unit GetAvailableProducer(uint unitOrAbilityType, bool allowQueue = false, Vector2 closestTo = default) {
         if (!_techTree.Producer.ContainsKey(unitOrAbilityType)) {
-            throw new NotImplementedException($"Producer for unit {_knowledgeBase.GetUnitTypeData(unitOrAbilityType).Name} not found");
+            // TODO GD It could be an upgrade and not a unit.
+            throw new ArgumentException($"Producer for unit {_knowledgeBase.GetUnitTypeData(unitOrAbilityType).Name} not found");
         }
 
-        var possibleProducers = _techTree.Producer[unitOrAbilityType];
+        var possibleProducersUnitType = _techTree.Producer[unitOrAbilityType];
+        var producers = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, possibleProducersUnitType)
+            .Where(unit => unit.IsOperational && unit.IsAvailable)
+            .ToList();
 
-        var producers = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, possibleProducers).Where(unit => unit.IsOperational && unit.IsAvailable);
+        if (possibleProducersUnitType == Units.Drone && producers.Count == 1) {
+            // Do not use the last drone.
+            return null;
+        }
 
         if (!allowQueue) {
-            producers = producers.Where(unit => !unit.OrdersExceptMining.Any());
+            producers = producers.Where(unit => !unit.OrdersExceptMining.Any()).ToList();
         }
 
         if (closestTo == default) {
@@ -202,7 +219,7 @@ public class Controller : IController {
         };
 
         if (result == BuildRequestResult.Ok) {
-            Logger.Info("(Controller) Completed build step {0}", buildStep);
+            Logger.Info($"(Controller) Completed build step {buildStep}");
         }
 
         return result;

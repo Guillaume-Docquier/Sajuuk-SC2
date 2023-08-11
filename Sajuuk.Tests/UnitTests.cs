@@ -3,6 +3,7 @@ using Sajuuk.Actions;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using Moq;
+using SC2APIProtocol;
 
 namespace Sajuuk.Tests;
 
@@ -29,7 +30,7 @@ public class UnitTests : BaseTestClass {
     [InlineData(2, true)]
     public void Given1FrameDeathDelay_WhenOutOfVision_DiesAfter1Frame(ulong outOfVisionTime, bool expected) {
         // Arrange
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling, frame: 0);
+        var unit = CreateUnit(Units.Zergling, frame: 0);
 
         // Act
         var isDead = unit.IsDead(outOfVisionTime);
@@ -41,7 +42,7 @@ public class UnitTests : BaseTestClass {
     [Fact]
     public void GivenDeathWatcherThatRemovesItself_WhenDies_DoesNotThrow() {
         // Arrange
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Zergling);
+        var unit = CreateUnit(Units.Zergling);
 
         var deathWatcher = new DeathWatcherThatRemovesItself();
         unit.AddDeathWatcher(deathWatcher);
@@ -58,7 +59,7 @@ public class UnitTests : BaseTestClass {
     [Fact]
     public void GivenManager_WhenPlaceBuilding_IsReleased() {
         // Arrange
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Drone);
+        var unit = CreateUnit(Units.Drone);
 
         var manager = new TestUtils.DummyManager();
         manager.Assign(unit);
@@ -75,8 +76,8 @@ public class UnitTests : BaseTestClass {
     [Fact]
     public void GivenManager_WhenPlaceExtractor_IsReleased() {
         // Arrange
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Drone);
-        var geyser = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.VespeneGeyser);
+        var unit = CreateUnit(Units.Drone);
+        var geyser = CreateUnit(Units.VespeneGeyser);
 
         var manager = new TestUtils.DummyManager();
         manager.Assign(unit);
@@ -93,7 +94,7 @@ public class UnitTests : BaseTestClass {
     [Fact]
     public void GivenNoManager_WhenPlaceBuilding_DoesNotThrow() {
         // Arrange
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Drone);
+        var unit = CreateUnit(Units.Drone);
 
         // Act
         Assert.Null(unit.Manager);
@@ -106,8 +107,8 @@ public class UnitTests : BaseTestClass {
     [Fact]
     public void GivenNoManager_WhenPlaceExtractor_DoesNotThrow() {
         // Arrange
-        var unit = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.Drone);
-        var geyser = TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object, Units.VespeneGeyser);
+        var unit = CreateUnit(Units.Drone);
+        var geyser = CreateUnit(Units.VespeneGeyser);
 
         // Act
         Assert.Null(unit.Manager);
@@ -124,5 +125,20 @@ public class UnitTests : BaseTestClass {
             deadUnit.RemoveDeathWatcher(this);
             ReportedDeath = true;
         }
+    }
+
+    private Unit CreateUnit(
+        uint unitType,
+        uint frame = 0,
+        Alliance alliance = Alliance.Self,
+        Vector3 position = default,
+        int vespeneContents = 0,
+        float buildProgress = 1f
+    ) {
+        return TestUtils.CreateUnit(
+            unitType,
+            KnowledgeBase, _frameClockMock.Object, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTrackerMock.Object,
+            frame, alliance, position, vespeneContents, buildProgress
+        );
     }
 }

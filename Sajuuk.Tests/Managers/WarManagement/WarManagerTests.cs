@@ -1,10 +1,12 @@
-﻿using Sajuuk.Actions;
+﻿using System.Numerics;
+using Sajuuk.Actions;
 using Sajuuk.Debugging.GraphicalDebugging;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using Sajuuk.Managers.WarManagement.States;
 using Sajuuk.Tests.Mocks;
 using Moq;
+using SC2APIProtocol;
 
 namespace Sajuuk.Tests.Managers.WarManagement;
 
@@ -36,7 +38,7 @@ public class WarManagerTests : BaseTestClass {
 
         var militaryUnits = Units.ZergMilitary
             .Except(new HashSet<uint> { Units.Queen, Units.QueenBurrowed })
-            .Select(militaryUnitType => TestUtils.CreateUnit(_frameClockMock.Object, KnowledgeBase, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker, militaryUnitType))
+            .Select(militaryUnitType => CreateUnit(militaryUnitType))
             .ToList();
 
         _unitsTracker.SetUnits(militaryUnits);
@@ -58,5 +60,20 @@ public class WarManagerTests : BaseTestClass {
         manager.OnFrame();
 
         // Assert
+    }
+
+    private Unit CreateUnit(
+        uint unitType,
+        uint frame = 0,
+        Alliance alliance = Alliance.Self,
+        Vector3 position = default,
+        int vespeneContents = 0,
+        float buildProgress = 1f
+    ) {
+        return TestUtils.CreateUnit(
+            unitType,
+            KnowledgeBase, _frameClockMock.Object, _actionBuilder, _actionServiceMock.Object, _terrainTrackerMock.Object, _regionsTrackerMock.Object, _unitsTracker,
+            frame, alliance, position, vespeneContents, buildProgress
+        );
     }
 }
