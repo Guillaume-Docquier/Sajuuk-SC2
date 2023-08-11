@@ -155,7 +155,10 @@ public class Unit: ICanDie, IHavePosition {
     /// </summary>
     public bool IsOperational => _buildProgress >= 1;
 
-    // Units inside extractors are not available. We keep them in memory but they're not in the game for some time
+    /// <summary>
+    /// Units inside extractors are not available. We keep them in memory but they're not in the game for some time.
+    /// Same might be true for units inside transports, but I haven't tested it yet.
+    /// </summary>
     public bool IsAvailable => LastSeen >= _frameClock.CurrentFrame;
 
     public IEnumerable<UnitOrder> OrdersExceptMining => Orders.Where(order => order.AbilityId != Abilities.Move
