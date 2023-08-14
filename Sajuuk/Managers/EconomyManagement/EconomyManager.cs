@@ -44,8 +44,8 @@ public sealed partial class EconomyManager : Manager {
     private readonly BuildRequest _dronesBuildRequest;
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
 
-    public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment)
-        .Concat(_townHallSupervisors.SelectMany(supervisor => supervisor.BuildFulfillments));
+    public override IEnumerable<IFulfillableBuildRequest> BuildRequests => _buildRequests
+        .Concat(_townHallSupervisors.SelectMany(supervisor => supervisor.BuildRequests));
 
     protected override IAssigner Assigner { get; }
     protected override IDispatcher Dispatcher { get; }
@@ -124,17 +124,17 @@ public sealed partial class EconomyManager : Manager {
         }
 
         if (ShouldExpand()) {
-            _expandBuildRequest.Requested += 1;
+            _expandBuildRequest.QuantityRequested += 1;
         }
 
         if (ShouldBuildExtraMacroHatch()) {
-            _macroHatchBuildRequest.Requested += 1;
+            _macroHatchBuildRequest.QuantityRequested += 1;
         }
 
         AdjustCreepQueensCount();
 
-        _queenBuildRequest.Requested = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery).Count() + _creepQueensCount;
-        _dronesBuildRequest.Requested = Math.Min(MaxDroneCount, _townHallSupervisors.Sum(supervisor => !supervisor.TownHall.IsOperational ? 0 : supervisor.SaturatedCapacity));
+        _queenBuildRequest.QuantityRequested = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Hatchery).Count() + _creepQueensCount;
+        _dronesBuildRequest.QuantityRequested = Math.Min(MaxDroneCount, _townHallSupervisors.Sum(supervisor => !supervisor.TownHall.IsOperational ? 0 : supervisor.SaturatedCapacity));
     }
 
     private void AdjustCreepQueensCount() {
@@ -170,7 +170,7 @@ public sealed partial class EconomyManager : Manager {
         }
 
         var extractorsNeeded = (int)Math.Ceiling(requiredDronesInGas / (double)Resources.MaxDronesPerExtractor);
-        _extractorsBuildRequest.Requested = extractorsNeeded;
+        _extractorsBuildRequest.QuantityRequested = extractorsNeeded;
 
         _requiredDronesInGas = requiredDronesInGas;
         _doNotChangeGasDroneCountBefore = _frameClock.CurrentFrame + GasDroneCountLoweringDelay;
@@ -260,7 +260,7 @@ public sealed partial class EconomyManager : Manager {
         }
 
         // TODO GD We could request 2 if we have a lot of idle workers
-        if (_expandBuildRequest.Fulfillment.Remaining > 0) {
+        if (_expandBuildRequest.QuantityRemaining > 0) {
             return false;
         }
 
@@ -279,7 +279,7 @@ public sealed partial class EconomyManager : Manager {
     ////////////////////////////////
 
     private bool ShouldBuildExtraMacroHatch() {
-        return _macroHatchBuildRequest.Fulfillment.Remaining == 0
+        return _macroHatchBuildRequest.QuantityRemaining == 0
                && BankIsTooBig()
                && !GetIdleLarvae().Any()
                && !HasReachedMaximumMacroTownHalls()

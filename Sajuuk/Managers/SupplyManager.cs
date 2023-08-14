@@ -22,7 +22,7 @@ public class SupplyManager : UnitlessManager {
     private readonly BuildRequest _overlordsBuildRequest;
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
 
-    public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(buildRequest => buildRequest.Fulfillment);
+    public override IEnumerable<IFulfillableBuildRequest> BuildRequests => _buildRequests;
 
     public SupplyManager(
         IUnitsTracker unitsTracker,
@@ -44,7 +44,7 @@ public class SupplyManager : UnitlessManager {
 
         if (ShouldTakeOverOverlordManagement() && ShouldRequestMoreOverlords()) {
             // TODO GD Be smarter about the batch size
-            _overlordsBuildRequest.Requested += OverlordBatchSize;
+            _overlordsBuildRequest.QuantityRequested += OverlordBatchSize;
         }
     }
 
@@ -52,14 +52,14 @@ public class SupplyManager : UnitlessManager {
         var supplyNeededFromOverlords = _controller.CurrentSupply - GetSupplyFromHatcheries();
         var requiredOverlords = (int)Math.Ceiling((float)supplyNeededFromOverlords / SupplyPerOverlord);
 
-        _overlordsBuildRequest.Requested = requiredOverlords;
+        _overlordsBuildRequest.QuantityRequested = requiredOverlords;
     }
 
     private bool ShouldTakeOverOverlordManagement() {
-        return _buildManager.BuildFulfillments
+        return _buildManager.BuildRequests
             .Where(buildFulfilment => buildFulfilment.BuildType == BuildType.Train)
             .Where(buildFulfilment => buildFulfilment.UnitOrUpgradeType == Units.Overlord)
-            .Sum(buildFulfilment => buildFulfilment.Remaining) <= 0;
+            .Sum(buildFulfilment => buildFulfilment.QuantityRemaining) <= 0;
     }
 
     private bool ShouldRequestMoreOverlords() {
@@ -73,6 +73,6 @@ public class SupplyManager : UnitlessManager {
     }
 
     private int GetRequestedSupportedSupply() {
-        return _overlordsBuildRequest.Requested * SupplyPerOverlord + GetSupplyFromHatcheries();
+        return _overlordsBuildRequest.QuantityRequested * SupplyPerOverlord + GetSupplyFromHatcheries();
     }
 }

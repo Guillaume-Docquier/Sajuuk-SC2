@@ -1,17 +1,14 @@
-﻿using Sajuuk.GameData;
-using Sajuuk.GameSense;
+﻿using Sajuuk.GameSense;
 
 namespace Sajuuk.Builds;
 
 public class BuildRequestFactory : IBuildRequestFactory {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IController _controller;
-    private readonly KnowledgeBase _knowledgeBase;
 
-    public BuildRequestFactory(IUnitsTracker unitsTracker, IController controller, KnowledgeBase knowledgeBase) {
+    public BuildRequestFactory(IUnitsTracker unitsTracker, IController controller) {
         _unitsTracker = unitsTracker;
         _controller = controller;
-        _knowledgeBase = knowledgeBase;
     }
 
     public TargetBuildRequest CreateTargetBuildRequest(
@@ -23,7 +20,7 @@ public class BuildRequestFactory : IBuildRequestFactory {
         BuildBlockCondition blockCondition = BuildBlockCondition.None,
         BuildRequestPriority priority = BuildRequestPriority.Normal
     ) {
-        return new TargetBuildRequest(_unitsTracker, _controller, _knowledgeBase, buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority);
+        return new TargetBuildRequest(_unitsTracker, _controller, buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority);
     }
 
     public QuantityBuildRequest CreateQuantityBuildRequest(
@@ -35,6 +32,6 @@ public class BuildRequestFactory : IBuildRequestFactory {
         BuildBlockCondition blockCondition = BuildBlockCondition.None,
         BuildRequestPriority priority = BuildRequestPriority.Normal
     ) {
-        return new QuantityBuildRequest(_controller, _knowledgeBase, buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority);
+        return new QuantityBuildRequest(buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority);
     }
 }

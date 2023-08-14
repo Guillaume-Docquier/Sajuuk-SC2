@@ -4,7 +4,7 @@ using Sajuuk.Builds;
 namespace Sajuuk.Managers;
 
 public abstract class Supervisor {
-    public abstract IEnumerable<BuildFulfillment> BuildFulfillments { get; }
+    public abstract IEnumerable<IFulfillableBuildRequest> BuildRequests { get; }
 
     public HashSet<Unit> SupervisedUnits { get; } = new HashSet<Unit>();
 

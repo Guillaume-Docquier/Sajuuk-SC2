@@ -15,7 +15,7 @@ public partial class ScoutManager : Manager {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IScoutSupervisorFactory _scoutSupervisorFactory;
 
-    public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
+    public override IEnumerable<IFulfillableBuildRequest> BuildRequests => Enumerable.Empty<IFulfillableBuildRequest>();
 
     protected override IAssigner Assigner { get; }
     protected override IDispatcher Dispatcher { get; }

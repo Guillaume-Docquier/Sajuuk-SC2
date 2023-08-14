@@ -32,7 +32,7 @@ public class SpendingTracker : ISpendingTracker {
     /// This effectively prioritizes expenses that will happen soon.
     /// </summary>
     /// <param name="futureBuildRequests"></param>
-    public void UpdateExpectedFutureSpending(List<BuildFulfillment> futureBuildRequests) {
+    public void UpdateExpectedFutureSpending(List<IFulfillableBuildRequest> futureBuildRequests) {
         ExpectedFutureMineralsSpending = 0;
         ExpectedFutureVespeneSpending = 0;
 
@@ -46,13 +46,13 @@ public class SpendingTracker : ISpendingTracker {
 
             if (buildRequest.BuildType == BuildType.Research) {
                 var upgradeTypeData = _knowledgeBase.GetUpgradeData(buildRequest.UnitOrUpgradeType);
-                mineralSpending += buildRequest.Remaining * upgradeTypeData.MineralCost;
-                vespeneSpending += buildRequest.Remaining * upgradeTypeData.VespeneCost;
+                mineralSpending += buildRequest.QuantityRemaining * upgradeTypeData.MineralCost;
+                vespeneSpending += buildRequest.QuantityRemaining * upgradeTypeData.VespeneCost;
             }
             else {
                 var unitTypeData = _knowledgeBase.GetUnitTypeData(buildRequest.UnitOrUpgradeType);
-                mineralSpending += buildRequest.Remaining * unitTypeData.MineralCost;
-                vespeneSpending += buildRequest.Remaining * unitTypeData.VespeneCost;
+                mineralSpending += buildRequest.QuantityRemaining * unitTypeData.MineralCost;
+                vespeneSpending += buildRequest.QuantityRemaining * unitTypeData.VespeneCost;
             }
 
             var totalSpending = mineralSpending + vespeneSpending;

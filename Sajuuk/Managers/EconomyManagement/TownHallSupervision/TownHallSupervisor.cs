@@ -33,7 +33,7 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
     private readonly BuildRequest _expandBuildRequest;
     private readonly List<BuildRequest> _buildStepRequests = new List<BuildRequest>();
 
-    public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildStepRequests.Select(buildRequest => buildRequest.Fulfillment);
+    public override IEnumerable<IFulfillableBuildRequest> BuildRequests => _buildStepRequests;
 
     protected override IAssigner Assigner { get; }
     protected override IReleaser Releaser { get; }
@@ -314,7 +314,7 @@ public partial class TownHallSupervisor : Supervisor, IWatchUnitsDie {
         // TODO GD Should probably put this in expand analyzer, but it's fine for now
         if (GetRemainingMineralsPercent() <= 0.6 || _minerals.Count <= 5) {
             Logger.Info("(TownHallManager) Running low on resources ({0:P2} / {1} minerals), requesting expand", GetRemainingMineralsPercent(), _minerals.Count);
-            _expandBuildRequest.Requested += 1;
+            _expandBuildRequest.QuantityRequested += 1;
 
             _expandHasBeenRequested = true;
         }

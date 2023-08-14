@@ -3,8 +3,8 @@ using Sajuuk.Builds;
 
 namespace Sajuuk.Managers;
 
-public abstract class Manager: IWatchUnitsDie {
-    public abstract IEnumerable<BuildFulfillment> BuildFulfillments { get; }
+public abstract class Manager : IWatchUnitsDie {
+    public abstract IEnumerable<IFulfillableBuildRequest> BuildRequests { get; }
 
     public HashSet<Unit> ManagedUnits { get; } = new HashSet<Unit>();
 

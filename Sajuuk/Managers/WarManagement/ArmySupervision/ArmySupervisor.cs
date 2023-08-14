@@ -8,7 +8,7 @@ using Sajuuk.StateManagement;
 
 namespace Sajuuk.Managers.WarManagement.ArmySupervision;
 
-public partial class ArmySupervisor: Supervisor {
+public partial class ArmySupervisor : Supervisor {
     private readonly IArmySupervisorStateFactory _armySupervisorStateFactory;
     private readonly IClustering _clustering;
     private readonly IUnitEvaluator _unitEvaluator;
@@ -26,7 +26,7 @@ public partial class ArmySupervisor: Supervisor {
     private bool CanHitAirUnits => SupervisedUnits.Any(supervisedUnit => supervisedUnit.CanHitAir);
     private bool CanFly => SupervisedUnits.Any(supervisedUnit => supervisedUnit.IsFlying);
 
-    public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
+    public override IEnumerable<IFulfillableBuildRequest> BuildRequests => Enumerable.Empty<IFulfillableBuildRequest>();
 
     protected override IAssigner Assigner { get; }
     protected override IReleaser Releaser { get; }

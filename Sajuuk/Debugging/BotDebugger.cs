@@ -51,7 +51,7 @@ public class BotDebugger : IBotDebugger {
         _spendingTracker = spendingTracker;
     }
 
-    public void Debug(List<BuildFulfillment> managerBuildRequests, (BuildFulfillment, BuildBlockCondition) buildBlockStatus) {
+    public void Debug(List<IFulfillableBuildRequest> managerBuildRequests, (IFulfillableBuildRequest, BuildBlockCondition) buildBlockStatus) {
         if (!Program.DebugEnabled) {
             return;
         }
@@ -86,19 +86,19 @@ public class BotDebugger : IBotDebugger {
         _graphicalDebugger.AddTextGroup(help, virtualPos: new Point { X = 0.02f, Y = 0.46f });
     }
 
-    private void DebugBuildRequests(IReadOnlyCollection<BuildFulfillment> managerBuildRequests, (BuildFulfillment blockingStep, BuildBlockCondition blockingReason) buildBlockStatus) {
+    private void DebugBuildRequests(IReadOnlyCollection<IFulfillableBuildRequest> managerBuildRequests, (IFulfillableBuildRequest blockingStep, BuildBlockCondition blockingReason) buildBlockStatus) {
         if (!_debuggingFlagsTracker.IsActive(DebuggingFlags.BuildOrder)) {
             return;
         }
 
         var managersBuildStepsData = managerBuildRequests
-            .Select(nextBuildStep => {
-                var stepString = nextBuildStep.ToString();
-                if (buildBlockStatus.blockingStep == nextBuildStep) {
-                    stepString += $" ({buildBlockStatus.blockingReason})";
+            .Select(nextBuildRequest => {
+                var buildRequestString = Stringify(nextBuildRequest);
+                if (buildBlockStatus.blockingStep == nextBuildRequest) {
+                    buildRequestString += $" ({buildBlockStatus.blockingReason})";
                 }
 
-                return stepString;
+                return buildRequestString;
             })
             .Take(25)
             .ToList();
@@ -106,6 +106,22 @@ public class BotDebugger : IBotDebugger {
         managersBuildStepsData.Insert(0, $"Next {managersBuildStepsData.Count}/{managerBuildRequests.Count} build requests:\n");
 
         _graphicalDebugger.AddTextGroup(managersBuildStepsData, virtualPos: new Point { X = 0.02f, Y = 0.02f });
+    }
+
+    private string Stringify(IFulfillableBuildRequest buildRequest) {
+        var buildStepUnitOrUpgradeName = buildRequest.BuildType == BuildType.Research
+            ? _knowledgeBase.GetUpgradeData(buildRequest.UnitOrUpgradeType).Name
+            : $"{buildRequest.QuantityFulfilled}/{buildRequest.QuantityRequested} {_knowledgeBase.GetUnitTypeData(buildRequest.UnitOrUpgradeType).Name}";
+
+        var when = $"at {buildRequest.AtSupply} supply";
+        if (buildRequest.AtSupply == 0) {
+            when = "";
+        }
+        else if (buildRequest.AtSupply <= _controller.CurrentSupply) {
+            when = "now";
+        }
+
+        return $"{buildRequest.BuildType.ToString()} {buildStepUnitOrUpgradeName} {when}";
     }
 
     private void DebugEnemyDetectors() {

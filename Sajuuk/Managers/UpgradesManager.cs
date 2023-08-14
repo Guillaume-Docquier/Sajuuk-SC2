@@ -17,7 +17,7 @@ public class UpgradesManager : UnitlessManager {
 
     private readonly BuildRequest _evolutionChamberBuildRequest;
     private readonly List<BuildRequest> _buildRequests = new List<BuildRequest>();
-    public override IEnumerable<BuildFulfillment> BuildFulfillments => _buildRequests.Select(request => request.Fulfillment);
+    public override IEnumerable<IFulfillableBuildRequest> BuildRequests => _buildRequests;
 
     public UpgradesManager(
         IUnitsTracker unitsTracker,
@@ -42,7 +42,7 @@ public class UpgradesManager : UnitlessManager {
 
         // We're done
         if (_requestedUpgrades.Contains(Upgrades.ZergMissileWeaponsLevel3) && _requestedUpgrades.Contains(Upgrades.ZergGroundArmorsLevel3)) {
-            _evolutionChamberBuildRequest.Requested = 0;
+            _evolutionChamberBuildRequest.QuantityRequested = 0;
 
             return;
         }
@@ -74,14 +74,14 @@ public class UpgradesManager : UnitlessManager {
         }
 
         if (roachCount >= 12) {
-            _evolutionChamberBuildRequest.Requested = 1;
+            _evolutionChamberBuildRequest.QuantityRequested = 1;
             _buildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.Research, Upgrades.ZergGroundArmorsLevel1, targetQuantity: 1));
             _requestedUpgrades.Add(Upgrades.ZergGroundArmorsLevel1);
         }
     }
 
     private void ImproveResearchInfrastructure() {
-        if (_evolutionChamberBuildRequest.Requested == 2) {
+        if (_evolutionChamberBuildRequest.QuantityRequested == 2) {
             return;
         }
 
@@ -89,7 +89,7 @@ public class UpgradesManager : UnitlessManager {
             var remainingResearchTime = GetRemainingResearchTime(Upgrades.ZergGroundArmorsLevel1);
             var evoChamberBuildTime = GetBuildTime(Units.EvolutionChamber);
             if (remainingResearchTime <= evoChamberBuildTime + 5) {
-                _evolutionChamberBuildRequest.Requested = 2;
+                _evolutionChamberBuildRequest.QuantityRequested = 2;
             }
         }
     }

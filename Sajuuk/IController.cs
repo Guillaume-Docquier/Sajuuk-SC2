@@ -23,7 +23,7 @@ public interface IController {
     public void SetSimulationTime(string reason);
     public void SetRealTime(string reason);
     public void NewFrame(ResponseGameInfo gameInfo, ResponseObservation observation);
-    public BuildRequestResult ExecuteBuildStep(BuildFulfillment buildStep);
+    public BuildRequestResult FulfillBuildRequest(IFulfillableBuildRequest buildRequest);
     public float GetResearchProgress(uint upgradeId);
     public bool IsResearchInProgress(uint upgradeId);
     public IEnumerable<Unit> GetProducersCarryingOrders(uint unitTypeToProduce);
