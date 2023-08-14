@@ -1,4 +1,4 @@
-﻿namespace Sajuuk.Builds;
+﻿namespace Sajuuk.Builds.BuildRequests;
 
 /// <summary>
 /// Represents the priority of a BuildRequest.

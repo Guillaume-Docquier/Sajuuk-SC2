@@ -1,16 +1,6 @@
-﻿using Sajuuk.GameSense;
+﻿namespace Sajuuk.Builds.BuildRequests;
 
-namespace Sajuuk.Builds;
-
-public class BuildRequestFactory : IBuildRequestFactory {
-    private readonly IUnitsTracker _unitsTracker;
-    private readonly IController _controller;
-
-    public BuildRequestFactory(IUnitsTracker unitsTracker, IController controller) {
-        _unitsTracker = unitsTracker;
-        _controller = controller;
-    }
-
+public interface IBuildRequestFactory {
     public TargetBuildRequest CreateTargetBuildRequest(
         BuildType buildType,
         uint unitOrUpgradeType,
@@ -19,9 +9,7 @@ public class BuildRequestFactory : IBuildRequestFactory {
         bool queue = false,
         BuildBlockCondition blockCondition = BuildBlockCondition.None,
         BuildRequestPriority priority = BuildRequestPriority.Normal
-    ) {
-        return new TargetBuildRequest(_unitsTracker, _controller, buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority);
-    }
+    );
 
     public QuantityBuildRequest CreateQuantityBuildRequest(
         BuildType buildType,
@@ -31,7 +19,5 @@ public class BuildRequestFactory : IBuildRequestFactory {
         bool queue = false,
         BuildBlockCondition blockCondition = BuildBlockCondition.None,
         BuildRequestPriority priority = BuildRequestPriority.Normal
-    ) {
-        return new QuantityBuildRequest(buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority);
-    }
+    );
 }

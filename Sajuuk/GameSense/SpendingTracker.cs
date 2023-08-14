@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Sajuuk.Builds;
+using Sajuuk.Builds.BuildRequests;
 using Sajuuk.GameData;
 
 namespace Sajuuk.GameSense;

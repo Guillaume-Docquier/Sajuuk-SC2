@@ -1,4 +1,4 @@
-﻿namespace Sajuuk.Builds;
+﻿namespace Sajuuk.Builds.BuildRequests;
 
 public enum BuildType {
     Train,

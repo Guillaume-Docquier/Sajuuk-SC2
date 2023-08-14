@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Sajuuk.Actions;
-using Sajuuk.Builds;
 using Sajuuk.Debugging.GraphicalDebugging;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
@@ -8,6 +7,7 @@ using Sajuuk.Managers.EconomyManagement.TownHallSupervision;
 using Sajuuk.Tests.Mocks;
 using Sajuuk.UnitModules;
 using Moq;
+using Sajuuk.Builds.BuildRequests;
 using SC2APIProtocol;
 
 namespace Sajuuk.Tests.Managers.EconomyManagement.TownHallSupervision;

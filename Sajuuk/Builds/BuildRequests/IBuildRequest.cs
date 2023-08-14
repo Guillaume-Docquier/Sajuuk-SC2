@@ -1,4 +1,4 @@
-﻿namespace Sajuuk.Builds;
+﻿namespace Sajuuk.Builds.BuildRequests;
 
 public interface IBuildRequest : IFulfillableBuildRequest {
     public new int QuantityRequested { get; set; }

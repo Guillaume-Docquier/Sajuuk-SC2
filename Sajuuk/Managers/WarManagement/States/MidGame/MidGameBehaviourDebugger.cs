@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Sajuuk.Builds;
+using Sajuuk.Builds.BuildRequests;
 using Sajuuk.Debugging;
 using Sajuuk.Debugging.GraphicalDebugging;
 using SC2APIProtocol;

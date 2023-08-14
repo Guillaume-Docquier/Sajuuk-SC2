@@ -1,4 +1,4 @@
-﻿namespace Sajuuk.Builds;
+﻿namespace Sajuuk.Builds.BuildRequests;
 
 public abstract class BuildRequest : IBuildRequest {
     public BuildType BuildType { get; }

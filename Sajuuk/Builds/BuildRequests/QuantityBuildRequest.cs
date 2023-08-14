@@ -1,4 +1,4 @@
-﻿namespace Sajuuk.Builds;
+﻿namespace Sajuuk.Builds.BuildRequests;
 
 public class QuantityBuildRequest : BuildRequest {
     private int _quantityFulfilled = 0;

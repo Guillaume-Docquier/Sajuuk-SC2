@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
-using Sajuuk.Builds;
+using Sajuuk.Builds.BuildRequests;
 
 namespace Sajuuk.GameSense;
 
 public interface ISpendingTracker {
-    float ExpectedFutureMineralsSpending { get; }
-    float ExpectedFutureVespeneSpending { get; }
+    public float ExpectedFutureMineralsSpending { get; }
+    public float ExpectedFutureVespeneSpending { get; }
 
     /// <summary>
     /// Update the expected future spending.
@@ -15,5 +15,5 @@ public interface ISpendingTracker {
     /// This effectively prioritizes expenses that will happen soon.
     /// </summary>
     /// <param name="futureBuildRequests"></param>
-    void UpdateExpectedFutureSpending(List<IFulfillableBuildRequest> futureBuildRequests);
+    public void UpdateExpectedFutureSpending(List<IFulfillableBuildRequest> futureBuildRequests);
 }

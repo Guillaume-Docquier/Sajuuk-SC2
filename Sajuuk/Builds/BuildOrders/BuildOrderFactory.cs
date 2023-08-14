@@ -1,15 +1,17 @@
-﻿using Sajuuk.GameSense;
+﻿using Sajuuk.Builds.BuildRequests;
+using Sajuuk.GameSense;
 
 namespace Sajuuk.Builds.BuildOrders;
 
 public class BuildOrderFactory : IBuildOrderFactory {
     private readonly IUnitsTracker _unitsTracker;
-    private readonly IController _controller;
     private readonly IBuildRequestFactory _buildRequestFactory;
 
-    public BuildOrderFactory(IUnitsTracker unitsTracker, IController controller, IBuildRequestFactory buildRequestFactory) {
+    public BuildOrderFactory(
+        IUnitsTracker unitsTracker,
+        IBuildRequestFactory buildRequestFactory
+    ) {
         _unitsTracker = unitsTracker;
-        _controller = controller;
         _buildRequestFactory = buildRequestFactory;
     }
 

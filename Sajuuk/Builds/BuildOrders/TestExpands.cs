@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Sajuuk.Builds.BuildRequests;
 using Sajuuk.GameData;
 using Sajuuk.GameSense.EnemyStrategyTracking;
 

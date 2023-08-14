@@ -3,7 +3,7 @@ using System.Linq;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
 
-namespace Sajuuk.Builds;
+namespace Sajuuk.Builds.BuildRequests;
 
 public class TargetBuildRequest : BuildRequest {
     private readonly IUnitsTracker _unitsTracker;

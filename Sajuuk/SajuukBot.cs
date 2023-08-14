@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Sajuuk.ExtensionMethods;
 using Sajuuk.Builds;
 using Sajuuk.Builds.BuildOrders;
+using Sajuuk.Builds.BuildRequests;
 using Sajuuk.Debugging;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
@@ -26,6 +27,7 @@ public class SajuukBot : PoliteBot {
     private readonly IFrameClock _frameClock;
     private readonly IController _controller;
     private readonly ISpendingTracker _spendingTracker;
+    private readonly IBuildRequestFulfiller _buildRequestFulfiller;
 
     public override string Name => "Sajuuk";
     public override Race Race => Race.Zerg;
@@ -43,7 +45,8 @@ public class SajuukBot : PoliteBot {
         IFrameClock frameClock,
         IController controller,
         ISpendingTracker spendingTracker,
-        IChatService chatService
+        IChatService chatService,
+        IBuildRequestFulfiller buildRequestFulfiller
     ) : base(version, scenarios, taggingService, unitsTracker, terrainTracker, frameClock, controller, chatService) {
         _managerFactory = managerFactory;
         _buildRequestFactory = buildRequestFactory;
@@ -53,6 +56,7 @@ public class SajuukBot : PoliteBot {
         _frameClock = frameClock;
         _controller = controller;
         _spendingTracker = spendingTracker;
+        _buildRequestFulfiller = buildRequestFulfiller;
     }
 
     protected override Task DoOnFrame() {
@@ -110,24 +114,24 @@ public class SajuukBot : PoliteBot {
                 }
 
                 // TODO GD Interweave requests (i.e if we have 2 requests, 10 roaches and 10 drones, do 1 roach 1 drone, 1 roach 1 drone, etc)
-                foreach (var buildStep in supplyGroups) {
-                    while (buildStep.QuantityRemaining > 0) {
-                        var buildStepResult = _controller.FulfillBuildRequest(buildStep);
-                        if (buildStepResult == BuildRequestResult.Ok) {
-                            buildStep.Fulfill(1);
+                foreach (var buildRequest in supplyGroups) {
+                    while (buildRequest.QuantityRemaining > 0) {
+                        var buildRequestResult = _buildRequestFulfiller.FulfillBuildRequest(buildRequest);
+                        if (buildRequestResult == BuildRequestResult.Ok) {
+                            buildRequest.Fulfill(1);
 
                             if (_controller.CurrentSupply >= lookBackSupplyTarget) {
                                 return AddressManagerRequests(groupedManagersBuildRequests);
                             }
                         }
                         // Don't retry expands if they are all taken
-                        else if (buildStep.BuildType == BuildType.Expand && buildStepResult.HasFlag(BuildRequestResult.NoSuitableLocation)) {
-                            buildStep.Fulfill(1);
+                        else if (buildRequest.BuildType == BuildType.Expand && buildRequestResult.HasFlag(BuildRequestResult.NoSuitableLocation)) {
+                            buildRequest.Fulfill(1);
                         }
-                        else if (ShouldBlock(buildStep, buildStepResult, out var buildBlockingReason)) {
+                        else if (ShouldBlock(buildRequest, buildRequestResult, out var buildBlockingReason)) {
                             // We must wait to fulfill this one
                             // TODO GD We can still process other requests that don't overlap with the blocking condition
-                            return (buildStep, buildBlockingReason);
+                            return (buildRequest, buildBlockingReason);
                         }
                         else {
                             // Not possible anymore, go to next
@@ -214,6 +218,6 @@ public class SajuukBot : PoliteBot {
             return;
         }
 
-        _controller.FulfillBuildRequest(_buildRequestFactory.CreateQuantityBuildRequest(BuildType.Train, Units.Overlord));
+        _buildRequestFulfiller.FulfillBuildRequest(_buildRequestFactory.CreateQuantityBuildRequest(BuildType.Train, Units.Overlord));
     }
 }
