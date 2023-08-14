@@ -11,7 +11,7 @@ public class CreepManager : UnitlessManager {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IUnitModuleInstaller _unitModuleInstaller;
 
-    public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
+    public override IEnumerable<IFulfillableBuildRequest> BuildRequests => Enumerable.Empty<IFulfillableBuildRequest>();
 
     public CreepManager(
         IUnitsTracker unitsTracker,

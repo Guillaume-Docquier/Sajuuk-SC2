@@ -24,7 +24,7 @@ public class RegionalArmySupervisor : Supervisor {
     private readonly IClustering _clustering;
     private readonly StateMachine<RegionalArmySupervisor, RegionalArmySupervisionState> _stateMachine;
 
-    public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
+    public override IEnumerable<IFulfillableBuildRequest> BuildRequests => Enumerable.Empty<IFulfillableBuildRequest>();
 
     public RegionalArmySupervisor(
         IUnitsTracker unitsTracker,

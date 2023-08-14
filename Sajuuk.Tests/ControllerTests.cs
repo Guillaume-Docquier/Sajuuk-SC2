@@ -48,8 +48,6 @@ public class ControllerTests : IClassFixture<NoLoggerFixture> {
             .Returns(new List<Unit>());
 
         var buildRequest = new QuantityBuildRequest(
-            _controller,
-            _knowledgeBase,
             BuildType.Build,
             Units.Hatchery,
             quantity: 1,
@@ -60,7 +58,7 @@ public class ControllerTests : IClassFixture<NoLoggerFixture> {
         );
 
         // Act
-        var result = _controller.ExecuteBuildStep(buildRequest.Fulfillment);
+        var result = _controller.FulfillBuildRequest(buildRequest);
 
         // Assert
         var actualNoProducersAvailableFlag = result & BuildRequestResult.NoProducersAvailable;
@@ -75,8 +73,6 @@ public class ControllerTests : IClassFixture<NoLoggerFixture> {
             .Returns(new List<Unit> { TestUtils.CreateUnit(Units.Drone, _knowledgeBase) });
 
         var buildRequest = new QuantityBuildRequest(
-            _controller,
-            _knowledgeBase,
             BuildType.Build,
             Units.Hatchery,
             quantity: 1,
@@ -87,7 +83,7 @@ public class ControllerTests : IClassFixture<NoLoggerFixture> {
         );
 
         // Act
-        var result = _controller.ExecuteBuildStep(buildRequest.Fulfillment);
+        var result = _controller.FulfillBuildRequest(buildRequest);
 
         // Assert
         var actualNoProducersAvailableFlag = result & BuildRequestResult.NoProducersAvailable;
@@ -106,8 +102,6 @@ public class ControllerTests : IClassFixture<NoLoggerFixture> {
             });
 
         var buildRequest = new QuantityBuildRequest(
-            _controller,
-            _knowledgeBase,
             BuildType.Build,
             Units.Hatchery,
             quantity: 1,
@@ -118,7 +112,7 @@ public class ControllerTests : IClassFixture<NoLoggerFixture> {
         );
 
         // Act
-        var result = _controller.ExecuteBuildStep(buildRequest.Fulfillment);
+        var result = _controller.FulfillBuildRequest(buildRequest);
 
         // Assert
         var actualNoProducersAvailable = result & BuildRequestResult.NoProducersAvailable;

@@ -69,8 +69,8 @@ public static class TestUtils {
         );
     }
 
-    public class DummyManager: Manager {
-        public override IEnumerable<BuildFulfillment> BuildFulfillments { get; } = Enumerable.Empty<BuildFulfillment>();
+    public class DummyManager : Manager {
+        public override IEnumerable<IFulfillableBuildRequest> BuildRequests { get; } = Enumerable.Empty<IFulfillableBuildRequest>();
 
         protected override IAssigner Assigner { get; }
         protected override IDispatcher Dispatcher { get; }
@@ -90,7 +90,7 @@ public static class TestUtils {
     }
 
     public class DummySupervisor : Supervisor {
-        public override IEnumerable<BuildFulfillment> BuildFulfillments { get; } = Enumerable.Empty<BuildFulfillment>();
+        public override IEnumerable<IFulfillableBuildRequest> BuildRequests { get; } = Enumerable.Empty<IFulfillableBuildRequest>();
 
         protected override IAssigner Assigner { get; }
         protected override IReleaser Releaser { get; }

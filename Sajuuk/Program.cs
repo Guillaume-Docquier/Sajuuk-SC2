@@ -249,8 +249,7 @@ public class Program {
     private static IBot CreateSajuuk(Services services, string version, List<IScenario> scenarios) {
         var buildRequestFactory = new BuildRequestFactory(
             services.UnitsTracker,
-            services.Controller,
-            services.KnowledgeBase
+            services.Controller
         );
 
         var buildOrderFactory = new BuildOrderFactory(

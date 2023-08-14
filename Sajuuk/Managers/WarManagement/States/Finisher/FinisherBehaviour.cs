@@ -160,7 +160,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
 
         BuildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.Build, Units.Spire, targetQuantity: 1, priority: BuildRequestPriority.VeryHigh, blockCondition: BuildBlockCondition.All));
 
-        _corruptorsBuildRequest.Requested = 10;
+        _corruptorsBuildRequest.QuantityRequested = 10;
         BuildRequests.Add(_corruptorsBuildRequest);
 
         _isTerranFinisherInitiated = true;
@@ -172,7 +172,7 @@ public class FinisherBehaviour : IWarManagerBehaviour {
     /// </summary>
     /// <returns></returns>
     private bool ShouldFreeSomeSupply() {
-        return _controller.AvailableSupply < 2 && _corruptorsBuildRequest.Fulfillment.Remaining > 0;
+        return _controller.AvailableSupply < 2 && _corruptorsBuildRequest.QuantityRemaining > 0;
     }
 
     /// <summary>

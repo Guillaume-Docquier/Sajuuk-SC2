@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using Sajuuk.Builds;
 using Sajuuk.Debugging.GraphicalDebugging;
 using Sajuuk.Managers.WarManagement.States;
@@ -18,7 +17,7 @@ namespace Sajuuk.Managers.WarManagement;
  * Be conservative about switching states try not to yo-yo
  */
 
-public class WarManager: Manager {
+public class WarManager : Manager {
     private readonly WarManagerDebugger _debugger;
     private readonly StateMachine<WarManager, WarManagerState> _stateMachine;
 
@@ -26,7 +25,7 @@ public class WarManager: Manager {
     protected override IDispatcher Dispatcher => _stateMachine.State.Behaviour.Dispatcher;
     protected override IReleaser Releaser => _stateMachine.State.Behaviour.Releaser;
 
-    public override IEnumerable<BuildFulfillment> BuildFulfillments => _stateMachine.State.Behaviour.BuildRequests.Select(buildRequest => buildRequest.Fulfillment);
+    public override IEnumerable<IFulfillableBuildRequest> BuildRequests => _stateMachine.State.Behaviour.BuildRequests;
 
     public WarManager(IWarManagerStateFactory warManagerStateFactory, IGraphicalDebugger graphicalDebugger) {
         _debugger = new WarManagerDebugger(graphicalDebugger);

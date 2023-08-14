@@ -13,7 +13,7 @@ public class ScoutSupervisor : Supervisor {
 
     public readonly ScoutingTask ScoutingTask;
 
-    public override IEnumerable<BuildFulfillment> BuildFulfillments => Enumerable.Empty<BuildFulfillment>();
+    public override IEnumerable<IFulfillableBuildRequest> BuildRequests => Enumerable.Empty<IFulfillableBuildRequest>();
 
     public ScoutSupervisor(IUnitsTracker unitsTracker, ScoutingTask scoutingTask) {
         _unitsTracker = unitsTracker;

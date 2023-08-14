@@ -206,20 +206,19 @@ public class Controller : IController {
         return producers.MinBy(producer => producer.DistanceTo(closestTo));
     }
 
-    // TODO GD Should use an IBuildStep, probably. BuildFulfillment seems odd here
-    public BuildRequestResult ExecuteBuildStep(BuildFulfillment buildStep) {
-        var result = buildStep.BuildType switch
+    public BuildRequestResult FulfillBuildRequest(IFulfillableBuildRequest buildRequest) {
+        var result = buildRequest.BuildType switch
         {
-            BuildType.Train => TrainUnit(buildStep.UnitOrUpgradeType),
-            BuildType.Build => PlaceBuilding(buildStep.UnitOrUpgradeType),
-            BuildType.Research => ResearchUpgrade(buildStep.UnitOrUpgradeType, buildStep.Queue),
-            BuildType.UpgradeInto => UpgradeInto(buildStep.UnitOrUpgradeType),
-            BuildType.Expand => PlaceExpand(buildStep.UnitOrUpgradeType),
+            BuildType.Train => TrainUnit(buildRequest.UnitOrUpgradeType),
+            BuildType.Build => PlaceBuilding(buildRequest.UnitOrUpgradeType),
+            BuildType.Research => ResearchUpgrade(buildRequest.UnitOrUpgradeType, buildRequest.AllowQueueing),
+            BuildType.UpgradeInto => UpgradeInto(buildRequest.UnitOrUpgradeType),
+            BuildType.Expand => PlaceExpand(buildRequest.UnitOrUpgradeType),
             _ => BuildRequestResult.NotSupported
         };
 
         if (result == BuildRequestResult.Ok) {
-            Logger.Info($"(Controller) Completed build step {buildStep}");
+            Logger.Info($"(Controller) Completed build request {buildRequest}");
         }
 
         return result;

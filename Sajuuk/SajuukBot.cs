@@ -100,7 +100,7 @@ public class SajuukBot : PoliteBot {
     /// </summary>
     /// <param name="groupedManagersBuildRequests"></param>
     /// <returns>The blocking build fulfillment with the block reason, or (null, None) if nothing was blocking</returns>
-    private (BuildFulfillment, BuildBlockCondition) AddressManagerRequests(List<List<List<BuildFulfillment>>> groupedManagersBuildRequests) {
+    private (IFulfillableBuildRequest, BuildBlockCondition) AddressManagerRequests(List<List<List<IFulfillableBuildRequest>>> groupedManagersBuildRequests) {
         var lookBackSupplyTarget = long.MaxValue;
         foreach (var priorityGroups in groupedManagersBuildRequests) {
             foreach (var supplyGroups in priorityGroups) {
@@ -111,8 +111,8 @@ public class SajuukBot : PoliteBot {
 
                 // TODO GD Interweave requests (i.e if we have 2 requests, 10 roaches and 10 drones, do 1 roach 1 drone, 1 roach 1 drone, etc)
                 foreach (var buildStep in supplyGroups) {
-                    while (buildStep.Remaining > 0) {
-                        var buildStepResult = _controller.ExecuteBuildStep(buildStep);
+                    while (buildStep.QuantityRemaining > 0) {
+                        var buildStepResult = _controller.FulfillBuildRequest(buildStep);
                         if (buildStepResult == BuildRequestResult.Ok) {
                             buildStep.Fulfill(1);
 
@@ -145,13 +145,13 @@ public class SajuukBot : PoliteBot {
     /// Returns the managers build requests grouped by priority and supply required
     /// </summary>
     /// <returns>Nested lists containing the managers build requests grouped by priority and supply required</returns>
-    private List<List<List<BuildFulfillment>>> GetManagersBuildRequests() {
+    private List<List<List<IFulfillableBuildRequest>>> GetManagersBuildRequests() {
         // We shuffle so that the requests are not always in the same order
         // We cannot shuffle request groups because we want to preserve the relative order of a manager's requests
         var shuffledManagers = _managers.ToList().Shuffle();
 
         var priorityGroups = shuffledManagers
-            .SelectMany(manager => manager.BuildFulfillments.Where(buildFulfillment => buildFulfillment.Remaining > 0))
+            .SelectMany(manager => manager.BuildRequests.Where(buildRequest => buildRequest.QuantityRemaining > 0))
             .GroupBy(buildRequest => buildRequest.Priority)
             .OrderByDescending(group => group.Key);
 
@@ -169,30 +169,30 @@ public class SajuukBot : PoliteBot {
     }
 
     /// <summary>
-    /// Determines if a BuildFulfillment should block the build based on its block conditions and the request result.
+    /// Determines if a build request should block the build based on its block conditions and the request result.
     /// </summary>
-    /// <param name="buildFulfillment">The build fulfillment that might be blocking</param>
+    /// <param name="buildRequest">The build request that might be blocking</param>
     /// <param name="buildRequestResult">The build request result</param>
     /// <param name="buildBlockingReason">The blocking reason, if any</param>
     /// <returns>True if the build should be blocked</returns>
-    private static bool ShouldBlock(BuildFulfillment buildFulfillment, BuildRequestResult buildRequestResult, out BuildBlockCondition buildBlockingReason) {
+    private static bool ShouldBlock(IFulfillableBuildRequest buildRequest, BuildRequestResult buildRequestResult, out BuildBlockCondition buildBlockingReason) {
         // TODO GD All of this is not really cute, is there a nicer way?
-        if (buildRequestResult.HasFlag(BuildRequestResult.TechRequirementsNotMet) && buildFulfillment.BlockCondition.HasFlag(BuildBlockCondition.MissingTech)) {
+        if (buildRequestResult.HasFlag(BuildRequestResult.TechRequirementsNotMet) && buildRequest.BlockCondition.HasFlag(BuildBlockCondition.MissingTech)) {
             buildBlockingReason = BuildBlockCondition.MissingTech;
             return true;
         }
 
-        if (buildRequestResult.HasFlag(BuildRequestResult.NoProducersAvailable) && buildFulfillment.BlockCondition.HasFlag(BuildBlockCondition.MissingProducer)) {
+        if (buildRequestResult.HasFlag(BuildRequestResult.NoProducersAvailable) && buildRequest.BlockCondition.HasFlag(BuildBlockCondition.MissingProducer)) {
             buildBlockingReason = BuildBlockCondition.MissingProducer;
             return true;
         }
 
-        if (buildRequestResult.HasFlag(BuildRequestResult.NotEnoughMinerals) && buildFulfillment.BlockCondition.HasFlag(BuildBlockCondition.MissingMinerals)) {
+        if (buildRequestResult.HasFlag(BuildRequestResult.NotEnoughMinerals) && buildRequest.BlockCondition.HasFlag(BuildBlockCondition.MissingMinerals)) {
             buildBlockingReason = BuildBlockCondition.MissingMinerals;
             return true;
         }
 
-        if (buildRequestResult.HasFlag(BuildRequestResult.NotEnoughVespeneGas) && buildFulfillment.BlockCondition.HasFlag(BuildBlockCondition.MissingVespene)) {
+        if (buildRequestResult.HasFlag(BuildRequestResult.NotEnoughVespeneGas) && buildRequest.BlockCondition.HasFlag(BuildBlockCondition.MissingVespene)) {
             buildBlockingReason = BuildBlockCondition.MissingVespene;
             return true;
         }
@@ -214,6 +214,6 @@ public class SajuukBot : PoliteBot {
             return;
         }
 
-        _controller.ExecuteBuildStep(_buildRequestFactory.CreateQuantityBuildRequest(BuildType.Train, Units.Overlord).Fulfillment);
+        _controller.FulfillBuildRequest(_buildRequestFactory.CreateQuantityBuildRequest(BuildType.Train, Units.Overlord));
     }
 }

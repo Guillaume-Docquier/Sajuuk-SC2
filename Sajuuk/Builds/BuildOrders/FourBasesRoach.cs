@@ -64,7 +64,7 @@ public class FourBasesRoach : IBuildOrder {
 
     public void PruneRequests() {
         _buildRequests = _buildRequests
-            .Where(buildRequest => buildRequest is TargetBuildRequest || buildRequest.Fulfillment.Remaining > 0)
+            .Where(buildRequest => buildRequest is TargetBuildRequest || buildRequest.QuantityRemaining > 0)
             .ToList();
     }
 

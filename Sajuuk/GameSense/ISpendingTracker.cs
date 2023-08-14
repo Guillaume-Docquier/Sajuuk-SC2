@@ -15,5 +15,5 @@ public interface ISpendingTracker {
     /// This effectively prioritizes expenses that will happen soon.
     /// </summary>
     /// <param name="futureBuildRequests"></param>
-    void UpdateExpectedFutureSpending(List<BuildFulfillment> futureBuildRequests);
+    void UpdateExpectedFutureSpending(List<IFulfillableBuildRequest> futureBuildRequests);
 }
