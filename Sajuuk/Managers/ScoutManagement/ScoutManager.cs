@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Numerics;
 using Sajuuk.ExtensionMethods;
-using Sajuuk.Builds;
+using Sajuuk.Builds.BuildRequests;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using Sajuuk.Managers.ScoutManagement.ScoutingStrategies;

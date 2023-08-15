@@ -1,4 +1,4 @@
-﻿namespace Sajuuk.Builds;
+﻿namespace Sajuuk.Builds.BuildRequests;
 
 public interface IBuildRequestFactory {
     public TargetBuildRequest CreateTargetBuildRequest(

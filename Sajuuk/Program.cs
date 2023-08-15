@@ -6,6 +6,7 @@ using Sajuuk.Actions;
 using Sajuuk.Algorithms;
 using Sajuuk.Builds;
 using Sajuuk.Builds.BuildOrders;
+using Sajuuk.Builds.BuildRequests;
 using Sajuuk.Debugging;
 using Sajuuk.Debugging.GraphicalDebugging;
 using Sajuuk.GameData;
@@ -248,13 +249,13 @@ public class Program {
 
     private static IBot CreateSajuuk(Services services, string version, List<IScenario> scenarios) {
         var buildRequestFactory = new BuildRequestFactory(
-            services.UnitsTracker,
-            services.Controller
+            services.KnowledgeBase,
+            services.Controller,
+            services.UnitsTracker
         );
 
         var buildOrderFactory = new BuildOrderFactory(
             services.UnitsTracker,
-            services.Controller,
             buildRequestFactory
         );
 
@@ -418,7 +419,8 @@ public class Program {
             services.FrameClock,
             services.Controller,
             services.SpendingTracker,
-            services.ChatService
+            services.ChatService,
+            services.BuildRequestFulfiller
         );
     }
 
@@ -509,18 +511,17 @@ public class Program {
 
         var controller = new Controller(
             unitsTracker,
-            buildingTracker,
-            terrainTracker,
             regionsTracker,
             techTree,
             knowledgeBase,
-            pathfinder,
             chatService,
             trackers
         );
 
         var detectionTracker = new DetectionTracker(unitsTracker, controller, knowledgeBase);
         var unitModuleInstaller = new UnitModuleInstaller(unitsTracker, graphicalDebugger, buildingTracker, regionsTracker, creepTracker, pathfinder, visibilityTracker, terrainTracker, frameClock);
+
+        var buildRequestFulfiller = new BuildRequestFulfiller(techTree, knowledgeBase, unitsTracker, buildingTracker, pathfinder, terrainTracker, controller, regionsTracker);
 
         // We do this to avoid circular dependencies between unit, unitsTracker, terrainTracker and regionsTracker
         // I don't 100% like it but it seems worth it.
@@ -560,6 +561,7 @@ public class Program {
             ActionService = actionService,
             Sc2Client = sc2Client,
             UnitModuleInstaller = unitModuleInstaller,
+            BuildRequestFulfiller = buildRequestFulfiller,
             ExpandAnalyzer = expandAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different BotRunner implementation
             RegionAnalyzer = regionAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different BotRunner implementation
         };
@@ -594,6 +596,7 @@ public class Program {
         public IActionService ActionService { get; init; }
         public ISc2Client Sc2Client { get; init; }
         public IUnitModuleInstaller UnitModuleInstaller { get; init; }
+        public IBuildRequestFulfiller BuildRequestFulfiller { get; init; }
 
         public IExpandAnalyzer ExpandAnalyzer { get; init; }
         public IRegionAnalyzer RegionAnalyzer { get; init; }

@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using Moq;
 using Sajuuk.Actions;
-using Sajuuk.Builds;
+using Sajuuk.Builds.BuildRequests;
 using Sajuuk.ExtensionMethods;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;

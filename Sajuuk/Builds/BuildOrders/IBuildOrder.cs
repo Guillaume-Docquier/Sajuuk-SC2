@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
+using Sajuuk.Builds.BuildRequests;
 using Sajuuk.GameSense.EnemyStrategyTracking;
 
-namespace Sajuuk.Builds;
+namespace Sajuuk.Builds.BuildOrders;
 
 public interface IBuildOrder {
     /// <summary>

@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Sajuuk.Builds;
+using Sajuuk.Builds.BuildRequests;
 
 namespace Sajuuk.Debugging;
 

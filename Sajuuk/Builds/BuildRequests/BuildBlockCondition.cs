@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Sajuuk.Builds;
+namespace Sajuuk.Builds.BuildRequests;
 
 [Flags]
 public enum BuildBlockCondition {

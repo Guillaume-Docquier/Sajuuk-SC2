@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Sajuuk.Builds;
+using Sajuuk.Builds.BuildOrders;
+using Sajuuk.Builds.BuildRequests;
 using Sajuuk.GameSense.EnemyStrategyTracking;
 using Sajuuk.Tagging;
 

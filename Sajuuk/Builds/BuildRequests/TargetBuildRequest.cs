@@ -3,9 +3,10 @@ using System.Linq;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
 
-namespace Sajuuk.Builds;
+namespace Sajuuk.Builds.BuildRequests;
 
 public class TargetBuildRequest : BuildRequest {
+    private readonly KnowledgeBase _knowledgeBase;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IController _controller;
 
@@ -30,8 +31,9 @@ public class TargetBuildRequest : BuildRequest {
     public override int QuantityRemaining => Math.Max(0, QuantityRequested - QuantityFulfilled);
 
     public TargetBuildRequest(
-        IUnitsTracker unitsTracker,
+        KnowledgeBase knowledgeBase,
         IController controller,
+        IUnitsTracker unitsTracker,
         BuildType buildType,
         uint unitOrUpgradeType,
         int targetQuantity,
@@ -40,9 +42,10 @@ public class TargetBuildRequest : BuildRequest {
         BuildBlockCondition blockCondition,
         BuildRequestPriority priority
     )
-        : base(buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority) {
-        _unitsTracker = unitsTracker;
+        : base(knowledgeBase, controller, buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority) {
+        _knowledgeBase = knowledgeBase;
         _controller = controller;
+        _unitsTracker = unitsTracker;
     }
 
     public override void Fulfill(int quantity) {

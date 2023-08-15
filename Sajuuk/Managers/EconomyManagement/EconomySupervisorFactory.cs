@@ -1,4 +1,4 @@
-﻿using Sajuuk.Builds;
+﻿using Sajuuk.Builds.BuildRequests;
 using Sajuuk.Debugging.GraphicalDebugging;
 using Sajuuk.GameSense;
 using Sajuuk.Managers.EconomyManagement.TownHallSupervision;

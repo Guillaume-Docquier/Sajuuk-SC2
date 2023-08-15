@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Sajuuk.ExtensionMethods;
 using Sajuuk.Algorithms;
-using Sajuuk.Builds;
+using Sajuuk.Builds.BuildRequests;
 using Sajuuk.Debugging;
 using Sajuuk.Debugging.GraphicalDebugging;
 using Sajuuk.GameData;

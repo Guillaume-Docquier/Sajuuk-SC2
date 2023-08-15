@@ -1,4 +1,6 @@
-﻿namespace Sajuuk.Builds;
+﻿using Sajuuk.GameData;
+
+namespace Sajuuk.Builds.BuildRequests;
 
 public class QuantityBuildRequest : BuildRequest {
     private int _quantityFulfilled = 0;
@@ -6,6 +8,8 @@ public class QuantityBuildRequest : BuildRequest {
     public override int QuantityRemaining => QuantityRequested - QuantityFulfilled;
 
     public QuantityBuildRequest(
+        KnowledgeBase knowledgeBase,
+        IController controller,
         BuildType buildType,
         uint unitOrUpgradeType,
         int quantity,
@@ -14,7 +18,7 @@ public class QuantityBuildRequest : BuildRequest {
         BuildBlockCondition blockCondition,
         BuildRequestPriority priority
     )
-        : base(buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority) {}
+        : base(knowledgeBase, controller, buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority) {}
 
     public override void Fulfill(int quantity) {
         _quantityFulfilled += quantity;
