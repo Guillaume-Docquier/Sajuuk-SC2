@@ -49,6 +49,8 @@ public class BuildRequestFulfillerTests : IClassFixture<NoLoggerFixture> {
             .Returns(new List<Unit>());
 
         var buildRequest = new QuantityBuildRequest(
+            _knowledgeBase,
+            _controllerMock.Object,
             BuildType.Build,
             Units.Hatchery,
             quantity: 1,
@@ -74,6 +76,8 @@ public class BuildRequestFulfillerTests : IClassFixture<NoLoggerFixture> {
             .Returns(new List<Unit> { TestUtils.CreateUnit(Units.Drone, _knowledgeBase) });
 
         var buildRequest = new QuantityBuildRequest(
+            _knowledgeBase,
+            _controllerMock.Object,
             BuildType.Build,
             Units.Hatchery,
             quantity: 1,
@@ -103,6 +107,8 @@ public class BuildRequestFulfillerTests : IClassFixture<NoLoggerFixture> {
             });
 
         var buildRequest = new QuantityBuildRequest(
+            _knowledgeBase,
+            _controllerMock.Object,
             BuildType.Build,
             Units.Hatchery,
             quantity: 1,

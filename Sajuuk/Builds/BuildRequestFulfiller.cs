@@ -56,7 +56,7 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         };
 
         if (result == BuildRequestResult.Ok) {
-            Logger.Info($"(Controller) Completed build request {buildRequest}");
+            Logger.Info($"Fulfilled 1 quantity of build request \"{buildRequest}\"");
         }
 
         return result;
@@ -274,12 +274,24 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         return BuildRequestResult.Ok;
     }
 
+    /// <summary>
+    /// Research the given upgrade, if possible.
+    /// </summary>
+    /// <param name="upgradeType">The upgrade type to research.</param>
+    /// <param name="allowQueue">Whether we allow queuing the research if no producer is available right now.</param>
+    /// <returns>A BuildRequestResult that describes if the upgrade could be researched, or why not.</returns>
     private BuildRequestResult ResearchUpgrade(uint upgradeType, bool allowQueue) {
         var producer = GetAvailableProducer(upgradeType, allowQueue);
 
         return ResearchUpgrade(upgradeType, producer);
     }
 
+    /// <summary>
+    /// Research the given upgrade with the given producer, if possible.
+    /// </summary>
+    /// <param name="upgradeType">The upgrade type to research.</param>
+    /// <param name="producer">The producer to use to research the upgrade.</param>
+    /// <returns>A BuildRequestResult that describes if the upgrade could be researched, or why not.</returns>
     private BuildRequestResult ResearchUpgrade(uint upgradeType, Unit producer) {
         var researchTypeData = _knowledgeBase.GetUpgradeData(upgradeType);
 
@@ -295,12 +307,23 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         return BuildRequestResult.Ok;
     }
 
+    /// <summary>
+    /// Upgrades a building into another one, if possible.
+    /// </summary>
+    /// <param name="buildingType">The building type to upgrade into.</param>
+    /// <returns>A BuildRequestResult that describes if the upgrade could be done, or why not.</returns>
     private BuildRequestResult UpgradeInto(uint buildingType) {
         var producer = GetAvailableProducer(buildingType);
 
         return UpgradeInto(buildingType, producer);
     }
 
+    /// <summary>
+    /// Upgrades a building into another one, if possible.
+    /// </summary>
+    /// <param name="buildingType">The building type to upgrade into.</param>
+    /// <param name="producer">The producer to use to upgrade into the given building type.</param>
+    /// <returns>A BuildRequestResult that describes if the upgrade could be done, or why not.</returns>
     private BuildRequestResult UpgradeInto(uint buildingType, Unit producer) {
         var buildingTypeData = _knowledgeBase.GetUnitTypeData(buildingType);
 
@@ -316,12 +339,25 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         return BuildRequestResult.Ok;
     }
 
+    /// <summary>
+    /// Places an expand, if possible.
+    /// The best expand location will be determined for you.
+    /// </summary>
+    /// <param name="buildingType">The type of townhall to place.</param>
+    /// <returns>A BuildRequestResult that describes if the expand could be placed, or why not.</returns>
     private BuildRequestResult PlaceExpand(uint buildingType) {
         var producer = GetAvailableProducer(buildingType);
 
         return PlaceExpand(buildingType, producer);
     }
 
+    /// <summary>
+    /// Places an expand using the given producer, if possible.
+    /// The best expand location will be determined for you.
+    /// </summary>
+    /// <param name="buildingType">The type of townhall to place.</param>
+    /// <param name="producer">The producer to use to place the expand.</param>
+    /// <returns>A BuildRequestResult that describes if the expand could be placed, or why not.</returns>
     private BuildRequestResult PlaceExpand(uint buildingType, Unit producer) {
         var buildingTypeData = _knowledgeBase.GetUnitTypeData(buildingType);
         var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
@@ -341,7 +377,11 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         return PlaceBuilding(buildingType, producer, expandLocation);
     }
 
-    // TODO GD Implement a more robust check and move this to an ExpandTracker
+    /// <summary>
+    /// Gets all the expand locations that are free.
+    /// TODO GD Implement a more robust check and move this to an ExpandTracker
+    /// </summary>
+    /// <returns>The list of expand locations available for expansion.</returns>
     private IEnumerable<Vector2> GetFreeExpandLocations() {
         return _regionsTracker.ExpandLocations
             .Select(expandLocation => expandLocation.Position)

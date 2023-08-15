@@ -93,7 +93,7 @@ public class BotDebugger : IBotDebugger {
 
         var managersBuildStepsData = managerBuildRequests
             .Select(nextBuildRequest => {
-                var buildRequestString = Stringify(nextBuildRequest);
+                var buildRequestString = nextBuildRequest.ToString();
                 if (buildBlockStatus.blockingStep == nextBuildRequest) {
                     buildRequestString += $" ({buildBlockStatus.blockingReason})";
                 }
@@ -106,22 +106,6 @@ public class BotDebugger : IBotDebugger {
         managersBuildStepsData.Insert(0, $"Next {managersBuildStepsData.Count}/{managerBuildRequests.Count} build requests:\n");
 
         _graphicalDebugger.AddTextGroup(managersBuildStepsData, virtualPos: new Point { X = 0.02f, Y = 0.02f });
-    }
-
-    private string Stringify(IFulfillableBuildRequest buildRequest) {
-        var buildStepUnitOrUpgradeName = buildRequest.BuildType == BuildType.Research
-            ? _knowledgeBase.GetUpgradeData(buildRequest.UnitOrUpgradeType).Name
-            : $"{buildRequest.QuantityFulfilled}/{buildRequest.QuantityRequested} {_knowledgeBase.GetUnitTypeData(buildRequest.UnitOrUpgradeType).Name}";
-
-        var when = $"at {buildRequest.AtSupply} supply";
-        if (buildRequest.AtSupply == 0) {
-            when = "";
-        }
-        else if (buildRequest.AtSupply <= _controller.CurrentSupply) {
-            when = "now";
-        }
-
-        return $"{buildRequest.BuildType.ToString()} {buildStepUnitOrUpgradeName} {when}";
     }
 
     private void DebugEnemyDetectors() {
