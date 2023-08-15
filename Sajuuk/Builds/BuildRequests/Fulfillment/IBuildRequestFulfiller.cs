@@ -1,6 +1,4 @@
-﻿using Sajuuk.Builds.BuildRequests;
-
-namespace Sajuuk.Builds;
+﻿namespace Sajuuk.Builds.BuildRequests.Fulfillment;
 
 public interface IBuildRequestFulfiller {
     /// <summary>

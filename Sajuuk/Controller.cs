@@ -5,7 +5,6 @@ using System.Threading;
 using Sajuuk.Builds.BuildRequests;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
-using Sajuuk.MapAnalysis;
 using Sajuuk.Utils;
 using SC2APIProtocol;
 

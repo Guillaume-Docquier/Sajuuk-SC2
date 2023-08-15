@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using Sajuuk.Builds.BuildRequests;
 using Sajuuk.ExtensionMethods;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
@@ -10,7 +9,7 @@ using Sajuuk.Managers.EconomyManagement.TownHallSupervision;
 using Sajuuk.MapAnalysis;
 using SC2APIProtocol;
 
-namespace Sajuuk.Builds;
+namespace Sajuuk.Builds.BuildRequests.Fulfillment;
 
 public class BuildRequestFulfiller : IBuildRequestFulfiller {
     private readonly TechTree _techTree;

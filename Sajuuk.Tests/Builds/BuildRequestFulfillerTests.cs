@@ -1,6 +1,6 @@
 ﻿using Moq;
-using Sajuuk.Builds;
 using Sajuuk.Builds.BuildRequests;
+using Sajuuk.Builds.BuildRequests.Fulfillment;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using Sajuuk.MapAnalysis;
