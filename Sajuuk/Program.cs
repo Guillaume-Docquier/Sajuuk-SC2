@@ -476,6 +476,7 @@ public class Program {
         var regionAnalyzer = new RegionAnalyzer(terrainTracker, expandAnalyzer, clustering, regionsDataRepository, chokeFinder, rampFinder, regionFactory, mapImageFactory, unitsTracker, new FootprintCalculator(terrainTracker), mapFileName);
 
         var spendingTracker = new SpendingTracker(incomeTracker, knowledgeBase);
+        var buildRequestFulfillmentTracker = new BuildRequestFulfillmentTracker();
 
         // TODO GD Compute update order. For now they are in declaration order (which is fine, but prone to errors)
         // TODO GD It's whack but that'll do until we get multiple controllers and game connections
@@ -507,6 +508,7 @@ public class Program {
                 enemyRaceTracker,
                 enemyStrategyTracker,
                 incomeTracker,
+                buildRequestFulfillmentTracker // Needs to be as last as possible
             };
 
         var controller = new Controller(
@@ -562,6 +564,7 @@ public class Program {
             Sc2Client = sc2Client,
             UnitModuleInstaller = unitModuleInstaller,
             BuildRequestFulfiller = buildRequestFulfiller,
+            BuildRequestFulfillmentTracker = buildRequestFulfillmentTracker,
             ExpandAnalyzer = expandAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different BotRunner implementation
             RegionAnalyzer = regionAnalyzer, // TODO GD These should not be here when not running in analysis mode, needs a different BotRunner implementation
         };
@@ -597,6 +600,7 @@ public class Program {
         public ISc2Client Sc2Client { get; init; }
         public IUnitModuleInstaller UnitModuleInstaller { get; init; }
         public IBuildRequestFulfiller BuildRequestFulfiller { get; init; }
+        public IBuildRequestFulfillmentTracker BuildRequestFulfillmentTracker { get; init; }
 
         public IExpandAnalyzer ExpandAnalyzer { get; init; }
         public IRegionAnalyzer RegionAnalyzer { get; init; }
