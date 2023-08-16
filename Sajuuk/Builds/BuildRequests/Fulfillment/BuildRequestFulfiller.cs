@@ -20,6 +20,8 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IController _controller;
     private readonly IRegionsTracker _regionsTracker;
+    private readonly IBuildRequestFulfillmentFactory _buildRequestFulfillmentFactory;
+    private readonly IBuildRequestFulfillmentTracker _buildRequestFulfillmentTracker;
 
     private const float ExpandIsTakenRadius = 4f;
 
@@ -31,7 +33,9 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         IPathfinder pathfinder,
         ITerrainTracker terrainTracker,
         IController controller,
-        IRegionsTracker regionsTracker
+        IRegionsTracker regionsTracker,
+        IBuildRequestFulfillmentFactory buildRequestFulfillmentFactory,
+        IBuildRequestFulfillmentTracker buildRequestFulfillmentTracker
     ) {
         _techTree = techTree;
         _knowledgeBase = knowledgeBase;
@@ -41,24 +45,28 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         _terrainTracker = terrainTracker;
         _controller = controller;
         _regionsTracker = regionsTracker;
+        _buildRequestFulfillmentFactory = buildRequestFulfillmentFactory;
+        _buildRequestFulfillmentTracker = buildRequestFulfillmentTracker;
     }
 
     public BuildRequestResult FulfillBuildRequest(IFulfillableBuildRequest buildRequest) {
         var result = buildRequest.BuildType switch
         {
             BuildType.Train => TrainUnit(buildRequest.UnitOrUpgradeType),
-            BuildType.Build => PlaceBuilding(buildRequest.UnitOrUpgradeType),
-            BuildType.Research => ResearchUpgrade(buildRequest.UnitOrUpgradeType, buildRequest.AllowQueueing),
-            BuildType.UpgradeInto => UpgradeInto(buildRequest.UnitOrUpgradeType),
-            BuildType.Expand => PlaceExpand(buildRequest.UnitOrUpgradeType),
-            _ => BuildRequestResult.NotSupported
+            //BuildType.Build => PlaceBuilding(buildRequest.UnitOrUpgradeType),
+            //BuildType.Research => ResearchUpgrade(buildRequest.UnitOrUpgradeType, buildRequest.AllowQueueing),
+            //BuildType.UpgradeInto => UpgradeInto(buildRequest.UnitOrUpgradeType),
+            //BuildType.Expand => PlaceExpand(buildRequest.UnitOrUpgradeType),
+            _ => (BuildRequestResult.NotSupported, null)
         };
 
-        if (result == BuildRequestResult.Ok) {
+        if (result.buildRequestResult == BuildRequestResult.Ok) {
             Logger.Info($"Fulfilled 1 quantity of build request \"{buildRequest}\"");
+            buildRequest.AddFulfillment(result.buildRequestFulfillment);
+            _buildRequestFulfillmentTracker.TrackFulfillment(result.buildRequestFulfillment);
         }
 
-        return result;
+        return result.buildRequestResult;
     }
 
     /// <summary>
@@ -166,7 +174,7 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     /// </summary>
     /// <param name="unitType">The unit type to train.</param>
     /// <returns>A BuildRequestResult that describes if the unit could be trained, or why not.</returns>
-    private BuildRequestResult TrainUnit(uint unitType) {
+    private (BuildRequestResult buildRequestResult, IBuildRequestFulfillment buildRequestFulfillment) TrainUnit(uint unitType) {
         var producer = GetAvailableProducer(unitType);
 
         return TrainUnit(unitType, producer);
@@ -178,19 +186,23 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     /// <param name="unitType">The unit type to train.</param>
     /// <param name="producer">The unit to use as a producer.</param>
     /// <returns>A BuildRequestResult that describes if the unit could be trained, or why not.</returns>
-    private BuildRequestResult TrainUnit(uint unitType, Unit producer) {
+    private (BuildRequestResult buildRequestResult, IBuildRequestFulfillment buildRequestFulfillment) TrainUnit(uint unitType, Unit producer) {
         var unitTypeData = _knowledgeBase.GetUnitTypeData(unitType);
 
         var requirementsValidationResult = ValidateRequirements(unitType, producer, unitTypeData);
         if (requirementsValidationResult != BuildRequestResult.Ok) {
-            return requirementsValidationResult;
+            return (requirementsValidationResult, null);
         }
 
-        producer.TrainUnit(unitType);
+        var order = producer.TrainUnit(unitType);
+        if (order == null) {
+            return (BuildRequestResult.NotSupported, null);
+        }
 
         _controller.Spend((int)unitTypeData.MineralCost, (int)unitTypeData.VespeneCost, unitTypeData.FoodRequired);
+        var fulfillment = _buildRequestFulfillmentFactory.CreateTrainUnitFulfillment(producer, order, unitType);
 
-        return BuildRequestResult.Ok;
+        return (BuildRequestResult.Ok, fulfillment);
     }
 
     /// <summary>

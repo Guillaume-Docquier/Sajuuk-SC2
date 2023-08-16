@@ -1,4 +1,6 @@
-﻿using Sajuuk.GameData;
+﻿using System;
+using Sajuuk.Builds.BuildRequests.Fulfillment;
+using Sajuuk.GameData;
 
 namespace Sajuuk.Builds.BuildRequests;
 
@@ -13,6 +15,8 @@ public abstract class BuildRequest : IBuildRequest {
     public bool AllowQueueing { get; }
     public BuildBlockCondition BlockCondition { get; set; }
     public BuildRequestPriority Priority { get; set; }
+
+    public int QuantityRemaining => Math.Max(0, QuantityRequested - QuantityFulfilled);
 
     protected BuildRequest(
         KnowledgeBase knowledgeBase,
@@ -37,9 +41,8 @@ public abstract class BuildRequest : IBuildRequest {
     }
 
     public abstract int QuantityFulfilled { get; }
-    public abstract int QuantityRemaining { get; }
 
-    public abstract void Fulfill(int quantity);
+    public abstract void AddFulfillment(IBuildRequestFulfillment buildRequestFulfillment);
 
     public override string ToString() {
         var unitOrUpgradeName = BuildType == BuildType.Research
@@ -54,6 +57,6 @@ public abstract class BuildRequest : IBuildRequest {
             when = "now";
         }
 
-        return $"{BuildType.ToString()} {unitOrUpgradeName} {when}";
+        return $"{BuildType.ToString()} {unitOrUpgradeName} {when}".TrimEnd();
     }
 }

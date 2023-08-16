@@ -1,4 +1,5 @@
-﻿using Sajuuk.GameData;
+﻿using Sajuuk.Builds.BuildRequests.Fulfillment;
+using Sajuuk.GameData;
 using Sajuuk.GameSense;
 
 namespace Sajuuk.Builds.BuildRequests;
@@ -7,10 +8,17 @@ public class BuildRequestFactory : IBuildRequestFactory {
     private readonly KnowledgeBase _knowledgeBase;
     private readonly IController _controller;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IBuildRequestFulfillmentTracker _buildRequestFulfillmentTracker;
 
-    public BuildRequestFactory(KnowledgeBase knowledgeBase, IController controller, IUnitsTracker unitsTracker) {
+    public BuildRequestFactory(
+        KnowledgeBase knowledgeBase,
+        IController controller,
+        IUnitsTracker unitsTracker,
+        IBuildRequestFulfillmentTracker buildRequestFulfillmentTracker
+    ) {
         _knowledgeBase = knowledgeBase;
         _unitsTracker = unitsTracker;
+        _buildRequestFulfillmentTracker = buildRequestFulfillmentTracker;
         _controller = controller;
     }
 
@@ -23,7 +31,10 @@ public class BuildRequestFactory : IBuildRequestFactory {
         BuildBlockCondition blockCondition = BuildBlockCondition.None,
         BuildRequestPriority priority = BuildRequestPriority.Normal
     ) {
-        return new TargetBuildRequest(_knowledgeBase, _controller, _unitsTracker, buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority);
+        return new TargetBuildRequest(
+            _knowledgeBase, _controller, _unitsTracker, _buildRequestFulfillmentTracker,
+            buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority
+        );
     }
 
     public QuantityBuildRequest CreateQuantityBuildRequest(

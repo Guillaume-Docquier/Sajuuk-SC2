@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Sajuuk.ExtensionMethods;
 using SC2APIProtocol;
 
 namespace Sajuuk.Builds.BuildRequests.Fulfillment;
@@ -15,15 +16,17 @@ public class BuildRequestFulfillmentTracker : INeedUpdating, IBuildRequestFulfil
             // TODO GD This creates an implicit dependency from this tracker to other trackers needed by the fulfillment
             buildRequestFulfillment.UpdateStatus();
 
-            if (IsCompleted(buildRequestFulfillment.Status)) {
+            if (buildRequestFulfillment.Status.HasFlag(BuildRequestFulfillmentStatus.Terminated)) {
                 _inProgressFulfillments.Remove(buildRequestFulfillment);
                 _completedFulfillments.Add(buildRequestFulfillment);
             }
         }
     }
 
-    public void RegisterBuildFulfillment(IBuildRequestFulfillment buildRequestFulfillment) {
-        if (IsCompleted(buildRequestFulfillment.Status)) {
+    public IEnumerable<IBuildRequestFulfillment> FulfillmentsInProgress => _inProgressFulfillments;
+
+    public void TrackFulfillment(IBuildRequestFulfillment buildRequestFulfillment) {
+        if (buildRequestFulfillment.Status.HasFlag(BuildRequestFulfillmentStatus.Terminated)) {
             Logger.Warning($"You are registering a completed fulfillment to the fulfillment tracker. It should have been in progress. {buildRequestFulfillment}");
             _completedFulfillments.Add(buildRequestFulfillment);
 
@@ -31,12 +34,5 @@ public class BuildRequestFulfillmentTracker : INeedUpdating, IBuildRequestFulfil
         }
 
         _inProgressFulfillments.Add(buildRequestFulfillment);
-    }
-
-    private static bool IsCompleted(BuildRequestFulfillmentStatus buildRequestFulfillmentStatus) {
-        return buildRequestFulfillmentStatus
-            is BuildRequestFulfillmentStatus.Completed
-            or BuildRequestFulfillmentStatus.Canceled
-            or BuildRequestFulfillmentStatus.Prevented;
     }
 }

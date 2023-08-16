@@ -1,11 +1,16 @@
-﻿namespace Sajuuk.Builds.BuildRequests.Fulfillment;
+﻿using System.Collections.Generic;
+
+namespace Sajuuk.Builds.BuildRequests.Fulfillment;
 
 public interface IBuildRequestFulfillmentTracker {
     /// <summary>
-    /// Registers a build fulfillment so that it can be updated over time and accessed by other systems.
+    /// Gets all fulfillments in progress that are being tracked.
+    /// </summary>
+    IEnumerable<IBuildRequestFulfillment> FulfillmentsInProgress { get; }
+
+    /// <summary>
+    /// Tracks a build fulfillment so that it can be updated over time and accessed by other systems.
     /// </summary>
     /// <param name="buildRequestFulfillment">The fulfillment to keep track of.</param>
-    void RegisterBuildFulfillment(IBuildRequestFulfillment buildRequestFulfillment);
-
-    // TODO GD Add some query mechanism
+    void TrackFulfillment(IBuildRequestFulfillment buildRequestFulfillment);
 }

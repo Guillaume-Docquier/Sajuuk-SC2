@@ -1,11 +1,16 @@
-﻿using Sajuuk.GameData;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Sajuuk.Builds.BuildRequests.Fulfillment;
+using Sajuuk.GameData;
 
 namespace Sajuuk.Builds.BuildRequests;
 
 public class QuantityBuildRequest : BuildRequest {
-    private int _quantityFulfilled = 0;
-    public override int QuantityFulfilled => _quantityFulfilled;
-    public override int QuantityRemaining => QuantityRequested - QuantityFulfilled;
+    private readonly List<IBuildRequestFulfillment> _fulfillments = new List<IBuildRequestFulfillment>();
+
+    // TODO GD This could cause a performance issues. If so, we should have fulfillments notify requests when their status changes
+    public override int QuantityFulfilled => _fulfillments
+        .Count(fulfillment => !fulfillment.Status.HasFlag(BuildRequestFulfillmentStatus.Failure));
 
     public QuantityBuildRequest(
         KnowledgeBase knowledgeBase,
@@ -20,7 +25,7 @@ public class QuantityBuildRequest : BuildRequest {
     )
         : base(knowledgeBase, controller, buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority) {}
 
-    public override void Fulfill(int quantity) {
-        _quantityFulfilled += quantity;
+    public override void AddFulfillment(IBuildRequestFulfillment buildRequestFulfillment) {
+        _fulfillments.Add(buildRequestFulfillment);
     }
 }

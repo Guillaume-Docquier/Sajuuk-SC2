@@ -385,20 +385,20 @@ public class Unit: ICanDie, IHavePosition {
         ProcessAction(_actionBuilder.AttackMove(Tag, target));
     }
 
-    public void TrainUnit(uint unitType, bool queue = false) {
+    public UnitOrder TrainUnit(uint unitType, bool allowQueue = false) {
         // TODO GD This should be handled when choosing a producer
-        if (!queue && Orders.Count > 0) {
+        if (!allowQueue && Orders.Count > 0) {
             var nameOfUnitToTrain = _knowledgeBase.GetUnitTypeData(unitType).Name;
             var orders = string.Join(",", Orders.Select(order => order.AbilityId));
-            Logger.Error("A {0} is trying to train {1}, but it already has the orders {2} and queue is false", this, nameOfUnitToTrain, orders);
+            Logger.Error($"A {this} is trying to train {nameOfUnitToTrain}, but it already has the orders {orders} and allowQueue is false");
 
-            return;
+            return null;
         }
 
-        ProcessAction(_actionBuilder.TrainUnit(unitType, Tag));
-
         var targetName = _knowledgeBase.GetUnitTypeData(unitType).Name;
-        Logger.Info("{0} started training {1}", this, targetName);
+        Logger.Info($"{this} started training {targetName}");
+
+        return ProcessAction(_actionBuilder.TrainUnit(unitType, Tag));
     }
 
     public void UpgradeInto(uint unitOrBuildingType) {
@@ -472,7 +472,7 @@ public class Unit: ICanDie, IHavePosition {
         }
     }
 
-    private void ProcessAction(Action action) {
+    private UnitOrder ProcessAction(Action action) {
         _actionService.AddAction(action);
 
         var order = new UnitOrder
@@ -491,6 +491,8 @@ public class Unit: ICanDie, IHavePosition {
         }
 
         Orders.Add(order);
+
+        return order;
     }
 
     public void AddDeathWatcher(IWatchUnitsDie watcher) {
@@ -510,6 +512,7 @@ public class Unit: ICanDie, IHavePosition {
         DeathWatchers.ToList().ForEach(watcher => watcher.ReportUnitDeath(this));
     }
 
+    // TODO GD Should use a frame clock
     public bool IsDead(ulong atFrame) {
         return atFrame - LastSeen > DeathDelay;
     }

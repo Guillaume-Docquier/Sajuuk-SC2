@@ -118,15 +118,14 @@ public class SajuukBot : PoliteBot {
                     while (buildRequest.QuantityRemaining > 0) {
                         var buildRequestResult = _buildRequestFulfiller.FulfillBuildRequest(buildRequest);
                         if (buildRequestResult == BuildRequestResult.Ok) {
-                            buildRequest.Fulfill(1);
-
                             if (_controller.CurrentSupply >= lookBackSupplyTarget) {
                                 return AddressManagerRequests(groupedManagersBuildRequests);
                             }
                         }
                         // Don't retry expands if they are all taken
                         else if (buildRequest.BuildType == BuildType.Expand && buildRequestResult.HasFlag(BuildRequestResult.NoSuitableLocation)) {
-                            buildRequest.Fulfill(1);
+                            // TODO GD Handle this
+                            // buildRequest.AddFulfillment(1);
                         }
                         else if (ShouldBlock(buildRequest, buildRequestResult, out var buildBlockingReason)) {
                             // We must wait to fulfill this one

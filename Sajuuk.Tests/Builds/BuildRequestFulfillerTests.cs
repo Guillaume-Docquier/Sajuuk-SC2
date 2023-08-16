@@ -17,6 +17,8 @@ public class BuildRequestFulfillerTests : IClassFixture<NoLoggerFixture> {
     private readonly Mock<ITerrainTracker> _terrainTrackerMock = new Mock<ITerrainTracker>();
     private readonly Mock<IController> _controllerMock = new Mock<IController>();
     private readonly Mock<IRegionsTracker> _regionsTrackerMock = new Mock<IRegionsTracker>();
+    private readonly Mock<IBuildRequestFulfillmentFactory> _buildRequestFulfillmentFactoryMock = new Mock<IBuildRequestFulfillmentFactory>();
+    private readonly Mock<IBuildRequestFulfillmentTracker> _buildRequestFulfillmentTrackerMock = new Mock<IBuildRequestFulfillmentTracker>();
 
     private readonly BuildRequestFulfiller _buildRequestFulfiller;
 
@@ -29,7 +31,9 @@ public class BuildRequestFulfillerTests : IClassFixture<NoLoggerFixture> {
             _pathfinderMock.Object,
             _terrainTrackerMock.Object,
             _controllerMock.Object,
-            _regionsTrackerMock.Object
+            _regionsTrackerMock.Object,
+            _buildRequestFulfillmentFactoryMock.Object,
+            _buildRequestFulfillmentTrackerMock.Object
         );
 
         _unitsTrackerMock

@@ -1,4 +1,6 @@
-﻿namespace Sajuuk.Builds.BuildRequests;
+﻿using Sajuuk.Builds.BuildRequests.Fulfillment;
+
+namespace Sajuuk.Builds.BuildRequests;
 
 public interface IFulfillableBuildRequest {
     public BuildType BuildType { get; }
@@ -12,5 +14,5 @@ public interface IFulfillableBuildRequest {
     public int QuantityFulfilled { get; }
     public int QuantityRemaining { get; }
 
-    public void Fulfill(int quantity);
+    public void AddFulfillment(IBuildRequestFulfillment buildRequestFulfillment);
 }
