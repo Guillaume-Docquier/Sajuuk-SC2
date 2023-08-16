@@ -180,14 +180,22 @@ public class UnitsTracker : IUnitsTracker, INeedUpdating {
         UnitsByTag[newUnit.Tag] = newUnit;
     }
 
+    /// <summary>
+    /// Detects dead units, updates unit collections and notifies watchers of the unit's death.
+    ///
+    /// Terran buildings can lift and move, we'll consider them dead when they do.
+    ///
+    /// Larvae that become eggs don't die, their unit type changes and their id is stable.
+    /// Drones that morph into buildings are not considered 'killed' by the api but they cease to exist.
+    /// Eggs die when their unit is born.
+    ///
+    /// TODO GD We should differentiate the type of death. Killed vs ceased to exist have different use cases.
+    /// </summary>
+    /// <param name="deadUnitTags">Dead units as reported by the API.</param>
+    /// <param name="currentlyVisibleUnits">Units that we currently see.</param>
+    /// <param name="currentFrame">The current frame number.</param>
     private void HandleDeadUnits(IReadOnlySet<ulong> deadUnitTags, List<SC2APIProtocol.Unit> currentlyVisibleUnits, uint currentFrame) {
-        if (deadUnitTags == null) {
-            return;
-        }
-
         foreach (var unit in UnitsByTag.Select(unit => unit.Value).ToList()) {
-            // We use unit.IsDead(currentFrame) as a fallback for cases where we missed a frame
-            // Also, drones that morph into buildings are not considered 'killed' and won't be present in deadUnitIds
             if (deadUnitTags.Contains(unit.Tag) || unit.IsDead(currentFrame)) {
                 unit.Died();
 
@@ -200,16 +208,16 @@ public class UnitsTracker : IUnitsTracker, INeedUpdating {
         // Terran buildings can move, we'll consider them dead if we don't know where they are
         // We should add them to the memorized units, probably
         var visibleUnitTags = currentlyVisibleUnits.Select(unit => unit.Tag).ToHashSet();
-        var buildingsThatProbablyMoved = UnitsByTag.Values
+        var enemyBuildingsThatProbablyMoved = UnitsByTag.Values
             .Where(unit => unit.Alliance == Alliance.Enemy)
             .Where(enemy => Units.Buildings.Contains(enemy.UnitType))
             .Where(enemyBuilding => !visibleUnitTags.Contains(enemyBuilding.Tag))
             .Where(_visibilityTracker.IsVisible);
 
-        foreach (var buildingThatProbablyMoved in buildingsThatProbablyMoved) {
-            buildingThatProbablyMoved.Died();
+        foreach (var enemyBuildingThatProbablyMoved in enemyBuildingsThatProbablyMoved) {
+            enemyBuildingThatProbablyMoved.Died();
 
-            UnitsByTag.Remove(buildingThatProbablyMoved.Tag);
+            UnitsByTag.Remove(enemyBuildingThatProbablyMoved.Tag);
         }
     }
 

@@ -43,7 +43,18 @@ public class Unit: ICanDie, IHavePosition {
     private float _buildProgress;
     public RepeatedField<UnitOrder> Orders;
     public bool IsVisible;
+
+    /// <summary>
+    /// The number of the first frame where this unit was seen.
+    /// For enemy units that reappear this will be the frame number of when they reappeared (because it's harder to implement otherwise).
+    /// </summary>
+    public ulong FirstSeen;
+
+    /// <summary>
+    /// The number of the last frame where this unit was seen.
+    /// </summary>
     public ulong LastSeen;
+
     public HashSet<uint> Buffs;
 
     public int InitialMineralCount = int.MaxValue;
@@ -175,7 +186,7 @@ public class Unit: ICanDie, IHavePosition {
         IRegionsTracker regionsTracker,
         IUnitsTracker unitsTracker,
         SC2APIProtocol.Unit rawUnit,
-        ulong lastSeen
+        ulong currentFrame
     ) {
         _frameClock = frameClock;
         _knowledgeBase = knowledgeBase;
@@ -185,10 +196,12 @@ public class Unit: ICanDie, IHavePosition {
         _regionsTracker = regionsTracker;
         _unitsTracker = unitsTracker;
 
-        Update(rawUnit, lastSeen);
+        FirstSeen = currentFrame;
+
+        Update(rawUnit, currentFrame);
     }
 
-    public void Update(SC2APIProtocol.Unit rawUnit, ulong lastSeen) {
+    public void Update(SC2APIProtocol.Unit rawUnit, ulong currentFrame) {
         var unitTypeChanged = rawUnit.UnitType != UnitType;
 
         RawUnitData = rawUnit;
@@ -201,7 +214,7 @@ public class Unit: ICanDie, IHavePosition {
         Position = rawUnit.Pos.ToVector3();
         Orders = rawUnit.Orders;
         IsVisible = rawUnit.DisplayType == DisplayType.Visible; // TODO GD This is not actually visible as in cloaked
-        LastSeen = lastSeen;
+        LastSeen = currentFrame;
         Buffs = new HashSet<uint>(rawUnit.BuffIds);
 
         if (unitTypeChanged) {
@@ -489,10 +502,7 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     public void Died() {
-        // Reduce the noise
-        if (UnitType is not Units.Larva and not Units.Egg) {
-            Logger.Info("{0} died", this);
-        }
+        Logger.Info($"{this} died");
 
         // We .ToList() to make a copy of _deathWatchers because some ReportUnitDeath might call RemoveDeathWatcher
         // They shouldn't, partly because it modifies the collection while we are iterating it

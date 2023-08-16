@@ -133,7 +133,7 @@ public class TownHallSupervisorTests : BaseTestClass {
 
         // Act
         closeGasGeyser.RawUnitData.VespeneContents = 0;
-        closeGasGeyser.Update(closeGasGeyser.RawUnitData, lastSeen: 1);
+        closeGasGeyser.Update(closeGasGeyser.RawUnitData, currentFrame: 1);
         townHallSupervisor.OnFrame();
 
         // Assert
