@@ -10,6 +10,11 @@ Kickstarted using [NikEyX/SC2-CSharpe-Starterkit](https://github.com/NikEyX/SC2-
 Want to see it in action or learn more about Sajuuk?  
 Check out [Artificially Intelligent](https://www.youtube.com/channel/UC_KAanPGVoL4Ppz2FORKoqA), my YouTube channel!
 
+## Dev setup
+In order for Sajuuk to function properly, you need to disable the "Select all larvae" in the gameplay options.  
+This setting will be persisted between games and is disabled on the ladder.  
+If the setting is enabled, Sajuuk cannot choose which larva gets used and will track the wrong units.  
+
 ## Features
 
 ### Economy

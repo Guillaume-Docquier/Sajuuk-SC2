@@ -4,6 +4,11 @@ namespace Sajuuk.Builds.BuildRequests.Fulfillment;
 
 [Flags]
 public enum BuildRequestFulfillmentStatus {
+    /// <summary>
+    /// No status yet.
+    /// </summary>
+    None = 0,
+
     //////////////////////////
     //                      //
     //   Individual flags   //

@@ -7,6 +7,11 @@ public interface IBuildRequestFulfillment {
     BuildRequestFulfillmentStatus Status { get; }
 
     /// <summary>
+    /// The expected frame at which this fulfillment should complete.
+    /// </summary>
+    uint ExpectedCompletionFrame { get; }
+
+    /// <summary>
     /// Updates the fulfillment status.
     /// </summary>
     void UpdateStatus();

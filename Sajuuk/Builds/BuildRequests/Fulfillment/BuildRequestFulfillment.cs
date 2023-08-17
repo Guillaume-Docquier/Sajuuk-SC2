@@ -1,14 +1,14 @@
 ﻿namespace Sajuuk.Builds.BuildRequests.Fulfillment;
 
 public abstract class BuildRequestFulfillment : IBuildRequestFulfillment {
-    private BuildRequestFulfillmentStatus _status = BuildRequestFulfillmentStatus.Preparing;
+    private BuildRequestFulfillmentStatus _status = BuildRequestFulfillmentStatus.None;
+
     public BuildRequestFulfillmentStatus Status {
         get => _status;
         protected set {
             if (_status != value) {
-                // TODO GD Include more info about the fulfillment
-                Logger.Info($"Fulfillment {_status.ToString()}");
                 _status = value;
+                Logger.Info($"{this} is {_status.ToString()}");
             }
         }
     }
@@ -26,6 +26,8 @@ public abstract class BuildRequestFulfillment : IBuildRequestFulfillment {
         Logger.Info($"Fulfillment {Status.ToString()}");
     }
 
+
+    public abstract uint ExpectedCompletionFrame { get; }
     public abstract void UpdateStatus();
     public abstract bool CanSatisfy(IBuildRequest buildRequest);
 }

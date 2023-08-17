@@ -121,6 +121,10 @@ public class UnitsTracker : IUnitsTracker, INeedUpdating {
         // Handle dead units
         var deadUnitTags = observation.Observation.RawData.Event?.DeadUnits?.ToHashSet() ?? new HashSet<ulong>();
         HandleDeadUnits(deadUnitTags, unitsAsReportedByTheApi, currentFrame);
+
+        // We log new units after dead units because it's more chronological in the case of morphs (they die before the new unit lives)
+        LogNewOwnedUnits();
+
         RememberEnemyUnitsOutOfSight(unitsAsReportedByTheApi);
         EraseGhosts();
 
@@ -152,7 +156,6 @@ public class UnitsTracker : IUnitsTracker, INeedUpdating {
         var newUnit = _unitFactory.CreateUnit(newRawUnit, currentFrame);
 
         if (newUnit.Alliance == Alliance.Self) {
-            Logger.Info("{0} was born", newUnit);
             NewOwnedUnits.Add(newUnit);
         }
         else {
@@ -218,6 +221,15 @@ public class UnitsTracker : IUnitsTracker, INeedUpdating {
             enemyBuildingThatProbablyMoved.Died();
 
             UnitsByTag.Remove(enemyBuildingThatProbablyMoved.Tag);
+        }
+    }
+
+    /// <summary>
+    /// Logs a message for each new unit.
+    /// </summary>
+    private void LogNewOwnedUnits() {
+        foreach (var newOwnedUnit in NewOwnedUnits) {
+            Logger.Info($"{newOwnedUnit} was born");
         }
     }
 

@@ -9,6 +9,7 @@ namespace Sajuuk.Builds.BuildRequests.Fulfillment;
 public class PlaceBuildingFulfillment : BuildRequestFulfillment {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IFrameClock _frameClock;
+    private readonly KnowledgeBase _knowledgeBase;
 
     private readonly Unit _producer;
     private readonly UnitOrder _producerOrder;
@@ -18,19 +19,26 @@ public class PlaceBuildingFulfillment : BuildRequestFulfillment {
     public PlaceBuildingFulfillment(
         IUnitsTracker unitsTracker,
         IFrameClock frameClock,
+        KnowledgeBase knowledgeBase,
         Unit producer,
         UnitOrder producerOrder,
         uint buildingTypeToPlace
     ) {
         _unitsTracker = unitsTracker;
         _frameClock = frameClock;
+        _knowledgeBase = knowledgeBase;
         _producer = producer;
         _producerOrder = producerOrder;
         _buildingTypeToPlace = buildingTypeToPlace;
+
+        Status = BuildRequestFulfillmentStatus.Preparing;
     }
 
+    // TODO GD Implement this
+    public override uint ExpectedCompletionFrame => 0;
+
     // TODO GD This could be a state machine
-    // TODO GD We could also subscribe to unit deaths to make this simpler
+    // TODO GD We could also subscribe to unit deaths to make it simpler
     public override void UpdateStatus() {
         if (Status.HasFlag(BuildRequestFulfillmentStatus.Terminated)) {
             return;
@@ -49,7 +57,10 @@ public class PlaceBuildingFulfillment : BuildRequestFulfillment {
         else if (_producer.IsDead(_frameClock.CurrentFrame)) {
             var placedBuilding = _unitsTracker.NewOwnedUnits
                 .Where(building => building.UnitType == _buildingTypeToPlace)
-                .FirstOrDefault(building => building.Position.ToVector2() == _producerOrder.TargetWorldSpacePos.ToVector2());
+                .FirstOrDefault(building => {
+                    // TODO GD Handle extractor (TargetUnitTag) vs building (TargetWorldSpacePos)
+                    return building.Position.ToVector2() == _producerOrder.TargetWorldSpacePos.ToVector2();
+                });
 
             if (placedBuilding != null) {
                 // The producer ceased to exist and a building appeared at the ordered position means we built it.
@@ -95,5 +106,9 @@ public class PlaceBuildingFulfillment : BuildRequestFulfillment {
         }
 
         return order.TargetWorldSpacePos.ToVector2() == _producerOrder.TargetWorldSpacePos.ToVector2();
+    }
+
+    public override string ToString() {
+        return $"Fulfillment {_producer} {BuildType.Build.ToString()} {_knowledgeBase.GetUnitTypeData(_buildingTypeToPlace).Name}";
     }
 }

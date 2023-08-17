@@ -1,66 +1,71 @@
 ﻿using System.Linq;
-using Sajuuk.ExtensionMethods;
 using Sajuuk.GameData;
-using Sajuuk.GameSense;
 using SC2APIProtocol;
 
 namespace Sajuuk.Builds.BuildRequests.Fulfillment;
 
+// TODO GD TrainUnitFulfillment does not handle queued orders. Don't queue Train orders!
+// This is not be a huge problem for Zerg because only queens can be queued and since we're a bot we can avoid queuing.
+// i.e Hatchery with 5 queens queued, 1 of them gets canceled or finishes. How do you know which one was yours?
+// UnitOrders do not seem to have an id, so we can't easily reconcile which UnitOrder matches this fulfillment.
 public class TrainUnitFulfillment : BuildRequestFulfillment {
-    private readonly IUnitsTracker _unitsTracker;
     private readonly IFrameClock _frameClock;
+    private readonly KnowledgeBase _knowledgeBase;
 
     private readonly Unit _producer;
     private readonly UnitOrder _producerOrder;
     private readonly uint _unitTypeToTrain;
 
+    // So far the expected completion frame seems reliable and the fulfillment completes at exactly that frame.
+    private readonly uint _expectedCompletionFrame;
+
     public TrainUnitFulfillment(
-        IUnitsTracker unitsTracker,
         IFrameClock frameClock,
+        KnowledgeBase knowledgeBase,
         Unit producer,
         UnitOrder producerOrder,
         uint unitTypeToTrain
     ) {
-        _unitsTracker = unitsTracker;
         _frameClock = frameClock;
+        _knowledgeBase = knowledgeBase;
 
         _producer = producer;
         _producerOrder = producerOrder;
         _unitTypeToTrain = unitTypeToTrain;
+        _expectedCompletionFrame = frameClock.CurrentFrame + (uint)knowledgeBase.GetUnitTypeData(unitTypeToTrain).BuildTime;
+
+        Status = BuildRequestFulfillmentStatus.Executing;
     }
 
-    // TODO GD This might not be a huge problem for Zerg, but how do you deal with queued units?
-    // TODO GD i.e Hatchery with 5 queens queued, 1 gets canceled or finishes. How do you know which one was yours?
+    public override uint ExpectedCompletionFrame => _expectedCompletionFrame;
+
     public override void UpdateStatus() {
         if (Status.HasFlag(BuildRequestFulfillmentStatus.Terminated)) {
             return;
         }
 
-        // An order will be prevented by killing the producer
-        // In the case of morphs, the producer will also die, but will spawn a new unit at its location
         if (_producer.IsDead(_frameClock.CurrentFrame)) {
-            var trainedUnit = _unitsTracker.NewOwnedUnits
-                .Where(unit => unit.UnitType == _unitTypeToTrain)
-                // TODO GD Maybe the position is not going to be exactly the same
-                .FirstOrDefault(unit => unit.Position.ToVector2() == _producer.Position.ToVector2());
-
-            Status = trainedUnit == null
-                ? BuildRequestFulfillmentStatus.Prevented
-                : BuildRequestFulfillmentStatus.Completed;
+            if (_frameClock.CurrentFrame < _expectedCompletionFrame) {
+                // The producer died before the expected completion frame, it was killed.
+                Status = BuildRequestFulfillmentStatus.Prevented;
+            }
+            else {
+                // TODO GD Could the producer get killed exactly on the expected completion frame?
+                // The producer died at or after the expected completion frame, it completed a morph!
+                Status = BuildRequestFulfillmentStatus.Completed;
+            }
         }
-        else if (_producer.Orders.Any(order => order.AbilityId == _producerOrder.AbilityId)) {
-            // TODO GD This is not exact when the unit is queued
-            Status = BuildRequestFulfillmentStatus.Executing;
-        }
-        // Units spawning from buildings (queens from hatcheries)
-        else if (Units.Buildings.Contains(_producer.UnitType)) {
-            // We can do this because cancellation should go through the fulfillment.
-            // If it wasn't cancelled, the producer is alive and there's no order, then it must be completed.
-            // TODO GD What if the required tech building is destroyed while the unit is spawning?
+        else if (Units.Buildings.Contains(_producer.UnitType) && _frameClock.CurrentFrame >= _expectedCompletionFrame) {
+            // The producer is a building so it didn't die (queens from hatcheries)
             Status = BuildRequestFulfillmentStatus.Completed;
         }
-        else {
-            Status = BuildRequestFulfillmentStatus.Canceled;
+        else if (_producer.Orders.All(order => order.AbilityId != _producerOrder.AbilityId)) {
+            // Maybe the unit received other orders
+            Status = BuildRequestFulfillmentStatus.Aborted;
+        }
+
+        if (Status == BuildRequestFulfillmentStatus.Completed && _frameClock.CurrentFrame != _expectedCompletionFrame) {
+            Logger.Error($"{this} completed at {_frameClock.CurrentFrame}, which is {_frameClock.CurrentFrame - _expectedCompletionFrame} frames off target.");
         }
     }
 
@@ -70,5 +75,9 @@ public class TrainUnitFulfillment : BuildRequestFulfillment {
         }
 
         return buildRequest.UnitOrUpgradeType == _unitTypeToTrain;
+    }
+
+    public override string ToString() {
+        return $"Fulfillment {_producer} {BuildType.Train.ToString()} {_knowledgeBase.GetUnitTypeData(_unitTypeToTrain).Name} completing at {_expectedCompletionFrame}";
     }
 }

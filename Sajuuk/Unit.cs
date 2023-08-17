@@ -655,9 +655,9 @@ public class Unit: ICanDie, IHavePosition {
 
     public override string ToString() {
         if (Alliance == Alliance.Self) {
-            return $"{Name}[{Tag}]";
+            return $"{Name}[{Tag}] at {Position.ToVector2()}";
         }
 
-        return $"{Alliance} {Name}[{Tag}]";
+        return $"{Alliance} {Name}[{Tag}] at {Position.ToVector2()}";
     }
 }

@@ -63,7 +63,6 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         };
 
         if (result.BuildRequestResult == BuildRequestResult.Ok) {
-            Logger.Info($"Fulfilled 1 quantity of build request \"{buildRequest}\"");
             buildRequest.AddFulfillment(result.BuildRequestFulfillment);
             _buildRequestFulfillmentTracker.TrackFulfillment(result.BuildRequestFulfillment);
         }
@@ -75,6 +74,11 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     /// Gets an available producer to produce the given unit or ability type.
     /// If the producers are drones and we only have 1 left, we will not return a producer.
     /// There might be a case where we want to use the last drone for some cheeky plays, but we'll cross that bridge when we get there.
+    ///
+    /// Important note: In order to be able to send an order to a specific larva, you need to disable the "Select all larvae" in the
+    /// gameplay options otherwise a random larva from the hatchery gets selected.
+    /// The setting will persist between games and is enabled by default.
+    /// See: https://discord.com/channels/350289306763657218/378866465807269888/866297001745973278
     /// </summary>
     /// <param name="unitOrAbilityType">The unit or ability type to produce.</param>
     /// <param name="allowQueue">Whether to include produces that are already producing something else.</param>
