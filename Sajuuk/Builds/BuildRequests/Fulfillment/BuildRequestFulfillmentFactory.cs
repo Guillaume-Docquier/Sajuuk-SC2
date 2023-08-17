@@ -15,14 +15,17 @@ public class BuildRequestFulfillmentFactory : IBuildRequestFulfillmentFactory {
         _frameClock = frameClock;
     }
 
-    public IBuildRequestFulfillment CreateTrainUnitFulfillment(
-        Unit producer,
-        UnitOrder producerOrder,
-        uint unitTypeToTrain
-    ) {
+    public IBuildRequestFulfillment CreateTrainUnitFulfillment(Unit producer, UnitOrder producerOrder, uint unitTypeToTrain) {
         return new TrainUnitFulfillment(
             _unitsTracker, _frameClock,
             producer, producerOrder, unitTypeToTrain
+        );
+    }
+
+    public IBuildRequestFulfillment CreatePlaceBuildingFulfillment(Unit producer, UnitOrder producerOrder, uint buildingTypeToPlace) {
+        return new PlaceBuildingFulfillment(
+            _unitsTracker, _frameClock,
+            producer, producerOrder, buildingTypeToPlace
         );
     }
 }

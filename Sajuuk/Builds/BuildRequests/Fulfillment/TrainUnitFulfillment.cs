@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Sajuuk.ExtensionMethods;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
@@ -7,7 +6,7 @@ using SC2APIProtocol;
 
 namespace Sajuuk.Builds.BuildRequests.Fulfillment;
 
-public class TrainUnitFulfillment : IBuildRequestFulfillment {
+public class TrainUnitFulfillment : BuildRequestFulfillment {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IFrameClock _frameClock;
 
@@ -30,22 +29,9 @@ public class TrainUnitFulfillment : IBuildRequestFulfillment {
         _unitTypeToTrain = unitTypeToTrain;
     }
 
-    private BuildRequestFulfillmentStatus _status = BuildRequestFulfillmentStatus.Preparing;
-    public BuildRequestFulfillmentStatus Status {
-        get => _status;
-        private set {
-            if (_status != value) {
-                // TODO GD Include more info about the fulfillment
-                Logger.Info($"Fulfillment {_status.ToString()}");
-                _status = value;
-            }
-        }
-    }
-
-    public void UpdateStatus() {
-        // TODO GD This might not be a problem for Zerg, but how do you deal with queued abilities?
-        // TODO GD i.e Barracks with 5 marines queued, 1 gets canceled or finishes. How do you know which one was yours?
-        // TODO GD Could be problem when training queens
+    // TODO GD This might not be a huge problem for Zerg, but how do you deal with queued units?
+    // TODO GD i.e Hatchery with 5 queens queued, 1 gets canceled or finishes. How do you know which one was yours?
+    public override void UpdateStatus() {
         if (Status.HasFlag(BuildRequestFulfillmentStatus.Terminated)) {
             return;
         }
@@ -63,6 +49,7 @@ public class TrainUnitFulfillment : IBuildRequestFulfillment {
                 : BuildRequestFulfillmentStatus.Completed;
         }
         else if (_producer.Orders.Any(order => order.AbilityId == _producerOrder.AbilityId)) {
+            // TODO GD This is not exact when the unit is queued
             Status = BuildRequestFulfillmentStatus.Executing;
         }
         // Units spawning from buildings (queens from hatcheries)
@@ -72,26 +59,12 @@ public class TrainUnitFulfillment : IBuildRequestFulfillment {
             // TODO GD What if the required tech building is destroyed while the unit is spawning?
             Status = BuildRequestFulfillmentStatus.Completed;
         }
-
-        if (Status.HasFlag(BuildRequestFulfillmentStatus.Terminated)) {
-            Logger.Info($"Fulfillment {Status.ToString()}");
+        else {
+            Status = BuildRequestFulfillmentStatus.Canceled;
         }
     }
 
-    public void Abort() {
-        Status = BuildRequestFulfillmentStatus.Aborted;
-        Logger.Info($"Fulfillment {Status.ToString()}");
-    }
-
-    public void Cancel() {
-        // TODO GD How to cancel?
-        throw new NotImplementedException();
-
-        Status = BuildRequestFulfillmentStatus.Canceled;
-        Logger.Info($"Fulfillment {Status.ToString()}");
-    }
-
-    public bool CanSatisfy(IBuildRequest buildRequest) {
+    public override bool CanSatisfy(IBuildRequest buildRequest) {
         if (buildRequest.BuildType != BuildType.Train) {
             return false;
         }

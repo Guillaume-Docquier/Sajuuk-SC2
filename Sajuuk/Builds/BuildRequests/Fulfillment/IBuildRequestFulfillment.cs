@@ -24,7 +24,7 @@ public interface IBuildRequestFulfillment {
     /// <summary>
     /// Determines whether this fulfillment could fulfill the given build request
     /// </summary>
-    /// <param name="buildRequest"></param>
-    /// <returns></returns>
+    /// <param name="buildRequest">The build request to validate against.</param>
+    /// <returns>True if this fulfillment could satisfy the given build request.</returns>
     bool CanSatisfy(IBuildRequest buildRequest);
 }

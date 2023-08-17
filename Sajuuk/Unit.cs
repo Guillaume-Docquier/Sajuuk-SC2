@@ -409,20 +409,22 @@ public class Unit: ICanDie, IHavePosition {
         Logger.Info("Upgrading {0} into {1}", this, upgradeName);
     }
 
-    public void PlaceBuilding(uint buildingType, Vector2 target) {
+    public UnitOrder PlaceBuilding(uint buildingType, Vector2 target) {
         Manager?.Release(this);
-        ProcessAction(_actionBuilder.PlaceBuilding(buildingType, Tag, target));
 
         var buildingName = _knowledgeBase.GetUnitTypeData(buildingType).Name;
-        Logger.Info("{0} started building {1} at {2}", this, buildingName, target);
+        Logger.Info($"{this} started building {buildingName} at {target}");
+
+        return ProcessAction(_actionBuilder.PlaceBuilding(buildingType, Tag, target));
     }
 
-    public void PlaceExtractor(uint buildingType, Unit gas) {
+    public UnitOrder PlaceExtractor(uint extractorType, Unit gas) {
         Manager?.Release(this);
-        ProcessAction(_actionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
 
-        var buildingName = _knowledgeBase.GetUnitTypeData(buildingType).Name;
-        Logger.Info("{0} started building {1} on gas at {2}", this, buildingName, gas.Position);
+        var extractorName = _knowledgeBase.GetUnitTypeData(extractorType).Name;
+        Logger.Info($"{this} started building {extractorName} on gas at {gas.Position}");
+
+        return ProcessAction(_actionBuilder.PlaceExtractor(extractorType, Tag, gas.Tag));
     }
 
     public void ResearchUpgrade(uint upgradeType)

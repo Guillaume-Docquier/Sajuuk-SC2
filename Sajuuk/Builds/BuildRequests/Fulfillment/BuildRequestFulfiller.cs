@@ -12,6 +12,8 @@ using SC2APIProtocol;
 namespace Sajuuk.Builds.BuildRequests.Fulfillment;
 
 public class BuildRequestFulfiller : IBuildRequestFulfiller {
+    private record struct FulfillmentResult(BuildRequestResult BuildRequestResult, IBuildRequestFulfillment BuildRequestFulfillment);
+
     private readonly TechTree _techTree;
     private readonly KnowledgeBase _knowledgeBase;
     private readonly IUnitsTracker _unitsTracker;
@@ -53,20 +55,20 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         var result = buildRequest.BuildType switch
         {
             BuildType.Train => TrainUnit(buildRequest.UnitOrUpgradeType),
-            //BuildType.Build => PlaceBuilding(buildRequest.UnitOrUpgradeType),
+            BuildType.Build => PlaceBuilding(buildRequest.UnitOrUpgradeType),
             //BuildType.Research => ResearchUpgrade(buildRequest.UnitOrUpgradeType, buildRequest.AllowQueueing),
             //BuildType.UpgradeInto => UpgradeInto(buildRequest.UnitOrUpgradeType),
-            //BuildType.Expand => PlaceExpand(buildRequest.UnitOrUpgradeType),
-            _ => (BuildRequestResult.NotSupported, null)
+            BuildType.Expand => PlaceExpand(buildRequest.UnitOrUpgradeType),
+            _ => new FulfillmentResult(BuildRequestResult.NotSupported, null)
         };
 
-        if (result.buildRequestResult == BuildRequestResult.Ok) {
+        if (result.BuildRequestResult == BuildRequestResult.Ok) {
             Logger.Info($"Fulfilled 1 quantity of build request \"{buildRequest}\"");
-            buildRequest.AddFulfillment(result.buildRequestFulfillment);
-            _buildRequestFulfillmentTracker.TrackFulfillment(result.buildRequestFulfillment);
+            buildRequest.AddFulfillment(result.BuildRequestFulfillment);
+            _buildRequestFulfillmentTracker.TrackFulfillment(result.BuildRequestFulfillment);
         }
 
-        return result.buildRequestResult;
+        return result.BuildRequestResult;
     }
 
     /// <summary>
@@ -174,7 +176,7 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     /// </summary>
     /// <param name="unitType">The unit type to train.</param>
     /// <returns>A BuildRequestResult that describes if the unit could be trained, or why not.</returns>
-    private (BuildRequestResult buildRequestResult, IBuildRequestFulfillment buildRequestFulfillment) TrainUnit(uint unitType) {
+    private FulfillmentResult TrainUnit(uint unitType) {
         var producer = GetAvailableProducer(unitType);
 
         return TrainUnit(unitType, producer);
@@ -186,23 +188,23 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     /// <param name="unitType">The unit type to train.</param>
     /// <param name="producer">The unit to use as a producer.</param>
     /// <returns>A BuildRequestResult that describes if the unit could be trained, or why not.</returns>
-    private (BuildRequestResult buildRequestResult, IBuildRequestFulfillment buildRequestFulfillment) TrainUnit(uint unitType, Unit producer) {
+    private FulfillmentResult TrainUnit(uint unitType, Unit producer) {
         var unitTypeData = _knowledgeBase.GetUnitTypeData(unitType);
 
         var requirementsValidationResult = ValidateRequirements(unitType, producer, unitTypeData);
         if (requirementsValidationResult != BuildRequestResult.Ok) {
-            return (requirementsValidationResult, null);
+            return new FulfillmentResult(requirementsValidationResult, null);
         }
 
         var order = producer.TrainUnit(unitType);
         if (order == null) {
-            return (BuildRequestResult.NotSupported, null);
+            return new FulfillmentResult(BuildRequestResult.NotSupported, null);
         }
 
         _controller.Spend((int)unitTypeData.MineralCost, (int)unitTypeData.VespeneCost, unitTypeData.FoodRequired);
         var fulfillment = _buildRequestFulfillmentFactory.CreateTrainUnitFulfillment(producer, order, unitType);
 
-        return (BuildRequestResult.Ok, fulfillment);
+        return new FulfillmentResult(BuildRequestResult.Ok, fulfillment);
     }
 
     /// <summary>
@@ -212,7 +214,7 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     /// <param name="buildingType">The building type to build.</param>
     /// <param name="location">The location to build on. If no location is given, one will be determined.</param>
     /// <returns>A BuildRequestResult that describes if the building could be placed, or why not.</returns>
-    private BuildRequestResult PlaceBuilding(uint buildingType, Vector2 location = default) {
+    private FulfillmentResult PlaceBuilding(uint buildingType, Vector2 location = default) {
         var producer = GetAvailableProducer(buildingType);
 
         return PlaceBuilding(buildingType, producer, location);
@@ -226,14 +228,15 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     /// <param name="producer">The producer to use to place the building.</param>
     /// <param name="location">The location to build on. If no location is given, one will be determined.</param>
     /// <returns>A BuildRequestResult that describes if the building could be placed, or why not.</returns>
-    private BuildRequestResult PlaceBuilding(uint buildingType, Unit producer, Vector2 location = default) {
+    private FulfillmentResult PlaceBuilding(uint buildingType, Unit producer, Vector2 location = default) {
         var buildingTypeData = _knowledgeBase.GetUnitTypeData(buildingType);
 
         var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
         if (requirementsValidationResult != BuildRequestResult.Ok) {
-            return requirementsValidationResult;
+            return new FulfillmentResult(requirementsValidationResult, null);
         }
 
+        UnitOrder order;
         if (buildingType == Units.Extractor) {
             Logger.Debug("Trying to build {0}", buildingTypeData.Name);
 
@@ -249,40 +252,39 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
 
             if (availableGas == null) {
                 Logger.Debug("(Controller) No available gasses for extractor");
-                return BuildRequestResult.NoSuitableLocation;
+                return new FulfillmentResult(BuildRequestResult.NoSuitableLocation, null);
             }
 
             producer = GetAvailableProducer(buildingType, closestTo: availableGas.Position.ToVector2());
-            producer.PlaceExtractor(buildingType, availableGas);
+            order = producer.PlaceExtractor(buildingType, availableGas);
             _buildingTracker.ConfirmPlacement(buildingType, availableGas.Position.ToVector2(), producer);
         }
         else if (location != default) {
             Logger.Debug("Trying to build {0} with location {1}", buildingTypeData.Name, location);
             if (!_buildingTracker.CanPlace(buildingType, location)) {
-                return BuildRequestResult.NoSuitableLocation;
+                return new FulfillmentResult(BuildRequestResult.NoSuitableLocation, null);
             }
 
             producer = GetAvailableProducer(buildingType, closestTo: location);
-            producer.PlaceBuilding(buildingType, location);
+            order = producer.PlaceBuilding(buildingType, location);
             _buildingTracker.ConfirmPlacement(buildingType, location, producer);
         }
         else {
             Logger.Debug("Trying to build {0} without location", buildingTypeData.Name);
             var constructionSpot = _buildingTracker.FindConstructionSpot(buildingType);
             if (constructionSpot == default) {
-                return BuildRequestResult.NoSuitableLocation;
+                return new FulfillmentResult(BuildRequestResult.NoSuitableLocation, null);
             }
 
             producer = GetAvailableProducer(buildingType, closestTo: constructionSpot);
-            producer.PlaceBuilding(buildingType, constructionSpot);
+            order = producer.PlaceBuilding(buildingType, constructionSpot);
             _buildingTracker.ConfirmPlacement(buildingType, constructionSpot, producer);
         }
 
-        Logger.Debug("Done building {0}", buildingTypeData.Name);
-
         _controller.Spend((int)buildingTypeData.MineralCost, (int)buildingTypeData.VespeneCost);
+        var fulfillment = _buildRequestFulfillmentFactory.CreatePlaceBuildingFulfillment(producer, order, buildingType);
 
-        return BuildRequestResult.Ok;
+        return new FulfillmentResult(BuildRequestResult.Ok, fulfillment);
     }
 
     /// <summary>
@@ -356,7 +358,7 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     /// </summary>
     /// <param name="buildingType">The type of townhall to place.</param>
     /// <returns>A BuildRequestResult that describes if the expand could be placed, or why not.</returns>
-    private BuildRequestResult PlaceExpand(uint buildingType) {
+    private FulfillmentResult PlaceExpand(uint buildingType) {
         var producer = GetAvailableProducer(buildingType);
 
         return PlaceExpand(buildingType, producer);
@@ -369,11 +371,11 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     /// <param name="buildingType">The type of townhall to place.</param>
     /// <param name="producer">The producer to use to place the expand.</param>
     /// <returns>A BuildRequestResult that describes if the expand could be placed, or why not.</returns>
-    private BuildRequestResult PlaceExpand(uint buildingType, Unit producer) {
+    private FulfillmentResult PlaceExpand(uint buildingType, Unit producer) {
         var buildingTypeData = _knowledgeBase.GetUnitTypeData(buildingType);
         var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
         if (requirementsValidationResult != BuildRequestResult.Ok) {
-            return requirementsValidationResult;
+            return new FulfillmentResult(requirementsValidationResult, null);
         }
 
         var expandLocation = GetFreeExpandLocations()
@@ -382,7 +384,7 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
             .FirstOrDefault(expandLocation => _buildingTracker.CanPlace(buildingType, expandLocation));
 
         if (expandLocation == default) {
-            return BuildRequestResult.NoSuitableLocation;
+            return new FulfillmentResult(BuildRequestResult.NoSuitableLocation, null);
         }
 
         return PlaceBuilding(buildingType, producer, expandLocation);
