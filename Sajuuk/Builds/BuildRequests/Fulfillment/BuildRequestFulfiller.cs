@@ -182,17 +182,6 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     /// <returns>A BuildRequestResult that describes if the unit could be trained, or why not.</returns>
     private FulfillmentResult TrainUnit(uint unitType) {
         var producer = GetAvailableProducer(unitType);
-
-        return TrainUnit(unitType, producer);
-    }
-
-    /// <summary>
-    /// Trains a unit of the given unitType using the given producer, if possible.
-    /// </summary>
-    /// <param name="unitType">The unit type to train.</param>
-    /// <param name="producer">The unit to use as a producer.</param>
-    /// <returns>A BuildRequestResult that describes if the unit could be trained, or why not.</returns>
-    private FulfillmentResult TrainUnit(uint unitType, Unit producer) {
         var unitTypeData = _knowledgeBase.GetUnitTypeData(unitType);
 
         var requirementsValidationResult = ValidateRequirements(unitType, producer, unitTypeData);
@@ -212,27 +201,13 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     }
 
     /// <summary>
-    /// Places a building of the given buildingType at the given location, if possible.
-    /// If no location is given, one will be determined.
+    /// Places a building of the given buildingType, if possible.
+    /// A suitable location will be automatically determined.
     /// </summary>
     /// <param name="buildingType">The building type to build.</param>
-    /// <param name="location">The location to build on. If no location is given, one will be determined.</param>
     /// <returns>A BuildRequestResult that describes if the building could be placed, or why not.</returns>
-    private FulfillmentResult PlaceBuilding(uint buildingType, Vector2 location = default) {
+    private FulfillmentResult PlaceBuilding(uint buildingType) {
         var producer = GetAvailableProducer(buildingType);
-
-        return PlaceBuilding(buildingType, producer, location);
-    }
-
-    /// <summary>
-    /// Places a building of the given buildingType at the given location using the given producer, if possible.
-    /// If no location is given, one will be determined.
-    /// </summary>
-    /// <param name="buildingType">The building type to build.</param>
-    /// <param name="producer">The producer to use to place the building.</param>
-    /// <param name="location">The location to build on. If no location is given, one will be determined.</param>
-    /// <returns>A BuildRequestResult that describes if the building could be placed, or why not.</returns>
-    private FulfillmentResult PlaceBuilding(uint buildingType, Unit producer, Vector2 location = default) {
         var buildingTypeData = _knowledgeBase.GetUnitTypeData(buildingType);
 
         var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
@@ -240,50 +215,61 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
             return new FulfillmentResult(requirementsValidationResult, null);
         }
 
-        UnitOrder order;
-        if (buildingType == Units.Extractor) {
-            Logger.Debug("Trying to build {0}", buildingTypeData.Name);
-
-            var extractorPositions = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Extractors)
-                .Select(extractor => extractor.Position.ToVector2())
-                .ToHashSet();
-
-            var availableGas = _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, Units.GasGeysers)
-                .Where(gas => gas.Supervisor != null)
-                .Where(gas => _buildingTracker.CanPlace(buildingType, gas.Position.ToVector2()))
-                .Where(gas => !extractorPositions.Contains(gas.Position.ToVector2()))
-                .MaxBy(gas => (gas.Supervisor as TownHallSupervisor)!.WorkerCount); // This is not cute nor clean, but it is efficient and we like that
-
-            if (availableGas == null) {
-                Logger.Debug("(Controller) No available gasses for extractor");
-                return new FulfillmentResult(BuildRequestResult.NoSuitableLocation, null);
-            }
-
-            producer = GetAvailableProducer(buildingType, closestTo: availableGas.Position.ToVector2());
-            order = producer.PlaceExtractor(buildingType, availableGas);
-            _buildingTracker.ConfirmPlacement(buildingType, availableGas.Position.ToVector2(), producer);
+        if (Units.Extractors.Contains(buildingType)) {
+            return ExecuteExtractorPlacement(buildingType, buildingTypeData);
         }
-        else if (location != default) {
-            Logger.Debug("Trying to build {0} with location {1}", buildingTypeData.Name, location);
-            if (!_buildingTracker.CanPlace(buildingType, location)) {
-                return new FulfillmentResult(BuildRequestResult.NoSuitableLocation, null);
-            }
 
-            producer = GetAvailableProducer(buildingType, closestTo: location);
-            order = producer.PlaceBuilding(buildingType, location);
-            _buildingTracker.ConfirmPlacement(buildingType, location, producer);
-        }
-        else {
-            Logger.Debug("Trying to build {0} without location", buildingTypeData.Name);
-            var constructionSpot = _buildingTracker.FindConstructionSpot(buildingType);
-            if (constructionSpot == default) {
-                return new FulfillmentResult(BuildRequestResult.NoSuitableLocation, null);
-            }
+        return ExecuteBuildingPlacement(buildingType, buildingTypeData);
+    }
 
-            producer = GetAvailableProducer(buildingType, closestTo: constructionSpot);
-            order = producer.PlaceBuilding(buildingType, constructionSpot);
-            _buildingTracker.ConfirmPlacement(buildingType, constructionSpot, producer);
+    /// <summary>
+    /// Finds an available gas geyser and builds an extractor on top of it.
+    /// </summary>
+    /// <param name="extractorType">The type of extractor to place.</param>
+    /// <param name="extractorTypeData">The unit type data of the extractor.</param>
+    /// <returns>A BuildRequestResult that describes if the extractor could be placed, or why not.</returns>
+    private FulfillmentResult ExecuteExtractorPlacement(uint extractorType, UnitTypeData extractorTypeData) {
+        var extractorPositions = _unitsTracker.GetUnits(_unitsTracker.OwnedUnits, Units.Extractors)
+            .Select(extractor => extractor.Position.ToVector2())
+            .ToHashSet();
+
+        var availableGas = _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, Units.GasGeysers)
+            .Where(gas => gas.Supervisor != null)
+            .Where(gas => _buildingTracker.CanPlace(extractorType, gas.Position.ToVector2()))
+            .Where(gas => !extractorPositions.Contains(gas.Position.ToVector2()))
+            .MaxBy(gas => (gas.Supervisor as TownHallSupervisor)!.WorkerCount); // This is not cute nor clean, but it is efficient and we like that
+
+        if (availableGas == null) {
+            Logger.Debug($"No available gasses for {extractorTypeData.Name}");
+            return new FulfillmentResult(BuildRequestResult.NoSuitableLocation, null);
         }
+
+        var producer = GetAvailableProducer(extractorType, closestTo: availableGas.Position.ToVector2());
+        var order = producer.PlaceExtractor(extractorType, availableGas);
+        _buildingTracker.ConfirmPlacement(extractorType, availableGas.Position.ToVector2(), producer);
+
+        _controller.Spend((int)extractorTypeData.MineralCost, (int)extractorTypeData.VespeneCost);
+        var fulfillment = _buildRequestFulfillmentFactory.CreatePlaceBuildingFulfillment(producer, order, extractorType);
+
+        return new FulfillmentResult(BuildRequestResult.Ok, fulfillment);
+    }
+
+    /// <summary>
+    /// Finds a suitable location to place a building of the given buildingType and the closest producer to place it.
+    /// Note: Extractors need to be handle specifically. Use ExecuteExtractorPlacement instead.
+    /// </summary>
+    /// <param name="buildingType">The type of building to place.</param>
+    /// <param name="buildingTypeData">The unit type data of the building.</param>
+    /// <returns>A BuildRequestResult that describes if the building could be placed, or why not.</returns>
+    private FulfillmentResult ExecuteBuildingPlacement(uint buildingType, UnitTypeData buildingTypeData) {
+        var buildLocation = _buildingTracker.FindConstructionSpot(buildingType);
+        if (buildLocation == default) {
+            return new FulfillmentResult(BuildRequestResult.NoSuitableLocation, null);
+        }
+
+        var producer = GetAvailableProducer(buildingType, closestTo: buildLocation);
+        var order = producer.PlaceBuilding(buildingType, buildLocation);
+        _buildingTracker.ConfirmPlacement(buildingType, buildLocation, producer);
 
         _controller.Spend((int)buildingTypeData.MineralCost, (int)buildingTypeData.VespeneCost);
         var fulfillment = _buildRequestFulfillmentFactory.CreatePlaceBuildingFulfillment(producer, order, buildingType);
@@ -299,17 +285,6 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     /// <returns>A BuildRequestResult that describes if the upgrade could be researched, or why not.</returns>
     private BuildRequestResult ResearchUpgrade(uint upgradeType, bool allowQueue) {
         var producer = GetAvailableProducer(upgradeType, allowQueue);
-
-        return ResearchUpgrade(upgradeType, producer);
-    }
-
-    /// <summary>
-    /// Research the given upgrade with the given producer, if possible.
-    /// </summary>
-    /// <param name="upgradeType">The upgrade type to research.</param>
-    /// <param name="producer">The producer to use to research the upgrade.</param>
-    /// <returns>A BuildRequestResult that describes if the upgrade could be researched, or why not.</returns>
-    private BuildRequestResult ResearchUpgrade(uint upgradeType, Unit producer) {
         var researchTypeData = _knowledgeBase.GetUpgradeData(upgradeType);
 
         var requirementsValidationResult = ValidateRequirements(upgradeType, producer, researchTypeData);
@@ -331,17 +306,6 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     /// <returns>A BuildRequestResult that describes if the upgrade could be done, or why not.</returns>
     private BuildRequestResult UpgradeInto(uint buildingType) {
         var producer = GetAvailableProducer(buildingType);
-
-        return UpgradeInto(buildingType, producer);
-    }
-
-    /// <summary>
-    /// Upgrades a building into another one, if possible.
-    /// </summary>
-    /// <param name="buildingType">The building type to upgrade into.</param>
-    /// <param name="producer">The producer to use to upgrade into the given building type.</param>
-    /// <returns>A BuildRequestResult that describes if the upgrade could be done, or why not.</returns>
-    private BuildRequestResult UpgradeInto(uint buildingType, Unit producer) {
         var buildingTypeData = _knowledgeBase.GetUnitTypeData(buildingType);
 
         var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
@@ -358,40 +322,39 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
 
     /// <summary>
     /// Places an expand, if possible.
-    /// The best expand location will be determined for you.
+    /// The best expand location will be determined.
     /// </summary>
-    /// <param name="buildingType">The type of townhall to place.</param>
+    /// <param name="townhallType">The type of townhall to place.</param>
     /// <returns>A BuildRequestResult that describes if the expand could be placed, or why not.</returns>
-    private FulfillmentResult PlaceExpand(uint buildingType) {
-        var producer = GetAvailableProducer(buildingType);
+    private FulfillmentResult PlaceExpand(uint townhallType) {
+        var producer = GetAvailableProducer(townhallType);
+        var townhallTypeData = _knowledgeBase.GetUnitTypeData(townhallType);
 
-        return PlaceExpand(buildingType, producer);
-    }
-
-    /// <summary>
-    /// Places an expand using the given producer, if possible.
-    /// The best expand location will be determined for you.
-    /// </summary>
-    /// <param name="buildingType">The type of townhall to place.</param>
-    /// <param name="producer">The producer to use to place the expand.</param>
-    /// <returns>A BuildRequestResult that describes if the expand could be placed, or why not.</returns>
-    private FulfillmentResult PlaceExpand(uint buildingType, Unit producer) {
-        var buildingTypeData = _knowledgeBase.GetUnitTypeData(buildingType);
-        var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
+        var requirementsValidationResult = ValidateRequirements(townhallType, producer, townhallTypeData);
         if (requirementsValidationResult != BuildRequestResult.Ok) {
             return new FulfillmentResult(requirementsValidationResult, null);
         }
 
+        // Getting the expand location is more expensive than getting an available producer twice
+        // so we don't do this before validating the requirements even if it means finding a producer twice.
         var expandLocation = GetFreeExpandLocations()
             .Where(expandLocation => _pathfinder.FindPath(_terrainTracker.StartingLocation, expandLocation) != null)
             .OrderBy(expandLocation => _pathfinder.FindPath(_terrainTracker.StartingLocation, expandLocation).Count)
-            .FirstOrDefault(expandLocation => _buildingTracker.CanPlace(buildingType, expandLocation));
+            .FirstOrDefault(expandLocation => _buildingTracker.CanPlace(townhallType, expandLocation));
 
         if (expandLocation == default) {
             return new FulfillmentResult(BuildRequestResult.NoSuitableLocation, null);
         }
 
-        return PlaceBuilding(buildingType, producer, expandLocation);
+        // There might be a more suitable producer now that we know the location to build on.
+        producer = GetAvailableProducer(townhallType, closestTo: expandLocation);
+        var order = producer.PlaceBuilding(townhallType, expandLocation);
+        _buildingTracker.ConfirmPlacement(townhallType, expandLocation, producer);
+
+        _controller.Spend((int)townhallTypeData.MineralCost, (int)townhallTypeData.VespeneCost);
+        var fulfillment = _buildRequestFulfillmentFactory.CreatePlaceBuildingFulfillment(producer, order, townhallType);
+
+        return new FulfillmentResult(BuildRequestResult.Ok, fulfillment);
     }
 
     /// <summary>
