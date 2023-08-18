@@ -249,7 +249,7 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         _buildingTracker.ConfirmPlacement(extractorType, availableGas.Position.ToVector2(), producer);
 
         _controller.Spend((int)extractorTypeData.MineralCost, (int)extractorTypeData.VespeneCost);
-        var fulfillment = _buildRequestFulfillmentFactory.CreatePlaceBuildingFulfillment(producer, order, extractorType);
+        var fulfillment = _buildRequestFulfillmentFactory.CreatePlaceExtractorFulfillment(producer, order, extractorType);
 
         return new FulfillmentResult(BuildRequestResult.Ok, fulfillment);
     }
@@ -352,7 +352,7 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         _buildingTracker.ConfirmPlacement(townhallType, expandLocation, producer);
 
         _controller.Spend((int)townhallTypeData.MineralCost, (int)townhallTypeData.VespeneCost);
-        var fulfillment = _buildRequestFulfillmentFactory.CreatePlaceBuildingFulfillment(producer, order, townhallType);
+        var fulfillment = _buildRequestFulfillmentFactory.CreateExpandFulfillment(producer, order, townhallType);
 
         return new FulfillmentResult(BuildRequestResult.Ok, fulfillment);
     }

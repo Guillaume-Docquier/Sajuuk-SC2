@@ -112,6 +112,12 @@ public static class Logger {
         Console.ResetColor();
     }
 
+    public static void Failure(string line, params object[] parameters) {
+        Console.ForegroundColor = ConsoleColor.Red;
+        WriteLine("FAILURE", line, parameters);
+        Console.ResetColor();
+    }
+
     public static void Tag(string line, params object[] parameters) {
         Console.ForegroundColor = ConsoleColor.Blue;
         WriteLine("TAG", line, parameters);

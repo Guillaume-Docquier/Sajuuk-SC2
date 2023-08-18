@@ -8,16 +8,13 @@ namespace Sajuuk.Builds.BuildRequests.Fulfillment;
 // This is not be a huge problem for Zerg because only queens can be queued and since we're a bot we can avoid queuing.
 // i.e Hatchery with 5 queens queued, 1 of them gets canceled or finishes. How do you know which one was yours?
 // UnitOrders do not seem to have an id, so we can't easily reconcile which UnitOrder matches this fulfillment.
-public class TrainUnitFulfillment : BuildRequestFulfillment {
+public sealed class TrainUnitFulfillment : BuildRequestFulfillment {
     private readonly IFrameClock _frameClock;
     private readonly KnowledgeBase _knowledgeBase;
 
     private readonly Unit _producer;
     private readonly UnitOrder _producerOrder;
     private readonly uint _unitTypeToTrain;
-
-    // So far the expected completion frame seems reliable and the fulfillment completes at exactly that frame.
-    private readonly uint _expectedCompletionFrame;
 
     public TrainUnitFulfillment(
         IFrameClock frameClock,
@@ -32,12 +29,14 @@ public class TrainUnitFulfillment : BuildRequestFulfillment {
         _producer = producer;
         _producerOrder = producerOrder;
         _unitTypeToTrain = unitTypeToTrain;
-        _expectedCompletionFrame = frameClock.CurrentFrame + (uint)knowledgeBase.GetUnitTypeData(unitTypeToTrain).BuildTime;
+
+        // So far the BuildTime seems reliable and the unit completes after exactly that amount of frames.
+        ExpectedCompletionFrame = frameClock.CurrentFrame + (uint)knowledgeBase.GetUnitTypeData(unitTypeToTrain).BuildTime;
 
         Status = BuildRequestFulfillmentStatus.Executing;
     }
 
-    public override uint ExpectedCompletionFrame => _expectedCompletionFrame;
+    public override uint ExpectedCompletionFrame { get; }
 
     public override void UpdateStatus() {
         if (Status.HasFlag(BuildRequestFulfillmentStatus.Terminated)) {
@@ -45,7 +44,7 @@ public class TrainUnitFulfillment : BuildRequestFulfillment {
         }
 
         if (_producer.IsDead(_frameClock.CurrentFrame)) {
-            if (_frameClock.CurrentFrame < _expectedCompletionFrame) {
+            if (_frameClock.CurrentFrame < ExpectedCompletionFrame) {
                 // The producer died before the expected completion frame, it was killed.
                 Status = BuildRequestFulfillmentStatus.Prevented;
             }
@@ -55,7 +54,7 @@ public class TrainUnitFulfillment : BuildRequestFulfillment {
                 Status = BuildRequestFulfillmentStatus.Completed;
             }
         }
-        else if (Units.Buildings.Contains(_producer.UnitType) && _frameClock.CurrentFrame >= _expectedCompletionFrame) {
+        else if (Units.Buildings.Contains(_producer.UnitType) && _frameClock.CurrentFrame >= ExpectedCompletionFrame) {
             // The producer is a building so it didn't die (queens from hatcheries)
             Status = BuildRequestFulfillmentStatus.Completed;
         }
@@ -64,8 +63,8 @@ public class TrainUnitFulfillment : BuildRequestFulfillment {
             Status = BuildRequestFulfillmentStatus.Aborted;
         }
 
-        if (Status == BuildRequestFulfillmentStatus.Completed && _frameClock.CurrentFrame != _expectedCompletionFrame) {
-            Logger.Error($"{this} completed at {_frameClock.CurrentFrame}, which is {_frameClock.CurrentFrame - _expectedCompletionFrame} frames off target.");
+        if (Status == BuildRequestFulfillmentStatus.Completed && _frameClock.CurrentFrame != ExpectedCompletionFrame) {
+            Logger.Error($"{this} completed at {_frameClock.CurrentFrame}, which is {_frameClock.CurrentFrame - ExpectedCompletionFrame} frames off target.");
         }
     }
 
@@ -78,6 +77,6 @@ public class TrainUnitFulfillment : BuildRequestFulfillment {
     }
 
     public override string ToString() {
-        return $"Fulfillment {_producer} {BuildType.Train.ToString()} {_knowledgeBase.GetUnitTypeData(_unitTypeToTrain).Name} completing at {_expectedCompletionFrame}";
+        return $"Fulfillment {_producer} {BuildType.Train.ToString()} {_knowledgeBase.GetUnitTypeData(_unitTypeToTrain).Name} completing at {ExpectedCompletionFrame}";
     }
 }

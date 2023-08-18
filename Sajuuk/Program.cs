@@ -524,7 +524,7 @@ public class Program {
         var detectionTracker = new DetectionTracker(unitsTracker, controller, knowledgeBase);
         var unitModuleInstaller = new UnitModuleInstaller(unitsTracker, graphicalDebugger, buildingTracker, regionsTracker, creepTracker, pathfinder, visibilityTracker, terrainTracker, frameClock);
 
-        var buildFulfillmentFactory = new BuildRequestFulfillmentFactory(unitsTracker, frameClock, knowledgeBase);
+        var buildFulfillmentFactory = new BuildRequestFulfillmentFactory(unitsTracker, frameClock, knowledgeBase, regionsTracker);
         var buildRequestFulfiller = new BuildRequestFulfiller(techTree, knowledgeBase, unitsTracker, buildingTracker, pathfinder, terrainTracker, controller, regionsTracker, buildFulfillmentFactory, buildRequestFulfillmentTracker);
 
         // We do this to avoid circular dependencies between unit, unitsTracker, terrainTracker and regionsTracker

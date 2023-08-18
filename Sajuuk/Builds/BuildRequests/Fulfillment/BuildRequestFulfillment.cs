@@ -8,7 +8,17 @@ public abstract class BuildRequestFulfillment : IBuildRequestFulfillment {
         protected set {
             if (_status != value) {
                 _status = value;
-                Logger.Info($"{this} is {_status.ToString()}");
+
+                var statusChangeMessage = $"{this} is {_status.ToString()}";
+                if (_status.HasFlag(BuildRequestFulfillmentStatus.Failure)) {
+                    Logger.Failure(statusChangeMessage);
+                }
+                else if (_status.HasFlag(BuildRequestFulfillmentStatus.Successful)) {
+                    Logger.Success(statusChangeMessage);
+                }
+                else {
+                    Logger.Info(statusChangeMessage);
+                }
             }
         }
     }
