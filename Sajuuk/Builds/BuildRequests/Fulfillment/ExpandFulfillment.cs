@@ -1,5 +1,4 @@
-﻿using System.Dynamic;
-using Sajuuk.ExtensionMethods;
+﻿using Sajuuk.ExtensionMethods;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using SC2APIProtocol;

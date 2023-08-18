@@ -1,6 +1,6 @@
 ﻿using System.Linq;
-using Sajuuk.ExtensionMethods;
 using Sajuuk.Debugging.GraphicalDebugging;
+using Sajuuk.ExtensionMethods;
 using Sajuuk.GameData;
 using Sajuuk.Managers.EconomyManagement.TownHallSupervision;
 
@@ -20,7 +20,7 @@ namespace Sajuuk.UnitModules;
 /// - Normal mining: 1240 minerals
 /// - Speed mining: 1305 minerals (+5.24%)
 /// </summary>
-public class MineralMiningStrategy: IStrategy {
+public class MineralMiningStrategy : IStrategy {
     private const float SpeedMiningDistanceThreshold = 0.4f; // Empirically tested, do not go lower
 
     private readonly IGraphicalDebugger _graphicalDebugger;

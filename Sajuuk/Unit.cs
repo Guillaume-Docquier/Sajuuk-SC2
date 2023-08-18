@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -15,7 +16,7 @@ using Action = SC2APIProtocol.Action;
 
 namespace Sajuuk;
 
-public class Unit: ICanDie, IHavePosition {
+public class Unit : ICanDie, IHavePosition {
     private readonly IFrameClock _frameClock;
     private readonly KnowledgeBase _knowledgeBase;
     private readonly IActionBuilder _actionBuilder;
@@ -111,7 +112,21 @@ public class Unit: ICanDie, IHavePosition {
 
     public float MaxRange { get; private set; }
 
-    public ulong DeathDelay = 0;
+    /// <summary>
+    /// Workers disappear when going inside extractors for 1.415 seconds
+    /// We'll change change their death delay so that we don't think they're dead
+    /// </summary>
+    private static readonly ulong GasDeathDelay = Convert.ToUInt64(1.415 * TimeUtils.FramesPerSecond) + 5; // +5 just to be sure
+
+    /// <summary>
+    /// This might be more of a UnitsTracker concerns, but I'd rather not expose a DeathDelay setter.
+    /// </summary>
+    private const int EnemyDeathDelaySeconds = 4 * 60;
+
+    /// <summary>
+    /// The delay after which if the unit was not seen it will be considered dead.
+    /// </summary>
+    private ulong _deathDelay = 0;
 
     private Manager _manager;
     public Manager Manager {
@@ -197,6 +212,10 @@ public class Unit: ICanDie, IHavePosition {
         _unitsTracker = unitsTracker;
 
         FirstSeen = currentFrame;
+
+        if (rawUnit.Alliance == Alliance.Enemy) {
+            _deathDelay = TimeUtils.SecsToFrames(EnemyDeathDelaySeconds);
+        }
 
         Update(rawUnit, currentFrame);
     }
@@ -437,6 +456,10 @@ public class Unit: ICanDie, IHavePosition {
 
     public void Gather(Unit mineralOrGas) {
         ProcessAction(_actionBuilder.Gather(Tag, mineralOrGas.Tag));
+
+        if (Resources.GetResourceType(mineralOrGas) == Resources.ResourceType.Gas) {
+            _deathDelay = GasDeathDelay;
+        }
     }
 
     public void ReturnCargo() {
@@ -475,6 +498,10 @@ public class Unit: ICanDie, IHavePosition {
     }
 
     private UnitOrder ProcessAction(Action action) {
+        // We reset the death delay on every action because we set it specifically when harvesting gas.
+        // See GasDeathDelay
+        _deathDelay = 0;
+
         _actionService.AddAction(action);
 
         var order = new UnitOrder
@@ -516,7 +543,7 @@ public class Unit: ICanDie, IHavePosition {
 
     // TODO GD Should use a frame clock
     public bool IsDead(ulong atFrame) {
-        return atFrame - LastSeen > DeathDelay;
+        return atFrame - LastSeen > _deathDelay;
     }
 
     public void ExecuteModules() {

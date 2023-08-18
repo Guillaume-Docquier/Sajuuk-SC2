@@ -2,7 +2,6 @@
 using System.Linq;
 using Sajuuk.ExtensionMethods;
 using Sajuuk.GameData;
-using Sajuuk.Utils;
 using SC2APIProtocol;
 
 namespace Sajuuk.GameSense;
@@ -10,8 +9,6 @@ namespace Sajuuk.GameSense;
 public class UnitsTracker : IUnitsTracker, INeedUpdating {
     private readonly IVisibilityTracker _visibilityTracker;
     private IUnitFactory _unitFactory;
-
-    private const int EnemyDeathDelaySeconds = 4 * 60;
 
     private bool _isInitialized = false;
 
@@ -174,7 +171,6 @@ public class UnitsTracker : IUnitsTracker, INeedUpdating {
                 newUnit = equivalentUnit;
             }
             else if (newUnit.Alliance == Alliance.Enemy) {
-                newUnit.DeathDelay = TimeUtils.SecsToFrames(EnemyDeathDelaySeconds);
                 EnemyGhostUnits.Remove(newUnit.Tag);
                 EnemyMemorizedUnits.Remove(newUnit.Tag);
             }

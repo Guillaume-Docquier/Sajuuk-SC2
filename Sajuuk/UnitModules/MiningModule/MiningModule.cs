@@ -3,7 +3,7 @@ using Sajuuk.Debugging.GraphicalDebugging;
 
 namespace Sajuuk.UnitModules;
 
-public class MiningModule: UnitModule {
+public class MiningModule : UnitModule {
     public const string ModuleTag = "MiningModule";
 
     private readonly IGraphicalDebugger _graphicalDebugger;
