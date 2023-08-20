@@ -1,25 +1,32 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Sajuuk.ExtensionMethods;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using SC2APIProtocol;
 
-namespace Sajuuk.Builds.BuildRequests.Fulfillment;
+namespace Sajuuk.Builds.BuildRequests.Fulfillment.Building;
 
 public abstract class BuildingFulfillment : BuildRequestFulfillment {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IFrameClock _frameClock;
     private readonly KnowledgeBase _knowledgeBase;
+    private readonly ITimeToTravelCalculator _timeToTravelCalculator;
 
     protected readonly Unit Producer;
     protected readonly UnitOrder ProducerOrder;
     protected readonly uint BuildingTypeToPlace;
     private Unit _placedBuilding;
 
+    private readonly uint _creationFrame;
+    private uint _timeToTravel;
+    private readonly uint _buildTime;
+
     protected BuildingFulfillment(
         IUnitsTracker unitsTracker,
         IFrameClock frameClock,
         KnowledgeBase knowledgeBase,
+        ITimeToTravelCalculator timeToTravelCalculator,
         Unit producer,
         UnitOrder producerOrder,
         uint buildingTypeToPlace
@@ -27,16 +34,19 @@ public abstract class BuildingFulfillment : BuildRequestFulfillment {
         _unitsTracker = unitsTracker;
         _frameClock = frameClock;
         _knowledgeBase = knowledgeBase;
+        _timeToTravelCalculator = timeToTravelCalculator;
+
         Producer = producer;
         ProducerOrder = producerOrder;
         BuildingTypeToPlace = buildingTypeToPlace;
 
-        var timeToTravel = 0u; // TODO GD calculate based on path and speed
+        _creationFrame = frameClock.CurrentFrame;
+        _timeToTravel = _timeToTravelCalculator.CalculateTimeToTravel();
         // So far the BuildTime seems reliable and the building completes after exactly that amount of frames.
-        ExpectedCompletionFrame = frameClock.CurrentFrame + timeToTravel + (uint)knowledgeBase.GetUnitTypeData(buildingTypeToPlace).BuildTime;
+        _buildTime = (uint)knowledgeBase.GetUnitTypeData(buildingTypeToPlace).BuildTime;
     }
 
-    public override uint ExpectedCompletionFrame { get; }
+    public override uint ExpectedCompletionFrame => _creationFrame + _timeToTravel + _buildTime;
 
     public override void UpdateStatus() {
         if (Status.HasFlag(BuildRequestFulfillmentStatus.Terminated)) {
@@ -70,6 +80,8 @@ public abstract class BuildingFulfillment : BuildRequestFulfillment {
             // Maybe the unit received other orders
             Status = BuildRequestFulfillmentStatus.Canceled;
         }
+
+        _timeToTravel = _timeToTravelCalculator.CalculateTimeToTravel();
 
         // TODO GD Prevented if order fails (burrowed enemy unit, insufficient resources, invalid location)
     }

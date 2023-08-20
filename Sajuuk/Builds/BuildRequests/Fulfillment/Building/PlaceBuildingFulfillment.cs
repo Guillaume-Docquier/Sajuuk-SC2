@@ -2,7 +2,7 @@
 using Sajuuk.GameSense;
 using SC2APIProtocol;
 
-namespace Sajuuk.Builds.BuildRequests.Fulfillment;
+namespace Sajuuk.Builds.BuildRequests.Fulfillment.Building;
 
 public sealed class PlaceBuildingFulfillment : BuildingFulfillment {
     public PlaceBuildingFulfillment(

@@ -4,7 +4,7 @@ using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using SC2APIProtocol;
 
-namespace Sajuuk.Builds.BuildRequests.Fulfillment;
+namespace Sajuuk.Builds.BuildRequests.Fulfillment.Building;
 
 public sealed class PlaceExtractorFulfillment : BuildingFulfillment {
     private readonly Unit _gasGeyser;
