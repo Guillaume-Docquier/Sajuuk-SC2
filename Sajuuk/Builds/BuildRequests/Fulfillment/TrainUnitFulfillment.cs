@@ -31,12 +31,12 @@ public sealed class TrainUnitFulfillment : BuildRequestFulfillment {
         _unitTypeToTrain = unitTypeToTrain;
 
         // So far the BuildTime seems reliable and the unit completes after exactly that amount of frames.
-        ExpectedCompletionFrame = frameClock.CurrentFrame + (uint)knowledgeBase.GetUnitTypeData(unitTypeToTrain).BuildTime;
+        ExpectedCompletionFrame = frameClock.CurrentFrame + (ulong)knowledgeBase.GetUnitTypeData(unitTypeToTrain).BuildTime;
 
         Status = BuildRequestFulfillmentStatus.Executing;
     }
 
-    public override uint ExpectedCompletionFrame { get; }
+    public override ulong ExpectedCompletionFrame { get; }
 
     public override void UpdateStatus() {
         if (Status.HasFlag(BuildRequestFulfillmentStatus.Terminated)) {

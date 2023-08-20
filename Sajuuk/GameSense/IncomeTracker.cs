@@ -13,11 +13,11 @@ public class IncomeTracker : IIncomeTracker, INeedUpdating {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IFrameClock _frameClock;
 
-    private const int LogCollectedMineralsFrame = (int)(90 * TimeUtils.FramesPerSecond);
+    private const int LogCollectedMineralsFrame = (int)(90 * TimeUtils.FasterFramesPerSecond);
     private const int StatisticsRollingWindowSeconds = 30;
 
-    private readonly CircularQueue<float> _mineralsCollectionRates = new CircularQueue<float>((int)(TimeUtils.FramesPerSecond * StatisticsRollingWindowSeconds));
-    private readonly CircularQueue<float> _vespeneCollectionRates = new CircularQueue<float>((int)(TimeUtils.FramesPerSecond * StatisticsRollingWindowSeconds));
+    private readonly CircularQueue<float> _mineralsCollectionRates = new CircularQueue<float>((int)(TimeUtils.FasterFramesPerSecond * StatisticsRollingWindowSeconds));
+    private readonly CircularQueue<float> _vespeneCollectionRates = new CircularQueue<float>((int)(TimeUtils.FasterFramesPerSecond * StatisticsRollingWindowSeconds));
 
     public float CurrentMineralsCollectionRate { get; private set; }
     public float MaxMineralsCollectionRate { get; private set; }

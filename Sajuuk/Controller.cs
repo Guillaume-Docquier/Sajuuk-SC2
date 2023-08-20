@@ -11,7 +11,7 @@ using SC2APIProtocol;
 namespace Sajuuk;
 
 public class Controller : IController {
-    private const int RealTime = (int)(1000 / TimeUtils.FramesPerSecond);
+    private const int RealTime = (int)(1000 / TimeUtils.FasterFramesPerSecond);
     private int _frameDelayMs = 0;
 
     private const float ExpandIsTakenRadius = 4f;

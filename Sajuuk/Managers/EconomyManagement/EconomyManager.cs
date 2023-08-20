@@ -26,7 +26,7 @@ public sealed partial class EconomyManager : Manager {
 
     private const int MaxDroneCount = 70;
 
-    private const uint GasDroneCountLoweringDelay = (int)(TimeUtils.FramesPerSecond * 15);
+    private const uint GasDroneCountLoweringDelay = (int)(TimeUtils.FasterFramesPerSecond * 15);
     private int _requiredDronesInGas = 0;
     private uint _doNotChangeGasDroneCountBefore = 0;
 

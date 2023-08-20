@@ -6,20 +6,19 @@ using SC2APIProtocol;
 
 namespace Sajuuk.Builds.BuildRequests.Fulfillment.Building;
 
-public sealed class PlaceExtractorFulfillment : BuildingFulfillment {
+public sealed class PlaceExtractorFulfillment : PlaceBuildingFulfillment {
     private readonly Unit _gasGeyser;
 
     public PlaceExtractorFulfillment(
         IUnitsTracker unitsTracker,
         IFrameClock frameClock,
         KnowledgeBase knowledgeBase,
+        ITimeToTravelCalculator timeToTravelCalculator,
         Unit producer,
         UnitOrder producerOrder,
         uint buildingTypeToPlace
-    ) : base(unitsTracker, frameClock, knowledgeBase, producer, producerOrder, buildingTypeToPlace) {
+    ) : base(unitsTracker, frameClock, knowledgeBase, timeToTravelCalculator, BuildType.Build, producer, producerOrder, buildingTypeToPlace) {
         _gasGeyser = unitsTracker.NeutralUnits.First(neutralUnit => neutralUnit.Tag == ProducerOrder.TargetUnitTag);
-
-        Status = BuildRequestFulfillmentStatus.Preparing;
     }
 
     protected override bool OrderMatchesOurs(UnitOrder order) {

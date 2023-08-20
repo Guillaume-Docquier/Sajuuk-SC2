@@ -149,7 +149,7 @@ public partial class ArmySupervisor {
             }
             else {
                 if (_stuckDetector.IsStuck) {
-                    Logger.Warning("{0} disabling pathfinding for {1:F2} seconds", Name, _pathfindingLockDelay / TimeUtils.FramesPerSecond);
+                    Logger.Warning("{0} disabling pathfinding for {1:F2} seconds", Name, _pathfindingLockDelay / TimeUtils.FasterFramesPerSecond);
                     _pathfindingLock = _frameClock.CurrentFrame + _pathfindingLockDelay;
                     _pathfindingLockDelay = Math.Min(MaximumPathfindingLockDelay, (ulong)(_pathfindingLockDelay * 1.25));
 

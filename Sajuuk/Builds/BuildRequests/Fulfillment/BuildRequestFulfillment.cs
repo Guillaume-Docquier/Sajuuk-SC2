@@ -37,7 +37,7 @@ public abstract class BuildRequestFulfillment : IBuildRequestFulfillment {
     }
 
 
-    public abstract uint ExpectedCompletionFrame { get; }
+    public abstract ulong ExpectedCompletionFrame { get; }
     public abstract void UpdateStatus();
     public abstract bool CanSatisfy(IBuildRequest buildRequest);
 }

@@ -46,6 +46,12 @@ public class Unit : ICanDie, IHavePosition {
     public bool IsVisible;
 
     /// <summary>
+    /// The unit base speed in real distance per frame.
+    /// This does not take into account speed bonuses due to tech or creep.
+    /// </summary>
+    public double Speed { get; private set; }
+
+    /// <summary>
     /// The number of the first frame where this unit was seen.
     /// For enemy units that reappear this will be the frame number of when they reappeared (because it's harder to implement otherwise).
     /// </summary>
@@ -116,7 +122,7 @@ public class Unit : ICanDie, IHavePosition {
     /// Workers disappear when going inside extractors for 1.415 seconds
     /// We'll change change their death delay so that we don't think they're dead
     /// </summary>
-    private static readonly ulong GasDeathDelay = Convert.ToUInt64(1.415 * TimeUtils.FramesPerSecond) + 5; // +5 just to be sure
+    private static readonly ulong GasDeathDelay = Convert.ToUInt64(1.415 * TimeUtils.FasterFramesPerSecond) + 5; // +5 just to be sure
 
     /// <summary>
     /// This might be more of a UnitsTracker concerns, but I'd rather not expose a DeathDelay setter.
@@ -244,6 +250,9 @@ public class Unit : ICanDie, IHavePosition {
             AliasUnitTypeData = UnitTypeData.HasUnitAlias ? _knowledgeBase.GetUnitTypeData(UnitTypeData.UnitAlias) : null;
 
             UpdateWeaponsData(UnitTypeData.Weapons.ToList());
+
+            // Api data is based on normal speed even if the game is playing at faster speed.
+            Speed = UnitTypeData.MovementSpeed / TimeUtils.NormalFramesPerSecond;
         }
 
         WeaponCooldownPercent = HasWeapons
@@ -276,7 +285,7 @@ public class Unit : ICanDie, IHavePosition {
         // Weapon speed is in seconds between attacks
         _maxWeaponCooldownFrames = HasWeapons
             // TODO GD Not sure how to handle multiple weapons
-            ? weapons[0].Speed * TimeUtils.FramesPerSecond
+            ? weapons[0].Speed * TimeUtils.FasterFramesPerSecond
             : float.MaxValue;
 
         CanHitAir = IsOperational && weapons.Any(weapon => weapon.Type is Weapon.Types.TargetType.Any or Weapon.Types.TargetType.Air);

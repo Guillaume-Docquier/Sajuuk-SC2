@@ -10,7 +10,6 @@ namespace Sajuuk.MapAnalysis;
 public class FootprintCalculator {
     private readonly ITerrainTracker _terrainTracker;
 
-    // TODO GD It would be nice if we didn't need the map analyzer
     public FootprintCalculator(ITerrainTracker terrainTracker) {
         _terrainTracker = terrainTracker;
     }
