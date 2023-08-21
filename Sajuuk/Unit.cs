@@ -455,12 +455,11 @@ public class Unit : ICanDie, IHavePosition {
         return ProcessAction(_actionBuilder.PlaceExtractor(extractorType, Tag, gas.Tag));
     }
 
-    public void ResearchUpgrade(uint upgradeType)
-    {
-        ProcessAction(_actionBuilder.ResearchUpgrade(upgradeType, Tag));
-
+    public UnitOrder ResearchUpgrade(uint upgradeType) {
         var researchName = _knowledgeBase.GetUpgradeData(upgradeType).Name;
-        Logger.Info("{0} started researching {1}", this, researchName);
+        Logger.Info($"{this} started researching {researchName}");
+
+        return ProcessAction(_actionBuilder.ResearchUpgrade(upgradeType, Tag));
     }
 
     public void Gather(Unit mineralOrGas) {

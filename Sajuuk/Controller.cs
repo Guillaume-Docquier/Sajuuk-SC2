@@ -18,7 +18,7 @@ public class Controller : IController {
 
     private readonly IUnitsTracker _unitsTracker;
     private readonly IRegionsTracker _regionsTracker;
-    private readonly TechTree _techTree; // TODO GD There's probably a circular dependency with tech tree
+    private readonly TechTree _techTree;
     private readonly KnowledgeBase _knowledgeBase;
     private readonly IChatService _chatService;
     private readonly List<INeedUpdating> _trackers;
@@ -82,6 +82,9 @@ public class Controller : IController {
             Environment.Exit(1);
         }
 
+        // TODO GD This should be moved to a tracker, it needs to happen before the FulfillmentTracker
+        ResearchedUpgrades = new HashSet<uint>(Observation.Observation.RawData.Player.UpgradeIds);
+
         foreach (var tracker in _trackers) {
             tracker.Update(Observation, GameInfo);
         }
@@ -97,7 +100,6 @@ public class Controller : IController {
 
         AvailableMinerals = (int)Observation.Observation.PlayerCommon.Minerals;
         AvailableVespene = (int)Observation.Observation.PlayerCommon.Vespene;
-        ResearchedUpgrades = new HashSet<uint>(Observation.Observation.RawData.Player.UpgradeIds);
 
         if (Program.DebugEnabled && _frameDelayMs > 0) {
             Thread.Sleep(_frameDelayMs);

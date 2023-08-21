@@ -15,6 +15,7 @@ public class BuildRequestFulfillmentFactory : IBuildRequestFulfillmentFactory {
     private readonly IPathfinder _pathfinder;
     private readonly FootprintCalculator _footprintCalculator;
     private readonly ITerrainTracker _terrainTracker;
+    private readonly IController _controller;
 
     public BuildRequestFulfillmentFactory(
         IUnitsTracker unitsTracker,
@@ -22,7 +23,8 @@ public class BuildRequestFulfillmentFactory : IBuildRequestFulfillmentFactory {
         KnowledgeBase knowledgeBase,
         IPathfinder pathfinder,
         FootprintCalculator footprintCalculator,
-        ITerrainTracker terrainTracker
+        ITerrainTracker terrainTracker,
+        IController controller
     ) {
         _unitsTracker = unitsTracker;
         _frameClock = frameClock;
@@ -30,6 +32,7 @@ public class BuildRequestFulfillmentFactory : IBuildRequestFulfillmentFactory {
         _pathfinder = pathfinder;
         _footprintCalculator = footprintCalculator;
         _terrainTracker = terrainTracker;
+        _controller = controller;
     }
 
     public IBuildRequestFulfillment CreateTrainUnitFulfillment(Unit producer, UnitOrder producerOrder, uint unitTypeToTrain) {
@@ -64,6 +67,13 @@ public class BuildRequestFulfillmentFactory : IBuildRequestFulfillmentFactory {
         return new PlaceBuildingFulfillment(
             _unitsTracker, _frameClock, _knowledgeBase, timeToTravelCalculator, BuildType.Expand,
             producer, producerOrder, expandTypeToPlace
+        );
+    }
+
+    public IBuildRequestFulfillment CreateResearchUpgradeFulfillment(Unit producer, UnitOrder producerOrder, uint upgradeTypeToResearch) {
+        return new ResearchUpgradeFulfillment(
+            _frameClock, _knowledgeBase, _controller,
+            producer, producerOrder, upgradeTypeToResearch
         );
     }
 }

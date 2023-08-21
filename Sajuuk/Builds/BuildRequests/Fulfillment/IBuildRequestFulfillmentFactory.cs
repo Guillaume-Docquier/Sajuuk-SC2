@@ -7,4 +7,5 @@ public interface IBuildRequestFulfillmentFactory {
     IBuildRequestFulfillment CreatePlaceBuildingFulfillment(Unit producer, UnitOrder producerOrder, uint buildingTypeToPlace);
     IBuildRequestFulfillment CreatePlaceExtractorFulfillment(Unit producer, UnitOrder producerOrder, uint extractorTypeToPlace);
     IBuildRequestFulfillment CreateExpandFulfillment(Unit producer, UnitOrder producerOrder, uint expandTypeToPlace);
+    IBuildRequestFulfillment CreateResearchUpgradeFulfillment(Unit producer, UnitOrder producerOrder, uint upgradeTypeToResearch);
 }

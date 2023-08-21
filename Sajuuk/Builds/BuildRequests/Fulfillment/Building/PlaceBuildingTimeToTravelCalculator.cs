@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Numerics;
 using Sajuuk.ExtensionMethods;
-using Sajuuk.GameData;
 using Sajuuk.MapAnalysis;
 
 namespace Sajuuk.Builds.BuildRequests.Fulfillment.Building;

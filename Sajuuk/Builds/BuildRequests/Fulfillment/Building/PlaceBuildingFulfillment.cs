@@ -6,6 +6,7 @@ using SC2APIProtocol;
 
 namespace Sajuuk.Builds.BuildRequests.Fulfillment.Building;
 
+// TODO GD There's a bug where we create 4 evo chambers
 public class PlaceBuildingFulfillment : BuildRequestFulfillment {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IFrameClock _frameClock;

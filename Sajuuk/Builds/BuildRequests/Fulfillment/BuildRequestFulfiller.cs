@@ -56,7 +56,7 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         {
             BuildType.Train => TrainUnit(buildRequest.UnitOrUpgradeType),
             BuildType.Build => PlaceBuilding(buildRequest.UnitOrUpgradeType),
-            //BuildType.Research => ResearchUpgrade(buildRequest.UnitOrUpgradeType, buildRequest.AllowQueueing),
+            BuildType.Research => ResearchUpgrade(buildRequest.UnitOrUpgradeType, buildRequest.AllowQueueing),
             //BuildType.UpgradeInto => UpgradeInto(buildRequest.UnitOrUpgradeType),
             BuildType.Expand => PlaceExpand(buildRequest.UnitOrUpgradeType),
             _ => new FulfillmentResult(BuildRequestResult.NotSupported, null)
@@ -283,20 +283,21 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     /// <param name="upgradeType">The upgrade type to research.</param>
     /// <param name="allowQueue">Whether we allow queuing the research if no producer is available right now.</param>
     /// <returns>A BuildRequestResult that describes if the upgrade could be researched, or why not.</returns>
-    private BuildRequestResult ResearchUpgrade(uint upgradeType, bool allowQueue) {
+    private FulfillmentResult ResearchUpgrade(uint upgradeType, bool allowQueue) {
         var producer = GetAvailableProducer(upgradeType, allowQueue);
         var researchTypeData = _knowledgeBase.GetUpgradeData(upgradeType);
 
         var requirementsValidationResult = ValidateRequirements(upgradeType, producer, researchTypeData);
         if (requirementsValidationResult != BuildRequestResult.Ok) {
-            return requirementsValidationResult;
+            return new FulfillmentResult(requirementsValidationResult, null);
         }
 
-        producer.ResearchUpgrade(upgradeType);
+        var order = producer.ResearchUpgrade(upgradeType);
 
         _controller.Spend((int)researchTypeData.MineralCost, (int)researchTypeData.VespeneCost);
+        var fulfillment = _buildRequestFulfillmentFactory.CreateResearchUpgradeFulfillment(producer, order, upgradeType);
 
-        return BuildRequestResult.Ok;
+        return new FulfillmentResult(BuildRequestResult.Ok, fulfillment);
     }
 
     /// <summary>

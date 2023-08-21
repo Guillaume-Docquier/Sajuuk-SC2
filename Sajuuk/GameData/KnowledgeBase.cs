@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using SC2APIProtocol;
 
 namespace Sajuuk.GameData;
@@ -42,6 +43,8 @@ public class KnowledgeBase {
         { Units.UltraliskCavern,  Units.Drone },
     };
 
+    private readonly Dictionary<uint, UpgradeData> _upgradesDataByAbilityId = new Dictionary<uint, UpgradeData>();
+
     private ResponseData _data;
 
     public const float GameGridCellWidth = 1f;
@@ -79,6 +82,15 @@ public class KnowledgeBase {
                 }
             }
 
+            foreach (var upgrade in value.Upgrades.Where(upgrade => upgrade.HasAbilityId)) {
+                if (_upgradesDataByAbilityId.TryGetValue(upgrade.AbilityId, out var alreadyMappedUpgrade)) {
+                    Logger.Error($"Ability Id {upgrade.AbilityId} from upgrade {upgrade.Name} is already mapped to {alreadyMappedUpgrade.Name}");
+                }
+                else {
+                    _upgradesDataByAbilityId[upgrade.AbilityId] = upgrade;
+                }
+            }
+
             _data = value;
         }
     }
@@ -89,6 +101,15 @@ public class KnowledgeBase {
 
     public UpgradeData GetUpgradeData(uint upgradeId) {
         return Data.Upgrades[(int)upgradeId];
+    }
+
+    /// <summary>
+    /// Gets an UpgradeData from the abilityId that triggers it.
+    /// </summary>
+    /// <param name="upgradeAbilityId">The ability id for the upgrade data to get.</param>
+    /// <returns>The UpgradeData whose AbilityId is the given one.</returns>
+    public UpgradeData GetUpgradeDataFromAbilityId(uint upgradeAbilityId) {
+        return _upgradesDataByAbilityId[upgradeAbilityId];
     }
 
     public AbilityData GetAbilityData(uint abilityId) {

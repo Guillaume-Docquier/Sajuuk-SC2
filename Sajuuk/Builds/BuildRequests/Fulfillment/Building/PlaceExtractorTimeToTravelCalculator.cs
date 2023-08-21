@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Sajuuk.ExtensionMethods;
-using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using Sajuuk.MapAnalysis;
 
