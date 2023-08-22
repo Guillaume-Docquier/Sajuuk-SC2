@@ -25,7 +25,6 @@ public abstract class BuildRequestFulfillment : IBuildRequestFulfillment {
 
     public void Abort() {
         Status = BuildRequestFulfillmentStatus.Aborted;
-        Logger.Info($"Fulfillment {Status.ToString()}");
     }
 
     public void Cancel() {
