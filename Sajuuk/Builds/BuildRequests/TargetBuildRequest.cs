@@ -6,9 +6,9 @@ using Sajuuk.GameSense;
 namespace Sajuuk.Builds.BuildRequests;
 
 public class TargetBuildRequest : BuildRequest {
+    private readonly IController _controller;
     private readonly IUnitsTracker _unitsTracker;
     private readonly IBuildRequestFulfillmentTracker _buildRequestFulfillmentTracker;
-    private readonly IController _controller;
 
     public override int QuantityFulfilled => ComputeQuantityFulfilled();
 
@@ -25,14 +25,10 @@ public class TargetBuildRequest : BuildRequest {
         BuildBlockCondition blockCondition,
         BuildRequestPriority priority
     )
-        : base(knowledgeBase, controller, buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority) {
+        : base(knowledgeBase, controller, buildRequestFulfillmentTracker, buildType, unitOrUpgradeType, targetQuantity, atSupply, queue, blockCondition, priority) {
         _controller = controller;
         _unitsTracker = unitsTracker;
         _buildRequestFulfillmentTracker = buildRequestFulfillmentTracker;
-    }
-
-    public override void AddFulfillment(IBuildRequestFulfillment buildRequestFulfillment) {
-        // Target build requests must consider the global scope, so their own buildRequestFulfillments don't matter.
     }
 
     private int ComputeQuantityFulfilled() {

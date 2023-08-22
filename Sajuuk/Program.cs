@@ -526,7 +526,7 @@ public class Program {
         var unitModuleInstaller = new UnitModuleInstaller(unitsTracker, graphicalDebugger, buildingTracker, regionsTracker, creepTracker, pathfinder, visibilityTracker, terrainTracker, frameClock);
 
         var buildFulfillmentFactory = new BuildRequestFulfillmentFactory(unitsTracker, frameClock, knowledgeBase, pathfinder, footprintCalculator, terrainTracker, controller);
-        var buildRequestFulfiller = new BuildRequestFulfiller(techTree, knowledgeBase, unitsTracker, buildingTracker, pathfinder, terrainTracker, controller, regionsTracker, buildFulfillmentFactory, buildRequestFulfillmentTracker);
+        var buildRequestFulfiller = new BuildRequestFulfiller(techTree, knowledgeBase, unitsTracker, buildingTracker, pathfinder, terrainTracker, controller, regionsTracker, buildFulfillmentFactory);
 
         // We do this to avoid circular dependencies between unit, unitsTracker, terrainTracker and regionsTracker
         // I don't 100% like it but it seems worth it.

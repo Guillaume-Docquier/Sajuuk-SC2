@@ -7,6 +7,7 @@ namespace Sajuuk.Builds.BuildRequests;
 public abstract class BuildRequest : IBuildRequest {
     private readonly KnowledgeBase _knowledgeBase;
     private readonly IController _controller;
+    private readonly IBuildRequestFulfillmentTracker _buildRequestFulfillmentTracker;
 
     public BuildType BuildType { get; }
     public uint UnitOrUpgradeType { get; }
@@ -21,6 +22,7 @@ public abstract class BuildRequest : IBuildRequest {
     protected BuildRequest(
         KnowledgeBase knowledgeBase,
         IController controller,
+        IBuildRequestFulfillmentTracker buildRequestFulfillmentTracker,
         BuildType buildType,
         uint unitOrUpgradeType,
         int quantity,
@@ -31,6 +33,8 @@ public abstract class BuildRequest : IBuildRequest {
     ) {
         _knowledgeBase = knowledgeBase;
         _controller = controller;
+        _buildRequestFulfillmentTracker = buildRequestFulfillmentTracker;
+
         BuildType = buildType;
         UnitOrUpgradeType = unitOrUpgradeType;
         AtSupply = atSupply;
@@ -42,7 +46,12 @@ public abstract class BuildRequest : IBuildRequest {
 
     public abstract int QuantityFulfilled { get; }
 
-    public abstract void AddFulfillment(IBuildRequestFulfillment buildRequestFulfillment);
+    public void AddFulfillment(IBuildRequestFulfillment buildRequestFulfillment) {
+        _buildRequestFulfillmentTracker.TrackFulfillment(buildRequestFulfillment);
+        OnFulfillmentAdded(buildRequestFulfillment);
+    }
+
+    protected virtual void OnFulfillmentAdded(IBuildRequestFulfillment buildRequestFulfillment) {}
 
     public override string ToString() {
         var unitOrUpgradeName = BuildType == BuildType.Research

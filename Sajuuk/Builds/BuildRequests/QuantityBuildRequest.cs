@@ -15,6 +15,7 @@ public class QuantityBuildRequest : BuildRequest {
     public QuantityBuildRequest(
         KnowledgeBase knowledgeBase,
         IController controller,
+        IBuildRequestFulfillmentTracker buildRequestFulfillmentTracker,
         BuildType buildType,
         uint unitOrUpgradeType,
         int quantity,
@@ -23,9 +24,9 @@ public class QuantityBuildRequest : BuildRequest {
         BuildBlockCondition blockCondition,
         BuildRequestPriority priority
     )
-        : base(knowledgeBase, controller, buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority) {}
+        : base(knowledgeBase, controller, buildRequestFulfillmentTracker, buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority) {}
 
-    public override void AddFulfillment(IBuildRequestFulfillment buildRequestFulfillment) {
+    protected override void OnFulfillmentAdded(IBuildRequestFulfillment buildRequestFulfillment) {
         _fulfillments.Add(buildRequestFulfillment);
     }
 }

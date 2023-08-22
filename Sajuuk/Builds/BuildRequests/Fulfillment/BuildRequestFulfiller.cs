@@ -23,7 +23,6 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
     private readonly IController _controller;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IBuildRequestFulfillmentFactory _buildRequestFulfillmentFactory;
-    private readonly IBuildRequestFulfillmentTracker _buildRequestFulfillmentTracker;
 
     private const float ExpandIsTakenRadius = 4f;
 
@@ -36,8 +35,7 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         ITerrainTracker terrainTracker,
         IController controller,
         IRegionsTracker regionsTracker,
-        IBuildRequestFulfillmentFactory buildRequestFulfillmentFactory,
-        IBuildRequestFulfillmentTracker buildRequestFulfillmentTracker
+        IBuildRequestFulfillmentFactory buildRequestFulfillmentFactory
     ) {
         _techTree = techTree;
         _knowledgeBase = knowledgeBase;
@@ -48,7 +46,6 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         _controller = controller;
         _regionsTracker = regionsTracker;
         _buildRequestFulfillmentFactory = buildRequestFulfillmentFactory;
-        _buildRequestFulfillmentTracker = buildRequestFulfillmentTracker;
     }
 
     public BuildRequestResult FulfillBuildRequest(IFulfillableBuildRequest buildRequest) {
@@ -63,7 +60,6 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
 
         if (result.BuildRequestResult == BuildRequestResult.Ok) {
             buildRequest.AddFulfillment(result.BuildRequestFulfillment);
-            _buildRequestFulfillmentTracker.TrackFulfillment(result.BuildRequestFulfillment);
         }
 
         return result.BuildRequestResult;

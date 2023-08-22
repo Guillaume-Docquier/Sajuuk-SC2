@@ -6,7 +6,7 @@ using Sajuuk.GameSense;
 using Sajuuk.MapAnalysis;
 using Sajuuk.Tests.Fixtures;
 
-namespace Sajuuk.Tests.Builds;
+namespace Sajuuk.Tests.Builds.BuildRequests.Fulfillment;
 
 public class BuildRequestFulfillerTests : IClassFixture<NoLoggerFixture> {
     private readonly TechTree _techTree = new TechTree(Mock.Of<IPrerequisiteFactory>()); // TODO GD TechTree should be mockable
@@ -32,8 +32,7 @@ public class BuildRequestFulfillerTests : IClassFixture<NoLoggerFixture> {
             _terrainTrackerMock.Object,
             _controllerMock.Object,
             _regionsTrackerMock.Object,
-            _buildRequestFulfillmentFactoryMock.Object,
-            _buildRequestFulfillmentTrackerMock.Object
+            _buildRequestFulfillmentFactoryMock.Object
         );
 
         _unitsTrackerMock
@@ -55,6 +54,7 @@ public class BuildRequestFulfillerTests : IClassFixture<NoLoggerFixture> {
         var buildRequest = new QuantityBuildRequest(
             _knowledgeBase,
             _controllerMock.Object,
+            _buildRequestFulfillmentTrackerMock.Object,
             BuildType.Build,
             Units.Hatchery,
             quantity: 1,
@@ -82,6 +82,7 @@ public class BuildRequestFulfillerTests : IClassFixture<NoLoggerFixture> {
         var buildRequest = new QuantityBuildRequest(
             _knowledgeBase,
             _controllerMock.Object,
+            _buildRequestFulfillmentTrackerMock.Object,
             BuildType.Build,
             Units.Hatchery,
             quantity: 1,
@@ -113,6 +114,7 @@ public class BuildRequestFulfillerTests : IClassFixture<NoLoggerFixture> {
         var buildRequest = new QuantityBuildRequest(
             _knowledgeBase,
             _controllerMock.Object,
+            _buildRequestFulfillmentTrackerMock.Object,
             BuildType.Build,
             Units.Hatchery,
             quantity: 1,

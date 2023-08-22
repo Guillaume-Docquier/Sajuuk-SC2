@@ -46,6 +46,9 @@ public class BuildRequestFactory : IBuildRequestFactory {
         BuildBlockCondition blockCondition = BuildBlockCondition.None,
         BuildRequestPriority priority = BuildRequestPriority.Normal
     ) {
-        return new QuantityBuildRequest(_knowledgeBase, _controller, buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority);
+        return new QuantityBuildRequest(
+            _knowledgeBase, _controller, _buildRequestFulfillmentTracker,
+            buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority
+        );
     }
 }
