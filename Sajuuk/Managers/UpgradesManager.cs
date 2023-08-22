@@ -122,7 +122,7 @@ public class UpgradesManager : UnitlessManager {
 
         if (roachCount >= 40) {
             _buildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.Build,       Units.InfestationPit,              targetQuantity: 1));
-            _buildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.UpgradeInto, Units.Hive,                        targetQuantity: 1));
+            _buildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.Train,       Units.Hive,                        targetQuantity: 1));
             _buildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.Research,    Upgrades.ZergMissileWeaponsLevel3, targetQuantity: 1));
             _buildRequests.Add(_buildRequestFactory.CreateTargetBuildRequest(BuildType.Research,    Upgrades.ZergGroundArmorsLevel3,   targetQuantity: 1));
             _requestedUpgrades.Add(Upgrades.ZergMissileWeaponsLevel3);

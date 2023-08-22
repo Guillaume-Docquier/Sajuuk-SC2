@@ -4,6 +4,5 @@ public enum BuildType {
     Train,
     Build,
     Research,
-    UpgradeInto,
     Expand,
 }

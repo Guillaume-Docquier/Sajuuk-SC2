@@ -413,12 +413,12 @@ public class Unit : ICanDie, IHavePosition {
         ProcessAction(_actionBuilder.AttackMove(Tag, target));
     }
 
-    public UnitOrder TrainUnit(uint unitType, bool allowQueue = false) {
+    public UnitOrder TrainUnit(uint unitType) {
         // TODO GD This should be handled when choosing a producer
-        if (!allowQueue && Orders.Count > 0) {
+        if (Orders.Count > 0) {
             var nameOfUnitToTrain = _knowledgeBase.GetUnitTypeData(unitType).Name;
             var orders = string.Join(",", Orders.Select(order => order.AbilityId));
-            Logger.Error($"A {this} is trying to train {nameOfUnitToTrain}, but it already has the orders {orders} and allowQueue is false");
+            Logger.Error($"A {this} is trying to train {nameOfUnitToTrain}, but it already has the orders {orders}.");
 
             return null;
         }
@@ -429,12 +429,13 @@ public class Unit : ICanDie, IHavePosition {
         return ProcessAction(_actionBuilder.TrainUnit(unitType, Tag));
     }
 
-    public void UpgradeInto(uint unitOrBuildingType) {
-        // You upgrade a unit or building by training the upgrade from the producer
-        ProcessAction(_actionBuilder.TrainUnit(unitOrBuildingType, Tag));
+    public UnitOrder PlaceExtractor(uint extractorType, Unit gas) {
+        Manager?.Release(this);
 
-        var upgradeName = _knowledgeBase.GetUnitTypeData(unitOrBuildingType).Name;
-        Logger.Info("Upgrading {0} into {1}", this, upgradeName);
+        var extractorName = _knowledgeBase.GetUnitTypeData(extractorType).Name;
+        Logger.Info($"{this} started building {extractorName} on gas at {gas.Position}");
+
+        return ProcessAction(_actionBuilder.PlaceExtractor(extractorType, Tag, gas.Tag));
     }
 
     public UnitOrder PlaceBuilding(uint buildingType, Vector2 target) {
@@ -444,15 +445,6 @@ public class Unit : ICanDie, IHavePosition {
         Logger.Info($"{this} started building {buildingName} at {target}");
 
         return ProcessAction(_actionBuilder.PlaceBuilding(buildingType, Tag, target));
-    }
-
-    public UnitOrder PlaceExtractor(uint extractorType, Unit gas) {
-        Manager?.Release(this);
-
-        var extractorName = _knowledgeBase.GetUnitTypeData(extractorType).Name;
-        Logger.Info($"{this} started building {extractorName} on gas at {gas.Position}");
-
-        return ProcessAction(_actionBuilder.PlaceExtractor(extractorType, Tag, gas.Tag));
     }
 
     public UnitOrder ResearchUpgrade(uint upgradeType) {

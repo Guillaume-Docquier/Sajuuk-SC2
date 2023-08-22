@@ -34,7 +34,7 @@ public class TwoBasesRoach : IBuildOrder {
             buildRequestFactory.CreateQuantityBuildRequest(BuildType.Train,       Units.Zergling,                    atSupply: 24, quantity: 2),
             buildRequestFactory.CreateTargetBuildRequest  (BuildType.Train,       Units.Overlord,                    atSupply: 30, targetQuantity: 4),
             buildRequestFactory.CreateTargetBuildRequest  (BuildType.Train,       Units.Queen,                       atSupply: 30, targetQuantity: 3),
-            buildRequestFactory.CreateTargetBuildRequest  (BuildType.UpgradeInto, Units.Lair,                        atSupply: 33, targetQuantity: 1),
+            buildRequestFactory.CreateTargetBuildRequest  (BuildType.Train,       Units.Lair,                        atSupply: 33, targetQuantity: 1),
             buildRequestFactory.CreateTargetBuildRequest  (BuildType.Build,       Units.RoachWarren,                 atSupply: 33, targetQuantity: 1),
             buildRequestFactory.CreateTargetBuildRequest  (BuildType.Build,       Units.EvolutionChamber,            atSupply: 37, targetQuantity: 1),
             buildRequestFactory.CreateTargetBuildRequest  (BuildType.Build,       Units.Extractor,                   atSupply: 37, targetQuantity: 2),
@@ -79,7 +79,7 @@ public class TwoBasesRoach : IBuildOrder {
 
     private void TransitionToDefensiveBuild() {
         var evos = _buildRequests.Where(request => request.BuildType == BuildType.Build && request.UnitOrUpgradeType == Units.EvolutionChamber);
-        var lair = _buildRequests.Where(request => request.BuildType == BuildType.UpgradeInto && request.UnitOrUpgradeType == Units.Lair);
+        var lair = _buildRequests.Where(request => request.BuildType == BuildType.Train && request.UnitOrUpgradeType == Units.Lair);
         var upgrades = _buildRequests.Where(request => request.BuildType == BuildType.Research);
         var stepsToPushBack = evos.Concat(lair).Concat(upgrades).ToList();
 
@@ -100,7 +100,7 @@ public class TwoBasesRoach : IBuildOrder {
         }
 
         var evos = _buildRequests.Where(request => request.BuildType == BuildType.Build && request.UnitOrUpgradeType == Units.EvolutionChamber);
-        var lair = _buildRequests.Where(request => request.BuildType == BuildType.UpgradeInto && request.UnitOrUpgradeType == Units.Lair);
+        var lair = _buildRequests.Where(request => request.BuildType == BuildType.Train && request.UnitOrUpgradeType == Units.Lair);
         var upgrades = _buildRequests.Where(request => request.BuildType == BuildType.Research);
         var stepsToPushBack = evos.Concat(lair).Concat(upgrades).ToList();
 

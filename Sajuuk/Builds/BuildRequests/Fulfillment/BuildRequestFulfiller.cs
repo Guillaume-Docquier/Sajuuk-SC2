@@ -57,7 +57,6 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
             BuildType.Train => TrainUnit(buildRequest.UnitOrUpgradeType),
             BuildType.Build => PlaceBuilding(buildRequest.UnitOrUpgradeType),
             BuildType.Research => ResearchUpgrade(buildRequest.UnitOrUpgradeType, buildRequest.AllowQueueing),
-            //BuildType.UpgradeInto => UpgradeInto(buildRequest.UnitOrUpgradeType),
             BuildType.Expand => PlaceExpand(buildRequest.UnitOrUpgradeType),
             _ => new FulfillmentResult(BuildRequestResult.NotSupported, null)
         };
@@ -298,27 +297,6 @@ public class BuildRequestFulfiller : IBuildRequestFulfiller {
         var fulfillment = _buildRequestFulfillmentFactory.CreateResearchUpgradeFulfillment(producer, order, upgradeType);
 
         return new FulfillmentResult(BuildRequestResult.Ok, fulfillment);
-    }
-
-    /// <summary>
-    /// Upgrades a building into another one, if possible.
-    /// </summary>
-    /// <param name="buildingType">The building type to upgrade into.</param>
-    /// <returns>A BuildRequestResult that describes if the upgrade could be done, or why not.</returns>
-    private BuildRequestResult UpgradeInto(uint buildingType) {
-        var producer = GetAvailableProducer(buildingType);
-        var buildingTypeData = _knowledgeBase.GetUnitTypeData(buildingType);
-
-        var requirementsValidationResult = ValidateRequirements(buildingType, producer, buildingTypeData);
-        if (requirementsValidationResult != BuildRequestResult.Ok) {
-            return requirementsValidationResult;
-        }
-
-        producer.UpgradeInto(buildingType);
-
-        _controller.Spend((int)buildingTypeData.MineralCost, (int)buildingTypeData.VespeneCost);
-
-        return BuildRequestResult.Ok;
     }
 
     /// <summary>
