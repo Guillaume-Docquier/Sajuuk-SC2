@@ -10,8 +10,6 @@ public class TargetBuildRequest : BuildRequest {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IBuildRequestFulfillmentTracker _buildRequestFulfillmentTracker;
 
-    public override int QuantityFulfilled => ComputeQuantityFulfilled();
-
     public TargetBuildRequest(
         KnowledgeBase knowledgeBase,
         IController controller,
@@ -30,6 +28,8 @@ public class TargetBuildRequest : BuildRequest {
         _unitsTracker = unitsTracker;
         _buildRequestFulfillmentTracker = buildRequestFulfillmentTracker;
     }
+
+    public override int QuantityFulfilled => ComputeQuantityFulfilled();
 
     private int ComputeQuantityFulfilled() {
         var nbFulfillmentsInProgress = _buildRequestFulfillmentTracker

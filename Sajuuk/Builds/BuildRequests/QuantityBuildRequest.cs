@@ -8,10 +8,6 @@ namespace Sajuuk.Builds.BuildRequests;
 public class QuantityBuildRequest : BuildRequest {
     private readonly List<IBuildRequestFulfillment> _fulfillments = new List<IBuildRequestFulfillment>();
 
-    // TODO GD This could cause a performance issues. If so, we should have fulfillments notify requests when their status changes
-    public override int QuantityFulfilled => _fulfillments
-        .Count(fulfillment => !fulfillment.Status.HasFlag(BuildRequestFulfillmentStatus.Failure));
-
     public QuantityBuildRequest(
         KnowledgeBase knowledgeBase,
         IController controller,
@@ -25,6 +21,10 @@ public class QuantityBuildRequest : BuildRequest {
         BuildRequestPriority priority
     )
         : base(knowledgeBase, controller, buildRequestFulfillmentTracker, buildType, unitOrUpgradeType, quantity, atSupply, queue, blockCondition, priority) {}
+
+    // TODO GD This could cause performance issues. If so, we should have fulfillments notify requests when their status changes
+    public override int QuantityFulfilled => _fulfillments
+        .Count(fulfillment => !fulfillment.Status.HasFlag(BuildRequestFulfillmentStatus.Failure));
 
     protected override void OnFulfillmentAdded(IBuildRequestFulfillment buildRequestFulfillment) {
         _fulfillments.Add(buildRequestFulfillment);
