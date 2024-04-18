@@ -97,7 +97,7 @@ public class PlaceBuildingFulfillment : BuildRequestFulfillment {
     }
 
     public sealed override bool CanSatisfy(IBuildRequest buildRequest) {
-        if (buildRequest.BuildType == _buildType) {
+        if (buildRequest.BuildType != _buildType) {
             return false;
         }
 

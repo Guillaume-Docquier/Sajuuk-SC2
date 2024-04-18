@@ -32,7 +32,6 @@ public abstract class BuildRequestFulfillment : IBuildRequestFulfillment {
         throw new System.NotImplementedException();
 
         Status = BuildRequestFulfillmentStatus.Canceled;
-        Logger.Info($"Fulfillment {Status.ToString()}");
     }
 
 
