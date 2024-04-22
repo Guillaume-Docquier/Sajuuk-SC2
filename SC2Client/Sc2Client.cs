@@ -27,10 +27,10 @@ public sealed class Sc2Client : ISc2Client, IDisposable {
         var executableInfo = FindExecutableInfo();
 
         _logger.Info("Launching SC2 instance");
-        StartGameClient(serverAddress, gamePort, executableInfo.sc2ExeFilePath, _gameDisplayMode);
+        StartGameClient(serverAddress, gamePort, executableInfo.sc2RootDir, executableInfo.sc2ExeFilePath, _gameDisplayMode);
     }
 
-    private static (string sc2ExeFilePath, string sc2MapsDirectoryPath) FindExecutableInfo() {
+    private static (string sc2RootDir, string sc2ExeFilePath, string sc2MapsDirectoryPath) FindExecutableInfo() {
         var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         var executeInfoFilePath = Path.Combine(myDocuments, "StarCraft II", "ExecuteInfo.txt");
         if (!File.Exists(executeInfoFilePath)) {
@@ -52,14 +52,14 @@ public sealed class Sc2Client : ISc2Client, IDisposable {
 
         var sc2MapsDirectoryPath = Path.Combine(sc2RootDir, "Maps");
 
-        return (sc2ExeFilePath, sc2MapsDirectoryPath);
+        return (sc2RootDir, sc2ExeFilePath, sc2MapsDirectoryPath);
     }
 
-    private void StartGameClient(string serverAddress, int gamePort, string sc2ExeFilePath, GameDisplayMode gameDisplayMode) {
+    private void StartGameClient(string serverAddress, int gamePort, string sc2RootDir, string sc2ExeFilePath, GameDisplayMode gameDisplayMode) {
         var processStartInfo = new ProcessStartInfo(sc2ExeFilePath)
         {
             Arguments = $"-listen {serverAddress} -port {gamePort} -displayMode {gameDisplayMode}",
-            WorkingDirectory = Path.Combine(sc2ExeFilePath, "Support64")
+            WorkingDirectory = Path.Combine(sc2RootDir, "Support64")
         };
 
         _logger.Debug($"Starting game client with arguments: {processStartInfo.Arguments}");
