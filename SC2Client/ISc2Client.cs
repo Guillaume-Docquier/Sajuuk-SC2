@@ -2,31 +2,52 @@
 
 namespace SC2Client;
 
+/// <summary>
+/// A client to handle StarCraft II instances.
+/// This client is very close to the metal and offers very little abstractions over the game itself.
+/// </summary>
 public interface ISc2Client {
-    /**
-     * Launches a StartCraft II instance.
-     */
+    /// <summary>
+    /// Launches a StartCraft II instance.
+    /// </summary>
+    /// <param name="serverAddress">The address of the server where the instance should run.</param>
+    /// <param name="gamePort">The port that the server should use.</param>
     public void LaunchSc2(string serverAddress, int gamePort);
 
-    /**
-     * Connects to a StarCraft II instance.
-     */
+    /// <summary>
+    /// Connects to a StarCraft II instance.
+    /// </summary>
+    /// <param name="serverAddress">The address of the server to connect to.</param>
+    /// <param name="gamePort">The port of the server to connect to.</param>
+    /// <param name="maxRetries">The number of retries to do before giving up.</param>
     public Task ConnectToGameClient(string serverAddress, int gamePort, int maxRetries = 60);
 
-    /**
-     * Creates a StarCraft II game.
-     */
+    /// <summary>
+    /// Creates a StarCraft II game.
+    /// </summary>
+    /// <param name="mapFileName">The file name of the map to use.</param>
+    /// <param name="opponentRace">The race for the computer opponent.</param>
+    /// <param name="opponentDifficulty">The difficulty of the computer opponent.</param>
+    /// <param name="realTime">Whether the game runs in step mode or real time.</param>
     public Task CreateGame(string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime);
 
-    /**
-     * Join a StarCraft II game.
-     */
+    /// <summary>
+    /// Joins a StarCraft II game.
+    /// </summary>
+    /// <param name="joinGameRequest">The request to join a game. This is typically a request to join a computer game, or an AIArena ladder game.</param>
+    /// <returns>The assigned player id.</returns>
     public Task<uint> JoinGame(Request joinGameRequest);
 
-    /**
-     * Leave the Starcraft II game.
-     */
+    /// <summary>
+    /// Leaves the current game.
+    /// </summary>
     public Task LeaveCurrentGame();
 
+    /// <summary>
+    /// Sends an SC2 API request to the current game.
+    /// This method will throw if you're not already connected to a game.
+    /// </summary>
+    /// <param name="request">The request to send.</param>
+    /// <returns>The response of the request.</returns>
     public Task<Response> SendRequest(Request request);
 }

@@ -2,9 +2,9 @@
 
 namespace SC2Client;
 
-/**
- * Logs messages to file and, optionally, to stdout
- */
+/// <summary>
+/// A logger to log messages to file and, optionally, to stdout
+/// </summary>
 public class Logger : ILogger {
     private readonly IFrameClock _frameClock;
     private readonly bool _logToStdOut;
@@ -23,8 +23,13 @@ public class Logger : ILogger {
         _fileStream.AutoFlush = true;
     }
 
-    private void WriteLine(string logLevel, string line) {
-        var msg = $"[{DateTime.UtcNow:HH:mm:ss} | {TimeUtils.GetGameTimeString(_frameClock.CurrentFrame)} @ {_frameClock.CurrentFrame,5}] {logLevel,7}: {line}";
+    /// <summary>
+    /// Logs a message, adding standardized time information and log level.
+    /// </summary>
+    /// <param name="logLevel">The log level of the message.</param>
+    /// <param name="message">The message to log.</param>
+    private void WriteLine(string logLevel, string message) {
+        var msg = $"[{DateTime.UtcNow:HH:mm:ss} | {TimeUtils.GetGameTimeString(_frameClock.CurrentFrame)} @ {_frameClock.CurrentFrame,5}] {logLevel,7}: {message}";
 
         _fileStream.WriteLine(msg);
 
@@ -33,25 +38,25 @@ public class Logger : ILogger {
         }
     }
 
-    public void Debug(string line) {
+    public void Debug(string message) {
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        WriteLine("DEBUG", line);
+        WriteLine("DEBUG", message);
         Console.ResetColor();
     }
 
-    public void Info(string line) {
+    public void Info(string message) {
         Console.ForegroundColor = ConsoleColor.White;
-        WriteLine("INFO", line);
+        WriteLine("INFO", message);
         Console.ResetColor();
     }
 
-    public void Warning(string line) {
+    public void Warning(string message) {
         Console.ForegroundColor = ConsoleColor.Yellow;
-        WriteLine("WARNING", line);
+        WriteLine("WARNING", message);
         Console.ResetColor();
     }
 
-    public void Error(string error) {
+    public void Error(string message) {
         Console.ForegroundColor = ConsoleColor.Red;
 
         var stackTrace = string.Join(
@@ -62,37 +67,37 @@ public class Logger : ILogger {
                 .Take(7)
         );
 
-        WriteLine("ERROR", $"({GetNameOfCallingClass()}) {error}\n{stackTrace}");
+        WriteLine("ERROR", $"({GetNameOfCallingClass()}) {message}\n{stackTrace}");
         Console.ResetColor();
     }
 
-    public void Success(string line) {
+    public void Success(string message) {
         Console.ForegroundColor = ConsoleColor.Green;
-        WriteLine("SUCCESS", line);
+        WriteLine("SUCCESS", message);
         Console.ResetColor();
     }
 
-    public void Important(string line) {
+    public void Important(string message) {
         Console.ForegroundColor = ConsoleColor.DarkCyan;
-        WriteLine("VIP", line);
+        WriteLine("VIP", message);
         Console.ResetColor();
     }
 
-    public void Performance(string line) {
+    public void Performance(string message) {
         Console.ForegroundColor = ConsoleColor.Magenta;
-        WriteLine("PERF", line);
+        WriteLine("PERF", message);
         Console.ResetColor();
     }
 
-    public void Metric(string line) {
+    public void Metric(string message) {
         Console.ForegroundColor = ConsoleColor.Cyan;
-        WriteLine("METRIC", line);
+        WriteLine("METRIC", message);
         Console.ResetColor();
     }
 
-    public void Tag(string line) {
+    public void Tag(string message) {
         Console.ForegroundColor = ConsoleColor.Blue;
-        WriteLine("TAG", line);
+        WriteLine("TAG", message);
         Console.ResetColor();
     }
 

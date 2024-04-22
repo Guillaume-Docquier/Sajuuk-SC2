@@ -1,6 +1,8 @@
 ﻿namespace SC2Client;
 
-// Used when spawning debug units
+/// <summary>
+/// The unit owner, used when spawning debug units.
+/// </summary>
 public enum UnitOwner {
     Neutral = 0,
     Self = 1,

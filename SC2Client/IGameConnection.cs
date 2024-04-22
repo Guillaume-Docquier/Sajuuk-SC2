@@ -2,11 +2,14 @@
 
 namespace SC2Client;
 
+/// <summary>
+/// An interface to join an SC2 game.
+/// </summary>
 public interface IGameConnection {
     /// <summary>
-    /// Joins as game as the given race.
+    /// Joins a game as the given race.
     /// </summary>
-    /// <param name="race">The race to play as</param>
-    /// <returns></returns>
+    /// <param name="race">The race to play as.</param>
+    /// <returns>The player id in the game.</returns>
     public Task<uint> JoinGame(Race race);
 }

@@ -2,17 +2,26 @@
 
 namespace SC2Client;
 
+/// <summary>
+/// A collection of factory methods to create SC2 API requests.
+/// The requests can be sent using an ISc2Client.
+/// </summary>
 public static class RequestBuilder {
-    /**
-     * Creates an SC2 API request to create a computer game.
-     */
-    public static Request RequestCreateComputerGame(bool realTime, string mapPath, Race opponentRace, Difficulty opponentDifficulty) {
+    /// <summary>
+    /// Creates an SC2 API request to create a computer game.
+    /// </summary>
+    /// <param name="realTime">Whether the game should be played in real time.</param>
+    /// <param name="mapFilePath">The file path of the map to play on.</param>
+    /// <param name="opponentRace">The race of the computer opponent.</param>
+    /// <param name="opponentDifficulty">The difficulty of the computer opponent.</param>
+    /// <returns>The request to create a computer game.</returns>
+    public static Request RequestCreateComputerGame(bool realTime, string mapFilePath, Race opponentRace, Difficulty opponentDifficulty) {
         var requestCreateGame = new RequestCreateGame
         {
             Realtime = realTime,
             LocalMap = new LocalMap
             {
-                MapPath = mapPath,
+                MapPath = mapFilePath,
             }
         };
 
@@ -34,9 +43,12 @@ public static class RequestBuilder {
         };
     }
 
-    /**
-     * Creates an SC2 API request to join an AIArena ladder game.
-     */
+    /// <summary>
+    /// Creates an SC2 API request to join an AIArena ladder game.
+    /// </summary>
+    /// <param name="race">The race to play as.</param>
+    /// <param name="startPort">The AIArena start port provided as CLI arguments.</param>
+    /// <returns>The request to join a ladder game.</returns>
     public static Request RequestJoinLadderGame(Race race, int startPort) {
         var requestJoinGame = new RequestJoinGame
         {
@@ -62,9 +74,11 @@ public static class RequestBuilder {
         };
     }
 
-    /**
-     * Creates an SC2 API request to join a local game.
-     */
+    /// <summary>
+    /// Creates an SC2 API request to join a local game.
+    /// </summary>
+    /// <param name="race">The race to play as.</param>
+    /// <returns>The request to join a local game.</returns>
     public static Request RequestJoinLocalGame(Race race) {
         return new Request
         {
@@ -76,9 +90,10 @@ public static class RequestBuilder {
         };
     }
 
-    /**
-     * Creates game configuration options that determines what data the game sends when sending game state on each frame.
-     */
+    /// <summary>
+    /// Creates game interface options that determines what data the game sends when sending game state on each frame.
+    /// </summary>
+    /// <returns>The interface options.</returns>
     private static InterfaceOptions GetInterfaceOptions() {
         return new InterfaceOptions
         {
@@ -90,9 +105,10 @@ public static class RequestBuilder {
         };
     }
 
-    /**
-     * Creates an SC2 API request to quit a game.
-     */
+    /// <summary>
+    /// Creates an SC2 API request to quit a game.
+    /// </summary>
+    /// <returns>The request to quit the game.</returns>
     public static Request RequestQuitGame() {
         return new Request
         {

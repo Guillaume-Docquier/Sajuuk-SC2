@@ -163,9 +163,11 @@ public sealed class Sc2Client : ISc2Client, IDisposable {
         return await ReadResponse(_clientWebsocket);
     }
 
-    /**
-     * Sends the protobuf request through the websocket.
-     */
+    /// <summary>
+    /// Sends the protobuf request through the websocket.
+    /// </summary>
+    /// <param name="request">The request to send.</param>
+    /// <param name="websocket">The websocket to send the request through.</param>
     private static async Task WriteRequest(IMessage request, WebSocket websocket) {
         var sendBuffer = ArrayPool<byte>.Shared.Rent(1024 * 1024);
         var outStream = new CodedOutputStream(sendBuffer);
@@ -182,9 +184,11 @@ public sealed class Sc2Client : ISc2Client, IDisposable {
         ArrayPool<byte>.Shared.Return(sendBuffer);
     }
 
-    /**
-     * Reads a response through the websocket after writing a request.
-     */
+    /// <summary>
+    /// Reads a response through the websocket after writing a request.
+    /// </summary>
+    /// <param name="websocket">The websocket to read from.</param>
+    /// <returns>The response that was read.</returns>
     private static async Task<Response> ReadResponse(WebSocket websocket) {
         var receiveBuffer = ArrayPool<byte>.Shared.Rent(1024 * 1024);
         var responseLength = 0;

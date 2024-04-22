@@ -2,6 +2,9 @@
 
 namespace SC2Client;
 
+/// <summary>
+/// The local game connection is used to launch SC2, create and join a game against a computer opponent.
+/// </summary>
 public class LocalGameConnection : IGameConnection {
     private readonly ILogger _logger;
     private readonly ISc2Client _sc2Client;

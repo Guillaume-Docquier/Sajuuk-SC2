@@ -1,8 +1,8 @@
 ﻿namespace SC2Client;
 
-/**
- * Represents the possible display modes when starting SC2
- */
+/// <summary>
+/// Represents the possible display modes when starting SC2
+/// </summary>
 public enum GameDisplayMode {
     Windowed = 0,
     FullScreen = 1

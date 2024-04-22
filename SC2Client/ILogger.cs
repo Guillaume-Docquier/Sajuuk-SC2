@@ -1,51 +1,66 @@
 ﻿namespace SC2Client;
 
-/**
- * A logger to log whatever messages wherever and however you want.
- */
+/// <summary>
+/// An interface to log messages of various types.
+/// The different log levels can be used to give more or less importance to certain logs.
+/// They can also be used to parse and analyze certain categories of logs.
+/// </summary>
 public interface ILogger {
-    /**
-     * Logs a debug message.
-     */
-    void Debug(string line);
+    /// <summary>
+    /// Logs a debug message.
+    /// </summary>
+    /// <param name="message">The debug message.</param>
+    void Debug(string message);
 
-    /**
-     * Logs an info message.
-     */
-    void Info(string line);
+    /// <summary>
+    /// Logs an info message.
+    /// </summary>
+    /// <param name="message">The info message.</param>
+    void Info(string message);
 
-    /**
-     * Logs a warning message.
-     */
-    void Warning(string line);
+    /// <summary>
+    /// Logs a warning message.
+    /// </summary>
+    /// <param name="message">The warning message.</param>
+    void Warning(string message);
 
-    /**
-     * Logs an error message.
-     */
-    void Error(string error);
+    /// <summary>
+    /// Logs an error message.
+    /// </summary>
+    /// <param name="message">The error message.</param>
+    void Error(string message);
 
-    /**
-     * Logs a success message.
-     */
-    void Success(string line);
+    /// <summary>
+    /// Logs a success message.
+    /// Success messages are more visible.
+    /// </summary>
+    /// <param name="message">The success message.</param>
+    void Success(string message);
 
-    /**
-     * Logs an important message.
-     */
-    void Important(string line);
+    /// <summary>
+    /// Logs an important message.
+    /// Important messages are more visible.
+    /// </summary>
+    /// <param name="message">The important message.</param>
+    void Important(string message);
 
-    /**
-     * Logs a performance message.
-     */
-    void Performance(string line);
+    /// <summary>
+    /// Logs a performance message.
+    /// Performance messages are used to keep track of potential performance problems.
+    /// </summary>
+    /// <param name="message">The performance message.</param>
+    void Performance(string message);
 
-    /**
-     * Logs a metric message.
-     */
-    void Metric(string line);
+    /// <summary>
+    /// Logs a metric message.
+    /// Metrics are used as comparative tokens from game to game.
+    /// </summary>
+    /// <param name="message">The metric message.</param>
+    void Metric(string message);
 
-    /**
-     * Logs a tag.
-     */
-    void Tag(string line);
+    /// <summary>
+    /// Logs a message related to AIArena tags.
+    /// </summary>
+    /// <param name="message">The tag to log.</param>
+    void Tag(string message);
 }

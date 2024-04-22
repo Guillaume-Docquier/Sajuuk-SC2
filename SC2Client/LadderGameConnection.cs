@@ -2,6 +2,9 @@
 
 namespace SC2Client;
 
+/// <summary>
+/// The ladder game connection is used to connect to an already set up ladder game against a non-computer opponent.
+/// </summary>
 public class LadderGameConnection : IGameConnection {
     private readonly ILogger _logger;
     private readonly ISc2Client _sc2Client;

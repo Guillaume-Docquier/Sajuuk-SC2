@@ -1,11 +1,11 @@
 ﻿namespace SC2Client;
 
-/**
- * A frame clock keeps track of the current frame.
- */
+/// <summary>
+/// A frame clock keeps track of the current frame.
+/// </summary>
 public interface IFrameClock {
-    /**
-     * The current frame number.
-     */
+    /// <summary>
+    /// The current frame number.
+    /// </summary>
     public uint CurrentFrame { get; }
 }
