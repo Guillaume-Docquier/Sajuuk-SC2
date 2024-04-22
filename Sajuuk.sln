@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sajuuk.Tests", "Sajuuk.Test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "S2ClientProtocol", "S2ClientProtocol\S2ClientProtocol.csproj", "{FCC1604F-C1E1-4754-AA7A-4CAAB27DF9BF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SC2Client", "SC2Client\SC2Client.csproj", "{64EACFBC-A665-40E6-952B-EA505C1C65A4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{FCC1604F-C1E1-4754-AA7A-4CAAB27DF9BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FCC1604F-C1E1-4754-AA7A-4CAAB27DF9BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FCC1604F-C1E1-4754-AA7A-4CAAB27DF9BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64EACFBC-A665-40E6-952B-EA505C1C65A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64EACFBC-A665-40E6-952B-EA505C1C65A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64EACFBC-A665-40E6-952B-EA505C1C65A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64EACFBC-A665-40E6-952B-EA505C1C65A4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
