@@ -23,13 +23,10 @@ public interface ISc2Client {
     public Task ConnectToGameClient(string serverAddress, int gamePort, int maxRetries = 60);
 
     /// <summary>
-    /// Creates a StarCraft II game.
+    /// Creates a StarCraft II local game against a computer opponent.
     /// </summary>
-    /// <param name="mapFileName">The file name of the map to use.</param>
-    /// <param name="opponentRace">The race for the computer opponent.</param>
-    /// <param name="opponentDifficulty">The difficulty of the computer opponent.</param>
-    /// <param name="realTime">Whether the game runs in step mode or real time.</param>
-    public Task CreateGame(string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime);
+    /// <param name="localGameConfiguration">The local game configuration.</param>
+    public Task CreateLocalGame(ILocalGameConfiguration localGameConfiguration);
 
     /// <summary>
     /// Joins a StarCraft II game.

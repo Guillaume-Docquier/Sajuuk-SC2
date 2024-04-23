@@ -102,17 +102,24 @@ public sealed class Sc2Client : ISc2Client, IDisposable {
         await Ping();
     }
 
-    public async Task CreateGame(string mapFileName, Race opponentRace, Difficulty opponentDifficulty, bool realTime) {
+    public async Task CreateLocalGame(ILocalGameConfiguration localGameConfiguration) {
         _logger.Info("Finding the SC2 executable info");
         var executableInfo = FindExecutableInfo();
 
-        _logger.Info($"Creating game on map: {mapFileName}");
-        var mapPath = Path.Combine(executableInfo.sc2MapsDirectoryPath, mapFileName);
+        _logger.Info($"Creating game on map: {localGameConfiguration.MapFileName}");
+        var mapPath = Path.Combine(executableInfo.sc2MapsDirectoryPath, localGameConfiguration.MapFileName);
         if (!File.Exists(mapPath)) {
             throw new Exception($"Unable to locate map: {mapPath}");
         }
 
-        var createGameResponse = await SendRequest(RequestBuilder.RequestCreateComputerGame(realTime, mapPath, opponentRace, opponentDifficulty));
+        var createGameResponse = await SendRequest(
+            RequestBuilder.RequestCreateComputerGame(
+                localGameConfiguration.RealTime,
+                mapPath,
+                localGameConfiguration.OpponentRace,
+                localGameConfiguration.OpponentDifficulty
+            )
+        );
 
         // TODO GD This might be broken now, used to be ResponseJoinGame.Types.Error.Unset (0) but it doesn't exist anymore
         if (createGameResponse.CreateGame.Error != ResponseCreateGame.Types.Error.MissingMap) {
