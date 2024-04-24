@@ -45,7 +45,6 @@ public static class Maps {
         Hardwire,
     };
 
-
     /// <summary>
     /// Represents the map pool of season 4 of 2022.
     /// </summary>

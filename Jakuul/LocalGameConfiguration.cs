@@ -7,5 +7,5 @@ public class LocalGameConfiguration : ILocalGameConfiguration {
     public string MapFileName => Maps.CosmicSapphire;
     public Race OpponentRace => Race.Terran;
     public Difficulty OpponentDifficulty => Difficulty.CheatInsane;
-    public bool RealTime => true;
+    public bool RealTime => false;
 }

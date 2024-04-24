@@ -115,4 +115,35 @@ public static class RequestBuilder {
             Quit = new RequestQuit()
         };
     }
+
+    /// <summary>
+    /// Requests a new game observation.
+    /// This will return the current game state.
+    /// </summary>
+    /// <param name="waitUntilFrame"></param>
+    /// <returns></returns>
+    public static Request RequestObservation(uint waitUntilFrame) {
+        return new Request
+        {
+            Observation = new RequestObservation
+            {
+                GameLoop = waitUntilFrame,
+            },
+        };
+    }
+
+    /// <summary>
+    /// Requests a step in the game simulation.
+    /// </summary>
+    /// <param name="stepSize"></param>
+    /// <returns></returns>
+    public static Request RequestStep(uint stepSize) {
+        return new Request
+        {
+            Step = new RequestStep
+            {
+                Count = stepSize,
+            }
+        };
+    }
 }

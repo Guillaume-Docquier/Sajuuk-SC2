@@ -26,10 +26,12 @@ public class LadderGameConnection : IGameConnection {
         _startPort = startPort;
     }
 
-    public async Task<uint> JoinGame(Race race) {
+    public async Task<IGame> JoinGame(Race race) {
         await _sc2Client.ConnectToGameClient(_serverAddress, _gamePort);
 
         _logger.Info("Joining ladder game");
-        return await _sc2Client.JoinGame(RequestBuilder.RequestJoinLadderGame(race, _startPort));
+        var playerId = await _sc2Client.JoinGame(RequestBuilder.RequestJoinLadderGame(race, _startPort));
+
+        return new Game(playerId, _logger, _sc2Client);
     }
 }

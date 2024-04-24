@@ -23,12 +23,14 @@ public class LocalGameConnection : IGameConnection {
         _localGameConfiguration = localGameConfiguration;
     }
 
-    public async Task<uint> JoinGame(Race race) {
+    public async Task<IGame> JoinGame(Race race) {
         _sc2Client.LaunchSc2(ServerAddress, GamePort);
         await _sc2Client.ConnectToGameClient(ServerAddress, GamePort);
         await _sc2Client.CreateLocalGame(_localGameConfiguration);
 
         _logger.Info("Joining local game");
-        return await _sc2Client.JoinGame(RequestBuilder.RequestJoinLocalGame(race));
+        var playerId = await _sc2Client.JoinGame(RequestBuilder.RequestJoinLocalGame(race));
+
+        return new Game(playerId, _logger, _sc2Client);
     }
 }

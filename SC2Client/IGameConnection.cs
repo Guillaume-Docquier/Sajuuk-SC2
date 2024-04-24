@@ -11,5 +11,5 @@ public interface IGameConnection {
     /// </summary>
     /// <param name="race">The race to play as.</param>
     /// <returns>The player id in the game.</returns>
-    public Task<uint> JoinGame(Race race);
+    public Task<IGame> JoinGame(Race race);
 }
