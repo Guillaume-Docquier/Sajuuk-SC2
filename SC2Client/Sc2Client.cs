@@ -23,10 +23,8 @@ public sealed class Sc2Client : ISc2Client, IDisposable {
     }
 
     public void LaunchSc2(string serverAddress, int gamePort) {
-        _logger.Info("Finding the SC2 executable info");
-        var executableInfo = FindExecutableInfo();
-
         _logger.Info("Launching SC2 instance");
+        var executableInfo = FindExecutableInfo();
         StartGameClient(serverAddress, gamePort, executableInfo.sc2RootDir, executableInfo.sc2ExeFilePath, _gameDisplayMode);
     }
 
@@ -103,10 +101,10 @@ public sealed class Sc2Client : ISc2Client, IDisposable {
     }
 
     public async Task CreateLocalGame(ILocalGameConfiguration localGameConfiguration) {
-        _logger.Info("Finding the SC2 executable info");
+        _logger.Info($"Creating game on map: {localGameConfiguration.MapFileName}");
+
         var executableInfo = FindExecutableInfo();
 
-        _logger.Info($"Creating game on map: {localGameConfiguration.MapFileName}");
         var mapPath = Path.Combine(executableInfo.sc2MapsDirectoryPath, localGameConfiguration.MapFileName);
         if (!File.Exists(mapPath)) {
             throw new Exception($"Unable to locate map: {mapPath}");
@@ -148,9 +146,9 @@ public sealed class Sc2Client : ISc2Client, IDisposable {
         return joinGameResponse.JoinGame.PlayerId;
     }
 
-    public Task LeaveCurrentGame() {
+    public async Task LeaveCurrentGame() {
         _logger.Info("Quitting game...");
-        return SendRequest(RequestBuilder.RequestQuitGame());
+        await SendRequest(RequestBuilder.RequestQuitGame());
     }
 
     private async Task Ping() {

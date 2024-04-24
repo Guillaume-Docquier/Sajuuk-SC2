@@ -5,6 +5,7 @@ namespace SC2Client;
 /// <summary>
 /// A client to handle StarCraft II instances.
 /// This client is very close to the metal and offers very little abstractions over the game itself.
+/// To get abstractions, use IGame instead.
 /// </summary>
 public interface ISc2Client {
     /// <summary>

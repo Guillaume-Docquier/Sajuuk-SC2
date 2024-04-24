@@ -23,4 +23,9 @@ public interface IGame {
     /// </summary>
     /// <param name="stepSize">The number of game loops to simulate for the next frame.</param>
     public Task Step(uint stepSize);
+
+    /// <summary>
+    /// Abandons the game immediately, leaving it.
+    /// </summary>
+    public void Surrender();
 }

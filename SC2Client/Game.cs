@@ -34,6 +34,11 @@ public class Game : IGame {
         GameResult = GetGameResult(observationResponse);
     }
 
+    public void Surrender() {
+        _logger.Info("Surrendering the game...");
+        _sc2Client.LeaveCurrentGame().Wait();
+    }
+
     /// <summary>
     /// Gets the game result from the response.
     /// </summary>
