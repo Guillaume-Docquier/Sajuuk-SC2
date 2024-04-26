@@ -6,9 +6,4 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Algorithms\Algorithms.csproj" />
-      <ProjectReference Include="..\S2ClientProtocol\S2ClientProtocol.csproj" />
-    </ItemGroup>
-
 </Project>
