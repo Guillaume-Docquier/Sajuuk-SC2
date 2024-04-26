@@ -40,8 +40,6 @@ public class NullGraphicalDebugger : IGraphicalDebugger {
 
     public void AddLink(Vector3 start, Vector3 end, Color color) {}
 
-    public void AddPath(List<Vector2> path, Color startColor, Color endColor) {}
-
     public void AddPath(List<Vector3> path, Color startColor, Color endColor) {}
 
     public void AddUnit(IUnit unit, Color? color = null) {}

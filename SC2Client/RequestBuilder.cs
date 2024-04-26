@@ -146,4 +146,39 @@ public static class RequestBuilder {
             }
         };
     }
+
+    /// <summary>
+    /// Requests drawing shapes in game.
+    /// </summary>
+    /// <param name="debugTexts">The texts to draw</param>
+    /// <param name="debugSpheres">The spheres to draw</param>
+    /// <param name="debugBoxes">The boxes to draw</param>
+    /// <param name="debugLines">The lines to draw</param>
+    /// <returns></returns>
+    public static Request DebugDraw(
+        IEnumerable<DebugText> debugTexts,
+        IEnumerable<DebugSphere> debugSpheres,
+        IEnumerable<DebugBox> debugBoxes,
+        IEnumerable<DebugLine> debugLines
+    ) {
+        return new Request
+        {
+            Debug = new RequestDebug
+            {
+                Debug =
+                {
+                    new DebugCommand
+                    {
+                        Draw = new DebugDraw
+                        {
+                            Text = { debugTexts },
+                            Spheres = { debugSpheres },
+                            Boxes = { debugBoxes },
+                            Lines = { debugLines },
+                        },
+                    },
+                }
+            }
+        };
+    }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Algorithms;
 using Algorithms.ExtensionMethods;
 using SC2APIProtocol;
 using SC2Client.GameData;
@@ -27,7 +28,7 @@ public static class Vector2Extensions {
     public static HashSet<Vector2> GetPointsInBetween(this Vector2 origin, Vector2 destination) {
         var targetCellCorner = destination.AsWorldGridCorner();
 
-        var pointsInBetween = RayCasting.RayCast(origin, destination, cellCorner => cellCorner == targetCellCorner)
+        var pointsInBetween = RayCasting.RayCast(origin, destination, cellCorner => cellCorner == targetCellCorner, cell => cell.AsWorldGridCorner())
             .Select(result => result.CornerOfCell.AsWorldGridCenter())
             .ToHashSet();
 

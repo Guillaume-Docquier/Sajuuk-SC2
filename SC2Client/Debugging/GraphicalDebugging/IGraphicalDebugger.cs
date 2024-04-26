@@ -39,8 +39,6 @@ public interface IGraphicalDebugger {
 
     void AddLink(Vector3 start, Vector3 end, Color color);
 
-    void AddPath(List<Vector2> path, Color startColor, Color endColor);
-
     void AddPath(List<Vector3> path, Color startColor, Color endColor);
 
     void AddUnit(IUnit unit, Color? color = null);

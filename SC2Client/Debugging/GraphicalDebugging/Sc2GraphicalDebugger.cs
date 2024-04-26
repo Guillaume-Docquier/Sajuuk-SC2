@@ -1,15 +1,16 @@
 ﻿using System.Numerics;
+using Algorithms;
+using Algorithms.ExtensionMethods;
 using SC2APIProtocol;
+using SC2Client.ExtensionMethods;
+using SC2Client.GameData;
 
 namespace SC2Client.Debugging.GraphicalDebugging;
 
 /// <summary>
 /// Implements all sorts of graphical shapes to help in local debugging.
 /// </summary>
-public class Sc2GraphicalDebugger: IGraphicalDebugger {
-    private readonly ITerrainTracker _terrainTracker;
-    private readonly IRequestBuilder _requestBuilder;
-
+public class Sc2GraphicalDebugger : IGraphicalDebugger {
     private const float CreepHeight = 0.02f;
     private const float Padding = 0.05f;
 
@@ -18,16 +19,8 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
     private readonly Dictionary<Vector3, List<DebugBox>> _debugBoxes = new Dictionary<Vector3, List<DebugBox>>();
     private readonly List<DebugLine> _debugLines = new List<DebugLine>();
 
-    public Sc2GraphicalDebugger(
-        ITerrainTracker terrainTracker,
-        IRequestBuilder requestBuilder
-    ) {
-        _terrainTracker = terrainTracker;
-        _requestBuilder = requestBuilder;
-    }
-
     public Request GetDebugRequest() {
-        var debugRequest = _requestBuilder.DebugDraw(
+        var debugRequest = RequestBuilder.DebugDraw(
             _debugTexts,
             _debugSpheres,
             _debugBoxes.SelectMany(kv => kv.Value),
@@ -177,10 +170,6 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
         AddGridSphere(end, color);
     }
 
-    public void AddPath(List<Vector2> path, Color startColor, Color endColor) {
-        AddPath(path.Select(cell => _terrainTracker.WithWorldHeight(cell)).ToList(), startColor, endColor);
-    }
-
     public void AddPath(List<Vector3> path, Color startColor, Color endColor) {
         if (path.Count <= 0) {
             return;
@@ -202,9 +191,8 @@ public class Sc2GraphicalDebugger: IGraphicalDebugger {
         );
 
         if (unit.IsFlying) {
-            var groundPosition = _terrainTracker.WithWorldHeight(unit.Position);
-            AddLine(unit.Position, groundPosition, color ?? Colors.White);
-            AddGridSphere(groundPosition, color ?? Colors.White);
+            AddLine(unit.Position, unit.GroundPosition, color ?? Colors.White);
+            AddGridSphere(unit.GroundPosition, color ?? Colors.White);
         }
     }
 }
