@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Sajuuk.Actions;
 using Sajuuk.Debugging.GraphicalDebugging;
+using Sajuuk.ExtensionMethods;
 using Sajuuk.GameData;
 using Sajuuk.GameSense;
 using Sajuuk.MapAnalysis;
@@ -145,6 +146,34 @@ public class BotRunner : IBotRunner {
 
         _performanceDebugger.BotStopwatch.Start();
         await bot.OnFrame();
+        foreach (var unit in _unitsTracker.OwnedUnits)
+        {
+            foreach (var action in unit.Actions)
+            {
+                var unitCommand = new ActionRawUnitCommand()
+                {
+                    QueueCommand = action.QueueComannd,
+                    AbilityId = (int)action.AbilityId,
+                };
+                if (action.TargetPosition != null)
+                {
+                    unitCommand.TargetWorldSpacePos = action.TargetPosition.Value.ToPoint2D();
+                }
+                if (action.TargetUnit != null)
+                {
+                    unitCommand.TargetUnitTag = action.TargetUnit.Value;
+                }
+                unitCommand.UnitTags.Add(unit.Tag);
+                _actionService.AddAction(new Action()
+                {
+                    ActionRaw = new ActionRaw()
+                    {
+                        UnitCommand = unitCommand,
+                    }
+                });
+            }
+            unit.Actions.Clear();
+        }
         _performanceDebugger.BotStopwatch.Stop();
 
         _performanceDebugger.ActionsStopwatch.Start();

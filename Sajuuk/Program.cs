@@ -53,7 +53,7 @@ public class Program {
 
     private const string Version = "5_0_0";
 
-    private const string MapFileName = Maps.CosmicSapphire;
+    private const string MapFileName = Maps.GoldenAura;
     private const Race OpponentRace = Race.Random;
     private const Difficulty OpponentDifficulty = Difficulty.CheatInsane;
 
@@ -432,7 +432,6 @@ public class Program {
         var frameClock = new FrameClock();
         var visibilityTracker = new VisibilityTracker(frameClock);
 
-        var actionBuilder = new ActionBuilder(knowledgeBase);
         var actionService = new ActionService();
         var unitsTracker = new UnitsTracker(visibilityTracker);
 
@@ -460,7 +459,7 @@ public class Program {
         var regionsEvaluatorFactory = new RegionsEvaluatorFactory(unitsTracker, frameClock, unitEvaluator, pathfinder);
         var regionsEvaluationsTracker = new RegionsEvaluationsTracker(debuggingFlagsTracker, terrainTracker, regionsTracker, graphicalDebugger, regionsEvaluatorFactory);
 
-        var chatService = new ChatService(actionService, actionBuilder);
+        var chatService = new ChatService(actionService);
         var taggingService = new TaggingService(frameClock, chatService);
         var enemyRaceTracker = new EnemyRaceTracker(taggingService, unitsTracker);
         var strategyInterpreterFactory = new StrategyInterpreterFactory(frameClock, knowledgeBase, enemyRaceTracker, regionsTracker);
@@ -525,7 +524,7 @@ public class Program {
 
         // We do this to avoid circular dependencies between unit, unitsTracker, terrainTracker and regionsTracker
         // I don't 100% like it but it seems worth it.
-        var unitsFactory = new UnitFactory(frameClock, knowledgeBase, actionBuilder, actionService, terrainTracker, regionsTracker, unitsTracker);
+        var unitsFactory = new UnitFactory(frameClock, knowledgeBase, terrainTracker, regionsTracker, unitsTracker);
         unitsTracker.WithUnitsFactory(unitsFactory);
 
         // Logger is not yet an instance

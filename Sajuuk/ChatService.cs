@@ -1,17 +1,23 @@
 ﻿using Sajuuk.Actions;
+using SC2APIProtocol;
 
 namespace Sajuuk;
 
 public class ChatService : IChatService {
     private readonly IActionService _actionService;
-    private readonly IActionBuilder _actionBuilder;
 
-    public ChatService(IActionService actionService, IActionBuilder actionBuilder) {
+    public ChatService(IActionService actionService) {
         _actionService = actionService;
-        _actionBuilder = actionBuilder;
     }
 
     public void Chat(string message, bool toTeam = false) {
-        _actionService.AddAction(_actionBuilder.Chat(message, toTeam));
+        _actionService.AddAction( new Action
+        {
+            ActionChat = new ActionChat
+            {
+                Channel = toTeam ? ActionChat.Types.Channel.Team : ActionChat.Types.Channel.Broadcast,
+                Message = message
+            }
+        });
     }
 }

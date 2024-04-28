@@ -18,8 +18,6 @@ namespace Sajuuk;
 public class Unit: ICanDie, IHavePosition {
     private readonly IFrameClock _frameClock;
     private readonly KnowledgeBase _knowledgeBase;
-    private readonly IActionBuilder _actionBuilder;
-    private readonly IActionService _actionService;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IRegionsTracker _regionsTracker;
     private readonly IUnitsTracker _unitsTracker;
@@ -113,6 +111,8 @@ public class Unit: ICanDie, IHavePosition {
 
     public ulong DeathDelay = 0;
 
+    public List<OrderAction> Actions { get; private set; }
+
     private Manager _manager;
     public Manager Manager {
         get => _manager;
@@ -180,8 +180,6 @@ public class Unit: ICanDie, IHavePosition {
     public Unit(
         IFrameClock frameClock,
         KnowledgeBase knowledgeBase,
-        IActionBuilder actionBuilder,
-        IActionService actionService,
         ITerrainTracker terrainTracker,
         IRegionsTracker regionsTracker,
         IUnitsTracker unitsTracker,
@@ -190,13 +188,12 @@ public class Unit: ICanDie, IHavePosition {
     ) {
         _frameClock = frameClock;
         _knowledgeBase = knowledgeBase;
-        _actionBuilder = actionBuilder;
-        _actionService = actionService;
         _terrainTracker = terrainTracker;
         _regionsTracker = regionsTracker;
         _unitsTracker = unitsTracker;
 
         FirstSeen = currentFrame;
+        Actions = new List<OrderAction>();
 
         Update(rawUnit, currentFrame);
     }
@@ -293,7 +290,7 @@ public class Unit: ICanDie, IHavePosition {
     // TODO GD Make sure to cancel any other order and prevent orders to be added for this frame
     public void Stop() {
         if (Orders.Any()) {
-            ProcessAction(_actionBuilder.Stop(Tag));
+            ProcessAction(Abilities.Stop);
         }
     }
 
@@ -341,7 +338,7 @@ public class Unit: ICanDie, IHavePosition {
             return;
         }
 
-        ProcessAction(_actionBuilder.Move(Tag, target));
+        ProcessAction(Abilities.Move,target);
     }
 
     /// <summary>
@@ -360,7 +357,8 @@ public class Unit: ICanDie, IHavePosition {
             return;
         }
 
-        ProcessAction(_actionBuilder.Attack(Tag, targetUnit.Tag));
+        //ProcessAction(_actionBuilder.Attack(Tag, targetUnit.Tag));
+        ProcessAction(Abilities.Attack, targetUnit.Tag);
     }
 
     /// <summary>
@@ -382,7 +380,7 @@ public class Unit: ICanDie, IHavePosition {
             return;
         }
 
-        ProcessAction(_actionBuilder.AttackMove(Tag, target));
+        ProcessAction(Abilities.Attack, target);
     }
 
     public void TrainUnit(uint unitType, bool queue = false) {
@@ -395,7 +393,8 @@ public class Unit: ICanDie, IHavePosition {
             return;
         }
 
-        ProcessAction(_actionBuilder.TrainUnit(unitType, Tag));
+        var unitAbilityId = _knowledgeBase.GetUnitTypeData(unitType).AbilityId;
+        ProcessAction(unitAbilityId);
 
         var targetName = _knowledgeBase.GetUnitTypeData(unitType).Name;
         Logger.Info("{0} started training {1}", this, targetName);
@@ -403,7 +402,8 @@ public class Unit: ICanDie, IHavePosition {
 
     public void UpgradeInto(uint unitOrBuildingType) {
         // You upgrade a unit or building by training the upgrade from the producer
-        ProcessAction(_actionBuilder.TrainUnit(unitOrBuildingType, Tag));
+        var unitAbilityId = _knowledgeBase.GetUnitTypeData(unitOrBuildingType).AbilityId;
+        ProcessAction(unitAbilityId);
 
         var upgradeName = _knowledgeBase.GetUnitTypeData(unitOrBuildingType).Name;
         Logger.Info("Upgrading {0} into {1}", this, upgradeName);
@@ -411,7 +411,8 @@ public class Unit: ICanDie, IHavePosition {
 
     public void PlaceBuilding(uint buildingType, Vector2 target) {
         Manager?.Release(this);
-        ProcessAction(_actionBuilder.PlaceBuilding(buildingType, Tag, target));
+        var buildingAbilityId = _knowledgeBase.GetUnitTypeData(buildingType).AbilityId;
+        ProcessAction(buildingAbilityId, target);
 
         var buildingName = _knowledgeBase.GetUnitTypeData(buildingType).Name;
         Logger.Info("{0} started building {1} at {2}", this, buildingName, target);
@@ -419,7 +420,8 @@ public class Unit: ICanDie, IHavePosition {
 
     public void PlaceExtractor(uint buildingType, Unit gas) {
         Manager?.Release(this);
-        ProcessAction(_actionBuilder.PlaceExtractor(buildingType, Tag, gas.Tag));
+        var buildingAbilityId = _knowledgeBase.GetUnitTypeData(buildingType).AbilityId;
+        ProcessAction(buildingAbilityId,gas.Tag);
 
         var buildingName = _knowledgeBase.GetUnitTypeData(buildingType).Name;
         Logger.Info("{0} started building {1} on gas at {2}", this, buildingName, gas.Position);
@@ -427,18 +429,19 @@ public class Unit: ICanDie, IHavePosition {
 
     public void ResearchUpgrade(uint upgradeType)
     {
-        ProcessAction(_actionBuilder.ResearchUpgrade(upgradeType, Tag));
+        var upgradeAbilityId = _knowledgeBase.GetUpgradeData(upgradeType).AbilityId;
+        ProcessAction(upgradeAbilityId);
 
         var researchName = _knowledgeBase.GetUpgradeData(upgradeType).Name;
         Logger.Info("{0} started researching {1}", this, researchName);
     }
 
     public void Gather(Unit mineralOrGas) {
-        ProcessAction(_actionBuilder.Gather(Tag, mineralOrGas.Tag));
+        ProcessAction(Abilities.HarvestGather, mineralOrGas.Tag);
     }
 
     public void ReturnCargo() {
-        ProcessAction(_actionBuilder.ReturnCargo(Tag));
+        ProcessAction(Abilities.HarvestReturn);
     }
 
     public void UseAbility(uint abilityId, Point2D position = null, ulong targetUnitTag = ulong.MaxValue) {
@@ -450,7 +453,12 @@ public class Unit: ICanDie, IHavePosition {
             RawUnitData.Energy -= energyCost;
         }
 
-        ProcessAction(_actionBuilder.UnitCommand(abilityId, Tag, position, targetUnitTag));
+        if(targetUnitTag != ulong.MaxValue)
+            ProcessAction(abilityId, targetUnitTag);
+        else if(position != null)
+            ProcessAction(abilityId, position.ToVector2());
+        else
+            ProcessAction(abilityId);
 
         var abilityName = _knowledgeBase.GetAbilityData(abilityId).FriendlyName;
         if (targetUnitTag != ulong.MaxValue) {
@@ -472,23 +480,55 @@ public class Unit: ICanDie, IHavePosition {
         }
     }
 
-    private void ProcessAction(Action action) {
-        _actionService.AddAction(action);
+    private void ProcessAction(uint abilityId ,Vector2 position)
+    {
+        Actions.Add(new OrderAction()
+        {
+            AbilityId = abilityId,
+            TargetPosition = position,
+        });
 
         var order = new UnitOrder
         {
-            AbilityId = (uint)action.ActionRaw.UnitCommand.AbilityId,
-            TargetUnitTag = action.ActionRaw.UnitCommand.TargetUnitTag,
+            AbilityId = (uint)abilityId,
+            TargetWorldSpacePos = new Point {
+                X = position.X,
+                Y = position.Y,
+                Z = 0, // We don't know
+            },
         };
 
-        if (action.ActionRaw.UnitCommand.TargetWorldSpacePos != null) {
-            order.TargetWorldSpacePos = new Point
-            {
-                X = action.ActionRaw.UnitCommand.TargetWorldSpacePos.X,
-                Y = action.ActionRaw.UnitCommand.TargetWorldSpacePos.Y,
-                Z = 0, // We don't know
-            };
-        }
+        Orders.Add(order);
+    }
+
+    private void ProcessAction(uint abilityId, ulong targetUnitTag)
+    {
+        Actions.Add(new OrderAction()
+        {
+            AbilityId = abilityId,
+            TargetUnit=targetUnitTag
+        });
+
+        var order = new UnitOrder
+        {
+            AbilityId = (uint)abilityId,
+            TargetUnitTag = targetUnitTag,
+        };
+
+        Orders.Add(order);
+    }
+
+    private void ProcessAction(uint abilityId)
+    {
+        Actions.Add(new OrderAction()
+        {
+            AbilityId = abilityId
+        });
+
+        var order = new UnitOrder
+        {
+            AbilityId = (uint)abilityId,
+        };
 
         Orders.Add(order);
     }
