@@ -1,7 +1,7 @@
 ﻿namespace SC2Client.GameData;
 
 // You can get all these values from the stableid.json file (Generally found in 'C:\Users\your_username\Documents\StarCraft II' on Windows)
-public static class Abilities {
+public static class AbilityId {
     public const uint CancelConstruction = 314;
     public const uint Cancel = 3659;
     public const uint CancelLast = 3671;

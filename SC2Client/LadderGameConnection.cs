@@ -32,6 +32,6 @@ public class LadderGameConnection : IGameConnection {
         _logger.Info("Joining ladder game");
         var playerId = await _sc2Client.JoinGame(RequestBuilder.RequestJoinLadderGame(race, _startPort));
 
-        return new Game(playerId, _logger, _sc2Client);
+        return await Game.Create(playerId, _logger, _sc2Client);
     }
 }

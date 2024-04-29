@@ -15,10 +15,7 @@ IGameConnection sc2GameConnection = commandLineArgs.LadderServerAddress != null
     : new LocalGameConnection(logger, sc2Client, new LocalGameConfiguration());
 
 // Play
-var botRace = Race.Zerg; // TODO GD The bot's race will be defined by the bot
-var game = await sc2GameConnection.JoinGame(botRace);
-
-await game.Step(stepSize: 0);
+var game = await sc2GameConnection.JoinGame(Race.Zerg); // TODO GD The bot's race will be defined by the bot
 while (game.GameResult == Result.Undecided) {
     // bot.Play(game)
     await game.Step(stepSize: 2);

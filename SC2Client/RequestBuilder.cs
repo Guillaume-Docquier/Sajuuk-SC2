@@ -117,6 +117,37 @@ public static class RequestBuilder {
     }
 
     /// <summary>
+    /// Requests the static game data.
+    /// The Data does not change over time, you'll typically query this only once.
+    /// </summary>
+    /// <returns></returns>
+    public static Request RequestData() {
+        return new Request
+        {
+            Data = new RequestData
+            {
+                UnitTypeId = true,
+                AbilityId = true,
+                BuffId = true,
+                EffectId = true,
+                UpgradeId = true,
+            }
+        };
+    }
+
+    /// <summary>
+    /// Requests info about the game.
+    /// The GameInfo does not change over time, you'll typically query this only once.
+    /// </summary>
+    /// <returns></returns>
+    public static Request RequestGameInfo() {
+        return new Request
+        {
+            GameInfo = new RequestGameInfo(),
+        };
+    }
+
+    /// <summary>
     /// Requests a new game observation.
     /// This will return the current game state.
     /// </summary>

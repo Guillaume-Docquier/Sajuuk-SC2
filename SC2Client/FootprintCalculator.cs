@@ -13,11 +13,11 @@ public class FootprintCalculator {
     }
 
     public List<Vector2> GetFootprint(IUnit obstacle) {
-        if (Units.MineralFields.Contains(obstacle.UnitType)) {
+        if (UnitTypeId.MineralFields.Contains(obstacle.UnitType)) {
             return GetMineralFootprint(obstacle);
         }
 
-        if (Units.Obstacles.Contains(obstacle.UnitType)) {
+        if (UnitTypeId.Obstacles.Contains(obstacle.UnitType)) {
             return GetRockFootprint(obstacle);
         }
 
@@ -36,9 +36,9 @@ public class FootprintCalculator {
     private List<Vector2> GetRockFootprint(IUnit rock) {
         var footprint = new List<Vector2>();
         switch (rock.UnitType) {
-            case Units.DestructibleDebris4x4:
-            case Units.DestructibleRock4x4:
-            case Units.DestructibleRockEx14x4:
+            case UnitTypeId.DestructibleDebris4x4:
+            case UnitTypeId.DestructibleRock4x4:
+            case UnitTypeId.DestructibleRockEx14x4:
                 footprint.AddRange(new Vector2[]
                 {
                     new(-1.5f,  1.5f), new(-0.5f,  1.5f), new(0.5f,  1.5f), new(1.5f,  1.5f),
@@ -47,10 +47,10 @@ public class FootprintCalculator {
                     new(-1.5f, -1.5f), new(-0.5f, -1.5f), new(0.5f, -1.5f), new(1.5f, -1.5f),
                 });
                 break;
-            case Units.DestructibleCityDebris6x6:
-            case Units.DestructibleDebris6x6:
-            case Units.DestructibleRock6x6:
-            case Units.DestructibleRockEx16x6:
+            case UnitTypeId.DestructibleCityDebris6x6:
+            case UnitTypeId.DestructibleDebris6x6:
+            case UnitTypeId.DestructibleRock6x6:
+            case UnitTypeId.DestructibleRockEx16x6:
                 footprint.AddRange(new Vector2[]
                 {
                                        new(-1.5f,  2.5f), new(-0.5f,  2.5f), new(0.5f,  2.5f), new(1.5f,  2.5f),
@@ -61,10 +61,10 @@ public class FootprintCalculator {
                                        new(-1.5f, -2.5f), new(-0.5f, -2.5f), new(0.5f, -2.5f), new(1.5f, -2.5f),
                 });
                 break;
-            case Units.DestructibleRampDiagonalHugeBLUR:
-            case Units.DestructibleDebrisRampDiagonalHugeBLUR:
-            case Units.DestructibleCityDebrisHugeDiagonalBLUR:
-            case Units.DestructibleRockEx1DiagonalHugeBLUR:
+            case UnitTypeId.DestructibleRampDiagonalHugeBLUR:
+            case UnitTypeId.DestructibleDebrisRampDiagonalHugeBLUR:
+            case UnitTypeId.DestructibleCityDebrisHugeDiagonalBLUR:
+            case UnitTypeId.DestructibleRockEx1DiagonalHugeBLUR:
                 footprint.AddRange(new Vector2[]
                 {
                                                                                                                                      new(1.5f,  4.5f), new(2.5f,  4.5f), new(3.5f,  4.5f),
@@ -79,9 +79,9 @@ public class FootprintCalculator {
                                        new(-3.5f, -4.5f), new(-2.5f, -4.5f), new(-1.5f, -4.5f),
                 });
                 break;
-            case Units.DestructibleRampDiagonalHugeULBR:
-            case Units.DestructibleDebrisRampDiagonalHugeULBR:
-            case Units.DestructibleRockEx1DiagonalHugeULBR:
+            case UnitTypeId.DestructibleRampDiagonalHugeULBR:
+            case UnitTypeId.DestructibleDebrisRampDiagonalHugeULBR:
+            case UnitTypeId.DestructibleRockEx1DiagonalHugeULBR:
                 footprint.AddRange(new Vector2[]
                 {
                                        new(-3.5f,  4.5f), new(-2.5f,  4.5f), new(-1.5f,  4.5f),
@@ -96,7 +96,7 @@ public class FootprintCalculator {
                                                                                                                                      new(1.5f, -4.5f), new(2.5f, -4.5f), new(3.5f, -4.5f),
                 });
                 break;
-            case Units.DestructibleRampVerticalHuge:
+            case UnitTypeId.DestructibleRampVerticalHuge:
                 footprint.AddRange(new Vector2[]
                 {
                     new(-1.5f,  5.5f), new(-0.5f,  5.5f), new(0.5f,  5.5f), new(1.5f,  5.5f),
@@ -113,7 +113,7 @@ public class FootprintCalculator {
                     new(-1.5f, -5.5f), new(-0.5f, -5.5f), new(0.5f, -5.5f), new(1.5f, -5.5f),
                 });
                 break;
-            case Units.DestructibleRockEx1HorizontalHuge:
+            case UnitTypeId.DestructibleRockEx1HorizontalHuge:
                 footprint.AddRange(new Vector2[]
                 {
                     new(-5.5f,  1.5f), new(-4.5f,  1.5f), new(-3.5f,  1.5f), new(-2.5f,  1.5f), new(-1.5f,  1.5f), new(-0.5f,  1.5f), new(0.5f,  1.5f), new(1.5f,  1.5f), new(2.5f,  1.5f), new(3.5f,  1.5f), new(4.5f,  1.5f), new(5.5f,  1.5f),
@@ -122,7 +122,7 @@ public class FootprintCalculator {
                     new(-5.5f, -1.5f), new(-4.5f, -1.5f), new(-3.5f, -1.5f), new(-2.5f, -1.5f), new(-1.5f, -1.5f), new(-0.5f, -1.5f), new(0.5f, -1.5f), new(1.5f, -1.5f), new(2.5f, -1.5f), new(3.5f, -1.5f), new(4.5f, -1.5f), new(5.5f, -1.5f),
                 });
                 break;
-            case Units.UnbuildablePlatesDestructible:
+            case UnitTypeId.UnbuildablePlatesDestructible:
                 // You can walk on it, no footprint (please I hope I never rely on this for placement, yikes)
                 break;
             default:

@@ -1,4 +1,5 @@
 ﻿using SC2APIProtocol;
+using SC2Client.GameData;
 
 namespace SC2Client;
 
@@ -16,6 +17,16 @@ public interface IGame {
     /// Indicates the result of the game.
     /// </summary>
     public Result GameResult { get; }
+
+    /// <summary>
+    /// Exposes game data about units, structures, abilities, etc.
+    /// </summary>
+    public KnowledgeBase KnowledgeBase { get; }
+
+    /// <summary>
+    /// The terrain data.
+    /// </summary>
+    public ITerrain Terrain { get; }
 
     /// <summary>
     /// Submits all actions and advances the game simulation by a set number of frames.

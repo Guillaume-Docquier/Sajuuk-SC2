@@ -1,7 +1,7 @@
 ﻿namespace SC2Client.GameData;
 
 // You can get all these values from the stableid.json file (Generally found in 'C:\Users\your_username\Documents\StarCraft II' on Windows)
-public static class Buffs {
+public static class BuffId {
     public const uint OnCreepSomething = 303; // Not sure what this is
     public const uint OnCreepVisible = 306;
 

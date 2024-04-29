@@ -2,7 +2,7 @@
 
 // You can get all these values from the stableid.json file (Generally found in 'C:\Users\your_username\Documents\StarCraft II' on Windows)
 // That's all of them as of 2022-10-26
-internal static class Effects {
+internal static class EffectId {
     public const int PsiStorm                   = 1;
     public const int GuardianShield             = 2;
     public const int TemporalFieldGrowing       = 3;

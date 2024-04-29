@@ -2,88 +2,87 @@
 
 namespace SC2Client.GameData;
 
+/// <summary>
+/// Contains static data about SC2 units, abilities, buffs, etc.
+/// </summary>
 public class KnowledgeBase {
     // TODO GD Can this be inferred from the game data?
     private readonly Dictionary<uint, uint> _morphSource = new Dictionary<uint, uint>
     {
-        { Units.Drone,            Units.Larva },
-        { Units.Corruptor,        Units.Larva },
-        { Units.BroodLord,        Units.Corruptor },
-        { Units.Hydralisk,        Units.Larva },
-        { Units.Lurker,           Units.Hydralisk },
-        { Units.Infestor,         Units.Larva },
-        { Units.Mutalisk,         Units.Larva },
-        { Units.Overlord,         Units.Larva },
-        { Units.Overseer,         Units.Overlord },
-        { Units.Roach,            Units.Larva },
-        { Units.Ravager,          Units.Roach },
-        { Units.Ultralisk,        Units.Larva },
-        { Units.Zergling,         Units.Larva },
-        { Units.SwarmHost,        Units.Larva },
-        { Units.Viper,            Units.Larva },
-        { Units.Baneling,         Units.Zergling },
-        { Units.BanelingNest,     Units.Drone },
-        { Units.EvolutionChamber, Units.Drone },
-        { Units.Extractor,        Units.Drone },
-        { Units.Hatchery,         Units.Drone },
-        { Units.Lair,             Units.Hatchery },
-        { Units.Hive,             Units.Lair },
-        { Units.HydraliskDen,     Units.Drone },
-        { Units.LurkerDen,        Units.Drone },
-        { Units.InfestationPit,   Units.Drone },
-        { Units.NydusNetwork,     Units.Drone },
-        { Units.RoachWarren,      Units.Drone },
-        { Units.SpawningPool,     Units.Drone },
-        { Units.SpineCrawler,     Units.Drone },
-        { Units.Spire,            Units.Drone },
-        { Units.GreaterSpire,     Units.Spire },
-        { Units.SporeCrawler,     Units.Drone },
-        { Units.UltraliskCavern,  Units.Drone },
+        { UnitTypeId.Drone,            UnitTypeId.Larva },
+        { UnitTypeId.Corruptor,        UnitTypeId.Larva },
+        { UnitTypeId.BroodLord,        UnitTypeId.Corruptor },
+        { UnitTypeId.Hydralisk,        UnitTypeId.Larva },
+        { UnitTypeId.Lurker,           UnitTypeId.Hydralisk },
+        { UnitTypeId.Infestor,         UnitTypeId.Larva },
+        { UnitTypeId.Mutalisk,         UnitTypeId.Larva },
+        { UnitTypeId.Overlord,         UnitTypeId.Larva },
+        { UnitTypeId.Overseer,         UnitTypeId.Overlord },
+        { UnitTypeId.Roach,            UnitTypeId.Larva },
+        { UnitTypeId.Ravager,          UnitTypeId.Roach },
+        { UnitTypeId.Ultralisk,        UnitTypeId.Larva },
+        { UnitTypeId.Zergling,         UnitTypeId.Larva },
+        { UnitTypeId.SwarmHost,        UnitTypeId.Larva },
+        { UnitTypeId.Viper,            UnitTypeId.Larva },
+        { UnitTypeId.Baneling,         UnitTypeId.Zergling },
+        { UnitTypeId.BanelingNest,     UnitTypeId.Drone },
+        { UnitTypeId.EvolutionChamber, UnitTypeId.Drone },
+        { UnitTypeId.Extractor,        UnitTypeId.Drone },
+        { UnitTypeId.Hatchery,         UnitTypeId.Drone },
+        { UnitTypeId.Lair,             UnitTypeId.Hatchery },
+        { UnitTypeId.Hive,             UnitTypeId.Lair },
+        { UnitTypeId.HydraliskDen,     UnitTypeId.Drone },
+        { UnitTypeId.LurkerDen,        UnitTypeId.Drone },
+        { UnitTypeId.InfestationPit,   UnitTypeId.Drone },
+        { UnitTypeId.NydusNetwork,     UnitTypeId.Drone },
+        { UnitTypeId.RoachWarren,      UnitTypeId.Drone },
+        { UnitTypeId.SpawningPool,     UnitTypeId.Drone },
+        { UnitTypeId.SpineCrawler,     UnitTypeId.Drone },
+        { UnitTypeId.Spire,            UnitTypeId.Drone },
+        { UnitTypeId.GreaterSpire,     UnitTypeId.Spire },
+        { UnitTypeId.SporeCrawler,     UnitTypeId.Drone },
+        { UnitTypeId.UltraliskCavern,  UnitTypeId.Drone },
     };
 
-    private ResponseData? _data;
+    public KnowledgeBase(ResponseData data) {
+        // We will not be able to get the real resource values after this point.
+        // I used to hack the proto files but I don't think that's a good idea
+        // However, I've never needed it so far, so we'll cross that bridge when we get there.
+        var unitValues = new Dictionary<uint, (uint Mineral, uint Vespene)>();
+        foreach (var unit in data.Units) {
+            // The unit cost returned by the API represents the unit value.
+            unitValues[unit.UnitId] = (unit.MineralCost, unit.VespeneCost);
+        }
+
+        foreach (var unit in data.Units) {
+            if (unit.UnitId == UnitTypeId.Zergling) {
+                // Zerglings must be spawned in pairs
+                unit.MineralCost *= 2;
+            }
+            else if (_morphSource.TryGetValue(unit.UnitId, out var morpherUnitId)) {
+                // The value of a unit that is morphed from another one (e.g: all zerg units) includes the value of the morphed unit
+                // Adjust the cost to be only the extra that you need to pay
+                var morpher = data.Units[(int)morpherUnitId];
+                unit.MineralCost = unitValues[unit.UnitId].Mineral - unitValues[morpher.UnitId].Mineral;
+                unit.VespeneCost = unitValues[unit.UnitId].Vespene - unitValues[morpher.UnitId].Vespene;
+            }
+        }
+
+        _data = data;
+    }
+
+    private readonly ResponseData _data;
 
     public const float GameGridCellWidth = 1f;
     public const float GameGridCellRadius = GameGridCellWidth / 2;
     public const int MaxSupplyAllowed = 200;
 
-    // TODO GD Init from file?
-    public ResponseData Data {
-        get => _data!;
-        set {
-            // We will not be able to get the real resource values after this point.
-            // I used to hack the proto files but I don't think that's a good idea
-            // However, I've never needed it so far, so we'll cross that bridge when we get there.
-            var unitValues = new Dictionary<uint, (uint Mineral, uint Vespene)>();
-            foreach (var unit in value.Units) {
-                // The unit cost returned by the API represents the unit value.
-                unitValues[unit.UnitId] = (unit.MineralCost, unit.VespeneCost);
-            }
-
-            foreach (var unit in value.Units) {
-                if (unit.UnitId == Units.Zergling) {
-                    // Zerglings must be spawned in pairs
-                    unit.MineralCost *= 2;
-                }
-                else if (_morphSource.TryGetValue(unit.UnitId, out var morpherUnitId)) {
-                    // The value of a unit that is morphed from another one (e.g: all zerg units) includes the value of the morphed unit
-                    // Adjust the cost to be only the extra that you need to pay
-                    var morpher = value.Units[(int)morpherUnitId];
-                    unit.MineralCost = unitValues[unit.UnitId].Mineral - unitValues[morpher.UnitId].Mineral;
-                    unit.VespeneCost = unitValues[unit.UnitId].Vespene - unitValues[morpher.UnitId].Vespene;
-                }
-            }
-
-            _data = value;
-        }
-    }
-
     public UnitTypeData GetUnitTypeData(uint unitType) {
-        return Data.Units[(int)unitType];
+        return _data.Units[(int)unitType];
     }
 
     public UpgradeData GetUpgradeData(uint upgradeId) {
-        return Data.Upgrades[(int)upgradeId];
+        return _data.Upgrades[(int)upgradeId];
     }
 
     public AbilityData GetAbilityData(uint abilityId) {
@@ -91,7 +90,7 @@ public class KnowledgeBase {
     }
 
     public AbilityData GetAbilityData(int abilityId) {
-        return Data.Abilities[abilityId];
+        return _data.Abilities[abilityId];
     }
 
     public EffectData GetEffectData(uint effectId) {
@@ -99,11 +98,11 @@ public class KnowledgeBase {
     }
 
     public EffectData GetEffectData(int effectId) {
-        return Data.Effects[effectId];
+        return _data.Effects[effectId];
     }
 
     public BuffData GetBuffData(int buffId) {
-        return Data.Buffs[buffId];
+        return _data.Buffs[buffId];
     }
 
     public float GetBuildingRadius(uint buildingType) {

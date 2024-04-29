@@ -1,6 +1,6 @@
 ﻿namespace SC2Client.GameData;
 
-public static class Units {
+public static class UnitTypeId {
     #region UnitTypeIds
 
     public const uint Colossus = 4;

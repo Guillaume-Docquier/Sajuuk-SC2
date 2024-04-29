@@ -1,6 +1,6 @@
 ﻿namespace SC2Client.GameData;
 
-public static class Upgrades {
+public static class UpgradeId {
     public const uint GlialReconstitution = 2;
     public const uint TunnelingClaws = 3;
     public const uint Burrow = 64;

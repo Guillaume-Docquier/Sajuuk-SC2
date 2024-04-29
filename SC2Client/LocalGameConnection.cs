@@ -31,6 +31,6 @@ public class LocalGameConnection : IGameConnection {
         _logger.Info("Joining local game");
         var playerId = await _sc2Client.JoinGame(RequestBuilder.RequestJoinLocalGame(race));
 
-        return new Game(playerId, _logger, _sc2Client);
+        return await Game.Create(playerId, _logger, _sc2Client);
     }
 }

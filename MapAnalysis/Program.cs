@@ -23,8 +23,6 @@ foreach (var mapToAnalyze in mapsToAnalyze) {
     logger.Important($"Analyzing map: {mapToAnalyze} ({mapIndex}/{mapsToAnalyze.Count})");
 
     var game = await sc2GameConnection.JoinGame(Race.Zerg);
-
-    await game.Step(stepSize: 0);
     while (!mapAnalyzer.IsAnalysisComplete) {
         frameClock.CurrentFrame = game.CurrentFrame;
 
