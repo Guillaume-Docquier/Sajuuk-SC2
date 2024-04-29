@@ -1,6 +1,6 @@
 ﻿using Google.Protobuf;
 
-namespace SC2Client;
+namespace SC2Client.GameState;
 
 /// <summary>
 /// A collection of functions to work on byte strings.

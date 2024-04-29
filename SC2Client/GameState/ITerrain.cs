@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace SC2Client;
+namespace SC2Client.GameState;
 
 /// <summary>
 /// Provides information about the terrain.

@@ -2,6 +2,7 @@
 using Algorithms.ExtensionMethods;
 using SC2APIProtocol;
 using SC2Client.GameData;
+using SC2Client.GameState;
 
 namespace SC2Client.ExtensionMethods;
 

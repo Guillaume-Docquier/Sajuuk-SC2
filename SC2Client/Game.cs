@@ -1,5 +1,6 @@
 ﻿using SC2APIProtocol;
 using SC2Client.GameData;
+using SC2Client.GameState;
 
 namespace SC2Client;
 
@@ -23,7 +24,7 @@ public class Game : IGame {
         _logger = logger;
         _sc2Client = sc2Client;
         KnowledgeBase = new KnowledgeBase(data);
-        _terrain = new Terrain(gameInfo);
+        _terrain = new Terrain(new FootprintCalculator(_logger), gameInfo);
 
         UpdateState(gameStatus, observation);
     }

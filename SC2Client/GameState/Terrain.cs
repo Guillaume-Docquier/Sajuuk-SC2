@@ -3,7 +3,7 @@ using SC2APIProtocol;
 using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
 
-namespace SC2Client;
+namespace SC2Client.GameState;
 
 public class Terrain : ITerrain {
     private readonly FootprintCalculator _footprintCalculator;

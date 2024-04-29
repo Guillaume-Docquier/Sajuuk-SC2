@@ -2,7 +2,7 @@
 using Algorithms;
 using SC2APIProtocol;
 
-namespace SC2Client;
+namespace SC2Client.GameState;
 
 /// <summary>
 /// An interface representing a unit in the game.
