@@ -151,22 +151,23 @@ public static class RequestBuilder {
     /// Requests a new game observation.
     /// This will return the current game state.
     /// </summary>
-    /// <param name="waitUntilFrame"></param>
+    /// <param name="targetFrame">The target frame to get an observation for. In step mode, this has no effect.</param>
     /// <returns></returns>
-    public static Request RequestObservation(uint waitUntilFrame) {
+    public static Request RequestObservation(uint targetFrame) {
         return new Request
         {
             Observation = new RequestObservation
             {
-                GameLoop = waitUntilFrame,
+                GameLoop = targetFrame,
             },
         };
     }
 
     /// <summary>
-    /// Requests a step in the game simulation.
+    /// Requests steps in the game simulation.
+    /// In real time mode, this does nothing.
     /// </summary>
-    /// <param name="stepSize"></param>
+    /// <param name="stepSize">The number of frames to simulate. Must be greater than 0, or you'll automatically lose the game.</param>
     /// <returns></returns>
     public static Request RequestStep(uint stepSize) {
         return new Request
@@ -211,5 +212,21 @@ public static class RequestBuilder {
                 }
             }
         };
+    }
+
+    /// <summary>
+    /// Executes actions as a player.
+    /// </summary>
+    /// <param name="actions">The actions to perform.</param>
+    /// <returns></returns>
+    public static Request RequestAction(IEnumerable<SC2APIProtocol.Action> actions) {
+        var actionRequest = new Request
+        {
+            Action = new RequestAction(),
+        };
+
+        actionRequest.Action.Actions.AddRange(actions);
+
+        return actionRequest;
     }
 }

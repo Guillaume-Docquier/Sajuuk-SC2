@@ -1,4 +1,4 @@
-﻿namespace SC2Client;
+﻿namespace SC2Client.Trackers;
 
 /// <summary>
 /// A frame clock keeps track of the current frame.

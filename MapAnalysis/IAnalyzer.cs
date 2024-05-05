@@ -1,9 +1,9 @@
-﻿using SC2Client;
+﻿using SC2Client.State;
 
 namespace MapAnalysis;
 
 public interface IAnalyzer {
     bool IsAnalysisComplete { get; }
 
-    void OnFrame(IGame game);
+    void OnFrame(IGameState gameState);
 }

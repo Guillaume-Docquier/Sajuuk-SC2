@@ -1,6 +1,5 @@
-﻿using SC2APIProtocol;
-using SC2Client.GameData;
-using SC2Client.GameState;
+﻿using SC2Client.GameData;
+using SC2Client.State;
 
 namespace SC2Client;
 
@@ -10,34 +9,31 @@ namespace SC2Client;
 /// </summary>
 public interface IGame {
     /// <summary>
-    /// The current game frame number.
-    /// </summary>
-    public uint CurrentFrame { get; } // TODO GD Wrap all state into an IGameState?
-
-    /// <summary>
-    /// Indicates the result of the game.
-    /// </summary>
-    public Result GameResult { get; }
-
-    /// <summary>
     /// Exposes game data about units, structures, abilities, etc.
     /// </summary>
     public KnowledgeBase KnowledgeBase { get; }
 
     /// <summary>
-    /// The terrain data.
+    /// The current state of the game
     /// </summary>
-    public ITerrain Terrain { get; }
+    public IGameState State { get; }
+
+    /// <summary>
+    /// Whether the game is still in progress
+    /// </summary>
+    public bool IsOver { get; }
 
     /// <summary>
     /// Submits all actions and advances the game simulation by a set number of frames.
-    /// The game state will be updated.
+    /// It is recommended to use a stepSize of at least 2 because new unit orders are never visible after only a single frame.
+    /// The game State will be updated.
     /// </summary>
-    /// <param name="stepSize">The number of game loops to simulate for the next frame.</param>
-    public Task Step(uint stepSize);
+    /// <param name="stepSize">The number of game loops to simulate for the next frame. Must be greater than 0, or you'll automatically lose the game.</param>
+    /// <param name="actions">The actions to perform.</param>
+    public Task Step(uint stepSize, List<SC2APIProtocol.Action> actions);
 
     /// <summary>
-    /// Abandons the game immediately, leaving it.
+    /// Quits the game immediately, abandoning it.
     /// </summary>
-    public void Surrender();
+    public void Quit();
 }

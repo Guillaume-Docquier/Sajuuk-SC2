@@ -1,5 +1,4 @@
 ﻿using SC2APIProtocol;
-using SC2Client.GameState;
 
 namespace SC2Client;
 

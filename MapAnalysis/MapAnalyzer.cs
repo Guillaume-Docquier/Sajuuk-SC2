@@ -1,4 +1,5 @@
 ﻿using SC2Client;
+using SC2Client.State;
 
 namespace MapAnalysis;
 
@@ -19,13 +20,13 @@ public class MapAnalyzer : IAnalyzer {
 
     public bool IsAnalysisComplete { get; private set; } = false;
 
-    public void OnFrame(IGame game) {
-        if (game.CurrentFrame == 0) {
+    public void OnFrame(IGameState gameState) {
+        if (gameState.CurrentFrame == 0) {
             _logger.Important("Starting map analysis. Expect the game to freeze for a while.");
         }
 
         foreach (var analyzer in _analyzers) {
-            analyzer.OnFrame(game);
+            analyzer.OnFrame(gameState);
         }
 
         _analyzers = _analyzers
@@ -33,10 +34,10 @@ public class MapAnalyzer : IAnalyzer {
             .ToList();
 
         if (_analyzers.Count <= 0 && _quitAt == uint.MaxValue) {
-            _quitAt = game.CurrentFrame + 10; // Just give a few frames to debug the analysis
+            _quitAt = gameState.CurrentFrame + 10; // Just give a few frames to debug the analysis
         }
 
-        if (_quitAt <= game.CurrentFrame) {
+        if (_quitAt <= gameState.CurrentFrame) {
             IsAnalysisComplete = true;
         }
     }

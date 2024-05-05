@@ -1,0 +1,64 @@
+﻿using SC2APIProtocol;
+using SC2Client.GameData;
+
+namespace SC2Client.State;
+
+public class GameState : IGameState {
+    private readonly ILogger _logger;
+    private readonly Terrain _terrain;
+    private readonly Units _units;
+
+    public uint PlayerId { get; }
+    public uint CurrentFrame { get; private set; }
+    public Result Result { get; private set; }
+    public ITerrain Terrain => _terrain;
+    public IUnits Units => _units;
+
+    public GameState(
+        ILogger logger,
+        uint playerId,
+        KnowledgeBase knowledgeBase,
+        ResponseGameInfo gameInfo,
+        Status gameStatus,
+        ResponseObservation observation
+    ) {
+        _logger = logger;
+        PlayerId = playerId;
+        CurrentFrame = observation.Observation.GameLoop;
+        Result = GetGameResult(gameStatus, observation);
+        _terrain = new Terrain(new FootprintCalculator(logger), gameInfo);
+        _units = new Units(logger, knowledgeBase, observation);
+    }
+
+    /// <summary>
+    /// Updates the game state.
+    /// </summary>
+    /// <param name="gameStatus">The status of the game.</param>
+    /// <param name="observation">The current game state observation.</param>
+    public void Update(Status gameStatus, ResponseObservation observation) {
+        CurrentFrame = observation.Observation.GameLoop;
+        Result = GetGameResult(gameStatus, observation);
+
+        // The order of updates is not important
+        _terrain.Update(observation);
+        _units.Update(observation);
+    }
+
+    /// <summary>
+    /// Gets the game result from the response.
+    /// </summary>
+    /// <param name="gameStatus">The status of the game.</param>
+    /// <param name="observation">The current game state observation.</param>
+    /// <returns>The current game result.</returns>
+    private Result GetGameResult(Status gameStatus, ResponseObservation observation) {
+        switch (gameStatus) {
+            case Status.Quit:
+                _logger.Warning("Game was terminated.");
+                return Result.Defeat;
+            case Status.Ended:
+                return observation.PlayerResult.First(result => result.PlayerId == PlayerId).Result;
+            default:
+                return Result.Undecided;
+        }
+    }
+}

@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 using SC2APIProtocol;
-using SC2Client.GameState;
+using SC2Client.State;
 
 namespace SC2Client.Debugging.GraphicalDebugging;
 

@@ -3,7 +3,7 @@ using SC2APIProtocol;
 using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
 
-namespace SC2Client.GameState;
+namespace SC2Client.State;
 
 public class Terrain : ITerrain {
     private readonly FootprintCalculator _footprintCalculator;
@@ -33,7 +33,7 @@ public class Terrain : ITerrain {
         InitHeights(gameInfo);
 
         _obstructions = new Dictionary<Vector2, bool>(totalCells);
-        InitObstructions(gameInfo);
+        InitObstructions(gameInfo, units);
 
         _walkables = new Dictionary<Vector2, bool>(totalCells);
         InitWalkables(gameInfo);
@@ -46,12 +46,21 @@ public class Terrain : ITerrain {
         // TODO GD Update walkable based on cleared obstructions
     }
 
-    public float GetHeight(Vector2 cell) {
+    public Vector3 WithWorldHeight(Vector2 cell) {
         if (IsOutOfBounds(cell)) {
-            return 0;
+            return new Vector3(cell, 0);
         }
 
-        return _heights[cell.AsWorldGridCorner()];
+        // Some unwalkable cells are incorrectly low on the map, let's try to bring them up if they touch a walkable cell (that generally have proper height)
+        // TODO GD Maybe fix this as part of the map analysis? We could save this data and override certain cell heights
+        if (!IsWalkable(cell)) {
+            var walkableNeighbors = cell.GetNeighbors().Where(neighbor => IsWalkable(neighbor)).ToList();
+            if (walkableNeighbors.Any()) {
+                return new Vector3(cell, walkableNeighbors.Max(neighbor => WithWorldHeight(neighbor).Z));
+            }
+        }
+
+        return new Vector3(cell, _heights[cell.AsWorldGridCorner()]);
     }
 
     public bool IsWalkable(Vector2 cell, bool considerObstructions = true) {
@@ -102,7 +111,7 @@ public class Terrain : ITerrain {
         }
     }
 
-    private void InitObstructions(ResponseGameInfo gameInfo) {
+    private void InitObstructions(ResponseGameInfo gameInfo, IUnits units) {
         var obstacleIds = new HashSet<uint>(UnitTypeId.Obstacles.Concat(UnitTypeId.MineralFields).Concat(UnitTypeId.GasGeysers));
         obstacleIds.Remove(UnitTypeId.UnbuildablePlatesDestructible); // It is destructible but you can walk on it
 
@@ -113,10 +122,10 @@ public class Terrain : ITerrain {
             }
         }
 
-        _obstacles = _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, obstacleIds).ToList();
+        // TODO GD We need to handle when obstacles die
+        var obstacles = UnitQueries.GetUnits(units.NeutralUnits, obstacleIds).ToList();
 
-        _obstacles.ForEach(obstacle => {
-            obstacle.AddDeathWatcher(this);
+        obstacles.ForEach(obstacle => {
             foreach (var cell in _footprintCalculator.GetFootprint(obstacle)) {
                 // We ignore any footprint cell that is out of bounds
                 if (_obstructions.ContainsKey(cell)) {

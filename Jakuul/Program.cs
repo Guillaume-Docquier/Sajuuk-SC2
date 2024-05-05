@@ -1,6 +1,7 @@
 ﻿using Jakuul;
 using SC2APIProtocol;
 using SC2Client;
+using SC2Client.Trackers;
 
 // CLI
 var commandLineArgs = new CommandLineArguments(args);
@@ -16,9 +17,9 @@ IGameConnection sc2GameConnection = commandLineArgs.LadderServerAddress != null
 
 // Play
 var game = await sc2GameConnection.JoinGame(Race.Zerg); // TODO GD The bot's race will be defined by the bot
-while (game.GameResult == Result.Undecided) {
-    // bot.Play(game)
-    await game.Step(stepSize: 2);
+while (game.State.Result == Result.Undecided) {
+    // bot.Play(game.State)
+    await game.Step(stepSize: 2, new List<SC2APIProtocol.Action>()); // TODO GD Provide the actions
 }
 
-logger.Success($"Game has ended: {game.GameResult}");
+logger.Success($"Game has ended: {game.State.Result}");

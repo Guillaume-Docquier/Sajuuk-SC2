@@ -1,9 +1,9 @@
 ﻿using System.Numerics;
 
-namespace SC2Client.GameState;
+namespace SC2Client.State;
 
 /// <summary>
-/// Provides information about the terrain.
+/// Provides game state data about the terrain.
 /// </summary>
 public interface ITerrain {
     /// <summary>
@@ -12,7 +12,7 @@ public interface ITerrain {
     /// </summary>
     /// <param name="cell">The cell to query.</param>
     /// <returns>The height of the cell</returns>
-    float GetHeight(Vector2 cell);
+    Vector3 WithWorldHeight(Vector2 cell);
 
     /// <summary>
     /// Determines whether a cell can be walked on by a ground unit.

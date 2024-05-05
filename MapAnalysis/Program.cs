@@ -1,6 +1,7 @@
 ﻿using MapAnalysis;
 using SC2APIProtocol;
 using SC2Client;
+using SC2Client.Trackers;
 
 var mapsToAnalyze = Maps.GetAll()
     // Blackburn has an isolated expand that breaks the analysis, we'll fix it if it comes back to the map pool
@@ -24,15 +25,15 @@ foreach (var mapToAnalyze in mapsToAnalyze) {
 
     var game = await sc2GameConnection.JoinGame(Race.Zerg);
     while (!mapAnalyzer.IsAnalysisComplete) {
-        frameClock.CurrentFrame = game.CurrentFrame;
+        frameClock.Update(game.State);
 
-        mapAnalyzer.OnFrame(game);
-        await game.Step(stepSize: 1);
+        mapAnalyzer.OnFrame(game.State);
+        await game.Step(stepSize: 1, new List<SC2APIProtocol.Action>());
     }
 
     logger.Success($"Analysis on {mapToAnalyze} complete!");
 
-    await sc2Client.LeaveCurrentGame();
+    game.Quit();
 
     mapIndex++;
 }
