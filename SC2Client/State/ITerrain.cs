@@ -7,39 +7,27 @@ namespace SC2Client.State;
 /// </summary>
 public interface ITerrain {
     /// <summary>
-    /// Gets the height of the given cell.
-    /// Cells in SC2 are 1x1. Any Vector2 within the same 1x1 cell will yield the same result.
+    /// The map's width
     /// </summary>
-    /// <param name="cell">The cell to query.</param>
-    /// <returns>The height of the cell</returns>
-    Vector3 WithWorldHeight(Vector2 cell);
+    int MaxX { get; }
 
     /// <summary>
-    /// Determines whether a cell can be walked on by a ground unit.
-    /// Cells in SC2 are 1x1. Any Vector2 within the same 1x1 cell will yield the same result.
-    /// The SC2 API data does not have the same resolution as the true in game data. Some cells can be considered unwalkable, but units can still walk on parts of that cell.
-    /// As far as I know, walkable cells are always walkable.
+    /// The map's height
     /// </summary>
-    /// <param name="cell">The cell to query.</param>
-    /// <param name="considerObstructions">Whether to consider obstructions. Obstructed cells are not walkable.</param>
-    /// <returns>True if the cell can be walked on.</returns>
-    bool IsWalkable(Vector2 cell, bool considerObstructions = true);
+    int MaxY { get; }
 
     /// <summary>
-    /// Determines whether a cell can be built on.
-    /// Cells in SC2 are 1x1. Any Vector2 within the same 1x1 cell will yield the same result.
+    /// Contains the heights of all cells in the game.
     /// </summary>
-    /// <param name="cell">The cell to query.</param>
-    /// <param name="considerObstructions">Whether to consider obstructions. Obstructed cells are not buildable.</param>
-    /// <returns>True if the cell can be built on.</returns>
-    bool IsBuildable(Vector2 cell, bool considerObstructions = true);
+    IReadOnlyDictionary<Vector2, float> CellHeights { get; }
 
     /// <summary>
-    /// Determines whether a cell is obstructed by destructible neutral units.
-    /// This will not consider ally or enemy buildings, only neutral units (rocks, minerals, etc) that can be destroyed.
-    /// Cells in SC2 are 1x1. Any Vector2 within the same 1x1 cell will yield the same result.
+    /// Contains all cells that are walkable.
     /// </summary>
-    /// <param name="cell">The cell to query.</param>
-    /// <returns>True if the cell is obstructed.</returns>
-    bool IsObstructed(Vector2 cell);
+    IReadOnlySet<Vector2> WalkableCells { get; }
+
+    /// <summary>
+    /// Contains all cells that are buildable.
+    /// </summary>
+    IReadOnlySet<Vector2> BuildableCells { get; }
 }

@@ -24,9 +24,18 @@ public interface IUnit : IHavePosition {
     public float Radius { get; }
 
     public Alliance Alliance { get; }
-    public bool IsVisible { get; }
+
+    /// <summary>
+    /// Whether this unit is snapshot of the last time the unit was seen.
+    /// </summary>
+    public bool IsSnapshot { get; }
+
     public bool IsFlying { get; }
     public bool IsCloaked { get; }
     public bool IsBurrowed { get; }
+
+    /// <summary>
+    /// The frame at which the unit was last seen for real.
+    /// </summary>
     public ulong LastSeen { get; }
 }

@@ -24,7 +24,7 @@ public class GameState : IGameState {
         PlayerId = playerId;
         CurrentFrame = observation.Observation.GameLoop;
         Result = GetGameResult(gameStatus, observation);
-        _terrain = new Terrain(new FootprintCalculator(logger), gameInfo);
+        _terrain = new Terrain(gameInfo);
         _units = new Units(logger, knowledgeBase, observation);
     }
 

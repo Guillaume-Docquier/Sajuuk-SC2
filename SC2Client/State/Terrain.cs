@@ -1,184 +1,86 @@
 ﻿using System.Numerics;
 using SC2APIProtocol;
-using SC2Client.ExtensionMethods;
-using SC2Client.GameData;
 
 namespace SC2Client.State;
 
 public class Terrain : ITerrain {
-    private readonly FootprintCalculator _footprintCalculator;
+    private readonly Dictionary<Vector2, float> _cellHeights;
+    private readonly HashSet<Vector2> _walkableCells;
+    private readonly HashSet<Vector2> _buildableCells;
 
-    // TODO GD Benchmark if dict of Vector2 is slower than list of list
-    private readonly Dictionary<Vector2, float> _heights;
-    private readonly Dictionary<Vector2, bool> _obstructions;
+    public int MaxX { get; }
+    public int MaxY { get; }
+    public IReadOnlyDictionary<Vector2, float> CellHeights => _cellHeights;
+    public IReadOnlySet<Vector2> WalkableCells => _walkableCells;
+    public IReadOnlySet<Vector2> BuildableCells => _buildableCells;
 
-    /// <summary>
-    /// True for all cells that can be walked on.
-    /// Obstructions are NOT taken into account here.
-    /// </summary>
-    private readonly Dictionary<Vector2, bool> _walkables;
+    public Terrain(ResponseGameInfo gameInfo) {
+        MaxX = gameInfo.StartRaw.MapSize.X;
+        MaxY = gameInfo.StartRaw.MapSize.Y;
 
-    /// <summary>
-    /// True for all cells that can be built on.
-    /// Obstructions are NOT taken into account here.
-    /// </summary>
-    private readonly Dictionary<Vector2, bool> _buildables;
-
-    public Terrain(FootprintCalculator footprintCalculator, ResponseGameInfo gameInfo) {
-        _footprintCalculator = footprintCalculator;
-
-        var totalCells = gameInfo.StartRaw.MapSize.X * gameInfo.StartRaw.MapSize.Y;
-
-        _heights = new Dictionary<Vector2, float>(totalCells);
-        InitHeights(gameInfo);
-
-        _obstructions = new Dictionary<Vector2, bool>(totalCells);
-        InitObstructions(gameInfo, units);
-
-        _walkables = new Dictionary<Vector2, bool>(totalCells);
-        InitWalkables(gameInfo);
-
-        _buildables = new Dictionary<Vector2, bool>(totalCells);
-        InitBuildables(gameInfo);
+        _cellHeights = InitCellHeights(gameInfo);
+        _walkableCells = InitWalkableCells(gameInfo);
+        _buildableCells = InitBuildableCells(gameInfo);
     }
 
     public void Update(ResponseObservation observation) {
-        // TODO GD Update walkable based on cleared obstructions
+        // TODO GD Update walkables/buildables?
     }
 
-    public Vector3 WithWorldHeight(Vector2 cell) {
-        if (IsOutOfBounds(cell)) {
-            return new Vector3(cell, 0);
-        }
-
-        // Some unwalkable cells are incorrectly low on the map, let's try to bring them up if they touch a walkable cell (that generally have proper height)
-        // TODO GD Maybe fix this as part of the map analysis? We could save this data and override certain cell heights
-        if (!IsWalkable(cell)) {
-            var walkableNeighbors = cell.GetNeighbors().Where(neighbor => IsWalkable(neighbor)).ToList();
-            if (walkableNeighbors.Any()) {
-                return new Vector3(cell, walkableNeighbors.Max(neighbor => WithWorldHeight(neighbor).Z));
-            }
-        }
-
-        return new Vector3(cell, _heights[cell.AsWorldGridCorner()]);
-    }
-
-    public bool IsWalkable(Vector2 cell, bool considerObstructions = true) {
-        if (IsOutOfBounds(cell)) {
-            return false;
-        }
-
-        var cornerOfCell = cell.AsWorldGridCorner();
-        if (considerObstructions && _obstructions.ContainsKey(cornerOfCell)) {
-            return false;
-        }
-
-        return _walkables[cornerOfCell];
-    }
-
-    public bool IsBuildable(Vector2 cell, bool considerObstructions = true) {
-        if (IsOutOfBounds(cell)) {
-            return false;
-        }
-
-        var cornerOfCell = cell.AsWorldGridCorner();
-        if (considerObstructions && _obstructions.ContainsKey(cornerOfCell)) {
-            return false;
-        }
-
-        return _buildables[cornerOfCell];
-    }
-
-    public bool IsObstructed(Vector2 cell) {
-        if (IsOutOfBounds(cell)) {
-            return false;
-        }
-
-        return _obstructions[cell.AsWorldGridCorner()];
-    }
-
-    private void InitHeights(ResponseGameInfo gameInfo) {
+    private static Dictionary<Vector2, float> InitCellHeights(ResponseGameInfo gameInfo) {
         var heightVector = gameInfo.StartRaw.TerrainHeight.Data
             .ToByteArray()
             .Select(ImageDataUtils.ByteToFloat)
             .ToList();
 
+        var heights = new Dictionary<Vector2, float>();
         var maxX = gameInfo.StartRaw.MapSize.X;
         for (var x = 0; x < maxX; x++) {
             for (var y = 0; y < gameInfo.StartRaw.MapSize.Y; y++) {
-                _heights[new Vector2(x, y)] = heightVector[y * maxX + x]; // heightVector[4] is (4, 0)
-            }
-        }
-    }
-
-    private void InitObstructions(ResponseGameInfo gameInfo, IUnits units) {
-        var obstacleIds = new HashSet<uint>(UnitTypeId.Obstacles.Concat(UnitTypeId.MineralFields).Concat(UnitTypeId.GasGeysers));
-        obstacleIds.Remove(UnitTypeId.UnbuildablePlatesDestructible); // It is destructible but you can walk on it
-
-        var maxX = gameInfo.StartRaw.MapSize.X;
-        for (var x = 0; x < maxX; x++) {
-            for (var y = 0; y < gameInfo.StartRaw.MapSize.Y; y++) {
-                _obstructions[new Vector2(x, y)] = false;
+                heights[new Vector2(x, y)] = heightVector[y * maxX + x]; // heightVector[4] is (4, 0)
             }
         }
 
-        // TODO GD We need to handle when obstacles die
-        var obstacles = UnitQueries.GetUnits(units.NeutralUnits, obstacleIds).ToList();
-
-        obstacles.ForEach(obstacle => {
-            foreach (var cell in _footprintCalculator.GetFootprint(obstacle)) {
-                // We ignore any footprint cell that is out of bounds
-                if (_obstructions.ContainsKey(cell)) {
-                    _obstructions[cell] = true;
-                }
-            }
-        });
+        return heights;
     }
 
-    private void InitWalkables(ResponseGameInfo gameInfo) {
+    private static HashSet<Vector2> InitWalkableCells(ResponseGameInfo gameInfo) {
         var walkVector = gameInfo.StartRaw.PathingGrid.Data
             .ToByteArray()
             .SelectMany(ImageDataUtils.ByteToBoolArray)
             .ToList();
 
+        var walkableCells = new HashSet<Vector2>();
         var maxX = gameInfo.StartRaw.MapSize.X;
         for (var x = 0; x < maxX; x++) {
             for (var y = 0; y < gameInfo.StartRaw.MapSize.Y; y++) {
-                var position = new Vector2(x, y);
-                _walkables[position] = walkVector[y * maxX + x]; // walkVector[4] is (4, 0)
-
-                // On some maps, some tiles under destructibles are not walkable
-                // We'll consider them walkable, but they won't be until the obstacle is cleared
-                if (_obstructions.ContainsKey(new Vector2(x, y))) {
-                    _walkables[position] = true;
+                // walkVector[4] is (4, 0)
+                if (walkVector[y * maxX + x]) {
+                    walkableCells.Add(new Vector2(x, y));
                 }
             }
         }
+
+        return walkableCells;
     }
 
-    private void InitBuildables(ResponseGameInfo gameInfo) {
+    private static HashSet<Vector2> InitBuildableCells(ResponseGameInfo gameInfo) {
         var buildVector = gameInfo.StartRaw.PlacementGrid.Data
             .ToByteArray()
             .SelectMany(ImageDataUtils.ByteToBoolArray)
             .ToList();
 
-        // TODO GD We should ignore obstructions, but there's a problem
-        // Rocks on ramps will never be buildable, but we can't make the difference without pre-computing the data offline.
+        var buildableCells = new HashSet<Vector2>();
         var maxX = gameInfo.StartRaw.MapSize.X;
         for (var x = 0; x < maxX; x++) {
             for (var y = 0; y < gameInfo.StartRaw.MapSize.Y; y++) {
-                _buildables[new Vector2(x, y)] = buildVector[y * maxX + x]; // buildVector[4] is (4, 0)
+                // buildVector[4] is (4, 0)
+                if (buildVector[y * maxX + x]) {
+                    buildableCells.Add(new Vector2(x, y));
+                }
             }
         }
-    }
 
-    /// <summary>
-    /// Determines if a cell is within the bounds of the game.
-    /// </summary>
-    /// <param name="cell">The cell to query.</param>
-    /// <returns>True if the cell is not within the game's bounds.</returns>
-    private bool IsOutOfBounds(Vector2 cell) {
-        // Walkable contains all playable cells. Anything that's not in there is not within bounds.
-        return !_walkables.ContainsKey(cell.AsWorldGridCorner());
+        return buildableCells;
     }
 }
