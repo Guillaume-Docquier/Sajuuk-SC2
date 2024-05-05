@@ -7,6 +7,13 @@
 /// </summary>
 public interface ILogger {
     /// <summary>
+    /// Creates an instance of this logger with a name prefix added to all messages.
+    /// </summary>
+    /// <param name="name">The name prefix to use.</param>
+    /// <returns></returns>
+    ILogger CreateNamed(string name);
+
+    /// <summary>
     /// Logs a debug message.
     /// </summary>
     /// <param name="message">The debug message.</param>

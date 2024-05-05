@@ -19,7 +19,7 @@ public class LadderGameConnection : IGameConnection {
         int gamePort,
         int startPort
     ) {
-        _logger = logger;
+        _logger = logger.CreateNamed("LadderGameConnection");
         _sc2Client = sc2Client;
         _serverAddress = serverAddress;
         _gamePort = gamePort;

@@ -18,7 +18,7 @@ public class LocalGameConnection : IGameConnection {
         ISc2Client sc2Client,
         ILocalGameConfiguration localGameConfiguration
     ) {
-        _logger = logger;
+        _logger = logger.CreateNamed("LocalGameConnection");
         _sc2Client = sc2Client;
         _localGameConfiguration = localGameConfiguration;
     }

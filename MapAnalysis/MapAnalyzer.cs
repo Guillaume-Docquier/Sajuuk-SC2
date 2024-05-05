@@ -14,7 +14,7 @@ public class MapAnalyzer : IAnalyzer {
     private uint _quitAt = uint.MaxValue;
 
     public MapAnalyzer(ILogger logger, List<IAnalyzer> analyzers) {
-        _logger = logger;
+        _logger = logger.CreateNamed("MapAnalyzer");
         _analyzers = analyzers;
     }
 

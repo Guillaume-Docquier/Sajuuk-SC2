@@ -22,10 +22,10 @@ public class Game : IGame {
         Status gameStatus,
         ResponseObservation observation
     ) {
-        _logger = logger;
+        _logger = logger.CreateNamed("Game");
         _sc2Client = sc2Client;
         KnowledgeBase = new KnowledgeBase(data);
-        _state = new GameState(logger, playerId, KnowledgeBase, gameInfo, gameStatus, observation);
+        _state = new GameState(playerId, logger, KnowledgeBase, gameInfo, gameStatus, observation);
     }
 
     public static async Task<Game> Create(

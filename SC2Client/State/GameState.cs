@@ -4,7 +4,6 @@ using SC2Client.GameData;
 namespace SC2Client.State;
 
 public class GameState : IGameState {
-    private readonly ILogger _logger;
     private readonly Terrain _terrain;
     private readonly Units _units;
 
@@ -15,14 +14,13 @@ public class GameState : IGameState {
     public IUnits Units => _units;
 
     public GameState(
-        ILogger logger,
         uint playerId,
+        ILogger logger,
         KnowledgeBase knowledgeBase,
         ResponseGameInfo gameInfo,
         Status gameStatus,
         ResponseObservation observation
     ) {
-        _logger = logger;
         PlayerId = playerId;
         CurrentFrame = observation.Observation.GameLoop;
         Result = GetGameResult(gameStatus, observation);
@@ -53,7 +51,6 @@ public class GameState : IGameState {
     private Result GetGameResult(Status gameStatus, ResponseObservation observation) {
         switch (gameStatus) {
             case Status.Quit:
-                _logger.Warning("Game was terminated.");
                 return Result.Defeat;
             case Status.Ended:
                 return observation.PlayerResult.First(result => result.PlayerId == PlayerId).Result;

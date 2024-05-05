@@ -24,6 +24,10 @@ public class Logger : ILogger {
         _fileStream.AutoFlush = true;
     }
 
+    public ILogger CreateNamed(string name) {
+        return new NamedLogger(this, name);
+    }
+
     /// <summary>
     /// Logs a message, adding standardized time information and log level.
     /// </summary>

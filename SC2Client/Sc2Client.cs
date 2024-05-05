@@ -18,7 +18,7 @@ public sealed class Sc2Client : ISc2Client, IDisposable {
     private ClientWebSocket? _clientWebsocket;
 
     public Sc2Client(ILogger logger, GameDisplayMode gameDisplayMode) {
-        _logger = logger;
+        _logger = logger.CreateNamed("Sc2Client");
         _gameDisplayMode = gameDisplayMode;
     }
 
