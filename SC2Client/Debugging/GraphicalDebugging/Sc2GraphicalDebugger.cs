@@ -5,6 +5,7 @@ using SC2APIProtocol;
 using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
 using SC2Client.State;
+using SC2Client.Trackers;
 
 namespace SC2Client.Debugging.GraphicalDebugging;
 
@@ -12,7 +13,7 @@ namespace SC2Client.Debugging.GraphicalDebugging;
 /// Implements all sorts of graphical shapes to help in local debugging.
 /// </summary>
 public class Sc2GraphicalDebugger : IGraphicalDebugger {
-    private readonly ITerrain _terrain;
+    private readonly ITerrainTracker _terrainTracker;
 
     private const float CreepHeight = 0.02f;
     private const float Padding = 0.05f;
@@ -22,8 +23,8 @@ public class Sc2GraphicalDebugger : IGraphicalDebugger {
     private readonly Dictionary<Vector3, List<DebugBox>> _debugBoxes = new Dictionary<Vector3, List<DebugBox>>();
     private readonly List<DebugLine> _debugLines = new List<DebugLine>();
 
-    public Sc2GraphicalDebugger(ITerrain terrain) {
-        _terrain = terrain;
+    public Sc2GraphicalDebugger(ITerrainTracker terrainTracker) {
+        _terrainTracker = terrainTracker;
     }
 
     public Request GetDebugRequest() {
@@ -86,8 +87,13 @@ public class Sc2GraphicalDebugger : IGraphicalDebugger {
     }
 
     public void AddGridSquaresInRadius(Vector3 centerPosition, int radius, Color color) {
-        foreach (var cell in _terrain.BuildSearchRadius(centerPosition.ToVector2(), radius)) {
-            AddSquare(_terrain.WithWorldHeight(cell), KnowledgeBase.GameGridCellWidth, color, padded: true);
+        var searchRadius = centerPosition.ToVector2()
+            .BuildSearchRadius(radius)
+            .Where(_terrainTracker.IsWithinBounds)
+            .Select(_terrainTracker.WithWorldHeight);
+
+        foreach (var cell in searchRadius) {
+            AddSquare(cell, KnowledgeBase.GameGridCellWidth, color, padded: true);
         }
     }
 
@@ -198,7 +204,7 @@ public class Sc2GraphicalDebugger : IGraphicalDebugger {
         );
 
         if (unit.IsFlying) {
-            var groundPosition = _terrain.WithWorldHeight(unit.Position.ToVector2());
+            var groundPosition = _terrainTracker.WithWorldHeight(unit.Position.ToVector2());
             AddLine(unit.Position, groundPosition, color ?? Colors.White);
             AddGridSphere(groundPosition, color ?? Colors.White);
         }

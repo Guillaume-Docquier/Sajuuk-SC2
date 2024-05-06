@@ -7,7 +7,6 @@ namespace Algorithms;
 /// A collection of clustering algorithms.
 /// </summary>
 public static class Clustering {
-    // ReSharper disable once InconsistentNaming
     private enum DBSCANLabels {
         Noise,
         BorderPoint,
@@ -226,10 +225,6 @@ public static class Clustering {
         var avgY = cells.Average(position => position.Y);
 
         return new Vector2(avgX, avgY);
-    }
-
-    public static Vector2 GetBoundingBoxCenter<T>(IEnumerable<T> cluster) where T: class, IHavePosition {
-        return GetBoundingBoxCenter(cluster.Select(item => item.Position.ToVector2()).ToList());
     }
 
     public static Vector2 GetBoundingBoxCenter(List<Vector2> cluster) {

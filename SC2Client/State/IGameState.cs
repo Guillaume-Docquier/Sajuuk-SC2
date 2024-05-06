@@ -1,4 +1,5 @@
-﻿using SC2APIProtocol;
+﻿using System.Numerics;
+using SC2APIProtocol;
 
 namespace SC2Client.State;
 
@@ -20,6 +21,16 @@ public interface IGameState {
     /// Indicates the result of the game.
     /// </summary>
     public Result Result { get; }
+
+    /// <summary>
+    /// The location of the starting townhall of the player.
+    /// </summary>
+    public Vector2 StartingLocation { get; }
+
+    /// <summary>
+    /// The location of the starting townhall of the enemy.
+    /// </summary>
+    public Vector2 EnemyStartingLocation { get; }
 
     /// <summary>
     /// The terrain data.

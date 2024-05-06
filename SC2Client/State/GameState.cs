@@ -1,4 +1,6 @@
-﻿using SC2APIProtocol;
+﻿using System.Numerics;
+using Algorithms.ExtensionMethods;
+using SC2APIProtocol;
 using SC2Client.GameData;
 
 namespace SC2Client.State;
@@ -10,6 +12,8 @@ public class GameState : IGameState {
     public uint PlayerId { get; }
     public uint CurrentFrame { get; private set; }
     public Result Result { get; private set; }
+    public Vector2 StartingLocation { get; }
+    public Vector2 EnemyStartingLocation { get; }
     public ITerrain Terrain => _terrain;
     public IUnits Units => _units;
 
@@ -26,6 +30,14 @@ public class GameState : IGameState {
         Result = GetGameResult(gameStatus, observation);
         _terrain = new Terrain(gameInfo);
         _units = new Units(logger, knowledgeBase, observation);
+
+        var startingTownHallPosition = UnitQueries.GetUnits(_units.OwnedUnits, UnitTypeId.TownHalls).First().Position.ToVector2();
+        var startLocations = gameInfo.StartRaw.StartLocations
+            .Select(startLocation => new Vector2(startLocation.X, startLocation.Y))
+            .ToList();
+
+        StartingLocation = startLocations.MinBy(startLocation => startLocation.DistanceTo(startingTownHallPosition));
+        EnemyStartingLocation = startLocations.MaxBy(startLocation => startLocation.DistanceTo(startingTownHallPosition));
     }
 
     /// <summary>

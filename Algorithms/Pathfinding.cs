@@ -3,7 +3,7 @@
 /// <summary>
 /// A collection of pathfinding algorithms.
 /// </summary>
-public static class PathFinding {
+public static class Pathfinding {
     /// <summary>
     /// <para>A textbook implementation of the A* search algorithm.</para>
     /// <para>See https://en.wikipedia.org/wiki/A*_search_algorithm</para>
@@ -13,7 +13,7 @@ public static class PathFinding {
     /// <param name="getEdgeLength">A function that computes the distance between two vertex.</param>
     /// <param name="getVertexNeighbors">A function that returns the neighbors of a vertex.</param>
     /// <returns>The requested path, or null if the destination is unreachable from the origin.</returns>
-    private static List<TVertex>? AStar<TVertex>(
+    public static List<TVertex>? AStar<TVertex>(
         TVertex origin,
         TVertex destination,
         Func<TVertex, TVertex, float> getEdgeLength,

@@ -1,7 +1,6 @@
 ﻿using MapAnalysis;
 using SC2APIProtocol;
 using SC2Client;
-using SC2Client.Trackers;
 
 var mapsToAnalyze = Maps.GetAll()
     // Blackburn has an isolated expand that breaks the analysis, we'll fix it if it comes back to the map pool
@@ -10,28 +9,28 @@ var mapsToAnalyze = Maps.GetAll()
 
 var mapIndex = 1;
 foreach (var mapToAnalyze in mapsToAnalyze) {
-    // DI
-    var frameClock = new FrameClock();
-    var logger = new Logger(frameClock, logToStdOut: true);
-    var sc2Client = new Sc2Client(logger, GameDisplayMode.FullScreen);
+    var services = ServicesFactory.CreateServices(mapToAnalyze);
 
-    // TODO GD Create the analyzers
-    var mapAnalyzer = new MapAnalyzer(logger, new List<IAnalyzer>());
+    services.Logger.Important($"Analyzing map: {mapToAnalyze} ({mapIndex}/{mapsToAnalyze.Count})");
 
-    var sc2GameConnection = new LocalGameConnection(logger, sc2Client, new LocalGameConfiguration(mapToAnalyze));
+    var game = await services.GameConnection.JoinGame(Race.Zerg);
+    while (!services.MapAnalyzer.IsAnalysisComplete) {
+        foreach (var tracker in services.Trackers) {
+            tracker.Update(game.State);
+        }
 
-    // Analyze
-    logger.Important($"Analyzing map: {mapToAnalyze} ({mapIndex}/{mapsToAnalyze.Count})");
+        services.MapAnalyzer.OnFrame(game.State);
 
-    var game = await sc2GameConnection.JoinGame(Race.Zerg);
-    while (!mapAnalyzer.IsAnalysisComplete) {
-        frameClock.Update(game.State);
+        // TODO GD This doesn't seem proper
+        var debugRequest = services.GraphicalDebugger.GetDebugRequest();
+        if (debugRequest != null) {
+            await services.Sc2Client.SendRequest(debugRequest);
+        }
 
-        mapAnalyzer.OnFrame(game.State);
         await game.Step(stepSize: 1, new List<SC2APIProtocol.Action>());
     }
 
-    logger.Success($"Analysis on {mapToAnalyze} complete!");
+    services.Logger.Success($"Analysis on {mapToAnalyze} complete!");
 
     game.Quit();
 

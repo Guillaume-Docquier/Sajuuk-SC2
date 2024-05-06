@@ -1,5 +1,4 @@
-﻿using Algorithms.ExtensionMethods;
-using SC2APIProtocol;
+﻿using SC2APIProtocol;
 using SC2Client.GameData;
 
 namespace SC2Client.State;

@@ -18,16 +18,19 @@ public interface ITerrain {
 
     /// <summary>
     /// Contains the heights of all cells in the game.
+    /// The cells as expressed as their corner.
     /// </summary>
     IReadOnlyDictionary<Vector2, float> CellHeights { get; }
 
     /// <summary>
     /// Contains all cells that are walkable.
+    /// The cells as expressed as their corner.
     /// </summary>
     IReadOnlySet<Vector2> WalkableCells { get; }
 
     /// <summary>
     /// Contains all cells that are buildable.
+    /// The cells as expressed as their corner.
     /// </summary>
     IReadOnlySet<Vector2> BuildableCells { get; }
 }

@@ -44,7 +44,7 @@ public class KnowledgeBase {
         { UnitTypeId.UltraliskCavern,  UnitTypeId.Drone },
     };
 
-    public KnowledgeBase(ResponseData data) {
+    public void Init(ResponseData data) {
         // We will not be able to get the real resource values after this point.
         // I used to hack the proto files but I don't think that's a good idea
         // However, I've never needed it so far, so we'll cross that bridge when we get there.
@@ -71,18 +71,18 @@ public class KnowledgeBase {
         _data = data;
     }
 
-    private readonly ResponseData _data;
+    private ResponseData? _data;
 
     public const float GameGridCellWidth = 1f;
     public const float GameGridCellRadius = GameGridCellWidth / 2;
     public const int MaxSupplyAllowed = 200;
 
     public UnitTypeData GetUnitTypeData(uint unitType) {
-        return _data.Units[(int)unitType];
+        return _data!.Units[(int)unitType];
     }
 
     public UpgradeData GetUpgradeData(uint upgradeId) {
-        return _data.Upgrades[(int)upgradeId];
+        return _data!.Upgrades[(int)upgradeId];
     }
 
     public AbilityData GetAbilityData(uint abilityId) {
@@ -90,7 +90,7 @@ public class KnowledgeBase {
     }
 
     public AbilityData GetAbilityData(int abilityId) {
-        return _data.Abilities[abilityId];
+        return _data!.Abilities[abilityId];
     }
 
     public EffectData GetEffectData(uint effectId) {
@@ -98,11 +98,11 @@ public class KnowledgeBase {
     }
 
     public EffectData GetEffectData(int effectId) {
-        return _data.Effects[effectId];
+        return _data!.Effects[effectId];
     }
 
     public BuffData GetBuffData(int buffId) {
-        return _data.Buffs[buffId];
+        return _data!.Buffs[buffId];
     }
 
     public float GetBuildingRadius(uint buildingType) {

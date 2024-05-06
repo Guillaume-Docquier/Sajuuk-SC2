@@ -7,9 +7,9 @@ namespace SC2Client;
 public class Game : IGame {
     private readonly ILogger _logger;
     private readonly ISc2Client _sc2Client;
+    private readonly KnowledgeBase _knowledgeBase;
     private readonly GameState _state;
 
-    public KnowledgeBase KnowledgeBase { get; }
     public IGameState State => _state;
     public bool IsOver => State.Result != Result.Undecided;
 
@@ -17,24 +17,36 @@ public class Game : IGame {
         ILogger logger,
         ISc2Client sc2Client,
         uint playerId,
-        ResponseData data,
+        KnowledgeBase knowledgeBase,
         ResponseGameInfo gameInfo,
         Status gameStatus,
         ResponseObservation observation
     ) {
         _logger = logger.CreateNamed("Game");
         _sc2Client = sc2Client;
-        KnowledgeBase = new KnowledgeBase(data);
-        _state = new GameState(playerId, logger, KnowledgeBase, gameInfo, gameStatus, observation);
+        _knowledgeBase = knowledgeBase;
+        _state = new GameState(playerId, logger, knowledgeBase, gameInfo, gameStatus, observation);
     }
 
+    /// <summary>
+    /// Creates a Game.
+    /// The knowledge base will be initialized
+    /// </summary>
+    /// <param name="playerId"></param>
+    /// <param name="logger"></param>
+    /// <param name="sc2Client"></param>
+    /// <param name="knowledgeBase"></param>
+    /// <returns></returns>
     public static async Task<Game> Create(
         uint playerId,
         ILogger logger,
-        ISc2Client sc2Client
+        ISc2Client sc2Client,
+        KnowledgeBase knowledgeBase
     ) {
-        // TODO GD I think we can merge these 3 requests into 1
+        // TODO GD Can I request the KB data before joining the game? Initializing it here feels dumb.
         var dataResponse = await sc2Client.SendRequest(RequestBuilder.RequestData());
+        knowledgeBase.Init(dataResponse.Data);
+
         var gameInfoResponse = await sc2Client.SendRequest(RequestBuilder.RequestGameInfo());
         var observationResponse = await sc2Client.SendRequest(RequestBuilder.RequestObservation(0));
 
@@ -42,7 +54,7 @@ public class Game : IGame {
             logger,
             sc2Client,
             playerId,
-            dataResponse.Data,
+            knowledgeBase,
             gameInfoResponse.GameInfo,
             observationResponse.Status,
             observationResponse.Observation
@@ -57,7 +69,7 @@ public class Game : IGame {
             var unsuccessfulActions = actions
                 .Zip(response.Action.Result, (action, result) => (action, result))
                 .Where(action => action.result != ActionResult.Success)
-                .Select(action => $"({KnowledgeBase.GetAbilityData(action.action.ActionRaw.UnitCommand.AbilityId).FriendlyName}, {action.result})")
+                .Select(action => $"({_knowledgeBase.GetAbilityData(action.action.ActionRaw.UnitCommand.AbilityId).FriendlyName}, {action.result})")
                 .ToList();
 
             if (unsuccessfulActions.Count > 0) {

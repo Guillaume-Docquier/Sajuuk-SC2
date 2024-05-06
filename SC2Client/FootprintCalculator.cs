@@ -7,10 +7,19 @@ using SC2Client.State;
 namespace SC2Client;
 
 public class FootprintCalculator {
+    private readonly KnowledgeBase _knowledgeBase;
     private readonly ILogger _logger;
 
-    public FootprintCalculator(ILogger logger) {
+    public FootprintCalculator(
+        KnowledgeBase knowledgeBase,
+        ILogger logger
+    ) {
+        _knowledgeBase = knowledgeBase;
         _logger = logger;
+    }
+
+    public IEnumerable<Vector2> GetFootprint(Vector2 buildingCenter, uint buildingType) {
+        return buildingCenter.BuildSearchGrid((int)_knowledgeBase.GetBuildingRadius(buildingType));
     }
 
     public List<Vector2> GetFootprint(IUnit obstacle) {
@@ -135,19 +144,8 @@ public class FootprintCalculator {
     }
 
     private static List<Vector2> GetGenericFootprint(IUnit obstacle) {
-        return BuildSearchGrid(obstacle.Position.ToVector2(), (int)obstacle.Radius)
+        return obstacle.Position.ToVector2().BuildSearchGrid((int)obstacle.Radius)
             .Select(cell => cell.AsWorldGridCenter())
             .ToList();
-    }
-
-    private static IEnumerable<Vector2> BuildSearchGrid(Vector2 centerPosition, int gridRadius, float stepSize = KnowledgeBase.GameGridCellWidth) {
-        var grid = new List<Vector2>();
-        for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x += stepSize) {
-            for (var y = centerPosition.Y - gridRadius; y <= centerPosition.Y + gridRadius; y += stepSize) {
-                grid.Add(new Vector2(x, y));
-            }
-        }
-
-        return grid.OrderBy(position => Vector2.Distance(centerPosition, position));
     }
 }

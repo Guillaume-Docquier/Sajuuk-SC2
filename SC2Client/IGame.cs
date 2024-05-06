@@ -1,5 +1,4 @@
-﻿using SC2Client.GameData;
-using SC2Client.State;
+﻿using SC2Client.State;
 
 namespace SC2Client;
 
@@ -8,11 +7,6 @@ namespace SC2Client;
 /// This is what bots use to interact with the game while it is in progress.
 /// </summary>
 public interface IGame {
-    /// <summary>
-    /// Exposes game data about units, structures, abilities, etc.
-    /// </summary>
-    public KnowledgeBase KnowledgeBase { get; }
-
     /// <summary>
     /// The current state of the game
     /// </summary>

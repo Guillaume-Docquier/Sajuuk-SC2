@@ -1,4 +1,5 @@
 ﻿using SC2APIProtocol;
+using SC2Client.GameData;
 
 namespace SC2Client;
 
@@ -8,19 +9,25 @@ namespace SC2Client;
 public class LadderGameConnection : IGameConnection {
     private readonly ILogger _logger;
     private readonly ISc2Client _sc2Client;
+    private readonly KnowledgeBase _knowledgeBase;
     private readonly string _serverAddress;
     private readonly int _gamePort;
     private readonly int _startPort;
 
+    /// <summary>
+    /// The knowledge base will be initialized upon joining the game.
+    /// </summary>
     public LadderGameConnection(
         ILogger logger,
         ISc2Client sc2Client,
+        KnowledgeBase knowledgeBase,
         string serverAddress,
         int gamePort,
         int startPort
     ) {
         _logger = logger.CreateNamed("LadderGameConnection");
         _sc2Client = sc2Client;
+        _knowledgeBase = knowledgeBase;
         _serverAddress = serverAddress;
         _gamePort = gamePort;
         _startPort = startPort;
@@ -32,6 +39,6 @@ public class LadderGameConnection : IGameConnection {
         _logger.Info("Joining ladder game");
         var playerId = await _sc2Client.JoinGame(RequestBuilder.RequestJoinLadderGame(race, _startPort));
 
-        return await Game.Create(playerId, _logger, _sc2Client);
+        return await Game.Create(playerId, _logger, _sc2Client, _knowledgeBase);
     }
 }

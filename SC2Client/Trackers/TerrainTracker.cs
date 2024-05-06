@@ -1,8 +1,13 @@
 ﻿using System.Numerics;
+using SC2Client.State;
 
 namespace SC2Client.Trackers;
 
-public class TerrainTracker : ITerrainTracker {
+public class TerrainTracker : ITracker, ITerrainTracker {
+    public void Update(IGameState gameState) {
+        throw new NotImplementedException();
+    }
+
     public Vector3 WithWorldHeight(Vector2 cell) {
         throw new NotImplementedException();
     }
@@ -16,6 +21,18 @@ public class TerrainTracker : ITerrainTracker {
     }
 
     public bool IsObstructed(Vector2 cell) {
+        throw new NotImplementedException();
+    }
+
+    public bool IsWithinBounds(Vector2 position) {
+        throw new NotImplementedException();
+    }
+
+    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 cell, IReadOnlySet<Vector2>? potentialNeighbors = null, bool considerObstaclesObstructions = true) {
+        throw new NotImplementedException();
+    }
+
+    public Vector2 GetClosestWalkable(Vector2 position, int searchRadius = 8, HashSet<Vector2>? allowedCells = null) {
         throw new NotImplementedException();
     }
 }

@@ -1,4 +1,7 @@
-﻿using SC2APIProtocol;
+﻿using System.Numerics;
+using SC2APIProtocol;
+using SC2Client.ExtensionMethods;
+using SC2Client.GameData;
 
 namespace SC2Client;
 
@@ -228,5 +231,27 @@ public static class RequestBuilder {
         actionRequest.Action.Actions.AddRange(actions);
 
         return actionRequest;
+    }
+
+    /// <summary>
+    /// A query to test if a building can be placed at the target location.
+    /// </summary>
+    /// <param name="buildingType">The building you'd want to build.</param>
+    /// <param name="position">The position to build at.</param>
+    /// <param name="knowledgeBase">The game's knowledge base.</param>
+    /// <returns></returns>
+    public static Request RequestQueryBuildingPlacement(uint buildingType, Vector2 position, KnowledgeBase knowledgeBase) {
+        var requestQuery = new RequestQuery();
+
+        requestQuery.Placements.Add(new RequestQueryBuildingPlacement
+        {
+            AbilityId = (int)knowledgeBase.GetUnitTypeData(buildingType).AbilityId,
+            TargetPos = position.ToPoint2D(),
+        });
+
+        return new Request
+        {
+            Query = requestQuery,
+        };
     }
 }

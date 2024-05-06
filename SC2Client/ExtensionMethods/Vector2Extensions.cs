@@ -48,13 +48,51 @@ public static class Vector2Extensions {
         }
     }
 
-    // Center of cells are on .5, e.g: (1.5, 2.5)
+    /// <summary>
+    /// Returns the Vector 2 of the center of the given cell.
+    /// Center of cells are on .5, e.g: (1.5, 2.5)
+    /// </summary>
+    /// <param name="vector"></param>
+    /// <returns></returns>
     public static Vector2 AsWorldGridCenter(this Vector2 vector) {
         return new Vector2((float)Math.Floor(vector.X) + KnowledgeBase.GameGridCellRadius, (float)Math.Floor(vector.Y) + KnowledgeBase.GameGridCellRadius);
     }
 
-    // Corner of cells are on .0, e.g: (1.0, 2.0)
+    /// <summary>
+    /// Returns the Vector 2 of the corner of the given cell.
+    /// Corner of cells are on .0, e.g: (1.0, 2.0)
+    /// </summary>
+    /// <param name="vector"></param>
+    /// <returns></returns>
     public static Vector2 AsWorldGridCorner(this Vector2 vector) {
         return new Vector2((float)Math.Floor(vector.X), (float)Math.Floor(vector.Y));
+    }
+
+    /// <summary>
+    /// Builds a square search grid composed of all the 1x1 game cells around a center position.
+    /// </summary>
+    /// <param name="centerPosition">The position to search around.</param>
+    /// <param name="gridRadius">The "radius" of the search grid</param>
+    /// <returns></returns>
+    public static IEnumerable<Vector2> BuildSearchGrid(this Vector2 centerPosition, int gridRadius) {
+        var grid = new List<Vector2>();
+        for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x++) {
+            for (var y = centerPosition.Y - gridRadius; y <= centerPosition.Y + gridRadius; y++) {
+                grid.Add(new Vector2(x, y));
+            }
+        }
+
+        return grid.OrderBy(position => centerPosition.DistanceTo(position));
+    }
+
+    /// <summary>
+    /// Builds a circle search area composed of all the 1x1 game cells around a center position.
+    /// </summary>
+    /// <param name="centerPosition">The position to search around</param>
+    /// <param name="searchRadius">The radius of the search area</param>
+    /// <returns></returns>
+    public static IEnumerable<Vector2> BuildSearchRadius(this Vector2 centerPosition, float searchRadius) {
+        return BuildSearchGrid(centerPosition, (int)searchRadius + 1)
+            .Where(cell => cell.DistanceTo(centerPosition) <= searchRadius);
     }
 }
