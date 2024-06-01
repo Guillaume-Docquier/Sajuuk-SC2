@@ -1,4 +1,5 @@
-﻿using Algorithms;
+﻿using System.Numerics;
+using Algorithms;
 using SC2APIProtocol;
 
 namespace SC2Client.State;
@@ -38,4 +39,18 @@ public interface IUnit : IHavePosition {
     /// The frame at which the unit was last seen for real.
     /// </summary>
     public ulong LastSeen { get; }
+
+    /// <summary>
+    /// Gets the 2D distance between this unit and a 2D position.
+    /// </summary>
+    /// <param name="position">The position to get the 2D distance to</param>
+    /// <returns></returns>
+    public float Distance2DTo(Vector2 position);
+
+    /// <summary>
+    /// Gets the 2D distance between this unit and another one.
+    /// </summary>
+    /// <param name="otherUnit"></param>
+    /// <returns></returns>
+    public float Distance2DTo(IUnit otherUnit);
 }

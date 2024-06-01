@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Algorithms.ExtensionMethods;
 using SC2APIProtocol;
 using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
@@ -37,6 +38,14 @@ public class Unit : IUnit {
     }
 
     // TODO GD Update for LastSeen / IsSnapshot
+
+    public float Distance2DTo(Vector2 position) {
+        return Position.ToVector2().DistanceTo(position);
+    }
+
+    public float Distance2DTo(IUnit otherUnit) {
+        return Position.ToVector2().DistanceTo(otherUnit.Position.ToVector2());
+    }
 
     public override string ToString() {
         return Alliance == Alliance.Self

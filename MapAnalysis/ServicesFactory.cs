@@ -28,6 +28,7 @@ public static class ServicesFactory {
         var gameConnection = new LocalGameConnection(logger, sc2Client, knowledgeBase, new LocalGameConfiguration(mapFileName));
 
         var footprintCalculator = new FootprintCalculator(knowledgeBase, logger);
+        var unitsTracker = new UnitsTracker();
         var terrainTracker = new TerrainTracker();
         var graphicalDebugger = new Sc2GraphicalDebugger(terrainTracker);
 
@@ -40,7 +41,12 @@ public static class ServicesFactory {
             vector => vector.ToString()
         );
 
-        var expandUnitsAnalyzer = new ExpandUnitsAnalyzer();
+        var expandUnitsAnalyzer = new ExpandUnitsAnalyzer(
+            knowledgeBase,
+            unitsTracker,
+            terrainTracker
+        );
+
         var expandAnalyzer = new ExpandAnalyzer(
             knowledgeBase,
             frameClock,
@@ -54,7 +60,7 @@ public static class ServicesFactory {
         );
 
         // TODO GD Make it simpler to know who's a tracker and in which order to update them
-        var trackers = new List<ITracker> { frameClock, terrainTracker };
+        var trackers = new List<ITracker> { frameClock, unitsTracker, terrainTracker };
 
         var analyzers = new List<IAnalyzer> { expandAnalyzer };
         var mapAnalyzer = new MapAnalyzer(logger, analyzers);

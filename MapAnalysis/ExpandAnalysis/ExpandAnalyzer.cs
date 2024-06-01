@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using Algorithms;
+using Algorithms.ExtensionMethods;
 using SC2APIProtocol;
 using SC2Client;
 using SC2Client.Debugging.GraphicalDebugging;
@@ -87,12 +88,12 @@ public class ExpandAnalyzer : IExpandAnalyzer, IAnalyzer {
         }
     }
 
-    private IEnumerable<Vector2> FindExpandLocations(IGameState gameState, List<List<Unit>> resourceClusters) {
+    private IEnumerable<Vector2> FindExpandLocations(IGameState gameState, List<List<IUnit>> resourceClusters) {
         InitTooCloseToResourceGrid(gameState, resourceClusters);
 
         var expandLocations = new List<Vector2>();
         foreach (var resourceCluster in resourceClusters) {
-            var clusterPositions = resourceCluster.Select(resource => resource.Pos.ToVector2()).ToList();
+            var clusterPositions = resourceCluster.Select(resource => resource.Position.ToVector2()).ToList();
             var centerPosition = Clustering.GetBoundingBoxCenter(clusterPositions).AsWorldGridCenter();
             var searchGrid = centerPosition.BuildSearchGrid(ExpandSearchRadius);
 
@@ -155,13 +156,13 @@ public class ExpandAnalyzer : IExpandAnalyzer, IAnalyzer {
     /// <returns>The ExpandLocations</returns>
     private List<ExpandLocation> GenerateExpandLocations(IGameState gameState, IReadOnlyList<Vector2> expandPositions) {
         // Clusters
-        var resourceClustersByExpand = new Dictionary<Vector2, HashSet<Unit>>();
+        var resourceClustersByExpand = new Dictionary<Vector2, HashSet<IUnit>>();
         foreach (var expandPosition in expandPositions) {
             resourceClustersByExpand[expandPosition] = _expandUnitsAnalyzer.FindExpandResources(expandPosition);
         }
 
         // Blockers
-        var blockersByExpand = new Dictionary<Vector2, HashSet<Unit>>();
+        var blockersByExpand = new Dictionary<Vector2, HashSet<IUnit>>();
         foreach (var expandPosition in expandPositions) {
             blockersByExpand[expandPosition] = _expandUnitsAnalyzer.FindExpandBlockers(expandPosition);
         }
@@ -201,7 +202,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, IAnalyzer {
     /// <param name="resourceCluster"></param>
     /// <param name="rank"></param>
     /// <returns></returns>
-    private static (ExpandType expandType, int newRank) CalculateExpandType(IReadOnlyCollection<Unit> resourceCluster, IEnumerable<Unit> blockers, int rank) {
+    private static (ExpandType expandType, int newRank) CalculateExpandType(IReadOnlyCollection<IUnit> resourceCluster, IEnumerable<IUnit> blockers, int rank) {
         if (IsGoldExpand(resourceCluster)) {
             return (ExpandType.Gold, rank);
         }
@@ -218,7 +219,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, IAnalyzer {
     /// </summary>
     /// <param name="resourceCluster">The resource cluster associated with the expand</param>
     /// <returns>True if the resource cluster associated with the expand contains rich resources</returns>
-    private static bool IsGoldExpand(IEnumerable<Unit> resourceCluster) {
+    private static bool IsGoldExpand(IEnumerable<IUnit> resourceCluster) {
         return resourceCluster.Any(resource => UnitTypeId.GoldMineralFields.Contains(resource.UnitType) || UnitTypeId.PurpleGasGeysers.Contains(resource.UnitType));
     }
 
@@ -229,7 +230,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, IAnalyzer {
     /// <param name="resourceCluster">The resource cluster associated with the expand</param>
     /// <param name="blockers">The units blocking the expand</param>
     /// <returns>True if the expand is a pocket expand</returns>
-    private static bool IsPocketExpand(IReadOnlyCollection<Unit> resourceCluster, IEnumerable<Unit> blockers) {
+    private static bool IsPocketExpand(IReadOnlyCollection<IUnit> resourceCluster, IEnumerable<IUnit> blockers) {
         if (IsGoldExpand(resourceCluster)) {
             return false;
         }

@@ -1,25 +1,27 @@
 ﻿using System.Numerics;
+using Algorithms;
+using Algorithms.ExtensionMethods;
+using SC2Client.GameData;
+using SC2Client.State;
+using SC2Client.Trackers;
 
 namespace MapAnalysis.ExpandAnalysis;
 
 public class ExpandUnitsAnalyzer : IExpandUnitsAnalyzer {
+    private readonly KnowledgeBase _knowledgeBase;
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
-    private readonly KnowledgeBase _knowledgeBase;
-    private readonly IClustering _clustering;
 
-    private List<List<Unit>> _resourceClusters;
+    private List<List<IUnit>>? _resourceClusters;
 
     public ExpandUnitsAnalyzer(
-        IUnitsTracker unitsTracker,
-        ITerrainTracker terrainTracker,
         KnowledgeBase knowledgeBase,
-        IClustering clustering
+        IUnitsTracker unitsTracker,
+        ITerrainTracker terrainTracker
     ) {
+        _knowledgeBase = knowledgeBase;
         _unitsTracker = unitsTracker;
         _terrainTracker = terrainTracker;
-        _knowledgeBase = knowledgeBase;
-        _clustering = clustering;
     }
 
     /// <summary>
@@ -29,18 +31,18 @@ public class ExpandUnitsAnalyzer : IExpandUnitsAnalyzer {
     /// We cache the result because resources don't change and clustering is costly to run.
     /// </summary>
     /// <returns></returns>
-    public IEnumerable<List<Unit>> FindResourceClusters() {
+    public IEnumerable<List<IUnit>> FindResourceClusters() {
         if (_resourceClusters == null) {
             // See note on MineralField450
-            var minerals = _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, Units.MineralFields.Except(new[] { Units.MineralField450 }).ToHashSet());
-            var gasses = _unitsTracker.GetUnits(_unitsTracker.NeutralUnits, Units.GasGeysers);
+            var minerals = UnitQueries.GetUnits(_unitsTracker.NeutralUnits, UnitTypeId.MineralFields.Except(new[] { UnitTypeId.MineralField450 }).ToHashSet());
+            var gasses = UnitQueries.GetUnits(_unitsTracker.NeutralUnits, UnitTypeId.GasGeysers);
             var resources = minerals.Concat(gasses).ToList();
 
-            _resourceClusters = _clustering.DBSCAN(resources, epsilon: 8, minPoints: 4)
+            _resourceClusters = Clustering.DBSCAN(resources, epsilon: 8, minPoints: 4)
                 .clusters
                 // Expand clusters have at least a gas, and a minimum of 5 minerals (maybe more, but at least 5)
-                .Where(cluster => cluster.Any(resource => Units.GasGeysers.Contains(resource.UnitType)))
-                .Where(cluster => cluster.Count(resource => Units.MineralFields.Contains(resource.UnitType)) >= 5)
+                .Where(cluster => cluster.Any(resource => UnitTypeId.GasGeysers.Contains(resource.UnitType)))
+                .Where(cluster => cluster.Count(resource => UnitTypeId.MineralFields.Contains(resource.UnitType)) >= 5)
                 .ToList();
         }
 
@@ -52,9 +54,9 @@ public class ExpandUnitsAnalyzer : IExpandUnitsAnalyzer {
     /// </summary>
     /// <param name="expandPosition"></param>
     /// <returns></returns>
-    public HashSet<Unit> FindExpandResources(Vector2 expandPosition) {
+    public HashSet<IUnit> FindExpandResources(Vector2 expandPosition) {
         return FindResourceClusters()
-            .MinBy(cluster => _terrainTracker.GetClosestWalkable(cluster.GetCenter(), searchRadius: 3).DistanceTo(expandPosition))!
+            .MinBy(cluster => _terrainTracker.GetClosestWalkable(Clustering.GetCenter(cluster), searchRadius: 3).DistanceTo(expandPosition))!
             .ToHashSet();
     }
 
@@ -63,11 +65,11 @@ public class ExpandUnitsAnalyzer : IExpandUnitsAnalyzer {
     /// </summary>
     /// <param name="expandLocation"></param>
     /// <returns></returns>
-    public HashSet<Unit> FindExpandBlockers(Vector2 expandLocation) {
-        var hatcheryRadius = _knowledgeBase.GetBuildingRadius(Units.Hatchery);
+    public HashSet<IUnit> FindExpandBlockers(Vector2 expandLocation) {
+        var hatcheryRadius = _knowledgeBase.GetBuildingRadius(UnitTypeId.Hatchery);
 
         return _unitsTracker.NeutralUnits
-            .Where(neutralUnit => neutralUnit.DistanceTo(expandLocation) <= neutralUnit.Radius + hatcheryRadius)
+            .Where(neutralUnit => neutralUnit.Distance2DTo(expandLocation) <= neutralUnit.Radius + hatcheryRadius)
             .ToHashSet();
     }
 }
