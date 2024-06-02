@@ -16,19 +16,4 @@ public interface IExpandLocation {
     /// The type of this expand location.
     /// </summary>
     public ExpandType ExpandType { get; }
-
-    /// <summary>
-    /// The set of resources present at this expand location.
-    /// </summary>
-    public HashSet<IUnit> Resources { get; }
-
-    /// <summary>
-    /// Whether the expand location's resources are depleted
-    /// </summary>
-    public bool IsDepleted { get; }
-
-    /// <summary>
-    /// Whether the expand position's optimal townhall position is obstructed.
-    /// </summary>
-    public bool IsObstructed { get; }
 }
