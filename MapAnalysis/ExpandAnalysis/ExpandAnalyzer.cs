@@ -9,32 +9,47 @@ using SC2Client.GameData;
 using SC2Client.Services;
 using SC2Client.State;
 using SC2Client.Trackers;
-using Unit = SC2APIProtocol.Unit;
 
 namespace MapAnalysis.ExpandAnalysis;
 
-public class ExpandAnalyzer : IExpandAnalyzer, IAnalyzer {
+public class ExpandAnalyzer : IExpandAnalyzer {
     private readonly KnowledgeBase _knowledgeBase;
     private readonly IFrameClock _frameClock;
     private readonly ILogger _logger;
     private readonly ISc2Client _sc2Client;
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly ITerrainTracker _terrainTracker;
-    private readonly IExpandUnitsAnalyzer _expandUnitsAnalyzer;
+    private readonly IResourceFinder _resourceFinder;
     private readonly IPathfinder<Vector2> _pathfinder;
     private readonly FootprintCalculator _footprintCalculator;
 
     private const bool DrawEnabled = false;
+
+    /// <summary>
+    /// The number of resources that we typically expect around an expand location.
+    /// 8 mineral fields and 2 vespene geysers.
+    /// </summary>
     private const int TypicalResourceCount = 10;
+
+    /// <summary>
+    /// The radius in which to search for an optimal expand location.
+    /// If we have to look farther than that, we're probably not at an expand location.
+    /// </summary>
     private const int ExpandSearchRadius = 5;
+
+    /// <summary>
+    /// The minimum distance a townhall has to be from a resource in order to be able to build it.
+    /// </summary>
     private static readonly float TooCloseToResourceDistance = (float)Math.Sqrt(1*1 + 3*3); // Empirical, 1x3 diagonal
 
+    /// <summary>
+    /// The cells for each resource clusters where a townhall can't be built because it would be too close to a resource.
+    /// </summary>
     private List<List<bool>>? _tooCloseToResourceGrid;
-    private List<ExpandLocation> _expandLocations = new List<ExpandLocation>();
 
-    public bool IsAnalysisComplete { get; private set; }  = false;
+    public bool IsAnalysisComplete { get; private set; } = false;
 
-    public IEnumerable<ExpandLocation> ExpandLocations => _expandLocations;
+    public IEnumerable<IExpandLocation> ExpandLocations { get; private set; } = Enumerable.Empty<IExpandLocation>();
 
     public ExpandAnalyzer(
         KnowledgeBase knowledgeBase,
@@ -43,7 +58,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, IAnalyzer {
         ISc2Client sc2Client,
         IGraphicalDebugger graphicalDebugger,
         ITerrainTracker terrainTracker,
-        IExpandUnitsAnalyzer expandUnitsAnalyzer,
+        IResourceFinder resourceFinder,
         IPathfinder<Vector2> pathfinder,
         FootprintCalculator footprintCalculator
     ) {
@@ -53,7 +68,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, IAnalyzer {
         _sc2Client = sc2Client;
         _graphicalDebugger = graphicalDebugger;
         _terrainTracker = terrainTracker;
-        _expandUnitsAnalyzer = expandUnitsAnalyzer;
+        _resourceFinder = resourceFinder;
         _pathfinder = pathfinder;
         _footprintCalculator = footprintCalculator;
     }
@@ -70,16 +85,17 @@ public class ExpandAnalyzer : IExpandAnalyzer, IAnalyzer {
 
         _logger.Info("Analyzing expand locations, this can take some time...");
 
-        var resourceClusters = _expandUnitsAnalyzer.FindResourceClusters().ToList();
+        var resourceClusters = _resourceFinder.FindResourceClusters().ToList();
         _logger.Metric($"Found {resourceClusters.Count} resource clusters");
 
-        var expandPositions = FindExpandLocations(gameState, resourceClusters).ToList();
-        _logger.Metric($"Found {expandPositions.Count} expand locations");
+        var expandPositions = FindExpandPositions(gameState, resourceClusters).ToList();
+        _logger.Metric($"Found {expandPositions.Count} expand positions");
 
         IsAnalysisComplete = expandPositions.Count == resourceClusters.Count;
         if (IsAnalysisComplete) {
-            _expandLocations = GenerateExpandLocations(gameState, expandPositions);
-            // TODO GD We could save here, but we don't need to because expands are saved in regions
+            ExpandLocations = GenerateExpandLocations(gameState, expandPositions);
+
+            // We don't need to save here because expands are saved in regions
             _logger.Success("Expand analysis done");
         }
         else {
@@ -88,7 +104,13 @@ public class ExpandAnalyzer : IExpandAnalyzer, IAnalyzer {
         }
     }
 
-    private IEnumerable<Vector2> FindExpandLocations(IGameState gameState, List<List<IUnit>> resourceClusters) {
+    /// <summary>
+    /// Finds the optimal expand location townhall positions by finding the closest 5x5 positions to each resource cluster.
+    /// </summary>
+    /// <param name="gameState">The current game state.</param>
+    /// <param name="resourceClusters">The resource clusters that should represent expand locations.</param>
+    /// <returns>A list of positions that represent the optimal townhall placement for each resource cluster.</returns>
+    private IEnumerable<Vector2> FindExpandPositions(IGameState gameState, List<List<IUnit>> resourceClusters) {
         InitTooCloseToResourceGrid(gameState, resourceClusters);
 
         var expandLocations = new List<Vector2>();
@@ -97,7 +119,7 @@ public class ExpandAnalyzer : IExpandAnalyzer, IAnalyzer {
             var centerPosition = Clustering.GetBoundingBoxCenter(clusterPositions).AsWorldGridCenter();
             var searchGrid = centerPosition.BuildSearchGrid(ExpandSearchRadius);
 
-            var goodBuildSpot = searchGrid.FirstOrDefault(IsValidExpandPlacement);
+            var goodBuildSpot = searchGrid.FirstOrDefault(IsValidTownHallPlacement);
             if (goodBuildSpot != default) {
                 expandLocations.Add(goodBuildSpot);
                 _graphicalDebugger.AddSphere(_terrainTracker.WithWorldHeight(goodBuildSpot), KnowledgeBase.GameGridCellRadius, Colors.Green);
@@ -132,7 +154,12 @@ public class ExpandAnalyzer : IExpandAnalyzer, IAnalyzer {
         }
     }
 
-    private bool IsValidExpandPlacement(Vector2 buildSpot) {
+    /// <summary>
+    /// Determines if the suggested build spot is a valid townhall placement by checking if one could be placed there.
+    /// </summary>
+    /// <param name="buildSpot"></param>
+    /// <returns></returns>
+    private bool IsValidTownHallPlacement(Vector2 buildSpot) {
         if (_tooCloseToResourceGrid == null) {
             return false;
         }
@@ -158,13 +185,13 @@ public class ExpandAnalyzer : IExpandAnalyzer, IAnalyzer {
         // Clusters
         var resourceClustersByExpand = new Dictionary<Vector2, HashSet<IUnit>>();
         foreach (var expandPosition in expandPositions) {
-            resourceClustersByExpand[expandPosition] = _expandUnitsAnalyzer.FindExpandResources(expandPosition);
+            resourceClustersByExpand[expandPosition] = _resourceFinder.FindExpandResources(expandPosition);
         }
 
         // Blockers
         var blockersByExpand = new Dictionary<Vector2, HashSet<IUnit>>();
         foreach (var expandPosition in expandPositions) {
-            blockersByExpand[expandPosition] = _expandUnitsAnalyzer.FindExpandBlockers(expandPosition);
+            blockersByExpand[expandPosition] = _resourceFinder.FindExpandBlockers(expandPosition);
         }
 
         var expandTypes = new Dictionary<Vector2, ExpandType>();

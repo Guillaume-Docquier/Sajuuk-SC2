@@ -3,7 +3,7 @@ using SC2Client.State;
 
 namespace MapAnalysis.ExpandAnalysis;
 
-public interface IExpandUnitsAnalyzer {
+public interface IResourceFinder {
     /// <summary>
     /// Finds all the resource clusters in the map that could be associated with an expand.
     /// </summary>

@@ -7,14 +7,14 @@ using SC2Client.Trackers;
 
 namespace MapAnalysis.ExpandAnalysis;
 
-public class ExpandUnitsAnalyzer : IExpandUnitsAnalyzer {
+public class ResourceFinder : IResourceFinder {
     private readonly KnowledgeBase _knowledgeBase;
     private readonly IUnitsTracker _unitsTracker;
     private readonly ITerrainTracker _terrainTracker;
 
-    private List<List<IUnit>>? _resourceClusters;
+    private List<List<IUnit>>? _resourceClustersCache;
 
-    public ExpandUnitsAnalyzer(
+    public ResourceFinder(
         KnowledgeBase knowledgeBase,
         IUnitsTracker unitsTracker,
         ITerrainTracker terrainTracker
@@ -32,13 +32,13 @@ public class ExpandUnitsAnalyzer : IExpandUnitsAnalyzer {
     /// </summary>
     /// <returns></returns>
     public IEnumerable<List<IUnit>> FindResourceClusters() {
-        if (_resourceClusters == null) {
+        if (_resourceClustersCache == null) {
             // See note on MineralField450
             var minerals = UnitQueries.GetUnits(_unitsTracker.NeutralUnits, UnitTypeId.MineralFields.Except(new[] { UnitTypeId.MineralField450 }).ToHashSet());
             var gasses = UnitQueries.GetUnits(_unitsTracker.NeutralUnits, UnitTypeId.GasGeysers);
             var resources = minerals.Concat(gasses).ToList();
 
-            _resourceClusters = Clustering.DBSCAN(resources, epsilon: 8, minPoints: 4)
+            _resourceClustersCache = Clustering.DBSCAN(resources, epsilon: 8, minPoints: 4)
                 .clusters
                 // Expand clusters have at least a gas, and a minimum of 5 minerals (maybe more, but at least 5)
                 .Where(cluster => cluster.Any(resource => UnitTypeId.GasGeysers.Contains(resource.UnitType)))
@@ -46,7 +46,7 @@ public class ExpandUnitsAnalyzer : IExpandUnitsAnalyzer {
                 .ToList();
         }
 
-        return _resourceClusters;
+        return _resourceClustersCache;
     }
 
     /// <summary>

@@ -41,7 +41,7 @@ public static class ServicesFactory {
             vector => vector.ToString()
         );
 
-        var expandUnitsAnalyzer = new ExpandUnitsAnalyzer(
+        var resourceFinder = new ResourceFinder(
             knowledgeBase,
             unitsTracker,
             terrainTracker
@@ -54,7 +54,7 @@ public static class ServicesFactory {
             sc2Client,
             graphicalDebugger,
             terrainTracker,
-            expandUnitsAnalyzer,
+            resourceFinder,
             pathfinder,
             footprintCalculator
         );

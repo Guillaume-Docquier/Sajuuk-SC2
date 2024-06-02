@@ -11,8 +11,4 @@
       <ProjectReference Include="..\SC2Client\SC2Client.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="RegionAnalysis\" />
-    </ItemGroup>
-
 </Project>
