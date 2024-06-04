@@ -58,9 +58,9 @@ public interface ITerrainTracker {
     /// </summary>
     /// <param name="cell">The cell to get the neighbors of.</param>
     /// <param name="potentialNeighbors">The set of allowed potential neighbors. If null, all neighbors will be considered allowed.</param>
-    /// <param name="considerObstaclesObstructions">Whether to consider the obstructions from obstacles.</param>
+    /// <param name="considerObstructions">Whether to consider the obstructions from obstacles.</param>
     /// <returns></returns>
-    IEnumerable<Vector2> GetReachableNeighbors(Vector2 cell, IReadOnlySet<Vector2>? potentialNeighbors = null, bool considerObstaclesObstructions = true);
+    IEnumerable<Vector2> GetReachableNeighbors(Vector2 cell, IReadOnlySet<Vector2>? potentialNeighbors = null, bool considerObstructions = true);
 
     /// <summary>
     /// Gets the closest walkable cell around

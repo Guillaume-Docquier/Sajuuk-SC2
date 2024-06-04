@@ -30,7 +30,7 @@ public class TerrainTracker : ITracker, ITerrainTracker {
         throw new NotImplementedException();
     }
 
-    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 cell, IReadOnlySet<Vector2>? potentialNeighbors = null, bool considerObstaclesObstructions = true) {
+    public IEnumerable<Vector2> GetReachableNeighbors(Vector2 cell, IReadOnlySet<Vector2>? potentialNeighbors = null, bool considerObstructions = true) {
         throw new NotImplementedException();
     }
 

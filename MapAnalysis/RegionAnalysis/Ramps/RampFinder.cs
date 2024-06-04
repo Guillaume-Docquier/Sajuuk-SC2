@@ -1,16 +1,18 @@
 ﻿using System.Numerics;
+using Algorithms;
+using Algorithms.ExtensionMethods;
+using SC2Client.ExtensionMethods;
+using SC2Client.Trackers;
 
 namespace MapAnalysis.RegionAnalysis.Ramps;
 
 public class RampFinder : IRampFinder {
     private readonly ITerrainTracker _terrainTracker;
-    private readonly IClustering _clustering;
 
     private readonly float _diagonalDistance = (float)Math.Sqrt(2);
 
-    public RampFinder(ITerrainTracker terrainTracker, IClustering clustering) {
+    public RampFinder(ITerrainTracker terrainTracker) {
         _terrainTracker = terrainTracker;
-        _clustering = clustering;
     }
 
     /// <summary>
@@ -22,12 +24,12 @@ public class RampFinder : IRampFinder {
     /// <returns>The ramps that were found.</returns>
     public List<Ramp> FindRamps(IEnumerable<Vector2> cellsToConsider) {
         var potentialRampCells = cellsToConsider
-            .Where(cell => _terrainTracker.IsWalkable(cell, considerObstaclesObstructions: false))
-            .Where(cell => !_terrainTracker.IsBuildable(cell, considerObstaclesObstructions: false))
+            .Where(cell => _terrainTracker.IsWalkable(cell, considerObstructions: false))
+            .Where(cell => !_terrainTracker.IsBuildable(cell, considerObstructions: false))
             .ToList();
 
         // We cluster once for an initial split
-        var initialRampSplit = _clustering.DBSCAN(potentialRampCells, epsilon: 1, minPoints: 1);
+        var initialRampSplit = Clustering.DBSCAN(potentialRampCells, epsilon: 1, minPoints: 1);
         var noise = initialRampSplit.noise.ToHashSet();
 
         var ramps = new List<Ramp>();
@@ -42,7 +44,7 @@ public class RampFinder : IRampFinder {
             // Some ramps touch each other (berlingrad)
             // We do a 2nd round of clustering based on the connectivity of the cluster
             // This is because ramps have low connectivity, so we need it to be variable
-            var rampClusterResult = _clustering.DBSCAN(initialRampCluster, epsilon: _diagonalDistance, minPoints: maxConnections);
+            var rampClusterResult = Clustering.DBSCAN(initialRampCluster, epsilon: _diagonalDistance, minPoints: maxConnections);
 
             foreach (var mapCell in rampClusterResult.noise) {
                 noise.Add(mapCell);
@@ -65,7 +67,7 @@ public class RampFinder : IRampFinder {
         var allRampCells = ramps.SelectMany(ramp => ramp.Cells).ToHashSet();
         var orderedNoise = noise.OrderBy(noisyCell => allRampCells.Min(rampCell => rampCell.DistanceTo(noisyCell)));
         foreach (var noisyCell in orderedNoise) {
-            var noisyCellRampNeighbors = _terrainTracker.GetReachableNeighbors(noisyCell, allRampCells, considerObstaclesObstructions: false);
+            var noisyCellRampNeighbors = _terrainTracker.GetReachableNeighbors(noisyCell, allRampCells, considerObstructions: false);
 
             var rampToAddTo = ramps.FirstOrDefault(ramp => noisyCellRampNeighbors.Any(ramp.Cells.Contains));
             if (rampToAddTo != default) {
