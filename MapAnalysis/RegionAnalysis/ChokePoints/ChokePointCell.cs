@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Algorithms;
 
 namespace MapAnalysis.RegionAnalysis.ChokePoints;
 
@@ -24,8 +25,9 @@ public class ChokePointCell : IHavePosition {
     /// </summary>
     public List<VisionLine> MostLikelyChokeLines { get; private set; }
 
-    public ChokePointCell(Vector2 position) {
+    public ChokePointCell(Vector2 position, List<VisionLine> mostLikelyChokeLines) {
         Position = new Vector3 { X = position.X, Y = position.Y, Z = 0 };
+        MostLikelyChokeLines = mostLikelyChokeLines;
     }
 
     /// <summary>
