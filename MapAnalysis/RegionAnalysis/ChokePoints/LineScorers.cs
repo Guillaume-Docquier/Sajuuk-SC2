@@ -1,4 +1,6 @@
-﻿namespace MapAnalysis.RegionAnalysis.ChokePoints;
+﻿using Algorithms.ExtensionMethods;
+
+namespace MapAnalysis.RegionAnalysis.ChokePoints;
 
 public static class LineScorers {
     /// <summary>
