@@ -1,8 +1,12 @@
 ﻿using System.Numerics;
+using Algorithms;
+using Algorithms.ExtensionMethods;
+using SC2Client.ExtensionMethods;
+using SC2Client.Trackers;
 
 namespace MapAnalysis.RegionAnalysis.ChokePoints;
 
-public class VisionLine: IHavePosition {
+public class VisionLine : IHavePosition {
     private readonly ITerrainTracker _terrainTracker;
 
     public List<Vector2> OrderedTraversedCells { get; }

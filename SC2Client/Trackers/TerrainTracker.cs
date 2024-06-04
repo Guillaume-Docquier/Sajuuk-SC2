@@ -8,7 +8,9 @@ public class TerrainTracker : ITracker, ITerrainTracker {
         throw new NotImplementedException();
     }
 
-    public Vector3 WithWorldHeight(Vector2 cell) {
+    public ITerrain Terrain { get; }
+
+    public Vector3 WithWorldHeight(Vector2 cell, float zOffset = 0) {
         throw new NotImplementedException();
     }
 

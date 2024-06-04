@@ -1,5 +1,4 @@
 ﻿using System.Numerics;
-using SC2Client.State;
 
 namespace MapAnalysis.ExpandAnalysis;
 

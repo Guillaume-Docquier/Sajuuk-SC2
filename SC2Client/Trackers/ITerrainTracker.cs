@@ -1,15 +1,22 @@
 ﻿using System.Numerics;
+using SC2Client.State;
 
 namespace SC2Client.Trackers;
 
 public interface ITerrainTracker {
     /// <summary>
+    /// The up to date raw terrain data.
+    /// </summary>
+    ITerrain Terrain { get; }
+
+    /// <summary>
     /// Adds the terrain height to the given position.
     /// Cells in SC2 are 1x1. Any Vector2 within the same 1x1 position will have the same height.
     /// </summary>
     /// <param name="position">The position to query.</param>
+    /// <param name="zOffset">An offset to apply to the world height.</param>
     /// <returns></returns>
-    Vector3 WithWorldHeight(Vector2 position);
+    Vector3 WithWorldHeight(Vector2 position, float zOffset = 0);
 
     /// <summary>
     /// Determines whether a position can be walked on by a ground unit.

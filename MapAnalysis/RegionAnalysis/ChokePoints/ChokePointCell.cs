@@ -23,11 +23,10 @@ public class ChokePointCell : IHavePosition {
     /// <summary>
     /// The vision lines that go through this cell that are most likely part of a choke point.
     /// </summary>
-    public List<VisionLine> MostLikelyChokeLines { get; private set; }
+    public List<VisionLine> MostLikelyChokeLines { get; private set; } = new List<VisionLine>();
 
-    public ChokePointCell(Vector2 position, List<VisionLine> mostLikelyChokeLines) {
+    public ChokePointCell(Vector2 position) {
         Position = new Vector3 { X = position.X, Y = position.Y, Z = 0 };
-        MostLikelyChokeLines = mostLikelyChokeLines;
     }
 
     /// <summary>

@@ -1,13 +1,20 @@
 ﻿using System.Numerics;
+using Algorithms;
+using Algorithms.ExtensionMethods;
+using MapAnalysis.RegionAnalysis.Persistence;
 using SC2APIProtocol;
+using SC2Client;
+using SC2Client.Debugging.GraphicalDebugging;
+using SC2Client.ExtensionMethods;
+using SC2Client.Trackers;
 
 namespace MapAnalysis.RegionAnalysis.ChokePoints;
 
 // TODO GD Considering the obstacles (resources, rocks) might be interesting at some point
 public class RayCastingChokeFinder : IChokeFinder {
+    private readonly ILogger _logger;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
-    private readonly IClustering _clustering;
     private readonly IMapImageFactory _mapImageFactory;
     private readonly string _mapFileName;
 
@@ -19,25 +26,25 @@ public class RayCastingChokeFinder : IChokeFinder {
     private const int AngleIncrement = 5;
 
     public RayCastingChokeFinder(
+        ILogger logger,
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
-        IClustering clustering,
         IMapImageFactory mapImageFactory,
         string mapFileName
     ) {
+        _logger = logger.CreateNamed("RayCastingChokeFinder");
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
-        _clustering = clustering;
         _mapImageFactory = mapImageFactory;
         _mapFileName = mapFileName;
     }
 
     public List<ChokePoint> FindChokePoints() {
         var chokePointCells = CreateChokePointCells();
-        Logger.Info($"Identified {chokePointCells.Count} potential choke point cells");
+        _logger.Info($"Identified {chokePointCells.Count} potential choke point cells");
 
         var lines = CreateVisionLines(chokePointCells.Count);
-        Logger.Info($"Computed {lines.Count} total vision lines");
+        _logger.Info($"Computed {lines.Count} total vision lines");
 
         var chokePoints = ComputeChokePoints(chokePointCells, lines);
 
@@ -54,10 +61,10 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// <returns>A mapping from a walkable Vector2 to a ChokePointCell.</returns>
     private Dictionary<Vector2, ChokePointCell> CreateChokePointCells() {
         var chokePointCells = new Dictionary<Vector2, ChokePointCell>();
-        for (var x = 0; x < _terrainTracker.MaxX; x++) {
-            for (var y = 0; y < _terrainTracker.MaxY; y++) {
+        for (var x = 0; x < _terrainTracker.Terrain.MaxX; x++) {
+            for (var y = 0; y < _terrainTracker.Terrain.MaxY; y++) {
                 var position = new Vector2(x, y).AsWorldGridCenter();
-                if (_terrainTracker.IsWalkable(position, considerObstaclesObstructions: false)) {
+                if (_terrainTracker.IsWalkable(position, considerObstructions: false)) {
                     chokePointCells[position] = new ChokePointCell(position);
                 }
             }
@@ -69,17 +76,17 @@ public class RayCastingChokeFinder : IChokeFinder {
     private List<VisionLine> CreateVisionLines(int chokePointCellsCount) {
         var allLines = new List<VisionLine>();
         for (var angle = StartingAngle; angle <= MaxAngle; angle += AngleIncrement) {
-            var lines = CreateLinesAtAnAngle(angle, _terrainTracker.MaxX, _terrainTracker.MaxY);
+            var lines = CreateLinesAtAnAngle(angle, _terrainTracker.Terrain.MaxX, _terrainTracker.Terrain.MaxY);
             lines = BreakDownIntoContinuousSegments(lines);
 
             var nbCellsCovered = lines.SelectMany(line => line.OrderedTraversedCells).ToHashSet().Count;
             var percentageOfCellsCovered = (float)nbCellsCovered / chokePointCellsCount;
-            Logger.Info($"Created {lines.Count,4} lines at {angle,3} degrees covering {nbCellsCovered,5} cells ({percentageOfCellsCovered,3:P0})");
+            _logger.Info($"Created {lines.Count,4} lines at {angle,3} degrees covering {nbCellsCovered,5} cells ({percentageOfCellsCovered,3:P0})");
 
             allLines.AddRange(lines);
         }
 
-        Logger.Info("All vision lines computed!");
+        _logger.Info("All vision lines computed!");
 
         return allLines;
     }
@@ -143,7 +150,7 @@ public class RayCastingChokeFinder : IChokeFinder {
     private int GoToStartOfNextLine(VisionLine visionLine, int startCellIndex) {
         var currentCellIndex = startCellIndex;
         while (currentCellIndex < visionLine.OrderedTraversedCells.Count) {
-            if (_terrainTracker.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], considerObstaclesObstructions: false)) {
+            if (_terrainTracker.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], considerObstructions: false)) {
                 return currentCellIndex;
             }
 
@@ -168,7 +175,7 @@ public class RayCastingChokeFinder : IChokeFinder {
         var currentCellIndex = startCellIndex;
 
         while (currentCellIndex < visionLine.OrderedTraversedCells.Count) {
-            if (!_terrainTracker.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], considerObstaclesObstructions: false)) {
+            if (!_terrainTracker.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], considerObstructions: false)) {
                 return currentCellIndex - 1;
             }
 
@@ -201,10 +208,10 @@ public class RayCastingChokeFinder : IChokeFinder {
 
         DebugLines(chokeLines, Colors.Orange);
 
-        var (lineCentersClusters, _) = _clustering.DBSCAN(chokeLines, 1.5f, 1);
+        var (lineCentersClusters, _) = Clustering.DBSCAN(chokeLines, 1.5f, 1);
         var chokePoints = new List<ChokePoint>();
         foreach (var lineCentersCluster in lineCentersClusters) {
-            var clusterCenter = _clustering.GetCenter(lineCentersCluster);
+            var clusterCenter = Clustering.GetCenter(lineCentersCluster);
 
             var shortestCenterLine = lineCentersCluster.MinBy(line => line.Length + line.Position.ToVector2().DistanceTo(clusterCenter) * 0.5)!;
             DebugLines(new[] { shortestCenterLine }, Colors.LimeGreen);
@@ -245,7 +252,7 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// <returns>The choke point cells that can be considered part of a choke point.</returns>
     private List<ChokePointCell> EliminateChokePointCellOutliers(IEnumerable<ChokePointCell> potentialChokePointCells) {
         var initialChokePointCells = potentialChokePointCells.Where(chokePointCell => chokePointCell.ChokeScore > ChokeScoreCutOff).ToList();
-        var (chokePointCellsClusters, _) = _clustering.DBSCAN(initialChokePointCells, 1.5f, 4);
+        var (chokePointCellsClusters, _) = Clustering.DBSCAN(initialChokePointCells, 1.5f, 4);
 
         // Eliminate outliers from choke cells clusters.
         // We compute a dispersion score based on the average, median and std.
@@ -323,7 +330,7 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// <param name="dispersionScore">A score representing the dispersion of scores of the cells.</param>
     /// <param name="cutScore">The minimum score to reach to be considered part of a choke point.</param>
     private void DebugScores(List<ChokePointCell> chokePointCells, double average, double median, double std, double dispersionScore, double cutScore) {
-        if (!Program.DebugEnabled || !DrawEnabled) {
+        if (!DrawEnabled) {
             return;
         }
 
@@ -335,7 +342,7 @@ public class RayCastingChokeFinder : IChokeFinder {
             $"Dsp: {dispersionScore,4:F2}",
             $"Cut: {cutScore,4:F2}",
         };
-        var chokePointCellsClusterCenter = _terrainTracker.WithWorldHeight(_clustering.GetCenter(chokePointCells));
+        var chokePointCellsClusterCenter = _terrainTracker.WithWorldHeight(Clustering.GetCenter(chokePointCells));
         _graphicalDebugger.AddTextGroup(textGroup, worldPos: chokePointCellsClusterCenter.ToPoint(zOffset: 5));
         _graphicalDebugger.AddLink(chokePointCellsClusterCenter, chokePointCellsClusterCenter.Translate(zTranslation: 5), Colors.SunbrightOrange);
 
@@ -348,7 +355,7 @@ public class RayCastingChokeFinder : IChokeFinder {
                 textColor = Colors.Blue;
             }
 
-            _graphicalDebugger.AddText($"{chokePointCell.ChokeScore:F1}", worldPos: _terrainTracker.WithWorldHeight(chokePointCell.Position).ToPoint(), color: textColor, size: 13);
+            _graphicalDebugger.AddText($"{chokePointCell.ChokeScore:F1}", worldPos: _terrainTracker.WithWorldHeight(chokePointCell.Position.ToVector2()).ToPoint(), color: textColor, size: 13);
         }
     }
 
@@ -358,7 +365,7 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// <param name="lines">The lines to display.</param>
     /// <param name="color">The color to use.</param>
     private void DebugLines(IEnumerable<VisionLine> lines, Color color) {
-        if (!Program.DebugEnabled || !DrawEnabled) {
+        if (!DrawEnabled) {
             return;
         }
 
@@ -376,7 +383,7 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// The scores are grouped by their rounded value.
     /// </summary>
     /// <param name="chokeScores">The choke scores</param>
-    private static void LogChokeScoresDistribution(List<float> chokeScores) {
+    private void LogChokeScoresDistribution(List<float> chokeScores) {
         var minScore = (int)chokeScores.Min();
         var maxScore = (int)chokeScores.Max();
 
@@ -389,7 +396,7 @@ public class RayCastingChokeFinder : IChokeFinder {
             chokeScoresDistribution[(int)chokeScore] += 1;
         }
 
-        Logger.Info("Choke score distribution");
+        _logger.Info("Choke score distribution");
         var cumulativeCount = 0;
         for (var chokeScore = minScore; chokeScore <= maxScore; chokeScore++) {
             if (chokeScoresDistribution[chokeScore] <= 0) {
@@ -401,7 +408,7 @@ public class RayCastingChokeFinder : IChokeFinder {
 
             var percentage = (float)count / chokeScores.Count;
             var cumulativePercentage = (float)cumulativeCount / chokeScores.Count;
-            Logger.Info($"{chokeScore,3}: {count,4} ({percentage,6:P2}) [{cumulativePercentage,6:P2}]");
+            _logger.Info($"{chokeScore,3}: {count,4} ({percentage,6:P2}) [{cumulativePercentage,6:P2}]");
         }
     }
 }

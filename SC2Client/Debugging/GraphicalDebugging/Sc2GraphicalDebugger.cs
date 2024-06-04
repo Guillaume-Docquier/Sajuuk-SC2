@@ -90,7 +90,7 @@ public class Sc2GraphicalDebugger : IGraphicalDebugger {
         var searchRadius = centerPosition.ToVector2()
             .BuildSearchRadius(radius)
             .Where(_terrainTracker.IsWithinBounds)
-            .Select(_terrainTracker.WithWorldHeight);
+            .Select(cell => _terrainTracker.WithWorldHeight(cell));
 
         foreach (var cell in searchRadius) {
             AddSquare(cell, KnowledgeBase.GameGridCellWidth, color, padded: true);
