@@ -181,7 +181,7 @@ public class ExpandAnalyzer : IExpandAnalyzer {
     /// <param name="gameState">The current state of the game.</param>
     /// <param name="expandPositions">The positions of the found expand locations.</param>
     /// <returns>The ExpandLocations</returns>
-    private List<ExpandLocation> GenerateExpandLocations(IGameState gameState, IReadOnlyList<Vector2> expandPositions) {
+    private IEnumerable<ExpandLocation> GenerateExpandLocations(IGameState gameState, IReadOnlyList<Vector2> expandPositions) {
         // Clusters
         var resourceClustersByExpand = new Dictionary<Vector2, HashSet<IUnit>>();
         foreach (var expandPosition in expandPositions) {
@@ -218,7 +218,7 @@ public class ExpandAnalyzer : IExpandAnalyzer {
         }
 
         return expandPositions
-            .Select(expandPosition => new ExpandLocation(expandPosition, expandTypes[expandPosition]))
+            .Select(expandPosition => new ExpandLocation(expandPosition, expandTypes[expandPosition], resourceClustersByExpand[expandPosition].ToList()))
             .ToList();
     }
 

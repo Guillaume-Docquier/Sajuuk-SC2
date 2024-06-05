@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using SC2Client.State;
 
 namespace MapAnalysis.ExpandAnalysis;
 
@@ -15,4 +16,9 @@ public interface IExpandLocation {
     /// The type of this expand location.
     /// </summary>
     public ExpandType ExpandType { get; }
+
+    /// <summary>
+    /// The resources of this expand location.
+    /// </summary>
+    public IReadOnlyList<IUnit> Resources { get; }
 }

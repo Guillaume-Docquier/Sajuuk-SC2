@@ -5,15 +5,14 @@ using MapAnalysis.RegionAnalysis.Ramps;
 
 namespace MapAnalysis.RegionAnalysis;
 
-public class RegionsData {
+public class RegionsData : IRegionsData {
     [JsonInclude] public List<Region> Regions { get; private set; }
     [JsonInclude] public List<HashSet<Vector2>> Ramps { get; private set; }
     [JsonInclude] public List<Vector2> Noise { get; private set; }
     [JsonInclude] public List<ChokePoint> ChokePoints { get; private set; }
 
-    [JsonConstructor]
     [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
-    public RegionsData() {}
+    [JsonConstructor] public RegionsData() {}
 
     public RegionsData(IEnumerable<Region> regions, IEnumerable<Ramp> ramps, IEnumerable<Vector2> noise, IEnumerable<ChokePoint> chokePoints) {
         // We sort the collections to have deterministic structures.
