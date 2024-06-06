@@ -1,117 +1,124 @@
 ﻿using System.Numerics;
 using System.Text.Json.Serialization;
+using Algorithms;
+using Algorithms.ExtensionMethods;
+using MapAnalysis.ExpandAnalysis;
 using SC2APIProtocol;
+using SC2Client.Debugging.GraphicalDebugging;
+using SC2Client.ExtensionMethods;
 
 namespace MapAnalysis.RegionAnalysis;
 
 public class Region : IRegion {
-    private ITerrainTracker _terrainTracker;
-    private IClustering _clustering;
-    private IPathfinder _pathfinder;
-    private IUnitsTracker _unitsTracker;
+    private static readonly Color RampColor = Colors.Cyan;
+    private static readonly List<Color> RegionColors = new List<Color>
+    {
+        Colors.Magenta,
+        Colors.Orange,
+        Colors.Blue,
+        Colors.Red,
+        Colors.LimeGreen,
+    };
 
     [JsonInclude] public int Id { get; set; }
     [JsonInclude] public Color Color { get; set; }
     [JsonInclude] public Vector2 Center { get; set; }
     [JsonInclude] public HashSet<Vector2> Cells { get; protected set; }
-    [JsonInclude] public float ApproximatedRadius { get; set; }
     [JsonInclude] public RegionType Type { get; set; }
-    [JsonInclude] public bool IsObstructed { get; set; }
 
-    [JsonInclude] public ExpandLocation ConcreteExpandLocation { get; set; }
-    [JsonIgnore] public IExpandLocation ExpandLocation => ConcreteExpandLocation;
+    [JsonInclude] public ExpandLocation? ConcreteExpandLocation { get; set; } // TODO GD Do we really need the concrete types?
+    [JsonIgnore] public IExpandLocation? ExpandLocation => ConcreteExpandLocation;
 
-    [JsonInclude] public HashSet<NeighboringRegion> ConcreteNeighbors { get; set; }
+    [JsonInclude] public HashSet<NeighboringRegion> ConcreteNeighbors { get; set; } = new HashSet<NeighboringRegion>(); // TODO GD Do we really need the concrete types?
     [JsonIgnore] public IEnumerable<INeighboringRegion> Neighbors => ConcreteNeighbors;
 
-    [JsonConstructor]
     [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
-    public Region() {}
+    [JsonConstructor] public Region() {}
 
     public Region(
-        ITerrainTracker terrainTracker,
-        IClustering clustering,
-        IPathfinder pathfinder,
-        IUnitsTracker unitsTracker
+        IEnumerable<Vector2> cells,
+        RegionType type,
+        IEnumerable<ExpandLocation> expandLocations
     ) {
-        _terrainTracker = terrainTracker;
-        _clustering = clustering;
-        _pathfinder = pathfinder;
-        _unitsTracker = unitsTracker;
-    }
+        // We order the cells to have a deterministic structure when persisting.
+        // When enumerated, hashsets keep the insertion order.
+        Cells = cells
+            .OrderBy(cell => cell.X)
+            .ThenBy(cell => cell.Y)
+            .ToHashSet();
 
-    public void SetDependencies(
-        ITerrainTracker terrainTracker,
-        IClustering clustering,
-        IPathfinder pathfinder,
-        IUnitsTracker unitsTracker
-    ) {
-        _terrainTracker = terrainTracker;
-        _clustering = clustering;
-        _pathfinder = pathfinder;
-        _unitsTracker = unitsTracker;
-    }
-
-    public IEnumerable<IRegion> GetReachableNeighbors() {
-        return Neighbors
-            .Where(neighbor => !neighbor.Region.IsObstructed)
-            .Select(neighbor => neighbor.Region);
-    }
-
-    // TODO GD Regions should track units in their region and update obstructions themselves when these units die
-    public void UpdateObstruction() {
-        IsObstructed = IsRegionObstructed();
-    }
-
-    protected bool IsRegionObstructed() {
-        if (Type == RegionType.Expand) {
-            // Expands are never obstructed
-            return false;
+        Type = type;
+        if (Type == RegionType.Unknown) {
+            var expandInRegion = expandLocations.FirstOrDefault(expandLocation => Cells.Contains(expandLocation.OptimalTownHallPosition));
+            if (expandInRegion != default) {
+                Type = RegionType.Expand;
+                Center = expandInRegion.OptimalTownHallPosition;
+                ConcreteExpandLocation = expandInRegion;
+            }
+            else {
+                Type = RegionType.OpenArea;
+            }
         }
 
-        if (Cells.All(cell => !_terrainTracker.IsWalkable(cell))) {
-            return true;
+        Color = Type == RegionType.Ramp
+            ? RampColor
+            : RegionColors.First();
+
+        if (Center == default) {
+            var regionCenter = Clustering.GetCenter(Cells.ToList());
+            Center = Cells.MinBy(cell => cell.DistanceTo(regionCenter));
         }
-
-        var obstaclesInRegion = _unitsTracker
-            .GetUnits(_unitsTracker.NeutralUnits, Units.Obstacles.Concat(Units.MineralFields).ToHashSet())
-            .Where(obstacle => Cells.Contains(obstacle.Position.ToVector2().AsWorldGridCenter()));
-
-        if (!obstaclesInRegion.Any()) {
-            return false;
-        }
-
-        var frontier = Neighbors.SelectMany(neighbor => neighbor.Frontier).ToList();
-        var clusteringResult = _clustering.DBSCAN(frontier, epsilon: (float)Math.Sqrt(2), minPoints: 1);
-        if (clusteringResult.clusters.Count != 2) {
-            Logger.Warning($"Region {Id} has {clusteringResult.clusters.Count} frontiers instead of 2, we cannot determine if it is obstructed.");
-            return false;
-        }
-
-        var pathThrough = _pathfinder.FindPath(
-            GetWalkableCellNearFrontier(clusteringResult.clusters[0]),
-            GetWalkableCellNearFrontier(clusteringResult.clusters[1])
-        );
-
-        if (pathThrough == null) {
-            return true;
-        }
-
-        // Obstructed if the path between the neighbors does not go through this region
-        // Let's hope no regions have two direct paths between each other
-        var portionPassingThrough = (float)pathThrough.Count(cell => Cells.Contains(cell)) / pathThrough.Count;
-        return portionPassingThrough <= 0.5f;
     }
 
-    private Vector2 GetWalkableCellNearFrontier(IReadOnlyCollection<Vector2> frontier) {
-        var walkableCell = frontier.FirstOrDefault(cell => _terrainTracker.IsWalkable(cell));
+    // TODO GD Do I really need this?
+    public void FinalizeCreation(int id, IEnumerable<Region> allRegions) {
+        Id = id;
 
-        return walkableCell != default
-            ? walkableCell
-            : _terrainTracker.GetClosestWalkable(frontier.First());
+        ConcreteNeighbors = ComputeNeighboringRegions(Cells, allRegions.Where(region => region != this).ToHashSet())
+            .OrderBy(neighbor => neighbor.Region.Id)
+            .ToHashSet();
+
+        Color = GetDifferentColorFromNeighbors();
     }
 
-    public override string ToString() {
-        return $"Region {Id} ({(IsObstructed ? "Obstructed" : "Clear")}) at {Center}";
+    private static HashSet<NeighboringRegion> ComputeNeighboringRegions(IEnumerable<Vector2> cells, IReadOnlyCollection<Region> allOtherRegions) {
+        var neighborsMap = new Dictionary<Region, NeighboringRegion>();
+        foreach (var cell in cells) {
+            var neighboringRegions = cell
+                .GetNeighbors()
+                .Where(neighbor => neighbor.DistanceTo(cell) <= 1) // Disallow diagonals
+                .Select(neighbor => allOtherRegions.FirstOrDefault(region => region.Cells.Contains(neighbor)))
+                .Where(region => region != null);
+
+            foreach (var neighboringRegion in neighboringRegions) {
+                if (!neighborsMap.ContainsKey(neighboringRegion)) {
+                    neighborsMap[neighboringRegion] = new NeighboringRegion(neighboringRegion, new HashSet<Vector2> { cell });
+                }
+                else {
+                    neighborsMap[neighboringRegion].Frontier.Add(cell);
+                }
+            }
+        }
+
+        return neighborsMap.Values.ToHashSet();
+    }
+
+    /// <summary>
+    /// Gets a color that's different from the neighbors colors.
+    /// </summary>
+    /// <returns>A color that's different from the colors of all neighbors.</returns>
+    private Color GetDifferentColorFromNeighbors() {
+        var neighborColors = Neighbors.Select(neighbor => neighbor.Region.Color).ToHashSet();
+        if (!neighborColors.Contains(Color)) {
+            return Color;
+        }
+
+        // There should be enough colors so that one is always available
+        var distinctRegionColor = RegionColors
+            .Except(neighborColors)
+            .Take(1)
+            .First();
+
+        return distinctRegionColor;
     }
 }
