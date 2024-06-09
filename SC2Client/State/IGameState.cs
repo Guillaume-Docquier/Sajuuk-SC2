@@ -13,6 +13,11 @@ public interface IGameState {
     public uint PlayerId { get; }
 
     /// <summary>
+    /// The name of the map on which the game is being played.
+    /// </summary>
+    public string MapName { get; }
+
+    /// <summary>
     /// The current game frame number.
     /// </summary>
     public uint CurrentFrame { get; }

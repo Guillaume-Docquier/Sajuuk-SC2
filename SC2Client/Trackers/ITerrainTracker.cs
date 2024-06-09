@@ -10,6 +10,11 @@ public interface ITerrainTracker {
     ITerrain Terrain { get; }
 
     /// <summary>
+    /// The set of all cells that are currently obstructed.
+    /// </summary>
+    IEnumerable<Vector2> ObstructedCells { get; }
+
+    /// <summary>
     /// Adds the terrain height to the given position.
     /// Cells in SC2 are 1x1. Any Vector2 within the same 1x1 position will have the same height.
     /// </summary>

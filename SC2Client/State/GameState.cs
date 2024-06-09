@@ -10,6 +10,7 @@ public class GameState : IGameState {
     private readonly Units _units;
 
     public uint PlayerId { get; }
+    public string MapName { get; }
     public uint CurrentFrame { get; private set; }
     public Result Result { get; private set; }
     public Vector2 StartingLocation { get; }
@@ -26,6 +27,7 @@ public class GameState : IGameState {
         ResponseObservation observation
     ) {
         PlayerId = playerId;
+        MapName = gameInfo.MapName;
         CurrentFrame = observation.Observation.GameLoop;
         Result = GetGameResult(gameStatus, observation);
         _terrain = new Terrain(gameInfo);

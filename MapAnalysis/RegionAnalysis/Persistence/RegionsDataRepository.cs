@@ -46,7 +46,7 @@ public class RegionsDataRepository<TRegionsData> : IMapDataRepository<TRegionsDa
     /// </summary>
     /// <param name="regions">The regions to represent.</param>
     /// <param name="mapFileName">The file name of the current map.</param>
-    private void SaveAsImage(List<Region> regions, string mapFileName) {
+    private void SaveAsImage(List<IRegion> regions, string mapFileName) {
         var mapImage = _mapImageFactory.CreateMapImage();
         foreach (var region in regions) {
             foreach (var cell in region.Cells) {

@@ -1,25 +1,36 @@
 ﻿using System.Numerics;
+using Algorithms;
+using Algorithms.ExtensionMethods;
+using MapAnalysis.ExpandAnalysis;
 using MapAnalysis.RegionAnalysis.ChokePoints;
+using MapAnalysis.RegionAnalysis.Persistence;
 using MapAnalysis.RegionAnalysis.Ramps;
-using SC2APIProtocol;
+using SC2Client;
+using SC2Client.ExtensionMethods;
+using SC2Client.GameData;
+using SC2Client.State;
+using SC2Client.Trackers;
 using Color = System.Drawing.Color;
 
 namespace MapAnalysis.RegionAnalysis;
 
-public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
+public class RegionAnalyzer : IRegionAnalyzer {
+    private readonly ILogger _logger;
     private readonly ITerrainTracker _terrainTracker;
     private readonly IExpandAnalyzer _expandAnalyzer;
-    private readonly IClustering _clustering;
     private readonly IMapDataRepository<RegionsData> _regionsRepository;
     private readonly IChokeFinder _chokeFinder;
     private readonly IRampFinder _rampFinder;
-    private readonly IRegionFactory _regionFactory;
     private readonly IMapImageFactory _mapImageFactory;
     private readonly IUnitsTracker _unitsTracker;
     private readonly FootprintCalculator _footprintCalculator;
     private readonly string _mapFileName;
 
     private const float RegionZMultiplier = 8;
+
+    /// <summary>
+    /// The precomputed diagonal distance.
+    /// </summary>
     private readonly float _diagonalDistance = (float)Math.Sqrt(2);
 
     /// <summary>
@@ -28,31 +39,33 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// </summary>
     private const int MinRegionSize = 16;
 
-    private RegionsData _regionsData;
+    /// <summary>
+    /// The regions data
+    /// </summary>
+    private RegionsData? _regionsData;
 
     public bool IsAnalysisComplete => _regionsData != null;
-    public List<IRegion> Regions => _regionsData.Regions.Select(region => region as IRegion).ToList();
+
+    public List<IRegion> Regions => _regionsData!.Regions.Select(region => region as IRegion).ToList();
 
     public RegionAnalyzer(
+        ILogger logger,
         ITerrainTracker terrainTracker,
         IExpandAnalyzer expandAnalyzer,
-        IClustering clustering,
         IMapDataRepository<RegionsData> regionsRepository,
         IChokeFinder chokeFinder,
         IRampFinder rampFinder,
-        IRegionFactory regionFactory,
         IMapImageFactory mapImageFactory,
         IUnitsTracker unitsTracker,
         FootprintCalculator footprintCalculator,
         string mapFileName
     ) {
+        _logger = logger.CreateNamed("RegionAnalyzer");
         _terrainTracker = terrainTracker;
         _expandAnalyzer = expandAnalyzer;
-        _clustering = clustering;
         _regionsRepository = regionsRepository;
         _chokeFinder = chokeFinder;
         _rampFinder = rampFinder;
-        _regionFactory = regionFactory;
         _mapImageFactory = mapImageFactory;
         _unitsTracker = unitsTracker;
         _footprintCalculator = footprintCalculator;
@@ -63,7 +76,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <para>Analyzes the map to find ramps and do region decomposition</para>
     /// <para>There should be at least 1 region per expand location and regions are always separated by ramps or choke points.</para>
     /// </summary>
-    public void Update(ResponseObservation observation, ResponseGameInfo gameInfo) {
+    public void OnFrame(IGameState gameState) {
         if (!_expandAnalyzer.IsAnalysisComplete) {
             return;
         }
@@ -72,26 +85,25 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             return;
         }
 
-        var cellsToConsider = _terrainTracker.PlayableCells;
-        Logger.Info($"Starting region analysis on {cellsToConsider.Count} cells ({_terrainTracker.MaxX}x{_terrainTracker.MaxY})");
+        var cellsToConsider = gameState.Terrain.WalkableCells;
+        _logger.Info($"Starting region analysis on {cellsToConsider.Count} cells ({gameState.Terrain.MaxX}x{gameState.Terrain.MaxY})");
 
         var ramps = _rampFinder.FindRamps(cellsToConsider);
         var chokePoints = _chokeFinder.FindChokePoints();
-        var regions = FindRegions(cellsToConsider, ramps, chokePoints);
+        var regions = FindRegions(cellsToConsider, ramps, chokePoints).ToList();
         var noise = cellsToConsider.Except(regions.SelectMany(region => region.Cells));
 
-        _regionsData = new RegionsData(regions.Select(region => region as Region).ToList(), ramps, noise, chokePoints);
-        _regionsRepository.Save(_regionsData, gameInfo.MapName);
+        _regionsData = new RegionsData(regions, ramps, noise, chokePoints);
+        _regionsRepository.Save(_regionsData, gameState.MapName);
 
         var nbRegions = _regionsData.Regions.Count;
-        var nbObstructed = _regionsData.Regions.Count(region => region.IsObstructed);
         var nbRamps = _regionsData.Ramps.Count;
         var nbNoise = _regionsData.Noise.Count;
         var nbChokePoints = _regionsData.ChokePoints.Count;
-        Logger.Metric($"{nbRegions} regions ({nbObstructed} obstructed), {nbRamps} ramps, {nbNoise} unclassified cells and {nbChokePoints} choke points");
+        _logger.Metric($"{nbRegions} regions, {nbRamps} ramps, {nbNoise} unclassified cells and {nbChokePoints} choke points");
         DebugReachableNeighbors();
 
-        Logger.Success("Region analysis done and saved");
+        _logger.Success("Region analysis done and saved");
     }
 
     /// <summary>
@@ -102,7 +114,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <param name="ramps">The ramps on the map.</param>
     /// <param name="potentialChokePoints">The potential choke points on the map.</param>
     /// <returns>The detected regions.</returns>
-    private List<AnalyzedRegion> FindRegions(IReadOnlyCollection<Vector2> cellsToConsider, IReadOnlyCollection<Ramp> ramps, IReadOnlyCollection<ChokePoint> potentialChokePoints) {
+    private IEnumerable<IRegion> FindRegions(IReadOnlyCollection<Vector2> cellsToConsider, IReadOnlyCollection<Ramp> ramps, IReadOnlyCollection<ChokePoint> potentialChokePoints) {
         var regions = ComputeObstaclesRegions(cellsToConsider, ramps);
 
         var cellToConsiderForRegionSplit = cellsToConsider
@@ -114,10 +126,10 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
 
         foreach (var region in potentialRegions) {
             var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints, saveSplitsAsImage: false);
-            regions.AddRange(subregions.Select(subregion => _regionFactory.CreateAnalyzedRegion(subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
+            regions.AddRange(subregions.Select(subregion => new Region(subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
         }
 
-        regions.AddRange(ramps.Select(ramp => _regionFactory.CreateAnalyzedRegion(ramp.Cells, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
+        regions.AddRange(ramps.Select(ramp => new Region(ramp.Cells, RegionType.Ramp, _expandAnalyzer.ExpandLocations)));
 
         // We order the regions to have a deterministic regions order.
         // It'll also make it easier to find a region by its id because they're going to be left to right, bottom to top.
@@ -141,23 +153,23 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <param name="cellsToConsider">The cells to find regions from.</param>
     /// <param name="ramps">The ramps on the map.</param>
     /// <returns>A list of regions made from obstacles.</returns>
-    private List<AnalyzedRegion> ComputeObstaclesRegions(IReadOnlyCollection<Vector2> cellsToConsider, IReadOnlyCollection<Ramp> ramps) {
+    private List<Region> ComputeObstaclesRegions(IReadOnlyCollection<Vector2> cellsToConsider, IReadOnlyCollection<Ramp> ramps) {
         var allRampsCells = ramps.SelectMany(ramp => ramp.Cells).ToHashSet();
         var obstacleGroups = ComputeObstacleGroups(cellsToConsider.Except(allRampsCells));
 
-        var regions = new List<AnalyzedRegion>();
+        var regions = new List<Region>();
         foreach (var obstacleGroup in obstacleGroups) {
             var borderingCells = ComputeBorderingCells(obstacleGroup.ToHashSet());
-            var borderingCellsGroups = borderingCells.GroupBy(cell => _terrainTracker.IsWalkable(cell, considerObstaclesObstructions: false));
+            var borderingCellsGroups = borderingCells.GroupBy(cell => _terrainTracker.IsWalkable(cell, considerObstructions: false));
 
             var nbClusters = borderingCellsGroups
-                .Select(group => _clustering.DBSCAN(group.ToList(), epsilon: (float)Math.Sqrt(2), minPoints: 1).clusters)
+                .Select(group => Clustering.DBSCAN(group.ToList(), epsilon: (float)Math.Sqrt(2), minPoints: 1).clusters)
                 .Select(clusters => clusters.Count)
                 .Sum();
 
             // 4 or more clusters means we have 2 sides of the obstacle that are walkable, and two sides that are unwalkable.
             if (nbClusters >= 4) {
-                regions.Add(_regionFactory.CreateAnalyzedRegion(obstacleGroup, RegionType.OpenArea, _expandAnalyzer.ExpandLocations));
+                regions.Add(new Region(obstacleGroup, RegionType.OpenArea, _expandAnalyzer.ExpandLocations));
             }
         }
 
@@ -170,13 +182,13 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <param name="cellsToConsider">The cells to find obstacles in.</param>
     /// <returns>The list of all obstacle groups.</returns>
     private List<List<Vector2>> ComputeObstacleGroups(IEnumerable<Vector2> cellsToConsider) {
-        var cells = _unitsTracker
-            .GetUnits(_unitsTracker.NeutralUnits, Units.Obstacles.Concat(Units.MineralFields).ToHashSet())
+        var cells = UnitQueries
+            .GetUnits(_unitsTracker.NeutralUnits, UnitTypeId.Obstacles.Concat(UnitTypeId.MineralFields).ToHashSet())
             .SelectMany(_footprintCalculator.GetFootprint)
             .Where(cellsToConsider.Contains)
             .ToList();
 
-        return _clustering.DBSCAN(cells, epsilon: (float)Math.Sqrt(2), minPoints: 1).clusters;
+        return Clustering.DBSCAN(cells, epsilon: (float)Math.Sqrt(2), minPoints: 1).clusters;
     }
 
     /// <summary>
@@ -203,7 +215,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         // DragonScalesAIE has 2 cells like that.
         // This would probably not be the case after fixing https://github.com/Guillaume-Docquier/Sajuuk-SC2/issues/43
         var isolatedCells = potentialRegionCells
-            .Where(cell => !_terrainTracker.GetReachableNeighbors(cell, considerObstaclesObstructions: false).Any())
+            .Where(cell => !_terrainTracker.GetReachableNeighbors(cell, considerObstructions: false).Any())
             .ToList();
 
         return potentialRegionCells.Except(isolatedCells);
@@ -227,7 +239,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
             return trickPosition;
         }).ToList();
 
-        var clusteringResult = _clustering.DBSCAN(regionCells3d, epsilon: _diagonalDistance + 0.04f, minPoints: 6);
+        var clusteringResult = Clustering.DBSCAN(regionCells3d, epsilon: _diagonalDistance + 0.04f, minPoints: 6);
 
         var potentialRegions = clusteringResult.clusters
             .Select(cluster => cluster.Select(cell => cell.ToVector2()).ToHashSet())
@@ -270,7 +282,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
                 .ToList();
 
             if (chokePointCombinations.Count > 20_000) {
-                Logger.Warning($"We are about to try {chokePointCombinations.Count} choke point combinations ({nbChokesToConsider} from {chokesInRegion.Count}). There is most likely an issue.");
+                _logger.Warning($"We are about to try {chokePointCombinations.Count} choke point combinations ({nbChokesToConsider} from {chokesInRegion.Count}). There is most likely an issue.");
             }
 
             foreach (var chokePointCombination in chokePointCombinations) {
@@ -307,7 +319,11 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
     /// <returns>The two subregions.</returns>
     private (HashSet<Vector2> subregion1, HashSet<Vector2> subregion2) SplitRegion(IReadOnlySet<Vector2> regionToSplit, IReadOnlyCollection<Vector2> separations) {
         var startingPoint = regionToSplit.First(point => !separations.Contains(point));
-        var subregion1 = _clustering.FloodFill(regionToSplit.Except(separations).ToHashSet(), startingPoint).ToHashSet();
+        var subregion1 = Clustering.FloodFill(
+            regionToSplit.Except(separations).ToHashSet(),
+            startingPoint,
+            (cell, cellsToExplore) => cell.GetNeighbors().Where(cellsToExplore.Contains).ToList()
+        ).ToHashSet();
         var subregion2 = regionToSplit.Except(subregion1).ToHashSet();
 
         return (subregion1, subregion2);
@@ -331,7 +347,7 @@ public class RegionAnalyzer : IRegionAnalyzer, INeedUpdating {
         }
 
         // A region should form a single cluster of cells
-        var floodFill = _clustering.FloodFill(subregion.ToHashSet(), subregion.First());
+        var floodFill = Clustering.FloodFill(subregion.ToHashSet(), subregion.First(), (cell, cellsToExplore) => cell.GetNeighbors().Where(cellsToExplore.Contains).ToList());
         return floodFill.Count() == subregion.Count;
     }
 

@@ -9,6 +9,7 @@ public class TerrainTracker : ITracker, ITerrainTracker {
     }
 
     public ITerrain Terrain { get; }
+    public IEnumerable<Vector2> ObstructedCells { get; }
 
     public Vector3 WithWorldHeight(Vector2 cell, float zOffset = 0) {
         throw new NotImplementedException();

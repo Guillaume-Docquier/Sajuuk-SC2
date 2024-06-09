@@ -10,7 +10,7 @@ public interface IRegionsData {
     /// <summary>
     /// All the regions in the map.
     /// </summary>
-    List<Region> Regions { get; }
+    List<IRegion> Regions { get; }
 
     /// <summary>
     /// All the ramps in the map.

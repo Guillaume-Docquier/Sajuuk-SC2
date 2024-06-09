@@ -40,4 +40,10 @@ public interface IRegion {
     /// Represents the neighbors of this region. A neighbor is described as another Region and its frontier.
     /// </summary>
     public IEnumerable<INeighboringRegion> Neighbors { get; } // TODO GD Change this to frontier
+
+    /// <summary>
+    /// Gets all the regions that can be reached from this region.
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerable<Region> GetReachableNeighbors(); // TODO GD Without the obstructions, this becomes non trivial...
 }

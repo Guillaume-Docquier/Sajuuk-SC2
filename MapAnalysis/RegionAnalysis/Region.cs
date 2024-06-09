@@ -23,14 +23,10 @@ public class Region : IRegion {
     [JsonInclude] public int Id { get; set; }
     [JsonInclude] public Color Color { get; set; }
     [JsonInclude] public Vector2 Center { get; set; }
-    [JsonInclude] public HashSet<Vector2> Cells { get; protected set; }
+    [JsonInclude] public HashSet<Vector2> Cells { get; }
     [JsonInclude] public RegionType Type { get; set; }
-
-    [JsonInclude] public ExpandLocation? ConcreteExpandLocation { get; set; } // TODO GD Do we really need the concrete types?
-    [JsonIgnore] public IExpandLocation? ExpandLocation => ConcreteExpandLocation;
-
-    [JsonInclude] public HashSet<NeighboringRegion> ConcreteNeighbors { get; set; } = new HashSet<NeighboringRegion>(); // TODO GD Do we really need the concrete types?
-    [JsonIgnore] public IEnumerable<INeighboringRegion> Neighbors => ConcreteNeighbors;
+    [JsonInclude] public IExpandLocation? ExpandLocation { get; }
+    [JsonInclude] public IEnumerable<INeighboringRegion> Neighbors { get; private set; }
 
     [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
     [JsonConstructor] public Region() {}
@@ -38,7 +34,7 @@ public class Region : IRegion {
     public Region(
         IEnumerable<Vector2> cells,
         RegionType type,
-        IEnumerable<ExpandLocation> expandLocations
+        IEnumerable<IExpandLocation> expandLocations
     ) {
         // We order the cells to have a deterministic structure when persisting.
         // When enumerated, hashsets keep the insertion order.
@@ -53,7 +49,7 @@ public class Region : IRegion {
             if (expandInRegion != default) {
                 Type = RegionType.Expand;
                 Center = expandInRegion.OptimalTownHallPosition;
-                ConcreteExpandLocation = expandInRegion;
+                ExpandLocation = expandInRegion;
             }
             else {
                 Type = RegionType.OpenArea;
@@ -74,7 +70,7 @@ public class Region : IRegion {
     public void FinalizeCreation(int id, IEnumerable<Region> allRegions) {
         Id = id;
 
-        ConcreteNeighbors = ComputeNeighboringRegions(Cells, allRegions.Where(region => region != this).ToHashSet())
+        Neighbors = ComputeNeighboringRegions(Cells, allRegions.Where(region => region != this).ToHashSet())
             .OrderBy(neighbor => neighbor.Region.Id)
             .ToHashSet();
 
