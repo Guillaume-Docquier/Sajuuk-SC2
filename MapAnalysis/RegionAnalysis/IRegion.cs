@@ -38,12 +38,21 @@ public interface IRegion {
 
     /// <summary>
     /// Represents the neighbors of this region. A neighbor is described as another Region and its frontier.
+    /// TODO GD Change this to frontier with obstructions. We're not interested in a region being obstructed, but rather if you can go from one region to another.
+    /// TODO GD Sometimes, going to B from A won't be possible, gut going to C from A will be. That's because the frontier is obstructed, not the region.
     /// </summary>
-    public IEnumerable<INeighboringRegion> Neighbors { get; } // TODO GD Change this to frontier
+    public IEnumerable<INeighboringRegion> Neighbors { get; }
+
+    /// <summary>
+    /// Whether this region is currently obstructed
+    /// </summary>
+    [Obsolete("Will be removed in favor of frontier obstruction")]
+    public bool IsObstructed { get; }
 
     /// <summary>
     /// Gets all the regions that can be reached from this region.
     /// </summary>
     /// <returns></returns>
-    public IEnumerable<Region> GetReachableNeighbors(); // TODO GD Without the obstructions, this becomes non trivial...
+    [Obsolete("Will be removed in favor of frontier obstruction")]
+    public IEnumerable<IRegion> GetReachableNeighbors();
 }

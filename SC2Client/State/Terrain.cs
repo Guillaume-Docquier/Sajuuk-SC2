@@ -5,12 +5,14 @@ namespace SC2Client.State;
 
 public class Terrain : ITerrain {
     private readonly Dictionary<Vector2, float> _cellHeights;
+    private readonly HashSet<Vector2> _cells;
     private readonly HashSet<Vector2> _walkableCells;
     private readonly HashSet<Vector2> _buildableCells;
 
     public int MaxX { get; }
     public int MaxY { get; }
     public IReadOnlyDictionary<Vector2, float> CellHeights => _cellHeights;
+    public IReadOnlySet<Vector2> Cells => _cells;
     public IReadOnlySet<Vector2> WalkableCells => _walkableCells;
     public IReadOnlySet<Vector2> BuildableCells => _buildableCells;
 
@@ -20,6 +22,7 @@ public class Terrain : ITerrain {
 
         _cellHeights = InitCellHeights(gameInfo);
         _walkableCells = InitWalkableCells(gameInfo);
+        _cells = _walkableCells.ToHashSet(); // At the start of the game, all playable cells are walkable because no obstruction are in direct sight.
         _buildableCells = InitBuildableCells(gameInfo);
     }
 

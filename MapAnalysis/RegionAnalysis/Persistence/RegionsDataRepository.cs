@@ -4,7 +4,7 @@ using SC2Client;
 
 namespace MapAnalysis.RegionAnalysis.Persistence;
 
-public class RegionsDataRepository<TRegionsData> : IMapDataRepository<TRegionsData> where TRegionsData : IRegionsData{
+public class RegionsDataRepository<TRegionsData> : IMapDataRepository<TRegionsData> where TRegionsData : IRegionsData {
     private readonly FootprintCalculator _footprintCalculator;
     private readonly IMapImageFactory _mapImageFactory;
 

@@ -23,6 +23,13 @@ public interface ITerrain {
     IReadOnlyDictionary<Vector2, float> CellHeights { get; }
 
     /// <summary>
+    /// Contains all cells that are part of the terrain.
+    /// These cells can be buildable/walkable over the course of the game.
+    /// The cells as expressed as their corner.
+    /// </summary>
+    IReadOnlySet<Vector2> Cells { get; } // TODO GD I need to remember what is considered walkable from the start of the game
+
+    /// <summary>
     /// Contains all cells that are walkable.
     /// The cells as expressed as their corner.
     /// </summary>

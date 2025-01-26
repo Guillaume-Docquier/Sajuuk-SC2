@@ -8,6 +8,7 @@ using MapAnalysis.RegionAnalysis.Ramps;
 using SC2Client;
 using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
+using SC2Client.Services;
 using SC2Client.State;
 using SC2Client.Trackers;
 using Color = System.Drawing.Color;
@@ -23,6 +24,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
     private readonly IRampFinder _rampFinder;
     private readonly IMapImageFactory _mapImageFactory;
     private readonly IUnitsTracker _unitsTracker;
+    private readonly IPathfinder<Vector2> _pathfinder;
     private readonly FootprintCalculator _footprintCalculator;
     private readonly string _mapFileName;
 
@@ -57,6 +59,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
         IRampFinder rampFinder,
         IMapImageFactory mapImageFactory,
         IUnitsTracker unitsTracker,
+        IPathfinder<Vector2> pathfinder,
         FootprintCalculator footprintCalculator,
         string mapFileName
     ) {
@@ -68,6 +71,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
         _rampFinder = rampFinder;
         _mapImageFactory = mapImageFactory;
         _unitsTracker = unitsTracker;
+        _pathfinder = pathfinder;
         _footprintCalculator = footprintCalculator;
         _mapFileName = mapFileName;
     }
@@ -139,7 +143,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
             .ToList();
 
         for (var regionId = 0; regionId < regions.Count; regionId++) {
-            regions[regionId].FinalizeCreation(regionId, regions);
+            regions[regionId].FinalizeCreation(regionId, regions, _terrainTracker, _unitsTracker, _pathfinder, _logger.CreateNamed($"Region.FinalizeCreation {regionId}"));
         }
 
         return regions;
