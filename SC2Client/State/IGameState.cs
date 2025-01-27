@@ -5,6 +5,8 @@ namespace SC2Client.State;
 
 /// <summary>
 /// The state for a single frame in a game.
+/// The game state is a parsed version of the protobuf state of the game, with very little interpretation of it, if any.
+/// The trackers are where you can transform the data to draw your own conclusions.
 /// </summary>
 public interface IGameState {
     /// <summary>

@@ -44,7 +44,7 @@ public class Unit : IUnit {
     }
 
     public float Distance2DTo(IUnit otherUnit) {
-        return Position.ToVector2().DistanceTo(otherUnit.Position.ToVector2());
+        return Distance2DTo(otherUnit.Position.ToVector2());
     }
 
     public override string ToString() {

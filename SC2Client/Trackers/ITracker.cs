@@ -3,7 +3,8 @@
 namespace SC2Client.Trackers;
 
 /// <summary>
-/// A tracker tracks certain aspects of the game state.
+/// A tracker tracks certain aspects of the parsed game state.
+/// It is basically a customized view of some aspect of the state.
 /// </summary>
 public interface ITracker {
     /// <summary>

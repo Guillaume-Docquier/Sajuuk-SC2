@@ -17,6 +17,7 @@ public class Units : IUnits {
     public IReadOnlyList<IUnit> OwnedUnits => _ownedUnits;
     public IReadOnlyList<IUnit> EnemyUnits => _enemyUnits;
 
+    // TODO GD This needs a better name. Catalogue? Repertoire? Something "I hold the state of all units you might want".
     public Units(ILogger logger, KnowledgeBase knowledgeBase, ResponseObservation observation) {
         _logger = logger;
         _knowledgeBase = knowledgeBase;
@@ -33,6 +34,7 @@ public class Units : IUnits {
         _deadUnitTags = observation.Observation.RawData.Event?.DeadUnits?.ToHashSet() ?? new HashSet<ulong>();
 
         var currentFrame = observation.Observation.GameLoop;
+        // TODO GD We probably don't want to create new units on every frame. That sounds bad for performance. Maybe can be improved with a pool.
         var units = observation.Observation.RawData.Units
             .Select(rawUnit => new Unit(_knowledgeBase, currentFrame, rawUnit))
             .ToList();
