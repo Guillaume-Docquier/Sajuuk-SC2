@@ -7,7 +7,6 @@ public interface IGame {
     /// <summary>
     /// Sets up the game so that it is ready to join.
     /// </summary>
-    /// <returns>Nothing</returns>
     public Task Setup();
 
     /// <summary>
