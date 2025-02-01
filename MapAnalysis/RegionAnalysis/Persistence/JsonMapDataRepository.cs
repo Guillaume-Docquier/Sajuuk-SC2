@@ -23,7 +23,7 @@ public class JsonMapDataRepository<TData> : IMapDataRepository<TData> {
     }
 
     public void Save(TData data, string fileName) {
-        var fileNameWithExtension = $"{fileName}.{WellKnownFileExtensions.Json}";
+        var fileNameWithExtension = $"{fileName}.{FileExtensions.Json}";
         Directory.CreateDirectory(Path.GetDirectoryName(fileNameWithExtension)!);
 
         var jsonString = JsonSerializer.Serialize(data, _jsonSerializerOptions);
@@ -34,7 +34,7 @@ public class JsonMapDataRepository<TData> : IMapDataRepository<TData> {
     }
 
     public TData Load(string fileName) {
-        var fileNameWithExtension = $"{fileName}.{WellKnownFileExtensions.Json}";
+        var fileNameWithExtension = $"{fileName}.{FileExtensions.Json}";
         if (!File.Exists(fileNameWithExtension)) {
             return default;
         }

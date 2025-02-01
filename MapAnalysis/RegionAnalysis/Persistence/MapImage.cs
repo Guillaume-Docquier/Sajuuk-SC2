@@ -58,7 +58,7 @@ public class MapImage : IMapImage {
         // SC2 (0, 0) is bottom left, but bitmap (0, 0) is top left, so we flip to end up with the correct image orientation
         scaledImage.RotateFlip(RotateFlipType.RotateNoneFlipY);
 
-        var fileNameWithExtension = $"{fileName}.{WellKnownFileExtensions.Png}";
+        var fileNameWithExtension = $"{fileName}.{FileExtensions.Png}";
         Directory.CreateDirectory(Path.GetDirectoryName(fileNameWithExtension)!);
         scaledImage.Save(fileNameWithExtension);
         _logger.Success($"Map image saved to {fileNameWithExtension}");
