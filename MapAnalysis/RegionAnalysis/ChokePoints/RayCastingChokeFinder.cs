@@ -16,6 +16,7 @@ public class RayCastingChokeFinder : IChokeFinder {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IMapImageFactory _mapImageFactory;
+    private readonly IMapFileNameFormatter _mapFileNameFormatter;
     private readonly string _mapFileName;
 
     private const bool DrawEnabled = true; // TODO GD Flag this
@@ -30,12 +31,14 @@ public class RayCastingChokeFinder : IChokeFinder {
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
         IMapImageFactory mapImageFactory,
+        IMapFileNameFormatter mapFileNameFormatter,
         string mapFileName
     ) {
         _logger = logger.CreateNamed("RayCastingChokeFinder");
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
         _mapImageFactory = mapImageFactory;
+        _mapFileNameFormatter = mapFileNameFormatter;
         _mapFileName = mapFileName;
     }
 
@@ -81,12 +84,10 @@ public class RayCastingChokeFinder : IChokeFinder {
 
             var nbCellsCovered = lines.SelectMany(line => line.OrderedTraversedCells).ToHashSet().Count;
             var percentageOfCellsCovered = (float)nbCellsCovered / chokePointCellsCount;
-            _logger.Info($"Created {lines.Count,4} lines at {angle,3} degrees covering {nbCellsCovered,5} cells ({percentageOfCellsCovered,3:P0})");
+            _logger.Debug($"Created {lines.Count,4} lines at {angle,3} degrees covering {nbCellsCovered,5} cells ({percentageOfCellsCovered,3:P0})");
 
             allLines.AddRange(lines);
         }
-
-        _logger.Info("All vision lines computed!");
 
         return allLines;
     }
@@ -295,7 +296,7 @@ public class RayCastingChokeFinder : IChokeFinder {
             mapImage.SetCellColor(chokePointCell, System.Drawing.Color.Lime);
         }
 
-        mapImage.Save(FileNameFormatter.FormatDataFileName("ChokePoints", _mapFileName, "png"));
+        mapImage.Save(_mapFileNameFormatter.Format("ChokePoints", _mapFileName));
     }
 
     /// <summary>
@@ -315,7 +316,7 @@ public class RayCastingChokeFinder : IChokeFinder {
             mapImage.SetCellColor(chokePointCell.Position.ToVector2(), textColor);
         }
 
-        mapImage.Save(FileNameFormatter.FormatDataFileName("ChokeScores", _mapFileName, "png"));
+        mapImage.Save(_mapFileNameFormatter.Format("ChokeScores", _mapFileName));
     }
 
     /// <summary>
@@ -396,7 +397,7 @@ public class RayCastingChokeFinder : IChokeFinder {
             chokeScoresDistribution[(int)chokeScore] += 1;
         }
 
-        _logger.Info("Choke score distribution");
+        _logger.Info("Choke score distribution:");
         var cumulativeCount = 0;
         for (var chokeScore = minScore; chokeScore <= maxScore; chokeScore++) {
             if (chokeScoresDistribution[chokeScore] <= 0) {
@@ -408,7 +409,7 @@ public class RayCastingChokeFinder : IChokeFinder {
 
             var percentage = (float)count / chokeScores.Count;
             var cumulativePercentage = (float)cumulativeCount / chokeScores.Count;
-            _logger.Info($"{chokeScore,3}: {count,4} ({percentage,6:P2}) [{cumulativePercentage,6:P2}]");
+            _logger.Debug($"{chokeScore,3}: {count,4} ({percentage,6:P2}) [{cumulativePercentage,6:P2}]");
         }
     }
 }

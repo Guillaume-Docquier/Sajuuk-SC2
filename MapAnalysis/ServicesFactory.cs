@@ -1,6 +1,10 @@
 ﻿using System.Numerics;
 using Algorithms.ExtensionMethods;
 using MapAnalysis.ExpandAnalysis;
+using MapAnalysis.RegionAnalysis;
+using MapAnalysis.RegionAnalysis.ChokePoints;
+using MapAnalysis.RegionAnalysis.Persistence;
+using MapAnalysis.RegionAnalysis.Ramps;
 using SC2Client;
 using SC2Client.Debugging.GraphicalDebugging;
 using SC2Client.ExtensionMethods;
@@ -11,6 +15,8 @@ using SC2Client.Trackers;
 namespace MapAnalysis;
 
 public static class ServicesFactory {
+    private const string DataFolder = "Data";
+
     public readonly struct Services {
         public ILogger Logger { get; init; }
         public IGameConnection GameConnection { get; init; }
@@ -20,10 +26,10 @@ public static class ServicesFactory {
         public IReadOnlyList<ITracker> Trackers { get; init; }
     }
 
-    public static Services CreateServices(string mapFileName) {
+    public static Services CreateServices(List<ILogSink> logSinks, string mapFileName) {
         var knowledgeBase = new KnowledgeBase();
         var frameClock = new FrameClock();
-        var logger = new Logger(frameClock, logToStdOut: true);
+        var logger = new Logger(logSinks, frameClock);
         var sc2Client = new Sc2Client(logger, GameDisplayMode.FullScreen);
         var gameConnection = new LocalGameConnection(logger, sc2Client, knowledgeBase, new LocalGameConfiguration(mapFileName));
 
@@ -59,10 +65,51 @@ public static class ServicesFactory {
             footprintCalculator
         );
 
+        var mapImageFactory = new MapImageFactory(
+            logger,
+            terrainTracker
+        );
+
+        var mapFileNameFormatter = new MapFileNameFormatter(DataFolder);
+        var jsonMapDataRepository = new JsonMapDataRepository<RegionsData>(logger);
+
+        var regionsRepository = new RegionsDataRepository<RegionsData>(
+            footprintCalculator,
+            mapImageFactory,
+            jsonMapDataRepository,
+            mapFileNameFormatter
+        );
+
+        var chokeFinder = new RayCastingChokeFinder(
+            logger,
+            terrainTracker,
+            graphicalDebugger,
+            mapImageFactory,
+            mapFileNameFormatter,
+            mapFileName
+        );
+
+        var rampFinder = new RampFinder(terrainTracker);
+
+        var regionAnalyzer = new RegionAnalyzer(
+            logger,
+            terrainTracker,
+            expandAnalyzer,
+            regionsRepository,
+            chokeFinder,
+            rampFinder,
+            mapImageFactory,
+            unitsTracker,
+            pathfinder,
+            footprintCalculator,
+            mapFileNameFormatter,
+            mapFileName
+        );
+
         // TODO GD Make it simpler to know who's a tracker and in which order to update them
         var trackers = new List<ITracker> { frameClock, unitsTracker, terrainTracker };
 
-        var analyzers = new List<IAnalyzer> { expandAnalyzer };
+        var analyzers = new List<IAnalyzer> { expandAnalyzer, regionAnalyzer };
         var mapAnalyzer = new MapAnalyzer(logger, analyzers);
 
         return new Services

@@ -10,7 +10,12 @@ var commandLineArgs = new CommandLineArguments(args);
 // DI
 var knowledgeBase = new KnowledgeBase();
 var frameClock = new FrameClock();
-var logger = new Logger(frameClock, logToStdOut: true);
+var logSinks = new List<ILogSink>
+{
+    new FileLogSink($"Logs/{DateTime.UtcNow:yyyy-MM-dd HH.mm.ss}.log"),
+    new ConsoleLogSink()
+};
+var logger = new Logger(logSinks, frameClock);
 var sc2Client = new Sc2Client(logger, GameDisplayMode.FullScreen);
 
 IGameConnection sc2GameConnection = commandLineArgs.LadderServerAddress != null
