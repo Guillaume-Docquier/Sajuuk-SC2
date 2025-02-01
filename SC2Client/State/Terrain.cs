@@ -22,7 +22,7 @@ public class Terrain : ITerrain {
 
         _cellHeights = InitCellHeights(gameInfo);
         _walkableCells = InitWalkableCells(gameInfo);
-        _cells = _walkableCells.ToHashSet(); // At the start of the game, all playable cells are walkable because no obstruction are in direct sight.
+        _cells = _walkableCells.ToHashSet(); // At the start of the game, all playable cells are walkable because no obstructions are in direct sight.
         _buildableCells = InitBuildableCells(gameInfo);
     }
 

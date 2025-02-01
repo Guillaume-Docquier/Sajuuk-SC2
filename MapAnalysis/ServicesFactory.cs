@@ -29,7 +29,7 @@ public static class ServicesFactory {
 
         var footprintCalculator = new FootprintCalculator(knowledgeBase, logger);
         var unitsTracker = new UnitsTracker();
-        var terrainTracker = new TerrainTracker();
+        var terrainTracker = new TerrainTracker(footprintCalculator, unitsTracker, logger);
         var graphicalDebugger = new Sc2GraphicalDebugger(terrainTracker);
 
         var pathfinder = new CachedPathfinder<Vector2>(

@@ -1,6 +1,8 @@
 ﻿using System.Numerics;
 using Algorithms;
 using SC2APIProtocol;
+using SC2Client.PubSub;
+using SC2Client.PubSub.Events;
 
 namespace SC2Client.State;
 
@@ -8,7 +10,7 @@ namespace SC2Client.State;
 /// An interface representing a unit in the game.
 /// Units are everything: actual units, buildings, resources, rocks, xel nagas, critters, etc.
 /// </summary>
-public interface IUnit : IHavePosition {
+public interface IUnit : IHavePosition, IPublisher<UnitDeath> {
     /// <summary>
     /// The unique identifier of the unit.
     /// </summary>

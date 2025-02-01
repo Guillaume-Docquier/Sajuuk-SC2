@@ -32,7 +32,7 @@ public class CachedPathfinder<TVertex> : IPathfinder<TVertex> where TVertex : no
         Func<TVertex, TVertex> normalizeVertex,
         Func<TVertex, string> getVertexId
     ) {
-        _logger = logger;
+        _logger = logger.CreateNamed("CachedPathfinder");
         _cache = cache;
         _getEdgeLength = getEdgeLength;
         _getVertexNeighbors = getVertexNeighbors;

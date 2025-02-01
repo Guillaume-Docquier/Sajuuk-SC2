@@ -10,8 +10,9 @@ var mapsToAnalyze = Maps.GetAll()
 var mapIndex = 1;
 foreach (var mapToAnalyze in mapsToAnalyze) {
     var services = ServicesFactory.CreateServices(mapToAnalyze);
+    var logger = services.Logger.CreateNamed("Game Loop");
 
-    services.Logger.Important($"Analyzing map: {mapToAnalyze} ({mapIndex}/{mapsToAnalyze.Count})");
+    logger.Important($"Analyzing map: {mapToAnalyze} ({mapIndex}/{mapsToAnalyze.Count})");
 
     var game = await services.GameConnection.JoinGame(Race.Zerg);
     while (!services.MapAnalyzer.IsAnalysisComplete) {
@@ -30,7 +31,7 @@ foreach (var mapToAnalyze in mapsToAnalyze) {
         await game.Step(stepSize: 1, new List<SC2APIProtocol.Action>());
     }
 
-    services.Logger.Success($"Analysis on {mapToAnalyze} complete!");
+    logger.Success($"Analysis on {mapToAnalyze} complete!");
 
     game.Quit();
 

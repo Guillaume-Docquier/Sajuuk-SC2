@@ -61,8 +61,8 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// <returns>A mapping from a walkable Vector2 to a ChokePointCell.</returns>
     private Dictionary<Vector2, ChokePointCell> CreateChokePointCells() {
         var chokePointCells = new Dictionary<Vector2, ChokePointCell>();
-        for (var x = 0; x < _terrainTracker.Terrain.MaxX; x++) {
-            for (var y = 0; y < _terrainTracker.Terrain.MaxY; y++) {
+        for (var x = 0; x < _terrainTracker.MaxX; x++) {
+            for (var y = 0; y < _terrainTracker.MaxY; y++) {
                 var position = new Vector2(x, y).AsWorldGridCenter();
                 if (_terrainTracker.IsWalkable(position, considerObstructions: false)) {
                     chokePointCells[position] = new ChokePointCell(position);
@@ -76,7 +76,7 @@ public class RayCastingChokeFinder : IChokeFinder {
     private List<VisionLine> CreateVisionLines(int chokePointCellsCount) {
         var allLines = new List<VisionLine>();
         for (var angle = StartingAngle; angle <= MaxAngle; angle += AngleIncrement) {
-            var lines = CreateLinesAtAnAngle(angle, _terrainTracker.Terrain.MaxX, _terrainTracker.Terrain.MaxY);
+            var lines = CreateLinesAtAnAngle(angle, _terrainTracker.MaxX, _terrainTracker.MaxY);
             lines = BreakDownIntoContinuousSegments(lines);
 
             var nbCellsCovered = lines.SelectMany(line => line.OrderedTraversedCells).ToHashSet().Count;

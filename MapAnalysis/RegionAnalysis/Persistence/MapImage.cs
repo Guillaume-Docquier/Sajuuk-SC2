@@ -23,7 +23,7 @@ public class MapImage : IMapImage {
             return;
         }
 
-        _image = new Bitmap(terrainTracker.Terrain.MaxX, terrainTracker.Terrain.MaxY);
+        _image = new Bitmap(terrainTracker.MaxX, terrainTracker.MaxY);
         for (var x = 0; x < _image.Width; x++) {
             for (var y = 0; y < _image.Height; y++) {
                 var color = terrainTracker.IsWalkable(new Vector2(x, y), considerObstructions: false)

@@ -6,6 +6,10 @@ using SC2Client.State;
 
 namespace SC2Client;
 
+/// <summary>
+/// Calculates the footprints of various game units.
+/// TODO GD As an optimization, well known objects should be cached instead of created on every call.
+/// </summary>
 public class FootprintCalculator {
     private readonly KnowledgeBase _knowledgeBase;
     private readonly ILogger _logger;
@@ -15,7 +19,7 @@ public class FootprintCalculator {
         ILogger logger
     ) {
         _knowledgeBase = knowledgeBase;
-        _logger = logger;
+        _logger = logger.CreateNamed("FootprintCalculator");
     }
 
     public IEnumerable<Vector2> GetFootprint(Vector2 buildingCenter, uint buildingType) {
@@ -34,8 +38,20 @@ public class FootprintCalculator {
         return GetGenericFootprint(obstacle);
     }
 
+    /// <summary>
+    /// Mineral fields are 1x2 and their position is in between the two cells.
+    /// So the mineral:
+    /// ┌───────┐
+    /// │   .   │
+    /// └───────┘
+    /// Becomes:
+    /// ┌───┐┌───┐
+    /// │ . ││ . │
+    /// └───┘└───┘
+    /// </summary>
+    /// <param name="mineral"></param>
+    /// <returns></returns>
     private static List<Vector2> GetMineralFootprint(IUnit mineral) {
-        // Mineral fields are 1x2
         return new List<Vector2>
         {
             mineral.Position.Translate(xTranslation: -0.5f).AsWorldGridCenter().ToVector2(),

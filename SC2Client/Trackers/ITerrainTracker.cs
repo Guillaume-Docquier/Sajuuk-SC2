@@ -5,12 +5,18 @@ namespace SC2Client.Trackers;
 
 public interface ITerrainTracker {
     /// <summary>
-    /// The up to date raw terrain data.
+    /// The map's width
     /// </summary>
-    ITerrain Terrain { get; }
+    int MaxX { get; }
+
+    /// <summary>
+    /// The map's height
+    /// </summary>
+    int MaxY { get; }
 
     /// <summary>
     /// The set of all cells that are currently obstructed.
+    /// The cells are expressed as their corner.
     /// </summary>
     IEnumerable<Vector2> ObstructedCells { get; }
 
@@ -68,11 +74,11 @@ public interface ITerrainTracker {
     IEnumerable<Vector2> GetReachableNeighbors(Vector2 cell, IReadOnlySet<Vector2>? potentialNeighbors = null, bool considerObstructions = true);
 
     /// <summary>
-    /// Gets the closest walkable cell around
+    /// Gets the closest walkable Cell around.
     /// </summary>
-    /// <param name="position"></param>
-    /// <param name="searchRadius"></param>
-    /// <param name="allowedCells"></param>
-    /// <returns></returns>
+    /// <param name="position">Can be any Position, will be converted to a Cell.</param>
+    /// <param name="searchRadius">The radius within which to perform the search.</param>
+    /// <param name="allowedCells">A set of Cells to restrict the search.</param>
+    /// <returns>The closest Cell that is walkable.</returns>
     Vector2 GetClosestWalkable(Vector2 position, int searchRadius = 8, HashSet<Vector2>? allowedCells = null);
 }

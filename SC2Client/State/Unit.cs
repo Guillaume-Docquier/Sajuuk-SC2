@@ -3,10 +3,14 @@ using Algorithms.ExtensionMethods;
 using SC2APIProtocol;
 using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
+using SC2Client.PubSub.Events;
 
 namespace SC2Client.State;
 
-public class Unit : IUnit {
+// TODO GD I might want to split this up between RawUnit and Unit. This way I can have the "simple" unit and the "complicated" unit.
+public sealed class Unit : IUnit {
+    private readonly ILogger _logger;
+
     public Vector3 Position { get; }
     public ulong Tag { get; }
     public string Name { get; }
@@ -20,7 +24,9 @@ public class Unit : IUnit {
     public bool IsBurrowed { get; }
     public ulong LastSeen { get; }
 
-    public Unit(KnowledgeBase knowledgeBase, ulong currentFrame, SC2APIProtocol.Unit rawUnit) {
+    private readonly HashSet<Action<UnitDeath>> _deathHandlers = new HashSet<Action<UnitDeath>>();
+
+    public Unit(KnowledgeBase knowledgeBase, ulong currentFrame, SC2APIProtocol.Unit rawUnit, ILogger logger) {
         var unitTypeData = knowledgeBase.GetUnitTypeData(rawUnit.UnitType);
 
         Position = rawUnit.Pos.ToVector3();
@@ -35,6 +41,9 @@ public class Unit : IUnit {
         IsCloaked = rawUnit.Cloak == CloakState.Cloaked;
         IsBurrowed = rawUnit.IsBurrowed;
         LastSeen = currentFrame;
+
+        // Needs to be last otherwise some properties might not be set
+        _logger = logger.CreateNamed($"{ToString()}");
     }
 
     // TODO GD Update for LastSeen / IsSnapshot
@@ -51,5 +60,15 @@ public class Unit : IUnit {
         return Alliance == Alliance.Self
             ? $"{Name}[{Tag}]"
             : $"{Alliance} {Name}[{Tag}]";
+    }
+
+    public void Register(Action<UnitDeath> handler) {
+        _logger.Warning("Unit death is not implemented yet!");
+        _deathHandlers.Add(handler);
+    }
+
+    public void Deregister(Action<UnitDeath> handler) {
+        _logger.Warning("Unit death is not implemented yet!");
+        _deathHandlers.Remove(handler);
     }
 }
