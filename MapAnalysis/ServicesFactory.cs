@@ -31,12 +31,13 @@ public static class ServicesFactory {
         var frameClock = new FrameClock();
         var logger = new Logger(logSinks, frameClock);
         var sc2Client = new Sc2Client(logger, GameDisplayMode.FullScreen);
-        var gameConnection = new LocalGameConnection(logger, sc2Client, knowledgeBase, new LocalGameConfiguration(mapFileName));
-
         var footprintCalculator = new FootprintCalculator(knowledgeBase, logger);
+        var gameConnection = new LocalGameConnection(logger, sc2Client, knowledgeBase, footprintCalculator, new LocalGameConfiguration(mapFileName));
+
         var unitsTracker = new UnitsTracker();
-        var terrainTracker = new TerrainTracker(footprintCalculator, unitsTracker, logger);
+        var terrainTracker = new TerrainTracker(logger);
         var graphicalDebugger = new Sc2GraphicalDebugger(terrainTracker);
+        var debugger = new Debugger(graphicalDebugger, terrainTracker);
 
         var pathfinder = new CachedPathfinder<Vector2>(
             logger,
@@ -107,7 +108,9 @@ public static class ServicesFactory {
         );
 
         // TODO GD Make it simpler to know who's a tracker and in which order to update them
-        var trackers = new List<ITracker> { frameClock, unitsTracker, terrainTracker };
+        // You can do that via a base class that registers in the CTOR
+        // Since trackers will be created in dependency order, they'll register in that same order and update in that same order
+        var trackers = new List<ITracker> { frameClock, unitsTracker, terrainTracker, debugger };
 
         var analyzers = new List<IAnalyzer> { expandAnalyzer, regionAnalyzer };
         var mapAnalyzer = new MapAnalyzer(logger, analyzers);

@@ -64,13 +64,8 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// <returns>A mapping from a walkable Vector2 to a ChokePointCell.</returns>
     private Dictionary<Vector2, ChokePointCell> CreateChokePointCells() {
         var chokePointCells = new Dictionary<Vector2, ChokePointCell>();
-        for (var x = 0; x < _terrainTracker.MaxX; x++) {
-            for (var y = 0; y < _terrainTracker.MaxY; y++) {
-                var position = new Vector2(x, y).AsWorldGridCenter();
-                if (_terrainTracker.IsWalkable(position, considerObstructions: false)) {
-                    chokePointCells[position] = new ChokePointCell(position);
-                }
-            }
+        foreach (var cellCenter in _terrainTracker.Cells.Select(cell => cell.AsWorldGridCenter())) {
+            chokePointCells[cellCenter] = new ChokePointCell(cellCenter);
         }
 
         return chokePointCells;
@@ -151,7 +146,8 @@ public class RayCastingChokeFinder : IChokeFinder {
     private int GoToStartOfNextLine(VisionLine visionLine, int startCellIndex) {
         var currentCellIndex = startCellIndex;
         while (currentCellIndex < visionLine.OrderedTraversedCells.Count) {
-            if (_terrainTracker.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], considerObstructions: false)) {
+            // TODO GD Add a method like isWithinGameCells or something, to avoid forgetting .AsWorldGridCorner()
+            if (_terrainTracker.Cells.Contains(visionLine.OrderedTraversedCells[currentCellIndex].AsWorldGridCorner())) {
                 return currentCellIndex;
             }
 
@@ -176,7 +172,8 @@ public class RayCastingChokeFinder : IChokeFinder {
         var currentCellIndex = startCellIndex;
 
         while (currentCellIndex < visionLine.OrderedTraversedCells.Count) {
-            if (!_terrainTracker.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], considerObstructions: false)) {
+            // TODO GD Add a method like isWithinGameCells or something, to avoid forgetting .AsWorldGridCorner()
+            if (!_terrainTracker.Cells.Contains(visionLine.OrderedTraversedCells[currentCellIndex].AsWorldGridCorner())) {
                 return currentCellIndex - 1;
             }
 

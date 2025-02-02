@@ -3,10 +3,7 @@ using SC2APIProtocol;
 using SC2Client;
 using SC2Client.Trackers;
 
-var mapsToAnalyze = Maps.GetAll()
-    // Blackburn has an isolated expand that breaks the analysis, we'll fix it if it comes back to the map pool
-    .Except(new[] { Maps.Blackburn })
-    .ToList();
+var mapsToAnalyze = new List<string> { Maps.AncientCistern };
 
 var logSinks = new List<ILogSink>
 {
