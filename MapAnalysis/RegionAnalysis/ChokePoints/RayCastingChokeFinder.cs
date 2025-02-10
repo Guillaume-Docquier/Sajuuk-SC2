@@ -5,6 +5,7 @@ using MapAnalysis.RegionAnalysis.Persistence;
 using SC2APIProtocol;
 using SC2Client;
 using SC2Client.Debugging.GraphicalDebugging;
+using SC2Client.Debugging.Images;
 using SC2Client.ExtensionMethods;
 using SC2Client.Trackers;
 
@@ -286,7 +287,7 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// </summary>
     /// <param name="chokePoints">All the choke points.</param>
     private void SaveChokePointsImage(IEnumerable<ChokePoint> chokePoints) {
-        var mapImage = _mapImageFactory.CreateMapImage();
+        var mapImage = _mapImageFactory.CreateMapImageWithTerrain();
 
         var chokePointCells = chokePoints.SelectMany(chokePoint => chokePoint.Edge);
         foreach (var chokePointCell in chokePointCells) {
@@ -303,7 +304,7 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// </summary>
     /// <param name="chokePointCells">All the cells to display the choke scores of.</param>
     private void SaveChokeScoresImage(List<ChokePointCell> chokePointCells) {
-        var mapImage = _mapImageFactory.CreateMapImage();
+        var mapImage = _mapImageFactory.CreateMapImageWithTerrain();
         var minChokeScore = chokePointCells.Min(chokePointCell => chokePointCell.ChokeScore);
         var maxChokeScore = chokePointCells.Max(chokePointCell => chokePointCell.ChokeScore);
 

@@ -7,6 +7,7 @@ using MapAnalysis.RegionAnalysis.Persistence;
 using MapAnalysis.RegionAnalysis.Ramps;
 using SC2Client;
 using SC2Client.Debugging.GraphicalDebugging;
+using SC2Client.Debugging.Images;
 using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
 using SC2Client.Services;
@@ -90,7 +91,13 @@ public static class ServicesFactory {
             mapFileName
         );
 
-        var rampFinder = new RampFinder(terrainTracker);
+        var rampFinder = new RampFinder(
+            terrainTracker,
+            mapImageFactory,
+            mapFileNameFormatter,
+            logger,
+            mapFileName
+        );
 
         var regionAnalyzer = new RegionAnalyzer(
             logger,

@@ -66,7 +66,7 @@ public class Program {
             switch (args.Length) {
                 case 1 when args[0] == "--mapAnalysis":
                     PlayMapAnalysis(
-                        new List<string> { Maps.AncientCistern }
+                        new List<string> { Maps.Berlingrad }
                     );
                     break;
                 case 1 when args[0] == "--videoClip":

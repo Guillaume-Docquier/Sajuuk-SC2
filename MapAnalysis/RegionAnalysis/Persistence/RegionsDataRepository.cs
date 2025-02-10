@@ -1,6 +1,7 @@
 ﻿using System.Drawing;
 using MapAnalysis.ExpandAnalysis;
 using SC2Client;
+using SC2Client.Debugging.Images;
 
 namespace MapAnalysis.RegionAnalysis.Persistence;
 
@@ -48,7 +49,7 @@ public class RegionsDataRepository<TRegionsData> : IMapDataRepository<TRegionsDa
     /// <param name="regions">The regions to represent.</param>
     /// <param name="mapFileName">The file name of the current map.</param>
     private void SaveAsImage(List<IRegion> regions, string mapFileName) {
-        var mapImage = _mapImageFactory.CreateMapImage();
+        var mapImage = _mapImageFactory.CreateMapImageWithTerrain();
         foreach (var region in regions) {
             foreach (var cell in region.Cells) {
                 mapImage.SetCellColor(cell, RegionsDataColors.RegionColorsMapping[region.Color]);

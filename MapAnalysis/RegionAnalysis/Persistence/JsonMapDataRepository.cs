@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using SC2Client;
+using SC2Client.Debugging.Images;
 
 namespace MapAnalysis.RegionAnalysis.Persistence;
 

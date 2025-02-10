@@ -52,10 +52,10 @@ public class Terrain : ITerrain {
         _obstructedCells = ComputeObstructedCells(units);
 
         _walkableCells = ParseWalkableCells(gameInfo);
-        _walkableCells.ExceptWith(_obstructedCells);
+        // _walkableCells.ExceptWith(_obstructedCells);
 
         _buildableCells = ParseBuildableCells(gameInfo);
-        _buildableCells.ExceptWith(_obstructedCells);
+        // _buildableCells.ExceptWith(_obstructedCells);
     }
 
     private static Dictionary<Vector2, float> ParseCellHeights(ResponseGameInfo gameInfo) {

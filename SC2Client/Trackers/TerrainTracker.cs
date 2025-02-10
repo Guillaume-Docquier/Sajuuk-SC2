@@ -36,40 +36,20 @@ public class TerrainTracker : ITracker, ITerrainTracker {
     public IEnumerable<Vector2> ObstructedCells => _terrain.ObstructedCells;
 
     public Vector3 WithWorldHeight(Vector2 cell, float zOffset = 0) {
-        if (!IsWithinBounds(cell)) {
-            return new Vector3(cell.X, cell.Y, zOffset);
-        }
-
-        // Some unwalkable cells are low on the map, let's try to bring them up if they touch a walkable cell (that generally have proper heights)
-        if (!IsWalkable(cell)) {
-            var walkableNeighbors = cell.GetNeighbors().Where(neighbor => IsWalkable(neighbor)).ToList();
-            if (walkableNeighbors.Any()) {
-                return new Vector3(cell.X, cell.Y, walkableNeighbors.Max(neighbor => WithWorldHeight(neighbor).Z) + zOffset);
-            }
-        }
-
         return new Vector3(cell.X, cell.Y, _terrain.CellHeights[cell.AsWorldGridCorner()] + zOffset);
     }
 
     public bool IsWalkable(Vector2 cell, bool considerObstructions = true) {
-        if (!IsWithinBounds(cell)) {
+        if (considerObstructions && IsObstructed(cell)) {
             return false;
-        }
-
-        if (!considerObstructions && IsObstructed(cell)) {
-            return true;
         }
 
         return _terrain.WalkableCells.Contains(cell.AsWorldGridCorner());
     }
 
     public bool IsBuildable(Vector2 cell, bool considerObstructions = true) {
-        if (!IsWithinBounds(cell)) {
+        if (considerObstructions && IsObstructed(cell)) {
             return false;
-        }
-
-        if (!considerObstructions && IsObstructed(cell)) {
-            return true;
         }
 
         return _terrain.BuildableCells.Contains(cell.AsWorldGridCorner());

@@ -3,7 +3,7 @@ using SC2APIProtocol;
 using SC2Client;
 using SC2Client.Trackers;
 
-var mapsToAnalyze = new List<string> { Maps.AncientCistern };
+var mapsToAnalyze = new List<string> { Maps.Berlingrad };
 
 var logSinks = new List<ILogSink>
 {

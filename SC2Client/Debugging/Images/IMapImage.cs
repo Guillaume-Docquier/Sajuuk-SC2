@@ -1,15 +1,22 @@
 ﻿using System.Drawing;
 using System.Numerics;
 
-namespace MapAnalysis.RegionAnalysis.Persistence;
+namespace SC2Client.Debugging.Images;
 
 public interface IMapImage {
+    /// <summary>
+    /// Sets the color of multiple game grid cell.
+    /// </summary>
+    /// <param name="cell">The cell to color.</param>
+    /// <param name="color">The color to set.</param>
+    IMapImage SetCellsColor(IEnumerable<Vector2> cell, Color color);
+
     /// <summary>
     /// Sets the color of the given game grid cell.
     /// </summary>
     /// <param name="cell">The cell to color.</param>
     /// <param name="color">The color to set.</param>
-    void SetCellColor(Vector2 cell, Color color);
+    IMapImage SetCellColor(Vector2 cell, Color color);
 
     /// <summary>
     /// Sets the color of the game grid cell at the (x, y) coordinates.
@@ -17,7 +24,7 @@ public interface IMapImage {
     /// <param name="x">The pixel X.</param>
     /// <param name="y">The pixel Y.</param>
     /// <param name="color">The color to set.</param>
-    void SetCellColor(int x, int y, Color color);
+    IMapImage SetCellColor(int x, int y, Color color);
 
     /// <summary>
     /// Saves the image of the map.
