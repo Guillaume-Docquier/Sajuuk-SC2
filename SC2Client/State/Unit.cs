@@ -3,6 +3,7 @@ using Algorithms.ExtensionMethods;
 using SC2APIProtocol;
 using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
+using SC2Client.Logging;
 using SC2Client.PubSub.Events;
 
 namespace SC2Client.State;

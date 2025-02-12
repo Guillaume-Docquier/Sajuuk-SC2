@@ -1,5 +1,6 @@
 ﻿using SC2APIProtocol;
 using SC2Client.GameData;
+using SC2Client.Logging;
 
 namespace SC2Client;
 

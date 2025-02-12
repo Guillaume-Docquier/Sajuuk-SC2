@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using SC2Client.Logging;
 using SC2Client.Trackers;
 
 namespace SC2Client.Debugging.Images;

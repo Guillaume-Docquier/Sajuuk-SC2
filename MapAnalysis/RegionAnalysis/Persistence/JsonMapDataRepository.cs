@@ -1,10 +1,12 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using SC2Client;
 using SC2Client.Debugging.Images;
+using SC2Client.Logging;
 
 namespace MapAnalysis.RegionAnalysis.Persistence;
 
+// TODO GD rename this class, it doesn't have to be map data! Just json
+// Also does it need to be generic?
 public class JsonMapDataRepository<TData> : IMapDataRepository<TData> {
     private readonly ILogger _logger;
 
@@ -34,7 +36,7 @@ public class JsonMapDataRepository<TData> : IMapDataRepository<TData> {
         _logger.Success($"JSON data saved to {fileNameWithExtension}");
     }
 
-    public TData Load(string fileName) {
+    public TData? Load(string fileName) {
         var fileNameWithExtension = $"{fileName}.{FileExtensions.Json}";
         if (!File.Exists(fileNameWithExtension)) {
             return default;

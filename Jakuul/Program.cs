@@ -2,6 +2,7 @@
 using SC2APIProtocol;
 using SC2Client;
 using SC2Client.GameData;
+using SC2Client.Logging;
 using SC2Client.Trackers;
 
 // CLI

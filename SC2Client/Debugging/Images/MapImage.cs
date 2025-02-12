@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Numerics;
 using SC2Client.ExtensionMethods;
+using SC2Client.Logging;
 
 namespace SC2Client.Debugging.Images;
 

@@ -9,6 +9,7 @@ using SC2Client;
 using SC2Client.Debugging.Images;
 using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
+using SC2Client.Logging;
 using SC2Client.Services;
 using SC2Client.State;
 using SC2Client.Trackers;

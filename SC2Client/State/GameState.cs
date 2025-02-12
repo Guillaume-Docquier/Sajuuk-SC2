@@ -2,11 +2,12 @@
 using Algorithms.ExtensionMethods;
 using SC2APIProtocol;
 using SC2Client.GameData;
+using SC2Client.Logging;
 
 namespace SC2Client.State;
 
 public class GameState : IGameState {
-    private readonly Units _units;
+    private readonly Units _units; // TODO GD Maybe I can just make this public to serialize it? Doesn't matter if used as IGameState
     private readonly Terrain _terrain;
 
     public uint PlayerId { get; }
@@ -47,6 +48,7 @@ public class GameState : IGameState {
     /// Updates the game state.
     /// </summary>
     /// <param name="gameStatus">The status of the game.</param>
+    /// <param name="gameInfo">Data about the game, such as the terrain data.</param>
     /// <param name="observation">The current game state observation.</param>
     public void Update(Status gameStatus, ResponseGameInfo gameInfo, ResponseObservation observation) {
         CurrentFrame = observation.Observation.GameLoop;

@@ -3,10 +3,10 @@ using Algorithms;
 using Algorithms.ExtensionMethods;
 using MapAnalysis.RegionAnalysis.Persistence;
 using SC2APIProtocol;
-using SC2Client;
 using SC2Client.Debugging.GraphicalDebugging;
 using SC2Client.Debugging.Images;
 using SC2Client.ExtensionMethods;
+using SC2Client.Logging;
 using SC2Client.Trackers;
 
 namespace MapAnalysis.RegionAnalysis.ChokePoints;

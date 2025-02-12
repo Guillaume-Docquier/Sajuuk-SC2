@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using SC2Client.Trackers;
 
-namespace SC2Client;
+namespace SC2Client.Logging;
 
 /// <summary>
 /// A logger to log messages to file and, optionally, to stdout

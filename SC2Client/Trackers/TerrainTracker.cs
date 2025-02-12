@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using Algorithms.ExtensionMethods;
 using SC2Client.ExtensionMethods;
+using SC2Client.Logging;
 using SC2Client.State;
 
 namespace SC2Client.Trackers;

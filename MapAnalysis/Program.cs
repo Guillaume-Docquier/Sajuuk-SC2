@@ -1,6 +1,7 @@
 ﻿using MapAnalysis;
 using SC2APIProtocol;
 using SC2Client;
+using SC2Client.Logging;
 using SC2Client.Trackers;
 
 var mapsToAnalyze = new List<string> { Maps.Berlingrad };
