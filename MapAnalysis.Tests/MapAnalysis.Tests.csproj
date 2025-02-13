@@ -27,4 +27,13 @@
       <ProjectReference Include="..\MapAnalysis\MapAnalysis.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="RegionAnalysis\Ramps\RampFinderTestsValidationData_berlingradaie.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="RegionAnalysis\Ramps\RampFinderTestsValidationData_ancientcisternaie.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

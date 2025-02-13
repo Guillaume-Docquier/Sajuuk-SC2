@@ -19,6 +19,7 @@ public class JsonMapDataRepository<TData> : IMapDataRepository<TData> {
             new JsonSerializers.Vector2JsonConverter(),
             new JsonSerializers.Vector3JsonConverter(),
         },
+        IncludeFields = true,
     };
 
     public JsonMapDataRepository(ILogger logger) {

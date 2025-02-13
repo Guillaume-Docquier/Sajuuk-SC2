@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Text.Json.Serialization;
 using Algorithms.ExtensionMethods;
 using SC2APIProtocol;
 using SC2Client.GameData;
@@ -7,17 +8,24 @@ using SC2Client.Logging;
 namespace SC2Client.State;
 
 public class GameState : IGameState {
-    private readonly Units _units; // TODO GD Maybe I can just make this public to serialize it? Doesn't matter if used as IGameState
-    private readonly Terrain _terrain;
+    [JsonInclude] public Units _units { get; init; }
+    [JsonInclude] public Terrain _terrain { get; init; }
 
-    public uint PlayerId { get; }
-    public string MapName { get; }
+    public uint PlayerId { get; init; }
+    public string MapName { get; init; }
     public uint CurrentFrame { get; private set; }
     public Result Result { get; private set; }
-    public Vector2 StartingLocation { get; }
-    public Vector2 EnemyStartingLocation { get; }
-    public ITerrain Terrain => _terrain;
-    public IUnits Units => _units;
+    public Vector2 StartingLocation { get; init; }
+    public Vector2 EnemyStartingLocation { get; init; }
+
+    [JsonIgnore] public ITerrain Terrain => _terrain;
+    [JsonIgnore] public IUnits Units => _units;
+
+    [JsonConstructor]
+    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
+#pragma warning disable CS8618, CS9264
+    public GameState() {}
+#pragma warning restore CS8618, CS9264
 
     public GameState(
         uint playerId,

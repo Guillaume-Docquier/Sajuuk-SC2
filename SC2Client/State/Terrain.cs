@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Text.Json.Serialization;
 using SC2APIProtocol;
 using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
@@ -8,23 +9,33 @@ namespace SC2Client.State;
 public class Terrain : ITerrain {
     private readonly FootprintCalculator _footprintCalculator;
 
-    private readonly Dictionary<Vector2, float> _cellHeights;
-    private readonly HashSet<Vector2> _cells;
+    [JsonInclude] public Dictionary<Vector2, float> _cellHeights { get; init; }
+    [JsonInclude] public HashSet<Vector2> _cells { get; init; }
 
-    private HashSet<Vector2> _obstructedCells = new HashSet<Vector2>();
-    private HashSet<Vector2> _walkableCells = new HashSet<Vector2>();
-    private HashSet<Vector2> _buildableCells = new HashSet<Vector2>();
+    [JsonInclude] public HashSet<Vector2> _obstructedCells { get; private set; }
+    [JsonInclude] public HashSet<Vector2> _walkableCells { get; private set; }
+    [JsonInclude] public HashSet<Vector2> _buildableCells { get; private set; }
 
     public int MaxX { get; }
     public int MaxY { get; }
-    public IReadOnlyDictionary<Vector2, float> CellHeights => _cellHeights;
-    public IReadOnlySet<Vector2> Cells => _cells;
-    public IReadOnlySet<Vector2> ObstructedCells => _obstructedCells;
-    public IReadOnlySet<Vector2> WalkableCells => _walkableCells;
-    public IReadOnlySet<Vector2> BuildableCells => _buildableCells;
+
+    [JsonIgnore] public IReadOnlyDictionary<Vector2, float> CellHeights => _cellHeights;
+    [JsonIgnore] public IReadOnlySet<Vector2> Cells => _cells;
+    [JsonIgnore] public IReadOnlySet<Vector2> ObstructedCells => _obstructedCells;
+    [JsonIgnore] public IReadOnlySet<Vector2> WalkableCells => _walkableCells;
+    [JsonIgnore] public IReadOnlySet<Vector2> BuildableCells => _buildableCells;
+
+    [JsonConstructor]
+    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
+#pragma warning disable CS8618, CS9264
+    public Terrain() {}
+#pragma warning restore CS8618, CS9264
 
     public Terrain(FootprintCalculator footprintCalculator, ResponseGameInfo gameInfo, Units units) {
         _footprintCalculator = footprintCalculator;
+        _obstructedCells = new HashSet<Vector2>();
+        _walkableCells = new HashSet<Vector2>();
+        _buildableCells = new HashSet<Vector2>();
 
         MaxX = gameInfo.StartRaw.MapSize.X;
         MaxY = gameInfo.StartRaw.MapSize.Y;

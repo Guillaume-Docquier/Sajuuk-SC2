@@ -15,7 +15,7 @@ public class SerializationTest {
     }
 
     class Thing : IThing {
-        public HashSet<Vector2> ConcreteLocations;
+        [JsonInclude] public HashSet<Vector2> ConcreteLocations { get; init; }
 
         [JsonIgnore] public IReadOnlySet<Vector2> Locations => ConcreteLocations;
 

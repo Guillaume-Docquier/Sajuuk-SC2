@@ -1,4 +1,5 @@
-﻿using SC2APIProtocol;
+﻿using System.Text.Json.Serialization;
+using SC2APIProtocol;
 using SC2Client.GameData;
 using SC2Client.Logging;
 
@@ -8,20 +9,31 @@ public class Units : IUnits {
     private readonly ILogger _logger;
     private readonly KnowledgeBase _knowledgeBase;
 
-    private HashSet<ulong> _deadUnitTags = new HashSet<ulong>();
-    private List<Unit> _neutralUnits = new List<Unit>();
-    private List<Unit> _ownedUnits = new List<Unit>();
-    private List<Unit> _enemyUnits = new List<Unit>();
+    [JsonInclude] public HashSet<ulong> _deadUnitTags { get; private set; }
+    [JsonInclude] public List<Unit> _neutralUnits { get; private set; }
+    [JsonInclude] public List<Unit> _ownedUnits { get; private set; }
+    [JsonInclude] public List<Unit> _enemyUnits { get; private set; }
 
-    public IReadOnlySet<ulong> DeadUnitTags => _deadUnitTags;
-    public IReadOnlyList<IUnit> NeutralUnits => _neutralUnits;
-    public IReadOnlyList<IUnit> OwnedUnits => _ownedUnits;
-    public IReadOnlyList<IUnit> EnemyUnits => _enemyUnits;
+    [JsonIgnore] public IReadOnlySet<ulong> DeadUnitTags => _deadUnitTags;
+    [JsonIgnore] public IReadOnlyList<IUnit> NeutralUnits => _neutralUnits;
+    [JsonIgnore] public IReadOnlyList<IUnit> OwnedUnits => _ownedUnits;
+    [JsonIgnore] public IReadOnlyList<IUnit> EnemyUnits => _enemyUnits;
+
+    [JsonConstructor]
+    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
+#pragma warning disable CS8618, CS9264
+    public Units() {}
+#pragma warning restore CS8618, CS9264
 
     // TODO GD This needs a better name. Catalogue? Repertoire? Something "I hold the state of all units you might want".
     public Units(ILogger logger, KnowledgeBase knowledgeBase, ResponseObservation observation) {
         _logger = logger.CreateNamed("Units");
         _knowledgeBase = knowledgeBase;
+
+        _deadUnitTags = new HashSet<ulong>();
+        _neutralUnits = new List<Unit>();
+        _ownedUnits = new List<Unit>();
+        _enemyUnits = new List<Unit>();
 
         Update(observation);
         LogUnknownNeutralUnits();

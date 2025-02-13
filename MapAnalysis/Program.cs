@@ -4,7 +4,7 @@ using SC2Client;
 using SC2Client.Logging;
 using SC2Client.Trackers;
 
-var mapsToAnalyze = new List<string> { Maps.Berlingrad };
+var mapsToAnalyze = Maps.GetAll().Except(new[] { Maps.Blackburn }).ToList();
 
 var logSinks = new List<ILogSink>
 {

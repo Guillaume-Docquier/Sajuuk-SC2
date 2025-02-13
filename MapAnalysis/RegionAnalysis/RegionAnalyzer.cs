@@ -29,6 +29,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
     private readonly IPathfinder<Vector2> _pathfinder;
     private readonly FootprintCalculator _footprintCalculator;
     private readonly IMapFileNameFormatter _mapFileNameFormatter;
+    private readonly IMapDataRepository<RampFinderValidationData> _rampFinderResultRepository;
     private readonly string _mapFileName;
 
     private const float RegionZMultiplier = 8;
@@ -65,6 +66,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
         IPathfinder<Vector2> pathfinder,
         FootprintCalculator footprintCalculator,
         IMapFileNameFormatter mapFileNameFormatter,
+        IMapDataRepository<RampFinderValidationData> rampFinderResultRepository,
         string mapFileName
     ) {
         _logger = logger.CreateNamed("RegionAnalyzer");
@@ -78,6 +80,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
         _pathfinder = pathfinder;
         _footprintCalculator = footprintCalculator;
         _mapFileNameFormatter = mapFileNameFormatter;
+        _rampFinderResultRepository = rampFinderResultRepository;
         _mapFileName = mapFileName;
     }
 
@@ -92,6 +95,10 @@ public class RegionAnalyzer : IRegionAnalyzer {
 
         if (IsAnalysisComplete) {
             return;
+        }
+
+        if (gameState is not GameState concreteState) {
+            throw new Exception($"Expected gameState to be instance of {typeof(GameState)} for later serialization, but got {gameState.GetType()}");
         }
 
         var cellsToConsider = _terrainTracker.Cells.ToList();
@@ -116,6 +123,15 @@ public class RegionAnalyzer : IRegionAnalyzer {
         var nbChokePoints = _regionsData.ChokePoints.Count;
         _logger.Metric($"{nbRegions} regions, {nbRamps} ramps, {nbNoise} unclassified cells and {nbChokePoints} choke points");
         DebugReachableNeighbors();
+
+        _rampFinderResultRepository.Save(
+            new RampFinderValidationData
+            {
+                InitialGameState = concreteState,
+                ExpectedRamps = ramps,
+            },
+            _mapFileNameFormatter.Format(RampFinderValidationData.FilenameTopic, _mapFileName)
+        );
 
         _logger.Success("Region analysis done and saved");
     }

@@ -112,6 +112,7 @@ public static class ServicesFactory {
             pathfinder,
             footprintCalculator,
             mapFileNameFormatter,
+            new JsonMapDataRepository<RampFinderValidationData>(logger), // TODO GD We don't need new repos everytime, just one for the map
             mapFileName
         );
 
