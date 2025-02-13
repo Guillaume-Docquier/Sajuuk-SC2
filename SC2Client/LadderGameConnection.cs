@@ -1,5 +1,6 @@
 ﻿using SC2APIProtocol;
 using SC2Client.GameData;
+using SC2Client.Logging;
 
 namespace SC2Client;
 
@@ -10,6 +11,7 @@ public class LadderGameConnection : IGameConnection {
     private readonly ILogger _logger;
     private readonly ISc2Client _sc2Client;
     private readonly KnowledgeBase _knowledgeBase;
+    private readonly FootprintCalculator _footprintCalculator;
     private readonly string _serverAddress;
     private readonly int _gamePort;
     private readonly int _startPort;
@@ -21,6 +23,7 @@ public class LadderGameConnection : IGameConnection {
         ILogger logger,
         ISc2Client sc2Client,
         KnowledgeBase knowledgeBase,
+        FootprintCalculator footprintCalculator,
         string serverAddress,
         int gamePort,
         int startPort
@@ -28,6 +31,7 @@ public class LadderGameConnection : IGameConnection {
         _logger = logger.CreateNamed("LadderGameConnection");
         _sc2Client = sc2Client;
         _knowledgeBase = knowledgeBase;
+        _footprintCalculator = footprintCalculator;
         _serverAddress = serverAddress;
         _gamePort = gamePort;
         _startPort = startPort;
@@ -39,6 +43,7 @@ public class LadderGameConnection : IGameConnection {
         _logger.Info("Joining ladder game");
         var playerId = await _sc2Client.JoinGame(RequestBuilder.RequestJoinLadderGame(race, _startPort));
 
-        return await Game.Create(playerId, _logger, _sc2Client, _knowledgeBase);
+        // TODO GD Need a GameFactory
+        return await Game.Create(playerId, _logger, _sc2Client, _knowledgeBase, _footprintCalculator);
     }
 }

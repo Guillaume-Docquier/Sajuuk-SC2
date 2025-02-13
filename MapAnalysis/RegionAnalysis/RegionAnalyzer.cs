@@ -6,8 +6,10 @@ using MapAnalysis.RegionAnalysis.ChokePoints;
 using MapAnalysis.RegionAnalysis.Persistence;
 using MapAnalysis.RegionAnalysis.Ramps;
 using SC2Client;
+using SC2Client.Debugging.Images;
 using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
+using SC2Client.Logging;
 using SC2Client.Services;
 using SC2Client.State;
 using SC2Client.Trackers;
@@ -26,6 +28,8 @@ public class RegionAnalyzer : IRegionAnalyzer {
     private readonly IUnitsTracker _unitsTracker;
     private readonly IPathfinder<Vector2> _pathfinder;
     private readonly FootprintCalculator _footprintCalculator;
+    private readonly IMapFileNameFormatter _mapFileNameFormatter;
+    private readonly IMapDataRepository<RampFinderValidationData> _rampFinderResultRepository;
     private readonly string _mapFileName;
 
     private const float RegionZMultiplier = 8;
@@ -61,6 +65,8 @@ public class RegionAnalyzer : IRegionAnalyzer {
         IUnitsTracker unitsTracker,
         IPathfinder<Vector2> pathfinder,
         FootprintCalculator footprintCalculator,
+        IMapFileNameFormatter mapFileNameFormatter,
+        IMapDataRepository<RampFinderValidationData> rampFinderResultRepository,
         string mapFileName
     ) {
         _logger = logger.CreateNamed("RegionAnalyzer");
@@ -73,6 +79,8 @@ public class RegionAnalyzer : IRegionAnalyzer {
         _unitsTracker = unitsTracker;
         _pathfinder = pathfinder;
         _footprintCalculator = footprintCalculator;
+        _mapFileNameFormatter = mapFileNameFormatter;
+        _rampFinderResultRepository = rampFinderResultRepository;
         _mapFileName = mapFileName;
     }
 
@@ -89,16 +97,25 @@ public class RegionAnalyzer : IRegionAnalyzer {
             return;
         }
 
-        var cellsToConsider = gameState.Terrain.WalkableCells;
-        _logger.Info($"Starting region analysis on {cellsToConsider.Count} cells ({gameState.Terrain.MaxX}x{gameState.Terrain.MaxY})");
+        if (gameState is not GameState concreteState) {
+            throw new Exception($"Expected gameState to be instance of {typeof(GameState)} for later serialization, but got {gameState.GetType()}");
+        }
+
+        var cellsToConsider = _terrainTracker.Cells.ToList();
+        _logger.Info($"Starting region analysis on {cellsToConsider.Count} cells ({_terrainTracker.MaxX}x{_terrainTracker.MaxY})");
 
         var ramps = _rampFinder.FindRamps(cellsToConsider);
+        _mapImageFactory
+            .CreateMapImageWithTerrain()
+            .SetCellsColor(ramps.SelectMany(ramp => ramp.Cells), Color.Teal)
+            .Save(_mapFileNameFormatter.Format("Ramps", _mapFileName));
+
         var chokePoints = _chokeFinder.FindChokePoints();
         var regions = FindRegions(cellsToConsider, ramps, chokePoints).ToList();
         var noise = cellsToConsider.Except(regions.SelectMany(region => region.Cells));
 
         _regionsData = new RegionsData(regions, ramps, noise, chokePoints);
-        _regionsRepository.Save(_regionsData, gameState.MapName);
+        _regionsRepository.Save(_regionsData, _mapFileName);
 
         var nbRegions = _regionsData.Regions.Count;
         var nbRamps = _regionsData.Ramps.Count;
@@ -106,6 +123,15 @@ public class RegionAnalyzer : IRegionAnalyzer {
         var nbChokePoints = _regionsData.ChokePoints.Count;
         _logger.Metric($"{nbRegions} regions, {nbRamps} ramps, {nbNoise} unclassified cells and {nbChokePoints} choke points");
         DebugReachableNeighbors();
+
+        _rampFinderResultRepository.Save(
+            new RampFinderValidationData
+            {
+                InitialGameState = concreteState,
+                ExpectedRamps = ramps,
+            },
+            _mapFileNameFormatter.Format(RampFinderValidationData.FilenameTopic, _mapFileName)
+        );
 
         _logger.Success("Region analysis done and saved");
     }
@@ -119,17 +145,24 @@ public class RegionAnalyzer : IRegionAnalyzer {
     /// <param name="potentialChokePoints">The potential choke points on the map.</param>
     /// <returns>The detected regions.</returns>
     private IEnumerable<IRegion> FindRegions(IReadOnlyCollection<Vector2> cellsToConsider, IReadOnlyCollection<Ramp> ramps, IReadOnlyCollection<ChokePoint> potentialChokePoints) {
+        _logger.Info($"Finding regions with {cellsToConsider.Count} cellsToConsider, {ramps.Count} ramps and {potentialChokePoints.Count} potentialChokePoints");
         var regions = ComputeObstaclesRegions(cellsToConsider, ramps);
+        _logger.Info($"{regions.Count} obstacle regions");
 
-        var cellToConsiderForRegionSplit = cellsToConsider
+        var cellsToConsiderForRegionSplit = cellsToConsider
             .Except(ramps.SelectMany(ramp => ramp.Cells))
-            .Except(regions.SelectMany(region => region.Cells));
+            .Except(regions.SelectMany(region => region.Cells))
+            .ToList();
+        _logger.Info($"{cellsToConsiderForRegionSplit.Count} cellsToConsiderForRegionSplit");
 
-        var regionsPotentialCells = ComputePotentialRegionCells(cellToConsiderForRegionSplit);
+        var regionsPotentialCells = ComputePotentialRegionCells(cellsToConsiderForRegionSplit).ToList();
+        _logger.Info($"{regionsPotentialCells.Count} regionsPotentialCells");
         var potentialRegions = ComputePotentialRegions(regionsPotentialCells);
+        _logger.Info($"{potentialRegions.Count} potentialRegions");
 
         foreach (var region in potentialRegions) {
             var subregions = BreakDownIntoSubregions(region.ToHashSet(), potentialChokePoints, saveSplitsAsImage: false);
+            _logger.Info($"{subregions.Count} subregions");
             regions.AddRange(subregions.Select(subregion => new Region(subregion, RegionType.Unknown, _expandAnalyzer.ExpandLocations)));
         }
 
@@ -159,17 +192,22 @@ public class RegionAnalyzer : IRegionAnalyzer {
     /// <returns>A list of regions made from obstacles.</returns>
     private List<Region> ComputeObstaclesRegions(IReadOnlyCollection<Vector2> cellsToConsider, IReadOnlyCollection<Ramp> ramps) {
         var allRampsCells = ramps.SelectMany(ramp => ramp.Cells).ToHashSet();
+        _logger.Info($"{allRampsCells.Count} allRampsCells");
         var obstacleGroups = ComputeObstacleGroups(cellsToConsider.Except(allRampsCells));
+        _logger.Info($"{obstacleGroups.Count} obstacleGroups");
 
         var regions = new List<Region>();
         foreach (var obstacleGroup in obstacleGroups) {
-            var borderingCells = ComputeBorderingCells(obstacleGroup.ToHashSet());
+            var borderingCells = ComputeBorderingCells(obstacleGroup.ToHashSet()).ToList();
+            _logger.Info($"{borderingCells.Count} borderingCells");
             var borderingCellsGroups = borderingCells.GroupBy(cell => _terrainTracker.IsWalkable(cell, considerObstructions: false));
+            _logger.Info($"{borderingCellsGroups.Count()} borderingCellsGroups");
 
             var nbClusters = borderingCellsGroups
                 .Select(group => Clustering.DBSCAN(group.ToList(), epsilon: (float)Math.Sqrt(2), minPoints: 1).clusters)
                 .Select(clusters => clusters.Count)
                 .Sum();
+            _logger.Info($"{nbClusters} nbClusters");
 
             // 4 or more clusters means we have 2 sides of the obstacle that are walkable, and two sides that are unwalkable.
             if (nbClusters >= 4) {
@@ -186,13 +224,39 @@ public class RegionAnalyzer : IRegionAnalyzer {
     /// <param name="cellsToConsider">The cells to find obstacles in.</param>
     /// <returns>The list of all obstacle groups.</returns>
     private List<List<Vector2>> ComputeObstacleGroups(IEnumerable<Vector2> cellsToConsider) {
-        var cells = UnitQueries
-            .GetUnits(_unitsTracker.NeutralUnits, UnitTypeId.Obstacles.Concat(UnitTypeId.MineralFields).ToHashSet())
-            .SelectMany(_footprintCalculator.GetFootprint)
-            .Where(cellsToConsider.Contains)
-            .ToList();
+        _logger.Info($"ComputeObstacleGroups with {cellsToConsider.Count()} cellsToConsider");
+        var cellToConsiderMapImage = _mapImageFactory.CreateMapImageWithTerrain();
+        foreach (var cell in cellsToConsider) {
+            cellToConsiderMapImage.SetCellColor(cell, Color.MediumPurple);
+        }
+        cellToConsiderMapImage.Save(_mapFileNameFormatter.Format($"ObstacleGroups_Cells", _mapFileName));
 
-        return Clustering.DBSCAN(cells, epsilon: (float)Math.Sqrt(2), minPoints: 1).clusters;
+        var units = UnitQueries.GetUnits(_unitsTracker.NeutralUnits, UnitTypeId.Obstacles.Concat(UnitTypeId.MineralFields).ToHashSet()).ToList();
+        _logger.Info($"{units.Count} units");
+        var footprints = units.SelectMany(_footprintCalculator.GetFootprint).Select(position => position.AsWorldGridCorner()).ToList();
+        _logger.Info($"{footprints.Count} footprints");
+        var cells = footprints.Where(cellsToConsider.Contains).ToList();
+        _logger.Info($"{cells.Count} obstacle group cells");
+
+        var footprintsMapImage = _mapImageFactory.CreateMapImageWithTerrain();
+        foreach (var cell in footprints) {
+            footprintsMapImage.SetCellColor(cell, Color.Red);
+        }
+
+        foreach (var cell in cells) {
+            footprintsMapImage.SetCellColor(cell, Color.Cyan);
+        }
+        footprintsMapImage.Save(_mapFileNameFormatter.Format($"ObstacleGroups_Footprints", _mapFileName));
+
+        var clusters = Clustering.DBSCAN(cells, epsilon: (float)Math.Sqrt(2), minPoints: 1).clusters;
+
+        var clustersMapImage = _mapImageFactory.CreateMapImageWithTerrain();
+        foreach (var cell in clusters.SelectMany(cluster => cluster)) {
+            clustersMapImage.SetCellColor(cell, Color.MediumPurple);
+        }
+        clustersMapImage.Save(_mapFileNameFormatter.Format($"ObstacleGroups_Clusters", _mapFileName));
+
+        return clusters;
     }
 
     /// <summary>
@@ -221,6 +285,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
         var isolatedCells = potentialRegionCells
             .Where(cell => !_terrainTracker.GetReachableNeighbors(cell, considerObstructions: false).Any())
             .ToList();
+        _logger.Info($"{isolatedCells.Count} isolatedCells");
 
         return potentialRegionCells.Except(isolatedCells);
     }
@@ -276,6 +341,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
             .Where(chokePoint => chokePoint.Edge.Any(region.Contains))
             .OrderBy(chokePoint => chokePoint.Length)
             .ToList();
+        _logger.Info($"{chokesInRegion.Count} chokesInRegion");
 
         // Try to split the region into two reasonably sized subregions using choke points
         // Sometimes we will need more than 1 choke to split a region into two
@@ -364,7 +430,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
     /// <param name="subregion2">The second subregion.</param>
     /// <param name="cutLength">The cut length, for split validation.</param>
     private void SaveSplitAsImage(IEnumerable<Vector2> region, IEnumerable<ChokePoint> chokePointCombination, HashSet<Vector2> subregion1, HashSet<Vector2> subregion2, int cutLength) {
-        var mapImage = _mapImageFactory.CreateMapImage();
+        var mapImage = _mapImageFactory.CreateMapImageWithTerrain();
         foreach (var cell in region) {
             mapImage.SetCellColor(cell, Color.Cyan);
         }
@@ -388,7 +454,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
             mapImage.SetCellColor(cell, splitColor);
         }
 
-        mapImage.Save(FileNameFormatter.FormatDataFileName($"RegionSplit_{DateTime.UtcNow.Ticks}", _mapFileName, "png"));
+        mapImage.Save(_mapFileNameFormatter.Format($"RegionSplit_{DateTime.UtcNow.Ticks}", _mapFileName));
     }
 
     /// <summary>
@@ -396,7 +462,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
     /// We also save an image with red lines in between unreachable neighbors.
     /// </summary>
     private void DebugReachableNeighbors() {
-        var mapImage = _mapImageFactory.CreateMapImage();
+        var mapImage = _mapImageFactory.CreateMapImageWithTerrain();
 
         // Draw obstructions (rocks, minerals)
         foreach (var cell in _terrainTracker.ObstructedCells) {
@@ -419,6 +485,6 @@ public class RegionAnalyzer : IRegionAnalyzer {
             }
         }
 
-        mapImage.Save(FileNameFormatter.FormatDataFileName("UnreachableNeighbors", _mapFileName, "png"));
+        mapImage.Save(_mapFileNameFormatter.Format("UnreachableNeighbors", _mapFileName));
     }
 }

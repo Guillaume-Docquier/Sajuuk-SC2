@@ -1,8 +1,10 @@
 ﻿using System.Numerics;
+using System.Text.Json.Serialization;
 using Algorithms.ExtensionMethods;
 using SC2APIProtocol;
 using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
+using SC2Client.Logging;
 using SC2Client.PubSub.Events;
 
 namespace SC2Client.State;
@@ -11,20 +13,26 @@ namespace SC2Client.State;
 public sealed class Unit : IUnit {
     private readonly ILogger _logger;
 
-    public Vector3 Position { get; }
-    public ulong Tag { get; }
-    public string Name { get; }
-    public uint UnitType { get; }
-    public float FoodRequired { get; }
-    public float Radius { get; }
-    public Alliance Alliance { get; }
-    public bool IsSnapshot { get; }
-    public bool IsFlying { get; }
-    public bool IsCloaked { get; }
-    public bool IsBurrowed { get; }
-    public ulong LastSeen { get; }
+    [JsonInclude] public Vector3 Position { get; init; }
+    [JsonInclude] public ulong Tag { get; init; }
+    [JsonInclude] public string Name { get; init; }
+    [JsonInclude] public uint UnitType { get; init; }
+    [JsonInclude] public float FoodRequired { get; init; }
+    [JsonInclude] public float Radius { get; init; }
+    [JsonInclude] public Alliance Alliance { get; init; }
+    [JsonInclude] public bool IsSnapshot { get; init; }
+    [JsonInclude] public bool IsFlying { get; init; }
+    [JsonInclude] public bool IsCloaked { get; init; }
+    [JsonInclude] public bool IsBurrowed { get; init; }
+    [JsonInclude] public ulong LastSeen { get; init; }
 
     private readonly HashSet<Action<UnitDeath>> _deathHandlers = new HashSet<Action<UnitDeath>>();
+
+    [JsonConstructor]
+    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
+#pragma warning disable CS8618, CS9264
+    public Unit() {}
+#pragma warning restore CS8618, CS9264
 
     public Unit(KnowledgeBase knowledgeBase, ulong currentFrame, SC2APIProtocol.Unit rawUnit, ILogger logger) {
         var unitTypeData = knowledgeBase.GetUnitTypeData(rawUnit.UnitType);

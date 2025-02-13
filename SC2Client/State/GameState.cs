@@ -1,27 +1,37 @@
 ﻿using System.Numerics;
+using System.Text.Json.Serialization;
 using Algorithms.ExtensionMethods;
 using SC2APIProtocol;
 using SC2Client.GameData;
+using SC2Client.Logging;
 
 namespace SC2Client.State;
 
 public class GameState : IGameState {
-    private readonly Terrain _terrain;
-    private readonly Units _units;
+    [JsonInclude] public Units _units { get; init; }
+    [JsonInclude] public Terrain _terrain { get; init; }
 
-    public uint PlayerId { get; }
-    public string MapName { get; }
+    public uint PlayerId { get; init; }
+    public string MapName { get; init; }
     public uint CurrentFrame { get; private set; }
     public Result Result { get; private set; }
-    public Vector2 StartingLocation { get; }
-    public Vector2 EnemyStartingLocation { get; }
-    public ITerrain Terrain => _terrain;
-    public IUnits Units => _units;
+    public Vector2 StartingLocation { get; init; }
+    public Vector2 EnemyStartingLocation { get; init; }
+
+    [JsonIgnore] public ITerrain Terrain => _terrain;
+    [JsonIgnore] public IUnits Units => _units;
+
+    [JsonConstructor]
+    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
+#pragma warning disable CS8618, CS9264
+    public GameState() {}
+#pragma warning restore CS8618, CS9264
 
     public GameState(
         uint playerId,
         ILogger logger,
         KnowledgeBase knowledgeBase,
+        FootprintCalculator footprintCalculator,
         ResponseGameInfo gameInfo,
         Status gameStatus,
         ResponseObservation observation
@@ -30,8 +40,8 @@ public class GameState : IGameState {
         MapName = gameInfo.MapName;
         CurrentFrame = observation.Observation.GameLoop;
         Result = GetGameResult(gameStatus, observation);
-        _terrain = new Terrain(gameInfo);
         _units = new Units(logger, knowledgeBase, observation);
+        _terrain = new Terrain(footprintCalculator, gameInfo, _units);
 
         var startingTownHallPosition = UnitQueries.GetUnits(_units.OwnedUnits, UnitTypeId.TownHalls).First().Position.ToVector2();
         var startLocations = gameInfo.StartRaw.StartLocations
@@ -46,14 +56,14 @@ public class GameState : IGameState {
     /// Updates the game state.
     /// </summary>
     /// <param name="gameStatus">The status of the game.</param>
+    /// <param name="gameInfo">Data about the game, such as the terrain data.</param>
     /// <param name="observation">The current game state observation.</param>
-    public void Update(Status gameStatus, ResponseObservation observation) {
+    public void Update(Status gameStatus, ResponseGameInfo gameInfo, ResponseObservation observation) {
         CurrentFrame = observation.Observation.GameLoop;
         Result = GetGameResult(gameStatus, observation);
 
-        // The order of updates is not important
-        _terrain.Update(observation);
         _units.Update(observation);
+        _terrain.Update(gameInfo, _units);
     }
 
     /// <summary>

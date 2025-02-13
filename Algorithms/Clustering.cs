@@ -216,7 +216,7 @@ public static class Clustering {
         return GetCenter(items.Select(item => item.Position.ToVector2()).ToList());
     }
 
-    public static Vector2 GetCenter(List<Vector2> cells) {
+    public static Vector2 GetCenter(IReadOnlyCollection<Vector2> cells) {
         if (cells.Count <= 0) {
             throw new ArgumentException("Trying to GetCenter of an empty set of cells");
         }

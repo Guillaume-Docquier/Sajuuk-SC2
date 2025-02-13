@@ -3,9 +3,10 @@ using Algorithms;
 using Algorithms.ExtensionMethods;
 using MapAnalysis.RegionAnalysis.Persistence;
 using SC2APIProtocol;
-using SC2Client;
 using SC2Client.Debugging.GraphicalDebugging;
+using SC2Client.Debugging.Images;
 using SC2Client.ExtensionMethods;
+using SC2Client.Logging;
 using SC2Client.Trackers;
 
 namespace MapAnalysis.RegionAnalysis.ChokePoints;
@@ -16,6 +17,7 @@ public class RayCastingChokeFinder : IChokeFinder {
     private readonly ITerrainTracker _terrainTracker;
     private readonly IGraphicalDebugger _graphicalDebugger;
     private readonly IMapImageFactory _mapImageFactory;
+    private readonly IMapFileNameFormatter _mapFileNameFormatter;
     private readonly string _mapFileName;
 
     private const bool DrawEnabled = true; // TODO GD Flag this
@@ -30,12 +32,14 @@ public class RayCastingChokeFinder : IChokeFinder {
         ITerrainTracker terrainTracker,
         IGraphicalDebugger graphicalDebugger,
         IMapImageFactory mapImageFactory,
+        IMapFileNameFormatter mapFileNameFormatter,
         string mapFileName
     ) {
         _logger = logger.CreateNamed("RayCastingChokeFinder");
         _terrainTracker = terrainTracker;
         _graphicalDebugger = graphicalDebugger;
         _mapImageFactory = mapImageFactory;
+        _mapFileNameFormatter = mapFileNameFormatter;
         _mapFileName = mapFileName;
     }
 
@@ -61,13 +65,8 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// <returns>A mapping from a walkable Vector2 to a ChokePointCell.</returns>
     private Dictionary<Vector2, ChokePointCell> CreateChokePointCells() {
         var chokePointCells = new Dictionary<Vector2, ChokePointCell>();
-        for (var x = 0; x < _terrainTracker.MaxX; x++) {
-            for (var y = 0; y < _terrainTracker.MaxY; y++) {
-                var position = new Vector2(x, y).AsWorldGridCenter();
-                if (_terrainTracker.IsWalkable(position, considerObstructions: false)) {
-                    chokePointCells[position] = new ChokePointCell(position);
-                }
-            }
+        foreach (var cellCenter in _terrainTracker.Cells.Select(cell => cell.AsWorldGridCenter())) {
+            chokePointCells[cellCenter] = new ChokePointCell(cellCenter);
         }
 
         return chokePointCells;
@@ -81,12 +80,10 @@ public class RayCastingChokeFinder : IChokeFinder {
 
             var nbCellsCovered = lines.SelectMany(line => line.OrderedTraversedCells).ToHashSet().Count;
             var percentageOfCellsCovered = (float)nbCellsCovered / chokePointCellsCount;
-            _logger.Info($"Created {lines.Count,4} lines at {angle,3} degrees covering {nbCellsCovered,5} cells ({percentageOfCellsCovered,3:P0})");
+            _logger.Debug($"Created {lines.Count,4} lines at {angle,3} degrees covering {nbCellsCovered,5} cells ({percentageOfCellsCovered,3:P0})");
 
             allLines.AddRange(lines);
         }
-
-        _logger.Info("All vision lines computed!");
 
         return allLines;
     }
@@ -150,7 +147,8 @@ public class RayCastingChokeFinder : IChokeFinder {
     private int GoToStartOfNextLine(VisionLine visionLine, int startCellIndex) {
         var currentCellIndex = startCellIndex;
         while (currentCellIndex < visionLine.OrderedTraversedCells.Count) {
-            if (_terrainTracker.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], considerObstructions: false)) {
+            // TODO GD Add a method like isWithinGameCells or something, to avoid forgetting .AsWorldGridCorner()
+            if (_terrainTracker.Cells.Contains(visionLine.OrderedTraversedCells[currentCellIndex].AsWorldGridCorner())) {
                 return currentCellIndex;
             }
 
@@ -175,7 +173,8 @@ public class RayCastingChokeFinder : IChokeFinder {
         var currentCellIndex = startCellIndex;
 
         while (currentCellIndex < visionLine.OrderedTraversedCells.Count) {
-            if (!_terrainTracker.IsWalkable(visionLine.OrderedTraversedCells[currentCellIndex], considerObstructions: false)) {
+            // TODO GD Add a method like isWithinGameCells or something, to avoid forgetting .AsWorldGridCorner()
+            if (!_terrainTracker.Cells.Contains(visionLine.OrderedTraversedCells[currentCellIndex].AsWorldGridCorner())) {
                 return currentCellIndex - 1;
             }
 
@@ -288,14 +287,14 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// </summary>
     /// <param name="chokePoints">All the choke points.</param>
     private void SaveChokePointsImage(IEnumerable<ChokePoint> chokePoints) {
-        var mapImage = _mapImageFactory.CreateMapImage();
+        var mapImage = _mapImageFactory.CreateMapImageWithTerrain();
 
         var chokePointCells = chokePoints.SelectMany(chokePoint => chokePoint.Edge);
         foreach (var chokePointCell in chokePointCells) {
             mapImage.SetCellColor(chokePointCell, System.Drawing.Color.Lime);
         }
 
-        mapImage.Save(FileNameFormatter.FormatDataFileName("ChokePoints", _mapFileName, "png"));
+        mapImage.Save(_mapFileNameFormatter.Format("ChokePoints", _mapFileName));
     }
 
     /// <summary>
@@ -305,7 +304,7 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// </summary>
     /// <param name="chokePointCells">All the cells to display the choke scores of.</param>
     private void SaveChokeScoresImage(List<ChokePointCell> chokePointCells) {
-        var mapImage = _mapImageFactory.CreateMapImage();
+        var mapImage = _mapImageFactory.CreateMapImageWithTerrain();
         var minChokeScore = chokePointCells.Min(chokePointCell => chokePointCell.ChokeScore);
         var maxChokeScore = chokePointCells.Max(chokePointCell => chokePointCell.ChokeScore);
 
@@ -315,7 +314,7 @@ public class RayCastingChokeFinder : IChokeFinder {
             mapImage.SetCellColor(chokePointCell.Position.ToVector2(), textColor);
         }
 
-        mapImage.Save(FileNameFormatter.FormatDataFileName("ChokeScores", _mapFileName, "png"));
+        mapImage.Save(_mapFileNameFormatter.Format("ChokeScores", _mapFileName));
     }
 
     /// <summary>
@@ -396,7 +395,7 @@ public class RayCastingChokeFinder : IChokeFinder {
             chokeScoresDistribution[(int)chokeScore] += 1;
         }
 
-        _logger.Info("Choke score distribution");
+        _logger.Info("Choke score distribution:");
         var cumulativeCount = 0;
         for (var chokeScore = minScore; chokeScore <= maxScore; chokeScore++) {
             if (chokeScoresDistribution[chokeScore] <= 0) {
@@ -408,7 +407,7 @@ public class RayCastingChokeFinder : IChokeFinder {
 
             var percentage = (float)count / chokeScores.Count;
             var cumulativePercentage = (float)cumulativeCount / chokeScores.Count;
-            _logger.Info($"{chokeScore,3}: {count,4} ({percentage,6:P2}) [{cumulativePercentage,6:P2}]");
+            _logger.Debug($"{chokeScore,3}: {count,4} ({percentage,6:P2}) [{cumulativePercentage,6:P2}]");
         }
     }
 }
