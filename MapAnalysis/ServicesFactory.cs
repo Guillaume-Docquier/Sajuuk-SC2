@@ -8,7 +8,6 @@ using MapAnalysis.RegionAnalysis.Ramps;
 using SC2Client;
 using SC2Client.Debugging.GraphicalDebugging;
 using SC2Client.Debugging.Images;
-using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
 using SC2Client.Logging;
 using SC2Client.Services;
@@ -46,7 +45,7 @@ public static class ServicesFactory {
             new PathfinderCache<Vector2>(),
             (from, to) => from.DistanceTo(to),
             cell => terrainTracker.GetReachableNeighbors(cell),
-            cell => terrainTracker.GetClosestWalkable(cell).AsWorldGridCenter(),
+            cell => terrainTracker.GetClosestWalkable(cell).AsCellCenter(),
             vector => vector.ToString()
         );
 

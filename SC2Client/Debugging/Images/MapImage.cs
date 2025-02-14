@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Numerics;
-using SC2Client.ExtensionMethods;
+using Algorithms.ExtensionMethods;
 using SC2Client.Logging;
 
 namespace SC2Client.Debugging.Images;
@@ -42,7 +42,7 @@ public class MapImage : IMapImage {
     }
 
     public IMapImage SetCellColor(Vector2 cell, Color color) {
-        var adjustedCell = cell.AsWorldGridCorner();
+        var adjustedCell = cell.AsCell();
 
         return SetCellColor((int)adjustedCell.X, (int)adjustedCell.Y, color);
     }

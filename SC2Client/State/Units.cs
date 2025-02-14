@@ -19,10 +19,9 @@ public class Units : IUnits {
     [JsonIgnore] public IReadOnlyList<IUnit> OwnedUnits => _ownedUnits;
     [JsonIgnore] public IReadOnlyList<IUnit> EnemyUnits => _enemyUnits;
 
-    [JsonConstructor]
-    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
 #pragma warning disable CS8618, CS9264
-    public Units() {}
+    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
+    [JsonConstructor] public Units() {}
 #pragma warning restore CS8618, CS9264
 
     // TODO GD This needs a better name. Catalogue? Repertoire? Something "I hold the state of all units you might want".

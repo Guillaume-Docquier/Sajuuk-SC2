@@ -28,10 +28,9 @@ public sealed class Unit : IUnit {
 
     private readonly HashSet<Action<UnitDeath>> _deathHandlers = new HashSet<Action<UnitDeath>>();
 
-    [JsonConstructor]
-    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
 #pragma warning disable CS8618, CS9264
-    public Unit() {}
+    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
+    [JsonConstructor] public Unit() {}
 #pragma warning restore CS8618, CS9264
 
     public Unit(KnowledgeBase knowledgeBase, ulong currentFrame, SC2APIProtocol.Unit rawUnit, ILogger logger) {

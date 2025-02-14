@@ -65,7 +65,7 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// <returns>A mapping from a walkable Vector2 to a ChokePointCell.</returns>
     private Dictionary<Vector2, ChokePointCell> CreateChokePointCells() {
         var chokePointCells = new Dictionary<Vector2, ChokePointCell>();
-        foreach (var cellCenter in _terrainTracker.Cells.Select(cell => cell.AsWorldGridCenter())) {
+        foreach (var cellCenter in _terrainTracker.Cells.Select(cell => cell.AsCellCenter())) {
             chokePointCells[cellCenter] = new ChokePointCell(cellCenter);
         }
 
@@ -148,7 +148,7 @@ public class RayCastingChokeFinder : IChokeFinder {
         var currentCellIndex = startCellIndex;
         while (currentCellIndex < visionLine.OrderedTraversedCells.Count) {
             // TODO GD Add a method like isWithinGameCells or something, to avoid forgetting .AsWorldGridCorner()
-            if (_terrainTracker.Cells.Contains(visionLine.OrderedTraversedCells[currentCellIndex].AsWorldGridCorner())) {
+            if (_terrainTracker.Cells.Contains(visionLine.OrderedTraversedCells[currentCellIndex].AsCell())) {
                 return currentCellIndex;
             }
 
@@ -174,7 +174,7 @@ public class RayCastingChokeFinder : IChokeFinder {
 
         while (currentCellIndex < visionLine.OrderedTraversedCells.Count) {
             // TODO GD Add a method like isWithinGameCells or something, to avoid forgetting .AsWorldGridCorner()
-            if (!_terrainTracker.Cells.Contains(visionLine.OrderedTraversedCells[currentCellIndex].AsWorldGridCorner())) {
+            if (!_terrainTracker.Cells.Contains(visionLine.OrderedTraversedCells[currentCellIndex].AsCell())) {
                 return currentCellIndex - 1;
             }
 

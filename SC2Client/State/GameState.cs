@@ -21,10 +21,9 @@ public class GameState : IGameState {
     [JsonIgnore] public ITerrain Terrain => _terrain;
     [JsonIgnore] public IUnits Units => _units;
 
-    [JsonConstructor]
-    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
 #pragma warning disable CS8618, CS9264
-    public GameState() {}
+    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
+    [JsonConstructor] public GameState() {}
 #pragma warning restore CS8618, CS9264
 
     public GameState(

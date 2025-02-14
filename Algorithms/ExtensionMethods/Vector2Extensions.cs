@@ -108,4 +108,78 @@ public static class Vector2Extensions {
     public static double GetRadAngleTo(this Vector2 v1, Vector2 v2) {
         return Math.Acos(Vector2.Dot(v1, v2) / (v1.Length() * v2.Length()));
     }
+
+    /// <summary>
+    /// Gets all cells traversed by a ray from origin to destination.
+    /// The exact coordinates of origin and destination will not be respected, but will instead be used to represent the cell.
+    /// It returns cells.
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <param name="destination"></param>
+    /// <returns>The cells traversed by the ray from origin to destination</returns>
+    public static HashSet<Vector2> GetCellsInBetween(this Vector2 origin, Vector2 destination) {
+        return RayCasting.RayCastCellToCell(origin, destination)
+            .Select(result => result.Cell)
+            .ToHashSet();
+    }
+
+    // TODO GD Write proper documentation
+    // Distance means the radius of the square (it returns diagonal neighbors that are 1.41 units away)
+    public static IEnumerable<Vector2> GetNeighbors(this Vector2 vector, int distance = 1) {
+        for (var x = -distance; x <= distance; x++) {
+            for (var y = -distance; y <= distance; y++) {
+                if (x != 0 || y != 0) {
+                    yield return vector.Translate(xTranslation: x, yTranslation: y);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Returns the Vector 2 of the center of the given cell.
+    /// Center of cells are on .5, e.g: (1.5, 2.5)
+    /// </summary>
+    /// <param name="vector"></param>
+    /// <returns></returns>
+    public static Vector2 AsCellCenter(this Vector2 vector) {
+        return new Vector2((float)Math.Floor(vector.X) + 0.5f, (float)Math.Floor(vector.Y) + 0.5f);
+    }
+
+    /// <summary>
+    /// Returns the Vector 2 of the corner of the given cell.
+    /// Corner of cells are on .0, e.g: (1.0, 2.0)
+    /// </summary>
+    /// <param name="vector"></param>
+    /// <returns></returns>
+    public static Vector2 AsCell(this Vector2 vector) {
+        return new Vector2((float)Math.Floor(vector.X), (float)Math.Floor(vector.Y));
+    }
+
+    /// <summary>
+    /// Builds a square search grid composed of all the 1x1 game cells around a center position.
+    /// </summary>
+    /// <param name="centerPosition">The position to search around.</param>
+    /// <param name="gridRadius">The "radius" of the search grid</param>
+    /// <returns></returns>
+    public static IEnumerable<Vector2> BuildSearchGrid(this Vector2 centerPosition, int gridRadius) {
+        var grid = new List<Vector2>();
+        for (var x = centerPosition.X - gridRadius; x <= centerPosition.X + gridRadius; x++) {
+            for (var y = centerPosition.Y - gridRadius; y <= centerPosition.Y + gridRadius; y++) {
+                grid.Add(new Vector2(x, y));
+            }
+        }
+
+        return grid.OrderBy(position => centerPosition.DistanceTo(position));
+    }
+
+    /// <summary>
+    /// Builds a circle search area composed of all the 1x1 game cells around a center position.
+    /// </summary>
+    /// <param name="centerPosition">The position to search around</param>
+    /// <param name="searchRadius">The radius of the search area</param>
+    /// <returns></returns>
+    public static IEnumerable<Vector2> BuildSearchRadius(this Vector2 centerPosition, float searchRadius) {
+        return BuildSearchGrid(centerPosition, (int)searchRadius + 1)
+            .Where(cell => cell.DistanceTo(centerPosition) <= searchRadius);
+    }
 }

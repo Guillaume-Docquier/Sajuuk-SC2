@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Algorithms", "Algorithms\Al
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapAnalysis.Tests", "MapAnalysis.Tests\MapAnalysis.Tests.csproj", "{7B745851-893F-4653-B528-B6E30EAB7251}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Algorithms.Tests", "Algorithms.Tests\Algorithms.Tests.csproj", "{9E850A72-0776-4454-8641-E2DEA77F9A0A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,10 @@ Global
 		{7B745851-893F-4653-B528-B6E30EAB7251}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B745851-893F-4653-B528-B6E30EAB7251}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7B745851-893F-4653-B528-B6E30EAB7251}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E850A72-0776-4454-8641-E2DEA77F9A0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E850A72-0776-4454-8641-E2DEA77F9A0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E850A72-0776-4454-8641-E2DEA77F9A0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E850A72-0776-4454-8641-E2DEA77F9A0A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

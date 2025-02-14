@@ -7,7 +7,6 @@ using MapAnalysis.RegionAnalysis.Persistence;
 using MapAnalysis.RegionAnalysis.Ramps;
 using SC2Client;
 using SC2Client.Debugging.Images;
-using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
 using SC2Client.Logging;
 using SC2Client.Services;
@@ -233,7 +232,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
 
         var units = UnitQueries.GetUnits(_unitsTracker.NeutralUnits, UnitTypeId.Obstacles.Concat(UnitTypeId.MineralFields).ToHashSet()).ToList();
         _logger.Info($"{units.Count} units");
-        var footprints = units.SelectMany(_footprintCalculator.GetFootprint).Select(position => position.AsWorldGridCorner()).ToList();
+        var footprints = units.SelectMany(_footprintCalculator.GetFootprint).Select(position => position.AsCell()).ToList();
         _logger.Info($"{footprints.Count} footprints");
         var cells = footprints.Where(cellsToConsider.Contains).ToList();
         _logger.Info($"{cells.Count} obstacle group cells");
@@ -476,7 +475,7 @@ public class RegionAnalyzer : IRegionAnalyzer {
 
             // Draw unreachable neighbors
             foreach (var unreachableNeighbor in unreachableNeighbors) {
-                foreach (var cell in region.Center.GetPointsInBetween(unreachableNeighbor.Center)) {
+                foreach (var cell in region.Center.GetCellsInBetween(unreachableNeighbor.Center)) {
                     mapImage.SetCellColor(cell, Color.Red);
                 }
 

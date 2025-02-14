@@ -162,7 +162,7 @@ public class FootprintCalculator {
 
     private static List<Vector2> GetGenericFootprint(IUnit obstacle) {
         return obstacle.Position.ToVector2().BuildSearchGrid((int)obstacle.Radius)
-            .Select(cell => cell.AsWorldGridCenter())
+            .Select(cell => cell.AsCellCenter())
             .ToList();
     }
 }

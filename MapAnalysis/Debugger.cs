@@ -1,5 +1,5 @@
-﻿using SC2Client.Debugging.GraphicalDebugging;
-using SC2Client.ExtensionMethods;
+﻿using Algorithms.ExtensionMethods;
+using SC2Client.Debugging.GraphicalDebugging;
 using SC2Client.State;
 using SC2Client.Trackers;
 
@@ -22,14 +22,14 @@ public class Debugger : ITracker {
     private void ShowUnwalkableCells() {
         foreach (var cell in _terrainTracker.Cells) {
             if (!_terrainTracker.IsWalkable(cell, considerObstructions: false)) {
-                _graphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(cell.AsWorldGridCenter()), Colors.Red);
+                _graphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(cell.AsCellCenter()), Colors.Red);
             }
         }
     }
 
     private void ShowAllCells() {
         foreach (var cell in _terrainTracker.Cells) {
-            _graphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(cell.AsWorldGridCenter()), Colors.Green);
+            _graphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(cell.AsCellCenter()), Colors.Green);
         }
     }
 }

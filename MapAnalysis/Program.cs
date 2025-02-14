@@ -4,7 +4,8 @@ using SC2Client;
 using SC2Client.Logging;
 using SC2Client.Trackers;
 
-var mapsToAnalyze = Maps.GetAll().Except(new[] { Maps.Blackburn }).ToList();
+// var mapsToAnalyze = Maps.GetAll().Except(new[] { Maps.Blackburn }).ToList();
+var mapsToAnalyze = new List<string> { Maps.CuriousMinds };
 
 var logSinks = new List<ILogSink>
 {

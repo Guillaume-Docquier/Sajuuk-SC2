@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Algorithms.ExtensionMethods;
-using SC2Client.ExtensionMethods;
 using SC2Client.Logging;
 using SC2Client.State;
 
@@ -36,28 +35,28 @@ public class TerrainTracker : ITracker, ITerrainTracker {
     public IReadOnlySet<Vector2> Cells => _terrain.Cells;
     public IEnumerable<Vector2> ObstructedCells => _terrain.ObstructedCells;
 
-    public Vector3 WithWorldHeight(Vector2 cell, float zOffset = 0) {
-        return new Vector3(cell.X, cell.Y, _terrain.CellHeights[cell.AsWorldGridCorner()] + zOffset);
+    public Vector3 WithWorldHeight(Vector2 position, float zOffset = 0) {
+        return new Vector3(position.X, position.Y, _terrain.CellHeights[position.AsCell()] + zOffset);
     }
 
-    public bool IsWalkable(Vector2 cell, bool considerObstructions = true) {
-        if (considerObstructions && IsObstructed(cell)) {
+    public bool IsWalkable(Vector2 position, bool considerObstructions = true) {
+        if (considerObstructions && IsObstructed(position)) {
             return false;
         }
 
-        return _terrain.WalkableCells.Contains(cell.AsWorldGridCorner());
+        return _terrain.WalkableCells.Contains(position.AsCell());
     }
 
-    public bool IsBuildable(Vector2 cell, bool considerObstructions = true) {
-        if (considerObstructions && IsObstructed(cell)) {
+    public bool IsBuildable(Vector2 position, bool considerObstructions = true) {
+        if (considerObstructions && IsObstructed(position)) {
             return false;
         }
 
-        return _terrain.BuildableCells.Contains(cell.AsWorldGridCorner());
+        return _terrain.BuildableCells.Contains(position.AsCell());
     }
 
-    public bool IsObstructed(Vector2 cell) {
-        return _terrain.ObstructedCells.Contains(cell.AsWorldGridCorner());
+    public bool IsObstructed(Vector2 position) {
+        return _terrain.ObstructedCells.Contains(position.AsCell());
     }
 
     public bool IsWithinBounds(Vector2 position) {
@@ -131,7 +130,7 @@ public class TerrainTracker : ITracker, ITerrainTracker {
             return position;
         }
 
-        var searchGrid = position.AsWorldGridCorner().BuildSearchGrid(searchRadius)
+        var searchGrid = position.AsCell().BuildSearchGrid(searchRadius)
             .Where(cell => IsWalkable(cell));
 
         if (allowedCells != null) {

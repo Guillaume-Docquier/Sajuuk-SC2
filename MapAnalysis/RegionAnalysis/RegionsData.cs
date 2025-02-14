@@ -12,8 +12,10 @@ public class RegionsData : IRegionsData {
     [JsonInclude] public List<Vector2> Noise { get; private set; }
     [JsonInclude] public List<ChokePoint> ChokePoints { get; private set; }
 
+#pragma warning disable CS8618, CS9264
     [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
     [JsonConstructor] public RegionsData() {}
+#pragma warning restore CS8618, CS9264
 
     public RegionsData(IEnumerable<IRegion> regions, IEnumerable<Ramp> ramps, IEnumerable<Vector2> noise, IEnumerable<ChokePoint> chokePoints) {
         // We sort the collections to have deterministic structures.

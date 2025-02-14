@@ -5,7 +5,6 @@ using Algorithms.ExtensionMethods;
 using MapAnalysis.ExpandAnalysis;
 using SC2APIProtocol;
 using SC2Client.Debugging.GraphicalDebugging;
-using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
 using SC2Client.Logging;
 using SC2Client.Services;
@@ -34,8 +33,10 @@ public class Region : IRegion {
     [JsonInclude] public IExpandLocation? ExpandLocation { get; }
     [JsonInclude] public IEnumerable<INeighboringRegion> Neighbors { get; private set; }
 
+#pragma warning disable CS8618, CS9264
     [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
     [JsonConstructor] public Region() {}
+#pragma warning restore CS8618, CS9264
 
     public Region(
         IEnumerable<Vector2> cells,
@@ -104,7 +105,7 @@ public class Region : IRegion {
 
         var obstaclesInRegion = UnitQueries
             .GetUnits(unitsTracker.NeutralUnits, UnitTypeId.Obstacles.Concat(UnitTypeId.MineralFields).ToHashSet())
-            .Where(obstacle => Cells.Contains(obstacle.Position.ToVector2().AsWorldGridCenter()));
+            .Where(obstacle => Cells.Contains(obstacle.Position.ToVector2().AsCellCenter()));
 
         if (!obstaclesInRegion.Any()) {
             return false;

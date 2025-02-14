@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using System.Text.Json.Serialization;
+using Algorithms.ExtensionMethods;
 using SC2APIProtocol;
-using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
 
 namespace SC2Client.State;
@@ -25,10 +25,9 @@ public class Terrain : ITerrain {
     [JsonIgnore] public IReadOnlySet<Vector2> WalkableCells => _walkableCells;
     [JsonIgnore] public IReadOnlySet<Vector2> BuildableCells => _buildableCells;
 
-    [JsonConstructor]
-    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
 #pragma warning disable CS8618, CS9264
-    public Terrain() {}
+    [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
+    [JsonConstructor] public Terrain() {}
 #pragma warning restore CS8618, CS9264
 
     public Terrain(FootprintCalculator footprintCalculator, ResponseGameInfo gameInfo, Units units) {
@@ -92,7 +91,7 @@ public class Terrain : ITerrain {
 
         return UnitQueries.GetUnits(units.NeutralUnits, obstacleIds)
             .SelectMany(_footprintCalculator.GetFootprint)
-            .Select(position => position.AsWorldGridCorner())
+            .Select(position => position.AsCell())
             .ToHashSet();
     }
 
@@ -139,6 +138,6 @@ public class Terrain : ITerrain {
     private IEnumerable<Vector2> ComputeStartingBuildingCells(Units units) {
         return UnitQueries.GetUnits(units.OwnedUnits, UnitTypeId.Buildings)
             .SelectMany(_footprintCalculator.GetFootprint)
-            .Select(position => position.AsWorldGridCorner());
+            .Select(position => position.AsCell());
     }
 }

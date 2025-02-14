@@ -1,7 +1,6 @@
 ﻿using System.Numerics;
 using Algorithms;
 using Algorithms.ExtensionMethods;
-using SC2Client.ExtensionMethods;
 using SC2Client.Trackers;
 
 namespace MapAnalysis.RegionAnalysis.ChokePoints;
@@ -24,9 +23,9 @@ public class VisionLine : IHavePosition {
     ) {
         _terrainTracker = terrainTracker;
 
-        var centerOfStart = start.AsWorldGridCenter();
+        var centerOfStart = start.AsCellCenter();
 
-        OrderedTraversedCells = start.GetPointsInBetween(end)
+        OrderedTraversedCells = start.GetCellsInBetween(end)
             .OrderBy(current => current.DistanceTo(centerOfStart))
             .ToList();
 

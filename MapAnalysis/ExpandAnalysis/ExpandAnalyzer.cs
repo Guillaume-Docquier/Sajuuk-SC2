@@ -4,7 +4,6 @@ using Algorithms.ExtensionMethods;
 using SC2APIProtocol;
 using SC2Client;
 using SC2Client.Debugging.GraphicalDebugging;
-using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
 using SC2Client.Logging;
 using SC2Client.Services;
@@ -117,7 +116,7 @@ public class ExpandAnalyzer : IExpandAnalyzer {
         var expandLocations = new List<Vector2>();
         foreach (var resourceCluster in resourceClusters) {
             var clusterPositions = resourceCluster.Select(resource => resource.Position.ToVector2()).ToList();
-            var centerPosition = Clustering.GetBoundingBoxCenter(clusterPositions).AsWorldGridCenter();
+            var centerPosition = Clustering.GetBoundingBoxCenter(clusterPositions).AsCellCenter();
             var searchGrid = centerPosition.BuildSearchGrid(ExpandSearchRadius);
 
             var goodBuildSpot = searchGrid.FirstOrDefault(IsValidTownHallPlacement);
@@ -144,11 +143,11 @@ public class ExpandAnalyzer : IExpandAnalyzer {
         var cellsTooCloseToResource = resourceClusters.SelectMany(cluster => cluster)
             .SelectMany(_footprintCalculator.GetFootprint)
             .SelectMany(position => position.BuildSearchRadius(TooCloseToResourceDistance))
-            .Select(position => position.AsWorldGridCorner());
+            .Select(position => position.AsCell());
 
         foreach (var cell in cellsTooCloseToResource) {
             if (DrawEnabled) {
-                _graphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(cell.AsWorldGridCenter()), Colors.SunbrightOrange);
+                _graphicalDebugger.AddGridSquare(_terrainTracker.WithWorldHeight(cell.AsCellCenter()), Colors.SunbrightOrange);
             }
 
             _tooCloseToResourceGrid[(int)cell.X][(int)cell.Y] = true;
