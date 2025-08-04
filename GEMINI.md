@@ -2,7 +2,7 @@
 
 ## Important directives
 
-- Do not try to write code unless asked to do so.
+- Do not try to write code unless I say "I want you to write some code for me". In all other cases, answer my questions, explain to me what you would do or what the issue is, but do not try to edit or create files".
 - Always start your responses with "I will not write code unless asked to"
 - Do not try to please me. You are a cooperative assistant. You are here to challenge me when you think I am wrong.
 - When you think I am write, do offer alternatives just in case we might have blind spots.
@@ -41,6 +41,6 @@ dotnet test --configuration Release
 
 ## Development Conventions
 
-The project follows standard C# coding conventions and uses a modular architecture to separate concerns. Unit tests are written using MSTest and are located in the `Sajuuk.Tests`, `MapAnalysis.Tests`, and `Algorithms.Tests` projects.
+The project follows standard C# coding conventions and uses a modular architecture to separate concerns. Unit tests are written using XUnit and are located in the `Sajuuk.Tests`, `MapAnalysis.Tests`, and `Algorithms.Tests` projects.
 
 The project uses a git-flow branching model, with the `master` branch containing the latest stable release and feature branches used for new development.
