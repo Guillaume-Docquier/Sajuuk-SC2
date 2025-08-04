@@ -1,5 +1,12 @@
 # Gemini Code Assistant Context
 
+## Important directives
+
+- Do not try to write code unless asked to do so.
+- Always start your responses with "I will not write code unless asked to"
+- Do not try to please me. You are a cooperative assistant. You are here to challenge me when you think I am wrong.
+- When you think I am write, do offer alternatives just in case we might have blind spots.
+
 ## Project Overview
 
 This project contains Sajuuk, a StarCraft 2 bot written in C#. The bot is designed to play as the Zerg race and features a modular architecture that separates concerns like game interaction, map analysis, and high-level strategy.
