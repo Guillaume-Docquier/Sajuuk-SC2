@@ -65,14 +65,15 @@ public class RayCastingChokeFinder : IChokeFinder {
     /// <returns>A mapping from a walkable Vector2 to a ChokePointCell.</returns>
     private Dictionary<Vector2, ChokePointCell> CreateChokePointCells() {
         var chokePointCells = new Dictionary<Vector2, ChokePointCell>();
-        foreach (var cellCenter in _terrainTracker.Cells.Select(cell => cell.AsCellCenter())) {
-            chokePointCells[cellCenter] = new ChokePointCell(cellCenter);
+        foreach (var cell in _terrainTracker.Cells) {
+            chokePointCells[cell] = new ChokePointCell(cell);
         }
 
         return chokePointCells;
     }
 
     private List<VisionLine> CreateVisionLines(int chokePointCellsCount) {
+        var error = false;
         var allLines = new List<VisionLine>();
         for (var angle = StartingAngle; angle <= MaxAngle; angle += AngleIncrement) {
             var lines = CreateLinesAtAnAngle(angle, _terrainTracker.MaxX, _terrainTracker.MaxY);
@@ -80,9 +81,19 @@ public class RayCastingChokeFinder : IChokeFinder {
 
             var nbCellsCovered = lines.SelectMany(line => line.OrderedTraversedCells).ToHashSet().Count;
             var percentageOfCellsCovered = (float)nbCellsCovered / chokePointCellsCount;
-            _logger.Debug($"Created {lines.Count,4} lines at {angle,3} degrees covering {nbCellsCovered,5} cells ({percentageOfCellsCovered,3:P0})");
+            if (nbCellsCovered == chokePointCellsCount) {
+                _logger.Debug($"Created {lines.Count,4} lines at {angle,3} degrees covering {nbCellsCovered,5} cells ({percentageOfCellsCovered,3:P0})");
+            }
+            else {
+                _logger.Warning($"Created {lines.Count,4} lines at {angle,3} degrees covering {nbCellsCovered,5} cells ({percentageOfCellsCovered,3:P0})");
+                error = true;
+            }
 
             allLines.AddRange(lines);
+        }
+
+        if (error) {
+            throw new Exception("Did not cover all cells with all vision lines! Every vision line set should cover all cells.");
         }
 
         return allLines;
