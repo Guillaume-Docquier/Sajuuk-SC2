@@ -13,15 +13,28 @@ public static class RayCasting {
     }
 
     /// <summary>
+    /// Does a ray casting from a position to another.
+    /// The exact coordinates of origin and destination will be respected.
+    /// </summary>
+    /// <param name="originPos"></param>
+    /// <param name="destinationPos"></param>
+    /// <returns></returns>
+    public static IEnumerable<RayCastResult> RayCastPosToPos(Vector2 originPos, Vector2 destinationPos) {
+        var destinationCell = destinationPos.AsCellCenter();
+
+        return RayCast(originPos, destinationPos, rayCastResult => rayCastResult.Cell.AsCellCenter() == destinationCell);
+    }
+
+    /// <summary>
     /// Does a ray casting from a cell to another.
     /// The exact coordinates of origin and destination will not be respected, but will instead be used to represent the cell.
     /// </summary>
-    /// <param name="origin"></param>
-    /// <param name="destination"></param>
+    /// <param name="originPos"></param>
+    /// <param name="destinationPos"></param>
     /// <returns></returns>
-    public static IEnumerable<RayCastResult> RayCastCellToCell(Vector2 origin, Vector2 destination) {
-        var originCell = origin.AsCellCenter();
-        var destinationCell = destination.AsCellCenter();
+    public static IEnumerable<RayCastResult> RayCastCellToCell(Vector2 originPos, Vector2 destinationPos) {
+        var originCell = originPos.AsCellCenter();
+        var destinationCell = destinationPos.AsCellCenter();
 
         return RayCast(originCell, destinationCell, rayCastResult => rayCastResult.Cell.AsCellCenter() == destinationCell);
     }
@@ -49,12 +62,12 @@ public static class RayCasting {
     /// In certain edge cases such as ray casting from a corner to a corner, the ray casting is not guaranteed to hit a target cell.
     /// Make sure to account for this in your stop condition.
     /// </summary>
-    /// <param name="origin">The origin of the ray</param>
-    /// <param name="direction">A point to ray cast towards</param>
+    /// <param name="originPos">The origin of the ray</param>
+    /// <param name="towardsPos">A point to ray cast towards</param>
     /// <param name="shouldStopRay">A function that receives the latest ray casting result to decide if we should stop ray casting</param>
     /// <returns>All the crossed cells and their intersection point when the ray entered the cell. The origin and the last cell are included.</returns>
-    public static IEnumerable<RayCastResult> RayCast(Vector2 origin, Vector2 direction, Func<RayCastResult, bool> shouldStopRay) {
-        var delta = Vector2.Normalize(direction - origin);
+    public static IEnumerable<RayCastResult> RayCast(Vector2 originPos, Vector2 towardsPos, Func<RayCastResult, bool> shouldStopRay) {
+        var delta = Vector2.Normalize(towardsPos - originPos);
 
         var dxdy = delta.Y == 0 ? 0 : delta.X / delta.Y;
         var dydx = delta.X == 0 ? 0 : delta.Y / delta.X;
@@ -78,12 +91,12 @@ public static class RayCasting {
         if (delta.X > 0) {
             // Moving right
             stepX = 1;
-            stepXDistance = (float)Math.Floor(origin.X + 1) - origin.X;
+            stepXDistance = (float)Math.Floor(originPos.X + 1) - originPos.X;
         }
         else if (delta.X < 0) {
             // Moving left
             stepX = -1;
-            stepXDistance = origin.X - (float)Math.Ceiling(origin.X - 1);
+            stepXDistance = originPos.X - (float)Math.Ceiling(originPos.X - 1);
         }
 
         // Edge case, if deltaY is 0, stepYDistance can be 0, making the first ray 0, thus it's going to be picked
@@ -93,18 +106,18 @@ public static class RayCasting {
         if (delta.Y > 0) {
             // Moving up
             stepY = 1;
-            stepYDistance = (float)Math.Floor(origin.Y + 1) - origin.Y;
+            stepYDistance = (float)Math.Floor(originPos.Y + 1) - originPos.Y;
         }
         else if (delta.Y < 0) {
             // Moving down
             stepY = -1;
-            stepYDistance = origin.Y - (float)Math.Ceiling(origin.Y - 1);
+            stepYDistance = originPos.Y - (float)Math.Ceiling(originPos.Y - 1);
         }
 
-        var lastIntersection = origin;
+        var lastIntersection = originPos;
         var currentRayCastResult = new RayCastResult
         {
-            Cell = origin.AsCell(),
+            Cell = originPos.AsCell(),
             RayIntersection = lastIntersection,
         };
         var xRayLength = stepXDistance * rayLengthWhenMovingInX;

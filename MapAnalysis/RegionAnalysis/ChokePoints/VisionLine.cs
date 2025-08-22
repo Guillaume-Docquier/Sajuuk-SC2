@@ -10,28 +10,29 @@ public class VisionLine : IHavePosition {
 
     public List<Vector2> OrderedTraversedCells { get; }
     public int Angle { get; }
-    public Vector2 Start { get; }
-    public Vector2 End { get; }
-    public Vector3 Position => Vector3.Lerp(_terrainTracker.WithWorldHeight(Start), _terrainTracker.WithWorldHeight(End), 0.5f);
+    public Vector2 StartCell { get; }
+    public Vector2 EndCell { get; }
+    public Vector3 Position => Vector3.Lerp(_terrainTracker.WithWorldHeight(StartCell), _terrainTracker.WithWorldHeight(EndCell), 0.5f);
     public float Length { get; }
 
     public VisionLine(
         ITerrainTracker terrainTracker,
-        Vector2 start,
-        Vector2 end,
+        Vector2 startPos,
+        Vector2 endPos,
         int angle
     ) {
         _terrainTracker = terrainTracker;
 
-        var centerOfStart = start.AsCellCenter();
+        var startCellCenter = startPos.AsCellCenter();
 
-        OrderedTraversedCells = start.GetCellsInBetween(end)
-            .OrderBy(current => current.DistanceTo(centerOfStart))
+        OrderedTraversedCells = RayCasting.RayCastPosToPos(startPos, endPos)
+            .Select(rayCastResult => rayCastResult.Cell)
+            .OrderBy(current => current.DistanceTo(startCellCenter))
             .ToList();
 
-        Start = OrderedTraversedCells[0];
-        End = OrderedTraversedCells.Last();
-        Length = Start.DistanceTo(End);
+        StartCell = OrderedTraversedCells[0];
+        EndCell = OrderedTraversedCells.Last();
+        Length = StartCell.DistanceTo(EndCell);
 
         Angle = angle;
     }
@@ -45,9 +46,9 @@ public class VisionLine : IHavePosition {
 
         OrderedTraversedCells = orderedTraversedCells;
 
-        Start = OrderedTraversedCells[0];
-        End = OrderedTraversedCells.Last();
-        Length = Start.DistanceTo(End);
+        StartCell = OrderedTraversedCells[0];
+        EndCell = OrderedTraversedCells.Last();
+        Length = StartCell.DistanceTo(EndCell);
 
         Angle = angle;
     }

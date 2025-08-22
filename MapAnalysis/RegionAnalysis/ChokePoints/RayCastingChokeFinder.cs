@@ -225,7 +225,7 @@ public class RayCastingChokeFinder : IChokeFinder {
 
             var shortestCenterLine = lineCentersCluster.MinBy(line => line.Length + line.Position.ToVector2().DistanceTo(clusterCenter) * 0.5)!;
             DebugLines(new[] { shortestCenterLine }, Colors.LimeGreen);
-            chokePoints.Add(new ChokePoint(shortestCenterLine.Start, shortestCenterLine.End, _terrainTracker));
+            chokePoints.Add(new ChokePoint(shortestCenterLine.StartCell, shortestCenterLine.EndCell, _terrainTracker));
         }
 
         return chokePoints;
@@ -381,8 +381,8 @@ public class RayCastingChokeFinder : IChokeFinder {
 
         foreach (var line in lines) {
             _graphicalDebugger.AddLink(
-                _terrainTracker.WithWorldHeight(line.Start, zOffset: 0.5f),
-                _terrainTracker.WithWorldHeight(line.End, zOffset: 0.5f),
+                _terrainTracker.WithWorldHeight(line.StartCell, zOffset: 0.5f),
+                _terrainTracker.WithWorldHeight(line.EndCell, zOffset: 0.5f),
                 color
             );
         }

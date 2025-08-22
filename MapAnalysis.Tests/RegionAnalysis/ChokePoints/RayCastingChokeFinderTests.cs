@@ -78,6 +78,7 @@ public class RayCastingChokeFinderTests
     [Theory]
     [InlineData(0)]
     [InlineData(45)]
+    [InlineData(79)]
     [InlineData(90)]
     [InlineData(135)]
     public void CreateLinesAtAnAngle_WithAngle_ShouldCoverAllCells(int angle)
