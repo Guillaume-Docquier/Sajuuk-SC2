@@ -126,6 +126,11 @@ public static class RayCasting {
         yield return currentRayCastResult;
 
         while (!shouldStopRay(currentRayCastResult)) {
+            var overshooting = Vector2.Dot(Vector2.Subtract(currentRayCastResult.Cell, towardsPos), Vector2.Subtract(towardsPos, originPos));
+            if (overshooting > 0) {
+                throw new Exception($"Infinite ray casting from {originPos} towards {towardsPos} at {currentRayCastResult.Cell} overshoot {overshooting}");
+            }
+
             var currentCell = new Vector2(currentRayCastResult.Cell.X, currentRayCastResult.Cell.Y);
             if (xRayLength < yRayLength) {
                 // Step in X, reduce Y ray

@@ -84,6 +84,16 @@ public class RayCastingChokeFinderTests
         // mapImage.Save($"./CreateLinesAtAnAngle_WithAngle_ShouldCoverAllCells_{angle}");
 
         // Assert
+
+        // The original lines should cover everything
+        var uncoveredCellsRaw = terrainTrackerMock.Object.Cells.Except(rawLines.SelectMany(line => line.OrderedTraversedCells));
+        Assert.Empty(uncoveredCellsRaw);
+
+        // Breaking down should not change that
+        var uncoveredCells = terrainTrackerMock.Object.Cells.Except(coveredCells);
+        Assert.Empty(uncoveredCells);
+
+        // If they cover all the cells and have the same count, then they contain exactly all the cells.
         Assert.Equal(walkableCellsCount, coveredCells.Count);
     }
 }

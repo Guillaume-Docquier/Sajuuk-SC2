@@ -17,6 +17,9 @@ public class RayCastingTests {
                 yield return new object[] { origin, new Vector2(x, y) };
             }
         }
+
+        // Found to infinite raycast
+        yield return new object[] { new Vector2(163f, -81.86624f), new Vector2(-84.16836f, 38.68582f) };
     }
 
     [Theory]
@@ -24,6 +27,16 @@ public class RayCastingTests {
     public void RayCastCellToCell_ShouldReturnForAnyTwoDifferentCells(Vector2 origin, Vector2 destination) {
         // Act
         var result = RayCasting.RayCastCellToCell(origin, destination).ToList();
+
+        // Assert
+        result.Count.Should().BeGreaterThan(1);
+    }
+
+    [Theory]
+    [MemberData(nameof(PairOfDifferentCellsAroundTheOrigin))]
+    public void RayCastPosToPos_ShouldReturnForAnyTwoDifferentCells(Vector2 origin, Vector2 destination) {
+        // Act
+        var result = RayCasting.RayCastPosToPos(origin, destination).ToList();
 
         // Assert
         result.Count.Should().BeGreaterThan(1);
