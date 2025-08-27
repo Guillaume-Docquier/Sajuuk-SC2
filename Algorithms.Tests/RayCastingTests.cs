@@ -19,7 +19,7 @@ public class RayCastingTests {
         }
 
         // Found to infinite raycast
-        yield return new object[] { new Vector2(163f, -81.86624f), new Vector2(-84.16836f, 38.68582f) };
+        yield return new object[] { new Vector2(163f, -81.86624f), new Vector2(-84.16836f, 38.68582f) }; // Going up left, hits (-83.5 39.5)
     }
 
     [Theory]
@@ -63,5 +63,43 @@ public class RayCastingTests {
         result.Should().HaveCount(2);
         result[0].Cell.Should().BeEquivalentTo(origin.AsCell());
         result[1].Cell.Should().BeEquivalentTo(destination.AsCell());
+    }
+
+    public static IEnumerable<object[]> PointsThatTravelInDiagonal() {
+        yield return new object[] { new Vector2(0, 0), new Vector2(0, 0), new Vector2[] { new(0, 0)}, };
+
+        // Left, down/up
+        yield return new object[] { new Vector2(0.1f, 0.5f), new Vector2(-0.5f, -0.1f), new Vector2[] { new(0, 0), new(-1, 0), new(-1, -1) }, };
+        yield return new object[] { new Vector2(0.1f, 0.5f), new Vector2(-0.5f, 0.1f), new Vector2[] { new(0, 0), new(-1, 0) }, };
+        yield return new object[] { new Vector2(0.1f, 0.5f), new Vector2(-0.5f, 1.1f), new Vector2[] { new(0, 0), new(-1, 0), new(-1, 1) }, };
+        yield return new object[] { new Vector2(0.1f, 0.5f), new Vector2(-0.5f, 0.9f), new Vector2[] { new(0, 0), new(-1, 0) }, };
+
+        // Bottom, left/right
+        yield return new object[] { new Vector2(0.5f, 0.1f), new Vector2(-0.1f, -0.5f), new Vector2[] { new(0, 0), new(0, -1), new(-1, -1) }, };
+        yield return new object[] { new Vector2(0.5f, 0.1f), new Vector2(0.1f, -0.5f), new Vector2[] { new(0, 0), new(0, -1) }, };
+        yield return new object[] { new Vector2(0.5f, 0.1f), new Vector2(1.1f, -0.5f), new Vector2[] { new(0, 0), new(0, -1), new(1, -1) }, };
+        yield return new object[] { new Vector2(0.5f, 0.1f), new Vector2(0.9f, -0.5f), new Vector2[] { new(0, 0), new(0, -1) }, };
+
+        // Up, left/right
+        yield return new object[] { new Vector2(0.5f, 0.9f), new Vector2(-0.1f, 1.5f), new Vector2[] { new(0, 0), new(0, 1), new(-1, 1) }, };
+        yield return new object[] { new Vector2(0.5f, 0.9f), new Vector2(0.1f, 1.5f), new Vector2[] { new(0, 0), new(0, 1) }, };
+        yield return new object[] { new Vector2(0.5f, 0.9f), new Vector2(1.1f, 1.5f), new Vector2[] { new(0, 0), new(0, 1), new(1, 1) }, };
+        yield return new object[] { new Vector2(0.5f, 0.9f), new Vector2(0.9f, 1.5f), new Vector2[] { new(0, 0), new(0, 1) }, };
+
+        // Right down/up
+        yield return new object[] { new Vector2(0.9f, 0.5f), new Vector2(1.5f, -0.1f), new Vector2[] { new(0, 0), new(1, 0), new(1, -1) }, };
+        yield return new object[] { new Vector2(0.9f, 0.5f), new Vector2(1.5f, 0.1f), new Vector2[] { new(0, 0), new(1, 0) }, };
+        yield return new object[] { new Vector2(0.9f, 0.5f), new Vector2(1.5f, 1.1f), new Vector2[] { new(0, 0), new(1, 0), new(1, 1) }, };
+        yield return new object[] { new Vector2(0.9f, 0.5f), new Vector2(1.5f, 0.9f), new Vector2[] { new(0, 0), new(1, 0) }, };
+    }
+
+    [Theory]
+    [MemberData(nameof(PointsThatTravelInDiagonal))]
+    public void RayCastPosToPos_ShouldRayCastCorrectlyInSimpleCases(Vector2 origin, Vector2 towards, Vector2[] expectedPath) {
+        // Act
+        var path = RayCasting.RayCastPosToPos(origin, towards);
+
+        // Assert
+        Assert.Equal(expectedPath, path.Select(rayCastResult => rayCastResult.Cell));
     }
 }

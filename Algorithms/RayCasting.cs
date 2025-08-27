@@ -22,6 +22,9 @@ public static class RayCasting {
     public static IEnumerable<RayCastResult> RayCastPosToPos(Vector2 originPos, Vector2 destinationPos) {
         var destinationCell = destinationPos.AsCellCenter();
 
+        // We need to take into account the direction when doing AsCellCenter. When going left, the cell center should be the left cell
+        // Right now, we always take the top right cell
+        // Should be easy to make a simple test to repro all 4 directions
         return RayCast(originPos, destinationPos, rayCastResult => rayCastResult.Cell.AsCellCenter() == destinationCell);
     }
 
