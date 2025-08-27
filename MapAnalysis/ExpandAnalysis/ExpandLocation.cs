@@ -13,8 +13,10 @@ public class ExpandLocation : IExpandLocation {
     /// </summary>
     [JsonIgnore] public IReadOnlyList<IUnit> Resources { get; }
 
+#pragma warning disable CS8618, CS9264
     [Obsolete("Do not use this parameterless JsonConstructor", error: true)]
     [JsonConstructor] public ExpandLocation() {}
+#pragma warning restore CS8618, CS9264
 
     public ExpandLocation(Vector2 optimalTownHallPosition, ExpandType expandType, List<IUnit> resources) {
         OptimalTownHallPosition = optimalTownHallPosition;

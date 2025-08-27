@@ -18,11 +18,27 @@ public static class JsonSerializers {
             );
         }
 
+        public override Vector2 ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+            var vectorData = reader.GetString()!.Split(Divider);
+
+            return new Vector2(
+                float.Parse(vectorData[0], CultureInfo.InvariantCulture.NumberFormat),
+                float.Parse(vectorData[1], CultureInfo.InvariantCulture.NumberFormat)
+            );
+        }
+
         public override void Write(Utf8JsonWriter writer, Vector2 value, JsonSerializerOptions options) {
             var x = value.X.ToString(CultureInfo.InvariantCulture.NumberFormat);
             var y = value.Y.ToString(CultureInfo.InvariantCulture.NumberFormat);
 
             writer.WriteStringValue($"{x}{Divider}{y}");
+        }
+
+        public override void WriteAsPropertyName(Utf8JsonWriter writer, Vector2 value, JsonSerializerOptions options) {
+            var x = value.X.ToString(CultureInfo.InvariantCulture.NumberFormat);
+            var y = value.Y.ToString(CultureInfo.InvariantCulture.NumberFormat);
+
+            writer.WritePropertyName($"{x}{Divider}{y}");
         }
     }
 
@@ -39,7 +55,25 @@ public static class JsonSerializers {
             );
         }
 
+        public override Vector3 ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+            var vectorData = reader.GetString()!.Split(Divider);
+
+            return new Vector3(
+                float.Parse(vectorData[0], CultureInfo.InvariantCulture.NumberFormat),
+                float.Parse(vectorData[1], CultureInfo.InvariantCulture.NumberFormat),
+                float.Parse(vectorData[2], CultureInfo.InvariantCulture.NumberFormat)
+            );
+        }
+
         public override void Write(Utf8JsonWriter writer, Vector3 value, JsonSerializerOptions options) {
+            var x = value.X.ToString(CultureInfo.InvariantCulture.NumberFormat);
+            var y = value.Y.ToString(CultureInfo.InvariantCulture.NumberFormat);
+            var z = value.Z.ToString(CultureInfo.InvariantCulture.NumberFormat);
+
+            writer.WriteStringValue($"{x}{Divider}{y}{Divider}{z}");
+        }
+
+        public override void WriteAsPropertyName(Utf8JsonWriter writer, Vector3 value, JsonSerializerOptions options) {
             var x = value.X.ToString(CultureInfo.InvariantCulture.NumberFormat);
             var y = value.Y.ToString(CultureInfo.InvariantCulture.NumberFormat);
             var z = value.Z.ToString(CultureInfo.InvariantCulture.NumberFormat);

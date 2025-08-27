@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
 using Google.Protobuf;
 using SC2APIProtocol;
+using SC2Client.Logging;
 
 namespace SC2Client;
 

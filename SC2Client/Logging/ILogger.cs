@@ -1,4 +1,4 @@
-﻿namespace SC2Client;
+﻿namespace SC2Client.Logging;
 
 /// <summary>
 /// An interface to log messages of various types.

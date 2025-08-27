@@ -1,4 +1,4 @@
-﻿using SC2Client;
+﻿using SC2Client.Logging;
 using SC2Client.State;
 
 namespace MapAnalysis;

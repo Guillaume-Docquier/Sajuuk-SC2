@@ -8,5 +8,5 @@ public interface IRampFinder {
     /// </summary>
     /// <param name="cellsToConsider">The cells to use to find ramps.</param>
     /// <returns>The ramps that were found.</returns>
-    public List<Ramp> FindRamps(IEnumerable<Vector2> cellsToConsider);
+    public List<Ramp> FindRamps(IReadOnlyCollection<Vector2> cellsToConsider);
 }

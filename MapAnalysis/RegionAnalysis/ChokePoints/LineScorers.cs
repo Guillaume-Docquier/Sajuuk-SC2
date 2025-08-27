@@ -16,7 +16,7 @@ public static class LineScorers {
         // Possible angles are [0, 175]
         var perpendicularLineAngle = (potentialChokeLine.Angle + 90) % 180;
         var perpendicularLine = chokePointCell.VisionLines.Find(otherLine => otherLine.Angle == perpendicularLineAngle)!;
-        var shortestHalfDistance = Math.Min(perpendicularLine.Start.DistanceTo(chokePointCell.Position.ToVector2()), perpendicularLine.End.DistanceTo(chokePointCell.Position.ToVector2()));
+        var shortestHalfDistance = Math.Min(perpendicularLine.StartCell.DistanceTo(chokePointCell.Position.ToVector2()), perpendicularLine.EndCell.DistanceTo(chokePointCell.Position.ToVector2()));
 
         // We set a max vision distance to avoid super high score on certain lines that can view very very far
         const float maxVisionDistance = 15f;

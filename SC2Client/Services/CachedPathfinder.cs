@@ -1,4 +1,5 @@
 ﻿using Algorithms;
+using SC2Client.Logging;
 
 namespace SC2Client.Services;
 

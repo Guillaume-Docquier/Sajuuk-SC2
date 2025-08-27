@@ -2,6 +2,7 @@
 using Algorithms.ExtensionMethods;
 using SC2Client.ExtensionMethods;
 using SC2Client.GameData;
+using SC2Client.Logging;
 using SC2Client.State;
 
 namespace SC2Client;
@@ -161,7 +162,7 @@ public class FootprintCalculator {
 
     private static List<Vector2> GetGenericFootprint(IUnit obstacle) {
         return obstacle.Position.ToVector2().BuildSearchGrid((int)obstacle.Radius)
-            .Select(cell => cell.AsWorldGridCenter())
+            .Select(cell => cell.AsCellCenter())
             .ToList();
     }
 }

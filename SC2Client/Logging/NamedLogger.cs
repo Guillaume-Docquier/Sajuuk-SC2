@@ -1,4 +1,4 @@
-﻿namespace SC2Client;
+﻿namespace SC2Client.Logging;
 
 /// <summary>
 /// A logger that prefixes all messages with a name.

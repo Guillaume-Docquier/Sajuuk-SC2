@@ -1,5 +1,6 @@
 ﻿using SC2APIProtocol;
 using SC2Client.GameData;
+using SC2Client.Logging;
 using SC2Client.State;
 
 namespace SC2Client;
@@ -18,6 +19,7 @@ public class Game : IGame {
         ISc2Client sc2Client,
         uint playerId,
         KnowledgeBase knowledgeBase,
+        FootprintCalculator footprintCalculator,
         ResponseGameInfo gameInfo,
         Status gameStatus,
         ResponseObservation observation
@@ -25,7 +27,7 @@ public class Game : IGame {
         _logger = logger.CreateNamed("Game");
         _sc2Client = sc2Client;
         _knowledgeBase = knowledgeBase;
-        _state = new GameState(playerId, logger, knowledgeBase, gameInfo, gameStatus, observation);
+        _state = new GameState(playerId, logger, knowledgeBase, footprintCalculator, gameInfo, gameStatus, observation);
     }
 
     /// <summary>
@@ -36,12 +38,14 @@ public class Game : IGame {
     /// <param name="logger"></param>
     /// <param name="sc2Client"></param>
     /// <param name="knowledgeBase"></param>
+    /// <param name="footprintCalculator"></param>
     /// <returns></returns>
     public static async Task<Game> Create(
         uint playerId,
         ILogger logger,
         ISc2Client sc2Client,
-        KnowledgeBase knowledgeBase
+        KnowledgeBase knowledgeBase,
+        FootprintCalculator footprintCalculator
     ) {
         // TODO GD Can I request the KB data before joining the game? Initializing it here feels dumb.
         var dataResponse = await sc2Client.SendRequest(RequestBuilder.RequestData());
@@ -55,6 +59,7 @@ public class Game : IGame {
             sc2Client,
             playerId,
             knowledgeBase,
+            footprintCalculator,
             gameInfoResponse.GameInfo,
             observationResponse.Status,
             observationResponse.Observation
@@ -79,9 +84,11 @@ public class Game : IGame {
 
         await _sc2Client.SendRequest(RequestBuilder.RequestStep(stepSize));
 
+        // TODO GD Maybe I can request both at the same time
+        var gameInfoResponse = await _sc2Client.SendRequest(RequestBuilder.RequestGameInfo());
         var observationResponse = await _sc2Client.SendRequest(RequestBuilder.RequestObservation(State.CurrentFrame + stepSize));
 
-        _state.Update(observationResponse.Status, observationResponse.Observation);
+        _state.Update(observationResponse.Status, gameInfoResponse.GameInfo, observationResponse.Observation);
     }
 
     public void Quit() {
