@@ -65,7 +65,7 @@ public class RayCastingTests {
         result[1].Cell.Should().BeEquivalentTo(destination.AsCell());
     }
 
-    enum Direction {
+    private enum Direction {
         Up,
         Right,
         Down,
@@ -86,6 +86,8 @@ public class RayCastingTests {
             { Direction.Down,  new Vector2(0, -1) },
             { Direction.Left,  new Vector2(-1, 0) },
         };
+
+        // TODO GD Document all of this
         object[] Generate(Direction mainDirection, Direction secondaryDirection, int steps) {
             var from = startingPoint + directionOffsets[mainDirection];
 
@@ -112,15 +114,15 @@ public class RayCastingTests {
             };
         };
 
-        for (int steps = 1; steps <= 5; steps++) {
-            yield return Generate(Direction.Up, Direction.Left, steps);
-            yield return Generate(Direction.Up, Direction.Right, steps);
-            yield return Generate(Direction.Right, Direction.Up, steps);
-            yield return Generate(Direction.Right, Direction.Down, steps);
-            yield return Generate(Direction.Down, Direction.Right, steps);
-            yield return Generate(Direction.Down, Direction.Left, steps);
-            yield return Generate(Direction.Left, Direction.Down, steps);
-            yield return Generate(Direction.Left, Direction.Up, steps);
+        for (int steps = 1; steps <= 3; steps++) {
+            yield return Generate(Direction.Up, Direction.Left, steps + 10000);
+            yield return Generate(Direction.Up, Direction.Right, steps + 10000);
+            yield return Generate(Direction.Right, Direction.Up, steps + 10000);
+            yield return Generate(Direction.Right, Direction.Down, steps + 10000);
+            yield return Generate(Direction.Down, Direction.Right, steps + 10000);
+            yield return Generate(Direction.Down, Direction.Left, steps + 10000);
+            yield return Generate(Direction.Left, Direction.Down, steps + 10000);
+            yield return Generate(Direction.Left, Direction.Up, steps + 10000);
         }
 
         yield return new object[] { new Vector2(0, 0), new Vector2(0, 0), new List<Vector2> { new(0, 0)}, };
@@ -128,7 +130,7 @@ public class RayCastingTests {
 
     [Theory]
     [MemberData(nameof(PointsThatTravelInDiagonal))]
-    public void RayCastPosToPos_ShouldRayCastCorrectlyInSimpleCases(Vector2 origin, Vector2 towards, List<Vector2> expectedPath) {
+    public void RayCastPosToPos_ShouldRayCastCorrectlyEvenAtLongRanges(Vector2 origin, Vector2 towards, List<Vector2> expectedPath) {
         // Act
         var actualPath = RayCasting.RayCastPosToPos(origin, towards).Select(rayCastResult => rayCastResult.Cell).ToList();
 
