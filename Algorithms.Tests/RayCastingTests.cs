@@ -65,41 +65,74 @@ public class RayCastingTests {
         result[1].Cell.Should().BeEquivalentTo(destination.AsCell());
     }
 
+    enum Direction {
+        Up,
+        Right,
+        Down,
+        Left
+    }
+
     public static IEnumerable<object[]> PointsThatTravelInDiagonal() {
-        yield return new object[] { new Vector2(0, 0), new Vector2(0, 0), new Vector2[] { new(0, 0)}, };
+        var startingPoint = new Vector2(0.5f, 0.5f);
+        var directionOffsets = new Dictionary<Direction, Vector2> {
+            { Direction.Up,    new Vector2(0, 0.4f) },
+            { Direction.Right, new Vector2(0.4f, 0) },
+            { Direction.Down,  new Vector2(0, -0.4f) },
+            { Direction.Left,  new Vector2(-0.4f, 0) },
+        };
+        var directionSteps = new Dictionary<Direction, Vector2> {
+            { Direction.Up,    new Vector2(0, 1) },
+            { Direction.Right, new Vector2(1, 0) },
+            { Direction.Down,  new Vector2(0, -1) },
+            { Direction.Left,  new Vector2(-1, 0) },
+        };
+        object[] Generate(Direction mainDirection, Direction secondaryDirection, int steps) {
+            var from = startingPoint + directionOffsets[mainDirection];
 
-        // Left, down/up
-        yield return new object[] { new Vector2(0.1f, 0.5f), new Vector2(-0.5f, -0.1f), new Vector2[] { new(0, 0), new(-1, 0), new(-1, -1) }, };
-        yield return new object[] { new Vector2(0.1f, 0.5f), new Vector2(-0.5f, 0.1f), new Vector2[] { new(0, 0), new(-1, 0) }, };
-        yield return new object[] { new Vector2(0.1f, 0.5f), new Vector2(-0.5f, 1.1f), new Vector2[] { new(0, 0), new(-1, 0), new(-1, 1) }, };
-        yield return new object[] { new Vector2(0.1f, 0.5f), new Vector2(-0.5f, 0.9f), new Vector2[] { new(0, 0), new(-1, 0) }, };
+            var expectedPath = new List<Vector2> { Vector2.Zero };
+            var currentPoint = Vector2.Zero;
 
-        // Bottom, left/right
-        yield return new object[] { new Vector2(0.5f, 0.1f), new Vector2(-0.1f, -0.5f), new Vector2[] { new(0, 0), new(0, -1), new(-1, -1) }, };
-        yield return new object[] { new Vector2(0.5f, 0.1f), new Vector2(0.1f, -0.5f), new Vector2[] { new(0, 0), new(0, -1) }, };
-        yield return new object[] { new Vector2(0.5f, 0.1f), new Vector2(1.1f, -0.5f), new Vector2[] { new(0, 0), new(0, -1), new(1, -1) }, };
-        yield return new object[] { new Vector2(0.5f, 0.1f), new Vector2(0.9f, -0.5f), new Vector2[] { new(0, 0), new(0, -1) }, };
+            for (var i = 1; i <= steps; i++) {
+                var useMainDirection = i % 2 != 0;
+                var directionVector = useMainDirection
+                    ? directionSteps[mainDirection]
+                    : directionSteps[secondaryDirection];
 
-        // Up, left/right
-        yield return new object[] { new Vector2(0.5f, 0.9f), new Vector2(-0.1f, 1.5f), new Vector2[] { new(0, 0), new(0, 1), new(-1, 1) }, };
-        yield return new object[] { new Vector2(0.5f, 0.9f), new Vector2(0.1f, 1.5f), new Vector2[] { new(0, 0), new(0, 1) }, };
-        yield return new object[] { new Vector2(0.5f, 0.9f), new Vector2(1.1f, 1.5f), new Vector2[] { new(0, 0), new(0, 1), new(1, 1) }, };
-        yield return new object[] { new Vector2(0.5f, 0.9f), new Vector2(0.9f, 1.5f), new Vector2[] { new(0, 0), new(0, 1) }, };
+                currentPoint += directionVector;
+                expectedPath.Add(currentPoint);
+            }
 
-        // Right down/up
-        yield return new object[] { new Vector2(0.9f, 0.5f), new Vector2(1.5f, -0.1f), new Vector2[] { new(0, 0), new(1, 0), new(1, -1) }, };
-        yield return new object[] { new Vector2(0.9f, 0.5f), new Vector2(1.5f, 0.1f), new Vector2[] { new(0, 0), new(1, 0) }, };
-        yield return new object[] { new Vector2(0.9f, 0.5f), new Vector2(1.5f, 1.1f), new Vector2[] { new(0, 0), new(1, 0), new(1, 1) }, };
-        yield return new object[] { new Vector2(0.9f, 0.5f), new Vector2(1.5f, 0.9f), new Vector2[] { new(0, 0), new(1, 0) }, };
+            var towards = expectedPath.Last() + startingPoint + (steps % 2 == 0 ? directionOffsets[mainDirection] : directionOffsets[secondaryDirection]);
+
+            return new object[]
+            {
+                from,
+                towards,
+                expectedPath,
+            };
+        };
+
+        for (int steps = 1; steps <= 5; steps++) {
+            yield return Generate(Direction.Up, Direction.Left, steps);
+            yield return Generate(Direction.Up, Direction.Right, steps);
+            yield return Generate(Direction.Right, Direction.Up, steps);
+            yield return Generate(Direction.Right, Direction.Down, steps);
+            yield return Generate(Direction.Down, Direction.Right, steps);
+            yield return Generate(Direction.Down, Direction.Left, steps);
+            yield return Generate(Direction.Left, Direction.Down, steps);
+            yield return Generate(Direction.Left, Direction.Up, steps);
+        }
+
+        yield return new object[] { new Vector2(0, 0), new Vector2(0, 0), new List<Vector2> { new(0, 0)}, };
     }
 
     [Theory]
     [MemberData(nameof(PointsThatTravelInDiagonal))]
-    public void RayCastPosToPos_ShouldRayCastCorrectlyInSimpleCases(Vector2 origin, Vector2 towards, Vector2[] expectedPath) {
+    public void RayCastPosToPos_ShouldRayCastCorrectlyInSimpleCases(Vector2 origin, Vector2 towards, List<Vector2> expectedPath) {
         // Act
-        var path = RayCasting.RayCastPosToPos(origin, towards);
+        var actualPath = RayCasting.RayCastPosToPos(origin, towards).Select(rayCastResult => rayCastResult.Cell).ToList();
 
         // Assert
-        Assert.Equal(expectedPath, path.Select(rayCastResult => rayCastResult.Cell));
+        Assert.Equal(expectedPath, actualPath);
     }
 }
